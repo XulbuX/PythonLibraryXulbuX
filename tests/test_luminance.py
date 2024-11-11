@@ -1,4 +1,4 @@
-from XulbuX import Color, rgba, hsla, hexa
+from src.XulbuX import Color, rgba, hsla, hexa
 
 import math as _math
 

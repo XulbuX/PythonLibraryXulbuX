@@ -1,13 +1,14 @@
-from XulbuX import rgba, hexa, hsla
+from src.XulbuX import rgba, hexa, hsla
 
 clr_rgba = (255, 0, 0, 0.5)
 clr_hexa = '#FF00007F'
 clr_hsla = (0, 100, 50, 0.5)
 
-print(f'\n------ {rgba(*clr_rgba)} ------')
-print(f'to_hsla(): {rgba(*clr_rgba).to_hsla()}')
-print(f'to_hexa(): {rgba(*clr_rgba).to_hexa()}')
-print(f'has_alpha(): {rgba(*clr_rgba).has_alpha()}')
+def test_rgba():
+    clr_rgba = (255, 0, 0, 0.5)
+    assert isinstance(rgba(*clr_rgba).to_hsla(), hsla)
+    assert isinstance(rgba(*clr_rgba).to_hexa(), hexa)
+    assert isinstance(rgba(*clr_rgba).has_alpha(), bool)
 print(f'lighten(0.5): {rgba(*clr_rgba).lighten(0.5)}')
 print(f'darken(0.5): {rgba(*clr_rgba).darken(0.5)}')
 print(f'saturate(0.5): {rgba(*clr_rgba).saturate(0.5)}')
