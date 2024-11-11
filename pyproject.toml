@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+keywords = [
+  "xulbux",
+  "python",
+  "library",
+  "utility",
+  "helper",
+  "helpful",
+  "functions",
+  "tools",
+  "classes",
+  "types",
+  "methods",
+  "cmd",
+  "code",
+  "color",
+  "data",
+  "structures",
+  "env",
+  "environment",
+  "file",
+  "format",
+  "json",
+  "path",
+  "regex",
+  "string",
+  "system",
+  "operations",
+  "presets",
+]
+name = "XulbuX"
+version = "1.5.5"
+authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
+description = "A library which includes a lot of really helpful functions."
+readme = "README.md"
+license = { file = "LICENSE" }
+changelog = "CHANGELOG.md"
+requires-python = ">=3.10.0"
+dependencies = ["keyboard>=0.13.5", "mouse>=0.7.1", "regex>=2023.10.3"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX"
+"Bug Reports" = "https://github.com/XulbuX-dev/Python/issues"
+"Documentation" = "https://github.com/XulbuX-dev/Python/wiki"
+"Source Code" = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX/src"
+"Changelog" = "https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md"
+
+[project.scripts]
+xulbux-help = "__help__:help"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xulbux"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
