@@ -69,6 +69,6 @@ dev = ["pytest>=7.0"]
 packages = ["src/xulbux"]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
+minversion = "7.0"
 addopts = "-ra -q"
 testpaths = ["tests/test_cmd_info.py", "tests/test_color_types.py"]
