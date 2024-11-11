@@ -33,7 +33,7 @@ keywords = [
   "presets",
 ]
 name = "XulbuX"
-version = "1.5.5"
+version = "1.5.6"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A library which includes a lot of really helpful functions."
 readme = "README.md"
