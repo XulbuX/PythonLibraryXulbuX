@@ -15,6 +15,9 @@
 # <br><b>Changelog</b><br>
 
 
+## ... `v1.5.7`
+* Change the testing modules to be able to run together with the library `pytest`
+
 ## 11.11.2024 `v1.5.6`
 * Moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
 * Updated all connections and links
