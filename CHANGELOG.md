@@ -15,7 +15,7 @@
 # <br><b>Changelog</b><br>
 
 
-## ... `v1.5.5`
+## 11.11.2024 `v1.5.5`
 * Added functions to get the width and height of the console (*in characters and lines*):<br>
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
