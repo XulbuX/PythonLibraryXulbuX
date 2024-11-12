@@ -286,9 +286,7 @@ class Cmd:
         last_console_width = 0
 
         def filter_pasted_text(text: str) -> str:
-            if allowed_chars == CHARS.all:
-                return text
-            return "".join(char for char in text if char in allowed_chars)
+            return "".join(char for char in text if allowed_chars == CHARS.all or char in allowed_chars)
 
         def update_display(console_width: int) -> None:
             nonlocal select_all, last_line_count, last_console_width
@@ -313,50 +311,69 @@ class Cmd:
             _sys.stdout.write("\033[2K\r" + prompt_str + ("\033[7m" if select_all else "") + input_str + "\033[0m")
             last_line_count, last_console_width = line_count, console_width
 
+        def handle_enter():
+            if min_length is not None and len(result) < min_length:
+                return False
+            print()
+            return True
+
+        def handle_backspace_delete():
+            nonlocal result, select_all
+            if select_all:
+                result, select_all = "", False
+            elif result and event.name == "backspace":
+                result = result[:-1]
+            update_display(Cmd.w())
+
+        def handle_paste():
+            nonlocal result, select_all
+            if select_all:
+                result, select_all = "", False
+            filtered_text = filter_pasted_text(_pyperclip.paste())
+            if max_length is None or len(result) + len(filtered_text) <= max_length:
+                result += filtered_text
+                update_display(Cmd.w())
+
+        def handle_select_all():
+            nonlocal select_all
+            select_all = True
+            update_display(Cmd.w())
+
+        def handle_copy():
+            nonlocal select_all
+            with suppress(KeyboardInterrupt):
+                select_all = False
+                update_display(Cmd.w())
+                _pyperclip.copy(result)
+
+        def handle_character_input():
+            nonlocal result
+            if (allowed_chars == CHARS.all or event.name in allowed_chars) and (
+                max_length is None or len(result) < max_length
+            ):
+                result += event.name
+                update_display(Cmd.w())
+
         while True:
             event = _keyboard.read_event()
             if event.event_type == "down":
-                if event.name == "enter":
-                    if min_length is not None and len(result) < min_length:
-                        continue
-                    print()
+                if event.name == "enter" and handle_enter():
                     return result.rstrip("\n")
                 elif event.name in ("backspace", "delete", "entf"):
-                    if select_all:
-                        result, select_all = "", False
-                    elif result and event.name == "backspace":
-                        result = result[:-1]
-                    update_display(Cmd.w())
+                    handle_backspace_delete()
                 elif (event.name == "v" and _keyboard.is_pressed("ctrl")) or _mouse.is_pressed("right"):
-                    if select_all:
-                        result, select_all = "", False
-                    filtered_text = filter_pasted_text(_pyperclip.paste())
-                    if max_length is None or len(result) + len(filtered_text) <= max_length:
-                        result += filtered_text
-                        update_display(Cmd.w())
+                    handle_paste()
                 elif event.name == "a" and _keyboard.is_pressed("ctrl"):
-                    select_all = True
-                    update_display(Cmd.w())
+                    handle_select_all()
                 elif event.name == "c" and _keyboard.is_pressed("ctrl") and select_all:
-                    with suppress(KeyboardInterrupt):  # PREVENT CTRL+C FROM RAISING A `KeyboardInterrupt` EXCEPTION
-                        select_all = False
-                        update_display(Cmd.w())
-                        _pyperclip.copy(result)
+                    handle_copy()
                 elif event.name == "esc":
-                    return
+                    return None
                 elif event.name == "space":
-                    if (allowed_chars == CHARS.all or " " in allowed_chars) and (
-                        max_length is None or len(result) < max_length
-                    ):
-                        result += " "
-                        update_display(Cmd.w())
+                    handle_character_input()
                 elif len(event.name) == 1:
-                    if (allowed_chars == CHARS.all or event.name in allowed_chars) and (
-                        max_length is None or len(result) < max_length
-                    ):
-                        result += event.name
-                        update_display(Cmd.w())
-                else:  # ANY DISALLOWED OR NON-DEFINED KEY PRESSED
+                    handle_character_input()
+                else:
                     select_all = False
                     update_display(Cmd.w())
 
