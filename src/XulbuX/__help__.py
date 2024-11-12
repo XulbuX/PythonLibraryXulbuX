@@ -1,9 +1,6 @@
-try: from ._consts_ import DEFAULT
-except: from _consts_ import DEFAULT
-try: from .xx_format_codes import *
-except: from xx_format_codes import *
-try: from .xx_cmd import *
-except: from xx_cmd import *
+from ._consts_ import DEFAULT
+from .xx_format_codes import *
+from .xx_cmd import *
 
 import os as _os
 
@@ -67,8 +64,3 @@ def help():
   [dim](Press any key to exit...)
   ''', DEFAULT.text_color)
     Cmd.pause_exit(pause=True)
-
-
-
-if __name__ == '__main__':
-    help()
