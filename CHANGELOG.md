@@ -21,6 +21,7 @@
 * Added the script (*command*) `xx-help` or `xulbux-help`
 * Moved the `help()` function to the file `_cli_.py`, because that's where all the scripts are located (*It also was renamed to* `help_command()`)
 * Structured `Cmd.restricted_input()` a bit nicer, so it appears less complex
+* Corrected code after `Lint with flake8` formatting suggestions
 
 ## 11.11.2024 `v1.5.6`
 * Moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)

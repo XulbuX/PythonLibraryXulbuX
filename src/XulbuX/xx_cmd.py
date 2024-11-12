@@ -75,7 +75,7 @@ class Cmd:
                 return _os.geteuid() == 0
             else:
                 return False
-        except:
+        except Exception:
             return False
 
     @staticmethod

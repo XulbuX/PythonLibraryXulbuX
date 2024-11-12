@@ -47,7 +47,7 @@ class Json:
             with open(file_path, "r", encoding="utf-8") as existing_f:
                 existing_content = _json.load(existing_f)
                 if existing_content == content:
-                    raise FileExistsError(f"Already created this file. (nothing changed)")
+                    raise FileExistsError("Already created this file. (nothing changed)")
             raise FileExistsError("File already exists.")
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(Data.to_str(content, indent, compactness, as_json=True))

@@ -43,7 +43,7 @@ class Path:
                 files_and_dirs = _os.listdir(dir)
                 matches = _difflib.get_close_matches(part, files_and_dirs, n=1, cutoff=0.6)
                 return matches[0] if matches else None
-            except:
+            except Exception:
                 return None
 
         def find_path(start: str, parts: list[str]) -> str | None:
@@ -58,7 +58,7 @@ class Path:
             return current if _os.path.exists(current) and current != start else None
 
         def expand_env_path(p: str) -> str:
-            if not "%" in p:
+            if "%" not in p:
                 return p
             parts = p.split("%")
             for i in range(1, len(parts), 2):

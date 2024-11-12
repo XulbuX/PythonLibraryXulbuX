@@ -67,7 +67,7 @@ class rgba:
                 "RGBA color must have R G B as integers in [0, 255]: got",
                 (r, g, b),
             )
-        elif not a is None and not (isinstance(a, (int, float)) and 0 <= a <= 1):
+        elif a is not None and not (isinstance(a, (int, float)) and 0 <= a <= 1):
             raise ValueError("Alpha channel must be a float/int in [0.0, 1.0]: got", a)
         self.r, self.g, self.b = r, g, b
         self.a = (1.0 if a > 1.0 else float(a)) if a else None
@@ -123,7 +123,7 @@ class rgba:
 
     def has_alpha(self) -> bool:
         """Returns `True` if the color has an alpha channel and `False` otherwise"""
-        return self.a != None
+        return self.a is not None
 
     def lighten(self, amount: float) -> "rgba":
         """Increases the colors lightness by the specified amount (`0.0`-`1.0`)"""
@@ -273,7 +273,7 @@ class hsla:
                 "HSL color must have H as integer in [0, 360] and S L as integers in [0, 100]: got",
                 (h, s, l),
             )
-        elif not a is None and (not isinstance(a, (int, float)) or not 0 <= a <= 1):
+        elif a is not None and (not isinstance(a, (int, float)) or not 0 <= a <= 1):
             raise ValueError("Alpha channel must be a float/int in [0.0, 1.0]: got", a)
         self.h, self.s, self.l = h, s, l
         self.a = (1.0 if a > 1.0 else float(a)) if a else None
@@ -330,7 +330,7 @@ class hsla:
 
     def has_alpha(self) -> bool:
         """Returns `True` if the color has an alpha channel and `False` otherwise"""
-        return self.a != None
+        return self.a is not None
 
     def lighten(self, amount: float) -> "hsla":
         """Increases the colors lightness by the specified amount (`0.0`-`1.0`)"""
@@ -675,7 +675,7 @@ class Color:
             elif isinstance(color, str):
                 return bool(_re.fullmatch(Regex.rgba_str(), color))
             return False
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -705,7 +705,7 @@ class Color:
                     return 0 <= color["h"] <= 360 and 0 <= color["s"] <= 100 and 0 <= color["l"] <= 100
             elif isinstance(color, str):
                 return bool(_re.fullmatch(Regex.hsla_str(), color))
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -727,7 +727,7 @@ class Color:
                     else r"(?i)^[0-9A-F]{6}|[0-9A-F]{3}$"
                 )
                 return (bool(_re.fullmatch(pattern, color)), prefix) if get_prefix else bool(_re.fullmatch(pattern, color))
-        except:
+        except Exception:
             return (False, None) if get_prefix else False
 
     @staticmethod

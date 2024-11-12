@@ -14,10 +14,10 @@ def help_command():
         "punctuators": DEFAULT.color["darkgray"],
     }
     FormatCodes.print(
-        rf"""  [_|b|#7075FF]               __  __              
+        rf"""  [_|b|#7075FF]               __  __
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
-  [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , < 
+  [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , <
   [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{DEFAULT.color['gray']}|#000] v[b]{__version__} [*]
 
   [i|{DEFAULT.color['coral']}]A TON OF COOL FUNCTIONS, YOU NEED![*]
