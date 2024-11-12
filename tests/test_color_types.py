@@ -1,5 +1,4 @@
 from XulbuX import rgba, hexa, hsla
-from unittest.mock import patch
 
 
 clr_rgba = (255, 0, 0, 0.5)
@@ -7,7 +6,6 @@ clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
-# @patch("builtins.input", lambda _: "y")  # <- VALUE TO BE RETURNED BY INPUT METHOD
 def test_rgba_instances():
     assert isinstance(rgba(*clr_rgba), rgba)
     assert isinstance(rgba(*clr_rgba).to_hsla(), hsla)
@@ -80,65 +78,67 @@ clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
-# def test_rgba_return_values():
-#     print(f'\n------ {rgba(*clr_rgba)} ------')
-#     print(f'to_hsla(): {rgba(*clr_rgba).to_hsla()}')
-#     print(f'to_hexa(): {rgba(*clr_rgba).to_hexa()}')
-#     print(f'has_alpha(): {rgba(*clr_rgba).has_alpha()}')
-#     print(f'lighten(0.5): {rgba(*clr_rgba).lighten(0.5)}')
-#     print(f'darken(0.5): {rgba(*clr_rgba).darken(0.5)}')
-#     print(f'saturate(0.5): {rgba(*clr_rgba).saturate(0.5)}')
-#     print(f'desaturate(0.5): {rgba(*clr_rgba).desaturate(0.5)}')
-#     print(f'rotate(90): {rgba(*clr_rgba).rotate(90)}')
-#     print(f'rotate(-90): {rgba(*clr_rgba).rotate(-90)}')
-#     print(f'invert(): {rgba(*clr_rgba).invert()}')
-#     print(f'grayscale(): {rgba(*clr_rgba).grayscale()}')
-#     print(f'blend((0, 255, 0)): {rgba(*clr_rgba).blend((0, 255, 0))}')
-#     print(f'is_dark(): {rgba(*clr_rgba).is_dark()}')
-#     print(f'is_light(): {rgba(*clr_rgba).is_light()}')
-#     print(f'is_grayscale(): {rgba(*clr_rgba).is_grayscale()}')
-#     print(f'is_opaque(): {rgba(*clr_rgba).is_opaque()}')
-#     print(f'with_alpha(0.5): {rgba(*clr_rgba).with_alpha(0.5)}')
-#     print(f'complementary(): {rgba(*clr_rgba).complementary()}')
+def test_rgba_return_values():
+    rgba_instance = rgba(*clr_rgba)
+    assert rgba_instance.to_hsla() == (0, 100, 50, 0.5)
+    assert rgba_instance.to_hexa() == "#FF00007F"
+    assert rgba_instance.has_alpha() is True
+    assert rgba_instance.lighten(0.5) == (255, 128, 128, 0.5)
+    assert rgba_instance.darken(0.5) == (128, 0, 0, 0.5)
+    assert rgba_instance.saturate(0.5) == (255, 0, 0, 0.5)
+    assert rgba_instance.desaturate(0.5) == (191, 64, 64, 0.5)
+    assert rgba_instance.rotate(90) == (128, 255, 0, 0.5)
+    assert rgba_instance.rotate(-90) == (127, 0, 255, 0.5)
+    assert rgba_instance.invert() == (0, 255, 255, 0.5)
+    assert rgba_instance.grayscale() == (54, 54, 54, 0.5)
+    assert rgba_instance.blend((0, 255, 0)) == (255, 255, 0, 0.75)
+    assert rgba_instance.is_dark() is True
+    assert rgba_instance.is_light() is False
+    assert rgba_instance.is_grayscale() is False
+    assert rgba_instance.is_opaque() is False
+    assert rgba_instance.with_alpha(0.5) == (255, 0, 0, 0.5)
+    assert rgba_instance.complementary() == (0, 255, 255, 0.5)
 
-# def test_hsla_return_values():
-#     print(f'\n------ {hsla(*clr_hsla)} ------')
-#     print(f'to_rgba(): {hsla(*clr_hsla).to_rgba()}')
-#     print(f'to_hexa(): {hsla(*clr_hsla).to_hexa()}')
-#     print(f'has_alpha(): {hsla(*clr_hsla).has_alpha()}')
-#     print(f'lighten(0.5): {hsla(*clr_hsla).lighten(0.5)}')
-#     print(f'darken(0.5): {hsla(*clr_hsla).darken(0.5)}')
-#     print(f'saturate(0.5): {hsla(*clr_hsla).saturate(0.5)}')
-#     print(f'desaturate(0.5): {hsla(*clr_hsla).desaturate(0.5)}')
-#     print(f'rotate(90): {hsla(*clr_hsla).rotate(90)}')
-#     print(f'rotate(-90): {hsla(*clr_hsla).rotate(-90)}')
-#     print(f'invert(): {hsla(*clr_hsla).invert()}')
-#     print(f'grayscale(): {hsla(*clr_hsla).grayscale()}')
-#     print(f'blend((120, 100, 50)): {hsla(*clr_hsla).blend((120, 100, 50))}')
-#     print(f'is_dark(): {hsla(*clr_hsla).is_dark()}')
-#     print(f'is_light(): {hsla(*clr_hsla).is_light()}')
-#     print(f'is_grayscale(): {hsla(*clr_hsla).is_grayscale()}')
-#     print(f'is_opaque(): {hsla(*clr_hsla).is_opaque()}')
-#     print(f'with_alpha(0.5): {hsla(*clr_hsla).with_alpha(0.5)}')
-#     print(f'complementary(): {hsla(*clr_hsla).complementary()}')
 
-# def test_hexa_return_values():
-#     print(f'\n------ {hexa(clr_hexa)} ------')
-#     print(f'to_rgba(): {hexa(clr_hexa).to_rgba()}')
-#     print(f'to_hsla(): {hexa(clr_hexa).to_hsla()}')
-#     print(f'has_alpha(): {hexa(clr_hexa).has_alpha()}')
-#     print(f'lighten(0.5): {hexa(clr_hexa).lighten(0.5)}')
-#     print(f'darken(0.5): {hexa(clr_hexa).darken(0.5)}')
-#     print(f'saturate(0.5): {hexa(clr_hexa).saturate(0.5)}')
-#     print(f'desaturate(0.5): {hexa(clr_hexa).desaturate(0.5)}')
-#     print(f'rotate(90): {hexa(clr_hexa).rotate(90)}')
-#     print(f'rotate(-90): {hexa(clr_hexa).rotate(-90)}')
-#     print(f'invert(): {hexa(clr_hexa).invert()}')
-#     print(f'grayscale(): {hexa(clr_hexa).grayscale()}')
-#     print(f'blend("#0F0"): {hexa(clr_hexa).blend("#0F0")}')
-#     print(f'is_dark(): {hexa(clr_hexa).is_dark()}')
-#     print(f'is_light(): {hexa(clr_hexa).is_light()}')
-#     print(f'is_grayscale(): {hexa(clr_hexa).is_grayscale()}')
-#     print(f'is_opaque(): {hexa(clr_hexa).is_opaque()}')
-#     print(f'with_alpha(0.5): {hexa(clr_hexa).with_alpha(0.5)}')
-#     print(f'complementary(): {hexa(clr_hexa).complementary()}')
+def test_hsla_return_values():
+    hsla_instance = hsla(*clr_hsla)
+    assert hsla_instance.to_rgba() == (255, 0, 0, 0.5)
+    assert hsla_instance.to_hexa() == "#FF00007F"
+    assert hsla_instance.has_alpha() is True
+    assert hsla_instance.lighten(0.5) == (0, 100, 75, 0.5)
+    assert hsla_instance.darken(0.5) == (0, 100, 25, 0.5)
+    assert hsla_instance.saturate(0.5) == (0, 100, 50, 0.5)
+    assert hsla_instance.desaturate(0.5) == (0, 50, 50, 0.5)
+    assert hsla_instance.rotate(90) == (90, 100, 50, 0.5)
+    assert hsla_instance.rotate(-90) == (270, 100, 50, 0.5)
+    assert hsla_instance.invert() == (180, 100, 50, 0.5)
+    assert hsla_instance.grayscale() == (0, 0, 21, 0.5)
+    assert hsla_instance.blend((120, 100, 50)) == (60, 100, 50, 0.75)
+    assert hsla_instance.is_dark() is False
+    assert hsla_instance.is_light() is True
+    assert hsla_instance.is_grayscale() is False
+    assert hsla_instance.is_opaque() is False
+    assert hsla_instance.with_alpha(0.5) == (0, 100, 50, 0.5)
+    assert hsla_instance.complementary() == (180, 100, 50, 0.5)
+
+
+def test_hexa_return_values():
+    hexa_instance = hexa(clr_hexa)
+    assert hexa_instance.to_rgba() == (255, 0, 0, 0.5)
+    assert hexa_instance.to_hsla() == (0, 100, 50, 0.5)
+    assert hexa_instance.has_alpha() is True
+    assert hexa_instance.lighten(0.5) == "#FF80807F"
+    assert hexa_instance.darken(0.5) == "#8000007F"
+    assert hexa_instance.saturate(0.5) == "#FF00007F"
+    assert hexa_instance.desaturate(0.5) == "#BF40407F"
+    assert hexa_instance.rotate(90) == "#80FF007F"
+    assert hexa_instance.rotate(-90) == "#7F00FF7F"
+    assert hexa_instance.invert() == "#00FFFF7F"
+    assert hexa_instance.grayscale() == "#3636367F"
+    assert hexa_instance.blend("#00FF00") == "#FFFF00BF"
+    assert hexa_instance.is_dark() is False
+    assert hexa_instance.is_light() is True
+    assert hexa_instance.is_grayscale() is False
+    assert hexa_instance.is_opaque() is False
+    assert hexa_instance.with_alpha(0.5) == "#FF00007F"
+    assert hexa_instance.complementary() == "#00FFFF7F"
