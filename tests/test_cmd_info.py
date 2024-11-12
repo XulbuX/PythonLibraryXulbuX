@@ -1,4 +1,4 @@
-import src.XulbuX as xx
+import XulbuX as xx
 
 
 def test_console_user():

@@ -1,4 +1,4 @@
-from src.XulbuX import rgba, hexa, hsla
+from XulbuX import rgba, hexa, hsla
 
 
 clr_rgba = (255, 0, 0, 0.5)
