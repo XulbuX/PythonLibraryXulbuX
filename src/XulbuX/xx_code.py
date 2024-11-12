@@ -8,25 +8,6 @@ import regex as _rx
 class Code:
 
     @staticmethod
-    def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
-        """Replaces all special space characters with normal spaces.<br>
-        Also replaces tab characters with `tab_spaces` spaces."""
-        return (
-            string.replace("\t", " " * tab_spaces)
-            .replace("\u2000", " ")
-            .replace("\u2001", " ")
-            .replace("\u2002", " ")
-            .replace("\u2003", " ")
-            .replace("\u2004", " ")
-            .replace("\u2005", " ")
-            .replace("\u2006", " ")
-            .replace("\u2007", " ")
-            .replace("\u2008", " ")
-            .replace("\u2009", " ")
-            .replace("\u200A", " ")
-        )
-
-    @staticmethod
     def add_indent(code: str, indent: int) -> str:
         """Adds `indent` spaces at the beginning of each line."""
         indented_lines = [" " * indent + line for line in code.splitlines()]

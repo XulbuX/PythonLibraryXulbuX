@@ -4,37 +4,56 @@ import re as _re
 class String:
 
     @staticmethod
-    def to_type(value: str) -> any:
+    def to_type(string: str) -> any:
         """Will convert a string to a type."""
-        if value.lower() in ["true", "false"]:  # BOOLEAN
-            return value.lower() == "true"
-        elif value.lower() in ["none", "null", "undefined"]:  # NONE
+        if string.lower() in ["true", "false"]:  # BOOLEAN
+            return string.lower() == "true"
+        elif string.lower() in ["none", "null", "undefined"]:  # NONE
             return None
-        elif value.startswith("[") and value.endswith("]"):  # LIST
-            return [String.to_type(item.strip()) for item in value[1:-1].split(",") if item.strip()]
-        elif value.startswith("(") and value.endswith(")"):  # TUPLE
-            return tuple(String.to_type(item.strip()) for item in value[1:-1].split(",") if item.strip())
-        elif value.startswith("{") and value.endswith("}"):  # SET
-            return {String.to_type(item.strip()) for item in value[1:-1].split(",") if item.strip()}
-        elif value.startswith("{") and value.endswith("}") and ":" in value:  # DICTIONARY
+        elif string.startswith("[") and string.endswith("]"):  # LIST
+            return [String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip()]
+        elif string.startswith("(") and string.endswith(")"):  # TUPLE
+            return tuple(String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip())
+        elif string.startswith("{") and string.endswith("}"):  # SET
+            return {String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip()}
+        elif string.startswith("{") and string.endswith("}") and ":" in string:  # DICTIONARY
             return {
                 String.to_type(k.strip()): String.to_type(v.strip())
-                for k, v in [item.split(":") for item in value[1:-1].split(",") if item.strip()]
+                for k, v in [item.split(":") for item in string[1:-1].split(",") if item.strip()]
             }
         try:  # NUMBER (INT OR FLOAT)
-            if "." in value or "e" in value.lower():
-                return float(value)
+            if "." in string or "e" in string.lower():
+                return float(string)
             else:
-                return int(value)
+                return int(string)
         except ValueError:
             pass
-        if value.startswith(("'", '"')) and value.endswith(("'", '"')):  # STRING (WITH OR WITHOUT QUOTES)
-            return value[1:-1]
+        if string.startswith(("'", '"')) and string.endswith(("'", '"')):  # STRING (WITH OR WITHOUT QUOTES)
+            return string[1:-1]
         try:  # COMPLEX
-            return complex(value)
+            return complex(string)
         except ValueError:
             pass
-        return value  # IF NOTHING ELSE MATCHES, RETURN AS IS
+        return string  # IF NOTHING ELSE MATCHES, RETURN AS IS
+
+    @staticmethod
+    def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
+        """Replaces all special space characters with normal spaces.<br>
+        Also replaces tab characters with `tab_spaces` spaces."""
+        return (
+            string.replace("\t", " " * tab_spaces)
+            .replace("\u2000", " ")
+            .replace("\u2001", " ")
+            .replace("\u2002", " ")
+            .replace("\u2003", " ")
+            .replace("\u2004", " ")
+            .replace("\u2005", " ")
+            .replace("\u2006", " ")
+            .replace("\u2007", " ")
+            .replace("\u2008", " ")
+            .replace("\u2009", " ")
+            .replace("\u200A", " ")
+        )
 
     @staticmethod
     def get_repeated_symbol(string: str, symbol: str) -> int | bool:

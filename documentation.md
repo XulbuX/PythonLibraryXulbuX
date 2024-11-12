@@ -21,6 +21,7 @@
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).
 
 
+
 # Installation
 
 
@@ -35,17 +36,19 @@ pip install --upgrade XulbuX
 ```
 
 
+
 # Usage
 
 
-This imports the full library under the alias `xx`, so it"s classes, types and functions are accessible with `xx.Class.class_func()`, `xx.type()` and `xx.function()`:
+This imports the full library under the alias `xx`, so it"s classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
 import XulbuX as xx
 ```
-So you don"t have to write `xx` in front of the library"s types, you can import them directly (*e.g.* `rgba(255,0,0,.5)`):
+So you don"t have to write `xx` in front of the library"s types, you can import them directly:
 ```python
 from XulbuX import rgba, hsla, hexa
 ```
+
 
 
 # Modules
@@ -144,10 +147,11 @@ Includes methods:
 <br>
 
 
+
 ## xx_cmd
 
-### `Cmd`
 
+### `Cmd`
 This class includes functions for logging and other actions within the console.
 <br>
 
@@ -272,13 +276,84 @@ This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_i
 It has no additional parameters.<br>
 
 
+
+## xx_code
+
+
+### `Code`
+This class includes functions, used to work with strings, that are code.
 <br>
+
+#### `Code.add_indent()`
+-------------------------
+This function will add `indent` spaces at the beginning of each line.<br>
+**Params:**
+- <code>code: *str*</code> the string to add the indent to
+- <code>indent: *int*</code> the amount of spaces to add (*default* `4`)
+
+**Returns:** the indented string
+<br>
+
+#### `Code.get_tab_spaces()`
+-----------------------------
+This function will try to get the amount of spaces that are used for indentation.<br>
+**Params:**
+- <code>code: *str*</code> the string to get the tab spaces from
+
+**Returns:** the amount of spaces used for indentation
+<br>
+
+#### `Code.change_tab_size()`
+------------------------------
+This function will change the amount of spaces used for indentation.<br>
+**Params:**
+- <code>code: *str*</code> the string to change the tab size of
+- <code>new_tab_size: *int*</code> the amount of spaces to use for indentation
+- <code>remove_empty_lines: *bool*</code> whether to remove empty lines in the process
+
+**Returns:** the string with the new tab size (*and no empty lines if* `remove_empty_lines` *is true*)
+<br>
+
+#### `Code.get_func_calls()`
+This function will try to get all the function calls (*JavaScript, Python, etc. style functions*).<br>
+**Params:**
+- <code>code: *str*</code> the string to get the function calls from
+
+**Returns:** a list of function calls
+<br>
+
+#### `Code.is_js()`
+This function will check if the code is likely to be JavaScript.<br>
+**Params:**
+- <code>code: *str*</code> the string to check
+
+**Returns:** `True` if the code is likely to be JavaScript and `False` otherwise
+
+
+
+
+
+#### `String.normalize_spaces()`
+-------------------------------
+This function will replace all special space characters with normal spaces.<br>
+**Params:**
+- <code>code: *str*</code> the string to normalize
+- <code>tab_spaces: *int*</code> the amount of spaces to replace tab characters with (*default* `4`)
+
+**Returns:** the normalized string
+<br>
+
+
+
+
+
+<br id="bottom">
 <br>
 
 --------------------------------------------------------------
 [View this library on PyPI](https://pypi.org/project/XulbuX/)
 
-<div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
+<div style="width:45px; height:45px; right:10px; position:absolute">
   <a href="#top"><abbr title="go to top" style="text-decoration:none">
     <div style="
       font-size: 2em;
