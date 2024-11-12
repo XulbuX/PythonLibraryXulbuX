@@ -8,6 +8,7 @@
       text-align: center;
       justify-content: center;
     ">🠫</div>
+    <div style="display:none">go to bottom</div>
   </abbr></a>
 </div>
 <br>
@@ -280,6 +281,7 @@ It has no additional parameters.<br>
 
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
   <a href="#top"><abbr title="go to top" style="text-decoration:none">
+    <div style="display:none">go to top</div>
     <div style="
       font-size: 2em;
       font-weight: bold;
