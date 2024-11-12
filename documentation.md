@@ -274,6 +274,12 @@ This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_i
 It has no additional parameters.<br>
 
 
+<br>
+<br>
+
+--------------------------------------------------------------
+[View this library on PyPI](https://pypi.org/project/XulbuX/)
+
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
   <a href="#top"><abbr title="go to top" style="text-decoration:none">
     <div style="
@@ -286,9 +292,3 @@ It has no additional parameters.<br>
     ">🠩</div>
   </abbr></a>
 </div>
-
-<br>
-<br>
-
---------------------------------------------------------------
-[View this library on PyPI](https://pypi.org/project/XulbuX/)
