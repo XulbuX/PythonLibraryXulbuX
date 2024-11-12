@@ -358,7 +358,7 @@ class hsla:
         If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
         If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)"""
-        self.h, self.s, self.l, self.a = self.to_hsla().blend(Color.to_hsla(other), ratio, additive_alpha).values()
+        self.h, self.s, self.l, self.a = self.to_rgba().blend(Color.to_rgba(other), ratio, additive_alpha).values()
         return hsla(self.h, self.s, self.l, self.a)
 
     def is_dark(self) -> bool:
