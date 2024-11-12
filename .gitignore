@@ -1,0 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+wheels/
+build/
+dist/
+
+# PyBuilder
+.pybuilder/
+target/
+
+.python-version
+
+# PEP 582
+__pypackages__/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/

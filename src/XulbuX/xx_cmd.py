@@ -39,7 +39,7 @@ import os as _os
 class Cmd:
 
     @staticmethod
-    def get_args(find_args: dict) -> dict:
+    def get_args(find_args: dict) -> dict[str, dict[str, any]]:
         args = _sys.argv[1:]
         results = {}
         for arg_key, arg_group in find_args.items():
@@ -82,14 +82,14 @@ class Cmd:
     def pause_exit(
         pause: bool = False,
         exit: bool = False,
-        last_prompt: object = "",
+        prompt: object = "",
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
         """Will print the `last_prompt` and then pause the program if `pause` is set<br>
         to `True` and after the pause, exit the program if `exit` is set to `True`.
         """
-        print(last_prompt, end="", flush=True)
+        print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
         if pause:
@@ -108,7 +108,7 @@ class Cmd:
     @staticmethod
     def log(
         title: str,
-        prompt: object,
+        prompt: object = "",
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = None,
@@ -247,7 +247,7 @@ class Cmd:
         end="\n",
         default_color: hexa | rgba = DEFAULT.color["cyan"],
         default_is_yes: bool = True,
-    ) -> None:
+    ) -> bool:
         """Ask a yes/no question.\n
         -----------------------------------------------------------------------------------
         The question can be formatted with special formatting codes. For more detailed<br>
@@ -260,7 +260,7 @@ class Cmd:
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
-            (Cmd.log("", "") if end == "\n" else (Cmd.log("", end[1:]) if end.startswith("\n") else Cmd.log("", end)))
+            Cmd.log("", end, end="")
         return confirmed
 
     @staticmethod
