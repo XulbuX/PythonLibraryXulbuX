@@ -1,4 +1,18 @@
-<span id="xulbux"/>**$\color{#8085FF}\Huge\textsf{XulbuX}$**
+<div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
+  <a href="#bottom"><abbr title="go to bottom" style="text-decoration:none">
+    <div style="
+      font-size: 2em;
+      font-weight: bold;
+      background: #88889845;
+      border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
+    ">🠫</div>
+  </abbr></a>
+</div>
+
+
+**$\color{#8085FF}\Huge\textsf{XulbuX}$**
 
 -------------------------------------------------------------
 
@@ -256,6 +270,19 @@ Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special forma
 This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_input) function, but it always hides the users input.<br>
 It has no additional parameters.<br>
 
+
+<div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
+  <a href="#top"><abbr title="go to top" style="text-decoration:none">
+    <div style="
+      font-size: 2em;
+      font-weight: bold;
+      background: #88889845;
+      border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
+    ">🠩</div>
+  </abbr></a>
+</div>
 
 <br>
 <br>
