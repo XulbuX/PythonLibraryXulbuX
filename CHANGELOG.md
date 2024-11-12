@@ -18,6 +18,7 @@
 ## ... `v1.5.7`
 * Change the testing modules to be able to run together with the library `pytest`
 * Added formatting checks, using `black`, `isort` and `flake8`
+* Added the script (*command*) `xx-help` or `xulbux-help`
 * Moved the `help()` function to the file `_cli_.py`, because that's where all the scripts are located (*It also was renamed to* `help_command()`)
 
 ## 11.11.2024 `v1.5.6`
