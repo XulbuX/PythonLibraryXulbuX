@@ -1,5 +1,5 @@
-from .xx_data import *
-from .xx_file import *
+from src.XulbuX.xx_data import *
+from src.XulbuX.xx_file import *
 
 import json as _json
 import os as _os

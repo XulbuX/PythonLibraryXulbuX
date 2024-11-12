@@ -21,10 +21,10 @@ For more detailed information about formatting codes, see the the `xx_format_cod
 """
 
 
-from ._consts_ import DEFAULT, CHARS
-from .xx_format_codes import *
-from .xx_string import *
-from .xx_color import *
+from src.XulbuX._consts_ import DEFAULT, CHARS
+from src.XulbuX.xx_format_codes import *
+from src.XulbuX.xx_string import *
+from src.XulbuX.xx_color import *
 
 from contextlib import suppress
 import subprocess as _subprocess

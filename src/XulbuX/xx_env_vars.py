@@ -6,8 +6,8 @@ Functions for modifying and checking the systems environment-variables:
 """
 
 
-from .xx_data import *
-from .xx_path import *
+from src.XulbuX.xx_data import *
+from src.XulbuX.xx_path import *
 
 import os as _os
 

@@ -1,6 +1,6 @@
-from ._consts_ import DEFAULT
-from .xx_format_codes import *
-from .xx_cmd import *
+from src.XulbuX._consts_ import DEFAULT
+from src.XulbuX.xx_format_codes import *
+from src.XulbuX.xx_cmd import *
 
 import os as _os
 
@@ -64,3 +64,8 @@ def help():
   [dim](Press any key to exit...)
   ''', DEFAULT.text_color)
     Cmd.pause_exit(pause=True)
+
+
+
+if __name__ == '__main__':
+    help()

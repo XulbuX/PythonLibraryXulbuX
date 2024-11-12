@@ -31,17 +31,17 @@ __all__ = [
     'xx_format_codes', 'xx_json', 'xx_path', 'xx_regex', 'xx_string', 'xx_system'
 ]
 
-from .__help__ import help
-from ._consts_ import *
-from .xx_cmd import *
-from .xx_code import *
-from .xx_color import *
-from .xx_data import *
-from .xx_env_vars import *
-from .xx_file import *
-from .xx_format_codes import *
-from .xx_json import *
-from .xx_path import *
-from .xx_regex import *
-from .xx_string import *
-from .xx_system import *
+from src.XulbuX.__help__ import help
+from src.XulbuX._consts_ import *
+from src.XulbuX.xx_cmd import *
+from src.XulbuX.xx_code import *
+from src.XulbuX.xx_color import *
+from src.XulbuX.xx_data import *
+from src.XulbuX.xx_env_vars import *
+from src.XulbuX.xx_file import *
+from src.XulbuX.xx_format_codes import *
+from src.XulbuX.xx_json import *
+from src.XulbuX.xx_path import *
+from src.XulbuX.xx_regex import *
+from src.XulbuX.xx_string import *
+from src.XulbuX.xx_system import *

@@ -69,11 +69,11 @@ This can also be changed by changing the param `_modifiers = ('+l', '-d')`.
 """
 
 
-from ._consts_ import ANSI
-from .xx_string import *
-from .xx_regex import *
-from .xx_color import *
-from .xx_data import *
+from src.XulbuX._consts_ import ANSI
+from src.XulbuX.xx_string import *
+from src.XulbuX.xx_regex import *
+from src.XulbuX.xx_color import *
+from src.XulbuX.xx_data import *
 
 import ctypes as _ctypes
 import regex as _rx

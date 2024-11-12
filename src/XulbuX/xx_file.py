@@ -1,5 +1,5 @@
-from .xx_string import *
-from .xx_path import *
+from src.XulbuX.xx_string import *
+from src.XulbuX.xx_path import *
 
 import os as _os
 
