@@ -70,7 +70,7 @@ def test_hexa_instances():
     assert isinstance(hexa(clr_hexa).complementary(), hexa)
 
 
-#! DONT'T CHANGE VALUES !#
+# ! DONT'T CHANGE VALUES ! #
 clr_rgba = (255, 0, 0, 0.5)
 clr_hexa = '#FF00007F'
 clr_hsla = (0, 100, 50, 0.5)
