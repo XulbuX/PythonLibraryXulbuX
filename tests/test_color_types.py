@@ -96,7 +96,7 @@ def test_rgba_return_values():
     assert rgba_instance.is_light() is False
     assert rgba_instance.is_grayscale() is False
     assert rgba_instance.is_opaque() is False
-    assert rgba_instance.with_alpha(0.5) == (255, 0, 0, 0.5)
+    assert rgba_instance.with_alpha(0.75) == (255, 0, 0, 0.75)
     assert rgba_instance.complementary() == (0, 255, 255, 0.5)
 
 
@@ -118,7 +118,7 @@ def test_hsla_return_values():
     assert hsla_instance.is_light() is True
     assert hsla_instance.is_grayscale() is False
     assert hsla_instance.is_opaque() is False
-    assert hsla_instance.with_alpha(0.5) == (0, 100, 50, 0.5)
+    assert hsla_instance.with_alpha(0.75) == (0, 100, 50, 0.75)
     assert hsla_instance.complementary() == (180, 100, 50, 0.5)
 
 
@@ -140,5 +140,5 @@ def test_hexa_return_values():
     assert hexa_instance.is_light() is True
     assert hexa_instance.is_grayscale() is False
     assert hexa_instance.is_opaque() is False
-    assert hexa_instance.with_alpha(0.5) == "#FF00007F"
+    assert hexa_instance.with_alpha(0.75) == "#FF0000BF"
     assert hexa_instance.complementary() == "#00FFFF7F"
