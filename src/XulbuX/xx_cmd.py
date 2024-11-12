@@ -308,7 +308,7 @@ class Cmd:
             prompt_str, input_str = lines[0][:prompt_len], (
                 lines[0][prompt_len:] if len(lines) == 1 else "\n".join([lines[0][prompt_len:]] + lines[1:])
             )  # SEPARATE THE PROMPT AND THE INPUT
-            _sys.stdout.write("\033[2K\r" + prompt_str + ("\033[7m" if select_all else "") + input_str + "\033[0m")
+            _sys.stdout.write("\033[2K\r" + prompt_str + ("\033[7m" if select_all else "") + input_str + "\033[27m")
             last_line_count, last_console_width = line_count, console_width
 
         def handle_enter():

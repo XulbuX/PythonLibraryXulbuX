@@ -195,7 +195,7 @@ Will print a prompt and then pause and/or exit the program.<br>
 Will clear the console in addition to completely resetting the ANSI formats.
 <br>
 
-#### `Cmd.log()`
+#### <span id="cmd-log">`Cmd.log()`</span>
 -----------------
 Will print a nicely formatted log message.<br>
 **Params:**
@@ -210,7 +210,7 @@ The log message supports special formatting codes. For more detailed information
 
 #### `Cmd.debug()` `Cmd.info()` `Cmd.done()` `Cmd.warn()` `Cmd.fail()` `Cmd.exit()`
 -----------------------------------------------------------------------------------------
-These functions are all presets for the `Cmd.log()` function, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Cmd.log()` function, with the two additional ones.<br>
+These functions are all presets for the [`Cmd.log()`](#cmd-log) function, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Cmd.log()` function, with the two additional ones.<br>
 **Additional Params:**
 - <code>pause: *bool*</code> whether to pause the program at the message or not (*different default depending on the log preset*)
 - <code>exit: *bool*</code> whether to exit the program after the message was printed (*and the program was unpaused if* `pause` *is true*) or not (*different default depending on the log preset*)
@@ -219,6 +219,7 @@ These functions are all presets for the `Cmd.log()` function, with the options t
 #### `Cmd.confirm()`
 ---------------------
 This function can be used to ask a yes/no question.<br>
+Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the question
 - <code>start: *str*</code> the string to print before the question
@@ -228,35 +229,36 @@ This function can be used to ask a yes/no question.<br>
 
 **Returns:**
 - `True` if the user enters `Y` or `yes` and `False` otherwise
-- If the user enters nothing:
+- If the user entered nothing:
   - `True` if `default_is_yes` is true
   - `False` if `default_is_yes` is false
 <br>
 
-#### `Cmd.restricted_input()`
+#### <span id="cmd-restricted_input">`Cmd.restricted_input()`</span>
 ------------------------------
 This function acts like a standard Python `input()` with the advantage, that you can specify:
 - what text characters the user is allowed to type and
 - the minimum and/or maximum length of the users input
 - optional mask character (hide user input, e.g. for passwords)
 
+Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the input
 - <code>allowed_chars: *str*</code> the allowed text characters the user can type (*default is all characters*)
 - <code>min_length: *int*</code> the minimum length of the users input (*user can not confirm the input before this length is reached*)
 - <code>max_length: *int*</code> the maximum length of the users input (*user cannot keep on writing if this length is reached*)
 - <code>mask_char: *str*</code> the mask character to hide the users input
+
+**Returns:** the user's entry as a string
 <br>
 
-- `Cmd.restricted_input()`
-- `Cmd.pwd_input()`\n
-----------------------------------------------------------------------------------------------------------
-You can also use special formatting codes directly inside the log message to change their appearance.<br>
-For more detailed information about formatting codes, see the the `xx_format_codes` description.
+#### `Cmd.pwd_input()`
+This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_input) function, but it always hides the users input.<br>
+It has no additional parameters.<br>
 
 
-
-<br><br>
+<br>
+<br>
 
 --------------------------------------------------------------
 [View this library on PyPI](https://pypi.org/project/XulbuX/)
