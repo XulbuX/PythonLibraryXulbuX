@@ -1,4 +1,5 @@
 from XulbuX import rgba, hexa, hsla
+from unittest.mock import patch
 
 
 clr_rgba = (255, 0, 0, 0.5)
@@ -6,6 +7,7 @@ clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
+# @patch("builtins.input", lambda _: "y")  # <- VALUE TO BE RETURNED BY INPUT METHOD
 def test_rgba_instances():
     assert isinstance(rgba(*clr_rgba), rgba)
     assert isinstance(rgba(*clr_rgba).to_hsla(), hsla)
