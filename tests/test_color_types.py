@@ -81,7 +81,7 @@ clr_hsla = (0, 100, 50, 0.5)
 def test_rgba_return_values():
     rgba_instance = rgba(*clr_rgba)
     assert rgba_instance.to_hsla() == hsla(0, 100, 50, 0.5)
-    assert rgba_instance.to_hexa() == hexa("#FF00007F")
+    assert rgba_instance.to_hexa() == "#FF00007F"
     assert rgba_instance.has_alpha() is True
     assert rgba_instance.lighten(0.5) == rgba(255, 128, 128, 0.5)
     assert rgba_instance.darken(0.5) == rgba(128, 0, 0, 0.5)
@@ -103,7 +103,7 @@ def test_rgba_return_values():
 def test_hsla_return_values():
     hsla_instance = hsla(*clr_hsla)
     assert hsla_instance.to_rgba() == rgba(255, 0, 0, 0.5)
-    assert hsla_instance.to_hexa() == hexa("#FF00007F")
+    assert hsla_instance.to_hexa() == "#FF00007F"
     assert hsla_instance.has_alpha() is True
     assert hsla_instance.lighten(0.5) == hsla(0, 100, 75, 0.5)
     assert hsla_instance.darken(0.5) == hsla(0, 100, 25, 0.5)
@@ -127,18 +127,18 @@ def test_hexa_return_values():
     assert hexa_instance.to_rgba() == rgba(255, 0, 0, 0.5)
     assert hexa_instance.to_hsla() == hsla(0, 100, 50, 0.5)
     assert hexa_instance.has_alpha() is True
-    assert hexa_instance.lighten(0.5) == hexa("#FF80807F")
-    assert hexa_instance.darken(0.5) == hexa("#8000007F")
-    assert hexa_instance.saturate(0.5) == hexa("#FF00007F")
-    assert hexa_instance.desaturate(0.5) == hexa("#BF40407F")
-    assert hexa_instance.rotate(90) == hexa("#80FF007F")
-    assert hexa_instance.rotate(-90) == hexa("#7F00FF7F")
-    assert hexa_instance.invert() == hexa("#00FFFF7F")
-    assert hexa_instance.grayscale() == hexa("#3636367F")
-    assert hexa_instance.blend("#00FF00") == hexa("#FFFF00BF")
+    assert hexa_instance.lighten(0.5) == "#FF80807F"
+    assert hexa_instance.darken(0.5) == "#8000007F"
+    assert hexa_instance.saturate(0.5) == "#FF00007F"
+    assert hexa_instance.desaturate(0.5) == "#BF40407F"
+    assert hexa_instance.rotate(90) == "#80FF007F"
+    assert hexa_instance.rotate(-90) == "#7F00FF7F"
+    assert hexa_instance.invert() == "#00FFFF7F"
+    assert hexa_instance.grayscale() == "#3636367F"
+    assert hexa_instance.blend("#00FF00") == "#FFFF00BF"
     assert hexa_instance.is_dark() is False
     assert hexa_instance.is_light() is True
     assert hexa_instance.is_grayscale() is False
     assert hexa_instance.is_opaque() is False
-    assert hexa_instance.with_alpha(0.75) == hexa("#FF0000BF")
-    assert hexa_instance.complementary() == hexa("#00FFFF7F")
+    assert hexa_instance.with_alpha(0.75) == "#FF0000BF"
+    assert hexa_instance.complementary() == "#00FFFF7F"
