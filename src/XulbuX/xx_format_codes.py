@@ -68,12 +68,11 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 This can also be changed by changing the param `_modifiers = ('+l', '-d')`.
 """
 
-
-from src.XulbuX._consts_ import ANSI
-from src.XulbuX.xx_string import *
-from src.XulbuX.xx_regex import *
-from src.XulbuX.xx_color import *
-from src.XulbuX.xx_data import *
+from XulbuX._consts_ import ANSI
+from XulbuX.xx_string import *
+from XulbuX.xx_regex import *
+from XulbuX.xx_color import *
+from XulbuX.xx_data import *
 
 import ctypes as _ctypes
 import regex as _rx
@@ -81,43 +80,115 @@ import sys as _sys
 import re as _re
 
 
-
-
 class FormatCodes:
 
     @staticmethod
-    def print(*values:object, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
+    def print(
+        *values: object,
+        default_color: hexa | rgba = None,
+        brightness_steps: int = 20,
+        sep: str = " ",
+        end: str = "\n",
+    ) -> None:
         FormatCodes.__config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)), default_color, brightness_steps) + end)
         _sys.stdout.flush()
 
     @staticmethod
-    def input(prompt:object = '', default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
+    def input(
+        prompt: object = "",
+        default_color: hexa | rgba = None,
+        brightness_steps: int = 20,
+    ) -> str:
         FormatCodes.__config_console()
         return input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
 
     @staticmethod
-    def to_ansi(string:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _default_start:bool = True) -> str:
-        result, use_default = '', default_color and (Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False))
+    def to_ansi(
+        string: str,
+        default_color: hexa | rgba = None,
+        brightness_steps: int = 20,
+        _default_start: bool = True,
+    ) -> str:
+        result = ""
+        use_default = default_color and (
+            Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False)
+        )
         if use_default:
-            string = _re.sub(r'\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]', r'[\1_|default\2]', string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-            string = _re.sub(r'\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]', r'[\1default\2]', string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
-        def replace_keys(match:_rx.Match) -> str:
-            format_keys, esc, auto_reset_txt = match.group(1), match.group(2), match.group(3)
+            string = _re.sub(
+                r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]",
+                r"[\1_|default\2]",
+                string,
+            )  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+            string = _re.sub(
+                r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]",
+                r"[\1default\2]",
+                string,
+            )  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
+
+        def replace_keys(match: _rx.Match) -> str:
+            format_keys = match.group(1)
+            esc = match.group(2)
+            auto_reset_txt = match.group(3)
             if not format_keys:
                 return match.group(0)
             else:
-                format_keys = [k.replace(' ', '') for k in format_keys.split('|') if k.replace(' ', '')]
-                ansi_resets, ansi_formats = [], [FormatCodes.__get_replacement(k, default_color, brightness_steps) for k in format_keys]
+                format_keys = [k.replace(" ", "") for k in format_keys.split("|") if k.replace(" ", "")]
+                ansi_resets, ansi_formats = [], [
+                    FormatCodes.__get_replacement(k, default_color, brightness_steps) for k in format_keys
+                ]
                 if auto_reset_txt and not esc:
-                    reset_keys = ['_color' if Color.is_valid(k) or k in ANSI.color_map
-                        else '_bg' if (set(k.lower().split(':')) & {'bg', 'bright', 'br'} and len(k.split(':')) <= 3 and any(Color.is_valid(k[i:]) or k[i:] in ANSI.color_map for i in range(len(k))))
-                        else f'_{k}' for k in format_keys]
-                    ansi_resets = [r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)).startswith(f'{ANSI.char}{ANSI.start}')]
-            if not all(f.startswith(f'{ANSI.char}{ANSI.start}') for f in ansi_formats): return match.group(0)
-            return ''.join(ansi_formats) + ((f'({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})' if esc else auto_reset_txt) if auto_reset_txt else '') + ('' if esc else ''.join(ansi_resets))
-        result = '\n'.join(_rx.sub(Regex.brackets('[', ']', is_group=True) + r'(?:\s*([/\\]?)\s*' + Regex.brackets('(', ')', is_group=True) + r')?', replace_keys, line) for line in string.splitlines())
-        return (FormatCodes.__get_default_ansi(default_color) if _default_start else '') + result if use_default else result
+                    reset_keys = [
+                        (
+                            "_color"
+                            if Color.is_valid(k) or k in ANSI.color_map
+                            else (
+                                "_bg"
+                                if (
+                                    set(k.lower().split(":")) & {"bg", "bright", "br"}
+                                    and len(k.split(":")) <= 3
+                                    and any(Color.is_valid(k[i:]) or k[i:] in ANSI.color_map for i in range(len(k)))
+                                )
+                                else f"_{k}"
+                            )
+                        )
+                        for k in format_keys
+                    ]
+                    ansi_resets = [
+                        r
+                        for k in reset_keys
+                        if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)).startswith(
+                            f"{ANSI.char}{ANSI.start}"
+                        )
+                    ]
+            if not all(f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):
+                return match.group(0)
+            return (
+                "".join(ansi_formats)
+                + (
+                    (
+                        f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
+                        if esc
+                        else auto_reset_txt
+                    )
+                    if auto_reset_txt
+                    else ""
+                )
+                + ("" if esc else "".join(ansi_resets))
+            )
+
+        result = "\n".join(
+            _rx.sub(
+                Regex.brackets("[", "]", is_group=True)
+                + r"(?:\s*([/\\]?)\s*"
+                + Regex.brackets("(", ")", is_group=True)
+                + r")?",
+                replace_keys,
+                line,
+            )
+            for line in string.splitlines()
+        )
+        return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + result if use_default else result
 
     @staticmethod
     def __config_console() -> None:
@@ -129,14 +200,22 @@ class FormatCodes:
         kernel32.SetConsoleMode(h, mode.value | 0x0004)  # ENABLE VIRTUAL TERMINAL PROCESSING
 
     @staticmethod
-    def __get_default_ansi(default_color:hexa|rgba, format_key:str = None, brightness_steps:int = None, _modifiers:tuple[str,str] = ('+l', '-d')) -> str|None:
+    def __get_default_ansi(
+        default_color: hexa | rgba,
+        format_key: str = None,
+        brightness_steps: int = None,
+        _modifiers: tuple[str, str] = ("+l", "-d"),
+    ) -> str | None:
         if Color.is_valid_hexa(default_color, False):
             default_color = Color.to_rgba(default_color)
-        if not brightness_steps or (format_key and _re.search(r'(?i)((?:BG\s*:)?)\s*default', format_key)):
-            if format_key and _re.search(r'(?i)BG\s*:\s*default', format_key):
+        if not brightness_steps or (format_key and _re.search(r"(?i)((?:BG\s*:)?)\s*default", format_key)):
+            if format_key and _re.search(r"(?i)BG\s*:\s*default", format_key):
                 return ANSI.seq_bg_color.format(default_color[0], default_color[1], default_color[2])
             return ANSI.seq_color.format(default_color[0], default_color[1], default_color[2])
-        match = _re.match(rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{_re.escape(m)}+" for m in _modifiers[0] + _modifiers[1]])})$', format_key)
+        match = _re.match(
+            rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{_re.escape(m)}+" for m in _modifiers[0] + _modifiers[1]])})$',
+            format_key,
+        )
         if not match or not match.group(2):
             return None
         is_bg, modifier = match.group(1), match.group(2)
@@ -153,29 +232,43 @@ class FormatCodes:
                     new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
                     break
         if new_rgb:
-            return ANSI.seq_bg_color.format(new_rgb[0], new_rgb[1], new_rgb[2]) if is_bg else ANSI.seq_color.format(new_rgb[0], new_rgb[1], new_rgb[2])
+            return (
+                ANSI.seq_bg_color.format(new_rgb[0], new_rgb[1], new_rgb[2])
+                if is_bg
+                else ANSI.seq_color.format(new_rgb[0], new_rgb[1], new_rgb[2])
+            )
 
     @staticmethod
-    def __get_replacement(format_key:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _modifiers:tuple[str, str] = ('+l', '-d')) -> str:
+    def __get_replacement(
+        format_key: str,
+        default_color: hexa | rgba = None,
+        brightness_steps: int = 20,
+        _modifiers: tuple[str, str] = ("+l", "-d"),
+    ) -> str:
         """Gives you the corresponding ANSI code for the given format key.<br>
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG) by<br>
         using one or more `_modifiers` symbols as a format key ()"""
-        def key_exists(key:str) -> bool:
+
+        def key_exists(key: str) -> bool:
             for map_key in ANSI.codes_map:
                 if isinstance(map_key, tuple) and key in map_key:
                     return True
                 elif key == map_key:
                     return True
             return False
-        def get_value(key:str) -> any:
+
+        def get_value(key: str) -> any:
             for map_key in ANSI.codes_map:
                 if isinstance(map_key, tuple) and key in map_key:
                     return ANSI.codes_map[map_key]
                 elif key == map_key:
                     return ANSI.codes_map[map_key]
             return None
-        use_default = default_color and (Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False))
+
+        use_default = default_color and (
+            Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False)
+        )
         _format_key, format_key = format_key, FormatCodes.__normalize(format_key)
         if use_default:
             new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps, _modifiers)
@@ -183,8 +276,14 @@ class FormatCodes:
                 return new_default_color
         if key_exists(format_key):
             return ANSI.seq().format(get_value(format_key))
-        rgb_match = _re.match(r'(?i)\s*(BG\s*:)?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*', format_key)
-        hex_match = _re.match(r'(?i)\s*(BG\s*:)?\s*(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})\s*', format_key)
+        rgb_match = _re.match(
+            r"(?i)\s*(BG\s*:)?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*",
+            format_key,
+        )
+        hex_match = _re.match(
+            r"(?i)\s*(BG\s*:)?\s*(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})\s*",
+            format_key,
+        )
         try:
             if rgb_match:
                 is_bg = rgb_match.group(1)
@@ -194,19 +293,28 @@ class FormatCodes:
             elif hex_match:
                 is_bg = hex_match.group(1)
                 rgb = Color.to_rgba(hex_match.group(2))
-                return ANSI.seq_bg_color.format(rgb[0], rgb[1], rgb[2]) if is_bg else ANSI.seq_color.format(rgb[0], rgb[1], rgb[2])
-        except Exception: pass
+                return (
+                    ANSI.seq_bg_color.format(rgb[0], rgb[1], rgb[2])
+                    if is_bg
+                    else ANSI.seq_color.format(rgb[0], rgb[1], rgb[2])
+                )
+        except Exception:
+            pass
         return _format_key
 
     @staticmethod
-    def __normalize(format_key:str) -> str:
+    def __normalize(format_key: str) -> str:
         """Put the given format key in the correct format:<br>
         `1` put `BG:` as first key-part<br>
         `2` put `bright:` or `br:` as second key-part<br>
         `3` put everything else behind<br>
         `4` everything in lower case"""
-        format_key = format_key.replace(' ', '').lower().strip()
-        if ':' in format_key:
-            key_parts = format_key.split(':')
-            format_key = ('bg:' if 'bg' in key_parts else '') + ('bright:' if 'bright' in key_parts or 'br' in key_parts else '') + ''.join(Data.remove(key_parts, ['bg', 'bright', 'br']))
+        format_key = format_key.replace(" ", "").lower().strip()
+        if ":" in format_key:
+            key_parts = format_key.split(":")
+            format_key = (
+                ("bg:" if "bg" in key_parts else "")
+                + ("bright:" if "bright" in key_parts or "br" in key_parts else "")
+                + "".join(Data.remove(key_parts, ["bg", "bright", "br"]))
+            )
         return format_key

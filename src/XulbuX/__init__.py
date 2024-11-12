@@ -19,29 +19,41 @@
   • REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-__version__ = '1.5.6'
-__author__ = 'XulbuX'
-__email__ = 'xulbux.real@gmail.com'
-__license__ = 'MIT'
-__copyright__ = 'Copyright (c) 2024 XulbuX'
-__url__ = 'https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX'
-__description__ = 'A library which includes a lot of really helpful functions.'
+__version__ = "1.5.6"
+__author__ = "XulbuX"
+__email__ = "xulbux.real@gmail.com"
+__license__ = "MIT"
+__copyright__ = "Copyright (c) 2024 XulbuX"
+__url__ = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX"
+__description__ = "A library which includes a lot of really helpful functions."
 __all__ = [
-    '__help__', '_consts_', 'xx_cmd', 'xx_code', 'xx_color', 'xx_data', 'xx_env_vars', 'xx_file',
-    'xx_format_codes', 'xx_json', 'xx_path', 'xx_regex', 'xx_string', 'xx_system'
+    "__help__",
+    "_consts_",
+    "xx_cmd",
+    "xx_code",
+    "xx_color",
+    "xx_data",
+    "xx_env_vars",
+    "xx_file",
+    "xx_format_codes",
+    "xx_json",
+    "xx_path",
+    "xx_regex",
+    "xx_string",
+    "xx_system",
 ]
 
-from src.XulbuX.__help__ import help
-from src.XulbuX._consts_ import *
-from src.XulbuX.xx_cmd import *
-from src.XulbuX.xx_code import *
-from src.XulbuX.xx_color import *
-from src.XulbuX.xx_data import *
-from src.XulbuX.xx_env_vars import *
-from src.XulbuX.xx_file import *
-from src.XulbuX.xx_format_codes import *
-from src.XulbuX.xx_json import *
-from src.XulbuX.xx_path import *
-from src.XulbuX.xx_regex import *
-from src.XulbuX.xx_string import *
-from src.XulbuX.xx_system import *
+from XulbuX.__help__ import help
+from XulbuX._consts_ import *
+from XulbuX.xx_cmd import *
+from XulbuX.xx_code import *
+from XulbuX.xx_color import *
+from XulbuX.xx_data import *
+from XulbuX.xx_env_vars import *
+from XulbuX.xx_file import *
+from XulbuX.xx_format_codes import *
+from XulbuX.xx_json import *
+from XulbuX.xx_path import *
+from XulbuX.xx_regex import *
+from XulbuX.xx_string import *
+from XulbuX.xx_system import *

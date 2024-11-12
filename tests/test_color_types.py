@@ -2,7 +2,7 @@ from XulbuX import rgba, hexa, hsla
 
 
 clr_rgba = (255, 0, 0, 0.5)
-clr_hexa = '#FF00007F'
+clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
@@ -27,6 +27,7 @@ def test_rgba_instances():
     assert isinstance(rgba(*clr_rgba).with_alpha(0.5), rgba)
     assert isinstance(rgba(*clr_rgba).complementary(), rgba)
 
+
 def test_hsla_instances():
     assert isinstance(hsla(*clr_hsla), hsla)
     assert isinstance(hsla(*clr_hsla).to_rgba(), rgba)
@@ -47,6 +48,7 @@ def test_hsla_instances():
     assert isinstance(hsla(*clr_hsla).is_opaque(), bool)
     assert isinstance(hsla(*clr_hsla).with_alpha(0.5), hsla)
     assert isinstance(hsla(*clr_hsla).complementary(), hsla)
+
 
 def test_hexa_instances():
     assert isinstance(hexa(clr_hexa), hexa)
@@ -72,7 +74,7 @@ def test_hexa_instances():
 
 # ! DONT'T CHANGE VALUES ! #
 clr_rgba = (255, 0, 0, 0.5)
-clr_hexa = '#FF00007F'
+clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 

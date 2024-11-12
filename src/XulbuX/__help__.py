@@ -1,39 +1,24 @@
-from src.XulbuX._consts_ import DEFAULT
-from src.XulbuX.xx_format_codes import *
-from src.XulbuX.xx_cmd import *
+from XulbuX.__init__ import __version__
+from XulbuX._consts_ import DEFAULT
+from XulbuX.xx_format_codes import *
+from XulbuX.xx_cmd import *
 
-import os as _os
-
-
-
-
-def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
-    try:
-        from . import var
-        return var
-    except ImportError:
-        init_path = _os.path.join(_os.path.dirname(__file__), file)
-        if _os.path.isfile(init_path):
-            with open(init_path, encoding='utf-8') as f:
-                for line in f:
-                    if line.startswith(var): return line.split('=')[-1].strip().strip('\'"')
-        return 'unknown'
 
 def help():
     """Show some info about the library, with a brief explanation of how to use it."""
     color = {
-        'lib': DEFAULT.color['ice'],
-        'import': DEFAULT.color['red'],
-        'class': DEFAULT.color['lavender'],
-        'types': DEFAULT.color['lightblue'],
-        'punctuators': DEFAULT.color['darkgray'],
+        "lib": DEFAULT.color["ice"],
+        "import": DEFAULT.color["red"],
+        "class": DEFAULT.color["lavender"],
+        "types": DEFAULT.color["lightblue"],
+        "punctuators": DEFAULT.color["darkgray"],
     }
     FormatCodes.print(
-  rf'''  [_|b|#7075FF]               __  __              
+        rf"""  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
   [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , < 
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{DEFAULT.color['gray']}|#000] v[b]{get_version()} [*]
+  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{DEFAULT.color['gray']}|#000] v[b]{__version__} [*]
 
   [i|{DEFAULT.color['coral']}]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
@@ -62,10 +47,11 @@ def help():
     [dim](•) REGEX PATTERN TEMPLATES  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Regex[*]
   [_]
   [dim](Press any key to exit...)
-  ''', DEFAULT.text_color)
+  """,
+        DEFAULT.text_color,
+    )
     Cmd.pause_exit(pause=True)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     help()
