@@ -20,10 +20,10 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `xx_format_codes` description.
 """
 
-from XulbuX._consts_ import DEFAULT, CHARS
-from XulbuX.xx_format_codes import *
-from XulbuX.xx_string import *
-from XulbuX.xx_color import *
+from ._consts_ import DEFAULT, CHARS
+from .xx_format_codes import *
+from .xx_string import *
+from .xx_color import *
 
 from contextlib import suppress
 import pyperclip as _pyperclip

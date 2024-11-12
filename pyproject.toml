@@ -70,7 +70,8 @@ keywords = [
 "Changelog" = "https://github.com/XulbuX-dev/PythonLibraryXulbuX/blob/main/CHANGELOG.md"
 
 [project.scripts]
-xulbux-help = "__help__:help"
+xx-help = "XulbuX._cli_:help_command"
+xulbux-help = "XulbuX._cli_:help_command"
 
 [tool.black]
 line-length = 127

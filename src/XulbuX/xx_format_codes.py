@@ -68,11 +68,11 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 This can also be changed by changing the param `_modifiers = ('+l', '-d')`.
 """
 
-from XulbuX._consts_ import ANSI
-from XulbuX.xx_string import *
-from XulbuX.xx_regex import *
-from XulbuX.xx_color import *
-from XulbuX.xx_data import *
+from ._consts_ import ANSI
+from .xx_string import *
+from .xx_regex import *
+from .xx_color import *
+from .xx_data import *
 
 import ctypes as _ctypes
 import regex as _rx

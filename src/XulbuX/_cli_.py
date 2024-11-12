@@ -1,10 +1,10 @@
-from XulbuX.__init__ import __version__
-from XulbuX._consts_ import DEFAULT
-from XulbuX.xx_format_codes import *
-from XulbuX.xx_cmd import *
+from . import __version__
+from ._consts_ import DEFAULT
+from .xx_format_codes import *
+from .xx_cmd import *
 
 
-def help():
+def help_command():
     """Show some info about the library, with a brief explanation of how to use it."""
     color = {
         "lib": DEFAULT.color["ice"],
@@ -51,7 +51,3 @@ def help():
         DEFAULT.text_color,
     )
     Cmd.pause_exit(pause=True)
-
-
-if __name__ == "__main__":
-    help()

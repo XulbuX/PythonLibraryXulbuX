@@ -1,6 +1,6 @@
-from XulbuX.xx_string import *
-from XulbuX.xx_regex import *
-from XulbuX.xx_data import *
+from .xx_string import *
+from .xx_regex import *
+from .xx_data import *
 
 import regex as _rx
 

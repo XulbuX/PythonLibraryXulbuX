@@ -5,8 +5,8 @@ Functions for modifying and checking the systems environment-variables:
 - `EnvVars.add_path()`
 """
 
-from XulbuX.xx_data import *
-from XulbuX.xx_path import *
+from .xx_data import *
+from .xx_path import *
 
 import os as _os
 
