@@ -7,6 +7,9 @@ clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
+####################### FUNCTIONS FOR CHECKING CUSTOM TYPE VALUES #######################
+
+
 def assert_rgba_equal(actual: rgba, expected: tuple):
     assert isinstance(actual, rgba)
     assert actual[0] == expected[0]
@@ -26,6 +29,9 @@ def assert_hsla_equal(actual: hsla, expected: tuple):
 def assert_hexa_equal(actual: hexa, expected: str):
     assert isinstance(actual, hexa)
     assert str(actual) == expected
+
+
+######################################## TESTING ########################################
 
 
 def test_rgba_return_values():
