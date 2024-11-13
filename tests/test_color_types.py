@@ -81,23 +81,23 @@ clr_hsla = (0, 100, 50, 0.5)
 
 def assert_rgba_equal(actual, expected):
     assert isinstance(actual, rgba)
-    assert actual.red == pytest.approx(expected[0])
-    assert actual.green == pytest.approx(expected[1])
-    assert actual.blue == pytest.approx(expected[2])
-    assert actual.alpha == pytest.approx(expected[3])
+    assert actual[0] == pytest.approx(expected[0])
+    assert actual[1] == pytest.approx(expected[1])
+    assert actual[2] == pytest.approx(expected[2])
+    assert actual[3] == pytest.approx(expected[3])
 
 
 def assert_hsla_equal(actual, expected):
     assert isinstance(actual, hsla)
-    assert actual.hue == pytest.approx(expected[0])
-    assert actual.saturation == pytest.approx(expected[1])
-    assert actual.lightness == pytest.approx(expected[2])
-    assert actual.alpha == pytest.approx(expected[3])
+    assert actual[0] == pytest.approx(expected[0])
+    assert actual[1] == pytest.approx(expected[1])
+    assert actual[2] == pytest.approx(expected[2])
+    assert actual[3] == pytest.approx(expected[3])
 
 
 def assert_hexa_equal(actual, expected):
     assert isinstance(actual, hexa)
-    assert actual.value.lower() == expected.lower()
+    assert actual.lower() == expected.lower()
 
 
 def test_rgba_return_values():
