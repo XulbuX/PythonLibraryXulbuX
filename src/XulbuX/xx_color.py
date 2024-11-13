@@ -625,7 +625,7 @@ class hexa:
         """Returns a new color with the specified alpha value"""
         if not (isinstance(alpha, (int, float)) and 0 <= alpha <= 1):
             raise ValueError("'alpha' must be in [0.0, 1.0]")
-        return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
+        return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(alpha * 255):02X}" if alpha else ""}')
 
     def complementary(self) -> "hexa":
         """Returns the complementary color (180 degrees on the color wheel)"""
