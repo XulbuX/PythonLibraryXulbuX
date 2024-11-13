@@ -79,25 +79,25 @@ clr_hexa = "#FF00007F"
 clr_hsla = (0, 100, 50, 0.5)
 
 
-def assert_rgba_equal(actual, expected):
+def assert_rgba_equal(actual: rgba, expected: tuple):
     assert isinstance(actual, rgba)
-    assert actual[0] == pytest.approx(expected[0])
-    assert actual[1] == pytest.approx(expected[1])
-    assert actual[2] == pytest.approx(expected[2])
-    assert actual[3] == pytest.approx(expected[3])
+    assert actual[0] == expected[0]
+    assert actual[1] == expected[1]
+    assert actual[2] == expected[2]
+    assert actual[3] == expected[3]
 
 
-def assert_hsla_equal(actual, expected):
+def assert_hsla_equal(actual: hsla, expected: tuple):
     assert isinstance(actual, hsla)
-    assert actual[0] == pytest.approx(expected[0])
-    assert actual[1] == pytest.approx(expected[1])
-    assert actual[2] == pytest.approx(expected[2])
-    assert actual[3] == pytest.approx(expected[3])
+    assert actual[0] == expected[0]
+    assert actual[1] == expected[1]
+    assert actual[2] == expected[2]
+    assert actual[3] == expected[3]
 
 
-def assert_hexa_equal(actual, expected):
+def assert_hexa_equal(actual: hexa, expected: str):
     assert isinstance(actual, hexa)
-    assert actual == expected
+    assert str(actual) == expected
 
 
 def test_rgba_return_values():

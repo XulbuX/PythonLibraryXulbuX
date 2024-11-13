@@ -78,6 +78,9 @@ class rgba:
     def __iter__(self):
         return iter((self.r, self.g, self.b) + ((self.a,) if self.a else ()))
 
+    def __dict__(self):
+        return self.dict()
+
     def __getitem__(self, index):
         return ((self.r, self.g, self.b) + ((self.a,) if self.a else ()))[index]
 
@@ -96,14 +99,6 @@ class rgba:
             other[2],
             other[3],
         )
-
-    def list(self) -> list:
-        """Returns the color components as a list `[r, g, b]` or `[r, g, b, a]` if alpha is present"""
-        return [self.r, self.g, self.b] + ([self.a] if self.a else [])
-
-    def tuple(self) -> tuple:
-        """Returns the color components as a tuple `(r, g, b)` or `(r, g, b, a)` if alpha is present"""
-        return tuple(self.list())
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
@@ -284,6 +279,9 @@ class hsla:
     def __iter__(self):
         return iter((self.h, self.s, self.l) + ((self.a,) if self.a else ()))
 
+    def __dict__(self):
+        return self.dict()
+
     def __getitem__(self, index):
         return ((self.h, self.s, self.l) + ((self.a,) if self.a else ()))[index]
 
@@ -302,14 +300,6 @@ class hsla:
             other[2],
             other[3],
         )
-
-    def list(self) -> list:
-        """Returns the color components as a list `[h, s, l]` or `[h, s, l, a]` if alpha is present"""
-        return [self.h, self.s, self.l] + ([self.a] if self.a else [])
-
-    def tuple(self) -> tuple:
-        """Returns the color components as a tuple `(h, s, l)` or `(h, s, l, a)` if alpha is present"""
-        return tuple(self.list())
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'h'`, `'s'`, `'l'` and optionally `'a'`"""
@@ -513,6 +503,9 @@ class hexa:
     def __iter__(self):
         return iter((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + ((f"{int(self.a * 255):02X}",) if self.a else ()))
 
+    def __dict__(self):
+        return self.dict()
+
     def __getitem__(self, index):
         return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + ((f"{int(self.a * 255):02X}",) if self.a else ()))[index]
 
@@ -531,14 +524,6 @@ class hexa:
             other[2],
             other[3],
         )
-
-    def list(self) -> list:
-        """Returns the color components as a list of hex strings `[RR, GG, BB]` or `[RR, GG, BB, AA]` if alpha is present"""
-        return [f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}"] + ([f"{int(self.a * 255):02X}"] if self.a else [])
-
-    def tuple(self) -> tuple:
-        """Returns the color components as a tuple of hex strings `(RR, GG, BB)` or `(RR, GG, BB, AA)` if alpha is present"""
-        return tuple(self.list())
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with hex string values for keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
