@@ -234,13 +234,6 @@ class Cmd:
         Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
-    def input(prompt: object = "", default_color: hexa | rgba = DEFAULT.color["cyan"]) -> None:
-        """Acts like a standard Python `input()` but the prompt can be formatted with special formatting codes.<br>
-        For more detailed information about formatting codes, see the `xx_format_codes` description.
-        """
-        return input(FormatCodes.to_ansi(str(prompt), default_color))
-
-    @staticmethod
     def confirm(
         prompt: object = "Do you want to continue?",
         start="\n",
