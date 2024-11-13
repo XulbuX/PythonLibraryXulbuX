@@ -97,7 +97,7 @@ def assert_hsla_equal(actual, expected):
 
 def assert_hexa_equal(actual, expected):
     assert isinstance(actual, hexa)
-    assert actual.lower() == expected.lower()
+    assert actual == expected
 
 
 def test_rgba_return_values():
