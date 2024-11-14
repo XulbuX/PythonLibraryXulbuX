@@ -259,6 +259,7 @@ This function acts like a standard Python `input()` with the advantage, that you
 - what text characters the user is allowed to type and
 - the minimum and/or maximum length of the users input
 - optional mask character (hide user input, e.g. for passwords)
+- reset the ANSI formatting codes after the user continues
 
 Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
@@ -267,6 +268,7 @@ Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special forma
 - <code>min_length: *int*</code> the minimum length of the users input (*user can not confirm the input before this length is reached*)
 - <code>max_length: *int*</code> the maximum length of the users input (*user cannot keep on writing if this length is reached*)
 - <code>mask_char: *str*</code> the mask character to hide the users input
+- <code>reset_ansi: *bool*</code> whether to reset the ANSI formatting codes after the user continues
 
 **Returns:** the user's entry as a string
 <br>

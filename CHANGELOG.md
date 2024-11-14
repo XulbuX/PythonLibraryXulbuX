@@ -40,6 +40,7 @@
   - paste text from the clipboard
   - select all text to delete everything at once
   - write and backspace over multiple lines
+  - not the prompt supports custom format codes
 * Added required non-standard libraries to the project file
 * Added more metadata to the project file
 

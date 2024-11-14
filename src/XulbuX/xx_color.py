@@ -718,9 +718,9 @@ class Color:
     @staticmethod
     def is_valid(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
         return (
-            Color.is_valid_hexa(color, allow_alpha)
-            or Color.is_valid_rgba(color, allow_alpha)
+            Color.is_valid_rgba(color, allow_alpha)
             or Color.is_valid_hsla(color, allow_alpha)
+            or Color.is_valid_hexa(color, allow_alpha)
         )
 
     @staticmethod

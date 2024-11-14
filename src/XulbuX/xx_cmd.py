@@ -263,23 +263,22 @@ class Cmd:
         min_length: int = None,
         max_length: int = None,
         mask_char: str = None,
+        _reset_ansi: bool = True,
     ) -> str | None:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
         - what text characters the user is allowed to type and
         - the minimum and/or maximum length of the users input
-        - optional mask character (hide user input, e.g. for passwords)\n
+        - optional mask character (hide user input, e.g. for passwords)
+        - reset the ANSI formatting codes after the user continues\n
         -----------------------------------------------------------------------------------
         The input can be formatted with special formatting codes. For more detailed<br>
         information about formatting codes, see the `xx_format_codes` description.
         """
-        print(prompt, end="", flush=True)
+        FormatCodes.print(prompt, end="", flush=True)
         result = ""
         select_all = False
         last_line_count = 1
         last_console_width = 0
-
-        def filter_pasted_text(text: str) -> str:
-            return "".join(char for char in text if allowed_chars == CHARS.all or char in allowed_chars)
 
         def update_display(console_width: int) -> None:
             nonlocal select_all, last_line_count, last_console_width
@@ -301,13 +300,15 @@ class Cmd:
             prompt_str, input_str = lines[0][:prompt_len], (
                 lines[0][prompt_len:] if len(lines) == 1 else "\n".join([lines[0][prompt_len:]] + lines[1:])
             )  # SEPARATE THE PROMPT AND THE INPUT
-            _sys.stdout.write("\033[2K\r" + prompt_str + ("\033[7m" if select_all else "") + input_str + "\033[27m")
+            _sys.stdout.write(
+                "\033[2K\r" + FormatCodes.to_ansi(prompt_str) + ("\033[7m" if select_all else "") + input_str + "\033[27m"
+            )
             last_line_count, last_console_width = line_count, console_width
 
         def handle_enter():
             if min_length is not None and len(result) < min_length:
                 return False
-            print()
+            FormatCodes.print("[_]", flush=True)
             return True
 
         def handle_backspace_delete():
@@ -322,7 +323,7 @@ class Cmd:
             nonlocal result, select_all
             if select_all:
                 result, select_all = "", False
-            filtered_text = filter_pasted_text(_pyperclip.paste())
+            filtered_text = "".join(char for char in _pyperclip.paste() if allowed_chars == CHARS.all or char in allowed_chars)
             if max_length is None or len(result) + len(filtered_text) <= max_length:
                 result += filtered_text
                 update_display(Cmd.w())
@@ -376,6 +377,7 @@ class Cmd:
         allowed_chars: str = CHARS.standard_ascii,
         min_length: int = None,
         max_length: int = None,
+        _reset_ansi: bool = True,
     ) -> str:
         """Password input that masks the entered characters with asterisks."""
-        return Cmd.restricted_input(prompt, allowed_chars, min_length, max_length, mask_char="*")
+        return Cmd.restricted_input(prompt, allowed_chars, min_length, max_length, "*", _reset_ansi)
