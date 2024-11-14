@@ -104,9 +104,9 @@ class String:
         return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
 
     @staticmethod
-    def split_every_chars(string: str, split: int) -> list[str]:
-        """Will split the string every `split` characters."""
-        return [string[i : i + split] for i in range(0, len(string), split)]
+    def split_count(string: str, count: int) -> list[str]:
+        """Will split the string every `count` characters."""
+        return [string[i : i + count] for i in range(0, len(string), count)]
 
     @staticmethod
     def multi_strip(string: str, strip_chars: str = " _-") -> str:

@@ -283,7 +283,7 @@ class Cmd:
 
         def update_display(console_width: int) -> None:
             nonlocal select_all, last_line_count, last_console_width
-            lines = String.split_every_chars(
+            lines = String.split_count(
                 str(prompt) + (mask_char * len(result) if mask_char else result),
                 console_width,
             )

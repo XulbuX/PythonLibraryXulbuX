@@ -34,7 +34,7 @@
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
-* Added the function <code>split_every_chars(*string*, *split_every*) -> *list*[*str*]</code> to `xx_string`
+* Added the function <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
 * Added doc-strings to every function in `xx_string`
 * Updated the `Cmd.restricted_input()` function:
   - paste text from the clipboard
