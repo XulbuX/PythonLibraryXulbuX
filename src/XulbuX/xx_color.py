@@ -493,7 +493,7 @@ class hexa:
             else:
                 raise ValueError(f"Invalid HEX format '{color}'")
         elif isinstance(color, int):
-            self.r, self.g, self.b, self.a = Color.hex_to_rgba(color)
+            self.r, self.g, self.b, self.a = Color.hex_int_to_rgba(color)
         else:
             raise TypeError("HEX color must be of type 'str' or 'int': got", type(color))
 
@@ -813,7 +813,7 @@ class Color:
         return result[0] if len(result) == 1 or only_first else result
 
     @staticmethod
-    def rgba_to_hex(
+    def rgba_to_hex_int(
         r: int,
         g: int,
         b: int,
@@ -844,7 +844,7 @@ class Color:
         return hex_int
 
     @staticmethod
-    def hex_to_rgba(hex_int: int) -> tuple[int, int, int, float | int | None]:
+    def hex_int_to_rgba(hex_int: int) -> tuple[int, int, int, float | int | None]:
         if not isinstance(hex_int, int):
             raise ValueError("Input must be an integer (hex value)")
         hex_str = f"{hex_int:x}"

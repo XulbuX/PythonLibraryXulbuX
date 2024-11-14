@@ -130,8 +130,8 @@ class FormatCodes:
         else:
             use_default = False
         if use_default:
-            string = COMPILED["*"].sub(r"[\1_|default\2]", string)
-            string = COMPILED["*color"].sub(r"[\1default\2]", string)
+            string = COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+            string = COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
 
         def replace_keys(match: _re.Match) -> str:
             format_keys = match.group(1)
@@ -210,13 +210,13 @@ class FormatCodes:
         is_bg, modifier = match.group(1), match.group(2)
         new_rgb, lighten, darken = None, None, None
         for mod in _modifiers[0]:
-            lighten = String.get_repeated_symbol(modifier, mod)
+            lighten = String.single_char_repeats(modifier, mod)
             if lighten and lighten > 0:
                 new_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * lighten)
                 break
         if not new_rgb:
             for mod in _modifiers[1]:
-                darken = String.get_repeated_symbol(modifier, mod)
+                darken = String.single_char_repeats(modifier, mod)
                 if darken and darken > 0:
                     print(-(brightness_steps / 100) * darken)
                     new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
@@ -233,9 +233,7 @@ class FormatCodes:
         """Gives you the corresponding ANSI code for the given format key.<br>
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
-        use_default = default_color and (
-            Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False)
-        )
+        use_default = default_color and Color.is_valid_rgba(default_color, False)
         _format_key, format_key = format_key, (  # NORMALIZE THE FORMAT KEY (+ SAVE ORIGINAL)
             "bg:" if "bg" in (parts := format_key.replace(" ", "").lower().split(":")) else ""
         ) + ("bright:" if any(x in parts for x in ["bright", "br"]) else "") + ":".join(

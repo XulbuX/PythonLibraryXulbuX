@@ -56,12 +56,12 @@ class String:
         )
 
     @staticmethod
-    def get_repeated_symbol(string: str, symbol: str) -> int | bool:
-        """If the string consists of one repeating `symbol`, it returns the number of times it is repeated.<br>
-        If the string doesn't consist of one repeating symbol, it returns `False`.
+    def single_char_repeats(string: str, char: str) -> int | bool:
+        """If the string consists of only the same `char`, it returns the number of times it is present.<br>
+        If the string doesn't consist of only the same character, it returns `False`.
         """
-        if len(string) == len(symbol) * string.count(symbol):
-            return string.count(symbol)
+        if len(string) == len(char) * string.count(char):
+            return string.count(char)
         else:
             return False
 
