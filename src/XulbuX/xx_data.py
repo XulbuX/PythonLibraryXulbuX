@@ -143,7 +143,7 @@ class Data:
                 if comment_end:
                     no_comments = _re.sub(
                         rf"^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$",
-                        lambda m: f'{m.group(1).strip()}{comment_sep if (m.group(1).strip() not in ["", None]) and (m.group(2).strip() not in ["", None]) else ""}{m.group(2).strip()}',
+                        lambda m: f'{m.group(1).strip()}{comment_sep if (m.group(1).strip() not in (None, "")) and (m.group(2).strip() not in (None, "")) else ""}{m.group(2).strip()}',
                         item,
                     )
                 else:

@@ -34,7 +34,7 @@ class System:
             if continue_program:
                 print(f"Restarting in {wait} seconds...")
                 _time.sleep(wait)
-        elif system in ["linux", "darwin"]:
+        elif system in ("linux", "darwin"):
             if not force:
                 output = _subprocess.check_output(["ps", "-A"]).decode()
                 processes = output.splitlines()[1:]  # EXCLUDE HEADER
@@ -77,7 +77,7 @@ class System:
             print("The following required libraries are missing:")
             for lib in missing:
                 print(f"- {lib}")
-            if input("Do you want to install them now (Y/n):  ").strip().lower() not in ["", "y", "yes"]:
+            if input("Do you want to install them now (Y/n):  ").strip().lower() not in ("", "y", "yes"):
                 raise ImportError("Missing required libraries.")
         try:
             _subprocess.check_call([_sys.executable, "-m", "pip", "install"] + missing)

@@ -236,8 +236,8 @@ class FormatCodes:
         use_default = default_color and Color.is_valid_rgba(default_color, False)
         _format_key, format_key = format_key, (  # NORMALIZE THE FORMAT KEY (+ SAVE ORIGINAL)
             "bg:" if "bg" in (parts := format_key.replace(" ", "").lower().split(":")) else ""
-        ) + ("bright:" if any(x in parts for x in ["bright", "br"]) else "") + ":".join(
-            p for p in parts if p not in ["bg", "bright", "br"]
+        ) + ("bright:" if any(x in parts for x in ("bright", "br")) else "") + ":".join(
+            p for p in parts if p not in ("bg", "bright", "br")
         )
         if use_default:
             new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps)

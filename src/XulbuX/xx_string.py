@@ -6,9 +6,9 @@ class String:
     @staticmethod
     def to_type(string: str) -> any:
         """Will convert a string to a type."""
-        if string.lower() in ["true", "false"]:  # BOOLEAN
+        if string.lower() in ("true", "false"):  # BOOLEAN
             return string.lower() == "true"
-        elif string.lower() in ["none", "null", "undefined"]:  # NONE
+        elif string.lower() in ("none", "null", "undefined"):  # NONE
             return None
         elif string.startswith("[") and string.endswith("]"):  # LIST
             return [String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip()]
@@ -19,7 +19,7 @@ class String:
         elif string.startswith("{") and string.endswith("}") and ":" in string:  # DICTIONARY
             return {
                 String.to_type(k.strip()): String.to_type(v.strip())
-                for k, v in [item.split(":") for item in string[1:-1].split(",") if item.strip()]
+                for k, v in (item.split(":") for item in string[1:-1].split(",") if item.strip())
             }
         try:  # NUMBER (INT OR FLOAT)
             if "." in string or "e" in string.lower():
