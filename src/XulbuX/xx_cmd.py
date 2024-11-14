@@ -260,10 +260,10 @@ class Cmd:
     def restricted_input(
         prompt: object = "",
         allowed_chars: str = CHARS.all,
-        min_length: int = None,
-        max_length: int = None,
+        min_len: int = None,
+        max_len: int = None,
         mask_char: str = None,
-        _reset_ansi: bool = True,
+        reset_ansi: bool = True,
     ) -> str | None:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
         - what text characters the user is allowed to type and
@@ -306,9 +306,9 @@ class Cmd:
             last_line_count, last_console_width = line_count, console_width
 
         def handle_enter():
-            if min_length is not None and len(result) < min_length:
+            if min_len is not None and len(result) < min_len:
                 return False
-            FormatCodes.print("[_]", flush=True)
+            FormatCodes.print("[_]" if reset_ansi else "", flush=True)
             return True
 
         def handle_backspace_delete():
@@ -324,7 +324,7 @@ class Cmd:
             if select_all:
                 result, select_all = "", False
             filtered_text = "".join(char for char in _pyperclip.paste() if allowed_chars == CHARS.all or char in allowed_chars)
-            if max_length is None or len(result) + len(filtered_text) <= max_length:
+            if max_len is None or len(result) + len(filtered_text) <= max_len:
                 result += filtered_text
                 update_display(Cmd.w())
 
@@ -342,9 +342,7 @@ class Cmd:
 
         def handle_character_input():
             nonlocal result
-            if (allowed_chars == CHARS.all or event.name in allowed_chars) and (
-                max_length is None or len(result) < max_length
-            ):
+            if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_len is None or len(result) < max_len):
                 result += event.name
                 update_display(Cmd.w())
 
@@ -375,9 +373,9 @@ class Cmd:
     def pwd_input(
         prompt: object = "Password: ",
         allowed_chars: str = CHARS.standard_ascii,
-        min_length: int = None,
-        max_length: int = None,
+        min_len: int = None,
+        max_len: int = None,
         _reset_ansi: bool = True,
     ) -> str:
         """Password input that masks the entered characters with asterisks."""
-        return Cmd.restricted_input(prompt, allowed_chars, min_length, max_length, "*", _reset_ansi)
+        return Cmd.restricted_input(prompt, allowed_chars, min_len, max_len, "*", _reset_ansi)

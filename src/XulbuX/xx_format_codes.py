@@ -64,8 +64,7 @@ Unlike the standard cmd colors, the default color can be changed by using the fo
 - `[dd]` will darken the `default_color` text by `2 × brightness_steps`%
 - `[ddd]` will darken the `default_color` text by `3 × brightness_steps`%
 - ... etc.\n
-Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.<br>
-This can also be changed by changing the param `_modifiers = ('+l', '-d')`.
+Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.
 """
 
 from ._consts_ import ANSI
@@ -218,16 +217,10 @@ class FormatCodes:
         return ANSI.seq_bg_color.format(*new_rgb[:3]) if is_bg else ANSI.seq_color.format(*new_rgb[:3])
 
     @staticmethod
-    def __get_replacement(
-        format_key: str,
-        default_color: hexa | rgba = None,
-        brightness_steps: int = 20,
-        _modifiers: tuple[str, str] = ("+l", "-d"),
-    ) -> str:
+    def __get_replacement(format_key: str, default_color: hexa | rgba = None, brightness_steps: int = 20) -> str:
         """Gives you the corresponding ANSI code for the given format key.<br>
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
-        are reset or you can get lighter or darker version of `default_color` (also as BG) by<br>
-        using one or more `_modifiers` symbols as a format key ()"""
+        are reset or you can get lighter or darker version of `default_color` (also as BG)"""
         use_default = default_color and (
             Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False)
         )
@@ -237,7 +230,7 @@ class FormatCodes:
             p for p in parts if p not in ["bg", "bright", "br"]
         )
         if use_default:
-            new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps, _modifiers)
+            new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps)
             if new_default_color:
                 return new_default_color
         for map_key in ANSI.codes_map:
