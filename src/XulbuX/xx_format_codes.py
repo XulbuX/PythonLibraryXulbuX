@@ -123,9 +123,12 @@ class FormatCodes:
         string: str, default_color: hexa | rgba = None, brightness_steps: int = 20, _default_start: bool = True
     ) -> str:
         result = ""
-        use_default = default_color and (
-            Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False)
-        )
+        if Color.is_valid_hexa(default_color, False):
+            use_default, default_color = True, Color.to_rgba(default_color)
+        elif Color.is_valid_rgba(default_color, False):
+            use_default = True
+        else:
+            use_default = False
         if use_default:
             string = COMPILED["*"].sub(r"[\1_|default\2]", string)
             string = COMPILED["*color"].sub(r"[\1default\2]", string)
@@ -195,29 +198,38 @@ class FormatCodes:
         default_color: rgba,
         format_key: str = None,
         brightness_steps: int = None,
+        _modifiers: tuple[str, str] = ("+l", "-d"),
     ) -> str | None:
-        if not Color.is_valid_rgba(default_color):
+        if not brightness_steps or (format_key and _re.search(r"(?i)((?:BG\s*:)?)\s*default", format_key)):
+            if format_key and _re.search(r"(?i)BG\s*:\s*default", format_key):
+                return ANSI.seq_bg_color.format(default_color[0], default_color[1], default_color[2])
+            return ANSI.seq_color.format(default_color[0], default_color[1], default_color[2])
+        match = _re.match(COMPILED["modifier"], format_key)
+        if not match or not match.group(2):
             return None
-        if not brightness_steps or (format_key and COMPILED["default"].search(format_key)):
-            if format_key and "bg" in format_key.lower():
-                return ANSI.seq_bg_color.format(*default_color[:3])
-            return ANSI.seq_color.format(*default_color[:3])
-        match = COMPILED["modifier"].match(format_key)
-        if not match:
-            return None
-        is_bg, modifier = match.groups()
-        lighten = sum(1 for c in modifier if c in "+l")
-        darken = sum(1 for c in modifier if c in "-d")
-        if lighten:
-            new_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * lighten)
-        elif darken:
-            new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
-        else:
-            return None
-        return ANSI.seq_bg_color.format(*new_rgb[:3]) if is_bg else ANSI.seq_color.format(*new_rgb[:3])
+        is_bg, modifier = match.group(1), match.group(2)
+        new_rgb, lighten, darken = None, None, None
+        for mod in _modifiers[0]:
+            lighten = String.get_repeated_symbol(modifier, mod)
+            if lighten and lighten > 0:
+                new_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * lighten)
+                break
+        if not new_rgb:
+            for mod in _modifiers[1]:
+                darken = String.get_repeated_symbol(modifier, mod)
+                if darken and darken > 0:
+                    print(-(brightness_steps / 100) * darken)
+                    new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
+                    break
+        if new_rgb:
+            return (
+                ANSI.seq_bg_color.format(new_rgb[0], new_rgb[1], new_rgb[2])
+                if is_bg
+                else ANSI.seq_color.format(new_rgb[0], new_rgb[1], new_rgb[2])
+            )
 
     @staticmethod
-    def __get_replacement(format_key: str, default_color: hexa | rgba = None, brightness_steps: int = 20) -> str:
+    def __get_replacement(format_key: str, default_color: rgba = None, brightness_steps: int = 20) -> str:
         """Gives you the corresponding ANSI code for the given format key.<br>
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
