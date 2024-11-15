@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "XulbuX"
-version = "1.5.6"
+version = "1.5.7"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A library which includes a lot of really helpful functions."
 readme = "README.md"
