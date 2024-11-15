@@ -24,6 +24,7 @@
 * Corrected code after `Lint with flake8` formatting suggestions
 * Moved the function `normalize_spaces()` to `xx_string`
 * Added additional tests for the custom color types
+* Updated the whole `xx_format_codes` module for more efficiency and speed
 
 ## 11.11.2024 `v1.5.6`
 * Moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
