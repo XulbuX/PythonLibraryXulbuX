@@ -15,7 +15,7 @@
 # <br><b>Changelog</b><br>
 
 
-## ... `v1.5.7`
+## 15.11.2024 `v1.5.7`
 * Change the testing modules to be able to run together with the library `pytest`
 * Added formatting checks, using `black`, `isort` and `flake8`
 * Added the script (*command*) `xx-help` or `xulbux-help`
