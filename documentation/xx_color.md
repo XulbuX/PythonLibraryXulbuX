@@ -1,8 +1,4 @@
-# xx_color
-
-<br>
-
-## `rgba()`
+# `rgba()`
 
 An RGB/RGBA color: is a tuple of 3 integers, representing the red (`0`-`255`), green (`0`-`255`), and blue (`0`-`255`).<br>
 It also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`):
@@ -35,7 +31,7 @@ Includes methods:
 
 <br>
 
-## `hsla()`
+# `hsla()`
 
 A HSL/HSLA color: is a tuple of 3 integers, representing hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).<br>
 It also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
@@ -68,7 +64,7 @@ Includes methods:
 
 <br>
 
-## `hexa()`
+# `hexa()`
 
 A HEX color: is a string representing a hexadecimal color code with optional alpha channel.
 ```python

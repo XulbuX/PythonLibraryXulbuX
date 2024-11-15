@@ -1,8 +1,4 @@
-# xx_code
-
-<br>
-
-## `Code`
+# `Code`
 This class includes functions, used to work with strings, that are code.
 
 <br>

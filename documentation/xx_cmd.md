@@ -1,8 +1,4 @@
-# xx_cmd
-
-<br>
-
-## `Cmd`
+# `Cmd`
 This class includes functions for logging and other actions within the console.
 
 <br>
@@ -11,7 +7,7 @@ This class includes functions for logging and other actions within the console.
 
 This function is used to get the command arguments, for if the current file is run via the console as a command.<br>
 **Params:**<br>
-- <code>find_args: *dict*</code> a dictionary that specifies, which arguments you are looking for and under which alias they should be returned if found. This dictionary could look something like this:
+- <code>find_args: *dict*</code> a dictionary that specifies, which arguments you are looking for and under which alias they should be returned, if found. This dictionary could look something like this:
   ```python
   {
       "filepath": ["-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"],
@@ -23,7 +19,7 @@ This function is used to get the command arguments, for if the current file is r
   ```bash
   python main.py -f /path/to/file -d
   ```
-  To get one value, you can allow multiple arguments, just like for the filepath in the above example.
+  To get one value, you can allow multiple arguments, just like for the file path in the above example.
 
 **Returns:**<br>
 The function will return a dictionary, with the specified aliases and two values per alias:
@@ -53,7 +49,7 @@ So for the example command line from above, the function would return a dictiona
 
 <br>
 
-#### `Cmd.pause_exit()`
+### `Cmd.pause_exit()`
 
 Will print a prompt and then pause and/or exit the program.<br>
 **Params:**
@@ -97,7 +93,7 @@ These functions are all presets for the [`Cmd.log()`](#cmd-log) function, with t
 ### `Cmd.confirm()`
 
 This function can be used to ask a yes/no question.<br>
-Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special formatting codes inside the `prompt`.<br>
+Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the question
 - <code>start: *str*</code> the string to print before the question
@@ -117,17 +113,17 @@ Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special forma
 
 This function acts like a standard Python `input()` with the advantage, that you can specify:
 - what text characters the user is allowed to type and
-- the minimum and/or maximum length of the users input
+- the minimum and/or maximum length of the user's input
 - optional mask character (hide user input, e.g. for passwords)
 - reset the ANSI formatting codes after the user continues
 
-Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special formatting codes inside the `prompt`.<br>
+Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the input
 - <code>allowed_chars: *str*</code> the allowed text characters the user can type (*default is all characters*)
-- <code>min_length: *int*</code> the minimum length of the users input (*user can not confirm the input before this length is reached*)
-- <code>max_length: *int*</code> the maximum length of the users input (*user cannot keep on writing if this length is reached*)
-- <code>mask_char: *str*</code> the mask character to hide the users input
+- <code>min_length: *int*</code> the minimum length of the user's input (*user can not confirm the input before this length is reached*)
+- <code>max_length: *int*</code> the maximum length of the user's input (*user cannot keep on writing if this length is reached*)
+- <code>mask_char: *str*</code> the mask character to hide the user's input
 - <code>reset_ansi: *bool*</code> whether to reset the ANSI formatting codes after the user continues
 
 **Returns:** the user's entry as a string
@@ -135,5 +131,5 @@ Like in the [`Cmd.log()`](#cmd-log) function it is possible to use special forma
 <br>
 
 ### `Cmd.pwd_input()`
-This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_input) function, but it always hides the users input.<br>
-It has no additional parameters.<br>
+This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_input) function, but it always hides the user's input.<br>
+It has no additional parameters.

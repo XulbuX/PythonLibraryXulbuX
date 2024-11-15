@@ -38,9 +38,9 @@ from XulbuX import rgba, hsla, hexa
 
 # Modules
 
-- [xx_color](xx_color.md)
-- [xx_cmd](xx_cmd.md)
-- [xx_code](xx_code.md)
+- [xx_cmd](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_cmd)
+- [xx_code](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)
+- [xx_color](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)
 
 
 <br>
