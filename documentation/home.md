@@ -41,19 +41,7 @@ from XulbuX import rgba, hsla, hexa
 - [xx_cmd](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_cmd)
 - [xx_code](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)
 - [xx_color](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)
-
-
-<br>
-
-### `String.normalize_spaces()`
-
-This function will replace all special space characters with normal spaces.<br>
-**Params:**
-- <code>code: *str*</code> the string to normalize
-- <code>tab_spaces: *int*</code> the amount of spaces to replace tab characters with (*default* `4`)
-
-**Returns:** the normalized string
-<br>
+- [xx_string](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string)
 
 
 
