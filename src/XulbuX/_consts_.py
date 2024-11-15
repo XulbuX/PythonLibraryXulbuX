@@ -62,6 +62,7 @@ class ANSI:
     START = start = "["
     SEP = sep = ";"
     END = end = "m"
+    modifier = {"lighten": "+l", "darken": "-d"}
 
     def seq(parts: int = 1) -> str:
         """Generate an ANSI sequence with `parts` amount of placeholders."""
