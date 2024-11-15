@@ -105,6 +105,7 @@ class FormatCodes:
         flush: bool = True,
     ) -> None:
         FormatCodes.__config_console()
+        print(sep.join(map(str, values)))
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
         if flush:
             _sys.stdout.flush()

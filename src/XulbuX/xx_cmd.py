@@ -129,13 +129,13 @@ class Cmd:
         if title:
             FormatCodes.print(
                 f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title.upper()}: [_]\t{f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
-                default_color,
+                default_color=default_color,
                 end=end,
             )
         else:
             FormatCodes.print(
                 f'{start}  {f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
-                default_color,
+                default_color=default_color,
                 end=end,
             )
 
