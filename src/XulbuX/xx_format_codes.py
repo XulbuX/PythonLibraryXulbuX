@@ -86,7 +86,8 @@ COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "format": _rx.compile(
         Regex.brackets("[", "]", is_group=True) + r"(?:\s*([/\\]?)\s*" + Regex.brackets("(", ")", is_group=True) + r")?"
     ),
-    "default": _re.compile(r"(?i)((?:BG\s*:)?)\s*default"),
+    "bg?_default": _re.compile(r"(?i)((?:BG\s*:)?)\s*default"),
+    "bg_default": _re.compile(r"(?i)BG\s*:\s*default"),
     "modifier": _re.compile(
         rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{_re.escape(m)}+" for m in ANSI.modifier["lighten"] + ANSI.modifier["darken"]])})$'
     ),
@@ -206,10 +207,10 @@ class FormatCodes:
         brightness_steps: int = None,
         _modifiers: tuple[str, str] = (ANSI.modifier["lighten"], ANSI.modifier["darken"]),
     ) -> str | None:
-        if not brightness_steps or (format_key and _re.search(r"(?i)((?:BG\s*:)?)\s*default", format_key)):
-            return (
-                ANSI.seq_bg_color if format_key and _re.search(r"(?i)BG\s*:\s*default", format_key) else ANSI.seq_color
-            ).format(*default_color[:3])
+        if not brightness_steps or (format_key and COMPILED["bg?_default"].search(format_key)):
+            return (ANSI.seq_bg_color if format_key and COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
+                *default_color[:3]
+            )
         if not (format_key in _modifiers[0] or format_key in _modifiers[1]):
             return None
         match = COMPILED["modifier"].match(format_key)
