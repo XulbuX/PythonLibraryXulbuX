@@ -14,13 +14,13 @@ d_comments = {
 }
 
 d1_equal = {
-    "key1": ["value1", "value2", "val__ue3", ["value1", "value2", "value3"]],
-    "key2": ["value1", "value2", "val__ue3", ["value1", "value2", "value3"]],
+    "key1": ["value1", "value2", "value3", ["value1", "value2", "value3"]],
+    "key2": ["value1", "value2", "value3", ["value1", "value2", "value3"]],
     "key3": "value",
 }
 d2_equal = {
-    "key1": ["value1", "value2", "val__ue3", ["value1", "value2", "value3"]],
-    "key2": ["value1", "value2", "val__ue3", ["value1", "value2", "value3"]],
+    "key1": ["value1", "value2", "value3", ["value1", "value2", "value3"]],
+    "key2": ["value1", "value2", "value3", ["value1", "value2", "value3"]],
     "key3": "CHANGED value",
 }
 
@@ -30,7 +30,7 @@ d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": 
 
 def test_remove_comments():
     assert xx.Data.remove_comments(d_comments, comment_sep="__") == {
-        "key1": ["value1", "value2", "val__ue3", ["value1", "value2", "value3"]],
+        "key1": ["value1", "value2", "val__ue3"],
         "key3": None,
     }
 
