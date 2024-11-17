@@ -1,10 +1,11 @@
 from .xx_string import *
 
+from typing import TypeAlias, Union
 import math as _math
 import re as _re
 
 
-type DataStructure = list | tuple | set | frozenset | dict
+DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
 
 
 class Data:
