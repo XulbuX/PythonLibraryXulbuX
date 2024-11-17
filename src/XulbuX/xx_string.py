@@ -56,6 +56,35 @@ class String:
         )
 
     @staticmethod
+    def escape(string: str, str_quotes: str = '"') -> str:
+        """Escapes the special characters and quotes inside a string.\n
+        ----------------------------------------------------------------------------
+        `str_quotes` can be either `"` or `'` and should match the quotes,<br>
+        the string will be put inside of. So if your string will be `"string"`,<br>
+        you should pass `"` to the parameter `str_quotes`.<br>
+        That way, if the string includes the same quotes, they will be escaped."""
+        string = (
+            string.replace("\\", r"\\")
+            .replace("\n", r"\n")
+            .replace("\r", r"\r")
+            .replace("\t", r"\t")
+            .replace("\b", r"\b")
+            .replace("\f", r"\f")
+            .replace("\a", r"\a")
+        )
+        if str_quotes == '"':
+            string = string.replace(r"\\'", "'").replace(r'"', r"\"")
+        elif str_quotes == "'":
+            string = string.replace(r'\\"', '"').replace(r"'", r"\'")
+        return string
+
+    @staticmethod
+    def is_empty(string: str, spaces_are_empty: bool = False):
+        """Returns `True` if the string is empty and `False` otherwise.<br>
+        If `spaces_are_empty` is true, it will also return `True` if the string is only spaces."""
+        return (string in (None, "")) or (spaces_are_empty and isinstance(string, str) and not string.strip())
+
+    @staticmethod
     def single_char_repeats(string: str, char: str) -> int | bool:
         """If the string consists of only the same `char`, it returns the number of times it is present.<br>
         If the string doesn't consist of only the same character, it returns `False`.

@@ -25,11 +25,11 @@ pip install --upgrade XulbuX
 
 # Usage
 
-This imports the full library under the alias `xx`, so it"s classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
+This imports the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
 import XulbuX as xx
 ```
-So you don"t have to write `xx` in front of the library"s types, you can import them directly:
+So you don't have to write `xx` in front of the library's types, you can import them directly:
 ```python
 from XulbuX import rgba, hsla, hexa
 ```
@@ -41,11 +41,12 @@ from XulbuX import rgba, hsla, hexa
 - [xx_cmd](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_cmd)
 - [xx_code](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)
 - [xx_color](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)
-- [xx_string](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string)
+- [xx_data](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_data)
+<!-- - [xx_string](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string) -->
 
 
 
-<br id="bottom">
+<br>
 <br>
 
 --------------------------------------------------------------

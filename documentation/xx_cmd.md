@@ -1,11 +1,11 @@
 # `Cmd`
-This class includes functions for logging and other actions within the console.
+This class includes methods for logging and other actions within the console.
 
 <br>
 
 ### `Cmd.get_args()`
 
-This function is used to get the command arguments, for if the current file is run via the console as a command.<br>
+This method is used to get the command arguments, for if the current file is run via the console as a command.<br>
 **Params:**<br>
 - <code>find_args: *dict*</code> a dictionary that specifies, which arguments you are looking for and under which alias they should be returned, if found. This dictionary could look something like this:
   ```python
@@ -22,11 +22,11 @@ This function is used to get the command arguments, for if the current file is r
   To get one value, you can allow multiple arguments, just like for the file path in the above example.
 
 **Returns:**<br>
-The function will return a dictionary, with the specified aliases and two values per alias:
+The method will return a dictionary, with the specified aliases and two values per alias:
 1. `"exists"` is `True`  if one of the listed arguments is found and `False` otherwise
 2. `"value"` is the value of the argument (`None` *if the argument has no value*)
 
-So for the example command line from above, the function would return a dictionary:
+So for the example command line from above, the method would return a dictionary:
 ```python
 {
     "filepath": { "exists": True, "value": "/path/to/file" },
@@ -77,13 +77,13 @@ Will print a nicely formatted log message.<br>
 - <code>end: *str*</code> the string to print after the log message (*default* `\n`)
 - <code>title_bg_color: *hexa*|*rgba*</code> the background color of the title
 - <code>default_color: *hexa*|*rgba*</code> the default color of the log message
-The log message supports special formatting codes. For more detailed information about formatting codes, see the [`xx_format_codes` documentation](xx_format_codes.md).
+The log message supports special formatting codes. For more detailed information about formatting codes, see the [`xx_format_codes` documentation](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_format_codes).
 
 <br>
 
 ### `Cmd.debug()`, `Cmd.info()`, `Cmd.done()`, `Cmd.warn()`, `Cmd.fail()`, `Cmd.exit()`
 
-These functions are all presets for the [`Cmd.log()`](#cmd-log) function, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Cmd.log()` function, with the two additional ones.<br>
+These methods are all presets for the [`Cmd.log()`](#cmd-log) method, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Cmd.log()` method, with the two additional ones.<br>
 **Additional Params:**
 - <code>pause: *bool*</code> whether to pause the program at the message or not (*different default depending on the log preset*)
 - <code>exit: *bool*</code> whether to exit the program after the message was printed (*and the program was unpaused if* `pause` *is true*) or not (*different default depending on the log preset*)
@@ -92,8 +92,8 @@ These functions are all presets for the [`Cmd.log()`](#cmd-log) function, with t
 
 ### `Cmd.confirm()`
 
-This function can be used to ask a yes/no question.<br>
-Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special formatting codes inside the `prompt`.<br>
+This method can be used to ask a yes/no question.<br>
+Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the question
 - <code>start: *str*</code> the string to print before the question
@@ -109,15 +109,15 @@ Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special form
 
 <br>
 
-### <span id="cmd-restricted_input">`Cmd.restricted_input()`</span>
+### <span id="cmd-restrictedinput">`Cmd.restricted_input()`</span>
 
-This function acts like a standard Python `input()` with the advantage, that you can specify:
+This method acts like a standard Python `input()` with the advantage, that you can specify:
 - what text characters the user is allowed to type and
 - the minimum and/or maximum length of the user's input
 - optional mask character (hide user input, e.g. for passwords)
 - reset the ANSI formatting codes after the user continues
 
-Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special formatting codes inside the `prompt`.<br>
+Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the input
 - <code>allowed_chars: *str*</code> the allowed text characters the user can type (*default is all characters*)
@@ -131,5 +131,5 @@ Like in the [`Cmd.log()`](#cmd-log) function, it is possible to use special form
 <br>
 
 ### `Cmd.pwd_input()`
-This function almost works like the [`Cmd.restricted_input()`](#cmd-restricted_input) function, but it always hides the user's input.<br>
+This method almost works like the [`Cmd.restricted_input()`](#cmd-restrictedinput) method, but it always hides the user's input.<br>
 It has no additional parameters.

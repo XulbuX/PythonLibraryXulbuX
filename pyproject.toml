@@ -114,4 +114,8 @@ packages = ["src/xulbux"]
 minversion = "7.0"
 addopts = "-ra -q"
 pythonpath = ["src"]
-testpaths = ["tests/test_cmd_info.py", "tests/test_color_types.py"]
+testpaths = [
+  "tests/test_cmd_info.py",
+  "tests/test_color_types.py",
+  "tests/test_data.py",
+]

@@ -91,3 +91,13 @@ Includes methods:
 - `is_opaque()` to check if the color has no transparency
 - `with_alpha(alpha)` to create a new color with different alpha
 - `complementary()` to get the complementary color
+
+<br>
+
+# `Color`
+
+This class includes all sorts of methods for working with colors in general.<br>
+
+<br>
+
+### 

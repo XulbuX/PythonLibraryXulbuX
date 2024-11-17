@@ -15,6 +15,13 @@
 # <br><b>Changelog</b><br>
 
 
+## 16.11.2024 `v1.5.8`
+* Added method `String.is_empty()` to check if the string is empty
+* Added method `String.escape()` to escape special characters in a string
+* Introduces a new test for `xx_data`
+* Added doc-strings to all the methods in `xx_data`
+* Made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
+
 ## 15.11.2024 `v1.5.7`
 * Change the testing modules to be able to run together with the library `pytest`
 * Added formatting checks, using `black`, `isort` and `flake8`
@@ -22,7 +29,7 @@
 * Moved the `help()` function to the file `_cli_.py`, because that's where all the scripts are located (*It also was renamed to* `help_command()`)
 * Structured `Cmd.restricted_input()` a bit nicer, so it appears less complex
 * Corrected code after `Lint with flake8` formatting suggestions
-* Moved the function `normalize_spaces()` to `xx_string`
+* Moved the method `normalize_spaces()` to `xx_string`
 * Added additional tests for the custom color types
 * Updated the whole `xx_format_codes` module for more efficiency and speed
 
@@ -31,13 +38,13 @@
 * Updated all connections and links
 
 ## 11.11.2024 `v1.5.5`
-* Added functions to get the width and height of the console (*in characters and lines*):<br>
+* Added methods to get the width and height of the console (*in characters and lines*):<br>
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
-* Added the function <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
-* Added doc-strings to every function in `xx_string`
-* Updated the `Cmd.restricted_input()` function:
+* Added the method <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
+* Added doc-strings to every method in `xx_string`
+* Updated the `Cmd.restricted_input()` method:
   - paste text from the clipboard
   - select all text to delete everything at once
   - write and backspace over multiple lines
@@ -47,11 +54,11 @@
 
 ## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
-* Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
+* Added a new method <code>normalize_spaces(*code*) -> *str*</code> to `Code`
 * Added new doc-strings to `xx_code` and `xx_cmd`
-* Added a custom `input()` function to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
-* Added the function `pwd_input()` to `Cmd`, which works just like the `Cmd.restricted_input()` but masks the input characters with `*`
-* Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a function
+* Added a custom `input()` method to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
+* Added the method `pwd_input()` to `Cmd`, which works just like the `Cmd.restricted_input()` but masks the input characters with `*`
+* Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a method/function
 * Fixed bug when trying to get the base directory from a compiled script (*EXE*):<br>
   Would get the path to the temporary extracted directory, which is created when running the EXE file<br>
   Now it gets the actual base directory of the currently running file
@@ -84,7 +91,7 @@
 
 ## 28.10.2024 `v1.5.1`
 * Renamed all library files for a better naming convention
-* Now all functions in `xx_color` support both HEX prefixes (`#` *and* `0x`)
+* Now all methods in `xx_color` support both HEX prefixes (`#` *and* `0x`)
 * Added the default HEX prefix to `_consts_.py`
 * Fixed bug when initializing a `hexa()` object:<br>
   Would throw an error, even if the color was valid
@@ -147,12 +154,12 @@
   - `hexa()`:<br>
     the method `to_rgba()` works correctly now<br>
     the method `to_hsla()` works correctly now
-* fixed functions from the `Color` class:<br>
+* fixed methods from the `Color` class:<br>
   `Color.has_alpha()` works correctly now<br>
   `Color.to_rgba()` works correctly now<br>
   `Color.to_hsla()` works correctly now<br>
   `Color.to_hexa()` works correctly now
-* set default value for param `allow_alpha:bool` to `True` for functions:<br>
+* set default value for param `allow_alpha:bool` to `True` for methods:<br>
   `Color.is_valid_rgba()`, `Color.is_valid_hsla()`, `Color.is_valid_hexa()`, `Color.is_valid()`
 
 ## 18.10.2024 `v1.2.4` `v1.2.5`
@@ -167,28 +174,28 @@
 * `README.md` improvements
 
 ## 18.10.2024 `v1.2.1` `v1.2.2`
-* fixed bug in function <code>Path.get(*base_dir*=True)</code>:<br>
+* fixed bug in method <code>Path.get(*base_dir*=True)</code>:<br>
   Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
   This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
 
 ## 17.10.2024 `v1.2.0`
-* new function in the `Path` class: `Path.remove()`
+* new method in the `Path` class: `Path.remove()`
 
 ## 17.10.2024 `v1.1.9`
 * corrected the naming of classes to comply with Python naming standards
 
 ## 17.10.2024 `v1.1.8`
-* added support for all OSes to the OS-dependent functions
+* added support for all OSes to the OS-dependent methods
 
 ## 17.10.2024 `v1.1.6` `v1.1.7`
-* fixed the `Cmd.cls()` function:<br>
+* fixed the `Cmd.cls()` method:<br>
   There was a bug where, on Windows 10, the ANSI formats weren't cleared.
 
 ## 17.10.2024 `v1.1.4` `v1.1.5`
 * added link to `CHANGELOG.md` to the `README.md` file
 
 ## 17.10.2024 `v1.1.3`
-* changed the default value of the param `compactness:int` in the function `Data.print()` to `1` instead of `0`
+* changed the default value of the param `compactness:int` in the method `Data.print()` to `1` instead of `0`
 
 ## 17.10.2024 `v1.1.1` `v1.1.2`
 * adjusted the library's description
@@ -210,7 +217,7 @@
   prints:  <code><u>(Automatically resetting) following text</u></code>
 
 ## 16.10.2024 `v1.0.7` `v1.0.8`
-* added `input()` function to the `FormatCodes` class, so you can make pretty looking input prompts
+* added `input()` method to the `FormatCodes` class, so you can make pretty looking input prompts
 * added warning for no network connection when trying to [install missing libraries](#improved-lib-importing)
 
 ## 15.10.2024 `v1.0.6`

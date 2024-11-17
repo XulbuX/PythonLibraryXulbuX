@@ -1,115 +1,120 @@
+from .xx_string import *
+
 import math as _math
 import re as _re
+
+
+type DataStructure = list | tuple | set | frozenset | dict
 
 
 class Data:
 
     @staticmethod
-    def chars_count(data: list | tuple | set | frozenset | dict) -> int:
-        """The sum of all the characters including the keys in dictionaries."""
+    def chars_count(data: DataStructure) -> int:
+        """The sum of all the characters amount including the keys in dictionaries."""
         if isinstance(data, dict):
             return sum(len(str(k)) + len(str(v)) for k, v in data.items())
         return sum(len(str(item)) for item in data)
 
     @staticmethod
-    def strip(data: list | tuple | dict) -> list | tuple | dict:
+    def strip(data: DataStructure) -> DataStructure:
+        """Removes leading and trailing whitespaces from the data structure's items."""
         if isinstance(data, dict):
-            return {k: v.strip() if isinstance(v, str) else Data.strip(v) for k, v in data.items()}
-        elif isinstance(data, (list, tuple)):
-            stripped = [item.strip() if isinstance(item, str) else Data.strip(item) for item in data]
-            return tuple(stripped) if isinstance(data, tuple) else stripped
-        return data.strip() if isinstance(data, str) else data
+            return {k: Data.strip(v) for k, v in data.items()}
+        return type(data)(map(Data.strip, data))
 
     @staticmethod
-    def remove(data: list | tuple | dict, items: list[str]) -> list | tuple | dict:
-        """Remove multiple items from lists and tuples or keys from dictionaries."""
-        if isinstance(data, (list, tuple)):
-            result = [k for k in data if k not in items]
-            return result if isinstance(data, list) else tuple(result)
-        elif isinstance(data, dict):
-            return {k: v for k, v in data.items() if k not in items}
-
-    @staticmethod
-    def remove_empty_items(data: list | tuple | dict, spaces_are_empty: bool = False) -> list | tuple | dict:
+    def remove_empty_items(data: DataStructure, spaces_are_empty: bool = False) -> DataStructure:
+        """Removes empty items from the data structure.<br>
+        If `spaces_are_empty` is true, it will count items with only spaces as empty."""
         if isinstance(data, dict):
-            filtered_dict = {}
-            for key, value in data.items():
-                if isinstance(value, (list, tuple, dict)):
-                    filtered_value = Data.remove_empty_items(value, spaces_are_empty)
-                    if filtered_value:
-                        filtered_dict[key] = filtered_value
-                elif value not in (None, "") and not (
-                    (spaces_are_empty and isinstance(value, str)) and value.strip() in (None, "")
-                ):
-                    filtered_dict[key] = value
-            return filtered_dict
-        filtered = []
-        for item in data:
-            if isinstance(item, (list, tuple, dict)):
-                deduped_item = Data.remove_empty_items(item, spaces_are_empty)
-                if deduped_item:
-                    if isinstance(item, tuple):
-                        deduped_item = tuple(deduped_item)
-                    filtered.append(deduped_item)
-            elif item not in (None, "") and not ((spaces_are_empty and isinstance(item, str)) and item.strip() in (None, "")):
-                filtered.append(item)
-        return tuple(filtered) if isinstance(data, tuple) else filtered
+            return {
+                k: (
+                    v
+                    if not isinstance(v, (list, tuple, set, frozenset, dict))
+                    else Data.remove_empty_items(v, spaces_are_empty)
+                )
+                for k, v in data.items()
+                if not String.is_empty(v, spaces_are_empty)
+            }
+        if isinstance(data, (list, tuple, set, frozenset)):
+            return type(data)(
+                item
+                for item in (
+                    (
+                        item
+                        if not isinstance(item, (list, tuple, set, frozenset, dict))
+                        else Data.remove_empty_items(item, spaces_are_empty)
+                    )
+                    for item in data
+                    if not String.is_empty(item, spaces_are_empty)
+                )
+                if item not in ((), {}, set(), frozenset())
+            )
+        return data
 
     @staticmethod
-    def remove_duplicates(data: list | tuple | dict) -> list | tuple | dict:
+    def remove_duplicates(data: DataStructure) -> DataStructure:
+        """Removes all duplicates from the data structure."""
         if isinstance(data, dict):
             return {k: Data.remove_duplicates(v) for k, v in data.items()}
-        elif isinstance(data, (list, tuple)):
-            unique_items = []
-            for item in data:
-                if isinstance(item, (list, tuple, set, dict)):
-                    deduped_item = Data.remove_duplicates(item)
-                    if deduped_item not in unique_items:
-                        unique_items.append(deduped_item)
-                elif item not in unique_items:
-                    unique_items.append(item)
-            return tuple(unique_items) if isinstance(data, tuple) else unique_items
+        if isinstance(data, (list, tuple)):
+            return type(data)(
+                Data.remove_duplicates(item) if isinstance(item, (list, tuple, set, frozenset, dict)) else item
+                for item in dict.fromkeys(data)
+            )
+        if isinstance(data, (set, frozenset)):
+            return type(data)(
+                Data.remove_duplicates(item) if isinstance(item, (list, tuple, set, frozenset, dict)) else item
+                for item in data
+            )
         return data
 
     @staticmethod
     def remove_comments(
-        data: list | tuple | dict,
+        data: DataStructure,
         comment_start: str = ">>",
         comment_end: str = "<<",
         comment_sep: str = "",
-    ) -> list | tuple | dict:
+    ) -> DataStructure:
         """Remove comments from a list, tuple or dictionary.\n
-        -----------------------------------------------------------------------------------------------------------------
+        --------------------------------------------------------------------------------------------------------------------
         The `data` parameter is your list, tuple or dictionary, where the comments should get removed from.<br>
         The `comment_start` parameter is the string that marks the start of a comment inside `data`. (default: `>>`)<br>
         The `comment_end` parameter is the string that marks the end of a comment inside `data`. (default: `<<`)<br>
-        The `comment_sep` parameter is a string with which a comment will be replaced, if it is between strings.\n
-        -----------------------------------------------------------------------------------------------------------------
+        The `comment_sep` parameter is a string with which a comment will be replaced, if it is in the middle of a value.\n
+        --------------------------------------------------------------------------------------------------------------------
         Examples:\n
         ```python\n data = {
-            'key1': [
-                '>> COMMENT IN THE BEGINNING OF THE STRING <<  value1',
-                'value2  >> COMMENT IN THE END OF THE STRING',
-                'val>> COMMENT IN THE MIDDLE OF THE STRING <<ue3',
-                '>> FULL VALUE IS A COMMENT  value4'
+            "key1": [
+                ">> COMMENT IN THE BEGINNING OF THE STRING <<  value1",
+                "value2  >> COMMENT IN THE END OF THE STRING",
+                "val>> COMMENT IN THE MIDDLE OF THE STRING <<ue3",
+                ">> FULL VALUE IS A COMMENT  value4"
             ],
-            '>> FULL KEY + ALL ITS VALUES ARE A COMMENT  key2': [
-                'value',
-                'value',
-                'value'
+            ">> FULL KEY + ALL ITS VALUES ARE A COMMENT  key2": [
+                "value",
+                "value",
+                "value"
             ],
-            'key3': '>> ALL THE KEYS VALUES ARE COMMENTS  value'
+            "key3": ">> ALL THE KEYS VALUES ARE COMMENTS  value"
         }
-        processed_data = Data.remove_comments(data, comment_start='>>', comment_end='<<', comment_sep='__')\n```
-        -----------------------------------------------------------------------------------------------------------------
+
+        processed_data = Data.remove_comments(
+            data,
+            comment_start=">>",
+            comment_end="<<",
+            comment_sep="__"
+        )\n```
+        --------------------------------------------------------------------------------------------------------------------
         For this example, `processed_data` will be:
         ```python\n {
-            'key1': [
-                'value1',
-                'value2',
-                'val__ue3'
+            "key1": [
+                "value1",
+                "value2",
+                "val__ue3"
             ],
-            'key3': None
+            "key3": None
         }\n```
         For `key1`, all the comments will just be removed, except at `value3` and `value4`:<br>
          `value3` The comment is removed and the parts left and right are joined through `comment_sep`.<br>
@@ -118,114 +123,98 @@ class Data:
         For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`.
         """
 
-        def process_item(
-            item: dict | list | tuple | str,
-        ) -> dict | list | tuple | str | None:
-            if isinstance(item, dict):
-                processed_dict = {}
-                for key, val in item.items():
-                    processed_key = process_item(key)
-                    if processed_key is not None:
-                        processed_val = process_item(val)
-                        if isinstance(val, (list, tuple, dict)):
-                            if processed_val:
-                                processed_dict[processed_key] = processed_val
-                        elif processed_val is not None:
-                            processed_dict[processed_key] = processed_val
-                        else:
-                            processed_dict[processed_key] = None
-                return processed_dict
-            elif isinstance(item, list):
-                return [v for v in (process_item(val) for val in item) if v is not None]
-            elif isinstance(item, tuple):
-                return tuple(v for v in (process_item(val) for val in item) if v is not None)
-            elif isinstance(item, str):
-                if comment_end:
-                    no_comments = _re.sub(
-                        rf"^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$",
-                        lambda m: f'{m.group(1).strip()}{comment_sep if (m.group(1).strip() not in (None, "")) and (m.group(2).strip() not in (None, "")) else ""}{m.group(2).strip()}',
-                        item,
-                    )
-                else:
-                    no_comments = None if item.lstrip().startswith(comment_start) else item
-                return no_comments.strip() if no_comments and no_comments.strip() != "" else None
+        if comment_end:
+            pattern = _re.compile(
+                rf"^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$"
+            )
+
+        def process_string(s: str) -> str | None:
+            if comment_end:
+                match = pattern.match(s)
+                if match:
+                    start, end = match.group(1).strip(), match.group(2).strip()
+                    return f"{start}{comment_sep if start and end else ''}{end}" or None
+                return s.strip() or None
             else:
-                return item
+                return None if s.lstrip().startswith(comment_start) else s.strip() or None
+
+        def process_item(item: any) -> any:
+            if isinstance(item, dict):
+                return {
+                    k: v for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
+                }
+            if isinstance(item, (list, tuple, set, frozenset)):
+                processed = (v for v in map(process_item, item) if v is not None)
+                return type(item)(processed)
+            if isinstance(item, str):
+                return process_string(item)
+            return item
 
         return process_item(data)
 
     @staticmethod
     def is_equal(
-        data1: list | tuple | dict,
-        data2: list | tuple | dict,
+        data1: DataStructure,
+        data2: DataStructure,
         ignore_paths: str | list[str] = "",
+        path_sep: str = "->",
         comment_start: str = ">>",
         comment_end: str = "<<",
-        sep: str = "->",
     ) -> bool:
         """Compares two structures and returns `True` if they are equal and `False` otherwise.\n
         ⇾ **Will not detect, if a key-name has changed, only if removed or added.**\n
         ------------------------------------------------------------------------------------------------
         Ignores the specified (found) key/s or item/s from `ignore_paths`. Comments are not ignored<br>
-        when comparing. `comment_start` and `comment_end` are only used for key recognition.\n
+        when comparing. `comment_start` and `comment_end` are only used to correctly recognize the<br>
+        keys in the `ignore_paths`.\n
         ------------------------------------------------------------------------------------------------
-        The paths from `ignore_paths` work exactly the same way as the paths from `value_paths`<br>
-        in the function `Data.get_path_id()`, just like the `sep` parameter. For more detailed<br>
-        explanation, see the documentation of the function `Data.get_path_id()`.
-        """
+        The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
+        the function `Data.get_path_id()`. See its documentation for more details."""
 
         def process_ignore_paths(
             ignore_paths: str | list[str],
         ) -> list[list[str]]:
             if isinstance(ignore_paths, str):
                 ignore_paths = [ignore_paths]
-            return [path.split(sep) for path in ignore_paths if path]
+            return [path.split(path_sep) for path in ignore_paths if path]
 
         def compare(
-            d1: dict | list | tuple,
-            d2: dict | list | tuple,
+            d1: DataStructure,
+            d2: DataStructure,
             ignore_paths: list[list[str]],
-            current_path: list = [],
+            current_path: list[str] = [],
         ) -> bool:
-            if ignore_paths and any(
-                current_path == path[: len(current_path)] and len(current_path) == len(path) for path in ignore_paths
-            ):
+            if any(current_path == path[: len(current_path)] for path in ignore_paths):
                 return True
-            if isinstance(d1, dict) and isinstance(d2, dict):
+            if type(d1) != type(d2):
+                return False
+            if isinstance(d1, dict):
                 if set(d1.keys()) != set(d2.keys()):
                     return False
                 return all(compare(d1[key], d2[key], ignore_paths, current_path + [key]) for key in d1)
-            elif isinstance(d1, (list, tuple)) and isinstance(d2, (list, tuple)):
+            if isinstance(d1, (list, tuple)):
                 if len(d1) != len(d2):
                     return False
                 return all(
                     compare(item1, item2, ignore_paths, current_path + [str(i)])
                     for i, (item1, item2) in enumerate(zip(d1, d2))
                 )
-            else:
+            if isinstance(d1, (set, frozenset)):
                 return d1 == d2
+            return d1 == d2
 
-        return compare(
-            Data.remove_comments(data1, comment_start, comment_end),
-            Data.remove_comments(data2, comment_start, comment_end),
-            process_ignore_paths(ignore_paths),
-        )
-
-    @staticmethod
-    def get_fingerprint(
-        data: list | tuple | dict,
-    ) -> list | tuple | dict | None:
-        if isinstance(data, dict):
-            return {i: type(v).__name__ for i, v in enumerate(data.values())}
-        elif isinstance(data, (list, tuple)):
-            return {i: type(v).__name__ for i, v in enumerate(data)}
-        return None
+        processed_data1 = Data.remove_comments(data1, comment_start, comment_end)
+        processed_data2 = Data.remove_comments(data2, comment_start, comment_end)
+        processed_ignore_paths = process_ignore_paths(ignore_paths)
+        return compare(processed_data1, processed_data2, processed_ignore_paths)
 
     @staticmethod
     def get_path_id(
-        data: list | tuple | dict,
+        data: DataStructure,
         value_paths: str | list[str],
-        sep: str = "->",
+        path_sep: str = "->",
+        comment_start: str = ">>",
+        comment_end: str = "<<",
         ignore_not_found: bool = False,
     ) -> str | list[str]:
         """Generates a unique ID based on the path to a specific value within a nested data structure.\n
@@ -235,83 +224,78 @@ class Data:
         The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.<br>
         In this example:
         ```\n {
-          'healthy': {
-            'fruit': ['apples', 'bananas', 'oranges'],
-            'vegetables': ['carrots', 'broccoli', 'celery']
-          }
+            "healthy": {
+                "fruit": ["apples", "bananas", "oranges"],
+                "vegetables": ["carrots", "broccoli", "celery"]
+            }
         }\n```
-        ... if you want to change the value of `'apples'` to `'strawberries'`, `value_path`<br>
-        would be `healthy->fruit->apples` or if you don't know that the value is `apples`<br>
-        you can also use the position of the value, so `healthy->fruit->0`.\n
+        ... if you want to change the value of `"apples"` to `"strawberries"`, the value path<br>
+        would be `healthy->fruit->apples` or if you don't know that the value is `"apples"`<br>
+        you can also use the index of the value, so `healthy->fruit->0`.\n
         -------------------------------------------------------------------------------------------------
-        The `sep` param is the separator between the keys in the path<br>
+        The comments marked with `comment_start` and `comment_end` will be removed,<br>
+        before trying to get the path id.\n
+        -------------------------------------------------------------------------------------------------
+        The `path_sep` param is the separator between the keys/indexes in the path<br>
         (default is `->` just like in the example above).\n
         -------------------------------------------------------------------------------------------------
         If `ignore_not_found` is `True`, the function will return `None` if the value is not<br>
         found instead of raising an error."""
-        if isinstance(value_paths, str):
-            value_paths = [value_paths]
-        path_ids = []
-        for path in value_paths:
-            keys = [k.strip() for k in path.split(str(sep).strip()) if k.strip() != ""]
-            id_part_len, _path_ids, _obj = 0, [], data
-            try:
-                for k in keys:
-                    if isinstance(_obj, dict):
-                        if k.isdigit():
-                            raise TypeError(f"Key '{k}' is invalid for a dict type.")
+
+        def process_path(path: str, data_obj: list | tuple | set | frozenset | dict) -> str | None:
+            keys = path.split(path_sep)
+            path_ids = []
+            max_id_length = 0
+            for key in keys:
+                if isinstance(data_obj, dict):
+                    if key.isdigit():
+                        if ignore_not_found:
+                            return None
+                        raise TypeError(f"Key '{key}' is invalid for a dict type.")
+                    try:
+                        idx = list(data_obj.keys()).index(key)
+                        data_obj = data_obj[key]
+                    except (ValueError, KeyError):
+                        if ignore_not_found:
+                            return None
+                        raise KeyError(f"Key '{key}' not found in dict.")
+                elif isinstance(data_obj, (list, tuple, set, frozenset)):
+                    try:
+                        idx = int(key)
+                        data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
+                    except ValueError:
                         try:
-                            idx = list(_obj.keys()).index(k)
-                            _path_ids.append(idx)
-                            _obj = _obj[k]
-                        except KeyError:
-                            if ignore_not_found:
-                                _path_ids = None
-                                break
-                            raise KeyError(f"Key '{k}' not found in dict.")
-                    elif isinstance(_obj, (list, tuple)):
-                        try:
-                            idx = int(k)
-                            _path_ids.append(idx)
-                            _obj = _obj[idx]
+                            idx = list(data_obj).index(key)
+                            data_obj = list(data_obj)[idx]
                         except ValueError:
-                            try:
-                                idx = _obj.index(k)
-                                _path_ids.append(idx)
-                                _obj = _obj[idx]
-                            except ValueError:
-                                if ignore_not_found:
-                                    _path_ids = None
-                                    break
-                                raise ValueError(f"Value '{k}' not found in list/tuple.")
-                    else:
-                        break
-                    if _path_ids:
-                        id_part_len = max(id_part_len, len(str(_path_ids[-1])))
-                if _path_ids is not None:
-                    path_ids.append(f'{id_part_len}>{"".join([str(id).zfill(id_part_len) for id in _path_ids])}')
-                elif ignore_not_found:
-                    path_ids.append(None)
-            except (KeyError, ValueError, TypeError) as e:
-                if ignore_not_found:
-                    path_ids.append(None)
+                            if ignore_not_found:
+                                return None
+                            raise ValueError(f"Value '{key}' not found in '{type(data_obj).__name__}'")
                 else:
-                    raise e
-        return path_ids if len(path_ids) > 1 else path_ids[0] if len(path_ids) == 1 else None
+                    break
+                path_ids.append(str(idx))
+                max_id_length = max(max_id_length, len(str(idx)))
+            if not path_ids:
+                return None
+            return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
+
+        data = Data.remove_comments(data, comment_start, comment_end)
+        if isinstance(value_paths, str):
+            return process_path(value_paths, data)
+        results = [process_path(path, data) for path in value_paths]
+        return results if len(results) > 1 else results[0] if results else None
 
     @staticmethod
-    def get_value_by_path_id(data: list | tuple | dict, path_id: str, get_key: bool = False) -> any:
+    def get_value_by_path_id(data: DataStructure, path_id: str, get_key: bool = False) -> any:
         """Retrieves the value from `data` using the provided `path_id`.\n
-        ------------------------------------------------------------------------------------
-        Input a list, tuple or dict as `data`, along with `path_id`, which is a path-id<br>
-        that was created before using `Object.get_path_id()`. If `get_key` is True<br>
-        and the final item is in a dict, it returns the key instead of the value.\n
-        ------------------------------------------------------------------------------------
-        The function will return the value (or key) from the path-id location, as long as<br>
-        the structure of `data` hasn't changed since creating the path-id to that value.
-        """
+        ----------------------------------------------------------------------------------------------------
+        Input your `data` along with a `path_id` that was created before using `Data.get_path_id()`.<br>
+        If `get_key` is true and the final item is in a dict, it returns the key instead of the value.\n
+        ----------------------------------------------------------------------------------------------------
+        The function will return the value (or key) from the path ID location, as long as the structure<br>
+        of `data` hasn't changed since creating the path ID to that value."""
 
-        def get_nested(data: list | tuple | dict, path: list[int], get_key: bool) -> any:
+        def get_nested(data: list | tuple | set | frozenset | dict, path: list[int], get_key: bool) -> any:
             parent = None
             for i, idx in enumerate(path):
                 if isinstance(data, dict):
@@ -320,54 +304,57 @@ class Data:
                         return keys[idx]
                     parent = data
                     data = data[keys[idx]]
-                elif isinstance(data, (list, tuple)):
+                elif isinstance(data, (list, tuple, set, frozenset)):
                     if i == len(path) - 1 and get_key:
                         if parent is None or not isinstance(parent, dict):
-                            raise ValueError("Cannot get key from list or tuple without a parent dictionary")
+                            raise ValueError("Cannot get key from a non-dict parent")
                         return next(key for key, value in parent.items() if value is data)
                     parent = data
-                    data = data[idx]
+                    data = list(data)[idx]  # CONVERT TO LIST FOR INDEXING
                 else:
-                    raise TypeError(f"Unsupported type {type(data)} at path {path[:i+1]}")
+                    raise TypeError(f"Unsupported type '{type(data)}' at path '{path[:i+1]}'")
             return data
 
-        path = Data._sep_path_id(path_id)
-        return get_nested(data, path, get_key)
+        return get_nested(data, Data.__sep_path_id(path_id), get_key)
 
     @staticmethod
     def set_value_by_path_id(
-        data: list | tuple | dict,
+        data: DataStructure,
         update_values: str | list[str],
         sep: str = "::",
     ) -> list | tuple | dict:
         """Updates the value/s from `update_values` in the `data`.\n
         --------------------------------------------------------------------------------
         Input a list, tuple or dict as `data`, along with `update_values`, which is<br>
-        a path-id that was created before using `Object.get_path_id()`, together<br>
-        with the new value to be inserted where the path-id points to. The path-id<br>
+        a path ID that was created before using `Data.get_path_id()`, together<br>
+        with the new value to be inserted where the path ID points to. The path ID<br>
         and the new value are separated by `sep`, which per default is `::`.\n
         --------------------------------------------------------------------------------
-        The value from path-id will be changed to the new value, as long as the<br>
-        structure of `data` hasn't changed since creating the path-id to that value.
-        """
+        The value from path ID will be changed to the new value, as long as the<br>
+        structure of `data` hasn't changed since creating the path ID to that value."""
 
-        def update_nested(data: list | tuple | dict, path: list[int], value: any) -> list | tuple | dict:
+        def update_nested(
+            data: list | tuple | set | frozenset | dict, path: list[int], value: any
+        ) -> list | tuple | set | frozenset | dict:
             if len(path) == 1:
                 if isinstance(data, dict):
                     keys = list(data.keys())
+                    data = dict(data)
                     data[keys[path[0]]] = value
-                elif isinstance(data, (list, tuple)):
+                elif isinstance(data, (list, tuple, set, frozenset)):
                     data = list(data)
                     data[path[0]] = value
                     data = type(data)(data)
-            elif isinstance(data, dict):
-                keys = list(data.keys())
-                key = keys[path[0]]
-                data[key] = update_nested(data[key], path[1:], value)
-            elif isinstance(data, (list, tuple)):
-                data = list(data)
-                data[path[0]] = update_nested(data[path[0]], path[1:], value)
-                data = type(data)(data)
+            else:
+                if isinstance(data, dict):
+                    keys = list(data.keys())
+                    key = keys[path[0]]
+                    data = dict(data)
+                    data[key] = update_nested(data[key], path[1:], value)
+                elif isinstance(data, (list, tuple, set, frozenset)):
+                    data = list(data)
+                    data[path[0]] = update_nested(data[path[0]], path[1:], value)
+                    data = type(data)(data)
             return data
 
         if isinstance(update_values, str):
@@ -379,19 +366,18 @@ class Data:
         ]
         if not valid_entries:
             raise ValueError(f"No valid update_values found: {update_values}")
-        path, new_values = zip(*valid_entries) if valid_entries else ([], [])
-        for path_id, new_val in zip(path, new_values):
-            path = Data._sep_path_id(path_id)
+        for path_id, new_val in valid_entries:
+            path = Data.__sep_path_id(path_id)
             data = update_nested(data, path, new_val)
         return data
 
     @staticmethod
     def print(
-        data: list | tuple | dict,
-        indent: int = 2,
+        data: DataStructure,
+        indent: int = 4,
         compactness: int = 1,
         sep: str = ", ",
-        max_width: int = 140,
+        max_width: int = 127,
         as_json: bool = False,
         end: str = "\n",
     ) -> None:
@@ -414,11 +400,11 @@ class Data:
 
     @staticmethod
     def to_str(
-        data: list | tuple | dict,
-        indent: int = 2,
+        data: DataStructure,
+        indent: int = 4,
         compactness: int = 1,
         sep: str = ", ",
-        max_width: int = 140,
+        max_width: int = 127,
         as_json: bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
@@ -430,24 +416,7 @@ class Data:
          ⠀if the data's content is longer than `max_width`<br>
         `2` keeps everything collapsed (all on one line)\n
         ------------------------------------------------------------------------------------
-        If `as_json` is set to `True`, the output will be in valid JSON format.
-        """
-
-        def escape_string(s: str, str_quotes: str = '"') -> str:
-            s = (
-                s.replace("\\", r"\\")
-                .replace("\n", r"\n")
-                .replace("\r", r"\r")
-                .replace("\t", r"\t")
-                .replace("\b", r"\b")
-                .replace("\f", r"\f")
-                .replace("\a", r"\a")
-            )
-            if str_quotes == '"':
-                s = s.replace(r"\\'", "'").replace(r'"', r"\"")
-            elif str_quotes == "'":
-                s = s.replace(r'\\"', '"').replace(r"'", r"\'")
-            return s
+        If `as_json` is set to `True`, the output will be in valid JSON format."""
 
         def format_value(value: any, current_indent: int) -> str:
             if isinstance(value, dict):
@@ -465,7 +434,7 @@ class Data:
             elif value is None:
                 return "null" if as_json else "None"
             else:
-                return '"' + escape_string(str(value), '"') + '"' if as_json else "'" + escape_string(str(value), "'") + "'"
+                return '"' + String.escape(str(value), '"') + '"' if as_json else "'" + String.escape(str(value), "'") + "'"
 
         def should_expand(seq: list | tuple | dict) -> bool:
             if compactness == 0:
@@ -481,9 +450,9 @@ class Data:
 
         def format_key(k: any) -> str:
             return (
-                '"' + escape_string(str(k), '"') + '"'
+                '"' + String.escape(str(k), '"') + '"'
                 if as_json
-                else ("'" + escape_string(str(k), "'") + "'" if isinstance(k, str) else str(k))
+                else ("'" + String.escape(str(k), "'") + "'" if isinstance(k, str) else str(k))
             )
 
         def format_dict(d: dict, current_indent: int) -> str:
@@ -522,34 +491,37 @@ class Data:
         return format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0)
 
     @staticmethod
-    def _is_key(data: list | tuple | dict, path_id: str) -> bool:
-        """Returns `True` if the path-id points to a key in `data` and `False` otherwise.\n
+    def _is_key(data: DataStructure, path_id: str) -> bool:
+        """Returns `True` if the path ID points to a key in `data` and `False` otherwise.\n
         ------------------------------------------------------------------------------------
-        Input a list, tuple or dict as `data`, along with `path_id`, which is a path-id<br>
-        that was created before using `Object.get_path_id()`."""
+        Input a list, tuple or dict as `data`, along with `path_id`, which is a path ID<br>
+        that was created before using `Data.get_path_id()`."""
 
-        def check_nested(data: list | tuple | dict, path: list[int]) -> bool:
+        def check_nested(data: list | tuple | set | frozenset | dict, path: list[int]) -> bool:
             for i, idx in enumerate(path):
                 if isinstance(data, dict):
                     keys = list(data.keys())
                     if i == len(path) - 1:
                         return True
-                    data = data[keys[idx]]
-                elif isinstance(data, (list, tuple)):
+                    try:
+                        data = data[keys[idx]]
+                    except IndexError:
+                        return False
+                elif isinstance(data, (list, tuple, set, frozenset)):
                     return False
                 else:
                     raise TypeError(f"Unsupported type {type(data)} at path {path[:i+1]}")
             return False
 
-        if isinstance(data, (list, tuple)):
+        if not isinstance(data, dict):
             return False
-        path = Data._sep_path_id(path_id)
+        path = Data.__sep_path_id(path_id)
         return check_nested(data, path)
 
     @staticmethod
-    def _sep_path_id(path_id: str) -> list[int]:
+    def __sep_path_id(path_id: str) -> list[int]:
         if path_id.count(">") != 1:
-            raise ValueError(f"Invalid path-id: {path_id}")
+            raise ValueError(f"Invalid path ID: {path_id}")
         id_part_len = int(path_id.split(">")[0])
         path_ids_str = path_id.split(">")[1]
         return [int(path_ids_str[i : i + id_part_len]) for i in range(0, len(path_ids_str), id_part_len)]
