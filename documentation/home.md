@@ -38,11 +38,13 @@ from XulbuX import rgba, hsla, hexa
 
 # Modules
 
-- [xx_cmd](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_cmd)
-- [xx_code](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)
-- [xx_color](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)
-- [xx_data](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_data)
-<!-- - [xx_string](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string) -->
+| | |
+| :--------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------- |
+| <h3>[`xx_cmd`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_cmd)</h3>       | all sorts of actions related to the console (pretty logging, advanced inputs, ...)        |
+| <h3>[`xx_code`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)</h3>     | code-string operations (*changing the indent, finding function calls, ...*)               |
+| <h3>[`xx_color`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)</h3>   | everything around colors (*converting, blending, searching colors in strings, ...*)       |
+| <h3>[`xx_data`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_data)</h3>     | operations with data structures (*compare, generate path ID's, pretty print/format, ...*) |
+<!-- | <h3>[`xx_string`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string)</h3> | helpful actions when working with strings. (*normalize, escape, decompose, ...*)          | -->
 
 
 
