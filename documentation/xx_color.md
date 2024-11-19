@@ -22,6 +22,18 @@ If the `rgba()` color object is treated like a string, it will be the color in t
 
 <br>
 
+### `.dict()`
+
+This method will get the color components as a dictionary with keys `'r'`, `'g'`, `'b'` and optionally `'a'`.<br>
+**Returns:** the color as a dictionary  `{'r': r, 'g': g, 'b': b}` if the color has no alpha channel, else `{'r': r, 'g': g, 'b': b, 'a': a}`
+
+<br>
+
+### `.values()`
+
+This method will get the color components as separate values `r`, `g`, `b` and optionally `a`.<br>
+**Returns:** the color as a tuple  `(r, g, b)` if the color has no alpha channel, else `(r, g, b, a)`
+
 ### `.to_hsla()`
 
 This method will convert the current color to a HSLA color.<br>
@@ -106,18 +118,54 @@ This method will blend (*additive*) the current color with another color.<br>
 - <code>additive_alpha: *bool* = False</code> whether to blend the alpha channels additively as well or not
 
 **Returns:** the blended `rgba()` color
-- `blend(other, ratio)` to blend with another color
-- `is_dark()` to check if the color is considered dark
-- `is_light()` to check if the color is considered light
-- `is_grayscale()` to check if the color is grayscale
-- `is_opaque()` to check if the color has no transparency
-- `with_alpha(alpha)` to create a new color with different alpha
-- `complementary()` to get the complementary color
 
 **Ratio Example:**<br>
 If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 *mixture*)<br>
 If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
 If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 *mixture*)
+
+<br>
+
+### `.is_dark()`
+
+This method will confirm if the current color is considered dark (*lightness < 50%*).<br>
+**Returns:** `True` if the color is considered dark, `False` otherwise
+
+<br>
+
+### `.is_light()`
+
+This method will confirm if the current color is considered light (*lightness >= 50%*).<br>
+**Returns:** `True` if the color is considered light, `False` otherwise
+
+<br>
+
+### `.is_grayscale()`
+
+This method will confirm if the current color is grayscale (`R` *=* `G` *=* `B`).<br>
+**Returns:** `True` if the color is grayscale, `False` otherwise
+
+<br>
+
+### `.is_opaque()`
+
+This method will confirm if the current color has no transparency (*alpha =* `1.0` *or no alpha channel*).<br>
+**Returns:** `True` if the color is opaque, `False` otherwise
+
+<br>
+
+### `.with_alpha()`
+
+This method will create a new color with different alpha.<br>
+**Param:** <code>alpha: *float*</code> the new alpha value (`0.0`-`1.0`)<br>
+**Returns:** the `rgba()` color with the new alpha channel value
+
+<br>
+
+### `.complementary()`
+
+This method will get the complementary color of the current color (*180 degrees on the color wheel*).<br>
+**Returns:** the complementary `rgba()` color
 
 <br>
 

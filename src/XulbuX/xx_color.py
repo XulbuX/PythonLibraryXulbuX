@@ -161,8 +161,7 @@ class rgba:
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
         If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
-        """
+        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         if not (isinstance(ratio, (int, float)) and 0 <= ratio <= 1):
             raise ValueError("'ratio' must be a float/int in [0.0, 1.0]")
         elif not isinstance(other, rgba):
@@ -193,11 +192,11 @@ class rgba:
         return rgba(self.r, self.g, self.b, None if none_alpha else self.a)
 
     def is_dark(self) -> bool:
-        """Returns `True` if the color is considered dark (luminance < 128)"""
+        """Returns `True` if the color is considered dark (`lightness < 50%`)"""
         return (0.299 * self.r + 0.587 * self.g + 0.114 * self.b) < 128
 
     def is_light(self) -> bool:
-        """Returns `True` if the color is considered light (luminance >= 128)"""
+        """Returns `True` if the color is considered light (`lightness >= 50%`)"""
         return not self.is_dark()
 
     def is_grayscale(self) -> bool:
@@ -371,19 +370,18 @@ class hsla:
 
     def blend(self, other: "hsla", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
+        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)
-        """
+        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         self.h, self.s, self.l, self.a = self.to_rgba().blend(Color.to_rgba(other), ratio, additive_alpha).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a)
 
     def is_dark(self) -> bool:
-        """Returns `True` if the color is considered dark (`lightness < 50`)"""
+        """Returns `True` if the color is considered dark (`lightness < 50%`)"""
         return self.l < 50
 
     def is_light(self) -> bool:
-        """Returns `True` if the color is considered light (`lightness >= 50`)"""
+        """Returns `True` if the color is considered light (`lightness >= 50%`)"""
         return not self.is_dark()
 
     def is_grayscale(self) -> bool:
@@ -598,19 +596,18 @@ class hexa:
 
     def blend(self, other: "hexa", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
+        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)
-        """
+        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         self.r, self.g, self.b, self.a = self.to_rgba(False).blend(Color.to_rgba(other), ratio, additive_alpha).values()
         return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
     def is_dark(self) -> bool:
-        """Returns `True` if the color is considered dark (converted `lightness < 50`)"""
+        """Returns `True` if the color is considered dark (`lightness < 50%`)"""
         return self.to_hsla(False).is_dark()
 
     def is_light(self) -> bool:
-        """Returns `True` if the color is considered light (`lightness >= 50`)"""
+        """Returns `True` if the color is considered light (`lightness >= 50%`)"""
         return self.to_hsla(False).is_light()
 
     def is_grayscale(self) -> bool:
