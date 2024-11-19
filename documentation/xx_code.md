@@ -1,5 +1,5 @@
 # `Code`
-This class includes methods, used to work with strings, that are code.
+This class includes methods, used to work with strings, which include code.
 
 <br>
 

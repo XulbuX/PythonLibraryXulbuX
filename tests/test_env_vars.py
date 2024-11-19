@@ -2,8 +2,8 @@ import XulbuX as xx
 
 
 def test_get_paths():
-    paths = xx.EnvVars.get_paths()
-    paths_list = xx.EnvVars.get_paths(as_list=True)
+    paths = xx.EnvPath.paths()
+    paths_list = xx.EnvPath.paths(as_list=True)
     assert paths
     assert paths_list
     assert isinstance(paths, str)
@@ -13,13 +13,13 @@ def test_get_paths():
 
 
 def test_add_path():
-    xx.EnvVars.add_path(base_dir=True)
+    xx.EnvPath.add_path(base_dir=True)
 
 
 def test_has_path():
-    assert xx.EnvVars.has_path(base_dir=True)
+    assert xx.EnvPath.has_path(base_dir=True)
 
 
 def test_remove_path():
-    xx.EnvVars.remove_path(base_dir=True)
-    assert not xx.EnvVars.has_path(base_dir=True)
+    xx.EnvPath.remove_path(base_dir=True)
+    assert not xx.EnvPath.has_path(base_dir=True)

@@ -1,8 +1,9 @@
 """
 Functions for modifying and checking the systems environment-variables:
-- `EnvVars.get_paths()`
-- `EnvVars.has_path()`
-- `EnvVars.add_path()`
+- `EnvPath.paths()`
+- `EnvPath.has_path()`
+- `EnvPath.add_path()`
+- `EnvPath.remove_path()`
 """
 
 from .xx_path import Path
@@ -11,10 +12,10 @@ import os as _os
 import sys as _sys
 
 
-class EnvVars:
+class EnvPath:
 
     @staticmethod
-    def get_paths(as_list: bool = False) -> str | list:
+    def paths(as_list: bool = False) -> str | list:
         """Get the PATH environment variable."""
         paths = _os.environ.get("PATH", "")
         return paths.split(_os.pathsep) if as_list else paths
@@ -28,7 +29,7 @@ class EnvVars:
             path = Path.get(base_dir=True)
         elif path is None:
             raise ValueError("A path must be provided or either 'cwd' or 'base_dir' must be True.")
-        paths = EnvVars.get_paths(as_list=True)
+        paths = EnvPath.paths(as_list=True)
         return _os.path.normpath(path) in [_os.path.normpath(p) for p in paths]
 
     @staticmethod
@@ -38,9 +39,9 @@ class EnvVars:
         base_dir: bool = False,
     ) -> None:
         """Add a path to the PATH environment variable."""
-        path = EnvVars.__get(path, cwd, base_dir)
-        if not EnvVars.has_path(path):
-            EnvVars.__persistent(path, add=True)
+        path = EnvPath.__get(path, cwd, base_dir)
+        if not EnvPath.has_path(path):
+            EnvPath.__persistent(path, add=True)
 
     @staticmethod
     def remove_path(
@@ -49,9 +50,9 @@ class EnvVars:
         base_dir: bool = False,
     ) -> None:
         """Remove a path from the PATH environment variable."""
-        path = EnvVars.__get(path, cwd, base_dir)
-        if EnvVars.has_path(path):
-            EnvVars.__persistent(path, remove=True)
+        path = EnvPath.__get(path, cwd, base_dir)
+        if EnvPath.has_path(path):
+            EnvPath.__persistent(path, remove=True)
 
     @staticmethod
     def __get(
@@ -75,7 +76,7 @@ class EnvVars:
         """Add or remove a path from PATH persistently across sessions as well as the current session."""
         if add == remove:
             raise ValueError("Either add or remove must be True, but not both.")
-        current_paths = EnvVars.get_paths(as_list=True)
+        current_paths = EnvPath.paths(as_list=True)
         path = _os.path.normpath(path)
         if remove:
             current_paths = [p for p in current_paths if _os.path.normpath(p) != _os.path.normpath(path)]

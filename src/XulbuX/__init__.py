@@ -9,12 +9,12 @@
   • FILE OPERATIONS          xx.File
   • JSON FILE OPERATIONS     xx.Json
   • SYSTEM ACTIONS           xx.System
-  • MANAGE ENVIRONMENT VARS  xx.EnvVars
-  • CMD LOG AND ACTIONS      xx.Console
-  • PRETTY PRINTING          xx.FormatCodes
-  • COLOR OPERATIONS         xx.Color
+  • MANAGE THE ENV PATH VAR  xx.EnvPath
+  • CONSOLE LOG AND ACTIONS  xx.Console
+  • EASY PRETTY PRINTING     xx.FormatCodes
+  • WORKING WITH COLORS      xx.Color
   • DATA OPERATIONS          xx.Data
-  • STR OPERATIONS           xx.String
+  • STRING OPERATIONS        xx.String
   • CODE STRING OPERATIONS   xx.Code
   • REGEX PATTERN TEMPLATES  xx.Regex
 """
@@ -32,7 +32,7 @@ __all__ = [
     "xx_code",
     "xx_color",
     "xx_data",
-    "xx_env_vars",
+    "xx_env_path",
     "xx_file",
     "xx_format_codes",
     "xx_json",
@@ -47,7 +47,7 @@ from .xx_code import *
 from .xx_color import *
 from .xx_console import *
 from .xx_data import *
-from .xx_env_vars import *
+from .xx_env_path import *
 from .xx_file import *
 from .xx_format_codes import *
 from .xx_json import *

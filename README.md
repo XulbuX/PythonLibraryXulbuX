@@ -32,12 +32,12 @@ The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with abo
   • FILE OPERATIONS          xx.File
   • JSON FILE OPERATIONS     xx.Json
   • SYSTEM ACTIONS           xx.System
-  • MANAGE ENVIRONMENT VARS  xx.EnvVars
-  • CMD LOG AND ACTIONS      xx.Console
-  • PRETTY PRINTING          xx.FormatCodes
-  • COLOR OPERATIONS         xx.Color
+  • MANAGE THE ENV PATH VAR  xx.EnvPath
+  • CONSOLE LOG AND ACTIONS  xx.Console
+  • EASY PRETTY PRINTING     xx.FormatCodes
+  • WORKING WITH COLORS      xx.Color
   • DATA OPERATIONS          xx.Data
-  • STR OPERATIONS           xx.String
+  • STRING OPERATIONS        xx.String
   • CODE STRING OPERATIONS   xx.Code
   • REGEX PATTERN TEMPLATES  xx.Regex
 ```

@@ -44,7 +44,7 @@ from XulbuX import rgba, hsla, hexa
 | <h3>[`xx_color`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)</h3>       | everything around colors (*converting, blending, searching colors in strings, ...*)       |
 | <h3>[`xx_console`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_console)</h3>   | all sorts of actions related to the console (*pretty logging, advanced inputs, ...*)      |
 | <h3>[`xx_data`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_data)</h3>         | operations with data structures (*compare, generate path ID's, pretty print/format, ...*) |
-| <h3>[`xx_env_vars`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_env_vars)</h3> | getting and editing the PATH variable (*get paths, check for paths, add a path, ...*)     |
+| <h3>[`xx_env_path`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_env_path)</h3> | getting and editing the PATH variable (*get paths, check for paths, add paths, ...*)      |
 <!--
 | <h3>[`xx_string`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string)</h3>     | helpful actions when working with strings. (*normalize, escape, decompose, ...*)          |
 -->
