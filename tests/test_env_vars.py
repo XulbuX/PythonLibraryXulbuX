@@ -12,8 +12,14 @@ def test_get_paths():
     assert isinstance(paths_list[0], str)
 
 
-def test_add_remove_path():
+def test_add_path():
     xx.EnvVars.add_path(base_dir=True)
+
+
+def test_has_path():
     assert xx.EnvVars.has_path(base_dir=True)
+
+
+def test_remove_path():
     xx.EnvVars.remove_path(base_dir=True)
     assert not xx.EnvVars.has_path(base_dir=True)
