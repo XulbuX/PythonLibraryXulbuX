@@ -78,12 +78,10 @@ class EnvVars:
         current_paths = EnvVars.get_paths(as_list=True)
         path = _os.path.normpath(path)
         if remove:
-            current_paths = [p for p in current_paths if _os.path.normpath(p) != path]
+            current_paths = [p for p in current_paths if _os.path.normpath(p) != _os.path.normpath(path)]
         elif add:
             current_paths.append(path)
-        final_paths = EnvVars.__sort_paths(current_paths)
-        new_path = _os.pathsep.join(final_paths)
-        _os.environ["PATH"] = new_path
+        _os.environ["PATH"] = new_path = _os.pathsep.join(sorted(set(filter(bool, current_paths))))
         if _sys.platform == "win32":  # Windows
             try:
                 import winreg as _winreg
