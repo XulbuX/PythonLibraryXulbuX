@@ -3,7 +3,7 @@ This class includes methods for logging and other actions within the console.
 
 <br>
 
-### `Cmd.get_args()`
+### `Console.get_args()`
 
 This method is used to get the command arguments, for if the current file is run via the console as a command.<br>
 **Params:**<br>
@@ -37,19 +37,19 @@ So for the example command line from above, the method would return a dictionary
 
 <br>
 
-### `Cmd.user()`
+### `Console.user()`
 
 **Returns:** the username of the user of the current console session
 
 <br>
 
-### `Cmd.is_admin()`
+### `Console.is_admin()`
 
 **Returns:** `True` if the current console session is run as administrator and `False` otherwise
 
 <br>
 
-### `Cmd.pause_exit()`
+### `Console.pause_exit()`
 
 Will print a prompt and then pause and/or exit the program.<br>
 **Params:**
@@ -61,13 +61,13 @@ Will print a prompt and then pause and/or exit the program.<br>
 
 <br>
 
-### `Cmd.cls()`
+### `Console.cls()`
 
 Will clear the console in addition to completely resetting the ANSI formats.
 
 <br>
 
-### <span id="cmd-log">`Cmd.log()`</span>
+### <span id="cmd-log">`Console.log()`</span>
 
 Will print a nicely formatted log message.<br>
 **Params:**
@@ -81,19 +81,19 @@ The log message supports special formatting codes. For more detailed information
 
 <br>
 
-### `Cmd.debug()`, `Cmd.info()`, `Cmd.done()`, `Cmd.warn()`, `Cmd.fail()`, `Cmd.exit()`
+### `Console.debug()`, `Console.info()`, `Console.done()`, `Console.warn()`, `Console.fail()`, `Console.exit()`
 
-These methods are all presets for the [`Cmd.log()`](#cmd-log) method, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Cmd.log()` method, with the two additional ones.<br>
+These methods are all presets for the [`Console.log()`](#cmd-log) method, with the options to pause at the message and exit the program after the message was printed. That means, they have the same params as the `Console.log()` method, with the two additional ones.<br>
 **Additional Params:**
 - <code>pause: *bool*</code> whether to pause the program at the message or not (*different default depending on the log preset*)
 - <code>exit: *bool*</code> whether to exit the program after the message was printed (*and the program was unpaused if* `pause` *is true*) or not (*different default depending on the log preset*)
 
 <br>
 
-### `Cmd.confirm()`
+### `Console.confirm()`
 
 This method can be used to ask a yes/no question.<br>
-Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
+Like in the [`Console.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the question
 - <code>start: *str*</code> the string to print before the question
@@ -109,7 +109,7 @@ Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special format
 
 <br>
 
-### <span id="cmd-restrictedinput">`Cmd.restricted_input()`</span>
+### <span id="cmd-restrictedinput">`Console.restricted_input()`</span>
 
 This method acts like a standard Python `input()` with the advantage, that you can specify:
 - what text characters the user is allowed to type and
@@ -117,7 +117,7 @@ This method acts like a standard Python `input()` with the advantage, that you c
 - optional mask character (hide user input, e.g. for passwords)
 - reset the ANSI formatting codes after the user continues
 
-Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
+Like in the [`Console.log()`](#cmd-log) method, it is possible to use special formatting codes inside the `prompt`.<br>
 **Params:**
 - <code>prompt: *object*</code> the prompt to print before the input
 - <code>allowed_chars: *str*</code> the allowed text characters the user can type (*default is all characters*)
@@ -130,6 +130,6 @@ Like in the [`Cmd.log()`](#cmd-log) method, it is possible to use special format
 
 <br>
 
-### `Cmd.pwd_input()`
-This method almost works like the [`Cmd.restricted_input()`](#cmd-restrictedinput) method, but it always hides the user's input.<br>
+### `Console.pwd_input()`
+This method almost works like the [`Console.restricted_input()`](#cmd-restrictedinput) method, but it always hides the user's input.<br>
 It has no additional parameters.

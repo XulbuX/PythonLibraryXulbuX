@@ -1,4 +1,4 @@
-from .xx_string import *
+from .xx_string import String
 
 from typing import TypeAlias, Union
 import math as _math

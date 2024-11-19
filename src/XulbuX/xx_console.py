@@ -1,28 +1,28 @@
 """
 Functions for logging and other small actions within the console:
-- `Cmd.get_args()`
-- `Cmd.user()`
-- `Cmd.is_admin()`
-- `Cmd.pause_exit()`
-- `Cmd.cls()`
-- `Cmd.log()`
-- `Cmd.debug()`
-- `Cmd.info()`
-- `Cmd.done()`
-- `Cmd.warn()`
-- `Cmd.fail()`
-- `Cmd.exit()`
-- `Cmd.confirm()`
-- `Cmd.restricted_input()`
-- `Cmd.pwd_input()`\n
+- `Console.get_args()`
+- `Console.user()`
+- `Console.is_admin()`
+- `Console.pause_exit()`
+- `Console.cls()`
+- `Console.log()`
+- `Console.debug()`
+- `Console.info()`
+- `Console.done()`
+- `Console.warn()`
+- `Console.fail()`
+- `Console.exit()`
+- `Console.confirm()`
+- `Console.restricted_input()`
+- `Console.pwd_input()`\n
 ----------------------------------------------------------------------------------------------------------
 You can also use special formatting codes directly inside the log message to change their appearance.<br>
 For more detailed information about formatting codes, see the the `xx_format_codes` description.
 """
 
 from ._consts_ import DEFAULT, CHARS
-from .xx_format_codes import *
-from .xx_string import *
+from .xx_format_codes import FormatCodes
+from .xx_string import String
 from .xx_color import *
 
 from contextlib import suppress
@@ -36,7 +36,7 @@ import sys as _sys
 import os as _os
 
 
-class Cmd:
+class Console:
 
     @staticmethod
     def get_args(find_args: dict) -> dict[str, dict[str, any]]:
@@ -62,7 +62,7 @@ class Cmd:
         return getattr(_shutil.get_terminal_size(), "lines", 24)
 
     def wh() -> tuple[int, int]:
-        return Cmd.w(), Cmd.h()
+        return Console.w(), Console.h()
 
     def user() -> str:
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
@@ -153,8 +153,8 @@ class Cmd:
         """A preset for `log()`: `DEBUG` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
         if active:
-            Cmd.log("DEBUG", prompt, start, end, title_bg_color, default_color)
-            Cmd.pause_exit(pause, exit)
+            Console.log("DEBUG", prompt, start, end, title_bg_color, default_color)
+            Console.pause_exit(pause, exit)
 
     @staticmethod
     def info(
@@ -168,8 +168,8 @@ class Cmd:
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
-        Cmd.log("INFO", prompt, start, end, title_bg_color, default_color)
-        Cmd.pause_exit(pause, exit)
+        Console.log("INFO", prompt, start, end, title_bg_color, default_color)
+        Console.pause_exit(pause, exit)
 
     @staticmethod
     def done(
@@ -183,8 +183,8 @@ class Cmd:
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
-        Cmd.log("DONE", prompt, start, end, title_bg_color, default_color)
-        Cmd.pause_exit(pause, exit)
+        Console.log("DONE", prompt, start, end, title_bg_color, default_color)
+        Console.pause_exit(pause, exit)
 
     @staticmethod
     def warn(
@@ -198,8 +198,8 @@ class Cmd:
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
-        Cmd.log("WARN", prompt, start, end, title_bg_color, default_color)
-        Cmd.pause_exit(pause, exit)
+        Console.log("WARN", prompt, start, end, title_bg_color, default_color)
+        Console.pause_exit(pause, exit)
 
     @staticmethod
     def fail(
@@ -214,8 +214,8 @@ class Cmd:
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
-        Cmd.log("FAIL", prompt, start, end, title_bg_color, default_color)
-        Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
+        Console.log("FAIL", prompt, start, end, title_bg_color, default_color)
+        Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
     def exit(
@@ -230,8 +230,8 @@ class Cmd:
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
-        Cmd.log("EXIT", prompt, start, end, title_bg_color, default_color)
-        Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
+        Console.log("EXIT", prompt, start, end, title_bg_color, default_color)
+        Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
     def confirm(
@@ -253,7 +253,7 @@ class Cmd:
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
-            Cmd.log("", end, end="")
+            Console.log("", end, end="")
         return confirmed
 
     @staticmethod
@@ -317,7 +317,7 @@ class Cmd:
                 result, select_all = "", False
             elif result and event.name == "backspace":
                 result = result[:-1]
-            update_display(Cmd.w())
+            update_display(Console.w())
 
         def handle_paste():
             nonlocal result, select_all
@@ -326,25 +326,25 @@ class Cmd:
             filtered_text = "".join(char for char in _pyperclip.paste() if allowed_chars == CHARS.all or char in allowed_chars)
             if max_len is None or len(result) + len(filtered_text) <= max_len:
                 result += filtered_text
-                update_display(Cmd.w())
+                update_display(Console.w())
 
         def handle_select_all():
             nonlocal select_all
             select_all = True
-            update_display(Cmd.w())
+            update_display(Console.w())
 
         def handle_copy():
             nonlocal select_all
             with suppress(KeyboardInterrupt):
                 select_all = False
-                update_display(Cmd.w())
+                update_display(Console.w())
                 _pyperclip.copy(result)
 
         def handle_character_input():
             nonlocal result
             if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_len is None or len(result) < max_len):
                 result += event.name
-                update_display(Cmd.w())
+                update_display(Console.w())
 
         while True:
             event = _keyboard.read_event()
@@ -367,7 +367,7 @@ class Cmd:
                     handle_character_input()
                 else:
                     select_all = False
-                    update_display(Cmd.w())
+                    update_display(Console.w())
 
     @staticmethod
     def pwd_input(
@@ -378,4 +378,4 @@ class Cmd:
         _reset_ansi: bool = True,
     ) -> str:
         """Password input that masks the entered characters with asterisks."""
-        return Cmd.restricted_input(prompt, allowed_chars, min_len, max_len, "*", _reset_ansi)
+        return Console.restricted_input(prompt, allowed_chars, min_len, max_len, "*", _reset_ansi)

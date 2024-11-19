@@ -31,7 +31,7 @@ The `Color` class, which contains all sorts of different color-related methods:
     - saturation
 """
 
-from .xx_regex import *
+from .xx_regex import Regex
 
 import re as _re
 

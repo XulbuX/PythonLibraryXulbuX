@@ -1,5 +1,5 @@
-from .xx_data import *
-from .xx_file import *
+from .xx_data import Data
+from .xx_file import File
 
 import json as _json
 import os as _os

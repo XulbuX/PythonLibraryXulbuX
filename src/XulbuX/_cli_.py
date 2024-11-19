@@ -1,7 +1,7 @@
 from . import __version__
 from ._consts_ import DEFAULT
-from .xx_format_codes import *
-from .xx_cmd import *
+from .xx_format_codes import FormatCodes
+from .xx_console import Console
 
 
 def help_command():
@@ -49,4 +49,4 @@ def help_command():
   [dim](Press any key to exit...)
   """
     )
-    Cmd.pause_exit(pause=True)
+    Console.pause_exit(pause=True)

@@ -15,91 +15,93 @@
 # <br><b>Changelog</b><br>
 
 
-## 16.11.2024 `v1.5.8`
-* Added method `String.is_empty()` to check if the string is empty
-* Added method `String.escape()` to escape special characters in a string
-* Introduces a new test for `xx_data`
-* Added doc-strings to all the methods in `xx_data`
-* Made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
+## ... `v1.5.8`
+* added method `String.is_empty()` to check if the string is empty
+* added method `String.escape()` to escape special characters in a string
+* introduces a new test for `xx_data`
+* added doc-strings to all the methods in `xx_data`
+* made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
+* renamed the module `xx_cmd` and it's class `Cmd` to `xx_console` and `Console`
 
 ## 15.11.2024 `v1.5.7`
-* Change the testing modules to be able to run together with the library `pytest`
-* Added formatting checks, using `black`, `isort` and `flake8`
-* Added the script (*command*) `xx-help` or `xulbux-help`
-* Moved the `help()` function to the file `_cli_.py`, because that's where all the scripts are located (*It also was renamed to* `help_command()`)
-* Structured `Cmd.restricted_input()` a bit nicer, so it appears less complex
-* Corrected code after `Lint with flake8` formatting suggestions
-* Moved the method `normalize_spaces()` to `xx_string`
-* Added additional tests for the custom color types
-* Updated the whole `xx_format_codes` module for more efficiency and speed
+* change the testing modules to be able to run together with the library `pytest`
+* added formatting checks, using `black`, `isort` and `flake8`
+* added the script (*command*) `xx-help` or `xulbux-help`
+* moved the `help()` function to the file `_cli_.py`, because that's where all the scripts are located (*It also was renamed to* `help_command()`)
+* structured `Cmd.restricted_input()` a bit nicer, so it appears less complex
+* corrected code after `Lint with flake8` formatting suggestions
+* moved the method `normalize_spaces()` to `xx_string`
+* added additional tests for the custom color types
+* updated the whole `xx_format_codes` module for more efficiency and speed
 
 ## 11.11.2024 `v1.5.6`
-* Moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
-* Updated all connections and links
+* moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
+* updated all connections and links
 
 ## 11.11.2024 `v1.5.5`
-* Added methods to get the width and height of the console (*in characters and lines*):<br>
+* added methods to get the width and height of the console (*in characters and lines*):<br>
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
-* Added the method <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
-* Added doc-strings to every method in `xx_string`
-* Updated the `Cmd.restricted_input()` method:
+* added the method <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
+* added doc-strings to every method in `xx_string`
+* updated the `Cmd.restricted_input()` method:
   - paste text from the clipboard
   - select all text to delete everything at once
   - write and backspace over multiple lines
   - not the prompt supports custom format codes
-* Added required non-standard libraries to the project file
-* Added more metadata to the project file
+* added required non-standard libraries to the project file
+* added more metadata to the project file
 
 ## 06.11.2024 `v1.5.4`
-* Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
-* Added a new method <code>normalize_spaces(*code*) -> *str*</code> to `Code`
-* Added new doc-strings to `xx_code` and `xx_cmd`
-* Added a custom `input()` method to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
-* Added the method `pwd_input()` to `Cmd`, which works just like the `Cmd.restricted_input()` but masks the input characters with `*`
-* Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a method/function
-* Fixed bug when trying to get the base directory from a compiled script (*EXE*):<br>
-  Would get the path to the temporary extracted directory, which is created when running the EXE file<br>
-  Now it gets the actual base directory of the currently running file
+* made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
+* added a new method <code>normalize_spaces(*code*) -> *str*</code> to `Code`
+* added new doc-strings to `xx_code` and `xx_cmd`
+* added a custom `input()` method to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
+* added the method `pwd_input()` to `Cmd`, which works just like the `Cmd.restricted_input()` but masks the input characters with `*`
+* restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a method/function
+* fixed bug when trying to get the base directory from a compiled script (*EXE*):<br>
+  would get the path to the temporary extracted directory, which is created when running the EXE file<br>
+  now it gets the actual base directory of the currently running file
 
 ## 30.10.2024 `v1.5.3`
-* Restructured the values in `_consts_.py`
-* Added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
-* Added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
-* Refactored the whole library's code after the [`PEPs`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
+* restructured the values in `_consts_.py`
+* added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
+* added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
+* refactored the whole library's code after the [`PEPs`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
   - changed the indent to 4 spaces
   - no more inline control statements (*except its only a really small statement and body*)
-* Added new methods to `Color`:<br>
+* added new methods to `Color`:<br>
   <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
   <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
   <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
-* Fixed the `grayscale()` method of `rgba()`, `hsla()` and `hexa()`:<br>
-  The method would previously just return the color, fully desaturated (*not grayscale*)<br>
-  Now this is fixed, and the method uses the luminance formula, to get the actual grayscale value
-* All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
+* fixed the `grayscale()` method of `rgba()`, `hsla()` and `hexa()`:<br>
+  the method would previously just return the color, fully desaturated (*not grayscale*)<br>
+  now this is fixed, and the method uses the luminance formula, to get the actual grayscale value
+* all the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
 
 ## 28.10.2024 `v1.5.2`
-* New parameter <code>correct_path:*bool*</code> in `Path.extend()`:
-  This makes sure, that typos in the path will only be corrected if this parameter is set to `True`
-* Fixed bug in `Path.extend()`, where an empty string was taken as a valid path for the current directory `./`
-* Fixed color validation bug:
-  `Color.is_valid_rgba()`and `Color.is_valid_hsla()` would not accept an alpha channel of `None`
+* new parameter <code>correct_path:*bool*</code> in `Path.extend()`:
+  this makes sure, that typos in the path will only be corrected if this parameter is set to `True`
+* fFixed bug in `Path.extend()`, where an empty string was taken as a valid path for the current directory `./`
+* fixed color validation bug:<br>
+  `Color.is_valid_rgba()`and `Color.is_valid_hsla()` would not accept an alpha channel of `None`<br>
   `Color.is_valid_rgba()` was still checking for an alpha channel from `0` to `255` instead of `0` to `1`
-* Fixed bug for `Color.has_alpha()`:
-  Previously, it would return `True` if the alpha channel was `None`. Now in such cases it will return `False`.
+* fixed bug for `Color.has_alpha()`:<br>
+  previously, it would return `True` if the alpha channel was `None`<br>
+  now in such cases it will return `False`
 
 ## 28.10.2024 `v1.5.1`
-* Renamed all library files for a better naming convention
-* Now all methods in `xx_color` support both HEX prefixes (`#` *and* `0x`)
-* Added the default HEX prefix to `_consts_.py`
-* Fixed bug when initializing a `hexa()` object:<br>
-  Would throw an error, even if the color was valid
+* renamed all library files for a better naming convention
+* now all methods in `xx_color` support both HEX prefixes (`#` *and* `0x`)
+* added the default HEX prefix to `_consts_.py`
+* fixed bug when initializing a `hexa()` object:<br>
+  would throw an error, even if the color was valid
 
 ## 27.10.2024 `v1.5.0`
-* Split all classes into separate files, so users can download only parts of the library more easily
-* Added a `__help__.py` file, which will show some information about the library and how to use it, when it's run as a script or when the `help()` function is called
-* Added a lot more metadata to the library:<br>
+* split all classes into separate files, so users can download only parts of the library more easily
+* added a `__help__.py` file, which will show some information about the library and how to use it, when it's run as a script or when the `help()` function is called
+* added a lot more metadata to the library:<br>
   `__version__` (*was already added in update [v1.4.2](#update-1-4-2)*)<br>
   `__author__`<br>
   `__email__`<br>
@@ -111,22 +113,22 @@
 
 ## <span id="update-1-4-2">27.10.2024 `v1.4.2` `v1.4.3`</span>
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`
-* Removed unnecessary parts when checking for missing required libraries
-* You can now get the libraries current version by accessing the attribute `XulbuX.__version__`
+* removed unnecessary parts when checking for missing required libraries
+* you can now get the libraries current version by accessing the attribute `XulbuX.__version__`
 
 ## 26.10.2024 `v1.4.1`
-* Added methods to each color type:<br>
+* added methods to each color type:<br>
   <code>is_grayscale() -> *self*</code><br>
   <code>is_opaque() -> *self*</code>
-* Added additional error checking to the color types
-* Made error messages for the color types clearer
-* Updated the <code>blend(*other*, *ratio*)</code> method of all color types to use additive blending except for the alpha-channel
-* Fixed problem with method-chaining for all color types
+* added additional error checking to the color types
+* made error messages for the color types clearer
+* updated the <code>blend(*other*, *ratio*)</code> method of all color types to use additive blending except for the alpha-channel
+* fixed problem with method-chaining for all color types
 
 ## 25.10.2024 `v1.4.0`
-* Huge update to the custom color types:
-  - Now all type-methods support chaining
-  - Added new methods to each type:<br>
+* huge update to the custom color types:
+  - now all type-methods support chaining
+  - added new methods to each type:<br>
     <code>lighten(*amount*) -> *self*</code><br>
     <code>darken(*amount*) -> *self*</code><br>
     <code>saturate(*amount*) -> *self*</code><br>
@@ -141,7 +143,7 @@
     <code>complementary() -> *self*</code>
 
 ## 23.10.2024 `v1.3.1`
-* Now rounds the alpha channel to maximal 2 decimals, if converting from `hexa()` to `rgba()` or `hsla()` 
+* now rounds the alpha channel to maximal 2 decimals, if converting from `hexa()` to `rgba()` or `hsla()` 
 
 ## 21.10.2024 `v1.3.0`
 * fixed the custom types `rgba()`, `hsla()` and `hexa()`:<br>

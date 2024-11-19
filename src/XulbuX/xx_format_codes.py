@@ -68,10 +68,9 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 """
 
 from ._consts_ import ANSI
-from .xx_string import *
-from .xx_regex import *
+from .xx_string import String
+from .xx_regex import Regex
 from .xx_color import *
-from .xx_data import *
 
 from functools import lru_cache
 import ctypes as _ctypes
