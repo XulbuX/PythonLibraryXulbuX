@@ -1,4 +1,4 @@
-# `Cmd`
+# `Console`
 This class includes methods for logging and other actions within the console.
 
 <br>

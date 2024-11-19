@@ -22,6 +22,8 @@
 * added doc-strings to all the methods in `xx_data`
 * made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
 * renamed the module `xx_cmd` and it's class `Cmd` to `xx_console` and `Console`
+* added method `EnvVars.remove_path()`
+* introduced a new test for `xx_env_vars`
 
 ## 15.11.2024 `v1.5.7`
 * change the testing modules to be able to run together with the library `pytest`

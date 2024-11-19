@@ -118,4 +118,5 @@ testpaths = [
   "tests/test_cmd_info.py",
   "tests/test_color_types.py",
   "tests/test_data.py",
+  "tests/test_env_vars.py",
 ]

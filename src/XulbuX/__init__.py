@@ -10,7 +10,7 @@
   • JSON FILE OPERATIONS     xx.Json
   • SYSTEM ACTIONS           xx.System
   • MANAGE ENVIRONMENT VARS  xx.EnvVars
-  • CMD LOG AND ACTIONS      xx.Cmd
+  • CMD LOG AND ACTIONS      xx.Console
   • PRETTY PRINTING          xx.FormatCodes
   • COLOR OPERATIONS         xx.Color
   • DATA OPERATIONS          xx.Data

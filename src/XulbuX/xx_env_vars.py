@@ -5,10 +5,7 @@ Functions for modifying and checking the systems environment-variables:
 - `EnvVars.add_path()`
 """
 
-from .xx_console import Console
-from .xx_data import Data
 from .xx_path import Path
-
 
 import os as _os
 import sys as _sys
@@ -43,11 +40,7 @@ class EnvVars:
         """Add a path to the PATH environment variable."""
         path = EnvVars.__get(path, cwd, base_dir)
         if not EnvVars.has_path(path):
-            paths = EnvVars.get_paths(as_list=True)
-            paths.append(path)
-            final_paths = EnvVars.__sort_paths(paths)
-            _os.environ["PATH"] = _os.pathsep.join(final_paths)
-            EnvVars.__make_persistent(path)
+            EnvVars.__persistent(path, add=True)
 
     @staticmethod
     def remove_path(
@@ -58,11 +51,7 @@ class EnvVars:
         """Remove a path from the PATH environment variable."""
         path = EnvVars.__get(path, cwd, base_dir)
         if EnvVars.has_path(path):
-            paths = EnvVars.get_paths(as_list=True)
-            paths = [p for p in paths if _os.path.normpath(p) != path]
-            final_paths = EnvVars.__sort_paths(paths)
-            _os.environ["PATH"] = _os.pathsep.join(final_paths)
-            EnvVars.__make_persistent(path, remove=True)
+            EnvVars.__persistent(path, remove=True)
 
     @staticmethod
     def __get(
@@ -82,16 +71,19 @@ class EnvVars:
         return _os.path.normpath(path)
 
     @staticmethod
-    def __add_sort_paths(add_path: str, current_paths: str) -> str:
-        """Add a path to the existing paths-string and sort it again."""
-        final_paths = Data.remove_empty_items(
-            Data.remove_duplicates(f"{add_path}{_os.pathsep}{current_paths}".split(_os.pathsep))
-        ).sort()
-        return f"{_os.pathsep.join(final_paths)}{_os.pathsep}"
-
-    @staticmethod
-    def __make_persistent(path: str, remove: bool = False) -> None:
-        """Make PATH changes persistent across sessions."""
+    def __persistent(path: str, add: bool = False, remove: bool = False) -> None:
+        """Add or remove a path from PATH persistently across sessions as well as the current session."""
+        if add == remove:
+            raise ValueError("Either add or remove must be True, but not both.")
+        current_paths = EnvVars.get_paths(as_list=True)
+        path = _os.path.normpath(path)
+        if remove:
+            current_paths = [p for p in current_paths if _os.path.normpath(p) != path]
+        elif add:
+            current_paths.append(path)
+        final_paths = EnvVars.__sort_paths(current_paths)
+        new_path = _os.pathsep.join(final_paths)
+        _os.environ["PATH"] = new_path
         if _sys.platform == "win32":  # Windows
             try:
                 import winreg as _winreg
@@ -102,15 +94,10 @@ class EnvVars:
                     0,
                     _winreg.KEY_ALL_ACCESS,
                 )
-                current_path = _winreg.QueryValueEx(key, "PATH")[0]
-                if remove:
-                    new_path = _os.pathsep.join([p for p in current_path.split(_os.pathsep) if _os.path.normpath(p) != path])
-                else:
-                    new_path = f"{current_path}{_os.pathsep}{path}"
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)
             except ImportError:
-                Console.warn("Unable to make persistent changes on Windows.")
+                print("Warning: Unable to make persistent changes on Windows.")
         else:  # UNIX-like (Linux/macOS)
             shell_rc_file = _os.path.expanduser(
                 "~/.bashrc" if _os.path.exists(_os.path.expanduser("~/.bashrc")) else "~/.zshrc"
@@ -122,6 +109,6 @@ class EnvVars:
                     new_content = [line for line in content.splitlines() if not line.endswith(f':{path}"')]
                     f.write("\n".join(new_content))
                 else:
-                    f.write(f'{content.rstrip()}\n# Added by XulbuX\nexport PATH="$PATH:{path}"\n')
+                    f.write(f'{content.rstrip()}\n# Added by XulbuX\nexport PATH="{new_path}"\n')
                 f.truncate()
             _os.system(f"source {shell_rc_file}")

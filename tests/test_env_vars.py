@@ -12,4 +12,4 @@ def test_get_paths():
     assert isinstance(paths_list[0], str)
 
 
-xx.EnvVars.add_path(base_dir=True)
+# xx.EnvVars.add_path(base_dir=True)

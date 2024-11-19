@@ -38,7 +38,7 @@ def help_command():
     [dim](•) JSON FILE OPERATIONS     [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Json[*]
     [dim](•) SYSTEM ACTIONS           [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]System[*]
     [dim](•) MANAGE ENVIRONMENT VARS  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Env_vars[*]
-    [dim](•) CMD LOG AND ACTIONS      [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Cmd[*]
+    [dim](•) CMD LOG AND ACTIONS      [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Console[*]
     [dim](•) PRETTY PRINTING          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]FormatCodes[*]
     [dim](•) COLOR OPERATIONS         [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Color[*]
     [dim](•) DATA OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Data[*]
