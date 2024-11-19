@@ -24,7 +24,7 @@ This method will remove all leading and trailing whitespaces from data items.<br
 This method will remove empty items from data.<br>
 **Params:**
 - <code>data: *list* | *tuple* | *set* | *frozenset* | *dict*</code> the data to remove empty items from
-- <code>spaces_are_empty: *bool* = *False*</code> whether to count items with only spaces as empty
+- <code>spaces_are_empty: *bool* = False</code> whether to count items with only spaces as empty
 
 **Returns:** the data with the empty items removed
 

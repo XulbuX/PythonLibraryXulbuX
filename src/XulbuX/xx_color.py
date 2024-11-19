@@ -159,9 +159,9 @@ class rgba:
 
     def blend(self, other: "rgba", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
+        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)
+        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
         """
         if not (isinstance(ratio, (int, float)) and 0 <= ratio <= 1):
             raise ValueError("'ratio' must be a float/int in [0.0, 1.0]")

@@ -10,17 +10,102 @@ rgba(
     a: float = None
 )
 ```
-Includes methods:
-- `to_hsla()` to convert to HSL color
-- `to_hexa()` to convert to HEX color
-- `has_alpha()` to check if the color has an alpha channel
-- `lighten(amount)` to create a lighter version of the color
-- `darken(amount)` to create a darker version of the color
-- `saturate(amount)` to increase color saturation
-- `desaturate(amount)` to decrease color saturation
-- `rotate(degrees)` to rotate the hue by degrees
-- `invert()` to get the inverse color
-- `grayscale()` to convert to grayscale
+The `rgba()` color object can be treated like a list/tuple with the items:<br>
+`0` = red channel value<br>
+`1` = green channel value<br>
+`2` = blue channel value<br>
+`3` = alpha channel value (*only if the color has an alpha channel*)
+
+If the `rgba()` color object is treated like a string, it will be the color in the format:<br>
+`(R, G, B)` if the color has no alpha channel<br>
+`(R, G, B, A)` if the color has an alpha channel
+
+<br>
+
+### `.to_hsla()`
+
+This method will convert the current color to a HSLA color.<br>
+**Returns:** the color as a `hsla()` color
+
+<br>
+
+### `.to_hexa()`
+
+This method will convert the current color to a HEXA color.<br>
+**Returns:** the color as a `hexa()` color
+
+<br>
+
+### `.has_alpha()`
+
+This method will check if the current color has an alpha channel.<br>
+**Returns:** `True` if the color has an alpha channel, `False` otherwise
+
+<br>
+
+### `.lighten()`
+
+This method will create a lighter version of the current color.<br>
+**Param:** <code>amount: *float*</code> the amount to lighten the color by (`0.0`-`1.0`)<br>
+**Returns:** the lightened `rgba()` color
+
+<br>
+
+### `.darken()`
+
+This method will create a darker version of the current color.<br>
+**Param:** <code>amount: *float*</code> the amount to darken the color by (`0.0`-`1.0`)<br>
+**Returns:** the darkened `rgba()` color
+
+<br>
+
+### `.saturate()`
+
+This method will increase the saturation of the current color.<br>
+**Param:** <code>amount: *float*</code> the amount to saturate the color by (`0.0`-`1.0`)<br>
+**Returns:** the saturated `rgba()` color
+
+<br>
+
+### `.desaturate()`
+
+This method will decrease the saturation of the current color.<br>
+**Param:** <code>amount: *float*</code> the amount to desaturate the color by (`0.0`-`1.0`)<br>
+**Returns:** the desaturated `rgba()` color
+
+<br>
+
+### `.rotate()`
+
+This method will rotate the hue of the current color.<br>
+**Param:** <code>degrees: *int*</code> the amount to rotate the hue by (`0`-`360`)<br>
+**Returns:** the rotated `rgba()` color
+
+<br>
+
+### `.invert()`
+
+This method will get the inverse color of the current color.<br>
+**Returns:** the inverse `rgba()` color
+
+<br>
+
+### `.grayscale()`
+
+This method will convert the current color to grayscale (*using the luminance formula*).<br>
+**Returns:** the grayscale `rgba()` color
+
+<br>
+
+### `.blend()`
+
+This method will blend (*additive*) the current color with another color.<br>
+**Params:**
+- <code>other: *rgba*</code> the color to blend with<br>
+- <code>ratio: *float*</code> the weight of each color when blending (`0.0`-`1.0`)<br>
+- <code>additive_alpha: *bool* = False</code> whether to blend the alpha channels additively as well or not
+
+**Returns:** the blended `rgba()` color
 - `blend(other, ratio)` to blend with another color
 - `is_dark()` to check if the color is considered dark
 - `is_light()` to check if the color is considered light
@@ -28,6 +113,11 @@ Includes methods:
 - `is_opaque()` to check if the color has no transparency
 - `with_alpha(alpha)` to create a new color with different alpha
 - `complementary()` to get the complementary color
+
+**Ratio Example:**<br>
+If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 *mixture*)<br>
+If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
+If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 *mixture*)
 
 <br>
 
@@ -43,6 +133,18 @@ hsla(
     a: float = None
 )
 ```
+The `hsla()` color object can be treated like a list/tuple with the items:<br>
+`0` = hue channel value<br>
+`1` = saturation channel value<br>
+`2` = lightness channel value<br>
+`3` = alpha channel value (*only if the color has an alpha channel*)
+
+If the `hsla()` color object is treated like a string, it will be the color in the format:<br>
+`(H, S, L)` if the color has no alpha channel<br>
+`(H, S, L, A)` if the color has an alpha channel
+
+<br>
+
 Includes methods:
 - `to_rgba()` to convert to RGB color
 - `to_hexa()` to convert to HEX color
@@ -72,6 +174,17 @@ hexa(
     color: str | int
 )
 ```
+The `hexa()` color object can be treated like a list/tuple with the items:<br>
+`0` = red channel value<br>
+`1` = green channel value<br>
+`2` = blue channel value<br>
+`3` = alpha channel value (*only if the color has an alpha channel*)
+
+If the `hexa()` color object is treated like a string, it will be the color in the format:<br>
+`#RRGGBB` if the color has no alpha channel<br>
+`#RRGGBBAA` if the color has an alpha channel
+
+
 Supports formats: RGB, RGBA, RRGGBB, RRGGBBAA (*with or without prefix*)<br>
 Includes methods:
 - `to_rgba()` to convert to RGB color
