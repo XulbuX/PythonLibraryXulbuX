@@ -699,8 +699,11 @@ class Color:
                 is_valid = 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
                 return (is_valid, "0x") if get_prefix else is_valid
             elif isinstance(color, str):
-                if get_prefix:
-                    prefix = "#" if color.startswith("#") else "0x" if color.startswith("0x") else None
+                color, prefix = (
+                    (color[1:], "#")
+                    if color.startswith("#")
+                    else (color[2:], "0x") if color.startswith("0x") else (color, None)
+                )
                 return (
                     (bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)), prefix)
                     if get_prefix
