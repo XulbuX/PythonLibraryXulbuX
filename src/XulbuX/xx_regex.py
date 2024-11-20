@@ -69,7 +69,7 @@ class Regex:
         return r"(?<=\b)(" + (func_name if func_name else r"[\w_]+") + r")\s*" + Regex.brackets("(", ")", is_group=True)
 
     @staticmethod
-    def rgba_str(fix_sep: str = ",", allow_alpha: bool = False) -> str:
+    def rgba_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
         """Matches an RGBA color inside a string.\n
         --------------------------------------------------------------------------------
         The RGBA color can be in the formats (for `fix_sep = ','`):<br>
@@ -87,7 +87,7 @@ class Regex:
         `a` 0-1 (float: opacity)\n
         --------------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number<br>
-        can be used to separate the RGB values, including just a space."""
+        can be used to separate the RGBA values, including just a space."""
         if fix_sep in (None, ""):
             fix_sep = r"[^0-9A-Z]"
         else:
@@ -105,7 +105,7 @@ class Regex:
         )
 
     @staticmethod
-    def hsla_str(fix_sep: str = ",", allow_alpha: bool = False) -> str:
+    def hsla_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
         """Matches a HSLA color inside a string.\n
         --------------------------------------------------------------------------------
         The HSLA color can be in the formats (for `fix_sep = ','`):<br>
@@ -123,7 +123,7 @@ class Regex:
         `a` 0-1 (float: opacity)\n
         --------------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number<br>
-        can be used to separate the HSL values, including just a space."""
+        can be used to separate the HSLA values, including just a space."""
         if fix_sep in (None, ""):
             fix_sep = r"[^0-9A-Z]"
         else:
@@ -138,4 +138,22 @@ class Regex:
             \s*\)?)"""
             if allow_alpha
             else rf"(?ix)(?:hsl|hsla)?\s*(?:\(?\s*{hsl_part}\s*\)?)"
+        )
+
+    @staticmethod
+    def hexa_str(allow_alpha: bool = True) -> str:
+        """Matches a HEXA color inside a string.\n
+        --------------------------------------------------------------------------
+        The HEXA color can be in the formats (prefix `#`, `0x` or no prefix):<br>
+        `RGB`<br>
+        `RGBA` (if `allow_alpha=True`)<br>
+        `RRGGBB`<br>
+        `RRGGBBAA` (if `allow_alpha=True`)\n
+        --------------------------------------------------------------------------
+        ### Valid ranges:<br>
+        each channel from 0-9 and A-F (*case insensitive*)"""
+        return (
+            r"(?i)^(?:#|0x)?[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$"
+            if allow_alpha
+            else r"(?i)^(?:#|0x)?[0-9A-F]{6}|[0-9A-F]{3}$"
         )

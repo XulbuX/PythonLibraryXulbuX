@@ -655,7 +655,7 @@ class Color:
                     )
                 return 0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
             elif isinstance(color, str):
-                return bool(_re.fullmatch(Regex.rgba_str(), color))
+                return bool(_re.fullmatch(Regex.rgba_str(allow_alpha=allow_alpha), color))
             return False
         except Exception:
             return False
@@ -686,29 +686,26 @@ class Color:
                 else:
                     return 0 <= color["h"] <= 360 and 0 <= color["s"] <= 100 and 0 <= color["l"] <= 100
             elif isinstance(color, str):
-                return bool(_re.fullmatch(Regex.hsla_str(), color))
+                return bool(_re.fullmatch(Regex.hsla_str(allow_alpha=allow_alpha), color))
         except Exception:
             return False
 
     @staticmethod
-    def is_valid_hexa(color: str, allow_alpha: bool = True, get_prefix: bool = False) -> bool | tuple[bool, str]:
+    def is_valid_hexa(color: str | int, allow_alpha: bool = True, get_prefix: bool = False) -> bool | tuple[bool, str]:
         try:
             if isinstance(color, hexa):
                 return (True, "#")
             elif isinstance(color, int):
                 is_valid = 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
                 return (is_valid, "0x") if get_prefix else is_valid
-            else:
-                if color.startswith("#"):
-                    color, prefix = color[1:], "#"
-                elif color.startswith("0x"):
-                    color, prefix = color[2:], "0x"
-                pattern = (
-                    r"(?i)^[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$"
-                    if allow_alpha
-                    else r"(?i)^[0-9A-F]{6}|[0-9A-F]{3}$"
+            elif isinstance(color, str):
+                if get_prefix:
+                    prefix = "#" if color.startswith("#") else "0x" if color.startswith("0x") else None
+                return (
+                    (bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)), prefix)
+                    if get_prefix
+                    else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color))
                 )
-                return (bool(_re.fullmatch(pattern, color)), prefix) if get_prefix else bool(_re.fullmatch(pattern, color))
         except Exception:
             return (False, None) if get_prefix else False
 
@@ -795,19 +792,30 @@ class Color:
         """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.<br>
         If `only_first` is `True` only the first found color will be returned (not as a list).
         """
-        matches = _re.findall(Regex.rgb_str(allow_alpha=True), string)
-        if not matches:
-            return None
-        result = [
-            rgba(
+        if only_first:
+            match = _re.search(Regex.rgb_str(allow_alpha=True), string)
+            if not match:
+                return None
+            m = match.groups()
+            return rgba(
                 int(m[0]),
                 int(m[1]),
                 int(m[2]),
                 ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
             )
-            for m in matches
-        ]
-        return result[0] if len(result) == 1 or only_first else result
+        else:
+            matches = _re.findall(Regex.rgb_str(allow_alpha=True), string)
+            if not matches:
+                return None
+            return [
+                rgba(
+                    int(m[0]),
+                    int(m[1]),
+                    int(m[2]),
+                    ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
+                )
+                for m in matches
+            ]
 
     @staticmethod
     def rgba_to_hex_int(

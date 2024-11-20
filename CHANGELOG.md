@@ -25,6 +25,7 @@
 * renamed the module `xx_env_vars` and it's class `EnvVars` to `xx_env_path` and `EnvPath`
 * added method `EnvPath.remove_path()`
 * introduced a new test for `xx_env_vars`
+* Added a `hexa_str()` preset to the `xx_regex` module
 
 ## 15.11.2024 `v1.5.7`
 * change the testing modules to be able to run together with the library `pytest`
