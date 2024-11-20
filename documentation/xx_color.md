@@ -647,7 +647,7 @@ This method will convert the given RGBA color to a HEX integer.<br>
 - <code>g: *int*</code> the green channel
 - <code>b: *int*</code> the blue channel
 - <code>a: *float* = None</code> an optional alpha channel
-- <code>_preserve_original: *bool* = False</code> whether to preserve the exact original color ([*not recommended setting this to true*](#color-rgbatohexint-preserveoriginal))
+- <code>preserve_original: *bool* = False</code> whether to preserve the exact original color ([*not recommended setting this to true*](#color-rgbatohexint-preserveoriginal))
 
 **Returns:** the converted color as a HEX integer
 
@@ -661,4 +661,4 @@ opaque black (*with alpha*): `0x000000FF` ⇾ is `255` as number ⇾ back to hex
 Since both colors are the same number as integers, it will lead to wrong results later on (*e.g. when converting back to a color*).
 
 To fix this, if the converted HEXA color starts with zeros, the first zero will be changed to `1`, so there's no leading zeros any more. This will change the color slightly, but almost unnoticeably.<br>
-If you don't want this behavior, set the `_preserve_original` param to `True`.
+If you don't want this behavior, set the `preserve_original` param to `True`.

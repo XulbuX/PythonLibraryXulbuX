@@ -18,14 +18,15 @@
 ## ... `v1.5.8`
 * added method `String.is_empty()` to check if the string is empty
 * added method `String.escape()` to escape special characters in a string
-* introduces a new test for `xx_data`
+* introduced a new test for `xx_data` (*all methods*)
 * added doc-strings to all the methods in `xx_data`
 * made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
 * renamed the module `xx_cmd` and it's class `Cmd` to `xx_console` and `Console`
 * renamed the module `xx_env_vars` and it's class `EnvVars` to `xx_env_path` and `EnvPath`
 * added method `EnvPath.remove_path()`
-* introduced a new test for `xx_env_vars`
+* introduced a new test for `xx_env_vars` (*all methods*)
 * Added a `hexa_str()` preset to the `xx_regex` module
+* introduced a new test for the methods from the `Color` class in `xx_color`
 
 ## 15.11.2024 `v1.5.7`
 * change the testing modules to be able to run together with the library `pytest`

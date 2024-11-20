@@ -823,40 +823,43 @@ class Color:
         g: int,
         b: int,
         a: float = None,
-        _preserve_original: bool = False,
+        preserve_original: bool = False,
     ) -> int:
         """Convert RGBA channels to a HEXA integer (alpha is optional).\n
         -------------------------------------------------------------------------------------------------------------------------
-        To preserve leading zeros, the function will add a `1` at the beginning, if the HEX value would start with a `0`.<br>
+        To preserve leading zeros, the function will add a `1` at the beginning, if the HEX integer would start with a `0`.<br>
         This could affect the color a little bit, but will make sure, that it won't be interpreted as a completely different<br>
-        color, when initializing it as a `hexa()` color or changing it back to RGBA using `Color.hex_to_rgba()`.\n
-        ⇾ **You can disable this behavior by setting `_preserve_original` to `True`**
-        """
+        color, when initializing it as a `hexa()` color or changing it back to RGBA using `Color.hex_int_to_rgba()`.\n
+        ⇾ **You can disable this behavior by setting `preserve_original` to `True`**"""
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
         if a is not None:
-            if isinstance(a, float):
-                a = int(a * 255)
-            a = max(0, min(255, int(a)))
+            a = max(0, min(255, int(a * 255)))
             hex_int = (r << 24) | (g << 16) | (b << 8) | a
-            if not _preserve_original and r == 0:
+            if not preserve_original and r == 0:
                 hex_int |= 0x01000000
         else:
             hex_int = (r << 16) | (g << 8) | b
-            if not _preserve_original and (hex_int & 0xF00000) == 0:
+            if not preserve_original and (hex_int & 0xF00000) == 0:
                 hex_int |= 0x010000
         return hex_int
 
     @staticmethod
-    def hex_int_to_rgba(hex_int: int) -> tuple[int, int, int, float | int | None]:
+    def hex_int_to_rgba(hex_int: int, preserve_original: bool = False) -> tuple[int, int, int, float | None]:
+        """Convert a HEX integer to RGBA channels.\n
+        -----------------------------------------------------------------------------------------------
+        If the red channel is `1` after conversion, it will be set to `0`, because when converting<br>
+        from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.<br>
+        This is the correction, so the color doesn't even look slightly different.\n
+        ⇾ **You can disable this behavior by setting `preserve_original` to `True`**"""
         if not isinstance(hex_int, int):
-            raise ValueError("Input must be an integer (hex value)")
+            raise ValueError("Input must be an integer")
         hex_str = f"{hex_int:x}"
         if len(hex_str) <= 6:
             hex_str = hex_str.zfill(6)
             return (
-                int(hex_str[0:2], 16),
+                r if (r := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
                 int(hex_str[2:4], 16),
                 int(hex_str[4:6], 16),
                 None,
@@ -864,7 +867,7 @@ class Color:
         elif len(hex_str) <= 8:
             hex_str = hex_str.zfill(8)
             return (
-                int(hex_str[0:2], 16),
+                r if (r := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
                 int(hex_str[2:4], 16),
                 int(hex_str[4:6], 16),
                 int(hex_str[6:8], 16) / 255.0,

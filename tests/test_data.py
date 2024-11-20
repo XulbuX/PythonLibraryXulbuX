@@ -1,4 +1,4 @@
-import XulbuX as xx
+from XulbuX import Data
 
 
 # ! DON'T CHANGE THIS DATA !
@@ -29,23 +29,23 @@ d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": 
 
 
 def test_remove_comments():
-    assert xx.Data.remove_comments(d_comments, comment_sep="__") == {
+    assert Data.remove_comments(d_comments, comment_sep="__") == {
         "key1": ["value1", "value2", "val__ue3"],
         "key3": None,
     }
 
 
 def test_is_equal():
-    assert xx.Data.is_equal(d1_equal, d2_equal) == False
-    assert xx.Data.is_equal(d1_equal, d2_equal, ignore_paths="key3") == True
+    assert Data.is_equal(d1_equal, d2_equal) == False
+    assert Data.is_equal(d1_equal, d2_equal, ignore_paths="key3") == True
 
 
 def test_path_id():
-    id1, id2 = xx.Data.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])
+    id1, id2 = Data.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])
     assert id1 == "1>001"
     assert id2 == "1>012"
-    assert xx.Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
-    assert xx.Data.get_value_by_path_id(d1_path_id, id2) == "celery"
-    assert xx.Data.set_value_by_path_id(d2_path_id, ["1>001::NEW1", "1>012::NEW2"]) == {
+    assert Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
+    assert Data.get_value_by_path_id(d1_path_id, id2) == "celery"
+    assert Data.set_value_by_path_id(d2_path_id, ["1>001::NEW1", "1>012::NEW2"]) == {
         "school": {"material": ["pencil", "NEW1", "rubber"], "subjects": ["math", "science", "NEW2"]}
     }
