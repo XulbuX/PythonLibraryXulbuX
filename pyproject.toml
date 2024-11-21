@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "XulbuX"
+name = "xulbux"
 version = "1.5.7"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A library which includes a lot of really helpful functions."
@@ -70,8 +70,8 @@ keywords = [
 "Changelog" = "https://github.com/XulbuX-dev/PythonLibraryXulbuX/blob/main/CHANGELOG.md"
 
 [project.scripts]
-xx-help = "XulbuX._cli_:help_command"
-xulbux-help = "XulbuX._cli_:help_command"
+xx-help = "xulbux._cli_:help_command"
+xulbux-help = "xulbux._cli_:help_command"
 
 [tool.black]
 line-length = 127

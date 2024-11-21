@@ -1,4 +1,4 @@
-from XulbuX import Console
+from xulbux import Console
 
 
 def test_console_user():

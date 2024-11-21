@@ -1,4 +1,4 @@
-from XulbuX import Data
+from xulbux import Data
 
 
 # ! DON'T CHANGE THIS DATA !

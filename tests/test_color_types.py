@@ -1,4 +1,4 @@
-from XulbuX import rgba, hexa, hsla
+from xulbux import rgba, hexa, hsla
 
 
 # ! DONT'T CHANGE VALUES ! #

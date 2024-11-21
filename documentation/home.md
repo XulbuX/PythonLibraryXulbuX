@@ -13,12 +13,12 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 
 Open a console and run the command:
 ```css
-pip install XulbuX
+pip install xulbux
 ```
 This should install the latest version of the library, along with some other required libraries.<br>
 To upgrade the library (*if there is a new release*) run the following command in your console:
 ```css
-pip install --upgrade XulbuX
+pip install --upgrade xulbux
 ```
 
 <br>
@@ -27,11 +27,11 @@ pip install --upgrade XulbuX
 
 This imports the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
-import XulbuX as xx
+import xulbux as xx
 ```
 So you don't have to write `xx` in front of the library's types, you can import them directly:
 ```python
-from XulbuX import rgba, hsla, hexa
+from xulbux import rgba, hsla, hexa
 ```
 
 <br>

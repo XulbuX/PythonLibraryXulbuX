@@ -1,4 +1,4 @@
-import XulbuX as xx
+import xulbux as xx
 
 
 def test_get_paths():

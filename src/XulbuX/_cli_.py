@@ -24,9 +24,9 @@ def help_command():
 
   [b|#75A2FF]Usage:[*]
     [{color['punctuators']}]# GENERAL LIBRARY[*]
-    [{color['import']}]import [{color['lib']}]XulbuX [{color['import']}]as [{color['lib']}]xx[*]
+    [{color['import']}]import [{color['lib']}]xulbux [{color['import']}]as [{color['lib']}]xx[*]
     [{color['punctuators']}]# CUSTOM TYPES[*]
-    [{color['import']}]from [{color['lib']}]XulbuX [{color['import']}]import [{color['lib']}]rgba[{color['punctuators']}], [{color['lib']}]hsla[{color['punctuators']}], [{color['lib']}]hexa[*]
+    [{color['import']}]from [{color['lib']}]xulbux [{color['import']}]import [{color['lib']}]rgba[{color['punctuators']}], [{color['lib']}]hsla[{color['punctuators']}], [{color['lib']}]hexa[*]
 
   [b|#75A2FF]Includes:[*]
     [dim](•) CUSTOM TYPES:

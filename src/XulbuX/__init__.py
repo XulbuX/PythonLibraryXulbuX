@@ -1,5 +1,5 @@
 """
- >>> import XulbuX as xx
+ >>> import xulbux as xx
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   • CUSTOM TYPES:
      • rgba(int,int,int,float)

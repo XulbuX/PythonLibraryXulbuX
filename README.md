@@ -10,7 +10,7 @@ For precise information about the library, see the library's [Wiki page](https:/
 
 On all operating systems, run the following command:
 ```bash
-pip install XulbuX
+pip install xulbux
 ```
 
 
@@ -18,9 +18,9 @@ pip install XulbuX
 
 ```python
 # GENERAL LIBRARY
-import XulbuX as xx
+import xulbux as xx
 # CUSTOM TYPES
-from XulbuX import rgba, hsla, hexa
+from xulbux import rgba, hsla, hexa
 ```
 The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with above imported types*) contains the following modules:
 ```python
