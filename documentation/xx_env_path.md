@@ -23,7 +23,7 @@ This method will check if a path is present in the PATH variable.<br>
 
 <br>
 
-### `add_path()`
+### `add_path()`
 
 This method will add a path to the PATH variable (*if it's not already present*).<br>
 **Params:**
