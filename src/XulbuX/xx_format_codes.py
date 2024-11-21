@@ -124,7 +124,8 @@ class FormatCodes:
     def to_ansi(
         string: str, default_color: hexa | rgba = None, brightness_steps: int = 20, _default_start: bool = True
     ) -> str:
-        result = ""
+        result, bg_kwd, color_pref = string, {"bg"}, {"br", "bright"}
+
         if Color.is_valid_rgba(default_color, False):
             use_default = True
         elif Color.is_valid_hexa(default_color, False):
@@ -135,6 +136,9 @@ class FormatCodes:
             string = COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
             string = COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
 
+        def is_valid_color(color: str) -> bool:
+            return color in ANSI.color_map or Color.is_valid_rgba(color) or Color.is_valid_hexa(color)
+
         def replace_keys(match: _re.Match) -> str:
             format_keys = match.group(1)
             esc = match.group(2)
@@ -144,23 +148,30 @@ class FormatCodes:
             format_keys = [k.strip() for k in format_keys.split("|") if k.strip()]
             ansi_formats = [FormatCodes.__get_replacement(k, default_color, brightness_steps) for k in format_keys]
             if auto_reset_txt and not esc:
-                reset_keys = [
-                    (
-                        "_color"
-                        if k in ANSI.color_map or Color.is_valid_rgba(k) or Color.is_valid_hexa(k)
-                        else (
-                            "_bg"
-                            if ({"bg", "bright", "br"} & set(k.lower().split(":")))
-                            and len(k.split(":")) <= 3
-                            and any(
-                                k[i:] in ANSI.color_map or Color.is_valid_rgba(k[i:]) or Color.is_valid_hexa(k[i:])
-                                for i in range(len(k))
-                            )
-                            else f"_{k}"
-                        )
-                    )
-                    for k in format_keys
-                ]
+                reset_keys = []
+                for k in format_keys:
+                    k_lower = k.lower()
+                    k_parts = k_lower.split(":")
+                    k_set = set(k_parts)
+                    if bg_kwd & k_set and len(k_parts) <= 3:
+                        if k_set & color_pref:
+                            for i in range(len(k)):
+                                if is_valid_color(k[i:]):
+                                    reset_keys.extend(["_bg", "_color"])
+                                    break
+                        else:
+                            for i in range(len(k)):
+                                if is_valid_color(k[i:]):
+                                    reset_keys.append("_bg")
+                                    break
+                    elif is_valid_color(k) or any(
+                        k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon) :])
+                        for prefix in color_pref
+                    ):
+                        reset_keys.append("_color")
+                    else:
+                        reset_keys.append(f"_{k}")
+                print(reset_keys)
                 ansi_resets = [
                     r
                     for k in reset_keys
@@ -182,12 +193,8 @@ class FormatCodes:
                 + ("" if esc else "".join(ansi_resets))
             )
 
-        return (
-            (FormatCodes.__get_default_ansi(default_color) if _default_start else "")
-            + (result := "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n")))
-            if use_default
-            else result
-        )
+        result = "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n"))
+        return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + result if use_default else result
 
     @staticmethod
     @lru_cache(maxsize=64)
