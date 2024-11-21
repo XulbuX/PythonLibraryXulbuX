@@ -662,3 +662,58 @@ Since both colors are the same number as integers, it will lead to wrong results
 
 To fix this, if the converted HEXA color starts with zeros, the first zero will be changed to `1`, so there's no leading zeros any more. This will change the color slightly, but almost unnoticeably.<br>
 If you don't want this behavior, set the `preserve_original` param to `True`.
+
+<br>
+
+### `luminance()`
+
+This method will calculate the luminance of the given `R`, `G` and `B` values.<br>
+**Params:**
+- <code>r: *int*</code> the red channel
+- <code>g: *int*</code> the green channel
+- <code>b: *int*</code> the blue channel
+- <code>output_type: *type* = None</code> the type/range of the returned luminance value
+
+**Returns:**<br>
+the luminance value of the given `RGB` values as:
+- integer in `[0, 100]` if `output_type` is `int`
+- float in `[0.0, 1.0]` if `output_type` is `float`
+- integer in `[0, 255]` if `output_type` is `None`
+
+<br>
+
+### `text_color_for_on_bg()`
+
+This method will calculate if text should be black or white, depending on contrast to the given background color.<br>
+**Param:** <code>text_bg_color: *rgba* | *hexa*</code> the background color to check against<br>
+**Returns:**
+the color black or white in the format of the given background color:
+- `rgba()` color object if `text_bg_color` is an RGBA color
+- `hexa()` color object if `text_bg_color` is a HEXA color
+- HEX integer if `text_bg_color` is a HEX integer
+
+<br>
+
+### `adjust_lightness()`
+
+This method will adjust the lightness of the given color.<br>
+**Params:**
+- <code>color: *rgba* | *hexa*</code> the color to adjust
+- <code>lightness_change: *float*</code> the amount to adjust the lightness by, between `-1.0` (*darken by 100%*) and `1.0` (*lighten by 100%*)
+
+**Returns:**<br>
+the adjusted color as a `rgba()` color object, if the given color is an RGBA color<br>
+the adjusted color as a `hexa()` color object, if the given color is a HEXA color
+
+<br>
+
+### `adjust_saturation()`
+
+This method will adjust the saturation of the given color.<br>
+**Params:**
+- <code>color: *rgba* | *hexa*</code> the color to adjust
+- <code>saturation_change: *float*</code> the amount to adjust the saturation by, between `-1.0` (*desaturate by 100%*) and `1.0` (*saturate by 100%)
+
+**Returns:**<br>
+the adjusted color as a `rgba()` color object, if the given color is an RGBA color<br>
+the adjusted color as a `hexa()` color object, if the given color is a HEXA color

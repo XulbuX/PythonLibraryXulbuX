@@ -904,28 +904,25 @@ class Color:
 
     @staticmethod
     def text_color_for_on_bg(
-        title_bg_color: rgba | hexa = 0xFFF,
+        text_bg_color: rgba | hexa = 0xFFF,
     ) -> rgba | hexa:
-        (was_hexa, hexa_prefix), was_int = Color.is_valid_hexa(title_bg_color, get_prefix=True), isinstance(
-            title_bg_color, int
-        )
-        title_bg_color = Color.to_rgba(title_bg_color)
-        brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
+        was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
+        text_bg_color = Color.to_rgba(text_bg_color)
+        brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
         return (
-            (hexa(f"{hexa_prefix}FFF") if was_hexa else rgba(255, 255, 255))
+            (hexa("#FFF") if was_hexa else rgba(255, 255, 255))
             if brightness < 128
-            else ((0x000 if was_int else hexa(f"{hexa_prefix}000")) if was_hexa else rgba(0, 0, 0))
+            else ((0x000 if was_int else hexa("#000")) if was_hexa else rgba(0, 0, 0))
         )
 
     @staticmethod
-    def adjust_lightness(color: rgba | hexa, brightness_change: float) -> rgba | hexa:
+    def adjust_lightness(color: rgba | hexa, lightness_change: float) -> rgba | hexa:
         """In- or decrease the lightness of the input color.\n
         ----------------------------------------------------------------------------------------------------
         **color** (rgba|hexa): HEX or RGBA color<br>
-        **brightness_change** (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
+        **lightness_change** (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
         ----------------------------------------------------------------------------------------------------
-        **returns** (rgba|hexa): the adjusted color in the format of the input color
-        """
+        **returns** (rgba|hexa): the adjusted color in the format of the input color"""
         was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = (
@@ -934,7 +931,7 @@ class Color:
             color[2],
             color[3] if Color.has_alpha(color) else None,
         )
-        l = int(max(0, min(100, l + brightness_change * 100)))
+        l = int(max(0, min(100, l + lightness_change * 100)))
         return Color.to_hexa((h, s, l, a)) if was_hexa else Color.to_rgba((h, s, l, a))
 
     @staticmethod
@@ -944,8 +941,7 @@ class Color:
         **color** (rgba|hexa): HEX or RGBA color<br>
         **saturation_change** (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
         ---------------------------------------------------------------------------------------------------------
-        **returns** (rgba|hexa): the adjusted color in the format of the input color
-        """
+        **returns** (rgba|hexa): the adjusted color in the format of the input color"""
         was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = (
