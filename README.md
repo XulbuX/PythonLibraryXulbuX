@@ -8,20 +8,29 @@ For precise information about the library, see the library's [Wiki page](https:/
 
 ## Installation
 
-On all operating systems, run the following command:
-```bash
+Open a console and run the command:
+```css
 pip install xulbux
+```
+This should install the latest version of the library, along with some other required libraries.<br>
+To upgrade the library (*if there is a new release*) run the following command in your console:
+```css
+pip install --upgrade xulbux
 ```
 
 
 ## Usage
 
+Import the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
-# GENERAL LIBRARY
 import xulbux as xx
-# CUSTOM TYPES
+```
+So you don't have to write `xx` in front of the library's types, you can import them directly:
+```python
 from xulbux import rgba, hsla, hexa
 ```
+
+
 The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with above imported types*) contains the following modules:
 ```python
   • CUSTOM TYPES:

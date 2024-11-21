@@ -25,7 +25,7 @@ pip install --upgrade xulbux
 
 # Usage
 
-This imports the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
+Import the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
 import xulbux as xx
 ```
