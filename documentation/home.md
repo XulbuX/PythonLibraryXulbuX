@@ -12,12 +12,12 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 # Installation
 
 Open a console and run the command:
-```css
+```prolog
 pip install xulbux
 ```
 This should install the latest version of the library, along with some other required libraries.<br>
 To upgrade the library (*if there is a new release*) run the following command in your console:
-```css
+```prolog
 pip install --upgrade xulbux
 ```
 
