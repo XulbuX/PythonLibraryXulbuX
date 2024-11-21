@@ -3,7 +3,7 @@ This class includes methods, used to work with strings, which include code.
 
 <br>
 
-### `Code.add_indent()`
+### `add_indent()`
 
 This method will add `indent` spaces at the beginning of each line.<br>
 **Params:**
@@ -14,7 +14,7 @@ This method will add `indent` spaces at the beginning of each line.<br>
 
 <br>
 
-### `Code.get_tab_spaces()`
+### `get_tab_spaces()`
 
 This method will try to get the amount of spaces that are used for indentation.<br>
 **Param:** <code>code: *str*</code> the string to get the tab spaces from<br>
@@ -22,7 +22,7 @@ This method will try to get the amount of spaces that are used for indentation.<
 
 <br>
 
-### `Code.change_tab_size()`
+### `change_tab_size()`
 
 This method will change the amount of spaces used for indentation.<br>
 **Params:**
@@ -34,7 +34,7 @@ This method will change the amount of spaces used for indentation.<br>
 
 <br>
 
-### `Code.get_func_calls()`
+### `get_func_calls()`
 
 This method will try to get all the function/method calls (*JavaScript, Python, etc. style functions/methods*).<br>
 **Param:** <code>code: *str*</code> the string to get the function/method calls from<br>
@@ -42,7 +42,7 @@ This method will try to get all the function/method calls (*JavaScript, Python, 
 
 <br>
 
-### `Code.is_js()`
+### `is_js()`
 
 This method will check if the code is likely to be JavaScript.<br>
 **Param:** <code>code: *str*</code> the string to check<br>

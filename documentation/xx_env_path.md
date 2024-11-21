@@ -3,7 +3,7 @@ This class includes methods to work with the PATH variable from environment vari
 
 <br>
 
-### `EnvPath.paths()`
+### `paths()`
 
 This method will return the PATH variable as a string or a list with the separated paths.<br>
 **Param:** <code>as_list: *bool* = False</code> whether to return the paths as a list or a string<br>
@@ -11,7 +11,7 @@ This method will return the PATH variable as a string or a list with the separat
 
 <br>
 
-### `EnvPath.has_path()`
+### `has_path()`
 
 This method will check if a path is present in the PATH variable.<br>
 **Params:**
@@ -23,7 +23,7 @@ This method will check if a path is present in the PATH variable.<br>
 
 <br>
 
-### `EnvPath.add_path()`
+### `add_path()`
 
 This method will add a path to the PATH variable (*if it's not already present*).<br>
 **Params:**
@@ -33,7 +33,7 @@ This method will add a path to the PATH variable (*if it's not already present*)
 
 <br>
 
-### `EnvPath.remove_path()`
+### `remove_path()`
 
 This method will remove a path from the PATH variable (*if it's present*).<br>
 **Params:**

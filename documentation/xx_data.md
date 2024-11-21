@@ -3,7 +3,7 @@ This class includes methods, used to work with lists, tuples, sets, frozensets a
 
 <br>
 
-### `Data.chars_count()`
+### `chars_count()`
 
 This method will return the sum of the amount of all the characters (*including the keys if it's a dictionary*) in data.<br>
 **Param:** <code>data: *list* | *tuple* | *set* | *frozenset* | *dict*</code> the data to count the characters in<br>
@@ -11,7 +11,7 @@ This method will return the sum of the amount of all the characters (*including 
 
 <br>
 
-### `Data.strip()`
+### `strip()`
 
 This method will remove all leading and trailing whitespaces from data items.<br>
 **Param:** <code>data: *list* | *tuple* | *set* | *frozenset* | *dict*</code> the data to strip<br>
@@ -19,7 +19,7 @@ This method will remove all leading and trailing whitespaces from data items.<br
 
 <br>
 
-### `Data.remove_empty_items()`
+### `remove_empty_items()`
 
 This method will remove empty items from data.<br>
 **Params:**
@@ -30,7 +30,7 @@ This method will remove empty items from data.<br>
 
 <br>
 
-### `Data.remove_duplicates()`
+### `remove_duplicates()`
 
 This method will remove duplicate items from data.<br>
 **Param:** <code>data: *list* | *tuple* | *set* | *frozenset* | *dict*</code> the data to remove duplicates from<br>
@@ -38,7 +38,7 @@ This method will remove duplicate items from data.<br>
 
 <br>
 
-### <span id="data-removecomments">`Data.remove_comments()`</span>
+### <span id="data-removecomments">`remove_comments()`</span>
 
 This method will remove custom defined comments from the data's keys, items and values.<br>
 **Params:**
@@ -93,7 +93,7 @@ For `key3`, since all its values are just comments, the key will still exist, bu
 
 <br>
 
-### `Data.is_equal()`
+### `is_equal()`
 
 This method will check if two data structures are equal (*comments not ignored*).<br>
 **Params:**
@@ -108,7 +108,7 @@ This method will check if two data structures are equal (*comments not ignored*)
 
 <br>
 
-### <span id="data-getpathid">`Data.get_path_id()`</span>
+### <span id="data-getpathid">`get_path_id()`</span>
 
 This method generates a unique ID based on the path to a specific value within a nested data structure.<br>
 **Params:**
@@ -139,7 +139,7 @@ The `path_sep` parameter is the separator between the keys/indexes in the value 
 
 <br>
 
-### `Data.get_value_by_path_id()`
+### `get_value_by_path_id()`
 
 This method tries to retrieve a value, using the provided path ID (*generated with* [`Data.get_path_id()`](#data-getpathid)), within a nested data structure.<br>
 **Params:**
@@ -151,7 +151,7 @@ This method tries to retrieve a value, using the provided path ID (*generated wi
 
 <br>
 
-### `Data.set_value_by_path_id()`
+### `set_value_by_path_id()`
 
 This method updates a value (*or a list of values*), using the provided path ID (*generated with* [`Data.get_path_id()`](#data-getpathid)), within a nested data structure.<br>
 **Params:**
@@ -179,7 +179,7 @@ The `sep` parameter is the separator between the path ID and the new value. In t
 
 <br>
 
-### `Data.print()`
+### `print()`
 
 This method prints a nested data structure in a nicely formatted way.<br>
 **Params:**
@@ -192,7 +192,7 @@ This method prints a nested data structure in a nicely formatted way.<br>
 
 <br>
 
-### `Data.to_str()`
+### `to_str()`
 
 This method converts a nested data structure into a nicely formatted string.<br>
 **Params:**

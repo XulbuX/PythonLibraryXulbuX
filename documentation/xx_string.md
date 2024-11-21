@@ -1,7 +1,7 @@
 
 <br>
 
-### `String.normalize_spaces()`
+### `normalize_spaces()`
 
 This method will replace all special space characters with normal spaces.<br>
 **Params:**
