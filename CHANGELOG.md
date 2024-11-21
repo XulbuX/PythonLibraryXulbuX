@@ -15,7 +15,13 @@
 # <br><b>Changelog</b><br>
 
 
-## ... `v1.5.8`
+## ... `v1.5.9`
+* fixed bug in method `to_ansi()` in module `xx_format_codes`:<br>
+  the method always returned an empty string, because the color validation was broken and it would identify all colors as invalid<br>
+  now the validation `Color.is_valid_rgba()` and `Color.is_valid_hexa()` are fixed and now, if a color is identified as invalid, the method returns the original string instead of an empty string
+* introduced a new test for the `xx_format_codes` module
+
+## 21.11.2024 `v1.5.8`
 * renamed the library from `XulbuX` to `xulbux` for better naming conventions
 * added method `String.is_empty()` to check if the string is empty
 * added method `String.escape()` to escape special characters in a string
