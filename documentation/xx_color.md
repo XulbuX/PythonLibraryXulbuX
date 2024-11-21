@@ -558,7 +558,7 @@ This class includes all sorts of methods for working with colors in general (*RG
 
 <br>
 
-### `Color.is_valid_rgba()`
+### `is_valid_rgba()`
 
 This method will confirm if the given color is a valid RGBA color.<br>
 **Params:**
@@ -569,7 +569,7 @@ This method will confirm if the given color is a valid RGBA color.<br>
 
 <br>
 
-### `Color.is_valid_hsla()`
+### `is_valid_hsla()`
 
 This method  will confirm if the given color is a valid HSLA color.<br>
 **Params:**
@@ -580,7 +580,7 @@ This method  will confirm if the given color is a valid HSLA color.<br>
 
 <br>
 
-### `Color.is_valid_hexa()`
+### `is_valid_hexa()`
 
 This method  will confirm if the given color is a valid HEXA color.<br>
 **Params:**
@@ -594,7 +594,7 @@ If `get_prefix` is true: `(True, <prefix>)` if the color is valid, `(False, No
 
 <br>
 
-### `Color.has_alpha()`
+### `has_alpha()`
 
 This method will confirm if the given color has an alpha channel.<br>
 **Param:** <code>color: *rgba* | *hsla* | *hexa*</code> the color to check<br>
@@ -602,7 +602,7 @@ This method will confirm if the given color has an alpha channel.<br>
 
 <br>
 
-### `Color.to_rgba()`
+### `to_rgba()`
 
 This method will convert the given color to a `rgba()` color object.<br>
 **Param:** <code>color: *hsla* | *hexa*</code> the color to convert<br>
@@ -610,7 +610,7 @@ This method will convert the given color to a `rgba()` color object.<br>
 
 <br>
 
-### `Color.to_hsla()`
+### `to_hsla()`
 
 This method will convert the given color to a `hsla()` color object.<br>
 **Param:** <code>color: *rgba* | *hexa*</code> the color to convert<br>
@@ -618,7 +618,7 @@ This method will convert the given color to a `hsla()` color object.<br>
 
 <br>
 
-### `Color.to_hexa()`
+### `to_hexa()`
 
 This method will convert the given color to a `hexa()` color object.<br>
 **Param:** <code>color: *rgba* | *hsla*</code> the color to convert<br>
@@ -626,7 +626,7 @@ This method will convert the given color to a `hexa()` color object.<br>
 
 <br>
 
-### `Color.str_to_rgba()`
+### `str_to_rgba()`
 
 This method will try to find RGBA colors in the given string and convert them into a `rgba()` color object.<br>
 **Params:**
@@ -639,7 +639,7 @@ If `only_first` is false: all found colors as a list of `rgba()` color objects
 
 <br>
 
-### `Color.rgba_to_hex_int()`
+### `rgba_to_hex_int()`
 
 This method will convert the given RGBA color to a HEX integer.<br>
 **Params:**
