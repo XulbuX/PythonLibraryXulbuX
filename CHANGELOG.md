@@ -16,6 +16,7 @@
 
 
 ## ... `v1.5.8`
+* renamed the library from `XulbuX` to `xulbux` for better naming conventions
 * added method `String.is_empty()` to check if the string is empty
 * added method `String.escape()` to escape special characters in a string
 * introduced a new test for `xx_data` (*all methods*)
