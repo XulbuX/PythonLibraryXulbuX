@@ -171,7 +171,6 @@ class FormatCodes:
                         reset_keys.append("_color")
                     else:
                         reset_keys.append(f"_{k}")
-                print(reset_keys)
                 ansi_resets = [
                     r
                     for k in reset_keys
