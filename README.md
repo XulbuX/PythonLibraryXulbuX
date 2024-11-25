@@ -31,25 +31,16 @@ from xulbux import rgba, hsla, hexa
 ```
 
 
-The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with above imported types*) contains the following modules:
-```python
-  • CUSTOM TYPES:
-     • rgba(int,int,int,float)
-     • hsla(int,int,int,float)
-     • hexa(str)
-  • PATH OPERATIONS          xx.Path
-  • FILE OPERATIONS          xx.File
-  • JSON FILE OPERATIONS     xx.Json
-  • SYSTEM ACTIONS           xx.System
-  • MANAGE THE ENV PATH VAR  xx.EnvPath
-  • CONSOLE LOG AND ACTIONS  xx.Console
-  • EASY PRETTY PRINTING     xx.FormatCodes
-  • WORKING WITH COLORS      xx.Color
-  • DATA OPERATIONS          xx.Data
-  • STRING OPERATIONS        xx.String
-  • CODE STRING OPERATIONS   xx.Code
-  • REGEX PATTERN TEMPLATES  xx.Regex
-```
+# Modules
+
+| | |
+| :------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------- |
+| <h3>[`xx_code`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_code)</h3>         | code-string operations (*changing the indent, finding function calls, ...*)               |
+| <h3>[`xx_color`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_color)</h3>       | everything around colors (*converting, blending, searching colors in strings, ...*)       |
+| <h3>[`xx_console`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_console)</h3>   | all sorts of actions related to the console (*pretty logging, advanced inputs, ...*)      |
+| <h3>[`xx_data`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_data)</h3>         | operations with data structures (*compare, generate path ID's, pretty print/format, ...*) |
+| <h3>[`xx_env_path`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_env_path)</h3> | getting and editing the PATH variable (*get paths, check for paths, add paths, ...*)      |
+| <h3>[`xx_string`](https://github.com/XulbuX-dev/PythonLibraryXulbuX/wiki/xx_string)</h3>     | helpful actions when working with strings. (*normalize, escape, decompose, ...*)          |
 
 
 <br>
