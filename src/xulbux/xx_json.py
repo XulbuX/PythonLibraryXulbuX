@@ -22,7 +22,7 @@ class Json:
         the the section from `comment_start` to `comment_end` is ignored.<br>
         If `return_original` is set to `True`, the original JSON is returned<br>
         additionally. (returns: `[processed_json, original_json]`)"""
-        file_path = File._make_path(json_file, "json", prefer_base_dir=True)
+        file_path = File.make_path(json_file, "json", prefer_base_dir=True)
         with open(file_path, "r") as f:
             content = f.read()
         try:
@@ -42,7 +42,7 @@ class Json:
         compactness: int = 1,
         force: bool = False,
     ) -> str:
-        file_path = File._make_path(new_file, "json", prefer_base_dir=True)
+        file_path = File.make_path(new_file, "json", prefer_base_dir=True)
         if _os.path.exists(file_path) and not force:
             with open(file_path, "r", encoding="utf-8") as existing_f:
                 existing_content = _json.load(existing_f)

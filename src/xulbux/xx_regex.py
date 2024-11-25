@@ -22,16 +22,14 @@ class Regex:
         **`quote`** the quote type (single or double)<br>
         **`string`** everything inside the found quote pair\n
         ------------------------------------------------------------------------------------
-        **Attention:** Requires non standard library `regex` not standard library `re`!
-        """
+        **Attention:** Requires non standard library `regex` not standard library `re`!"""
         return r'(?P<quote>[\'"])(?P<string>(?:\\.|(?!\g<quote>).)*?)\g<quote>'
 
     @staticmethod
     def brackets(bracket1: str = "(", bracket2: str = ")", is_group: bool = False) -> str:
         """Matches everything inside brackets, including other nested brackets.\n
         ------------------------------------------------------------------------------------
-        **Attention:** Requires non standard library `regex` not standard library `re`!
-        """
+        **Attention:** Requires non standard library `regex` not standard library `re`!"""
         g, b1, b2 = (
             "" if is_group else "?:",
             _re.escape(bracket1) if len(bracket1) == 1 else bracket1,
@@ -51,10 +49,10 @@ class Regex:
         is_group: bool = False,
     ) -> str:
         """Matches everything except `disallowed_pattern`, unless the `disallowed_pattern` is found inside a string (`'...'` or `"..."`).\n
-        ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        The `ignore_pattern` is just always ignored. For example if `disallowed_pattern` is `>` and `ignore_pattern` is `->`, the `->`-arrows will be allowed, even though they have `>` in them.<br>
-        If `is_group` is `True`, you will be able to reference the matched content as a group (e.g. <code>match.group(<i>int</i>)</code> or <code>r'\\<i>int</i>'</code>).
-        """
+        ------------------------------------------------------------------------------------------------------------------------------------
+        The `ignore_pattern` is just always ignored. For example if `disallowed_pattern` is `>` and `ignore_pattern` is `->`, the `->`<br>
+        -arrows will be allowed, even though they have `>` in them. If `is_group` is `True`, you will be able to reference the matched<br>
+        content as a group (e.g. <code>match.group(<i>int</i>)</code> or <code>r'\\<i>int</i>'</code>)."""
         return rf'({"" if is_group else "?:"}(?:(?!{ignore_pattern}).)*(?:(?!{Regex.outside_strings(disallowed_pattern)}).)*)'
 
     @staticmethod
@@ -64,8 +62,7 @@ class Regex:
         **`2`** the function's arguments\n
         If no `func_name` is given, it will match any function call.\n
         ------------------------------------------------------------------------------------
-        **Attention:** Requires non standard library `regex` not standard library `re`!
-        """
+        **Attention:** Requires non standard library `regex` not standard library `re`!"""
         return r"(?<=\b)(" + (func_name if func_name else r"[\w_]+") + r")\s*" + Regex.brackets("(", ")", is_group=True)
 
     @staticmethod

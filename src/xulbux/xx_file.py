@@ -7,29 +7,6 @@ import os as _os
 class File:
 
     @staticmethod
-    def _make_path(
-        filename: str,
-        filetype: str,
-        search_in: str | list[str] = None,
-        prefer_base_dir: bool = True,
-        correct_path: bool = False,
-    ) -> str:
-        """Get the path to a file in the cwd, the base-dir, or predefined directories.\n
-        --------------------------------------------------------------------------------------
-        If the `filename` is not found in the above directories, it will be searched<br>
-        in the `search_in` directory/directories. If the file is still not found, it will<br>
-        return the path to the file in the base-dir per default or to the file in the<br>
-        cwd if `prefer_base_dir` is set to `False`."""
-        if not filename.lower().endswith(f".{filetype.lower()}"):
-            filename = f"{filename}.{filetype.lower()}"
-        try:
-            return Path.extend(filename, search_in, True, correct_path)
-        except FileNotFoundError:
-            return (
-                _os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else _os.path.join(_os.getcwd(), filename)
-            )
-
-    @staticmethod
     def rename_extension(file_path: str, new_extension: str) -> str:
         directory, filename_with_ext = _os.path.split(file_path)
         filename = filename_with_ext.split(".")[0]
@@ -54,3 +31,26 @@ class File:
             f.write(content)
         full_path = _os.path.abspath(file)
         return full_path
+
+    @staticmethod
+    def make_path(
+        filename: str,
+        filetype: str,
+        search_in: str | list[str] = None,
+        prefer_base_dir: bool = True,
+        correct_path: bool = False,
+    ) -> str:
+        """Create the path to a file in the cwd, the base-dir, or predefined directories.\n
+        --------------------------------------------------------------------------------------
+        If the `filename` is not found in the above directories, it will be searched<br>
+        in the `search_in` directory/directories. If the file is still not found, it will<br>
+        return the path to the file in the base-dir per default or to the file in the<br>
+        cwd if `prefer_base_dir` is set to `False`."""
+        if not filename.lower().endswith(f".{filetype.lower()}"):
+            filename = f"{filename}.{filetype.lower()}"
+        try:
+            return Path.extend(filename, search_in, True, correct_path)
+        except FileNotFoundError:
+            return (
+                _os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else _os.path.join(_os.getcwd(), filename)
+            )
