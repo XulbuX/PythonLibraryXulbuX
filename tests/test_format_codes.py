@@ -20,7 +20,7 @@ reset_underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_underline', '_u')]
 
 def test_codes_to_ansi():
     assert (
-        FormatCodes.to_ansi("[b|#000|bg:red](Hello) [i|u|#F87](world)[default]!", "#FFF")
+        FormatCodes.to_ansi("[b|#000|bg:red](Hello) [i|u|#F87](world)[default]!", default_color="#FFF")
         == f"{default}{bold}{black}{bg_red}"
         + "Hello"
         + f"{reset_bold}{reset_color}{reset_bg}"
