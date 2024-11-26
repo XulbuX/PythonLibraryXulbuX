@@ -3,8 +3,8 @@ from xulbux import FormatCodes
 
 
 black = ANSI.seq_color.format(0, 0, 0)
-bg_red = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bg:bright:red', 'bg:br:red')]}{ANSI.end}"
-default = FormatCodes.__get_default_ansi("#FFF")
+bg_red = f"{ANSI.char}{ANSI.start}{ANSI.codes_map['bg:red']}{ANSI.end}"
+default = ANSI.seq_color.format(255, 255, 255)
 orange = ANSI.seq_color.format(255, 136, 119)
 
 bold = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bold', 'b')]}{ANSI.end}"
