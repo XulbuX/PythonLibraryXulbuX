@@ -3,7 +3,8 @@ from xulbux import FormatCodes
 
 
 black = ANSI.seq_color.format(0, 0, 0)
-bg_bright_red = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bg:bright:red', 'bg:br:red')]}{ANSI.end}"
+bg_red = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bg:bright:red', 'bg:br:red')]}{ANSI.end}"
+default = FormatCodes.__get_default_ansi("#FFF")
 orange = ANSI.seq_color.format(255, 136, 119)
 
 bold = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bold', 'b')]}{ANSI.end}"
@@ -19,13 +20,13 @@ reset_underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_underline', '_u')]
 
 def test_codes_to_ansi():
     assert (
-        FormatCodes.to_ansi("[b|#000|bg:br:red](Hello) [i|u|#F87](world)!")
-        == f"{bold}{black}{bg_bright_red}"
+        FormatCodes.to_ansi("[b|#000|bg:red](Hello) [i|u|#F87](world)[default]!", "#FFF")
+        == f"{default}{bold}{black}{bg_red}"
         + "Hello"
-        + f"{reset_bold}{reset_color}{reset_bg}{reset_color}"
+        + f"{reset_bold}{reset_color}{reset_bg}"
         + " "
         + f"{italic}{underline}{orange}"
         + "world"
-        + f"{reset_italic}{reset_underline}{reset_color}"
+        + f"{reset_italic}{reset_underline}{reset_color}{default}"
         + "!"
     )
