@@ -16,7 +16,7 @@ class Code:
     @staticmethod
     def get_tab_spaces(code: str) -> int:
         """Will try to get the amount of spaces used for indentation."""
-        code_lines = String.get_string_lines(code, remove_empty_lines=True)
+        code_lines = String.get_lines(code, remove_empty_lines=True)
         indents = [len(line) - len(line.lstrip()) for line in code_lines]
         non_zero_indents = [i for i in indents if i > 0]
         return min(non_zero_indents) if non_zero_indents else 0
@@ -26,8 +26,8 @@ class Code:
         """Replaces all tabs with `new_tab_size` spaces.<br>
         If `remove_empty_lines` is `True`, empty lines will be removed in the process.
         """
-        code_lines = String.get_string_lines(code, remove_empty_lines=True)
-        lines = code_lines if remove_empty_lines else String.get_string_lines(code)
+        code_lines = String.get_lines(code, remove_empty_lines=True)
+        lines = code_lines if remove_empty_lines else String.get_lines(code)
         tab_spaces = Code.get_tab_spaces(code)
         if (tab_spaces == new_tab_size) or tab_spaces == 0:
             if remove_empty_lines:

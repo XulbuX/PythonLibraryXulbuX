@@ -5,36 +5,54 @@ class String:
 
     @staticmethod
     def to_type(string: str) -> any:
-        """Will convert a string to a type."""
-        if string.lower() in ("true", "false"):  # BOOLEAN
+        """Will convert a string to the found type."""
+        string = string.strip()  # Clean up whitespace
+        # BOOLEAN
+        if _re.match(r"(?i)^(true|false)$", string):
             return string.lower() == "true"
-        elif string.lower() in ("none", "null", "undefined"):  # NONE
+        # NONE
+        elif _re.match(r"(?i)^(none|null|undefined)$", string):
             return None
-        elif string.startswith("[") and string.endswith("]"):  # LIST
-            return [String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip()]
-        elif string.startswith("(") and string.endswith(")"):  # TUPLE
-            return tuple(String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip())
-        elif string.startswith("{") and string.endswith("}"):  # SET
-            return {String.to_type(item.strip()) for item in string[1:-1].split(",") if item.strip()}
-        elif string.startswith("{") and string.endswith("}") and ":" in string:  # DICTIONARY
+        # INTEGER
+        elif _re.match(r"^-?\d+$", string):
+            return int(string)
+        # FLOAT
+        elif _re.match(r"^-?\d+\.\d+$", string):
+            return float(string)
+        # COMPLEX
+        elif _re.match(r"^(-?\d+(\.\d+)?[+-]\d+(\.\d+)?j)$", string):
+            return complex(string)
+        # QUOTED STRING
+        elif _re.match(r'^["\'](.*)["\']$', string):
+            return string[1:-1]
+        # BYTES
+        elif _re.match(r"^b['\"](.*)['\"]$", string):
+            return bytes(string[2:-1], "utf-8")
+        # LIST
+        elif _re.match(r"^\[(.*)\]$", string):
+            return [
+                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,\[\]]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
+            ]
+        # TUPLE
+        elif _re.match(r"^\((.*)\)$", string):
+            return tuple(
+                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,\(\)]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
+            )
+        # DICTIONARY
+        elif _re.match(r"^\{(.*)\}$", string) and ":" in string:
             return {
                 String.to_type(k.strip()): String.to_type(v.strip())
-                for k, v in (item.split(":") for item in string[1:-1].split(",") if item.strip())
+                for k, v in _re.findall(
+                    r"((?:[^:,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+)\s*:\s*((?:[^:,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+)", string[1:-1]
+                )
             }
-        try:  # NUMBER (INT OR FLOAT)
-            if "." in string or "e" in string.lower():
-                return float(string)
-            else:
-                return int(string)
-        except ValueError:
-            pass
-        if string.startswith(("'", '"')) and string.endswith(("'", '"')):  # STRING (WITH OR WITHOUT QUOTES)
-            return string[1:-1]
-        try:  # COMPLEX
-            return complex(string)
-        except ValueError:
-            pass
-        return string  # IF NOTHING ELSE MATCHES, RETURN AS IS
+        # SET
+        elif _re.match(r"^\{(.*?)\}$", string):
+            return {
+                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
+            }
+        # RETURN AS IS (str)
+        return string
 
     @staticmethod
     def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
@@ -87,8 +105,7 @@ class String:
     @staticmethod
     def single_char_repeats(string: str, char: str) -> int | bool:
         """If the string consists of only the same `char`, it returns the number of times it is present.<br>
-        If the string doesn't consist of only the same character, it returns `False`.
-        """
+        If the string doesn't consist of only the same character, it returns `False`."""
         if len(string) == len(char) * string.count(char):
             return string.count(char)
         else:
@@ -97,20 +114,27 @@ class String:
     @staticmethod
     def decompose(case_string: str, seps: str = "-_", lower_all: bool = True) -> list[str]:
         """Will decompose the string (*any type of casing, also mixed*) into parts."""
-        return [(part.lower() if lower_all else part) for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{seps}]", case_string)]
+        return [
+            (part.lower() if lower_all else part)
+            for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
+        ]
 
     @staticmethod
-    def to_camel_case(string: str) -> str:
-        """Will convert the string of any type of casing to camel case."""
-        return "".join(part.capitalize() for part in String.decompose(string))
+    def to_camel_case(string: str, upper: bool = True) -> str:
+        """Will convert the string of any type of casing to UpperCamelCase or lowerCamelCase if `upper` is false."""
+        return (
+            (parts := String.decompose(string))[0].lower()
+            if upper
+            else "" + "".join(part.capitalize() for part in (parts[1:] if upper else parts))
+        )
 
     @staticmethod
-    def to_snake_case(string: str, sep: str = "_", screaming: bool = False) -> str:
-        """Will convert the string of any type of casing to snake case."""
-        return sep.join(part.upper() if screaming else part for part in String.decompose(string))
+    def to_delimited_case(string: str, delimiter: str = "_", screaming: bool = False) -> str:
+        """Will convert the string of any type of casing to casing delimited by `delimiter`."""
+        return delimiter.join(part.upper() if screaming else part for part in String.decompose(string))
 
     @staticmethod
-    def get_string_lines(string: str, remove_empty_lines: bool = False) -> list[str]:
+    def get_lines(string: str, remove_empty_lines: bool = False) -> list[str]:
         """Will split the string into lines."""
         if not remove_empty_lines:
             return string.splitlines()
@@ -128,46 +152,10 @@ class String:
         ----------------------------------------------------------------------------------------------
         If `max_consecutive` is `0`, it will remove all consecutive empty lines.<br>
         If `max_consecutive` is bigger than `0`, it will only allow `max_consecutive` consecutive<br>
-        empty lines and everything above it will be cut down to `max_consecutive` empty lines.
-        """
+        empty lines and everything above it will be cut down to `max_consecutive` empty lines."""
         return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
 
     @staticmethod
     def split_count(string: str, count: int) -> list[str]:
         """Will split the string every `count` characters."""
         return [string[i : i + count] for i in range(0, len(string), count)]
-
-    @staticmethod
-    def multi_strip(string: str, strip_chars: str = " _-") -> str:
-        """Will remove all leading and trailing `strip_chars` from the string."""
-        for char in string:
-            if char in strip_chars:
-                string = string[1:]
-            else:
-                break
-        for char in string[::-1]:
-            if char in strip_chars:
-                string = string[:-1]
-            else:
-                break
-        return string
-
-    @staticmethod
-    def multi_lstrip(string: str, strip_chars: str = " _-") -> str:
-        """Will remove all leading `strip_chars` from the string."""
-        for char in string:
-            if char in strip_chars:
-                string = string[1:]
-            else:
-                break
-        return string
-
-    @staticmethod
-    def multi_rstrip(string: str, strip_chars: str = " _-") -> str:
-        """Will remove all trailing `strip_chars` from the string."""
-        for char in string[::-1]:
-            if char in strip_chars:
-                string = string[:-1]
-            else:
-                break
-        return string
