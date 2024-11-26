@@ -196,6 +196,11 @@ class FormatCodes:
         return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + result if use_default else result
 
     @staticmethod
+    def escape_ansi(ansi_string: str, escaped_char: str = ANSI.char_esc) -> str:
+        """Makes the string printable with the ANSI formats visible."""
+        return ansi_string.replace(ANSI.char, escaped_char)
+
+    @staticmethod
     @lru_cache(maxsize=64)
     def __config_console() -> None:
         _sys.stdout.flush()

@@ -58,6 +58,7 @@ class ANSI:
 
     global CHAR, START, SEP, END
 
+    char_esc = r"\x1b"
     CHAR = char = "\x1b"
     START = start = "["
     SEP = sep = ";"
