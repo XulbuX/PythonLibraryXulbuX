@@ -21,6 +21,8 @@
   now the validation `Color.is_valid_rgba()` and `Color.is_valid_hexa()` are fixed and now, if a color is identified as invalid, the method returns the original string instead of an empty string
 * introduced a new test for the `xx_format_codes` module
 * a lot of updates in the Wiki and README
+* fixed a small bug in the help client-command:<br>
+  added back the default text color
 
 ## 21.11.2024 `v1.5.8`
 * renamed the library from `XulbuX` to `xulbux` for better naming conventions
