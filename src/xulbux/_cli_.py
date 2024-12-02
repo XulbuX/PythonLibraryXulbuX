@@ -47,6 +47,7 @@ def help_command():
     [dim](•) REGEX PATTERN TEMPLATES  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Regex[*]
   [_]
   [dim](Press any key to exit...)
-  """
+  """,
+        default_color=DEFAULT.text_color,
     )
     Console.pause_exit(pause=True)
