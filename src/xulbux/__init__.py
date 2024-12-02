@@ -24,7 +24,7 @@ __author__ = "XulbuX"
 __email__ = "xulbux.real@gmail.com"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2024 XulbuX"
-__url__ = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX"
+__url__ = "https://github.com/XulbuX-dev/PythonLibraryXulbuX"
 __description__ = "A library which includes a lot of really helpful functions."
 __all__ = [
     "_consts_",
