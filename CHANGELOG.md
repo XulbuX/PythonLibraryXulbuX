@@ -21,6 +21,7 @@
     now the validation `Color.is_valid_rgba()` and `Color.is_valid_hexa()` are fixed and now, if a color is identified as invalid, the method returns the original string instead of an empty string
   2. previously the method `to_ansi()` couldn't handle formats inside of `[]` because everything inside the brackets was recognized as an invalid format
     now you are able to use formats inside of `[]` (*e.g.* `"[[red](Red text [b](inside) square brackets!)]"`)
+* adjusted the format codes test accordingly
 * introduced a new test for the `xx_format_codes` module
 * a lot of updates in the Wiki and README
 * fixed a small bug in the help client-command:<br>
