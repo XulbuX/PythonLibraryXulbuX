@@ -140,14 +140,21 @@ class FormatCodes:
             return color in ANSI.color_map or Color.is_valid_rgba(color) or Color.is_valid_hexa(color)
 
         def replace_keys(match: _re.Match) -> str:
-            format_keys = match.group(1)
-            esc = match.group(2)
+            formats = match.group(1)
+            escaped = match.group(2)
             auto_reset_txt = match.group(3)
-            if not format_keys:
+            if auto_reset_txt and auto_reset_txt.count("[") > 0 and auto_reset_txt.count("]") > 0:
+                auto_reset_txt = FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)
+            if not formats:
                 return match.group(0)
-            format_keys = [k.strip() for k in format_keys.split("|") if k.strip()]
-            ansi_formats = [FormatCodes.__get_replacement(k, default_color, brightness_steps) for k in format_keys]
-            if auto_reset_txt and not esc:
+            if formats.count("[") > 0 and formats.count("]") > 0:
+                formats = FormatCodes.to_ansi(formats, default_color, brightness_steps, False)
+            format_keys = [k.strip() for k in formats.split("|") if k.strip()]
+            ansi_formats = [
+                r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k else f"[{k}]"
+                for k in format_keys
+            ]
+            if auto_reset_txt and not escaped:
                 reset_keys = []
                 for k in format_keys:
                     k_lower = k.lower()
@@ -180,16 +187,18 @@ class FormatCodes:
                 ]
             else:
                 ansi_resets = []
-            if not all(f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):
+            if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.char}{ANSI.start}") >= 1) and not all(
+                f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats
+            ):
                 return match.group(0)
             return (
                 "".join(ansi_formats)
                 + (
                     f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
-                    if esc and auto_reset_txt
+                    if escaped and auto_reset_txt
                     else auto_reset_txt if auto_reset_txt else ""
                 )
-                + ("" if esc else "".join(ansi_resets))
+                + ("" if escaped else "".join(ansi_resets))
             )
 
         result = "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n"))
