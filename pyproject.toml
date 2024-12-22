@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
@@ -108,8 +108,9 @@ max-complexity = 18
 select = ["B", "C", "E", "F", "W", "T4", "B9"]
 per-file-ignores = ["__init__.py:F401,F403"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/xulbux"]
+[tool.setuptools]
+packages = ["xulbux"]
+package-dir = { "" = "src" }
 
 [tool.pytest.ini_options]
 minversion = "7.0"
