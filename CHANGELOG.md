@@ -15,6 +15,11 @@
 # <br><b>Changelog</b><br>
 
 
+## 07.01.2025 `v1.6.0`
+* fixed a small bug in `to_camel_case()` in the `xx_string` module:<br>
+  previously, it would return only the first part of the decomposed string
+  now it correctly returns all decomposed string parts, joined in CamelCase
+
 ## 21.12.2024 `v1.5.9`
 * fixed bugs in method `to_ansi()` in module `xx_format_codes`:<br>
   1. the method always returned an empty string, because the color validation was broken and it would identify all colors as invalid<br>

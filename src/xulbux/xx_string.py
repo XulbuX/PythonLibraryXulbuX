@@ -122,9 +122,8 @@ class String:
     @staticmethod
     def to_camel_case(string: str, upper: bool = True) -> str:
         """Will convert the string of any type of casing to UpperCamelCase or lowerCamelCase if `upper` is false."""
-        return ((parts := String.decompose(string))[0].lower() if upper else "") + "".join(
-            part.capitalize() for part in (parts[1:] if upper else parts)
-        )
+        parts = String.decompose(string)
+        return ("" if upper else parts[0].lower()) + "".join(part.capitalize() for part in (parts if upper else parts[1:]))
 
     @staticmethod
     def to_delimited_case(string: str, delimiter: str = "_", screaming: bool = False) -> str:
