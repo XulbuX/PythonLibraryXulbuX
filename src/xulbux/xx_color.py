@@ -68,7 +68,7 @@ class rgba:
                 (r, g, b),
             )
         elif a is not None and not (isinstance(a, (int, float)) and 0 <= a <= 1):
-            raise ValueError("Alpha channel must be a float/int in [0.0, 1.0]: got", a)
+            raise ValueError(f"Alpha channel must be a float/int in [0.0, 1.0]: got '{a}'")
         self.r, self.g, self.b = r, g, b
         self.a = (1.0 if a > 1.0 else float(a)) if a else None
 
@@ -268,7 +268,7 @@ class hsla:
                 (h, s, l),
             )
         elif a is not None and (not isinstance(a, (int, float)) or not 0 <= a <= 1):
-            raise ValueError("Alpha channel must be a float/int in [0.0, 1.0]: got", a)
+            raise ValueError(f"Alpha channel must be a float/int in [0.0, 1.0]: got '{a}'")
         self.h, self.s, self.l = h, s, l
         self.a = (1.0 if a > 1.0 else float(a)) if a else None
 
@@ -493,7 +493,7 @@ class hexa:
         elif isinstance(color, int):
             self.r, self.g, self.b, self.a = Color.hex_int_to_rgba(color)
         else:
-            raise TypeError("HEX color must be of type 'str' or 'int': got", type(color))
+            raise TypeError(f"HEX color must be of type 'str' or 'int': got '{type(color)}'")
 
     def __len__(self):
         return 4 if self.a else 3
@@ -904,7 +904,7 @@ class Color:
 
     @staticmethod
     def text_color_for_on_bg(
-        text_bg_color: rgba | hexa = 0xFFF,
+        text_bg_color: rgba | hexa = "#FFF",
     ) -> rgba | hexa:
         was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
         text_bg_color = Color.to_rgba(text_bg_color)
