@@ -29,12 +29,7 @@ class Path:
         return paths[0] if len(paths) == 1 else paths
 
     @staticmethod
-    def extend(
-        path: str,
-        search_in: str | list[str] = None,
-        raise_error: bool = False,
-        correct_path: bool = False,
-    ) -> str:
+    def extend(path: str, search_in: str | list[str] = None, raise_error: bool = False, correct_path: bool = False) -> str:
         if path in (None, ""):
             return path
 

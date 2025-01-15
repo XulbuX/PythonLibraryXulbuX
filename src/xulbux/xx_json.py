@@ -24,7 +24,7 @@ class Json:
         additionally. (returns: `[processed_json, original_json]`)"""
         if not json_file.endswith(".json"):
             json_file += ".json"
-        file_path = File.make_path(json_file, prefer_base_dir=True)
+        file_path = File.extend_or_make_path(json_file, prefer_base_dir=True)
         with open(file_path, "r") as f:
             content = f.read()
         try:
@@ -46,7 +46,7 @@ class Json:
     ) -> str:
         if not new_file.endswith(".json"):
             new_file += ".json"
-        file_path = File.make_path(new_file, prefer_base_dir=True)
+        file_path = File.extend_or_make_path(new_file, prefer_base_dir=True)
         if _os.path.exists(file_path) and not force:
             with open(file_path, "r", encoding="utf-8") as existing_f:
                 existing_content = _json.load(existing_f)

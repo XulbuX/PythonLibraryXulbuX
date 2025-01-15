@@ -22,6 +22,7 @@
 * changed the params in `File.make_path()`:<br>
   previously there were the params <code>filename: *str*</code> and <code>filetype: *str* = ""</code> where `filename` didn't have to have the file extension included, as long as the `filetype` was set
   now these params have become one param <code>file: *str*</code> which is the file with file extension
+* `File.make_path()` was renamed to a more descriptive name `File.extend_or_make_path()`
 * adjusted the usages of `File.create()` and `File.make_path()` inside `xx_json` accordingly
 * removed all line breaks and other Markdown formattings from docstrings, since not all IDEs support them
 
