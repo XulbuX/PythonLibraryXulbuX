@@ -26,7 +26,7 @@ class Data:
 
     @staticmethod
     def remove_empty_items(data: DataStructure, spaces_are_empty: bool = False) -> DataStructure:
-        """Removes empty items from the data structure.<br>
+        """Removes empty items from the data structure.
         If `spaces_are_empty` is true, it will count items with only spaces as empty."""
         if isinstance(data, dict):
             return {
@@ -79,14 +79,15 @@ class Data:
         comment_sep: str = "",
     ) -> DataStructure:
         """Remove comments from a list, tuple or dictionary.\n
-        --------------------------------------------------------------------------------------------------------------------
-        The `data` parameter is your list, tuple or dictionary, where the comments should get removed from.<br>
-        The `comment_start` parameter is the string that marks the start of a comment inside `data`. (default: `>>`)<br>
-        The `comment_end` parameter is the string that marks the end of a comment inside `data`. (default: `<<`)<br>
-        The `comment_sep` parameter is a string with which a comment will be replaced, if it is in the middle of a value.\n
-        --------------------------------------------------------------------------------------------------------------------
-        Examples:\n
-        ```python\n data = {
+        ----------------------------------------------------------------------------------------------------------------------
+        - The `data` parameter is your list, tuple or dictionary, where the comments should get removed from.
+        - The `comment_start` parameter is the string that marks the start of a comment inside `data`. (default: `>>`)
+        - The `comment_end` parameter is the string that marks the end of a comment inside `data`. (default: `<<`)
+        - The `comment_sep` parameter is a string with which a comment will be replaced, if it is in the middle of a value.\n
+        ----------------------------------------------------------------------------------------------------------------------
+        Examples:
+        ```python
+        data = {
             "key1": [
                 ">> COMMENT IN THE BEGINNING OF THE STRING <<  value1",
                 "value2  >> COMMENT IN THE END OF THE STRING",
@@ -106,24 +107,25 @@ class Data:
             comment_start=">>",
             comment_end="<<",
             comment_sep="__"
-        )\n```
-        --------------------------------------------------------------------------------------------------------------------
+        )
+        ```\n
+        ----------------------------------------------------------------------------------------------------------------------
         For this example, `processed_data` will be:
-        ```python\n {
+        ```python
+        {
             "key1": [
                 "value1",
                 "value2",
                 "val__ue3"
             ],
             "key3": None
-        }\n```
-        For `key1`, all the comments will just be removed, except at `value3` and `value4`:<br>
-         `value3` The comment is removed and the parts left and right are joined through `comment_sep`.<br>
-         `value4` The whole value is removed, since the whole value was a comment.<br>
-        For `key2`, the key, including its whole values will be removed.<br>
-        For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`.
-        """
-
+        }
+        ```\n
+        - For `key1`, all the comments will just be removed, except at `value3` and `value4`:
+          - `value3` The comment is removed and the parts left and right are joined through `comment_sep`.
+          - `value4` The whole value is removed, since the whole value was a comment.
+        - For `key2`, the key, including its whole values will be removed.
+        - For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
         if comment_end:
             pattern = _re.compile(
                 rf"^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$"
@@ -163,13 +165,13 @@ class Data:
         comment_end: str = "<<",
     ) -> bool:
         """Compares two structures and returns `True` if they are equal and `False` otherwise.\n
-        ⇾ **Will not detect, if a key-name has changed, only if removed or added.**\n
-        ------------------------------------------------------------------------------------------------
-        Ignores the specified (found) key/s or item/s from `ignore_paths`. Comments are not ignored<br>
-        when comparing. `comment_start` and `comment_end` are only used to correctly recognize the<br>
+        ⇾ Will not detect, if a key-name has changed, only if removed or added.\n
+        --------------------------------------------------------------------------------------------
+        Ignores the specified (found) key/s or item/s from `ignore_paths`. Comments are not ignored
+        when comparing. `comment_start` and `comment_end` are only used to correctly recognize the
         keys in the `ignore_paths`.\n
-        ------------------------------------------------------------------------------------------------
-        The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
+        --------------------------------------------------------------------------------------------
+        The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for
         the function `Data.get_path_id()`. See its documentation for more details."""
 
         def process_ignore_paths(
@@ -222,26 +224,28 @@ class Data:
         -------------------------------------------------------------------------------------------------
         The `data` parameter is the list, tuple, or dictionary, which the id should be generated for.\n
         -------------------------------------------------------------------------------------------------
-        The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.<br>
+        The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
         In this example:
-        ```\n {
+        ```python
+        {
             "healthy": {
                 "fruit": ["apples", "bananas", "oranges"],
                 "vegetables": ["carrots", "broccoli", "celery"]
             }
-        }\n```
-        ... if you want to change the value of `"apples"` to `"strawberries"`, the value path<br>
-        would be `healthy->fruit->apples` or if you don't know that the value is `"apples"`<br>
-        you can also use the index of the value, so `healthy->fruit->0`.\n
+        }
+        ```
+        ... if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
+        `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use the
+        index of the value, so `healthy->fruit->0`.\n
         -------------------------------------------------------------------------------------------------
-        The comments marked with `comment_start` and `comment_end` will be removed,<br>
-        before trying to get the path id.\n
+        The comments marked with `comment_start` and `comment_end` will be removed, before trying to get
+        the path id.\n
         -------------------------------------------------------------------------------------------------
-        The `path_sep` param is the separator between the keys/indexes in the path<br>
-        (default is `->` just like in the example above).\n
+        The `path_sep` param is the separator between the keys/indexes in the path (default is `->` just
+        like in the example above).\n
         -------------------------------------------------------------------------------------------------
-        If `ignore_not_found` is `True`, the function will return `None` if the value is not<br>
-        found instead of raising an error."""
+        If `ignore_not_found` is `True`, the function will return `None` if the value is not found
+        instead of raising an error."""
 
         def process_path(path: str, data_obj: list | tuple | set | frozenset | dict) -> str | None:
             keys = path.split(path_sep)
@@ -289,11 +293,11 @@ class Data:
     @staticmethod
     def get_value_by_path_id(data: DataStructure, path_id: str, get_key: bool = False) -> any:
         """Retrieves the value from `data` using the provided `path_id`.\n
-        ----------------------------------------------------------------------------------------------------
-        Input your `data` along with a `path_id` that was created before using `Data.get_path_id()`.<br>
+        -------------------------------------------------------------------------------------------------
+        Input your `data` along with a `path_id` that was created before using `Data.get_path_id()`.
         If `get_key` is true and the final item is in a dict, it returns the key instead of the value.\n
-        ----------------------------------------------------------------------------------------------------
-        The function will return the value (or key) from the path ID location, as long as the structure<br>
+        -------------------------------------------------------------------------------------------------
+        The function will return the value (or key) from the path ID location, as long as the structure
         of `data` hasn't changed since creating the path ID to that value."""
 
         def get_nested(data: list | tuple | set | frozenset | dict, path: list[int], get_key: bool) -> any:
@@ -326,12 +330,12 @@ class Data:
     ) -> list | tuple | dict:
         """Updates the value/s from `update_values` in the `data`.\n
         --------------------------------------------------------------------------------
-        Input a list, tuple or dict as `data`, along with `update_values`, which is<br>
-        a path ID that was created before using `Data.get_path_id()`, together<br>
-        with the new value to be inserted where the path ID points to. The path ID<br>
-        and the new value are separated by `sep`, which per default is `::`.\n
+        Input a list, tuple or dict as `data`, along with `update_values`, which is a
+        path ID that was created before using `Data.get_path_id()`, together with the
+        new value to be inserted where the path ID points to. The path ID and the new
+        value are separated by `sep`, which per default is `::`.\n
         --------------------------------------------------------------------------------
-        The value from path ID will be changed to the new value, as long as the<br>
+        The value from path ID will be changed to the new value, as long as the
         structure of `data` hasn't changed since creating the path ID to that value."""
 
         def update_nested(
@@ -383,16 +387,15 @@ class Data:
         end: str = "\n",
     ) -> None:
         """Print nicely formatted data structures.\n
-        ------------------------------------------------------------------------------------
-        The indentation spaces-amount can be set with with `indent`.<br>
-        There are three different levels of `compactness`:<br>
-        `0` expands everything possible<br>
-        `1` only expands if there's other lists, tuples or dicts inside of data or,<br>
-         ⠀if the data's content is longer than `max_width`<br>
-        `2` keeps everything collapsed (all on one line)\n
-        ------------------------------------------------------------------------------------
-        If `as_json` is set to `True`, the output will be in valid JSON format.
-        """
+        ------------------------------------------------------------------------------
+        The indentation spaces-amount can be set with with `indent`.
+        There are three different levels of `compactness`:
+        - `0` expands everything possible
+        - `1` only expands if there's other lists, tuples or dicts inside of data or,
+          if the data's content is longer than `max_width`
+        - `2` keeps everything collapsed (all on one line)\n
+        ------------------------------------------------------------------------------
+        If `as_json` is set to `True`, the output will be in valid JSON format."""
         print(
             Data.to_str(data, indent, compactness, sep, max_width, as_json),
             end=end,
@@ -409,14 +412,14 @@ class Data:
         as_json: bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
-        ------------------------------------------------------------------------------------
-        The indentation spaces-amount can be set with with `indent`.<br>
-        There are three different levels of `compactness`:<br>
-        `0` expands everything possible<br>
-        `1` only expands if there's other lists, tuples or dicts inside of data or,<br>
-         ⠀if the data's content is longer than `max_width`<br>
-        `2` keeps everything collapsed (all on one line)\n
-        ------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------
+        The indentation spaces-amount can be set with with `indent`.
+        There are three different levels of `compactness`:
+        - `0` expands everything possible
+        - `1` only expands if there's other lists, tuples or dicts inside of data or,
+          if the data's content is longer than `max_width`
+        - `2` keeps everything collapsed (all on one line)\n
+        ------------------------------------------------------------------------------
         If `as_json` is set to `True`, the output will be in valid JSON format."""
 
         def format_value(value: any, current_indent: int) -> str:
@@ -495,7 +498,7 @@ class Data:
     def _is_key(data: DataStructure, path_id: str) -> bool:
         """Returns `True` if the path ID points to a key in `data` and `False` otherwise.\n
         ------------------------------------------------------------------------------------
-        Input a list, tuple or dict as `data`, along with `path_id`, which is a path ID<br>
+        Input a list, tuple or dict as `data`, along with `path_id`, which is a path ID
         that was created before using `Data.get_path_id()`."""
 
         def check_nested(data: list | tuple | set | frozenset | dict, path: list[int]) -> bool:

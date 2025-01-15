@@ -60,9 +60,9 @@ class EnvPath:
         cwd: bool = False,
         base_dir: bool = False,
     ) -> list:
-        """Get and/or normalize the paths.<br>
-        Raise an error if no path is provided and<br>
-        neither `cwd` or `base_dir` is `True`."""
+        """Get and/or normalize the paths.\n
+        ------------------------------------------------------------------------------------
+        Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
         if cwd:
             path = _os.getcwd()
         elif base_dir:

@@ -1,56 +1,64 @@
 """
-Functions to be able to use special (easy) formatting codes directly inside some message (string).<br>
+Functions to be able to use special (easy) formatting codes directly inside some message (string).\n
 These codes, when used within following functions, will change the look of log within the console:
-- `FormatCodes.print()` (*print a special format-codes containing string*)
-- `FormatCodes.input()` (*input with a special format-codes containing prompt*)
-- `FormatCodes.to_ansi()` (*transform all special format-codes into ANSI codes in a string*)\n
+- `FormatCodes.print()` (print a special format-codes containing string)
+- `FormatCodes.input()` (input with a special format-codes containing prompt)
+- `FormatCodes.to_ansi()` (transform all special format-codes into ANSI codes in a string)\n
 --------------------------------------------------------------------------------------------------------------------
-How to change the text format and color?<br>
-**Example string with formatting codes:**<br>
-> `[bold]This is bold text, [#F08]which is pink now [black|BG:#FF0088] and now it changed`<br>
-> `to black with a pink background. [_]And this is the boring text, where everything is reset.`\n
-⇾ **Instead of writing the formats all separate** `[…][…][…]` **you can join them like this** `[…|…|…]`\n
+How to change the text format and color?\n
+Example string with formatting codes:
+```string
+[bold]This is bold text, [#F08]which is pink now [black|BG:#FF0088] and now it changed`
+to black with a pink background. [_]And this is the boring text, where everything is reset.
+```
+⇾ Instead of writing the formats all separate `[…][…][…]` you can join them like this `[…|…|…]`\n
 --------------------------------------------------------------------------------------------------------------------
-You can also automatically reset a certain format, behind text like shown in the following example:<br>
-> `This is normal text [b](which is bold now) but now it was automatically reset to normal.`\n
-This will only reset formats, that have a reset listed below. Colors and BG-colors won't be reset.<br>
-This is what will happen, if you use it with a color-format:<br>
-> `[cyan]This is cyan text [b](which is bold now.) Now it's not bold any more but still cyan.`\n
-If you want to ignore the `()` brackets you can put a `\\` or `/` between:<br>
-> `[cyan]This is cyan text [b]/(which is bold now.) And now it is still bold and cyan.`\n
-⇾ **To see these examples in action, you can put them into the** `FormatCodes.print()` **function.**\n
+You can also automatically reset a certain format, behind text like shown in the following example:
+```string
+This is normal text [b](which is bold now) but now it was automatically reset to normal.
+```
+This will only reset formats, that have a reset listed below. Colors and BG-colors won't be reset.\n
+This is what will happen, if you use it with a color-format:
+```string
+[cyan]This is cyan text [b](which is bold now.) Now it's not bold any more but still cyan.
+```
+If you want to ignore the `()` brackets you can put a `\\` or `/` between:
+```string
+[cyan]This is cyan text [b]/(which is bold now.) And now it is still bold and cyan.
+```
+⇾ To see these examples in action, you can put them into the `FormatCodes.print()` function.\n
 --------------------------------------------------------------------------------------------------------------------
-**All possible formatting codes:**
-- HEX colors:  `[#F08]` or `[#FF0088]` (*with or without leading #*)
+All possible formatting codes:
+- HEX colors:  `[#F08]` or `[#FF0088]` (with or without leading #)
 - RGB colors:  `[rgb(255, 0, 136)]`
 - bright colors:  `[bright:#F08]`
 - background colors:  `[BG:#F08]`
 - standard cmd colors:
-    - `[black]`
-    - `[red]`
-    - `[green]`
-    - `[yellow]`
-    - `[blue]`
-    - `[magenta]`
-    - `[cyan]`
-    - `[white]`
+  - `[black]`
+  - `[red]`
+  - `[green]`
+  - `[yellow]`
+  - `[blue]`
+  - `[magenta]`
+  - `[cyan]`
+  - `[white]`
 - bright cmd colors: `[bright:black]` or `[br:black]`, `[bright:red]` or `[br:red]`, ...
 - background cmd colors: `[BG:black]`, `[BG:red]`, ...
-- bright background cmd colors: `[BG:bright:black]` or `[BG:br:black]`, `[BG:bright:red]` or `[BG:br:red]`, ...<br>
-    ⇾ **The order of** `BG:` **and** `bright:` or `br:` **does not matter.**
+- bright background cmd colors: `[BG:bright:black]` or `[BG:br:black]`, `[BG:bright:red]` or `[BG:br:red]`, ...\n
+  ⇾ The order of `BG:` and `bright:` or `br:` does not matter.
 - text formats:
-    - `[bold]` or `[b]`
-    - `[dim]`
-    - `[italic]` or `[i]`
-    - `[underline]` or `[u]`
-    - `[inverse]`, `[invert]` or `[in]`
-    - `[hidden]`, `[hide]` or `[h]`
-    - `[strikethrough]` or `[s]`
-    - `[double-underline]` or `[du]`
+  - `[bold]` or `[b]`
+  - `[dim]`
+  - `[italic]` or `[i]`
+  - `[underline]` or `[u]`
+  - `[inverse]`, `[invert]` or `[in]`
+  - `[hidden]`, `[hide]` or `[h]`
+  - `[strikethrough]` or `[s]`
+  - `[double-underline]` or `[du]`
 - specific reset:  `[_bold]` or `[_b]`, `[_dim]`, ... or `[_color]` or `[_c]`, `[_background]` or `[_bg]`
-- total reset: `[_]` (only if no `default_color` is set, otherwise see **↓** )
+- total reset: `[_]` (only if no `default_color` is set, otherwise see ↓ )
 --------------------------------------------------------------------------------------------------------------------
-**Special formatting when param `default_color` is set to a color:**
+Special formatting when param `default_color` is set to a color:
 - `[*]` will reset everything, just like `[_]`, but the text-color will remain in `default_color`
 - `[*color]` will reset the text-color, just like `[_color]`, but then also make it `default_color`
 - `[default]` will just color the text in `default_color`,
@@ -252,8 +260,8 @@ class FormatCodes:
 
     @staticmethod
     def __get_replacement(format_key: str, default_color: rgba = None, brightness_steps: int = 20) -> str:
-        """Gives you the corresponding ANSI code for the given format key.<br>
-        If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
+        """Gives you the corresponding ANSI code for the given format key.
+        If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
         use_default = default_color and Color.is_valid_rgba(default_color, False)
         _format_key, format_key = format_key, (  # NORMALIZE THE FORMAT KEY (+ SAVE ORIGINAL)

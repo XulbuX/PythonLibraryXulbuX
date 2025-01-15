@@ -14,12 +14,11 @@ class System:
         continue_program: bool = False,
         force: bool = False,
     ) -> None:
-        """Starts a system restart:<br>
-        `prompt` is the message to be displayed in the systems restart notification.<br>
-        `wait` is the time to wait until restarting in seconds.<br>
-        `continue_program` is whether to continue the current Python program after calling this function.<br>
-        `force` is whether to force a restart even if other processes are still running.
-        """
+        """Starts a system restart:
+        - `prompt` is the message to be displayed in the systems restart notification.
+        - `wait` is the time to wait until restarting in seconds.
+        - `continue_program` is whether to continue the current Python program after calling this function.
+        - `force` is whether to force a restart even if other processes are still running."""
         system = _platform.system().lower()
         if system == "windows":
             if not force:
@@ -61,8 +60,8 @@ class System:
     ) -> None | list[str]:
         """Checks if the given list of libraries are installed. If not:
         - If `install_missing` is `False` the missing libraries will be returned as a list.
-        - If `install_missing` is `True` the missing libraries will be installed. If `confirm_install` is `True` the user will first be asked if they want to install the missing libraries.
-        """
+        - If `install_missing` is `True` the missing libraries will be installed.
+        - If `confirm_install` is `True` the user will first be asked if they want to install the missing libraries."""
         missing = []
         for lib in lib_names:
             try:

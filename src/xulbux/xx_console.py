@@ -15,8 +15,8 @@ Functions for logging and other small actions within the console:
 - `Console.confirm()`
 - `Console.restricted_input()`
 - `Console.pwd_input()`\n
-----------------------------------------------------------------------------------------------------------
-You can also use special formatting codes directly inside the log message to change their appearance.<br>
+------------------------------------------------------------------------------------------------------
+You can also use special formatting codes directly inside the log message to change their appearance.
 For more detailed information about formatting codes, see the the `xx_format_codes` description.
 """
 
@@ -86,9 +86,8 @@ class Console:
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
-        """Will print the `last_prompt` and then pause the program if `pause` is set<br>
-        to `True` and after the pause, exit the program if `exit` is set to `True`.
-        """
+        """Will print the `last_prompt` and then pause the program if `pause` is set
+        to `True` and after the pause, exit the program if `exit` is set to `True`."""
         print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
@@ -114,17 +113,16 @@ class Console:
         title_bg_color: hexa | rgba = None,
         default_color: hexa | rgba = None,
     ) -> None:
-        """Will print a formatted log message:<br>
-        `title` -⠀the title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, etc.)<br>
-        `prompt` -⠀the log message<br>
-        `start` -⠀something to print before the log is printed<br>
-        `end` -⠀something to print after the log is printed (e.g. `\\n\\n`)<br>
-        `title_bg_color` -⠀the background color of the `title`<br>
-        `default_color` -⠀the default text color of the `prompt`\n
+        """Will print a formatted log message:
+        - `title` -⠀the title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, etc.)
+        - `prompt` -⠀the log message
+        - `start` -⠀something to print before the log is printed
+        - `end` -⠀something to print after the log is printed (e.g. `\\n\\n`)
+        - `title_bg_color` -⠀the background color of the `title`
+        - `default_color` -⠀the default text color of the `prompt`\n
         --------------------------------------------------------------------------------
-        The log message supports special formatting codes. For more detailed<br>
-        information about formatting codes, see `xx_format_codes` class description.
-        """
+        The log message supports special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` class description."""
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if title:
             FormatCodes.print(
@@ -150,7 +148,7 @@ class Console:
         pause: bool = False,
         exit: bool = False,
     ) -> None:
-        """A preset for `log()`: `DEBUG` log message with the options to pause<br>
+        """A preset for `log()`: `DEBUG` log message with the options to pause
         at the message and exit the program after the message was printed."""
         if active:
             Console.log("DEBUG", prompt, start, end, title_bg_color, default_color)
@@ -166,7 +164,7 @@ class Console:
         pause: bool = False,
         exit: bool = False,
     ) -> None:
-        """A preset for `log()`: `INFO` log message with the options to pause<br>
+        """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("INFO", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
@@ -181,7 +179,7 @@ class Console:
         pause: bool = False,
         exit: bool = False,
     ) -> None:
-        """A preset for `log()`: `DONE` log message with the options to pause<br>
+        """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("DONE", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
@@ -196,7 +194,7 @@ class Console:
         pause: bool = False,
         exit: bool = False,
     ) -> None:
-        """A preset for `log()`: `WARN` log message with the options to pause<br>
+        """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("WARN", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
@@ -212,7 +210,7 @@ class Console:
         exit: bool = True,
         reset_ansi=True,
     ) -> None:
-        """A preset for `log()`: `FAIL` log message with the options to pause<br>
+        """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("FAIL", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
@@ -228,7 +226,7 @@ class Console:
         exit: bool = True,
         reset_ansi=True,
     ) -> None:
-        """A preset for `log()`: `EXIT` log message with the options to pause<br>
+        """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("EXIT", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
@@ -242,10 +240,9 @@ class Console:
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
-        -----------------------------------------------------------------------------------
-        The question can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see the `xx_format_codes` description.
-        """
+        -------------------------------------------------------------------------------
+        The question can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see the `xx_format_codes` description."""
         confirmed = input(
             FormatCodes.to_ansi(
                 f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
@@ -271,9 +268,8 @@ class Console:
         - optional mask character (hide user input, e.g. for passwords)
         - reset the ANSI formatting codes after the user continues\n
         -----------------------------------------------------------------------------------
-        The input can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see the `xx_format_codes` description.
-        """
+        The input can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see the `xx_format_codes` description."""
         FormatCodes.print(prompt, end="", flush=True)
         result = ""
         select_all = False
@@ -377,5 +373,6 @@ class Console:
         max_len: int = None,
         _reset_ansi: bool = True,
     ) -> str:
-        """Password input that masks the entered characters with asterisks."""
+        """Password input (preset for `Console.restricted_input()`)
+        that always masks the entered characters with asterisks."""
         return Console.restricted_input(prompt, allowed_chars, min_len, max_len, "*", _reset_ansi)

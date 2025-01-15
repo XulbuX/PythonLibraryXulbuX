@@ -23,9 +23,9 @@ class Code:
 
     @staticmethod
     def change_tab_size(code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
-        """Replaces all tabs with `new_tab_size` spaces.<br>
-        If `remove_empty_lines` is `True`, empty lines will be removed in the process.
-        """
+        """Replaces all tabs with `new_tab_size` spaces.\n
+        ----------------------------------------------------------------------------------
+        If `remove_empty_lines` is `True`, empty lines will be removed in the process."""
         code_lines = String.get_lines(code, remove_empty_lines=True)
         lines = code_lines if remove_empty_lines else String.get_lines(code)
         tab_spaces = Code.get_tab_spaces(code)
@@ -54,7 +54,7 @@ class Code:
 
     @staticmethod
     def is_js(code: str, funcs: list = ["__", "$t", "$lang"]) -> bool:
-        """Will check if the code is likely to be JavaScript."""
+        """Will check if the code is very likely to be JavaScript."""
         funcs = "|".join(funcs)
         js_pattern = _rx.compile(
             Regex.outside_strings(

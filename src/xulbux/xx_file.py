@@ -7,20 +7,23 @@ import os as _os
 class File:
 
     @staticmethod
-    def rename_extension(file_path: str, new_extension: str) -> str:
-        directory, filename_with_ext = _os.path.split(file_path)
+    def rename_extension(file: str, new_extension: str, camel_case_filename: bool = False) -> str:
+        """Rename the extension of a file.\n
+        --------------------------------------------------------------------------
+        If the `camel_case_filename` parameter is true, the filename will be made
+        CamelCase in addition to changing the files extension."""
+        directory, filename_with_ext = _os.path.split(file)
         filename = filename_with_ext.split(".")[0]
-        camel_case_filename = String.to_camel_case(filename)
-        new_filename = f"{camel_case_filename}{new_extension}"
-        new_file_path = _os.path.join(directory, new_filename)
-        return new_file_path
+        if camel_case_filename:
+            filename = String.to_camel_case(filename)
+        return _os.path.join(directory, f"{filename}{new_extension}")
 
     @staticmethod
-    def create(content: str = "", file: str = "new_file.txt", force: bool = False) -> str:
+    def create(file: str, content: str = "", force: bool = False) -> str:
         """Create a file with ot without content.\n
-        ----------------------------------------------------------------------------
-        The function will throw a `FileExistsError` if the file already exists.<br>
-        To overwrite the file, set the `force` parameter to `True`."""
+        ------------------------------------------------------------------------
+        The function will throw a `FileExistsError` if the file already exists.
+        To always overwrite the file, set the `force` parameter to `True`."""
         if _os.path.exists(file) and not force:
             with open(file, "r", encoding="utf-8") as existing_file:
                 existing_content = existing_file.read()
@@ -33,24 +36,14 @@ class File:
         return full_path
 
     @staticmethod
-    def make_path(
-        filename: str,
-        filetype: str,
-        search_in: str | list[str] = None,
-        prefer_base_dir: bool = True,
-        correct_path: bool = False,
-    ) -> str:
-        """Create the path to a file in the cwd, the base-dir, or predefined directories.\n
+    def make_path(file: str, search_in: str | list[str] = None, prefer_base_dir: bool = True) -> str:
+        """Generate the path to a file in the CWD, the base-dir, or predefined directories.\n
         --------------------------------------------------------------------------------------
-        If the `filename` is not found in the above directories, it will be searched<br>
-        in the `search_in` directory/directories. If the file is still not found, it will<br>
-        return the path to the file in the base-dir per default or to the file in the<br>
-        cwd if `prefer_base_dir` is set to `False`."""
-        if not filename.lower().endswith(f".{filetype.lower()}"):
-            filename = f"{filename}.{filetype.lower()}"
+        If the `file` is not found in the above directories, it will be searched in the
+        `search_in` directory/directories. If the file is still not found, it will return
+        the path to the file in the base-dir per default or to the file in the CWD if
+        `prefer_base_dir` is set to `False`."""
         try:
-            return Path.extend(filename, search_in, True, correct_path)
+            return Path.extend(file, search_in, raise_error=True)
         except FileNotFoundError:
-            return (
-                _os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else _os.path.join(_os.getcwd(), filename)
-            )
+            return _os.path.join(Path.get(base_dir=True), file) if prefer_base_dir else _os.path.join(_os.getcwd(), file)

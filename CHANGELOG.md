@@ -15,6 +15,16 @@
 # <br><b>Changelog</b><br>
 
 
+## ... `v1.6.1`
+* changed the order the params in `File.create()`:<br>
+  until now the param <code>content: *str* = ""</code> was the first param and <code>file: *str* = ""</code>
+  new the param <code>file: *str* = ""</code> is the first param and <code>content: *str* = ""</code> is the second
+* changed the params in `File.make_path()`:<br>
+  previously there were the params <code>filename: *str*</code> and <code>filetype: *str* = ""</code> where `filename` didn't have to have the file extension included, as long as the `filetype` was set
+  now these params have become one param <code>file: *str*</code> which is the file with file extension
+* adjusted the usages of `File.create()` and `File.make_path()` inside `xx_json` accordingly
+* removed all line breaks and other Markdown formattings from docstrings, since not all IDEs support them
+
 ## 07.01.2025 `v1.6.0`
 * fixed a small bug in `to_camel_case()` in the `xx_string` module:<br>
   previously, it would return only the first part of the decomposed string
@@ -66,7 +76,7 @@
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
-* added the method <code>split_count(*string*, *count*) -> *list*[*str*]</code> to `xx_string`
+* added the method <code>split_count(*string*, *count*) -> list[*str*]</code> to `xx_string`
 * added doc-strings to every method in `xx_string`
 * updated the `Cmd.restricted_input()` method:
   - paste text from the clipboard

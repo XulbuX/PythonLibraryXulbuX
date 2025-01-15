@@ -8,7 +8,7 @@
 `hexa`:
     A HEX color: is a string in the format `RGB`, `RGBA`, `RRGGBB` or `RRGGBBAA` (where `R` `G` `B` `A` are hexadecimal digits).
 
----------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
 The `Color` class, which contains all sorts of different color-related methods:
 - validate colors:
     - is valid rgba
@@ -37,9 +37,9 @@ import re as _re
 
 
 class rgba:
-    """An RGB/RGBA color: is a tuple of 3 integers, representing the red (`0`-`255`), green (`0`-`255`), and blue (`0`-`255`).<br>
+    """An RGB/RGBA color: is a tuple of 3 integers, representing the red (`0`-`255`), green (`0`-`255`), and blue (`0`-`255`).\n
     Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
-    -------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------------------
     Includes methods:
     - `to_hsla()` to convert to HSL color
     - `to_hexa()` to convert to HEX color
@@ -158,10 +158,10 @@ class rgba:
         return rgba(self.r, self.g, self.b, self.a)
 
     def blend(self, other: "rgba", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
-        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
-        If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
+        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
+        - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
+        - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
+        - if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         if not (isinstance(ratio, (int, float)) and 0 <= ratio <= 1):
             raise ValueError("'ratio' must be a float/int in [0.0, 1.0]")
         elif not isinstance(other, rgba):
@@ -237,9 +237,9 @@ class rgba:
 
 
 class hsla:
-    """A HSL/HSLA color: is a tuple of 3 integers, representing hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).<br>
+    """A HSL/HSLA color: is a tuple of 3 integers, representing hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).\n
     Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
-    ------------------------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------------------------------------
     Includes methods:
     - `to_rgba()` to convert to RGB color
     - `to_hexa()` to convert to HEX color
@@ -369,10 +369,10 @@ class hsla:
         return hsla(self.h, self.s, self.l, self.a)
 
     def blend(self, other: "hsla", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
-        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
-        If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
+        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
+        - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
+        - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
+        - if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         self.h, self.s, self.l, self.a = self.to_rgba().blend(Color.to_rgba(other), ratio, additive_alpha).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a)
 
@@ -432,7 +432,7 @@ class hsla:
 class hexa:
     """A HEX color: is a string representing a hexadecimal color code with optional alpha channel.\n
     -------------------------------------------------------------------------------------------------
-    Supports formats: RGB, RGBA, RRGGBB, RRGGBBAA (with or without prefix)<br>
+    Supports formats: RGB, RGBA, RRGGBB, RRGGBBAA (with or without prefix)
     Includes methods:
     - `to_rgba()` to convert to RGB color
     - `to_hsla()` to convert to HSL color
@@ -595,10 +595,10 @@ class hexa:
         return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
     def blend(self, other: "hexa", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
-        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
-        If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)<br>
-        If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
-        If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
+        """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
+        - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
+        - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
+        - if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)"""
         self.r, self.g, self.b, self.a = self.to_rgba(False).blend(Color.to_rgba(other), ratio, additive_alpha).values()
         return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
@@ -723,10 +723,9 @@ class Color:
     @staticmethod
     def has_alpha(color: rgba | hsla | hexa) -> bool:
         """Check if the given color has an alpha channel.\n
-        --------------------------------------------------------------------------------
-        Input a RGBA, HSLA or HEXA color as `color`.<br>
-        Returns `True` if the color has an alpha channel and `False` otherwise.
-        """
+        ---------------------------------------------------------------------------
+        Input a RGBA, HSLA or HEXA color as `color`.
+        Returns `True` if the color has an alpha channel and `False` otherwise."""
         if isinstance(color, (rgba, hsla, hexa)):
             return color.has_alpha()
         if Color.is_valid_hexa(color):
@@ -792,9 +791,9 @@ class Color:
 
     @staticmethod
     def str_to_rgba(string: str, only_first: bool = False) -> rgba | list[rgba] | None:
-        """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.<br>
-        If `only_first` is `True` only the first found color will be returned (not as a list).
-        """
+        """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.\n
+        --------------------------------------------------------------------------------------------------
+        If `only_first` is `True` only the first found color will be returned (not as a list)."""
         if only_first:
             match = _re.search(Regex.rgb_str(allow_alpha=True), string)
             if not match:
@@ -829,11 +828,13 @@ class Color:
         preserve_original: bool = False,
     ) -> int:
         """Convert RGBA channels to a HEXA integer (alpha is optional).\n
-        -------------------------------------------------------------------------------------------------------------------------
-        To preserve leading zeros, the function will add a `1` at the beginning, if the HEX integer would start with a `0`.<br>
-        This could affect the color a little bit, but will make sure, that it won't be interpreted as a completely different<br>
-        color, when initializing it as a `hexa()` color or changing it back to RGBA using `Color.hex_int_to_rgba()`.\n
-        ⇾ **You can disable this behavior by setting `preserve_original` to `True`**"""
+        --------------------------------------------------------------------------------------------
+        To preserve leading zeros, the function will add a `1` at the beginning, if the HEX integer
+        would start with a `0`.
+        This could affect the color a little bit, but will make sure, that it won't be interpreted
+        as a completely different color, when initializing it as a `hexa()` color or changing it
+        back to RGBA using `Color.hex_int_to_rgba()`.\n
+        ⇾ You can disable this behavior by setting `preserve_original` to `True`"""
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
@@ -851,11 +852,11 @@ class Color:
     @staticmethod
     def hex_int_to_rgba(hex_int: int, preserve_original: bool = False) -> tuple[int, int, int, float | None]:
         """Convert a HEX integer to RGBA channels.\n
-        -----------------------------------------------------------------------------------------------
-        If the red channel is `1` after conversion, it will be set to `0`, because when converting<br>
-        from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.<br>
+        -------------------------------------------------------------------------------------------
+        If the red channel is `1` after conversion, it will be set to `0`, because when converting
+        from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.
         This is the correction, so the color doesn't even look slightly different.\n
-        ⇾ **You can disable this behavior by setting `preserve_original` to `True`**"""
+        ⇾ You can disable this behavior by setting `preserve_original` to `True`"""
         if not isinstance(hex_int, int):
             raise ValueError("Input must be an integer")
         hex_str = f"{hex_int:x}"
@@ -882,10 +883,10 @@ class Color:
     def luminance(r: int, g: int, b: int, output_type: type = None) -> int | float:
         """Gets the colors luminance using the luminance formula.\n
         ------------------------------------------------------------
-        The param `output_type` can be set to:<br>
-        *`int`*   =⠀integer in [0, 100]<br>
-        *`float`* =⠀float in [0.0, 1.0]<br>
-        `None`    =⠀integer in [0, 255]"""
+        The param `output_type` can be set to:
+        - `int`   =⠀integer in [0, 100]
+        - `float` =⠀float in [0.0, 1.0]
+        - `None`  =⠀integer in [0, 255]"""
         r, g, b = r / 255.0, g / 255.0, b / 255.0
         if r < 0.03928:
             r = r / 12.92
@@ -918,11 +919,11 @@ class Color:
     @staticmethod
     def adjust_lightness(color: rgba | hexa, lightness_change: float) -> rgba | hexa:
         """In- or decrease the lightness of the input color.\n
-        ----------------------------------------------------------------------------------------------------
-        **color** (rgba|hexa): HEX or RGBA color<br>
-        **lightness_change** (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
-        ----------------------------------------------------------------------------------------------------
-        **returns** (rgba|hexa): the adjusted color in the format of the input color"""
+        -----------------------------------------------------------------------------------------------------
+        - color (rgba|hexa): HEX or RGBA color
+        - lightness_change (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
+        -----------------------------------------------------------------------------------------------------
+        returns (rgba|hexa): the adjusted color in the format of the input color"""
         was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = (
@@ -937,11 +938,11 @@ class Color:
     @staticmethod
     def adjust_saturation(color: rgba | hexa, saturation_change: float) -> rgba | hexa:
         """In- or decrease the saturation of the input color.\n
-        ---------------------------------------------------------------------------------------------------------
-        **color** (rgba|hexa): HEX or RGBA color<br>
-        **saturation_change** (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
-        ---------------------------------------------------------------------------------------------------------
-        **returns** (rgba|hexa): the adjusted color in the format of the input color"""
+        -----------------------------------------------------------------------------------------------------------
+        - color (rgba|hexa): HEX or RGBA color
+        - saturation_change (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
+        -----------------------------------------------------------------------------------------------------------
+        returns (rgba|hexa): the adjusted color in the format of the input color"""
         was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = (

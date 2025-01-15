@@ -56,7 +56,7 @@ class String:
 
     @staticmethod
     def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
-        """Replaces all special space characters with normal spaces.<br>
+        """Replaces all special space characters with normal spaces.
         Also replaces tab characters with `tab_spaces` spaces."""
         return (
             string.replace("\t", " " * tab_spaces)
@@ -76,10 +76,10 @@ class String:
     @staticmethod
     def escape(string: str, str_quotes: str = '"') -> str:
         """Escapes the special characters and quotes inside a string.\n
-        ----------------------------------------------------------------------------
-        `str_quotes` can be either `"` or `'` and should match the quotes,<br>
-        the string will be put inside of. So if your string will be `"string"`,<br>
-        you should pass `"` to the parameter `str_quotes`.<br>
+        ---------------------------------------------------------------------------
+        `str_quotes` can be either `"` or `'` and should match the quotes,
+        the string will be put inside of. So if your string will be `"string"`,
+        you should pass `"` to the parameter `str_quotes`.
         That way, if the string includes the same quotes, they will be escaped."""
         string = (
             string.replace("\\", r"\\")
@@ -98,14 +98,15 @@ class String:
 
     @staticmethod
     def is_empty(string: str, spaces_are_empty: bool = False):
-        """Returns `True` if the string is empty and `False` otherwise.<br>
+        """Returns `True` if the string is empty and `False` otherwise.\n
+        -------------------------------------------------------------------------------------------
         If `spaces_are_empty` is true, it will also return `True` if the string is only spaces."""
         return (string in (None, "")) or (spaces_are_empty and isinstance(string, str) and not string.strip())
 
     @staticmethod
     def single_char_repeats(string: str, char: str) -> int | bool:
-        """If the string consists of only the same `char`, it returns the number of times it is present.<br>
-        If the string doesn't consist of only the same character, it returns `False`."""
+        """- If the string consists of only the same `char`, it returns the number of times it is present.
+        - If the string doesn't consist of only the same character, it returns `False`."""
         if len(string) == len(char) * string.count(char):
             return string.count(char)
         else:
@@ -113,7 +114,7 @@ class String:
 
     @staticmethod
     def decompose(case_string: str, seps: str = "-_", lower_all: bool = True) -> list[str]:
-        """Will decompose the string (*any type of casing, also mixed*) into parts."""
+        """Will decompose the string (any type of casing, also mixed) into parts."""
         return [
             (part.lower() if lower_all else part)
             for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
@@ -121,7 +122,7 @@ class String:
 
     @staticmethod
     def to_camel_case(string: str, upper: bool = True) -> str:
-        """Will convert the string of any type of casing to UpperCamelCase or lowerCamelCase if `upper` is false."""
+        """Will convert the string of any type of casing to `UpperCamelCase` or `lowerCamelCase` if `upper` is false."""
         parts = String.decompose(string)
         return ("" if upper else parts[0].lower()) + "".join(part.capitalize() for part in (parts if upper else parts[1:]))
 
@@ -146,9 +147,9 @@ class String:
     @staticmethod
     def remove_consecutive_empty_lines(string: str, max_consecutive: int = 0) -> str:
         """Will remove consecutive empty lines from the string.\n
-        ----------------------------------------------------------------------------------------------
-        If `max_consecutive` is `0`, it will remove all consecutive empty lines.<br>
-        If `max_consecutive` is bigger than `0`, it will only allow `max_consecutive` consecutive<br>
+        --------------------------------------------------------------------------------------------
+        - If `max_consecutive` is `0`, it will remove all consecutive empty lines.
+        - If `max_consecutive` is bigger than `0`, it will only allow `max_consecutive` consecutive
         empty lines and everything above it will be cut down to `max_consecutive` empty lines."""
         return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
 

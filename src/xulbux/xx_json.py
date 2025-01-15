@@ -16,13 +16,15 @@ class Json:
     ) -> dict | tuple[dict, dict]:
         """Read JSON files, ignoring comments.\n
         -------------------------------------------------------------------------
-        If only `comment_start` is found at the beginning of an item,<br>
-        the whole item is counted as a comment and therefore ignored.<br>
-        If `comment_start` and `comment_end` are found inside an item,<br>
-        the the section from `comment_start` to `comment_end` is ignored.<br>
-        If `return_original` is set to `True`, the original JSON is returned<br>
+        If only `comment_start` is found at the beginning of an item,
+        the whole item is counted as a comment and therefore ignored.
+        If `comment_start` and `comment_end` are found inside an item,
+        the the section from `comment_start` to `comment_end` is ignored.
+        If `return_original` is set to `True`, the original JSON is returned
         additionally. (returns: `[processed_json, original_json]`)"""
-        file_path = File.make_path(json_file, "json", prefer_base_dir=True)
+        if not json_file.endswith(".json"):
+            json_file += ".json"
+        file_path = File.make_path(json_file, prefer_base_dir=True)
         with open(file_path, "r") as f:
             content = f.read()
         try:
@@ -42,7 +44,9 @@ class Json:
         compactness: int = 1,
         force: bool = False,
     ) -> str:
-        file_path = File.make_path(new_file, "json", prefer_base_dir=True)
+        if not new_file.endswith(".json"):
+            new_file += ".json"
+        file_path = File.make_path(new_file, prefer_base_dir=True)
         if _os.path.exists(file_path) and not force:
             with open(file_path, "r", encoding="utf-8") as existing_f:
                 existing_content = _json.load(existing_f)
@@ -63,27 +67,28 @@ class Json:
         sep: tuple[str, str] = ("->", "::"),
     ) -> None:
         """Function to easily update single/multiple values inside JSON files.\n
-        --------------------------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------------
         The param `json_file` is the path to the JSON file or just the name of the JSON file to be updated.\n
-        --------------------------------------------------------------------------------------------------------
-        The param `update_values` is a sort of path (or a list of paths) to the value/s to be updated, with<br>
-        the new value at the end of the path.<br>
+        ------------------------------------------------------------------------------------------------------
+        The param `update_values` is a sort of path (or a list of paths) to the value/s to be updated, with
+        the new value at the end of the path.\n
         In this example:
-        ```\n {
+        ```python
+        {
           'healthy': {
             'fruit': ['apples', 'bananas', 'oranges'],
             'vegetables': ['carrots', 'broccoli', 'celery']
           }
-        }\n```
-        ... if you want to change the value of `'apples'` to `'strawberries'`, `update_values` would<br>
-        be `healthy->fruit->apples::strawberries` or if you don't know that the value to update<br>
-        is `apples` you can also use the position of the value, so `healthy->fruit->0::strawberries`.\n
-        ⇾ **If the path from `update_values` doesn't exist, it will be created.**\n
-        --------------------------------------------------------------------------------------------------------
-        If only `comment_start` is found at the beginning of an item, the whole item is counted<br>
-        as a comment and therefore ignored. If `comment_start` and `comment_end` are found<br>
-        inside an item, the the section from `comment_start` to `comment_end` is ignored.
-        """
+        }
+        ```
+        ... if you want to change the value of `'apples'` to `'strawberries'`, `update_values` would be
+        `healthy->fruit->apples::strawberries` or if you don't know that the value to update is `apples` you
+        can also use the position of the value, so `healthy->fruit->0::strawberries`.\n
+        ⇾ If the path from `update_values` doesn't exist, it will be created.\n
+        ------------------------------------------------------------------------------------------------------
+        If only `comment_start` is found at the beginning of an item, the whole item is counted as a comment
+        and therefore ignored. If `comment_start` and `comment_end` are found inside an item, the the section
+        from `comment_start` to `comment_end` is ignored."""
         if isinstance(update_values, str):
             update_values = [update_values]
         valid_entries = [

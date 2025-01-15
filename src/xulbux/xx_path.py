@@ -8,7 +8,7 @@ import os as _os
 class Path:
 
     @staticmethod
-    def get(cwd: bool = False, base_dir: bool = False) -> str | list:
+    def get(cwd: bool = False, base_dir: bool = False) -> str | list[str]:
         paths = []
         if cwd:
             paths.append(_os.getcwd())
