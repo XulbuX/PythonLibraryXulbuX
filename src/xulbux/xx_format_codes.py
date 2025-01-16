@@ -100,6 +100,7 @@ PREFIX = {
     "BG": {"background", "bg"},
     "BR": {"bright", "br"},
 }
+PREFIXES = {val for values in PREFIX.values() for val in values}
 PREFIX_RX = {
     "BG": rf"(?:{'|'.join(PREFIX['BG'])})\s*:",
     "BR": rf"(?:{'|'.join(PREFIX['BR'])})\s*:",
@@ -197,9 +198,8 @@ class FormatCodes:
                 reset_keys = []
                 for k in format_keys:
                     k_lower = k.lower()
-                    k_parts = k_lower.split(":")
-                    k_set = set(k_parts)
-                    if PREFIX["BG"] & k_set and len(k_parts) <= 3:
+                    k_set = set(k_lower.split(":"))
+                    if PREFIX["BG"] & k_set and len(k_set) <= 3:
                         if k_set & PREFIX["BR"]:
                             for i in range(len(k)):
                                 if is_valid_color(k[i:]):
@@ -297,11 +297,7 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
         use_default = default_color and Color.is_valid_rgba(default_color, False)
-        _format_key, format_key = format_key, (  # NORMALIZE THE FORMAT KEY (+ SAVE ORIGINAL)
-            "bg:" if "bg" in (parts := format_key.replace(" ", "").lower().split(":")) else ""
-        ) + ("bright:" if any(x in parts for x in ("bright", "br")) else "") + ":".join(
-            p for p in parts if p not in ("bg", "bright", "br")
-        )
+        _format_key, format_key = format_key, FormatCodes.__normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
         if use_default:
             if new_default_color := FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps):
                 return new_default_color
@@ -336,3 +332,16 @@ class FormatCodes:
         except Exception:
             pass
         return _format_key
+
+    @staticmethod
+    def __normalize_key(format_key: str) -> str:
+        """Normalizes the given format key."""
+        k_parts = format_key.replace(" ", "").lower().split(":")
+        prefix_str = "".join(
+            f"{prefix_key.lower()}:"
+            for prefix_key, prefix_values in PREFIX.items()
+            if any(k_part in prefix_values for k_part in k_parts)
+        )
+        return prefix_str + ":".join(
+            part for part in k_parts if part not in {val for values in PREFIX.values() for val in values}
+        )
