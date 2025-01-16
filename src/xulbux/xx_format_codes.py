@@ -31,7 +31,6 @@ If you want to ignore the `()` brackets you can put a `\\` or `/` between:
 All possible formatting codes:
 - HEX colors:  `[#F08]` or `[#FF0088]` (with or without leading #)
 - RGB colors:  `[rgb(255, 0, 136)]`
-- bright colors:  `[bright:#F08]`
 - background colors:  `[BG:#F08]`
 - standard cmd colors:
   - `[black]`
@@ -55,10 +54,21 @@ All possible formatting codes:
   - `[hidden]`, `[hide]` or `[h]`
   - `[strikethrough]` or `[s]`
   - `[double-underline]` or `[du]`
-- specific reset:  `[_bold]` or `[_b]`, `[_dim]`, ... or `[_color]` or `[_c]`, `[_background]` or `[_bg]`
-- total reset: `[_]` (only if no `default_color` is set, otherwise see ↓ )
+- specific reset:
+  - `[_bold]` or `[_b]`
+  - `[_dim]`
+  - `[_italic]` or `[_i]`
+  - `[_underline]` or `[_u]`
+  - `[_inverse]`, `[_invert]` or `[_in]`
+  - `[_hidden]`, `[_hide]` or `[_h]`
+  - `[_strikethrough]` or `[_s]`
+  - `[_double-underline]` or `[_du]`
+  - `[_color]` or `[_c]`
+  - `[_background]` or `[_bg]`
+- total reset:
+  - `[_]`
 --------------------------------------------------------------------------------------------------------------------
-Special formatting when param `default_color` is set to a color:
+Additional formats when a `default_color` is set:
 - `[*]` will reset everything, just like `[_]`, but the text-color will remain in `default_color`
 - `[*color]` will reset the text-color, just like `[_color]`, but then also make it `default_color`
 - `[default]` will just color the text in `default_color`,
@@ -86,20 +96,31 @@ import regex as _rx
 import sys as _sys
 import re as _re
 
-
+PREFIX = {
+    "BG": {"background", "bg"},
+    "BR": {"bright", "br"},
+}
+PREFIX_RX = {
+    "BG": rf"(?:{'|'.join(PREFIX['BG'])})\s*:",
+    "BR": rf"(?:{'|'.join(PREFIX['BR'])})\s*:",
+}
 COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
     "format": _rx.compile(
         Regex.brackets("[", "]", is_group=True) + r"(?:\s*([/\\]?)\s*" + Regex.brackets("(", ")", is_group=True) + r")?"
     ),
-    "bg?_default": _re.compile(r"(?i)((?:BG\s*:)?)\s*default"),
-    "bg_default": _re.compile(r"(?i)BG\s*:\s*default"),
+    "bg?_default": _re.compile(r"(?i)((?:" + PREFIX_RX["BG"] + r")?)\s*default"),
+    "bg_default": _re.compile(r"(?i)" + PREFIX_RX["BG"] + r"\s*default"),
     "modifier": _re.compile(
-        rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{_re.escape(m)}+" for m in ANSI.modifier["lighten"] + ANSI.modifier["darken"]])})$'
+        r"(?i)((?:BG\s*:)?)\s*("
+        + "|".join([f"{_re.escape(m)}+" for m in ANSI.modifier["lighten"] + ANSI.modifier["darken"]])
+        + r")$"
     ),
-    "rgb": _re.compile(r"(?i)^\s*(BG\s*:)?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$"),
-    "hex": _re.compile(r"(?i)^\s*(BG\s*:)?\s*(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})\s*$"),
+    "rgb": _re.compile(
+        r"(?i)^\s*(" + PREFIX_RX["BG"] + r")?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$"
+    ),
+    "hex": _re.compile(r"(?i)^\s*(" + PREFIX_RX["BG"] + r")?\s*(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})\s*$"),
 }
 
 
@@ -114,6 +135,10 @@ class FormatCodes:
         end: str = "\n",
         flush: bool = True,
     ) -> None:
+        """Print a string that can be formatted using special formatting codes.\n
+        --------------------------------------------------------------------------
+        For exact information about how to use special formatting codes, see the
+        `xx_format_codes` module documentation."""
         FormatCodes.__config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
         if flush:
@@ -125,6 +150,10 @@ class FormatCodes:
         default_color: hexa | rgba = None,
         brightness_steps: int = 20,
     ) -> str:
+        """An input, which's prompt can be formatted using special formatting codes.\n
+        -------------------------------------------------------------------------------
+        For exact information about how to use special formatting codes, see the
+        `xx_format_codes` module documentation."""
         FormatCodes.__config_console()
         return input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
 
@@ -132,8 +161,10 @@ class FormatCodes:
     def to_ansi(
         string: str, default_color: hexa | rgba = None, brightness_steps: int = 20, _default_start: bool = True
     ) -> str:
-        result, bg_kwd, color_pref = string, {"bg"}, {"br", "bright"}
-
+        """Convert the special formatting codes inside a string to printable ANSI codes.\n
+        -----------------------------------------------------------------------------------
+        For exact information about how to use special formatting codes, see the
+        `xx_format_codes` module documentation."""
         if Color.is_valid_rgba(default_color, False):
             use_default = True
         elif Color.is_valid_hexa(default_color, False):
@@ -168,8 +199,8 @@ class FormatCodes:
                     k_lower = k.lower()
                     k_parts = k_lower.split(":")
                     k_set = set(k_parts)
-                    if bg_kwd & k_set and len(k_parts) <= 3:
-                        if k_set & color_pref:
+                    if PREFIX["BG"] & k_set and len(k_parts) <= 3:
+                        if k_set & PREFIX["BR"]:
                             for i in range(len(k)):
                                 if is_valid_color(k[i:]):
                                     reset_keys.extend(["_bg", "_color"])
@@ -181,7 +212,7 @@ class FormatCodes:
                                     break
                     elif is_valid_color(k) or any(
                         k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon) :])
-                        for prefix in color_pref
+                        for prefix in PREFIX["BR"]
                     ):
                         reset_keys.append("_color")
                     else:
@@ -209,8 +240,8 @@ class FormatCodes:
                 + ("" if escaped else "".join(ansi_resets))
             )
 
-        result = "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n"))
-        return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + result if use_default else result
+        string = "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n"))
+        return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string if use_default else string
 
     @staticmethod
     def escape_ansi(ansi_string: str, escaped_char: str = ANSI.char_esc) -> str:
@@ -220,6 +251,7 @@ class FormatCodes:
     @staticmethod
     @lru_cache(maxsize=64)
     def __config_console() -> None:
+        """Configure the console to be able to interpret ANSI formattings."""
         _sys.stdout.flush()
         kernel32 = _ctypes.windll.kernel32
         h = kernel32.GetStdHandle(-11)
@@ -234,6 +266,7 @@ class FormatCodes:
         brightness_steps: int = None,
         _modifiers: tuple[str, str] = (ANSI.modifier["lighten"], ANSI.modifier["darken"]),
     ) -> str | None:
+        """Get the `default_color` and lighter/darker versions of it in ANSI format."""
         if not brightness_steps or (format_key and COMPILED["bg?_default"].search(format_key)):
             return (ANSI.seq_bg_color if format_key and COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
                 *default_color[:3]
