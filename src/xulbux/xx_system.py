@@ -1,6 +1,5 @@
 import subprocess as _subprocess
 import platform as _platform
-import psutil as _psutil
 import ctypes as _ctypes
 import time as _time
 import sys as _sys

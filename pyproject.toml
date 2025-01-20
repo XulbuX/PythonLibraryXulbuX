@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.6.1"
+version = "1.6.2"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A library which includes a lot of really helpful functions."
 readme = "README.md"
@@ -14,7 +14,6 @@ dependencies = [
   "keyboard>=0.13.5",
   "mouse>=0.7.1",
   "pyperclip>=1.9.0",
-  "pywin32>=307",
   "regex>=2023.10.3",
 ]
 optional-dependencies = { dev = [
