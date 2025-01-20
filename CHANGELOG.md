@@ -33,7 +33,7 @@
   now these params have become one param <code>file: *str*</code> which is the file with file extension
 * `File.make_path()` was renamed to a more descriptive name `File.extend_or_make_path()`
 * adjusted the usages of `File.create()` and `File.make_path()` inside `xx_json` accordingly
-* removed all line breaks and other Markdown formattings from docstrings, since not all IDEs support them
+* removed all line breaks and other Markdown formatting from docstrings, since not all IDEs support them
 
 ## 07.01.2025 `v1.6.0`
 * fixed a small bug in `to_camel_case()` in the `xx_string` module:<br>

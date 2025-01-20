@@ -150,13 +150,20 @@ class FormatCodes:
         prompt: object = "",
         default_color: hexa | rgba = None,
         brightness_steps: int = 20,
+        reset_ansi: bool = False,
     ) -> str:
         """An input, which's prompt can be formatted using special formatting codes.\n
+        -------------------------------------------------------------------------------
+        If `reset_ansi` is true, all ANSI formatting will be reset, after the user has
+        confirmed the input and the program continues.\n
         -------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `xx_format_codes` module documentation."""
         FormatCodes.__config_console()
-        return input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
+        user_input = input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
+        if reset_ansi:
+            _sys.stdout.write("\x1b[0m")
+        return user_input
 
     @staticmethod
     def to_ansi(
@@ -251,7 +258,7 @@ class FormatCodes:
     @staticmethod
     @lru_cache(maxsize=64)
     def __config_console() -> None:
-        """Configure the console to be able to interpret ANSI formattings."""
+        """Configure the console to be able to interpret ANSI formatting."""
         _sys.stdout.flush()
         kernel32 = _ctypes.windll.kernel32
         h = kernel32.GetStdHandle(-11)
@@ -334,6 +341,7 @@ class FormatCodes:
         return _format_key
 
     @staticmethod
+    @lru_cache(maxsize=64)
     def __normalize_key(format_key: str) -> str:
         """Normalizes the given format key."""
         k_parts = format_key.replace(" ", "").lower().split(":")
