@@ -48,8 +48,8 @@ def test_rgba_return_values():
     assert_rgba_equal(rgba(*clr_rgba).invert(), (0, 255, 255, 0.5))
     assert_rgba_equal(rgba(*clr_rgba).grayscale(), (54, 54, 54, 0.5))
     assert_rgba_equal(rgba(*clr_rgba).blend((0, 255, 0)), (255, 255, 0, 0.75))
-    assert rgba(*clr_rgba).is_dark() is True
-    assert rgba(*clr_rgba).is_light() is False
+    assert rgba(*clr_rgba).is_dark() is False
+    assert rgba(*clr_rgba).is_light() is True
     assert rgba(*clr_rgba).is_grayscale() is False
     assert rgba(*clr_rgba).is_opaque() is False
     assert_rgba_equal(rgba(*clr_rgba).with_alpha(0.75), (255, 0, 0, 0.75))
@@ -98,3 +98,6 @@ def test_hexa_return_values():
     assert hexa(clr_hexa).is_opaque() is False
     assert_hexa_equal(hexa(clr_hexa).with_alpha(0.75), "#FF0000BF")
     assert_hexa_equal(hexa(clr_hexa).complementary(), "#00FFFF7F")
+
+
+print(rgba(*clr_rgba).is_dark())

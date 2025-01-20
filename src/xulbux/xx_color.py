@@ -762,23 +762,11 @@ class Color:
         if isinstance(color, (hsla, hexa)):
             return color.to_rgba()
         elif Color.is_valid_hsla(color):
-            return (
-                hsla(*color, _validate=False).to_rgba()
-                if Color.has_alpha(color)
-                else hsla(color[0], color[1], color[2], _validate=False).to_rgba()
-            )
+            return hsla(*color, _validate=False).to_rgba()
         elif Color.is_valid_hexa(color):
             return hexa(color).to_rgba()
         elif Color.is_valid_rgba(color):
-            return (
-                color
-                if isinstance(color, rgba)
-                else (
-                    rgba(*color, _validate=False)
-                    if Color.has_alpha(color)
-                    else rgba(color[0], color[1], color[2], _validate=False)
-                )
-            )
+            return color if isinstance(color, rgba) else (rgba(*color, _validate=False))
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
@@ -787,23 +775,11 @@ class Color:
         if isinstance(color, (rgba, hexa)):
             return color.to_hsla()
         elif Color.is_valid_rgba(color):
-            return (
-                rgba(*color, _validate=False).to_hsla()
-                if Color.has_alpha(color)
-                else rgba(color[0], color[1], color[2], _validate=False).to_hsla()
-            )
+            return rgba(*color, _validate=False).to_hsla()
         elif Color.is_valid_hexa(color):
             return hexa(color).to_hsla()
         elif Color.is_valid_hsla(color):
-            return (
-                color
-                if isinstance(color, hsla)
-                else (
-                    hsla(*color, _validate=False)
-                    if Color.has_alpha(color)
-                    else hsla(color[0], color[1], color[2], _validate=False)
-                )
-            )
+            return color if isinstance(color, hsla) else (hsla(*color, _validate=False))
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
@@ -812,17 +788,9 @@ class Color:
         if isinstance(color, (rgba, hsla)):
             return color.to_hexa()
         elif Color.is_valid_rgba(color):
-            return (
-                rgba(*color, _validate=False).to_hexa()
-                if Color.has_alpha(color)
-                else rgba(color[0], color[1], color[2], _validate=False).to_hexa()
-            )
+            return rgba(*color, _validate=False).to_hexa()
         elif Color.is_valid_hsla(color):
-            return (
-                hsla(*color, _validate=False).to_hexa()
-                if Color.has_alpha(color)
-                else hsla(color[0], color[1], color[2], _validate=False).to_hexa()
-            )
+            return hsla(*color, _validate=False).to_hexa()
         elif Color.is_valid_hexa(color):
             return color if isinstance(color, hexa) else hexa(color)
         raise ValueError(f"Invalid color format '{color}'")
