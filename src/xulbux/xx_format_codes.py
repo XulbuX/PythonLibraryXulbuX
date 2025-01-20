@@ -11,7 +11,7 @@ Example string with formatting codes:
 [bold]This is bold text, [#F08]which is pink now [black|BG:#FF0088] and now it changed`
 to black with a pink background. [_]And this is the boring text, where everything is reset.
 ```
-⇾ Instead of writing the formats all separate `[…][…][…]` you can join them like this `[…|…|…]`\n
+⇾ Instead of writing the formats all separate `[x][y][z]` you can join them like this `[x|y|z]`\n
 --------------------------------------------------------------------------------------------------------------------
 You can also automatically reset a certain format, behind text like shown in the following example:
 ```string

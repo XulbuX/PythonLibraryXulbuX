@@ -1,11 +1,29 @@
 import subprocess as _subprocess
 import platform as _platform
+import psutil as _psutil
+import ctypes as _ctypes
 import time as _time
 import sys as _sys
 import os as _os
 
 
+class ProcessNotFoundError(Exception):
+    pass
+
+
 class System:
+
+    @staticmethod
+    def is_elevated() -> bool:
+        """Returns `True` if the current user is an admin and `False` otherwise."""
+        try:
+            if _os.name == "nt":
+                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
+            elif _os.name == "posix":
+                return _os.geteuid() == 0
+        except:
+            pass
+        return False
 
     @staticmethod
     def restart(
@@ -83,3 +101,38 @@ class System:
             return None
         except _subprocess.CalledProcessError:
             return missing
+
+    @staticmethod
+    def elevate(win_title: str | None = None, args: list | None = None) -> bool:
+        """Attempts to start a new process with elevated privileges.\n
+        ---------------------------------------------------------------------------------
+        The param `win_title` is window the title of the elevated process.
+        The param `args` is the arguments to be passed to the elevated process.\n
+        After the elevated process started, the original process will exit.
+        This means, that this method has to be run at the beginning of the program or
+        will have to continue in a new window after elevation.\n
+        ---------------------------------------------------------------------------------
+        Returns `True` if the current process already has elevated privileges and raises
+        a `PermissionError` if the user denied the elevation or the elevation failed."""
+        if System.is_elevated():
+            return True
+        if _os.name == "nt":  # WINDOWS
+            if win_title:
+                args_str = f'-c "import ctypes; ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args)}"'
+            else:
+                args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args)}'
+            result = _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1)
+            if result <= 32:
+                raise PermissionError("Failed to launch elevated process.")
+            else:
+                _sys.exit(0)
+        else:  # POSIX
+            cmd = ["pkexec"]
+            if win_title:
+                cmd.extend(["--description", win_title])
+            cmd.extend([_sys.executable] + _sys.argv[1:] + ([] if args is None else args))
+            proc = _subprocess.Popen(cmd)
+            proc.wait()
+            if proc.returncode != 0:
+                raise PermissionError("Process elevation was denied.")
+            _sys.exit(0)

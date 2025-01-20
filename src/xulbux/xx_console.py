@@ -67,17 +67,6 @@ class Console:
     def user() -> str:
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
-    def is_admin() -> bool:
-        try:
-            if _os.name == "nt":
-                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
-            elif _os.name == "posix":
-                return _os.geteuid() == 0
-            else:
-                return False
-        except Exception:
-            return False
-
     @staticmethod
     def pause_exit(
         pause: bool = False,

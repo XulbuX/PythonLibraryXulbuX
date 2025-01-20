@@ -15,6 +15,15 @@
 # <br><b>Changelog</b><br>
 
 
+## ... `v1.6.2`
+* moved the method `is_admin()` from `xx_console` to `xx_system`
+* added a new method `elevate()` to `xx_system`, which is used to request elevated privileges
+* fixed a bug in `hexa()`:<br>
+  previously, when initializing the HEXA color `#0000` (*just transparent, short form*), it would get saved as `#000000` (*opaque black, long form*)
+  now when initializing the HEXA color `#0000` it will correctly be saved as `#00000000` (*just transparent, long form*)
+* huge speed and efficiency improvements in `xx_color`, due to newly added option to initialize a color without validation, which saves time when initializing colors, when we know, that the values are valid
+* method `hex_int_to_rgba()` from `xx_color` now returns an `rgba()` object instead of the separate values `r`, `g`, `b` and `a`
+
 ## 15.01.2025 `v1.6.1`
 * changed the order the params in `File.create()`:<br>
   until now the param <code>content: *str* = ""</code> was the first param and <code>file: *str* = ""</code>
