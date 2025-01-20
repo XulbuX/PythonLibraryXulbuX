@@ -29,7 +29,6 @@ from contextlib import suppress
 import pyperclip as _pyperclip
 import keyboard as _keyboard
 import getpass as _getpass
-import ctypes as _ctypes
 import shutil as _shutil
 import mouse as _mouse
 import sys as _sys

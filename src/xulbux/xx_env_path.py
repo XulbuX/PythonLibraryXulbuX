@@ -8,8 +8,8 @@ Functions for modifying and checking the systems environment-variables:
 
 from .xx_path import Path
 
-import os as _os
 import sys as _sys
+import os as _os
 
 
 class EnvPath:
