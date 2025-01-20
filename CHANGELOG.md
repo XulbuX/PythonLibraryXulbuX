@@ -23,6 +23,8 @@
   now when initializing a color with the alpha channel set to `0.0`, this doesn't happen and when converted or returned, the alpha channel is still `0.0`
 * huge speed and efficiency improvements in `xx_color`, due to newly added option to initialize a color without validation, which saves time when initializing colors, when we know, that the values are valid
 * method `hex_int_to_rgba()` from `xx_color` now returns an `rgba()` object instead of the separate values `r`, `g`, `b` and `a`
+* added a new param <code>reset_ansi: *bool* = False</code> to `FormatCodes.input()`:<br>
+  if this param is true, all formatting will be reset after the user confirmed the input and the program continues
 
 ## 15.01.2025 `v1.6.1`
 * changed the order the params in `File.create()`:<br>
