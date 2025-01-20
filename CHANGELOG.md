@@ -18,9 +18,9 @@
 ## ... `v1.6.2`
 * moved the method `is_admin()` from `xx_console` to `xx_system`
 * added a new method `elevate()` to `xx_system`, which is used to request elevated privileges
-* fixed a bug in `hexa()`:<br>
-  previously, when initializing the HEXA color `#0000` (*just transparent, short form*), it would get saved as `#000000` (*opaque black, long form*)
-  now when initializing the HEXA color `#0000` it will correctly be saved as `#00000000` (*just transparent, long form*)
+* fixed a bug in `rgba()`, `hsla()` and `hexa()`:<br>
+  previously, when initializing a color with the alpha channel set to `0.0` (*100% transparent*), it was saved correctly, but when converted to a different color type or when returned, the alpha channel got ignored, just like if it was `None` or `1.0` (*opaque*)
+  now when initializing a color with the alpha channel set to `0.0`, this doesn't happen and when converted or returned, the alpha channel is still `0.0`
 * huge speed and efficiency improvements in `xx_color`, due to newly added option to initialize a color without validation, which saves time when initializing colors, when we know, that the values are valid
 * method `hex_int_to_rgba()` from `xx_color` now returns an `rgba()` object instead of the separate values `r`, `g`, `b` and `a`
 

@@ -73,25 +73,25 @@ class rgba:
         elif a is not None and not (isinstance(a, (int, float)) and 0 <= a <= 1):
             raise ValueError(f"Alpha channel must be a float/int in [0.0, 1.0]: got '{a}'")
         self.r, self.g, self.b = r, g, b
-        self.a = (1.0 if a > 1.0 else float(a)) if a else None
+        self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
     def __len__(self):
-        return 4 if self.a else 3
+        return 3 if self.a is None else 4
 
     def __iter__(self):
-        return iter((self.r, self.g, self.b) + ((self.a,) if self.a else ()))
+        return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))
 
     def __dict__(self):
         return self.dict()
 
     def __getitem__(self, index):
-        return ((self.r, self.g, self.b) + ((self.a,) if self.a else ()))[index]
+        return ((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))[index]
 
     def __repr__(self):
-        return f'rgba({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
+        return f'rgba({self.r}, {self.g}, {self.b}{"" if self.a is None else f", {self.a}"})'
 
     def __str__(self):
-        return f'({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
+        return f'({self.r}, {self.g}, {self.b}{"" if self.a is None else f", {self.a}"})'
 
     def __eq__(self, other):
         if not isinstance(other, rgba):
@@ -105,7 +105,7 @@ class rgba:
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
-        return dict(r=self.r, g=self.g, b=self.b, a=self.a) if self.a else dict(r=self.r, g=self.g, b=self.b)
+        return dict(r=self.r, g=self.g, b=self.b) if self.a is None else dict(r=self.r, g=self.g, b=self.b, a=self.a)
 
     def values(self) -> tuple:
         """Returns the color components as separate values `r, g, b, a`"""
@@ -178,7 +178,7 @@ class rgba:
         self.b = max(0, min(255, int(round((self.b * (2 - ratio)) + (other.b * ratio)))))
         none_alpha = self.a is None and (len(other) <= 3 or other[3] is None)
         if not none_alpha:
-            self_a = self.a if self.a is not None else 1
+            self_a = 1 if self.a is None else self.a
             other_a = (other[3] if other[3] is not None else 1) if len(other) > 3 else 1
             if additive_alpha:
                 self.a = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
@@ -276,25 +276,25 @@ class hsla:
         elif a is not None and (not isinstance(a, (int, float)) or not 0 <= a <= 1):
             raise ValueError(f"Alpha channel must be a float/int in [0.0, 1.0]: got '{a}'")
         self.h, self.s, self.l = h, s, l
-        self.a = (1.0 if a > 1.0 else float(a)) if a else None
+        self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
     def __len__(self):
-        return 4 if self.a else 3
+        return 3 if self.a is None else 4
 
     def __iter__(self):
-        return iter((self.h, self.s, self.l) + ((self.a,) if self.a else ()))
+        return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))
 
     def __dict__(self):
         return self.dict()
 
     def __getitem__(self, index):
-        return ((self.h, self.s, self.l) + ((self.a,) if self.a else ()))[index]
+        return ((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))[index]
 
     def __repr__(self):
-        return f'hsla({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
+        return f'hsla({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
 
     def __str__(self):
-        return f'({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
+        return f'({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
 
     def __eq__(self, other):
         if not isinstance(other, hsla):
@@ -308,7 +308,7 @@ class hsla:
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'h'`, `'s'`, `'l'` and optionally `'a'`"""
-        return dict(h=self.h, s=self.s, l=self.l, a=self.a) if self.a else dict(h=self.h, s=self.s, l=self.l)
+        return dict(h=self.h, s=self.s, l=self.l) if self.a is None else dict(h=self.h, s=self.s, l=self.l, a=self.a)
 
     def values(self) -> tuple:
         """Returns the color components as separate values `h, s, l, a`"""
@@ -505,7 +505,7 @@ class hexa:
             raise TypeError(f"HEX color must be of type 'str' or 'int': got '{type(color)}'")
 
     def __len__(self):
-        return 4 if self.a else 3
+        return 3 if self.a is None else 4
 
     def __iter__(self):
         return iter(
@@ -539,14 +539,14 @@ class hexa:
     def dict(self) -> dict:
         """Returns the color components as a dictionary with hex string values for keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
         return (
-            dict(
+            dict(r=f"{self.r:02X}", g=f"{self.g:02X}", b=f"{self.b:02X}")
+            if self.a is None
+            else dict(
                 r=f"{self.r:02X}",
                 g=f"{self.g:02X}",
                 b=f"{self.b:02X}",
                 a=f"{int(self.a * 255):02X}",
             )
-            if self.a
-            else dict(r=f"{self.r:02X}", g=f"{self.g:02X}", b=f"{self.b:02X}")
         )
 
     def values(self) -> tuple:
@@ -846,15 +846,15 @@ class Color:
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
-        if a is not None:
+        if a is None:
+            hex_int = (r << 16) | (g << 8) | b
+            if not preserve_original and (hex_int & 0xF00000) == 0:
+                hex_int |= 0x010000
+        else:
             a = max(0, min(255, int(a * 255)))
             hex_int = (r << 24) | (g << 16) | (b << 8) | a
             if not preserve_original and r == 0:
                 hex_int |= 0x01000000
-        else:
-            hex_int = (r << 16) | (g << 8) | b
-            if not preserve_original and (hex_int & 0xF00000) == 0:
-                hex_int |= 0x010000
         return hex_int
 
     @staticmethod
