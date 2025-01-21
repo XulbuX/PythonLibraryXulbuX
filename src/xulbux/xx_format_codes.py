@@ -32,7 +32,7 @@ All possible formatting codes:
 - HEX colors:  `[#F08]` or `[#FF0088]` (with or without leading #)
 - RGB colors:  `[rgb(255, 0, 136)]`
 - background colors:  `[BG:#F08]`
-- standard cmd colors:
+- standard console colors:
   - `[black]`
   - `[red]`
   - `[green]`
@@ -41,9 +41,9 @@ All possible formatting codes:
   - `[magenta]`
   - `[cyan]`
   - `[white]`
-- bright cmd colors: `[bright:black]` or `[br:black]`, `[bright:red]` or `[br:red]`, ...
-- background cmd colors: `[BG:black]`, `[BG:red]`, ...
-- bright background cmd colors: `[BG:bright:black]` or `[BG:br:black]`, `[BG:bright:red]` or `[BG:br:red]`, ...\n
+- bright console colors: `[bright:black]` or `[br:black]`, `[bright:red]` or `[br:red]`, ...
+- background console colors: `[BG:black]`, `[BG:red]`, ...
+- bright background console colors: `[BG:bright:black]` or `[BG:br:black]`, `[BG:bright:red]` or `[BG:br:red]`, ...\n
   ⇾ The order of `BG:` and `bright:` or `br:` does not matter.
 - text formats:
   - `[bold]` or `[b]`
@@ -73,7 +73,7 @@ Additional formats when a `default_color` is set:
 - `[*color]` will reset the text-color, just like `[_color]`, but then also make it `default_color`
 - `[default]` will just color the text in `default_color`,
 - `[BG:default]` will color the background in `default_color`\n
-Unlike the standard cmd colors, the default color can be changed by using the following modifiers:
+Unlike the standard console colors, the default color can be changed by using the following modifiers:
 - `[l]` will lighten the `default_color` text by `brightness_steps`%
 - `[ll]` will lighten the `default_color` text by `2 × brightness_steps`%
 - `[lll]` will lighten the `default_color` text by `3 × brightness_steps`%

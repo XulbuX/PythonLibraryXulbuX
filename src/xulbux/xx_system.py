@@ -41,7 +41,7 @@ class System:
             if not force:
                 output = _subprocess.check_output("tasklist", shell=True).decode()
                 processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
-                if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CMD
+                if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CONSOLE
                     raise RuntimeError("Processes are still running. Use the parameter `force=True` to restart anyway.")
             if prompt:
                 _os.system(f'shutdown /r /t {wait} /c "{prompt}"')
