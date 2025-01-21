@@ -9,6 +9,7 @@ Really long regex code presets:
 `hsla_str` match a HSLA color
 """
 
+import regex as _rx
 import re as _re
 
 
@@ -17,25 +18,33 @@ class Regex:
     @staticmethod
     def quotes() -> str:
         """Matches everything inside quotes. (strings)\n
-        ------------------------------------------------------------------------------------
+        --------------------------------------------------------------------------------
         Will create two named groups:
         - `quote` the quote type (single or double)
         - `string` everything inside the found quote pair\n
-        ------------------------------------------------------------------------------------
+        --------------------------------------------------------------------------------
         Attention: Requires non standard library `regex` not standard library `re`!"""
         return r'(?P<quote>[\'"])(?P<string>(?:\\.|(?!\g<quote>).)*?)\g<quote>'
 
     @staticmethod
-    def brackets(bracket1: str = "(", bracket2: str = ")", is_group: bool = False) -> str:
+    def brackets(bracket1: str = "(", bracket2: str = ")", is_group: bool = False, ignore_in_strings: bool = True) -> str:
         """Matches everything inside brackets, including other nested brackets.\n
-        ------------------------------------------------------------------------------------
+        --------------------------------------------------------------------------------
+        If `is_group` is true, you will be able to reference the matched content as a
+        group (e.g. `match.group(…)` or `r'\\…'`).
+        If `ignore_in_strings` is true and a bracket is inside a string (e.g. `'...'`
+        or `"..."`), it will not be counted as the matching closing bracket.\n
+        --------------------------------------------------------------------------------
         Attention: Requires non standard library `regex` not standard library `re`!"""
         g, b1, b2 = (
             "" if is_group else "?:",
-            _re.escape(bracket1) if len(bracket1) == 1 else bracket1,
-            _re.escape(bracket2) if len(bracket2) == 1 else bracket2,
+            _rx.escape(bracket1) if len(bracket1) == 1 else bracket1,
+            _rx.escape(bracket2) if len(bracket2) == 1 else bracket2,
         )
-        return rf'{b1}\s*({g}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|{b1}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|(?R))*{b2})*)\s*{b2}'
+        if ignore_in_strings:
+            return rf'{b1}\s*({g}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|{b1}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|(?R))*{b2})*)\s*{b2}'
+        else:
+            return rf"{b1}\s*({g}(?:[^{b1}{b2}]|{b1}(?:[^{b1}{b2}]|(?R))*{b2})*)\s*{b2}"
 
     @staticmethod
     def outside_strings(pattern: str = r".*") -> str:
@@ -48,22 +57,27 @@ class Regex:
         ignore_pattern: str = "",
         is_group: bool = False,
     ) -> str:
-        """Matches everything except `disallowed_pattern`, unless the `disallowed_pattern` is found inside a string (`'...'` or `"..."`).\n
-        ------------------------------------------------------------------------------------------------------------------------------------
-        The `ignore_pattern` is just always ignored. For example if `disallowed_pattern` is `>` and `ignore_pattern` is `->`, the `->`
-        -arrows will be allowed, even though they have `>` in them. If `is_group` is `True`, you will be able to reference the matched
-        content as a group (e.g. `match.group(int)` or `r'\\int'`)."""
+        """Matches everything except `disallowed_pattern`, unless the `disallowed_pattern`
+        is found inside a string (`'...'` or `"..."`).\n
+        ------------------------------------------------------------------------------------
+        The `ignore_pattern` is just always ignored. For example if `disallowed_pattern` is
+        `>` and `ignore_pattern` is `->`, the `->`-arrows will be allowed, even though they
+        have `>` in them.
+        If `is_group` is true, you will be able to reference the matched content as a group
+        (e.g. `match.group(…)` or `r'\\…'`)."""
         return rf'({"" if is_group else "?:"}(?:(?!{ignore_pattern}).)*(?:(?!{Regex.outside_strings(disallowed_pattern)}).)*)'
 
     @staticmethod
     def func_call(func_name: str = None) -> str:
-        """Match a function call
-        - `1` function name
-        - `2` the function's arguments\n
+        """Match a function call, and get back two groups:
+        1. function name
+        2. the function's arguments\n
         If no `func_name` is given, it will match any function call.\n
-        ------------------------------------------------------------------------------------
+        --------------------------------------------------------------------------------
         Attention: Requires non standard library `regex` not standard library `re`!"""
-        return r"(?<=\b)(" + (func_name if func_name else r"[\w_]+") + r")\s*" + Regex.brackets("(", ")", is_group=True)
+        return (
+            r"(?<=\b)(" + (r"[\w_]+" if func_name is None else func_name) + r")\s*" + Regex.brackets("(", ")", is_group=True)
+        )
 
     @staticmethod
     def rgba_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
@@ -76,11 +90,10 @@ class Regex:
         - `(r, g, b, a)` (if `allow_alpha=True`)
         - `r, g, b`
         - `r, g, b, a` (if `allow_alpha=True`)\n
-        ----------------------------------------------------------------------------
-        ### Valid ranges:
-        - `r` 0-255 (amount: red)
-        - `g` 0-255 (amount: green)
-        - `b` 0-255 (amount: blue)
+        #### Valid ranges:
+        - `r` 0-255 (int: red)
+        - `g` 0-255 (int: green)
+        - `b` 0-255 (int: blue)
         - `a` 0-1 (float: opacity)\n
         ----------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number
@@ -112,11 +125,10 @@ class Regex:
         - `(h, s, l, a)` (if `allow_alpha=True`)
         - `h, s, l`
         - `h, s, l, a` (if `allow_alpha=True`)\n
-        ----------------------------------------------------------------------------
-        ### Valid ranges:
-        - `h` 0-360 (degrees: hue)
-        - `s` 0-100 (percentage: saturation)
-        - `l` 0-100 (percentage: lightness)
+        #### Valid ranges:
+        - `h` 0-360 (int: hue)
+        - `s` 0-100 (int: saturation)
+        - `l` 0-100 (int: lightness)
         - `a` 0-1 (float: opacity)\n
         ----------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number
@@ -146,9 +158,8 @@ class Regex:
         - `RGBA` (if `allow_alpha=True`)
         - `RRGGBB`
         - `RRGGBBAA` (if `allow_alpha=True`)\n
-        ----------------------------------------------------------------------
-        ### Valid ranges:
-        each channel from 0-9 and A-F (case insensitive)"""
+        #### Valid ranges:
+        every channel from 0-9 and A-F (case insensitive)"""
         return (
             r"(?i)^(?:#|0x)?[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$"
             if allow_alpha

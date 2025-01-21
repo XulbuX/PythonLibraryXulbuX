@@ -108,8 +108,11 @@ PREFIX_RX = {
 COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
-    "format": _rx.compile(
-        Regex.brackets("[", "]", is_group=True) + r"(?:\s*([/\\]?)\s*" + Regex.brackets("(", ")", is_group=True) + r")?"
+    "formatting": _rx.compile(
+        Regex.brackets("[", "]", is_group=True)
+        + r"(?:\s*([/\\]?)\s*"
+        + Regex.brackets("(", ")", is_group=True, ignore_in_strings=False)
+        + r")?"
     ),
     "bg?_default": _re.compile(r"(?i)((?:" + PREFIX_RX["BG"] + r")?)\s*default"),
     "bg_default": _re.compile(r"(?i)" + PREFIX_RX["BG"] + r"\s*default"),
@@ -247,7 +250,7 @@ class FormatCodes:
                 + ("" if escaped else "".join(ansi_resets))
             )
 
-        string = "\n".join(COMPILED["format"].sub(replace_keys, line) for line in string.split("\n"))
+        string = "\n".join(COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
         return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string if use_default else string
 
     @staticmethod
