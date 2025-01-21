@@ -1,31 +1,27 @@
-# Python bytecode
+# IDE & EDITOR SETTINGS
+.vscode/
+.python-version
+
+# COMPILED FILES & CACHES
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Distribution / packaging
-.Python
-wheels/
+# BUILD ARTIFACTS
 build/
 dist/
-
-# PyBuilder
-.pybuilder/
 target/
-
-.python-version
-
-# PEP 582
+wheels/
+*.egg-info/
+.Python
+.pybuilder/
+.pytype/
+cython_debug/
 __pypackages__/
 
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# VS Code
-.vscode/
-
-# Pytest
+# TESTING
 .pytest_cache/
+
+# MISCELLANEOUS
+.DS_Store
+Thumbs.db
