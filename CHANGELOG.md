@@ -14,8 +14,14 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.6.3`
+* fixed a small bug in `xx_format_codes`:<br>
+  inside print-strings, if there was a `'` or `"` inside a auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset
+  now this is fixed and auto-reset-formatting works as expected
+* added a new param <code>ignore_in_strings: *bool* = True</code> to `Regex.brackets()`:<br>
+  if this param is true and a bracket is inside a string (e.g. `'...'` or `"..."`), it will not be counted as the matching closing bracket
 
-## ... `v1.6.2`
+## 20.01.2025 `v1.6.2`
 * moved the method `is_admin()` from `xx_console` to `xx_system`
 * added a new method `elevate()` to `xx_system`, which is used to request elevated privileges
 * fixed a bug in `rgba()`, `hsla()` and `hexa()`:<br>
