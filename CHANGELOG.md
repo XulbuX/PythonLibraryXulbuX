@@ -55,10 +55,10 @@
 
 ## 21.12.2024 `v1.5.9`
 * fixed bugs in method `to_ansi()` in module `xx_format_codes`:<br>
-  1. the method always returned an empty string, because the color validation was broken and it would identify all colors as invalid<br>
+  1. the method always returned an empty string, because the color validation was broken, and it would identify all colors as invalid<br>
     now the validation `Color.is_valid_rgba()` and `Color.is_valid_hexa()` are fixed and now, if a color is identified as invalid, the method returns the original string instead of an empty string
-  2. previously the method `to_ansi()` couldn't handle formats inside of `[]` because everything inside the brackets was recognized as an invalid format
-    now you are able to use formats inside of `[]` (*e.g.* `"[[red](Red text [b](inside) square brackets!)]"`)
+  2. previously the method `to_ansi()` couldn't handle formats inside `[]` because everything inside the brackets was recognized as an invalid format
+    now you are able to use formats inside `[]` (*e.g.* `"[[red](Red text [b](inside) square brackets!)]"`)
 * adjusted the format codes test accordingly to the bug fixes
 * introduced a new test for the `xx_format_codes` module
 * a lot of updates in the Wiki and README
@@ -72,8 +72,8 @@
 * introduced a new test for `xx_data` (*all methods*)
 * added doc-strings to all the methods in `xx_data`
 * made all the methods from `xx_data` work wih all the types of data structures (*`list`, `tuple`, `set`, `frozenset`, `dict`*)
-* renamed the module `xx_cmd` and it's class `Cmd` to `xx_console` and `Console`
-* renamed the module `xx_env_vars` and it's class `EnvVars` to `xx_env_path` and `EnvPath`
+* renamed the module `xx_cmd`, and it's class `Cmd` to `xx_console` and `Console`
+* renamed the module `xx_env_vars`, and it's class `EnvVars` to `xx_env_path` and `EnvPath`
 * added method `EnvPath.remove_path()`
 * introduced a new test for `xx_env_vars` (*all methods*)
 * Added a `hexa_str()` preset to the `xx_regex` module
@@ -91,7 +91,7 @@
 * updated the whole `xx_format_codes` module for more efficiency and speed
 
 ## 11.11.2024 `v1.5.6`
-* moved the whole library to it's own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
+* moved the whole library to its own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
 * updated all connections and links
 
 ## 11.11.2024 `v1.5.5`
@@ -126,7 +126,7 @@
 * added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
 * refactored the whole library's code after the [`PEPs`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
   - changed the indent to 4 spaces
-  - no more inline control statements (*except its only a really small statement and body*)
+  - no more inline control statements (*except it's only a tiny statement and body*)
 * added new methods to `Color`:<br>
   <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
   <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
@@ -267,12 +267,12 @@
   ```python
   FormatCodes.print('[u](Automatically resetting) following text')
   ```
-  prints:  <code><u>Automatically resetting</u> following text</code>
+  prints: <code><u>Automatically resetting</u> following text</code>
 
   ```python
   FormatCodes.print('[u]/(Automatically resetting) following text')
   ```
-  prints:  <code><u>(Automatically resetting) following text</u></code>
+  prints: <code><u>(Automatically resetting) following text</u></code>
 
 ## 16.10.2024 `v1.0.7` `v1.0.8`
 * added `input()` method to the `FormatCodes` class, so you can make pretty looking input prompts
