@@ -1,38 +1,78 @@
 """
-Functions to be able to use special (easy) formatting codes directly inside some message (string).\n
-These codes, when used within following functions, will change the look of log within the console:
+Methods to transform formatting codes to ANSI and use them for pretty console output:
 - `FormatCodes.print()` (print a special format-codes containing string)
 - `FormatCodes.input()` (input with a special format-codes containing prompt)
 - `FormatCodes.to_ansi()` (transform all special format-codes into ANSI codes in a string)\n
---------------------------------------------------------------------------------------------------------------------
-How to change the text format and color?\n
-Example string with formatting codes:
-```string
-[bold]This is bold text, [#F08]which is pink now [black|BG:#FF0088] and now it changed`
-to black with a pink background. [_]And this is the boring text, where everything is reset.
+------------------------------------------------------------------------------------------------------------------------------------
+### The Easy Formatting
+
+First, let's take a look at a small example of what a highly styled print string with formatting could look like using this module:
+```regex
+This here is just unformatted text. [b|u|br:blue](Next we have text that is bright blue + bold + underlined.)\\n
+[#000|bg:#F67](Then there's also black text with a red background.) And finally the ([i](boring)) plain text again.
 ```
-⇾ Instead of writing the formats all separate `[x][y][z]` you can join them like this `[x|y|z]`\n
---------------------------------------------------------------------------------------------------------------------
-You can also automatically reset a certain format, behind text like shown in the following example:
-```string
-This is normal text [b](which is bold now) but now it was automatically reset to normal.
+
+How all of this exactly works is explained in the sections below. 🠫
+
+------------------------------------------------------------------------------------------------------------------------------------
+#### Formatting Codes and Keys
+
+In this module, you can apply styles and colors using simple formatting codes.
+These formatting codes consist of one or multiple different formatting keys in between square brackets.
+
+If a formatting code is placed in a print-string, the formatting of that code will be applied to everything behind it until its
+formatting is reset. If applying multiple styles and colors in the same place, instead of writing the formatting keys all into
+separate brackets (e.g. `[x][y][z]`), they can also be put in a single pair of brackets, separated by pipes (e.g. `[x|y|z]`).
+
+A list of all possible formatting keys can be found under all possible formatting keys.
+
+------------------------------------------------------------------------------------------------------------------------------------
+#### Auto Resetting Formatting Codes
+
+Certain formatting can automatically be reset, behind a certain amount of text, just like shown in the following example:
+```regex
+This is plain text, [br:blue](which is bright blue now.) Now it was automatically reset to plain again.
 ```
-This will only reset formats, that have a reset listed below. Colors and BG-colors won't be reset.\n
-This is what will happen, if you use it with a color-format:
-```string
-[cyan]This is cyan text [b](which is bold now.) Now it's not bold any more but still cyan.
+
+This will only reset formatting codes, that have a specific reset listed below.
+That means if you use it where another formatting is already applied, that formatting is still there after the automatic reset:
+```regex
+[cyan]This is cyan text, [dim](which is dimmed now.) Now it's not dimmed any more but still cyan.
 ```
-If you want to ignore the `()` brackets you can put a `\\` or `/` between:
-```string
-[cyan]This is cyan text [b]/(which is bold now.) And now it is still bold and cyan.
+
+If you want to ignore the auto-reset functionality of `()` brackets, you can put a `\\` or `/` between them and
+the formatting code:
+```regex
+[cyan]This is cyan text, [u]/(which is underlined now.) And now it is still underlined and cyan.
 ```
-⇾ To see these examples in action, you can put them into the `FormatCodes.print()` function.\n
---------------------------------------------------------------------------------------------------------------------
-All possible formatting codes:
-- HEX colors:  `[#F08]` or `[#FF0088]` (with or without leading #)
-- RGB colors:  `[rgb(255, 0, 136)]`
-- background colors:  `[BG:#F08]`
+
+------------------------------------------------------------------------------------------------------------------------------------
+#### All possible Formatting Keys
+
+- RGB colors:
+  Change the text color directly with an RGB color inside the square brackets. (With or without `rgb()` brackets doesn't matter.)
+  Examples:
+  - `[rgb(115, 117, 255)]`
+  - `[(255, 0, 136)]`
+  - `[255, 0, 136]`
+- HEX colors:
+  Change the text color directly with a HEX color inside the square brackets. (If `RGB` or `RRGGBB` formatting code is used,
+  and if there's a `#` or `0x` prefix, doesn't matter.)
+  Examples:
+  - `[#7788FF]`
+  - `[7788FF]`
+  - `[#78F]`
+  - `[78F]`
+- background RGB / HEX colors:
+  Change the background color directly with an RGB or HEX color inside the square brackets, using the `background:` `BG:` prefix.
+  (Same RGB / HEX formatting code rules as for text color.)
+  Examples:
+  - `[background:rgb(115, 117, 255)]`
+  - `[BG:(255, 0, 136)]`
+  - `[background:#7788FF]`
+  - `[BG:#78F]`
 - standard console colors:
+  Change the text color to one of the standard console colors by just writing the color name in the square brackets.
   - `[black]`
   - `[red]`
   - `[green]`
@@ -41,39 +81,64 @@ All possible formatting codes:
   - `[magenta]`
   - `[cyan]`
   - `[white]`
-- bright console colors: `[bright:black]` or `[br:black]`, `[bright:red]` or `[br:red]`, ...
-- background console colors: `[BG:black]`, `[BG:red]`, ...
-- bright background console colors: `[BG:bright:black]` or `[BG:br:black]`, `[BG:bright:red]` or `[BG:br:red]`, ...\n
-  ⇾ The order of `BG:` and `bright:` or `br:` does not matter.
-- text formats:
-  - `[bold]` or `[b]`
+- bright console colors:
+  Use the prefix `bright:` `BR:` to use the bright variant of the standard console color.
+  Examples:
+  - `[bright:black]` `[BR:black]`
+  - `[bright:red]` `[BR:red]`
+  - ...
+- Background console colors:
+  Use the prefix `background:` `BG:` to set the background to a standard console color. (Not all consoles support bright
+  standard colors.)
+  Examples:
+  - `[background:black]` `[BG:black]`
+  - `[background:red]` `[BG:red]`
+  - ...
+- Bright background console colors:
+  Combine the prefixes `background:` / `BG:` and `bright:` / `BR:` to set the background to a bright console color.
+  (The order of the prefixes doesn't matter.)
+  Examples:
+  - `[background:bright:black]` `[BG:BR:black]`
+  - `[background:bright:red]` `[BG:BR:red]`
+  - ...
+- Text styles:
+  Use the built-in text formatting to change the style of the text. There are long and short forms for each formatting code.
+  (Not all consoles support all text styles.)
+  - `[bold]` `[b]`
   - `[dim]`
-  - `[italic]` or `[i]`
-  - `[underline]` or `[u]`
-  - `[inverse]`, `[invert]` or `[in]`
-  - `[hidden]`, `[hide]` or `[h]`
-  - `[strikethrough]` or `[s]`
-  - `[double-underline]` or `[du]`
-- specific reset:
-  - `[_bold]` or `[_b]`
+  - `[italic]` `[i]`
+  - `[underline]` `[u]`
+  - `[inverse]` `[invert]` `[in]`
+  - `[hidden]` `[hide]` `[h]`
+  - `[strikethrough]` `[s]`
+  - `[double-underline]` `[du]`
+- Specific reset:
+  Use these reset codes to remove a specific style, color or background. Again, there are long and
+  short forms for each reset code.
+  - `[_bold]` `[_b]`
   - `[_dim]`
-  - `[_italic]` or `[_i]`
-  - `[_underline]` or `[_u]`
-  - `[_inverse]`, `[_invert]` or `[_in]`
-  - `[_hidden]`, `[_hide]` or `[_h]`
-  - `[_strikethrough]` or `[_s]`
-  - `[_double-underline]` or `[_du]`
-  - `[_color]` or `[_c]`
-  - `[_background]` or `[_bg]`
-- total reset:
+  - `[_italic]` `[_i]`
+  - `[_underline]` `[_u]`
+  - `[_inverse]` `[_invert]` `[_in]`
+  - `[_hidden]` `[_hide]` `[_h]`
+  - `[_strikethrough]` `[_s]`
+  - `[_double-underline]` `[_du]`
+  - `[_color]` `[_c]`
+  - `[_background]` `[_bg]`
+- Total reset:
+  This will reset all previously applied formatting codes.
   - `[_]`
---------------------------------------------------------------------------------------------------------------------
-Additional formats when a `default_color` is set:
-- `[*]` will reset everything, just like `[_]`, but the text-color will remain in `default_color`
-- `[*color]` will reset the text-color, just like `[_color]`, but then also make it `default_color`
-- `[default]` will just color the text in `default_color`,
-- `[BG:default]` will color the background in `default_color`\n
+
+------------------------------------------------------------------------------------------------------------------------------------
+#### Additional Formatting Codes when a `default_color` is set
+
+1. `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
+2. `[*color]` will reset the text color, just like `[_color]`, but then also make it `default_color`
+3. `[default]` will just color the text in `default_color`
+4. `[background:default]` `[BG:default]` will color the background in `default_color`
+
 Unlike the standard console colors, the default color can be changed by using the following modifiers:
+
 - `[l]` will lighten the `default_color` text by `brightness_steps`%
 - `[ll]` will lighten the `default_color` text by `2 × brightness_steps`%
 - `[lll]` will lighten the `default_color` text by `3 × brightness_steps`%
@@ -81,7 +146,7 @@ Unlike the standard console colors, the default color can be changed by using th
 - `[d]` will darken the `default_color` text by `brightness_steps`%
 - `[dd]` will darken the `default_color` text by `2 × brightness_steps`%
 - `[ddd]` will darken the `default_color` text by `3 × brightness_steps`%
-- ... etc.\n
+- ... etc.
 Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.
 """
 
@@ -90,22 +155,22 @@ from .xx_string import String
 from .xx_regex import Regex
 from .xx_color import *
 
-from functools import lru_cache
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import re as _re
 
-PREFIX = {
+_CONSOLE_ANSI_CONFIGURED = False
+
+_PREFIX = {
     "BG": {"background", "bg"},
     "BR": {"bright", "br"},
 }
-PREFIXES = {val for values in PREFIX.values() for val in values}
-PREFIX_RX = {
-    "BG": rf"(?:{'|'.join(PREFIX['BG'])})\s*:",
-    "BR": rf"(?:{'|'.join(PREFIX['BR'])})\s*:",
+_PREFIX_RX = {
+    "BG": rf"(?:{'|'.join(_PREFIX['BG'])})\s*:",
+    "BR": rf"(?:{'|'.join(_PREFIX['BR'])})\s*:",
 }
-COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
+_COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
     "formatting": _rx.compile(
@@ -114,17 +179,19 @@ COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
         + Regex.brackets("(", ")", is_group=True, ignore_in_strings=False)
         + r")?"
     ),
-    "bg?_default": _re.compile(r"(?i)((?:" + PREFIX_RX["BG"] + r")?)\s*default"),
-    "bg_default": _re.compile(r"(?i)" + PREFIX_RX["BG"] + r"\s*default"),
+    "bg?_default": _re.compile(r"(?i)((?:" + _PREFIX_RX["BG"] + r")?)\s*default"),
+    "bg_default": _re.compile(r"(?i)" + _PREFIX_RX["BG"] + r"\s*default"),
     "modifier": _re.compile(
         r"(?i)((?:BG\s*:)?)\s*("
-        + "|".join([f"{_re.escape(m)}+" for m in ANSI.modifier["lighten"] + ANSI.modifier["darken"]])
+        + "|".join(
+            [f"{_re.escape(m)}+" for m in ANSI.default_color_modifiers["lighten"] + ANSI.default_color_modifiers["darken"]]
+        )
         + r")$"
     ),
     "rgb": _re.compile(
-        r"(?i)^\s*(" + PREFIX_RX["BG"] + r")?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$"
+        r"(?i)^\s*(" + _PREFIX_RX["BG"] + r")?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$"
     ),
-    "hex": _re.compile(r"(?i)^\s*(" + PREFIX_RX["BG"] + r")?\s*(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})\s*$"),
+    "hex": _re.compile(r"(?i)^\s*(" + _PREFIX_RX["BG"] + r")?\s*(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})\s*$"),
 }
 
 
@@ -133,14 +200,14 @@ class FormatCodes:
     @staticmethod
     def print(
         *values: object,
-        default_color: hexa | rgba = None,
+        default_color: rgba | hexa = None,
         brightness_steps: int = 20,
         sep: str = " ",
         end: str = "\n",
         flush: bool = True,
     ) -> None:
-        """Print a string that can be formatted using special formatting codes.\n
-        --------------------------------------------------------------------------
+        """A print function, whose print values can be formatted using formatting codes.\n
+        -----------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `xx_format_codes` module documentation."""
         FormatCodes.__config_console()
@@ -151,29 +218,32 @@ class FormatCodes:
     @staticmethod
     def input(
         prompt: object = "",
-        default_color: hexa | rgba = None,
+        default_color: rgba | hexa = None,
         brightness_steps: int = 20,
         reset_ansi: bool = False,
     ) -> str:
-        """An input, which's prompt can be formatted using special formatting codes.\n
-        -------------------------------------------------------------------------------
-        If `reset_ansi` is true, all ANSI formatting will be reset, after the user has
-        confirmed the input and the program continues.\n
-        -------------------------------------------------------------------------------
+        """An input, whose prompt can be formatted using formatting codes.\n
+        -------------------------------------------------------------------------
+        If `reset_ansi` is true, all ANSI formatting will be reset, after the
+        user confirms the input and the program continues to run.\n
+        -------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `xx_format_codes` module documentation."""
         FormatCodes.__config_console()
-        user_input = input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
+        user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
         if reset_ansi:
             _sys.stdout.write("\x1b[0m")
         return user_input
 
     @staticmethod
     def to_ansi(
-        string: str, default_color: hexa | rgba = None, brightness_steps: int = 20, _default_start: bool = True
+        string: str,
+        default_color: rgba | hexa = None,
+        brightness_steps: int = 20,
+        _default_start: bool = True,
     ) -> str:
-        """Convert the special formatting codes inside a string to printable ANSI codes.\n
-        -----------------------------------------------------------------------------------
+        """Convert the formatting codes inside a string to ANSI formatting.\n
+        -------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `xx_format_codes` module documentation."""
         if Color.is_valid_rgba(default_color, False):
@@ -183,8 +253,8 @@ class FormatCodes:
         else:
             use_default = False
         if use_default:
-            string = COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-            string = COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
+            string = _COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+            string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
 
         def is_valid_color(color: str) -> bool:
             return color in ANSI.color_map or Color.is_valid_rgba(color) or Color.is_valid_hexa(color)
@@ -209,8 +279,8 @@ class FormatCodes:
                 for k in format_keys:
                     k_lower = k.lower()
                     k_set = set(k_lower.split(":"))
-                    if PREFIX["BG"] & k_set and len(k_set) <= 3:
-                        if k_set & PREFIX["BR"]:
+                    if _PREFIX["BG"] & k_set and len(k_set) <= 3:
+                        if k_set & _PREFIX["BR"]:
                             for i in range(len(k)):
                                 if is_valid_color(k[i:]):
                                     reset_keys.extend(["_bg", "_color"])
@@ -222,7 +292,7 @@ class FormatCodes:
                                     break
                     elif is_valid_color(k) or any(
                         k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon) :])
-                        for prefix in PREFIX["BR"]
+                        for prefix in _PREFIX["BR"]
                     ):
                         reset_keys.append("_color")
                     else:
@@ -250,40 +320,42 @@ class FormatCodes:
                 + ("" if escaped else "".join(ansi_resets))
             )
 
-        string = "\n".join(COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
+        string = "\n".join(_COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
         return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string if use_default else string
 
     @staticmethod
-    def escape_ansi(ansi_string: str, escaped_char: str = ANSI.char_esc) -> str:
-        """Makes the string printable with the ANSI formats visible."""
-        return ansi_string.replace(ANSI.char, escaped_char)
+    def escape_ansi(ansi_string: str) -> str:
+        """Escapes all ANSI codes in a string, so they are visible when output to the console."""
+        return ansi_string.replace(ANSI.char, ANSI.escaped_char)
 
     @staticmethod
-    @lru_cache(maxsize=64)
     def __config_console() -> None:
         """Configure the console to be able to interpret ANSI formatting."""
-        _sys.stdout.flush()
-        kernel32 = _ctypes.windll.kernel32
-        h = kernel32.GetStdHandle(-11)
-        mode = _ctypes.c_ulong()
-        kernel32.GetConsoleMode(h, _ctypes.byref(mode))
-        kernel32.SetConsoleMode(h, mode.value | 0x0004)
+        if not _CONSOLE_ANSI_CONFIGURED:
+            _sys.stdout.flush()
+            kernel32 = _ctypes.windll.kernel32
+            h = kernel32.GetStdHandle(-11)
+            mode = _ctypes.c_ulong()
+            kernel32.GetConsoleMode(h, _ctypes.byref(mode))
+            kernel32.SetConsoleMode(h, mode.value | 0x0004)
+            global _CONSOLE_ANSI_CONFIGURED
+            _CONSOLE_ANSI_CONFIGURED = True
 
     @staticmethod
     def __get_default_ansi(
         default_color: tuple,
         format_key: str = None,
         brightness_steps: int = None,
-        _modifiers: tuple[str, str] = (ANSI.modifier["lighten"], ANSI.modifier["darken"]),
+        _modifiers: tuple[str, str] = (ANSI.default_color_modifiers["lighten"], ANSI.default_color_modifiers["darken"]),
     ) -> str | None:
-        """Get the `default_color` and lighter/darker versions of it in ANSI format."""
-        if not brightness_steps or (format_key and COMPILED["bg?_default"].search(format_key)):
-            return (ANSI.seq_bg_color if format_key and COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
+        """Get the `default_color` and lighter/darker versions of it as ANSI code."""
+        if not brightness_steps or (format_key and _COMPILED["bg?_default"].search(format_key)):
+            return (ANSI.seq_bg_color if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
                 *default_color[:3]
             )
         if not (format_key in _modifiers[0] or format_key in _modifiers[1]):
             return None
-        match = COMPILED["modifier"].match(format_key)
+        match = _COMPILED["modifier"].match(format_key)
         if not match:
             return None
         is_bg, modifiers = match.groups()
@@ -323,8 +395,8 @@ class FormatCodes:
                         None,
                     )
                 )
-        rgb_match = _re.match(COMPILED["rgb"], format_key)
-        hex_match = _re.match(COMPILED["hex"], format_key)
+        rgb_match = _re.match(_COMPILED["rgb"], format_key)
+        hex_match = _re.match(_COMPILED["hex"], format_key)
         try:
             if rgb_match:
                 is_bg = rgb_match.group(1)
@@ -344,15 +416,14 @@ class FormatCodes:
         return _format_key
 
     @staticmethod
-    @lru_cache(maxsize=64)
     def __normalize_key(format_key: str) -> str:
         """Normalizes the given format key."""
         k_parts = format_key.replace(" ", "").lower().split(":")
         prefix_str = "".join(
             f"{prefix_key.lower()}:"
-            for prefix_key, prefix_values in PREFIX.items()
+            for prefix_key, prefix_values in _PREFIX.items()
             if any(k_part in prefix_values for k_part in k_parts)
         )
         return prefix_str + ":".join(
-            part for part in k_parts if part not in {val for values in PREFIX.values() for val in values}
+            part for part in k_parts if part not in {val for values in _PREFIX.values() for val in values}
         )

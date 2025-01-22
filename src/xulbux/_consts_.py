@@ -58,12 +58,12 @@ class ANSI:
 
     global CHAR, START, SEP, END
 
-    char_esc = r"\x1b"
+    escaped_char = "\\x1b"
     CHAR = char = "\x1b"
     START = start = "["
     SEP = sep = ";"
     END = end = "m"
-    modifier = {"lighten": "+l", "darken": "-d"}
+    default_color_modifiers = {"lighten": "+l", "darken": "-d"}
 
     def seq(parts: int = 1) -> str:
         """Generate an ANSI sequence with `parts` amount of placeholders."""
