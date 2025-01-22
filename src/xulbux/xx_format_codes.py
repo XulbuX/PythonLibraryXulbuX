@@ -232,7 +232,7 @@ class FormatCodes:
         FormatCodes.__config_console()
         user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
         if reset_ansi:
-            _sys.stdout.write("\x1b[0m")
+            _sys.stdout.write(f"{ANSI.char}[0m")
         return user_input
 
     @staticmethod
@@ -331,6 +331,7 @@ class FormatCodes:
     @staticmethod
     def __config_console() -> None:
         """Configure the console to be able to interpret ANSI formatting."""
+        global _CONSOLE_ANSI_CONFIGURED
         if not _CONSOLE_ANSI_CONFIGURED:
             _sys.stdout.flush()
             kernel32 = _ctypes.windll.kernel32
@@ -338,7 +339,6 @@ class FormatCodes:
             mode = _ctypes.c_ulong()
             kernel32.GetConsoleMode(h, _ctypes.byref(mode))
             kernel32.SetConsoleMode(h, mode.value | 0x0004)
-            global _CONSOLE_ANSI_CONFIGURED
             _CONSOLE_ANSI_CONFIGURED = True
 
     @staticmethod

@@ -14,7 +14,10 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.6.3`
+## 22.01.2025 `v1.6.4`
+* fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`
+
+## 22.01.2025 `v1.6.3`
 * fixed a small bug in `xx_format_codes`:<br>
   inside print-strings, if there was a `'` or `"` inside a auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset
   now this is fixed and auto-reset-formatting works as expected

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.6.3"
+version = "1.6.4"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A library which includes a lot of really helpful functions."
 readme = "README.md"

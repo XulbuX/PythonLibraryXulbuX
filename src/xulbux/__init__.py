@@ -19,7 +19,7 @@
   • REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-__version__ = "1.6.3"
+__version__ = "1.6.4"
 __author__ = "XulbuX"
 __email__ = "xulbux.real@gmail.com"
 __license__ = "MIT"
