@@ -91,7 +91,7 @@
 * updated the whole `xx_format_codes` module for more efficiency and speed
 
 ## 11.11.2024 `v1.5.6`
-* moved the whole library to its own repository: [PythonLibraryXulbuX](https://github.com/XulbuX-dev/PythonLibraryXulbuX)
+* moved the whole library to its own repository: [PythonLibraryXulbuX](https://github.com/XulbuX/PythonLibraryXulbuX)
 * updated all connections and links
 
 ## 11.11.2024 `v1.5.5`
