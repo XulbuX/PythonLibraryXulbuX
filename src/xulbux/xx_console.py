@@ -105,7 +105,7 @@ class Console:
         - `title` -⠀the title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, etc.)
         - `prompt` -⠀the log message
         - `start` -⠀something to print before the log is printed
-        - `end` -⠀something to print after the log is printed (e.g. `\\n\\n`)
+        - `end` -⠀something to print after the log is printed (e.g. `\\n`)
         - `title_bg_color` -⠀the background color of the `title`
         - `default_color` -⠀the default text color of the `prompt`\n
         --------------------------------------------------------------------------------
@@ -129,8 +129,8 @@ class Console:
     def debug(
         prompt: object = "Point in program reached.",
         active: bool = True,
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["yellow"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -145,8 +145,8 @@ class Console:
     @staticmethod
     def info(
         prompt: object = "Program running.",
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["blue"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -160,8 +160,8 @@ class Console:
     @staticmethod
     def done(
         prompt: object = "Program finished.",
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["teal"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -175,8 +175,8 @@ class Console:
     @staticmethod
     def warn(
         prompt: object = "Important message.",
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["orange"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -190,8 +190,8 @@ class Console:
     @staticmethod
     def fail(
         prompt: object = "Program error.",
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["red"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -206,8 +206,8 @@ class Console:
     @staticmethod
     def exit(
         prompt: object = "Program ended.",
-        start: str = "\n",
-        end: str = "\n\n",
+        start: str = "",
+        end: str = "\n",
         title_bg_color: hexa | rgba = DEFAULT.color["magenta"],
         default_color: hexa | rgba = DEFAULT.text_color,
         pause: bool = False,
@@ -218,6 +218,40 @@ class Console:
         at the message and exit the program after the message was printed."""
         Console.log("EXIT", prompt, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
+
+    @staticmethod
+    def log_box(
+        *values: object,
+        start: str = "",
+        end: str = "\n",
+        box_bg_color: str | hexa | rgba = "green",
+        default_color: hexa | rgba = "#000",
+        _padding: int = 2,
+    ) -> None:
+        """Will print a box, containing a formatted log message:
+        - `*values` -⠀the box content (each value is on a new line)
+        - `start` -⠀something to print before the log box is printed
+        - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
+        - `bg_color` -⠀the box's background color
+        - `default_color` -⠀the default text color of the `*values`\n
+        --------------------------------------------------------------------------------
+        The log message supports special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` class description."""
+        lines = [line for val in values for line in val.splitlines()]
+        unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
+        max_line_len = max(len(line) for line in unfmt_lines)
+        lines = [
+            f"[bg:{box_bg_color}]{' ' * _padding}{line}{' ' * (_padding + max_line_len - len(unfmt))}[_bg]"
+            for line, unfmt in zip(lines, unfmt_lines)
+        ]
+        FormatCodes.print(
+            f"{start}[bg:{box_bg_color}]{(pad := " " * (max_line_len + (2 * _padding)))}[_bg]\n"
+            + "\n".join(lines)
+            + f"\n[bg:{box_bg_color}]{pad}[_]",
+            default_color=default_color,
+            sep="\n",
+            end=end,
+        )
 
     @staticmethod
     def confirm(
@@ -244,6 +278,9 @@ class Console:
     @staticmethod
     def restricted_input(
         prompt: object = "",
+        start="",
+        end="\n",
+        default_color: hexa | rgba = DEFAULT.color["cyan"],
         allowed_chars: str = CHARS.all,
         min_len: int = None,
         max_len: int = None,
@@ -258,7 +295,7 @@ class Console:
         -----------------------------------------------------------------------------------
         The input can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `xx_format_codes` description."""
-        FormatCodes.print(prompt, end="", flush=True)
+        FormatCodes.print(start + prompt, default_color=default_color, end="")
         result = ""
         select_all = False
         last_line_count = 1
@@ -292,7 +329,7 @@ class Console:
         def handle_enter():
             if min_len is not None and len(result) < min_len:
                 return False
-            FormatCodes.print("[_]" if reset_ansi else "", flush=True)
+            FormatCodes.print(f"[_]{end}" if reset_ansi else end, default_color=default_color)
             return True
 
         def handle_backspace_delete():
@@ -356,6 +393,9 @@ class Console:
     @staticmethod
     def pwd_input(
         prompt: object = "Password: ",
+        start="",
+        end="\n",
+        default_color: hexa | rgba = DEFAULT.color["cyan"],
         allowed_chars: str = CHARS.standard_ascii,
         min_len: int = None,
         max_len: int = None,
@@ -363,4 +403,4 @@ class Console:
     ) -> str:
         """Password input (preset for `Console.restricted_input()`)
         that always masks the entered characters with asterisks."""
-        return Console.restricted_input(prompt, allowed_chars, min_len, max_len, "*", _reset_ansi)
+        return Console.restricted_input(prompt, start, end, default_color, allowed_chars, min_len, max_len, "*", _reset_ansi)

@@ -14,6 +14,15 @@
 
 # <br><b>Changelog</b><br>
 
+## 29.01.2025 `v1.6.5`
+* added a new method `remove_codes()` to `xx_format_codes`
+* added a new method `remove_ansi()` to `xx_format_codes`
+* added a new method `log_box()` to `xx_console`
+* changed the default values of two params in the `Console.log()` method and every log preset:<br>
+  <code>start: *str* = "\n"</code> has been changed to <code>start: *str* = ""</code><br>
+  <code>end: *str* = "\n\n"</code> has been changed to <code>end: *str* = "\n"</code>
+* added the params <code>start: *str* = ""</code>, <code>end: *str* = "\n"</code> and <code>default_color: *rgba* | *hexa* = DEFAULT.color["cyan"]</code> to `Console.restricted_input()` and `Console.pwd_input()`
+
 ## 22.01.2025 `v1.6.4`
 * fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`
 

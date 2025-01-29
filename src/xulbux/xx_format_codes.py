@@ -173,6 +173,7 @@ _PREFIX_RX = {
 _COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
+    "ansi_seq": _re.compile(ANSI.char + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
     "formatting": _rx.compile(
         Regex.brackets("[", "]", is_group=True)
         + r"(?:\s*([/\\]?)\s*"
@@ -246,6 +247,8 @@ class FormatCodes:
         -------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `xx_format_codes` module documentation."""
+        if not isinstance(string, str):
+            string = str(string)
         if Color.is_valid_rgba(default_color, False):
             use_default = True
         elif Color.is_valid_hexa(default_color, False):
@@ -325,8 +328,18 @@ class FormatCodes:
 
     @staticmethod
     def escape_ansi(ansi_string: str) -> str:
-        """Escapes all ANSI codes in a string, so they are visible when output to the console."""
+        """Escapes all ANSI codes in the string, so they are visible when output to the console."""
         return ansi_string.replace(ANSI.char, ANSI.escaped_char)
+
+    @staticmethod
+    def remove_ansi(ansi_string: str) -> str:
+        """Removes all ANSI codes from the string."""
+        return _COMPILED["ansi_seq"].sub("", ansi_string)
+
+    @staticmethod
+    def remove_formatting(string: str) -> str:
+        """Removes all formatting codes from the string."""
+        return _COMPILED["ansi_seq"].sub("", FormatCodes.to_ansi(string))
 
     @staticmethod
     def __config_console() -> None:
