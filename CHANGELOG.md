@@ -15,9 +15,10 @@
 # <br><b>Changelog</b><br>
 
 ## 29.01.2025 `v1.6.5`
-* added a new method `remove_codes()` to `xx_format_codes`
-* added a new method `remove_ansi()` to `xx_format_codes`
-* added a new method `log_box()` to `xx_console`
+* now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a `str` if it isn't one already
+* added a new method `FormatCodes.remove_codes()`
+* added a new method `FormatCodes.remove_ansi()`
+* added a new method `Console.log_box()`
 * changed the default values of two params in the `Console.log()` method and every log preset:<br>
   <code>start: *str* = "\n"</code> has been changed to <code>start: *str* = ""</code><br>
   <code>end: *str* = "\n\n"</code> has been changed to <code>end: *str* = "\n"</code>
@@ -28,7 +29,7 @@
 
 ## 22.01.2025 `v1.6.3`
 * fixed a small bug in `xx_format_codes`:<br>
-  inside print-strings, if there was a `'` or `"` inside a auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset
+  inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset
   now this is fixed and auto-reset-formatting works as expected
 * added a new param <code>ignore_in_strings: *bool* = True</code> to `Regex.brackets()`:<br>
   if this param is true and a bracket is inside a string (e.g. `'...'` or `"..."`), it will not be counted as the matching closing bracket

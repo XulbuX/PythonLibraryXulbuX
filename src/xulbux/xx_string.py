@@ -75,12 +75,11 @@ class String:
 
     @staticmethod
     def escape(string: str, str_quotes: str = '"') -> str:
-        """Escapes the special characters and quotes inside a string.\n
-        ---------------------------------------------------------------------------
-        `str_quotes` can be either `"` or `'` and should match the quotes,
-        the string will be put inside of. So if your string will be `"string"`,
-        you should pass `"` to the parameter `str_quotes`.
-        That way, if the string includes the same quotes, they will be escaped."""
+        """Escapes Python's special characters (e.g. `\n`, `\t`, ...) and quotes inside the string.\n
+        ----------------------------------------------------------------------------------------------
+        `str_quotes` can be either `"` or `'` and should match the quotes, the string will be put
+        inside of. So if your string will be `"string"`, you should pass `"` to the parameter
+        `str_quotes`. That way, if the string includes the same quotes, they will be escaped."""
         string = (
             string.replace("\\", r"\\")
             .replace("\n", r"\n")

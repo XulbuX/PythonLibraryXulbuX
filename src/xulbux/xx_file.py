@@ -53,7 +53,7 @@ class File:
         """Tries to find the file and extend the path to be absolute and if the file was not found:\n
         Generate the absolute path to the file in the CWD or the running program's base-directory.\n
         ----------------------------------------------------------------------------------------------
-        If the `file` is not found in the above directories, it will be searched in the `search_in`
+        If the `file` is not found in predefined directories, it will be searched in the `search_in`
         directory/directories. If the file is still not found, it will return the path to the file in
         the base-dir per default or to the file in the CWD if `prefer_base_dir` is set to `False`.\n
         ----------------------------------------------------------------------------------------------

@@ -75,25 +75,25 @@ class rgba:
         self.r, self.g, self.b = r, g, b
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))
 
-    def __dict__(self):
+    def __dict__(self) -> dict:
         return self.dict()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> int:
         return ((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))[index]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'rgba({self.r}, {self.g}, {self.b}{"" if self.a is None else f", {self.a}"})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'({self.r}, {self.g}, {self.b}{"" if self.a is None else f", {self.a}"})'
 
-    def __eq__(self, other):
+    def __eq__(self, other: "rgba") -> bool:
         if not isinstance(other, rgba):
             return False
         return (self.r, self.g, self.b, self.a) == (
@@ -278,25 +278,25 @@ class hsla:
         self.h, self.s, self.l = h, s, l
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))
 
-    def __dict__(self):
+    def __dict__(self) -> dict:
         return self.dict()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> int:
         return ((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))[index]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'hsla({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
 
-    def __eq__(self, other):
+    def __eq__(self, other: "hsla") -> bool:
         if not isinstance(other, hsla):
             return False
         return (self.h, self.s, self.l, self.a) == (
@@ -504,29 +504,29 @@ class hexa:
         else:
             raise TypeError(f"HEX color must be of type 'str' or 'int': got '{type(color)}'")
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         return iter(
             (f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else (f"{int(self.a * 255):02X}",))
         )
 
-    def __dict__(self):
+    def __dict__(self) -> dict:
         return self.dict()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> int:
         return (
             (f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else (f"{int(self.a * 255):02X}",))
         )[index]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"}'
 
-    def __eq__(self, other):
+    def __eq__(self, other: "hexa") -> bool:
         if not isinstance(other, hexa):
             return False
         return (self.r, self.g, self.b, self.a) == (
@@ -914,9 +914,7 @@ class Color:
         return round(l * 100) if isinstance(output_type, int) else round(l * 255) if output_type is None else l
 
     @staticmethod
-    def text_color_for_on_bg(
-        text_bg_color: rgba | hexa = "#FFF",
-    ) -> rgba | hexa:
+    def text_color_for_on_bg(text_bg_color: rgba | hexa) -> rgba | hexa:
         was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]

@@ -232,7 +232,7 @@ class Console:
         - `*values` -⠀the box content (each value is on a new line)
         - `start` -⠀something to print before the log box is printed
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
-        - `bg_color` -⠀the box's background color
+        - `box_bg_color` -⠀the box's background color
         - `default_color` -⠀the default text color of the `*values`\n
         --------------------------------------------------------------------------------
         The log message supports special formatting codes. For more detailed
@@ -256,7 +256,7 @@ class Console:
     @staticmethod
     def confirm(
         prompt: object = "Do you want to continue?",
-        start="\n",
+        start="",
         end="\n",
         default_color: hexa | rgba = DEFAULT.color["cyan"],
         default_is_yes: bool = True,

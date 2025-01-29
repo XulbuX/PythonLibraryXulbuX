@@ -381,10 +381,10 @@ class Data:
         data: DataStructure,
         indent: int = 4,
         compactness: int = 1,
-        sep: str = ", ",
         max_width: int = 127,
-        as_json: bool = False,
+        sep: str = ", ",
         end: str = "\n",
+        as_json: bool = False,
     ) -> None:
         """Print nicely formatted data structures.\n
         ------------------------------------------------------------------------------
@@ -407,8 +407,8 @@ class Data:
         data: DataStructure,
         indent: int = 4,
         compactness: int = 1,
-        sep: str = ", ",
         max_width: int = 127,
+        sep: str = ", ",
         as_json: bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
