@@ -12,12 +12,13 @@ Functions for logging and other small actions within the console:
 - `Console.warn()`
 - `Console.fail()`
 - `Console.exit()`
+- `Console.log_box()`
 - `Console.confirm()`
 - `Console.restricted_input()`
 - `Console.pwd_input()`\n
-------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
 You can also use special formatting codes directly inside the log message to change their appearance.
-For more detailed information about formatting codes, see the the `xx_format_codes` description.
+For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.
 """
 
 from ._consts_ import DEFAULT, CHARS
@@ -108,9 +109,9 @@ class Console:
         - `end` -⠀something to print after the log is printed (e.g. `\\n`)
         - `title_bg_color` -⠀the background color of the `title`
         - `default_color` -⠀the default text color of the `prompt`\n
-        --------------------------------------------------------------------------------
-        The log message supports special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` class description."""
+        -----------------------------------------------------------------------------------
+        The log message can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` module documentation."""
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if title:
             FormatCodes.print(
@@ -234,9 +235,9 @@ class Console:
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
         - `box_bg_color` -⠀the box's background color
         - `default_color` -⠀the default text color of the `*values`\n
-        --------------------------------------------------------------------------------
-        The log message supports special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` class description."""
+        -----------------------------------------------------------------------------------
+        The box content can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` module documentation."""
         lines = [line for val in values for line in val.splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
@@ -262,9 +263,9 @@ class Console:
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
-        -------------------------------------------------------------------------------
-        The question can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` description."""
+        ---------------------------------------------------------------------------------------
+        The prompt can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see the `xx_format_codes` module documentation."""
         confirmed = input(
             FormatCodes.to_ansi(
                 f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
@@ -292,9 +293,9 @@ class Console:
         - the minimum and/or maximum length of the users input
         - optional mask character (hide user input, e.g. for passwords)
         - reset the ANSI formatting codes after the user continues\n
-        -----------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------
         The input can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` description."""
+        information about formatting codes, see the `xx_format_codes` module documentation."""
         FormatCodes.print(start + prompt, default_color=default_color, end="")
         result = ""
         select_all = False
