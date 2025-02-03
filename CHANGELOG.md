@@ -16,6 +16,9 @@
 
 ## ... `v1.6.6`
 * added a new method `Console.multiline_input()`
+* added two new params to the method `Console.log_box()`:<br>
+  <code>w_padding: *int* = 2</code> the horizontal padding (*in chars*) to the box content<br>
+  <code>w_full: *bool* = False</code> whether to make the box be the full console width or not
 
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already

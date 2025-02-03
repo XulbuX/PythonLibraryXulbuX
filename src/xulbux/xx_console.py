@@ -228,28 +228,33 @@ class Console:
         end: str = "\n",
         box_bg_color: str | hexa | rgba = "green",
         default_color: hexa | rgba = "#000",
-        _padding: int = 2,
+        w_padding: int = 2,
+        w_full: bool = False,
     ) -> None:
         """Will print a box, containing a formatted log message:
         - `*values` -⠀the box content (each value is on a new line)
         - `start` -⠀something to print before the log box is printed
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
         - `box_bg_color` -⠀the box's background color
-        - `default_color` -⠀the default text color of the `*values`\n
+        - `default_color` -⠀the default text color of the `*values`
+        - `w_padding` -⠀the horizontal padding (in chars) to the box content
+        - `w_full` -⠀whether to make the box be the full console width or not\n
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
         lines = [line for val in values for line in val.splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
+        pad_w_full = (Console.w() - (max_line_len + (2 * w_padding))) if w_full else 0
         lines = [
-            f"[bg:{box_bg_color}]{' ' * _padding}{line}{' ' * (_padding + max_line_len - len(unfmt))}[_bg]"
+            f"[bg:{box_bg_color}]{' ' * w_padding}{line}"
+            + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)
+            + "[_bg]"
             for line, unfmt in zip(lines, unfmt_lines)
         ]
+        pady = " " * (Console.w() if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
-            f"{start}[bg:{box_bg_color}]{(pad := " " * (max_line_len + (2 * _padding)))}[_bg]\n"
-            + "\n".join(lines)
-            + f"\n[bg:{box_bg_color}]{pad}[_]",
+            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n" + "\n".join(lines) + f"\n[bg:{box_bg_color}]{pady}[_]",
             default_color=default_color,
             sep="\n",
             end=end,
@@ -402,7 +407,7 @@ class Console:
 
     @staticmethod
     def multiline_input(
-        prompt: object = "Input: ",
+        prompt: object = "",
         start="",
         end="\n",
         default_color: hexa | rgba = DEFAULT.color["cyan"],
@@ -410,6 +415,18 @@ class Console:
         input_prefix=" ⤷ ",
         reset_ansi=True,
     ) -> str:
+        """An input where users can input (and paste) text over multiple lines.\n
+        -----------------------------------------------------------------------------------
+        - `prompt` -⠀the input prompt
+        - `start` -⠀something to print before the input
+        - `end` -⠀something to print after the input (e.g. `\\n`)
+        - `default_color` -⠀the default text color of the `prompt`
+        - `show_keybindings` -⠀whether to show the special keybindings or not
+        - `input_prefix` -⠀the prefix of the input line
+        - `reset_ansi` -⠀whether to reset the ANSI codes after the input or not
+        -----------------------------------------------------------------------------------
+        The input prompt can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` module documentation."""
         kb = KeyBindings()
 
         @kb.add("c-d", eager=True)  # CTRL+D
