@@ -14,8 +14,11 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.6.6`
+* added a new method `Console.multiline_input()`
+
 ## 29.01.2025 `v1.6.5`
-* now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a `str` if it isn't one already
+* now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already
 * added a new method `FormatCodes.remove_codes()`
 * added a new method `FormatCodes.remove_ansi()`
 * added a new method `Console.log_box()`

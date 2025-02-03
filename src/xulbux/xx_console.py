@@ -26,7 +26,8 @@ from .xx_format_codes import FormatCodes
 from .xx_string import String
 from .xx_color import *
 
-from contextlib import suppress
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
+import prompt_toolkit as _prompt_toolkit
 import pyperclip as _pyperclip
 import keyboard as _keyboard
 import getpass as _getpass
@@ -355,13 +356,6 @@ class Console:
             select_all = True
             update_display(Console.w())
 
-        def handle_copy():
-            nonlocal select_all
-            with suppress(KeyboardInterrupt):
-                select_all = False
-                update_display(Console.w())
-                _pyperclip.copy(result)
-
         def handle_character_input():
             nonlocal result
             if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_len is None or len(result) < max_len):
@@ -379,8 +373,8 @@ class Console:
                     handle_paste()
                 elif event.name == "a" and _keyboard.is_pressed("ctrl"):
                     handle_select_all()
-                elif event.name == "c" and _keyboard.is_pressed("ctrl") and select_all:
-                    handle_copy()
+                elif event.name == "c" and _keyboard.is_pressed("ctrl"):
+                    raise KeyboardInterrupt
                 elif event.name == "esc":
                     return None
                 elif event.name == "space":
@@ -400,8 +394,31 @@ class Console:
         allowed_chars: str = CHARS.standard_ascii,
         min_len: int = None,
         max_len: int = None,
-        _reset_ansi: bool = True,
+        reset_ansi: bool = True,
     ) -> str:
         """Password input (preset for `Console.restricted_input()`)
         that always masks the entered characters with asterisks."""
-        return Console.restricted_input(prompt, start, end, default_color, allowed_chars, min_len, max_len, "*", _reset_ansi)
+        return Console.restricted_input(prompt, start, end, default_color, allowed_chars, min_len, max_len, "*", reset_ansi)
+
+    @staticmethod
+    def multiline_input(
+        prompt: object = "Input: ",
+        start="",
+        end="\n",
+        default_color: hexa | rgba = DEFAULT.color["cyan"],
+        show_keybindings=True,
+        input_prefix=" ⤷ ",
+        reset_ansi=True,
+    ) -> str:
+        kb = KeyBindings()
+
+        @kb.add("c-d", eager=True)  # CTRL+D
+        def _(event):
+            event.app.exit(result=event.app.current_buffer.document.text)
+
+        FormatCodes.print(start + prompt, default_color=default_color)
+        if show_keybindings:
+            FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
+        input_string = _prompt_toolkit.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
+        FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
+        return input_string
