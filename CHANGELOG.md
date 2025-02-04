@@ -19,6 +19,9 @@
 * added two new params to the method `Console.log_box()`:<br>
   <code>w_padding: *int* = 2</code> the horizontal padding (*in chars*) to the box content<br>
   <code>w_full: *bool* = False</code> whether to make the box be the full console width or not
+* fixed a small bug in `Data.print()` where two params passed to `Data.to_str()` where swapped, which caused an error
+* the method `Data.print()` now per default syntax highlights the console output:<br>
+  the syntax highlighting colors and styles can be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {...}</code>
 
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already

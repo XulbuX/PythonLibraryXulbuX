@@ -1,3 +1,5 @@
+from ._consts_ import DEFAULT
+from .xx_format_codes import FormatCodes
 from .xx_string import String
 
 from typing import TypeAlias, Union
@@ -377,32 +379,6 @@ class Data:
         return data
 
     @staticmethod
-    def print(
-        data: DataStructure,
-        indent: int = 4,
-        compactness: int = 1,
-        max_width: int = 127,
-        sep: str = ", ",
-        end: str = "\n",
-        as_json: bool = False,
-    ) -> None:
-        """Print nicely formatted data structures.\n
-        ------------------------------------------------------------------------------
-        The indentation spaces-amount can be set with with `indent`.
-        There are three different levels of `compactness`:
-        - `0` expands everything possible
-        - `1` only expands if there's other lists, tuples or dicts inside of data or,
-          if the data's content is longer than `max_width`
-        - `2` keeps everything collapsed (all on one line)\n
-        ------------------------------------------------------------------------------
-        If `as_json` is set to `True`, the output will be in valid JSON format."""
-        print(
-            Data.to_str(data, indent, compactness, sep, max_width, as_json),
-            end=end,
-            flush=True,
-        )
-
-    @staticmethod
     def to_str(
         data: DataStructure,
         indent: int = 4,
@@ -410,6 +386,7 @@ class Data:
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
+        _syntax_hl: dict[str, str] = {},
     ) -> str:
         """Get nicely formatted data structure-strings.\n
         ------------------------------------------------------------------------------
@@ -421,24 +398,72 @@ class Data:
         - `2` keeps everything collapsed (all on one line)\n
         ------------------------------------------------------------------------------
         If `as_json` is set to `True`, the output will be in valid JSON format."""
+        if syntax_hl := bool(_syntax_hl):
+            sep = f"[{_syntax_hl['punctuation']}]{sep}[_]"
+            punct = {
+                "'": f"[{_syntax_hl['punctuation']}]'[_]",
+                '"': f'[{_syntax_hl["punctuation"]}]"[_]',
+                ":": f"[{_syntax_hl['punctuation']}]:[_]",
+                "(": f"[{_syntax_hl['punctuation']}]/([_]",
+                ")": f"[{_syntax_hl['punctuation']}])[_]",
+                "[": f"[{_syntax_hl['punctuation']}][[_]",
+                "]": f"[{_syntax_hl['punctuation']}]][_]",
+                "{": f"[{_syntax_hl['punctuation']}]{{[_]",
+                "}": f"[{_syntax_hl['punctuation']}]}}[_]",
+            }
+        else:
+            punct = {
+                "'": "'",
+                '"': '"',
+                ":": ":",
+                "(": "(",
+                ")": ")",
+                "[": "[",
+                "]": "]",
+                "{": "{",
+                "}": "}",
+            }
 
-        def format_value(value: any, current_indent: int) -> str:
-            if isinstance(value, dict):
+        def format_value(value: any, current_indent: int = None) -> str:
+            if current_indent is not None and isinstance(value, dict):
                 return format_dict(value, current_indent + indent)
-            elif hasattr(value, "__dict__"):
+            elif current_indent is not None and hasattr(value, "__dict__"):
                 return format_dict(value.__dict__, current_indent + indent)
-            elif isinstance(value, (list, tuple, set, frozenset)):
+            elif current_indent is not None and isinstance(value, (list, tuple, set, frozenset)):
                 return format_sequence(value, current_indent + indent)
             elif isinstance(value, bool):
-                return str(value).lower() if as_json else str(value)
+                val = str(value).lower() if as_json else str(value)
+                return f"[{_syntax_hl['literal']}]{val}[_]" if syntax_hl else val
             elif isinstance(value, (int, float)):
-                return "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
+                val = "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
+                return f"[{_syntax_hl['number']}]{val}[_]" if syntax_hl else val
             elif isinstance(value, complex):
-                return f"[{value.real}, {value.imag}]" if as_json else str(value)
+                return (
+                    format_value(str(value).strip("()"))
+                    if as_json
+                    else (
+                        f"{punct['(']}[{_syntax_hl['number']}]{str(value).strip("()")}[_]{punct[')']}"
+                        if syntax_hl
+                        else str(value)
+                    )
+                )
             elif value is None:
-                return "null" if as_json else "None"
+                val = "null" if as_json else "None"
+                return f"[{_syntax_hl['literal']}]{val}[_]" if syntax_hl else val
             else:
-                return '"' + String.escape(str(value), '"') + '"' if as_json else "'" + String.escape(str(value), "'") + "'"
+                return (
+                    (
+                        f"{punct['"']}[{_syntax_hl['str']}]{String.escape(str(value), '"')}[_]{punct['"']}"
+                        if syntax_hl
+                        else f"{punct['"']}{String.escape(str(value), '"')}{punct['"']}"
+                    )
+                    if as_json
+                    else (
+                        f'{punct["'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "'")}[_]{punct["'"]}'
+                        if syntax_hl
+                        else f'{punct["'"]}{String.escape(str(value), "'")}{punct["'"]}'
+                    )
+                )
 
         def should_expand(seq: list | tuple | dict) -> bool:
             if compactness == 0:
@@ -452,75 +477,90 @@ class Data:
                 or Data.chars_count(seq) + (len(seq) * len(sep)) > max_width
             )
 
-        def format_key(k: any) -> str:
-            return (
-                '"' + String.escape(str(k), '"') + '"'
-                if as_json
-                else ("'" + String.escape(str(k), "'") + "'" if isinstance(k, str) else str(k))
-            )
-
         def format_dict(d: dict, current_indent: int) -> str:
             if not d or compactness == 2:
-                return "{" + sep.join(f"{format_key(k)}: {format_value(v, current_indent)}" for k, v in d.items()) + "}"
+                return (
+                    punct["{"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items())
+                    + punct["}"]
+                )
             if not should_expand(d.values()):
-                return "{" + sep.join(f"{format_key(k)}: {format_value(v, current_indent)}" for k, v in d.items()) + "}"
+                return (
+                    punct["{"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items())
+                    + punct["}"]
+                )
             items = []
-            for key, value in d.items():
-                formatted_value = format_value(value, current_indent)
-                items.append(f'{" " * (current_indent + indent)}{format_key(key)}: {formatted_value}')
-            return "{\n" + ",\n".join(items) + f'\n{" " * current_indent}}}'
+            for k, val in d.items():
+                formatted_value = format_value(val, current_indent)
+                items.append(f"{' ' * (current_indent + indent)}{format_value(k)}{punct[':']} {formatted_value}")
+            return punct["{"] + "\n" + f"{sep}\n".join(items) + f"\n{' ' * current_indent}" + punct["}"]
 
         def format_sequence(seq, current_indent: int) -> str:
             if as_json:
                 seq = list(seq)
             if not seq or compactness == 2:
                 return (
-                    "[" + sep.join(format_value(item, current_indent) for item in seq) + "]"
+                    punct["["] + sep.join(format_value(item, current_indent) for item in seq) + punct["]"]
                     if isinstance(seq, list)
-                    else "(" + sep.join(format_value(item, current_indent) for item in seq) + ")"
+                    else punct["("] + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             if not should_expand(seq):
                 return (
-                    "[" + sep.join(format_value(item, current_indent) for item in seq) + "]"
+                    punct["["] + sep.join(format_value(item, current_indent) for item in seq) + punct["]"]
                     if isinstance(seq, list)
-                    else "(" + sep.join(format_value(item, current_indent) for item in seq) + ")"
+                    else punct["("] + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             items = [format_value(item, current_indent) for item in seq]
-            formatted_items = ",\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
+            formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
             if isinstance(seq, list):
-                return "[\n" + formatted_items + f'\n{" " * current_indent}]'
+                return punct["["] + f"\n{formatted_items}\n{' ' * current_indent}" + punct["]"]
             else:
-                return "(\n" + formatted_items + f'\n{" " * current_indent})'
+                return punct["("] + f"\n{formatted_items}\n{' ' * current_indent}" + punct[")"]
 
         return format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0)
 
     @staticmethod
-    def _is_key(data: DataStructure, path_id: str) -> bool:
-        """Returns `True` if the path ID points to a key in `data` and `False` otherwise.\n
-        ------------------------------------------------------------------------------------
-        Input a list, tuple or dict as `data`, along with `path_id`, which is a path ID
-        that was created before using `Data.get_path_id()`."""
-
-        def check_nested(data: list | tuple | set | frozenset | dict, path: list[int]) -> bool:
-            for i, idx in enumerate(path):
-                if isinstance(data, dict):
-                    keys = list(data.keys())
-                    if i == len(path) - 1:
-                        return True
-                    try:
-                        data = data[keys[idx]]
-                    except IndexError:
-                        return False
-                elif isinstance(data, (list, tuple, set, frozenset)):
-                    return False
-                else:
-                    raise TypeError(f"Unsupported type {type(data)} at path {path[:i+1]}")
-            return False
-
-        if not isinstance(data, dict):
-            return False
-        path = Data.__sep_path_id(path_id)
-        return check_nested(data, path)
+    def print(
+        data: DataStructure,
+        indent: int = 4,
+        compactness: int = 1,
+        max_width: int = 127,
+        sep: str = ", ",
+        end: str = "\n",
+        as_json: bool = False,
+        syntax_highlighting: dict[str, str] = {
+            "str": DEFAULT.color["blue"],
+            "number": DEFAULT.color["magenta"],
+            "literal": DEFAULT.color["cyan"],
+            "punctuation": DEFAULT.color["darkgray"],
+        },
+    ) -> None:
+        """Print nicely formatted data structures.\n
+        ------------------------------------------------------------------------------
+        The indentation spaces-amount can be set with with `indent`.
+        There are three different levels of `compactness`:
+        - `0` expands everything possible
+        - `1` only expands if there's other lists, tuples or dicts inside of data or,
+          if the data's content is longer than `max_width`
+        - `2` keeps everything collapsed (all on one line)\n
+        ------------------------------------------------------------------------------
+        If `as_json` is set to `True`, the output will be in valid JSON format.\n
+        ------------------------------------------------------------------------------
+        The `syntax_highlighting` parameter is a dictionary with 4 keys for each part
+        of the data:
+        - `str`
+        - `number`
+        - `literal`
+        - `punctuation`\n
+        The key's values are the formatting codes to apply to this data part. For no
+        syntax highlighting, set `syntax_highlighting` to `{}` or `None`.\n
+        For more detailed information about formatting codes, see `xx_format_codes`
+        module documentation."""
+        FormatCodes.print(
+            Data.to_str(data, indent, compactness, max_width, sep, as_json, syntax_highlighting),
+            end=end,
+        )
 
     @staticmethod
     def __sep_path_id(path_id: str) -> list[int]:
