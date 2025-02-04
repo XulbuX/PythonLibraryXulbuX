@@ -482,15 +482,15 @@ class Data:
             else:
                 return (
                     (
-                        f"{punct['\"']}[{_syntax_hl['str']}]{String.escape(str(value), '\"')}[_]{punct['\"']}"
+                        f"{punct[r'"']}[{_syntax_hl['str']}]{String.escape(str(value), r'"')}[_]{punct[r'"']}"
                         if syntax_hl
-                        else f"{punct['\"']}{String.escape(str(value), '\"')}{punct['\"']}"
+                        else f"{punct[r'"']}{String.escape(str(value), r'"')}{punct[r'"']}"
                     )
                     if as_json
                     else (
-                        f'{punct["\'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "\'")}[_]{punct["\'"]}'
+                        f'{punct["'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "'")}[_]{punct["'"]}'
                         if syntax_hl
-                        else f'{punct["\'"]}{String.escape(str(value), "\'")}{punct["\'"]}'
+                        else f'{punct["'"]}{String.escape(str(value), "'")}{punct["'"]}'
                     )
                 )
 
