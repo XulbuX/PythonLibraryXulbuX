@@ -3,6 +3,7 @@ from .xx_format_codes import FormatCodes
 from .xx_string import String
 
 from typing import TypeAlias, Union
+import base64 as _base64
 import math as _math
 import re as _re
 
@@ -11,6 +12,32 @@ DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
 
 
 class Data:
+
+    @staticmethod
+    def serialize_bytes(data: bytes | bytearray) -> dict[str, str]:
+        """Converts bytes or bytearray to a JSON-compatible format (dictionary) with explicit keys."""
+        if isinstance(data, (bytes, bytearray)):
+            key = "bytearray" if isinstance(data, bytearray) else "bytes"
+            try:
+                return {key: data.decode("utf-8"), "encoding": "utf-8"}
+            except UnicodeDecodeError:
+                pass
+            return {key: _base64.b64encode(data).decode("utf-8"), "encoding": "base64"}
+        raise TypeError("Unsupported data type")
+
+    @staticmethod
+    def deserialize_bytes(obj: dict[str, str]) -> bytes | bytearray:
+        """Converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type."""
+        for key in ("bytes", "bytearray"):
+            if key in obj and "encoding" in obj:
+                if obj["encoding"] == "utf-8":
+                    data = obj[key].encode("utf-8")
+                elif obj["encoding"] == "base64":
+                    data = _base64.b64decode(obj[key].encode("utf-8"))
+                else:
+                    raise ValueError("Unknown encoding method")
+                return bytearray(data) if key == "bytearray" else data
+        raise ValueError("Invalid serialized data")
 
     @staticmethod
     def chars_count(data: DataStructure) -> int:
@@ -431,6 +458,8 @@ class Data:
                 return format_dict(value.__dict__, current_indent + indent)
             elif current_indent is not None and isinstance(value, (list, tuple, set, frozenset)):
                 return format_sequence(value, current_indent + indent)
+            elif isinstance(value, (bytes, bytearray)):
+                return format_value(Data.serialize_bytes(value), current_indent)
             elif isinstance(value, bool):
                 val = str(value).lower() if as_json else str(value)
                 return f"[{_syntax_hl['literal']}]{val}[_]" if syntax_hl else val

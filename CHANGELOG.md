@@ -22,6 +22,7 @@
 * fixed a small bug in `Data.print()` where two params passed to `Data.to_str()` where swapped, which caused an error
 * the method `Data.print()` now per default syntax highlights the console output:<br>
   the syntax highlighting colors and styles can be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {...}</code>
+* added two new methods `Data.serialize_bytes()` and `Data.deserialize_bytes()`
 
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already
