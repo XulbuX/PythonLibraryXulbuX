@@ -413,7 +413,7 @@ class Data:
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
-        _syntax_hl: dict[str, str] = {},
+        _syntax_highlighting: dict[str, str] | bool = {},
     ) -> str:
         """Get nicely formatted data structure-strings.\n
         ------------------------------------------------------------------------------
@@ -425,31 +425,34 @@ class Data:
         - `2` keeps everything collapsed (all on one line)\n
         ------------------------------------------------------------------------------
         If `as_json` is set to `True`, the output will be in valid JSON format."""
-        if syntax_hl := bool(_syntax_hl):
-            sep = f"[{_syntax_hl['punctuation']}]{sep}[_]"
-            punct = {
-                "'": f"[{_syntax_hl['punctuation']}]'[_]",
-                '"': f'[{_syntax_hl["punctuation"]}]"[_]',
-                ":": f"[{_syntax_hl['punctuation']}]:[_]",
-                "(": f"[{_syntax_hl['punctuation']}]/([_]",
-                ")": f"[{_syntax_hl['punctuation']}])[_]",
-                "[": f"[{_syntax_hl['punctuation']}][[_]",
-                "]": f"[{_syntax_hl['punctuation']}]][_]",
-                "{": f"[{_syntax_hl['punctuation']}]{{[_]",
-                "}": f"[{_syntax_hl['punctuation']}]}}[_]",
+        if syntax_hl := _syntax_highlighting not in (None, False):
+            if _syntax_highlighting is True:
+                _syntax_highlighting = {}
+            elif not isinstance(_syntax_highlighting, dict):
+                raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(_syntax_highlighting)}")
+            _syntax_hl = {
+                "str": (f"[{DEFAULT.color["blue"]}]", "[_c]"),
+                "number": (f"[{DEFAULT.color["magenta"]}]", "[_c]"),
+                "literal": (f"[{DEFAULT.color["cyan"]}]", "[_c]"),
+                "type": (f"[i|{DEFAULT.color["lightblue"]}]", "[_i|_c]"),
+                "punctuation": (f"[{DEFAULT.color["darkgray"]}]", "[_c]"),
             }
-        else:
-            punct = {
-                "'": "'",
-                '"': '"',
-                ":": ":",
-                "(": "(",
-                ")": ")",
-                "[": "[",
-                "]": "]",
-                "{": "{",
-                "}": "}",
-            }
+            _syntax_hl.update(
+                {
+                    k: [f"[{v}]", "[_]"] if k in _syntax_hl and v not in ("", None) else ["", ""]
+                    for k, v in _syntax_highlighting.items()
+                }
+            )
+            sep = f"{_syntax_hl['punctuation'][0]}{sep}{_syntax_hl['punctuation'][1]}"
+        punct_map = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
+        punct = {
+            k: (
+                (f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if syntax_hl else v[1])
+                if isinstance(v, (list, tuple))
+                else (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if syntax_hl else v)
+            )
+            for k, v in punct_map.items()
+        }
 
         def format_value(value: any, current_indent: int = None) -> str:
             if current_indent is not None and isinstance(value, dict):
@@ -459,36 +462,48 @@ class Data:
             elif current_indent is not None and isinstance(value, (list, tuple, set, frozenset)):
                 return format_sequence(value, current_indent + indent)
             elif isinstance(value, (bytes, bytearray)):
-                return format_value(Data.serialize_bytes(value), current_indent)
+                obj_dict = Data.serialize_bytes(value)
+                return (
+                    format_dict(obj_dict, current_indent + indent)
+                    if as_json
+                    else (
+                        f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
+                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
+                        if syntax_hl
+                        else (k := next(iter(obj_dict)))
+                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
+                    )
+                )
             elif isinstance(value, bool):
                 val = str(value).lower() if as_json else str(value)
-                return f"[{_syntax_hl['literal']}]{val}[_]" if syntax_hl else val
+                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
             elif isinstance(value, (int, float)):
                 val = "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
-                return f"[{_syntax_hl['number']}]{val}[_]" if syntax_hl else val
+                return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if syntax_hl else val
             elif isinstance(value, complex):
                 return (
                     format_value(str(value).strip("()"))
                     if as_json
                     else (
-                        f"{punct['(']}[{_syntax_hl['number']}]{str(value).strip('()')}[_]{punct[')']}"
+                        f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
+                        + format_sequence((value.real, value.imag), current_indent + indent)
                         if syntax_hl
-                        else str(value)
+                        else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
                     )
                 )
             elif value is None:
                 val = "null" if as_json else "None"
-                return f"[{_syntax_hl['literal']}]{val}[_]" if syntax_hl else val
+                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
             else:
                 return (
                     (
-                        punct['"'] + f"[{_syntax_hl['str']}]" + String.escape(str(value), '"') + "[_]" + punct['"']
+                        punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1] + punct['"']
                         if syntax_hl
                         else punct['"'] + String.escape(str(value), '"') + punct['"']
                     )
                     if as_json
                     else (
-                        punct["'"] + f'[{_syntax_hl["str"]}]' + String.escape(str(value), "'") + "[_]" + punct["'"]
+                        punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1] + punct["'"]
                         if syntax_hl
                         else punct["'"] + String.escape(str(value), "'") + punct["'"]
                     )
@@ -499,7 +514,8 @@ class Data:
                 return True
             if compactness == 2:
                 return False
-            complex_items = sum(1 for item in seq if isinstance(item, (list, tuple, dict, set, frozenset)))
+            complex_types = (list, tuple, dict, set, frozenset) + ((bytes, bytearray) if as_json else ())
+            complex_items = sum(1 for item in seq if isinstance(item, complex_types))
             return (
                 complex_items > 1
                 or (complex_items == 1 and len(seq) > 1)
@@ -558,12 +574,7 @@ class Data:
         sep: str = ", ",
         end: str = "\n",
         as_json: bool = False,
-        syntax_highlighting: dict[str, str] = {
-            "str": DEFAULT.color["blue"],
-            "number": DEFAULT.color["magenta"],
-            "literal": DEFAULT.color["cyan"],
-            "punctuation": DEFAULT.color["darkgray"],
-        },
+        syntax_highlighting: dict[str, str] | bool = {},
     ) -> None:
         """Print nicely formatted data structures.\n
         ------------------------------------------------------------------------------
@@ -576,14 +587,18 @@ class Data:
         ------------------------------------------------------------------------------
         If `as_json` is set to `True`, the output will be in valid JSON format.\n
         ------------------------------------------------------------------------------
-        The `syntax_highlighting` parameter is a dictionary with 4 keys for each part
-        of the data:
-        - `str`
-        - `number`
-        - `literal`
-        - `punctuation`\n
-        The key's values are the formatting codes to apply to this data part. For no
-        syntax highlighting, set `syntax_highlighting` to `{}` or `None`.\n
+        The `syntax_highlighting` parameter is a dictionary with 5 keys for each part
+        of the data. The key's values are the formatting codes to apply to this data
+        part. The formatting can be changed by simply adding the key with the new
+        value inside the `syntax_highlighting` dictionary.\n
+        The keys with their default values are:
+        - `str: DEFAULT.color["blue"]`
+        - `number: DEFAULT.color["magenta"]`
+        - `literal: DEFAULT.color["cyan"]`
+        - `type: "i|" + DEFAULT.color["lightblue"]`
+        - `punctuation: DEFAULT.color["darkgray"]`\n
+        For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
+        ------------------------------------------------------------------------------
         For more detailed information about formatting codes, see `xx_format_codes`
         module documentation."""
         FormatCodes.print(
