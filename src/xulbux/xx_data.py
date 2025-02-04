@@ -488,9 +488,9 @@ class Data:
                     )
                     if as_json
                     else (
-                        f'{punct["'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "'")}[_]{punct["'"]}'
+                        f'{punct["\'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "\'")}[_]{punct["\'"]}'
                         if syntax_hl
-                        else f'{punct["'"]}{String.escape(str(value), "'")}{punct["'"]}'
+                        else f'{punct["\'"]}{String.escape(str(value), "\'")}{punct["\'"]}'
                     )
                 )
 
