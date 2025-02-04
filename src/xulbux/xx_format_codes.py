@@ -153,7 +153,7 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 from ._consts_ import ANSI
 from .xx_string import String
 from .xx_regex import Regex
-from .xx_color import *
+from .xx_color import Color, rgba, hexa
 
 import ctypes as _ctypes
 import regex as _rx

@@ -109,7 +109,7 @@ max-line-length = 127
 extend-ignore = ["E203", "E266", "E303", "E501", "W503"]
 max-complexity = 18
 select = ["E", "F", "W", "C90"]
-per-file-ignores = ["__init__.py:F401,F403"]
+per-file-ignores = ["__init__.py:F401,F403,F405"]
 
 [tool.setuptools]
 packages = ["xulbux"]

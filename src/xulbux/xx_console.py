@@ -24,7 +24,7 @@ For more detailed information about formatting codes, see the the `xx_format_cod
 from ._consts_ import DEFAULT, CHARS
 from .xx_format_codes import FormatCodes
 from .xx_string import String
-from .xx_color import *
+from .xx_color import Color, rgba, hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 import prompt_toolkit as _prompt_toolkit
