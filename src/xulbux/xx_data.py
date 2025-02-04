@@ -471,7 +471,7 @@ class Data:
                     format_value(str(value).strip("()"))
                     if as_json
                     else (
-                        f"{punct['(']}[{_syntax_hl['number']}]{str(value).strip("()")}[_]{punct[')']}"
+                        f"{punct['(']}[{_syntax_hl['number']}]{str(value).strip('()')}[_]{punct[')']}"
                         if syntax_hl
                         else str(value)
                     )
@@ -482,15 +482,15 @@ class Data:
             else:
                 return (
                     (
-                        f"{punct['\"']}[{_syntax_hl['str']}]{String.escape(str(value), '\"')}[_]{punct['\"']}"
+                        f"{punct['"']}[{_syntax_hl['str']}]{String.escape(str(value), '"')}[_]{punct['"']}"
                         if syntax_hl
-                        else f"{punct['\"']}{String.escape(str(value), '\"')}{punct['\"']}"
+                        else f"{punct['"']}{String.escape(str(value), '"')}{punct['"']}"
                     )
                     if as_json
                     else (
-                        f'{punct["\'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "\'")}[_]{punct["\'"]}'
+                        f'{punct["'"]}[{_syntax_hl["str"]}]{String.escape(str(value), "'")}[_]{punct["'"]}'
                         if syntax_hl
-                        else f'{punct["\'"]}{String.escape(str(value), "\'")}{punct["\'"]}'
+                        else f'{punct["'"]}{String.escape(str(value), "'")}{punct["'"]}'
                     )
                 )
 
@@ -543,9 +543,9 @@ class Data:
             items = [format_value(item, current_indent) for item in seq]
             formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
             if isinstance(seq, list):
-                return punct["["] + f"\n{formatted_items}\n{' ' * current_indent}" + punct["]"]
+                return f"{punct['[']}\n{formatted_items}\n{' ' * current_indent}{punct[']']}"
             else:
-                return punct["("] + f"\n{formatted_items}\n{' ' * current_indent}" + punct[")"]
+                return f"{punct['(']}\n{formatted_items}\n{' ' * current_indent}{punct[')']}"
 
         return format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0)
 
