@@ -36,8 +36,8 @@ def test_remove_comments():
 
 
 def test_is_equal():
-    assert Data.is_equal(d1_equal, d2_equal) == False
-    assert Data.is_equal(d1_equal, d2_equal, ignore_paths="key3") == True
+    assert Data.is_equal(d1_equal, d2_equal) is False
+    assert Data.is_equal(d1_equal, d2_equal, ignore_paths="key3") is True
 
 
 def test_path_id():

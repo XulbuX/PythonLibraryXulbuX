@@ -218,7 +218,7 @@ class Data:
         ) -> bool:
             if any(current_path == path[: len(current_path)] for path in ignore_paths):
                 return True
-            if type(d1) != type(d2):
+            if type(d1) is not type(d2):
                 return False
             if isinstance(d1, dict):
                 if set(d1.keys()) != set(d2.keys()):

@@ -20,7 +20,7 @@ class System:
                 return _ctypes.windll.shell32.IsUserAnAdmin() != 0
             elif _os.name == "posix":
                 return _os.geteuid() == 0
-        except:
+        except Exception:
             pass
         return False
 
