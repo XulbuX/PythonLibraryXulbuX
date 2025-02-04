@@ -431,11 +431,11 @@ class Data:
             elif not isinstance(_syntax_highlighting, dict):
                 raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(_syntax_highlighting)}")
             _syntax_hl = {
-                "str": (f"[{DEFAULT.color["blue"]}]", "[_c]"),
-                "number": (f"[{DEFAULT.color["magenta"]}]", "[_c]"),
-                "literal": (f"[{DEFAULT.color["cyan"]}]", "[_c]"),
-                "type": (f"[i|{DEFAULT.color["lightblue"]}]", "[_i|_c]"),
-                "punctuation": (f"[{DEFAULT.color["darkgray"]}]", "[_c]"),
+                "str": (f"[{DEFAULT.color['blue']}]", "[_c]"),
+                "number": (f"[{DEFAULT.color['magenta']}]", "[_c]"),
+                "literal": (f"[{DEFAULT.color['cyan']}]", "[_c]"),
+                "type": (f"[i|{DEFAULT.color['lightblue']}]", "[_i|_c]"),
+                "punctuation": (f"[{DEFAULT.color['darkgray']}]", "[_c]"),
             }
             _syntax_hl.update(
                 {
