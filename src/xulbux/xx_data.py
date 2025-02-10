@@ -413,7 +413,7 @@ class Data:
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
-        _syntax_highlighting: dict[str, str] | bool = {},
+        _syntax_highlighting: dict[str, str] | bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
         ------------------------------------------------------------------------------
