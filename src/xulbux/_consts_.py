@@ -15,15 +15,15 @@ class DEFAULT:
         "yellow": "#FFD260",
         "green": "#7EE787",
         "teal": "#50EAAF",
-        "cyan": "#3EE6DE",
-        "ice": "#77EFEF",
+        "cyan": "#3EDEE6",
+        "ice": "#77DBEF",
         "lightblue": "#60AAFF",
         "blue": "#8085FF",
         "lavender": "#9B7DFF",
         "purple": "#AD68FF",
         "magenta": "#C860FF",
-        "pink": "#EE60BB",
-        "rose": "#FF6090",
+        "pink": "#F162EF",
+        "rose": "#FF609F",
     }
 
 
