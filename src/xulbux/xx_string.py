@@ -1,3 +1,5 @@
+import json as _json
+import ast as _ast
 import re as _re
 
 
@@ -5,54 +7,15 @@ class String:
 
     @staticmethod
     def to_type(string: str) -> any:
-        """Will convert a string to the found type."""
-        string = string.strip()  # Clean up whitespace
-        # BOOLEAN
-        if _re.match(r"(?i)^(true|false)$", string):
-            return string.lower() == "true"
-        # NONE
-        elif _re.match(r"(?i)^(none|null|undefined)$", string):
-            return None
-        # INTEGER
-        elif _re.match(r"^-?\d+$", string):
-            return int(string)
-        # FLOAT
-        elif _re.match(r"^-?\d+\.\d+$", string):
-            return float(string)
-        # COMPLEX
-        elif _re.match(r"^(-?\d+(\.\d+)?[+-]\d+(\.\d+)?j)$", string):
-            return complex(string)
-        # QUOTED STRING
-        elif _re.match(r'^["\'](.*)["\']$', string):
-            return string[1:-1]
-        # BYTES
-        elif _re.match(r"^b['\"](.*)['\"]$", string):
-            return bytes(string[2:-1], "utf-8")
-        # LIST
-        elif _re.match(r"^\[(.*)\]$", string):
-            return [
-                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,\[\]]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
-            ]
-        # TUPLE
-        elif _re.match(r"^\((.*)\)$", string):
-            return tuple(
-                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,\(\)]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
-            )
-        # DICTIONARY
-        elif _re.match(r"^\{(.*)\}$", string) and ":" in string:
-            return {
-                String.to_type(k.strip()): String.to_type(v.strip())
-                for k, v in _re.findall(
-                    r"((?:[^:,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+)\s*:\s*((?:[^:,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+)", string[1:-1]
-                )
-            }
-        # SET
-        elif _re.match(r"^\{(.*?)\}$", string):
-            return {
-                String.to_type(item.strip()) for item in _re.findall(r"(?:[^,{}]+|\[.*?\]|\(.*?\)|\{.*?\})+", string[1:-1])
-            }
-        # RETURN AS IS (str)
-        return string
+        """Will convert a string to the found type, including complex nested structures."""
+        string = string.strip()
+        try:
+            return _ast.literal_eval(string)
+        except (ValueError, SyntaxError):
+            try:
+                return _json.loads(string)
+            except _json.JSONDecodeError:
+                return string
 
     @staticmethod
     def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
