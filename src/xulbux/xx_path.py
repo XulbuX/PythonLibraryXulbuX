@@ -19,9 +19,8 @@ class Path:
                 main_module = _sys.modules["__main__"]
                 if hasattr(main_module, "__file__"):
                     base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
-                elif (
-                    hasattr(main_module, "__spec__") and main_module.__spec__ and getattr(main_module.__spec__, "origin", None)
-                ):
+                elif (hasattr(main_module, "__spec__") and main_module.__spec__
+                    and getattr(main_module.__spec__, "origin", None)):
                     base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
                 else:
                     raise RuntimeError("Can only get base directory if ran from a file.")

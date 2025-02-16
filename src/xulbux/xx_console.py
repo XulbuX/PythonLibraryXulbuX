@@ -247,10 +247,8 @@ class Console:
         max_line_len = max(len(line) for line in unfmt_lines)
         pad_w_full = (Console.w() - (max_line_len + (2 * w_padding))) if w_full else 0
         lines = [
-            f"[bg:{box_bg_color}]{' ' * w_padding}{line}"
-            + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)
-            + "[_bg]"
-            for line, unfmt in zip(lines, unfmt_lines)
+            f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
+            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[_bg]" for line, unfmt in zip(lines, unfmt_lines)
         ]
         pady = " " * (Console.w() if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
@@ -274,8 +272,8 @@ class Console:
         information about formatting codes, see the `xx_format_codes` module documentation."""
         confirmed = input(
             FormatCodes.to_ansi(
-                f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
-                default_color,
+            f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
+            default_color,
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
@@ -318,14 +316,12 @@ class Console:
             if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
                 if last_console_width > console_width:
                     line_count *= 2
-                for _ in range(
-                    line_count
-                    if line_count < last_line_count and not line_count > last_line_count
-                    else (line_count - 2 if line_count > last_line_count else line_count - 1)
-                ):
+                for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else (line_count
+                    - 2 if line_count > last_line_count else line_count - 1)):
                     _sys.stdout.write("\033[2K\r\033[A")
             prompt_len = len(str(prompt)) if prompt else 0
-            prompt_str, input_str = lines[0][:prompt_len], (
+            prompt_str = lines[0][:prompt_len]
+            input_str = (
                 lines[0][prompt_len:] if len(lines) == 1 else "\n".join([lines[0][prompt_len:]] + lines[1:])
             )  # SEPARATE THE PROMPT AND THE INPUT
             _sys.stdout.write(

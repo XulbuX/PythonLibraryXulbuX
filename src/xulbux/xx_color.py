@@ -79,13 +79,13 @@ class rgba:
         return 3 if self.a is None else 4
 
     def __iter__(self) -> iter:
-        return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))
+        return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))
 
     def __dict__(self) -> dict:
         return self.dict()
 
     def __getitem__(self, index: int) -> int:
-        return ((self.r, self.g, self.b) + (() if self.a is None else (self.a,)))[index]
+        return ((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))[index]
 
     def __repr__(self) -> str:
         return f'rgba({self.r}, {self.g}, {self.b}{"" if self.a is None else f", {self.a}"})'
@@ -186,8 +186,8 @@ class rgba:
                 self.a = max(
                     0,
                     min(
-                        1,
-                        (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2)),
+                    1,
+                    (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2)),
                     ),
                 )
         else:
@@ -282,13 +282,13 @@ class hsla:
         return 3 if self.a is None else 4
 
     def __iter__(self) -> iter:
-        return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))
+        return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))
 
     def __dict__(self) -> dict:
         return self.dict()
 
     def __getitem__(self, index: int) -> int:
-        return ((self.h, self.s, self.l) + (() if self.a is None else (self.a,)))[index]
+        return ((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))[index]
 
     def __repr__(self) -> str:
         return f'hsla({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
@@ -508,17 +508,15 @@ class hexa:
         return 3 if self.a is None else 4
 
     def __iter__(self) -> iter:
-        return iter(
-            (f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else (f"{int(self.a * 255):02X}",))
-        )
+        return iter((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}")
+            + (() if self.a is None else (f"{int(self.a * 255):02X}", )))
 
     def __dict__(self) -> dict:
         return self.dict()
 
     def __getitem__(self, index: int) -> int:
-        return (
-            (f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else (f"{int(self.a * 255):02X}",))
-        )[index]
+        return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else
+            (f"{int(self.a * 255):02X}", )))[index]
 
     def __repr__(self) -> str:
         return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"})'
@@ -539,13 +537,11 @@ class hexa:
     def dict(self) -> dict:
         """Returns the color components as a dictionary with hex string values for keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
         return (
-            dict(r=f"{self.r:02X}", g=f"{self.g:02X}", b=f"{self.b:02X}")
-            if self.a is None
-            else dict(
-                r=f"{self.r:02X}",
-                g=f"{self.g:02X}",
-                b=f"{self.b:02X}",
-                a=f"{int(self.a * 255):02X}",
+            dict(r=f"{self.r:02X}", g=f"{self.g:02X}", b=f"{self.b:02X}") if self.a is None else dict(
+            r=f"{self.r:02X}",
+            g=f"{self.g:02X}",
+            b=f"{self.b:02X}",
+            a=f"{int(self.a * 255):02X}",
             )
         )
 
@@ -653,18 +649,14 @@ class Color:
             elif isinstance(color, (list, tuple)):
                 if allow_alpha and Color.has_alpha(color):
                     return (
-                        0 <= color[0] <= 255
-                        and 0 <= color[1] <= 255
-                        and 0 <= color[2] <= 255
+                        0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
                         and (0 <= color[3] <= 1 or color[3] is None)
                     )
                 return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
             elif isinstance(color, dict):
                 if allow_alpha and Color.has_alpha(color):
                     return (
-                        0 <= color["r"] <= 255
-                        and 0 <= color["g"] <= 255
-                        and 0 <= color["b"] <= 255
+                        0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
                         and (0 <= color["a"] <= 1 or color["a"] is None)
                     )
                 return 0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
@@ -682,9 +674,7 @@ class Color:
             elif isinstance(color, (list, tuple)):
                 if allow_alpha and Color.has_alpha(color):
                     return (
-                        0 <= color[0] <= 360
-                        and 0 <= color[1] <= 100
-                        and 0 <= color[2] <= 100
+                        0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
                         and (0 <= color[3] <= 1 or color[3] is None)
                     )
                 else:
@@ -692,9 +682,7 @@ class Color:
             elif isinstance(color, dict):
                 if allow_alpha and Color.has_alpha(color):
                     return (
-                        0 <= color["h"] <= 360
-                        and 0 <= color["s"] <= 100
-                        and 0 <= color["l"] <= 100
+                        0 <= color["h"] <= 360 and 0 <= color["s"] <= 100 and 0 <= color["l"] <= 100
                         and (0 <= color["a"] <= 1 or color["a"] is None)
                     )
                 else:
@@ -713,24 +701,17 @@ class Color:
                 is_valid = 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
                 return (is_valid, "0x") if get_prefix else is_valid
             elif isinstance(color, str):
-                color, prefix = (
-                    (color[1:], "#")
-                    if color.startswith("#")
-                    else (color[2:], "0x") if color.startswith("0x") else (color, None)
-                )
-                return (
-                    (bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)), prefix)
-                    if get_prefix
-                    else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color))
-                )
+                color, prefix = ((color[1:], "#") if color.startswith("#") else
+                    (color[2:], "0x") if color.startswith("0x") else (color, None))
+                return ((bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)),
+                    prefix) if get_prefix else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)))
         except Exception:
             return (False, None) if get_prefix else False
 
     @staticmethod
     def is_valid(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
         return (
-            Color.is_valid_rgba(color, allow_alpha)
-            or Color.is_valid_hsla(color, allow_alpha)
+            Color.is_valid_rgba(color, allow_alpha) or Color.is_valid_hsla(color, allow_alpha)
             or Color.is_valid_hexa(color, allow_alpha)
         )
 
@@ -818,13 +799,12 @@ class Color:
                 return None
             return [
                 rgba(
-                    int(m[0]),
-                    int(m[1]),
-                    int(m[2]),
-                    ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
-                    _validate=False,
-                )
-                for m in matches
+                int(m[0]),
+                int(m[1]),
+                int(m[2]),
+                ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
+                _validate=False,
+                ) for m in matches
             ]
 
     @staticmethod
@@ -901,15 +881,15 @@ class Color:
         if r < 0.03928:
             r = r / 12.92
         else:
-            r = ((r + 0.055) / 1.055) ** 2.4
+            r = ((r + 0.055) / 1.055)**2.4
         if g < 0.03928:
             g = g / 12.92
         else:
-            g = ((g + 0.055) / 1.055) ** 2.4
+            g = ((g + 0.055) / 1.055)**2.4
         if b < 0.03928:
             b = b / 12.92
         else:
-            b = ((b + 0.055) / 1.055) ** 2.4
+            b = ((b + 0.055) / 1.055)**2.4
         l = 0.2126 * r + 0.7152 * g + 0.0722 * b
         return round(l * 100) if isinstance(output_type, int) else round(l * 255) if output_type is None else l
 
@@ -918,11 +898,8 @@ class Color:
         was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
-        return (
-            (hexa("", 255, 255, 255) if was_hexa else rgba(255, 255, 255, _validate=False))
-            if brightness < 128
-            else ((0x000 if was_int else hexa("", 0, 0, 0)) if was_hexa else rgba(0, 0, 0, _validate=False))
-        )
+        return ((hexa("", 255, 255, 255) if was_hexa else rgba(255, 255, 255, _validate=False)) if brightness < 128 else
+            ((0x000 if was_int else hexa("", 0, 0, 0)) if was_hexa else rgba(0, 0, 0, _validate=False)))
 
     @staticmethod
     def adjust_lightness(color: rgba | hexa, lightness_change: float) -> rgba | hexa:

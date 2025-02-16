@@ -160,6 +160,7 @@ import regex as _rx
 import sys as _sys
 import re as _re
 
+
 _CONSOLE_ANSI_CONFIGURED = False
 
 _PREFIX = {
@@ -177,7 +178,7 @@ _COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
     "formatting": _rx.compile(
         Regex.brackets("[", "]", is_group=True)
         + r"(?:\s*([/\\]?)\s*"
-        + Regex.brackets("(", ")", is_group=True, ignore_in_strings=False)
+        + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
         + r")?"
     ),
     "bg?_default": _re.compile(r"(?i)((?:" + _PREFIX_RX["BG"] + r")?)\s*default"),
@@ -294,33 +295,25 @@ class FormatCodes:
                                     reset_keys.append("_bg")
                                     break
                     elif is_valid_color(k) or any(
-                        k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon) :])
-                        for prefix in _PREFIX["BR"]
-                    ):
+                            k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon):])
+                            for prefix in _PREFIX["BR"]):
                         reset_keys.append("_color")
                     else:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
-                    r
-                    for k in reset_keys
-                    if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)).startswith(
-                        f"{ANSI.char}{ANSI.start}"
-                    )
+                    r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)
+                                             ).startswith(f"{ANSI.char}{ANSI.start}")
                 ]
             else:
                 ansi_resets = []
             if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.char}{ANSI.start}") >= 1) and not all(
-                f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats
-            ):
+                    f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):
                 return match.group(0)
             return (
-                "".join(ansi_formats)
-                + (
-                    f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
-                    if escaped and auto_reset_txt
-                    else auto_reset_txt if auto_reset_txt else ""
-                )
-                + ("" if escaped else "".join(ansi_resets))
+                "".join(ansi_formats) + (
+                f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
+                if escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
+                ) + ("" if escaped else "".join(ansi_resets))
             )
 
         string = "\n".join(_COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
@@ -400,12 +393,8 @@ class FormatCodes:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
                 return ANSI.seq().format(
                     next(
-                        (
-                            v
-                            for k, v in ANSI.codes_map.items()
-                            if format_key == k or (isinstance(k, tuple) and format_key in k)
-                        ),
-                        None,
+                    (v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)),
+                    None,
                     )
                 )
         rgb_match = _re.match(_COMPILED["rgb"], format_key)
@@ -421,8 +410,7 @@ class FormatCodes:
                 rgb = Color.to_rgba(hex_match.group(2))
                 return (
                     ANSI.seq_bg_color.format(rgb[0], rgb[1], rgb[2])
-                    if is_bg
-                    else ANSI.seq_color.format(rgb[0], rgb[1], rgb[2])
+                    if is_bg else ANSI.seq_color.format(rgb[0], rgb[1], rgb[2])
                 )
         except Exception:
             pass
@@ -433,10 +421,11 @@ class FormatCodes:
         """Normalizes the given format key."""
         k_parts = format_key.replace(" ", "").lower().split(":")
         prefix_str = "".join(
-            f"{prefix_key.lower()}:"
-            for prefix_key, prefix_values in _PREFIX.items()
+            f"{prefix_key.lower()}:" for prefix_key, prefix_values in _PREFIX.items()
             if any(k_part in prefix_values for k_part in k_parts)
         )
         return prefix_str + ":".join(
-            part for part in k_parts if part not in {val for values in _PREFIX.values() for val in values}
+            part for part in k_parts if part not in {val
+            for values in _PREFIX.values()
+            for val in values}
         )

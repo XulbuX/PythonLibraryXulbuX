@@ -27,24 +27,34 @@ class Regex:
         return r'(?P<quote>[\'"])(?P<string>(?:\\.|(?!\g<quote>).)*?)\g<quote>'
 
     @staticmethod
-    def brackets(bracket1: str = "(", bracket2: str = ")", is_group: bool = False, ignore_in_strings: bool = True) -> str:
+    def brackets(
+        bracket1: str = "(",
+        bracket2: str = ")",
+        is_group: bool = False,
+        strip_spaces: bool = True,
+        ignore_in_strings: bool = True,
+    ) -> str:
         """Matches everything inside brackets, including other nested brackets.\n
         --------------------------------------------------------------------------------
         If `is_group` is true, you will be able to reference the matched content as a
         group (e.g. `match.group(…)` or `r'\\…'`).
+        If `strip_spaces` is true, it will ignore spaces around the content inside the
+        brackets.
         If `ignore_in_strings` is true and a bracket is inside a string (e.g. `'...'`
         or `"..."`), it will not be counted as the matching closing bracket.\n
         --------------------------------------------------------------------------------
         Attention: Requires non standard library `regex` not standard library `re`!"""
-        g, b1, b2 = (
+        g, b1, b2, s1, s2 = (
             "" if is_group else "?:",
             _rx.escape(bracket1) if len(bracket1) == 1 else bracket1,
             _rx.escape(bracket2) if len(bracket2) == 1 else bracket2,
+            r"\s*" if strip_spaces else "",
+            "" if strip_spaces else r"\s*",
         )
         if ignore_in_strings:
-            return rf'{b1}\s*({g}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|{b1}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|(?R))*{b2})*)\s*{b2}'
+            return rf'{b1}{s1}({g}{s2}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|{b1}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|(?R))*{b2})*{s2}){s1}{b2}'
         else:
-            return rf"{b1}\s*({g}(?:[^{b1}{b2}]|{b1}(?:[^{b1}{b2}]|(?R))*{b2})*)\s*{b2}"
+            return rf"{b1}{s1}({g}{s2}(?:[^{b1}{b2}]|{b1}(?:[^{b1}{b2}]|(?R))*{b2})*{s2}){s1}{b2}"
 
     @staticmethod
     def outside_strings(pattern: str = r".*") -> str:
@@ -109,9 +119,7 @@ class Regex:
             rf"""(?ix)
             (?:rgb|rgba)?\s*(?:\(?\s*{rgb_part}
                 (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?)"""
-            if allow_alpha
-            else rf"(?ix)(?:rgb|rgba)?\s*(?:\(?\s*{rgb_part}\s*\)?)"
+            \s*\)?)""" if allow_alpha else rf"(?ix)(?:rgb|rgba)?\s*(?:\(?\s*{rgb_part}\s*\)?)"
         )
 
     @staticmethod
@@ -144,9 +152,7 @@ class Regex:
             rf"""(?ix)
             (?:hsl|hsla)?\s*(?:\(?\s*{hsl_part}
                 (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?)"""
-            if allow_alpha
-            else rf"(?ix)(?:hsl|hsla)?\s*(?:\(?\s*{hsl_part}\s*\)?)"
+            \s*\)?)""" if allow_alpha else rf"(?ix)(?:hsl|hsla)?\s*(?:\(?\s*{hsl_part}\s*\)?)"
         )
 
     @staticmethod
@@ -162,6 +168,5 @@ class Regex:
         every channel from 0-9 and A-F (case insensitive)"""
         return (
             r"(?i)^(?:#|0x)?[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$"
-            if allow_alpha
-            else r"(?i)^(?:#|0x)?[0-9A-F]{6}|[0-9A-F]{3}$"
+            if allow_alpha else r"(?i)^(?:#|0x)?[0-9A-F]{6}|[0-9A-F]{3}$"
         )

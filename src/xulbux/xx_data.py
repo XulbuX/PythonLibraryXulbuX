@@ -60,26 +60,17 @@ class Data:
         if isinstance(data, dict):
             return {
                 k: (
-                    v
-                    if not isinstance(v, (list, tuple, set, frozenset, dict))
-                    else Data.remove_empty_items(v, spaces_are_empty)
+                v if not isinstance(v, (list, tuple, set, frozenset, dict)) else Data.remove_empty_items(v, spaces_are_empty)
                 )
                 for k, v in data.items()
                 if not String.is_empty(v, spaces_are_empty)
             }
         if isinstance(data, (list, tuple, set, frozenset)):
             return type(data)(
-                item
-                for item in (
-                    (
-                        item
-                        if not isinstance(item, (list, tuple, set, frozenset, dict))
-                        else Data.remove_empty_items(item, spaces_are_empty)
-                    )
-                    for item in data
-                    if not String.is_empty(item, spaces_are_empty)
-                )
-                if item not in ((), {}, set(), frozenset())
+                item for item in ((
+                item if not isinstance(item, (list, tuple, set, frozenset,
+                dict)) else Data.remove_empty_items(item, spaces_are_empty)
+                ) for item in data if not String.is_empty(item, spaces_are_empty)) if item not in ((), {}, set(), frozenset())
             )
         return data
 
@@ -173,7 +164,9 @@ class Data:
         def process_item(item: any) -> any:
             if isinstance(item, dict):
                 return {
-                    k: v for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
+                    k: v
+                    for k, v in ((process_item(key), process_item(value)) for key, value in item.items())
+                    if k is not None
                 }
             if isinstance(item, (list, tuple, set, frozenset)):
                 processed = (v for v in map(process_item, item) if v is not None)
@@ -203,9 +196,7 @@ class Data:
         The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for
         the function `Data.get_path_id()`. See its documentation for more details."""
 
-        def process_ignore_paths(
-            ignore_paths: str | list[str],
-        ) -> list[list[str]]:
+        def process_ignore_paths(ignore_paths: str | list[str], ) -> list[list[str]]:
             if isinstance(ignore_paths, str):
                 ignore_paths = [ignore_paths]
             return [path.split(path_sep) for path in ignore_paths if path]
@@ -216,7 +207,7 @@ class Data:
             ignore_paths: list[list[str]],
             current_path: list[str] = [],
         ) -> bool:
-            if any(current_path == path[: len(current_path)] for path in ignore_paths):
+            if any(current_path == path[:len(current_path)] for path in ignore_paths):
                 return True
             if type(d1) is not type(d2):
                 return False
@@ -393,11 +384,9 @@ class Data:
 
         if isinstance(update_values, str):
             update_values = [update_values]
-        valid_entries = [
-            (parts[0].strip(), parts[1])
+        valid_entries = [(parts[0].strip(), parts[1])
             for update_value in update_values
-            if len(parts := update_value.split(str(sep).strip())) == 2
-        ]
+            if len(parts := update_value.split(str(sep).strip())) == 2]
         if not valid_entries:
             raise ValueError(f"No valid update_values found: {update_values}")
         for path_id, new_val in valid_entries:
@@ -437,20 +426,16 @@ class Data:
                 "type": (f"[i|{DEFAULT.color['lightblue']}]", "[_i|_c]"),
                 "punctuation": (f"[{DEFAULT.color['darkgray']}]", "[_c]"),
             }
-            _syntax_hl.update(
-                {
-                    k: [f"[{v}]", "[_]"] if k in _syntax_hl and v not in ("", None) else ["", ""]
-                    for k, v in _syntax_highlighting.items()
-                }
-            )
+            _syntax_hl.update({
+                k: [f"[{v}]", "[_]"] if k in _syntax_hl and v not in ("", None) else ["", ""]
+                for k, v in _syntax_highlighting.items()
+            })
             sep = f"{_syntax_hl['punctuation'][0]}{sep}{_syntax_hl['punctuation'][1]}"
         punct_map = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
         punct = {
-            k: (
-                (f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if syntax_hl else v[1])
-                if isinstance(v, (list, tuple))
-                else (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if syntax_hl else v)
-            )
+            k: ((f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if syntax_hl else v[1])
+            if isinstance(v, (list, tuple)) else
+            (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if syntax_hl else v))
             for k, v in punct_map.items()
         }
 
@@ -464,14 +449,10 @@ class Data:
             elif isinstance(value, (bytes, bytearray)):
                 obj_dict = Data.serialize_bytes(value)
                 return (
-                    format_dict(obj_dict, current_indent + indent)
-                    if as_json
-                    else (
-                        f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
-                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
-                        if syntax_hl
-                        else (k := next(iter(obj_dict)))
-                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
+                    format_dict(obj_dict, current_indent + indent) if as_json else (
+                    f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
+                    + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if syntax_hl else
+                    (k := next(iter(obj_dict))) + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
                     )
                 )
             elif isinstance(value, bool):
@@ -482,32 +463,23 @@ class Data:
                 return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if syntax_hl else val
             elif isinstance(value, complex):
                 return (
-                    format_value(str(value).strip("()"))
-                    if as_json
-                    else (
-                        f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
-                        + format_sequence((value.real, value.imag), current_indent + indent)
-                        if syntax_hl
-                        else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
+                    format_value(str(value).strip("()")) if as_json else (
+                    f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
+                    + format_sequence((value.real, value.imag), current_indent + indent)
+                    if syntax_hl else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
                     )
                 )
             elif value is None:
                 val = "null" if as_json else "None"
                 return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
             else:
-                return (
-                    (
-                        punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1] + punct['"']
-                        if syntax_hl
-                        else punct['"'] + String.escape(str(value), '"') + punct['"']
-                    )
-                    if as_json
-                    else (
-                        punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1] + punct["'"]
-                        if syntax_hl
-                        else punct["'"] + String.escape(str(value), "'") + punct["'"]
-                    )
-                )
+                return ((
+                    punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1]
+                    + punct['"'] if syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
+                ) if as_json else (
+                    punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1]
+                    + punct["'"] if syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
+                ))
 
         def should_expand(seq: list | tuple | dict) -> bool:
             if compactness == 0:
@@ -517,9 +489,8 @@ class Data:
             complex_types = (list, tuple, dict, set, frozenset) + ((bytes, bytearray) if as_json else ())
             complex_items = sum(1 for item in seq if isinstance(item, complex_types))
             return (
-                complex_items > 1
-                or (complex_items == 1 and len(seq) > 1)
-                or Data.chars_count(seq) + (len(seq) * len(sep)) > max_width
+                complex_items > 1 or (complex_items == 1 and len(seq) > 1) or Data.chars_count(seq) +
+                (len(seq) * len(sep)) > max_width
             )
 
         def format_dict(d: dict, current_indent: int) -> str:
@@ -546,15 +517,15 @@ class Data:
                 seq = list(seq)
             if not seq or compactness == 2:
                 return (
-                    punct["["] + sep.join(format_value(item, current_indent) for item in seq) + punct["]"]
-                    if isinstance(seq, list)
-                    else punct["("] + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
+                    punct["["] + sep.join(format_value(item, current_indent)
+                    for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
+                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             if not should_expand(seq):
                 return (
-                    punct["["] + sep.join(format_value(item, current_indent) for item in seq) + punct["]"]
-                    if isinstance(seq, list)
-                    else punct["("] + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
+                    punct["["] + sep.join(format_value(item, current_indent)
+                    for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
+                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             items = [format_value(item, current_indent) for item in seq]
             formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
@@ -612,4 +583,4 @@ class Data:
             raise ValueError(f"Invalid path ID: {path_id}")
         id_part_len = int(path_id.split(">")[0])
         path_ids_str = path_id.split(">")[1]
-        return [int(path_ids_str[i : i + id_part_len]) for i in range(0, len(path_ids_str), id_part_len)]
+        return [int(path_ids_str[i:i + id_part_len]) for i in range(0, len(path_ids_str), id_part_len)]
