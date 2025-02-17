@@ -21,17 +21,76 @@ pip install --upgrade xulbux
 
 ## Usage
 
-Import the full library under the alias `xx`, so it's classes, types and functions are accessible with `xx.Class.method()`, `xx.type()` and `xx.function()`:
+Import the full library under the alias `xx`, so it's constants, classes, types and functions are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()` and `xx.function()`:
 ```python
 import xulbux as xx
 ```
-So you don't have to write `xx` in front of the library's types, you can import them directly:
+So you don't have to write the alias `xx` in front of everything, you can import the library's contents directly:
 ```python
+# CONSTANTS
+from xulbux import COLOR, CHARS, ANSI
+# Classes
+from xulbux import Code, Color, Console, ...
+# types
 from xulbux import rgba, hsla, hexa
 ```
 
 
-# Modules
+## Preview
+
+This is what it could look like using this module for a small, simple script:
+```python
+from xulbux import COLOR                 # CONSTANTS
+from xulbux import FormatCodes, Console  # Classes
+from xulbux import hexa                  # types
+
+def main() -> None:
+    # Let the user enter a HEXA color in any HEXA format.
+    input_clr = FormatCodes.input(
+      "\n[b](Enter a HEXA color in any format) [dim](>) "
+    )
+    # Announce indexing the input color.
+    Console.log(
+      "INDEX",
+      "Indexing the input HEXA color...",
+      start="\n",
+      title_bg_color=COLOR.blue
+    )
+    try:
+        # Try to convert the input color into a hexa() color.
+        hexa_clr = hexa(input_clr)
+    except ValueError:
+        # Announce the error and exit the program.
+        Console.fail(
+          "The input HEXA color is invalid.",
+          end="\n\n",
+          exit=True
+        )
+    # Announce starting the conversion.
+    Console.log(
+      "CONVERT",
+      "Converting the HEXA color into different types...",
+      title_bg_color=COLOR.tangerine
+    )
+    # Convert the HEXA color into the two other color types.
+    rgba_clr = hexa_clr.to_rgba()
+    hsla_clr = hexa_clr.to_hsla()
+    # Announce the successful conversion.
+    Console.done(
+      "Successfully converted color into different types.",
+      end="\n\n"
+    )
+    # Pretty print the color in different types.
+    FormatCodes.print(f"[b](HEXA:) [i|white]({hexa_clr})")
+    FormatCodes.print(f"[b](RGBA:) [i|white]({rgba_clr})")
+    FormatCodes.print(f"[b](HSLA:) [i|white]({hsla_clr})\n")
+
+if __name__ == "__main__":
+    main()
+```
+
+
+## Modules
 
 | | |
 | :--------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------- |
