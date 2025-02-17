@@ -36,60 +36,6 @@ from xulbux import rgba, hsla, hexa
 ```
 
 
-## Preview
-
-This is what it could look like using this module for a small, simple script:
-```python
-from xulbux import COLOR                 # CONSTANTS
-from xulbux import FormatCodes, Console  # Classes
-from xulbux import hexa                  # types
-
-def main() -> None:
-    # Let the user enter a HEXA color in any HEXA format.
-    input_clr = FormatCodes.input(
-      "\n[b](Enter a HEXA color in any format) [dim](>) "
-    )
-    # Announce indexing the input color.
-    Console.log(
-      "INDEX",
-      "Indexing the input HEXA color...",
-      start="\n",
-      title_bg_color=COLOR.blue
-    )
-    try:
-        # Try to convert the input color into a hexa() color.
-        hexa_clr = hexa(input_clr)
-    except ValueError:
-        # Announce the error and exit the program.
-        Console.fail(
-          "The input HEXA color is invalid.",
-          end="\n\n",
-          exit=True
-        )
-    # Announce starting the conversion.
-    Console.log(
-      "CONVERT",
-      "Converting the HEXA color into different types...",
-      title_bg_color=COLOR.tangerine
-    )
-    # Convert the HEXA color into the two other color types.
-    rgba_clr = hexa_clr.to_rgba()
-    hsla_clr = hexa_clr.to_hsla()
-    # Announce the successful conversion.
-    Console.done(
-      "Successfully converted color into different types.",
-      end="\n\n"
-    )
-    # Pretty print the color in different types.
-    FormatCodes.print(f"[b](HEXA:) [i|white]({hexa_clr})")
-    FormatCodes.print(f"[b](RGBA:) [i|white]({rgba_clr})")
-    FormatCodes.print(f"[b](HSLA:) [i|white]({hsla_clr})\n")
-
-if __name__ == "__main__":
-    main()
-```
-
-
 ## Modules
 
 | | |
@@ -106,6 +52,69 @@ if __name__ == "__main__":
 | <h3>`xx_regex`</h3>                                                                                  | generated regex pattern-templates (*match bracket- and quote pairs, match colors, ...*)            |
 | <h3>[`xx_string`](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_string)</h3>             | helpful actions when working with strings. (*normalize, escape, decompose, ...*)                   |
 | <h3>`xx_system`</h3>                                                                                 | advanced system actions (*restart with message, check installed Python libs, ...*)                 |
+
+
+## Example Usage
+
+This is what it could look like using this module for a simple color converter:
+```python
+from xulbux import COLOR                 # CONSTANTS
+from xulbux import FormatCodes, Console  # Classes
+from xulbux import hexa                  # types
+
+
+def main() -> None:
+    # Let the user enter a HEXA color in any HEXA format.
+    input_clr = FormatCodes.input(
+      "\n[b](Enter a HEXA color in any format) [dim](>) "
+    )
+
+    # Announce indexing the input color.
+    Console.log(
+      "INDEX",
+      "Indexing the input HEXA color...",
+      start="\n",
+      title_bg_color=COLOR.blue,
+    )
+
+    try:
+        # Try to convert the input color into a hexa() color.
+        hexa_color = hexa(input_clr)
+
+    except ValueError:
+        # Announce the error and exit the program.
+        Console.fail(
+          "The input HEXA color is invalid.",
+          end="\n\n",
+          exit=True,
+        )
+
+    # Announce starting the conversion.
+    Console.log(
+      "CONVERT",
+      "Converting the HEXA color into different types...",
+      title_bg_color=COLOR.tangerine,
+    )
+
+    # Convert the HEXA color into the two other color types.
+    rgba_color = hexa_color.to_rgba()
+    hsla_color = hexa_color.to_hsla()
+
+    # Announce the successful conversion.
+    Console.done(
+      "Successfully converted color into different types.",
+      end="\n\n",
+    )
+
+    # Pretty print the color in different types.
+    FormatCodes.print(f"[b](HEXA:) [i|white]({hexa_color})")
+    FormatCodes.print(f"[b](RGBA:) [i|white]({rgba_color})")
+    FormatCodes.print(f"[b](HSLA:) [i|white]({hsla_color})\n")
+
+
+if __name__ == "__main__":
+    main()
+```
 
 
 <br>
