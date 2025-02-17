@@ -25,6 +25,9 @@
 * added two new methods `Data.serialize_bytes()` and `Data.deserialize_bytes()`
 * made the method `String.to_type()` be able to also interpret and convert large complex structures
 * added the new parameter <code>strip_spaces: *bool* = True</code> to the method `regex.brackets()` which makes it possible to not ignore spaces around the content inside the brackets
+* made all classes in `_consts_` to `@dataclass` classes
+* adjusted the `Console.log_box()` method, so the box background can't be reset to nothing anymore
+* renamed the `DEFAULT` class from the `_consts_` to `COLOR`, whose colors are now directly accessible as variables (*e.g.* `COLOR.red`) and not through dictionary keys
 
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already

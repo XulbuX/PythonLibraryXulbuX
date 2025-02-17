@@ -1,5 +1,5 @@
 from . import __version__
-from ._consts_ import DEFAULT
+from ._consts_ import COLOR
 from .xx_format_codes import FormatCodes
 from .xx_console import Console
 
@@ -7,20 +7,20 @@ from .xx_console import Console
 def help_command():
     """Show some info about the library, with a brief explanation of how to use it."""
     color = {
-        "lib": DEFAULT.color["ice"],
-        "import": DEFAULT.color["red"],
-        "class": DEFAULT.color["lavender"],
-        "types": DEFAULT.color["lightblue"],
-        "punctuators": DEFAULT.color["darkgray"],
+        "lib": COLOR.ice,
+        "import": COLOR.red,
+        "class": COLOR.lavender,
+        "types": COLOR.lightblue,
+        "punctuators": COLOR.darkgray,
     }
     FormatCodes.print(
         rf"""  [_|b|#7075FF]               __  __
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
   [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , <
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{DEFAULT.color['gray']}|#000] v[b]{__version__} [*]
+  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{COLOR.gray}|#000] v[b]{__version__} [*]
 
-  [i|{DEFAULT.color['coral']}]A TON OF COOL FUNCTIONS, YOU NEED![*]
+  [i|{COLOR.coral}]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
   [b|#75A2FF]Usage:[*]
     [{color['punctuators']}]# GENERAL LIBRARY[*]
@@ -48,6 +48,6 @@ def help_command():
   [_]
   [dim](Press any key to exit...)
   """,
-        default_color=DEFAULT.text_color,
+        default_color=COLOR.text
     )
     Console.pause_exit(pause=True)

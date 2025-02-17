@@ -1,3 +1,4 @@
+from typing import Optional
 import tempfile as _tempfile
 import difflib as _difflib
 import shutil as _shutil
@@ -32,7 +33,7 @@ class Path:
         if path in (None, ""):
             return path
 
-        def get_closest_match(dir: str, part: str) -> str | None:
+        def get_closest_match(dir: str, part: str) -> Optional[str]:
             try:
                 files_and_dirs = _os.listdir(dir)
                 matches = _difflib.get_close_matches(part, files_and_dirs, n=1, cutoff=0.6)
@@ -40,7 +41,7 @@ class Path:
             except Exception:
                 return None
 
-        def find_path(start: str, parts: list[str]) -> str | None:
+        def find_path(start: str, parts: list[str]) -> Optional[str]:
             current = start
             for part in parts:
                 if _os.path.isfile(current):

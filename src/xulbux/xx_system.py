@@ -1,3 +1,4 @@
+from typing import Optional
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
@@ -25,12 +26,7 @@ class System:
         return False
 
     @staticmethod
-    def restart(
-        prompt: object = None,
-        wait: int = 0,
-        continue_program: bool = False,
-        force: bool = False,
-    ) -> None:
+    def restart(prompt: object = None, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
         """Starts a system restart:
         - `prompt` is the message to be displayed in the systems restart notification.
         - `wait` is the time to wait until restarting in seconds.
@@ -70,11 +66,7 @@ class System:
             raise NotImplementedError(f"Restart not implemented for `{system}`")
 
     @staticmethod
-    def check_libs(
-        lib_names: list[str],
-        install_missing: bool = False,
-        confirm_install: bool = True,
-    ) -> None | list[str]:
+    def check_libs(lib_names: list[str], install_missing: bool = False, confirm_install: bool = True) -> Optional[list[str]]:
         """Checks if the given list of libraries are installed. If not:
         - If `install_missing` is `False` the missing libraries will be returned as a list.
         - If `install_missing` is `True` the missing libraries will be installed.
@@ -102,7 +94,7 @@ class System:
             return missing
 
     @staticmethod
-    def elevate(win_title: str | None = None, args: list | None = None) -> bool:
+    def elevate(win_title: Optional[str] = None, args: Optional[list] = None) -> bool:
         """Attempts to start a new process with elevated privileges.\n
         ---------------------------------------------------------------------------------
         The param `win_title` is window the title of the elevated process.

@@ -1,76 +1,86 @@
-class DEFAULT:
-
-    text_color: str = "#95B5FF"
-    color: dict[str, str] = {
-        "white": "#F1F2FF",
-        "lightgray": "#B6B7C0",
-        "gray": "#7B7C8D",
-        "darkgray": "#67686C",
-        "black": "#202125",
-        "red": "#FF606A",
-        "coral": "#FF7069",
-        "orange": "#FF876A",
-        "tangerine": "#FF9962",
-        "gold": "#FFAF60",
-        "yellow": "#FFD260",
-        "green": "#7EE787",
-        "teal": "#50EAAF",
-        "cyan": "#3EDEE6",
-        "ice": "#77DBEF",
-        "lightblue": "#60AAFF",
-        "blue": "#8085FF",
-        "lavender": "#9B7DFF",
-        "purple": "#AD68FF",
-        "magenta": "#C860FF",
-        "pink": "#F162EF",
-        "rose": "#FF609F",
-    }
+from dataclasses import dataclass
+from typing import TypeAlias
 
 
+FormattableString: TypeAlias = str
+
+
+@dataclass
+class COLOR:
+
+    text = "#A5D6FF"
+    white = "#F1F2FF"
+    lightgray = "#B6B7C0"
+    gray = "#7B7C8D"
+    darkgray = "#67686C"
+    black = "#202125"
+    red = "#FF606A"
+    coral = "#FF7069"
+    orange = "#FF876A"
+    tangerine = "#FF9962"
+    gold = "#FFAF60"
+    yellow = "#FFD260"
+    green = "#7EE787"
+    teal = "#50EAAF"
+    cyan = "#3EDEE6"
+    ice = "#77DBEF"
+    lightblue = "#60AAFF"
+    blue = "#8085FF"
+    lavender = "#9B7DFF"
+    purple = "#AD68FF"
+    magenta = "#C860FF"
+    pink = "#F162EF"
+    rose = "#FF609F"
+
+
+class AllTextCharacters:
+    pass
+
+
+@dataclass
 class CHARS:
 
     # CODE TO SIGNAL, ALL CHARACTERS ARE ALLOWED
-    all = "<*allowed>"
+    all = AllTextCharacters
 
     # DIGIT SETS
-    digits = "0123456789"
-    float_digits = digits + "."
-    hex_digits = digits + "#abcdefABCDEF"
+    digits: str = "0123456789"
+    float_digits: str = digits + "."
+    hex_digits: str = digits + "#abcdefABCDEF"
 
     # LETTER CATEGORIES
-    lowercase = "abcdefghijklmnopqrstuvwxyz"
-    lowercase_extended = lowercase + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
-    uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    uppercase_extended = uppercase + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
+    lowercase: str = "abcdefghijklmnopqrstuvwxyz"
+    lowercase_extended: str = lowercase + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
+    uppercase: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    uppercase_extended: str = uppercase + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
 
     # COMBINED LETTER SETS
-    letters = lowercase + uppercase
-    letters_extended = lowercase_extended + uppercase_extended
+    letters: str = lowercase + uppercase
+    letters_extended: str = lowercase_extended + uppercase_extended
 
     # ASCII sets
-    special_ascii = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-    special_ascii_extended = special_ascii + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
-    standard_ascii = special_ascii + digits + letters
-    full_ascii = special_ascii_extended + digits + letters_extended
+    special_ascii: str = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    special_ascii_extended: str = special_ascii + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    standard_ascii: str = special_ascii + digits + letters
+    full_ascii: str = special_ascii_extended + digits + letters_extended
 
 
 class ANSI:
 
-    global CHAR, START, SEP, END
-
-    escaped_char = "\\x1b"
+    escaped_char: str = "\\x1b"
     CHAR = char = "\x1b"
     START = start = "["
     SEP = sep = ";"
     END = end = "m"
-    default_color_modifiers = {"lighten": "+l", "darken": "-d"}
+    default_color_modifiers: dict[str, str] = {"lighten": "+l", "darken": "-d"}
 
-    def seq(parts: int = 1) -> str:
+    @classmethod
+    def seq(cls, parts: int = 1) -> str:
         """Generate an ANSI sequence with `parts` amount of placeholders."""
-        return CHAR + START + SEP.join(["{}" for _ in range(parts)]) + END
+        return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(parts)]) + cls.END
 
-    seq_color: str = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    seq_bg_color: str = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    seq_color: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    seq_bg_color: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
 
     color_map: list[str] = [
         ########### DEFAULT CONSOLE COLOR NAMES ############
@@ -84,7 +94,7 @@ class ANSI:
         "white",
     ]
 
-    codes_map: dict[str | tuple[str], int] = {
+    codes_map: dict[str | tuple[str, ...], int] = {
         ################# SPECIFIC RESETS ##################
         "_": 0,
         ("_bold", "_b"): 22,

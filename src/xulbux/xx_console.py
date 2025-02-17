@@ -21,12 +21,13 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.
 """
 
-from ._consts_ import DEFAULT, CHARS
-from .xx_format_codes import FormatCodes
+from ._consts_ import COLOR, CHARS
+from .xx_format_codes import FormatCodes, _COMPILED
 from .xx_string import String
 from .xx_color import Color, rgba, hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
+from typing import Optional
 import prompt_toolkit as _prompt_toolkit
 import pyperclip as _pyperclip
 import keyboard as _keyboard
@@ -133,8 +134,8 @@ class Console:
         active: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["yellow"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.yellow,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -149,8 +150,8 @@ class Console:
         prompt: object = "Program running.",
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["blue"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.blue,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -164,8 +165,8 @@ class Console:
         prompt: object = "Program finished.",
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["teal"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.teal,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -179,8 +180,8 @@ class Console:
         prompt: object = "Important message.",
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["orange"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.orange,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -194,8 +195,8 @@ class Console:
         prompt: object = "Program error.",
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["red"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.red,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = True,
         reset_ansi=True,
@@ -210,8 +211,8 @@ class Console:
         prompt: object = "Program ended.",
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = DEFAULT.color["magenta"],
-        default_color: hexa | rgba = DEFAULT.text_color,
+        title_bg_color: hexa | rgba = COLOR.magenta,
+        default_color: hexa | rgba = COLOR.text,
         pause: bool = False,
         exit: bool = True,
         reset_ansi=True,
@@ -242,7 +243,7 @@ class Console:
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
-        lines = [line for val in values for line in val.splitlines()]
+        lines = [line.strip() for val in values for line in val.splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         pad_w_full = (Console.w() - (max_line_len + (2 * w_padding))) if w_full else 0
@@ -252,7 +253,9 @@ class Console:
         ]
         pady = " " * (Console.w() if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
-            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n" + "\n".join(lines) + f"\n[bg:{box_bg_color}]{pady}[_]",
+            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n"
+            + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
+            + f"\n[bg:{box_bg_color}]{pady}[_bg]",
             default_color=default_color,
             sep="\n",
             end=end,
@@ -263,7 +266,7 @@ class Console:
         prompt: object = "Do you want to continue?",
         start="",
         end="\n",
-        default_color: hexa | rgba = DEFAULT.color["cyan"],
+        default_color: hexa | rgba = COLOR.cyan,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
@@ -285,13 +288,13 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: hexa | rgba = DEFAULT.color["cyan"],
+        default_color: hexa | rgba = COLOR.cyan,
         allowed_chars: str = CHARS.all,
         min_len: int = None,
         max_len: int = None,
         mask_char: str = None,
         reset_ansi: bool = True,
-    ) -> str | None:
+    ) -> Optional[str]:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
         - what text characters the user is allowed to type and
         - the minimum and/or maximum length of the users input
@@ -391,7 +394,7 @@ class Console:
         prompt: object = "Password: ",
         start="",
         end="\n",
-        default_color: hexa | rgba = DEFAULT.color["cyan"],
+        default_color: hexa | rgba = COLOR.cyan,
         allowed_chars: str = CHARS.standard_ascii,
         min_len: int = None,
         max_len: int = None,
@@ -406,7 +409,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: hexa | rgba = DEFAULT.color["cyan"],
+        default_color: hexa | rgba = COLOR.cyan,
         show_keybindings=True,
         input_prefix=" ⤷ ",
         reset_ansi=True,

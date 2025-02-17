@@ -33,6 +33,7 @@ The `Color` class, which contains all sorts of different color-related methods:
 
 from .xx_regex import Regex
 
+from typing import Optional
 import re as _re
 
 
@@ -777,7 +778,7 @@ class Color:
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
-    def str_to_rgba(string: str, only_first: bool = False) -> rgba | list[rgba] | None:
+    def str_to_rgba(string: str, only_first: bool = False) -> Optional[rgba | list[rgba]]:
         """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.\n
         --------------------------------------------------------------------------------------------------
         If `only_first` is `True` only the first found color will be returned (not as a list)."""

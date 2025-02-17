@@ -155,28 +155,29 @@ from .xx_string import String
 from .xx_regex import Regex
 from .xx_color import Color, rgba, hexa
 
+from typing import Optional, Pattern
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import re as _re
 
 
-_CONSOLE_ANSI_CONFIGURED = False
+_CONSOLE_ANSI_CONFIGURED: bool = False
 
-_PREFIX = {
+_PREFIX: dict[str, set[str]] = {
     "BG": {"background", "bg"},
     "BR": {"bright", "br"},
 }
-_PREFIX_RX = {
+_PREFIX_RX: dict[str, str] = {
     "BG": rf"(?:{'|'.join(_PREFIX['BG'])})\s*:",
     "BR": rf"(?:{'|'.join(_PREFIX['BR'])})\s*:",
 }
-_COMPILED = {  # PRECOMPILE REGULAR EXPRESSIONS
+_COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
     "ansi_seq": _re.compile(ANSI.char + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
     "formatting": _rx.compile(
-        Regex.brackets("[", "]", is_group=True)
+        Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
         + r"(?:\s*([/\\]?)\s*"
         + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
         + r")?"
@@ -353,7 +354,7 @@ class FormatCodes:
         format_key: str = None,
         brightness_steps: int = None,
         _modifiers: tuple[str, str] = (ANSI.default_color_modifiers["lighten"], ANSI.default_color_modifiers["darken"]),
-    ) -> str | None:
+    ) -> Optional[str]:
         """Get the `default_color` and lighter/darker versions of it as ANSI code."""
         if not brightness_steps or (format_key and _COMPILED["bg?_default"].search(format_key)):
             return (ANSI.seq_bg_color if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
