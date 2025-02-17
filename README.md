@@ -64,6 +64,7 @@ from xulbux import hexa                  # types
 
 
 def main() -> None:
+
     # Let the user enter a HEXA color in any HEXA format.
     input_clr = FormatCodes.input(
       "\n[b](Enter a HEXA color in any format) [dim](>) "
