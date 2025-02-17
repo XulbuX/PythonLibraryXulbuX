@@ -1,21 +1,5 @@
 """
-Functions for logging and other small actions within the console:
-- `Console.get_args()`
-- `Console.usr`
-- `Console.is_admin()`
-- `Console.pause_exit()`
-- `Console.cls()`
-- `Console.log()`
-- `Console.debug()`
-- `Console.info()`
-- `Console.done()`
-- `Console.warn()`
-- `Console.fail()`
-- `Console.exit()`
-- `Console.log_box()`
-- `Console.confirm()`
-- `Console.restricted_input()`
-- `Console.pwd_input()`\n
+Functions for logging and other small actions within the console.\n
 ----------------------------------------------------------------------------------------------------------
 You can also use special formatting codes directly inside the log message to change their appearance.
 For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.

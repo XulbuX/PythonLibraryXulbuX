@@ -1,9 +1,5 @@
 """
-Functions for modifying and checking the systems environment-variables:
-- `EnvPath.paths()`
-- `EnvPath.has_path()`
-- `EnvPath.add_path()`
-- `EnvPath.remove_path()`
+Functions for modifying and checking the systems environment-variables (especially the PATH object).
 """
 
 from .xx_path import Path

@@ -1,12 +1,5 @@
 """
-Really long regex code presets:
-`quotes` match everything inside quotes
-`brackets` match everything inside brackets
-`outside_strings` match the pattern but not inside strings
-`all_except` match everything except a certain pattern
-`func_call` match a function call
-`rgba_str` match an RGBA color
-`hsla_str` match a HSLA color
+Very useful and complicated (generated) regex patterns.
 """
 
 import regex as _rx
