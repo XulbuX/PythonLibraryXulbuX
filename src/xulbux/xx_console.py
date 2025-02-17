@@ -1,7 +1,7 @@
 """
 Functions for logging and other small actions within the console:
 - `Console.get_args()`
-- `Console.user()`
+- `Console.usr`
 - `Console.is_admin()`
 - `Console.pause_exit()`
 - `Console.cls()`
@@ -38,7 +38,32 @@ import sys as _sys
 import os as _os
 
 
+# YAPF: disable
+class _ConsoleWidth:
+    def __get__(self, obj, owner=None):
+        return _os.get_terminal_size().columns
+
+class _ConsoleHeight:
+    def __get__(self, obj, owner=None):
+        return _os.get_terminal_size().lines
+
+class _ConsoleSize:
+    def __get__(self, obj, owner=None):
+        size = _os.get_terminal_size()
+        return (size.columns, size.lines)
+
+class _ConsoleUser:
+    def __get__(self, obj, owner=None):
+        return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+# YAPF: enable
+
+
 class Console:
+
+    w: int = _ConsoleWidth()
+    h: int = _ConsoleHeight()
+    wh: tuple[int, int] = _ConsoleSize()
+    usr: str = _ConsoleUser()
 
     @staticmethod
     def get_args(find_args: dict) -> dict[str, dict[str, any]]:
@@ -56,18 +81,6 @@ class Console:
                     break
             results[arg_key] = {"exists": exists, "value": value}
         return results
-
-    def w() -> int:
-        return getattr(_shutil.get_terminal_size(), "columns", 80)
-
-    def h() -> int:
-        return getattr(_shutil.get_terminal_size(), "lines", 24)
-
-    def wh() -> tuple[int, int]:
-        return Console.w(), Console.h()
-
-    def user() -> str:
-        return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
     @staticmethod
     def pause_exit(
@@ -87,6 +100,7 @@ class Console:
         if exit:
             _sys.exit(exit_code)
 
+    @staticmethod
     def cls() -> None:
         """Will clear the console in addition to completely resetting the ANSI formats."""
         if _shutil.which("cls"):
@@ -97,16 +111,19 @@ class Console:
 
     @staticmethod
     def log(
-        title: str,
+        title: Optional[str] = None,
         prompt: object = "",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = None,
         default_color: hexa | rgba = None,
+        _console_tabsize: int = 8,
     ) -> None:
         """Will print a formatted log message:
         - `title` -⠀the title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, etc.)
         - `prompt` -⠀the log message
+        - `format_linebreaks` -⠀whether to format (indent after) the line breaks or not
         - `start` -⠀something to print before the log is printed
         - `end` -⠀something to print after the log is printed (e.g. `\\n`)
         - `title_bg_color` -⠀the background color of the `title`
@@ -114,16 +131,25 @@ class Console:
         -----------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
+        title = "" if title is None else title.strip().upper()
+        title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
-        if title:
+        if format_linebreaks:
+            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(prompt).splitlines())
+            prompt_lst = (item for lst in prompt_lst for item in (lst if isinstance(lst, list) else [lst]))
+            prompt = f"\n{' ' * title_len}\t".join(prompt_lst)
+        else:
+            prompt = str(prompt)
+        if title == "":
             FormatCodes.print(
-                f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title.upper()}: [_]\t{f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
+                f'{start}  {f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
                 default_color=default_color,
                 end=end,
             )
         else:
             FormatCodes.print(
-                f'{start}  {f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
+                f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title} [_]'
+                + f'\t{f"[{default_color}]" if default_color else ""}{prompt}[_]',
                 default_color=default_color,
                 end=end,
             )
@@ -132,6 +158,7 @@ class Console:
     def debug(
         prompt: object = "Point in program reached.",
         active: bool = True,
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.yellow,
@@ -140,14 +167,16 @@ class Console:
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `DEBUG` log message with the options to pause
-        at the message and exit the program after the message was printed."""
+        at the message and exit the program after the message was printed.
+        If `active` is false, no debug message will be printed."""
         if active:
-            Console.log("DEBUG", prompt, start, end, title_bg_color, default_color)
+            Console.log("DEBUG", prompt, format_linebreaks, start, end, title_bg_color, default_color)
             Console.pause_exit(pause, exit)
 
     @staticmethod
     def info(
         prompt: object = "Program running.",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.blue,
@@ -157,12 +186,13 @@ class Console:
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("INFO", prompt, start, end, title_bg_color, default_color)
+        Console.log("INFO", prompt, format_linebreaks, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
     def done(
         prompt: object = "Program finished.",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.teal,
@@ -172,12 +202,13 @@ class Console:
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("DONE", prompt, start, end, title_bg_color, default_color)
+        Console.log("DONE", prompt, format_linebreaks, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
     def warn(
         prompt: object = "Important message.",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.orange,
@@ -187,12 +218,13 @@ class Console:
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("WARN", prompt, start, end, title_bg_color, default_color)
+        Console.log("WARN", prompt, format_linebreaks, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
     def fail(
         prompt: object = "Program error.",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.red,
@@ -203,12 +235,13 @@ class Console:
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("FAIL", prompt, start, end, title_bg_color, default_color)
+        Console.log("FAIL", prompt, format_linebreaks, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
     def exit(
         prompt: object = "Program ended.",
+        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: hexa | rgba = COLOR.magenta,
@@ -219,7 +252,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("EXIT", prompt, start, end, title_bg_color, default_color)
+        Console.log("EXIT", prompt, format_linebreaks, start, end, title_bg_color, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -246,12 +279,12 @@ class Console:
         lines = [line.strip() for val in values for line in val.splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
-        pad_w_full = (Console.w() - (max_line_len + (2 * w_padding))) if w_full else 0
+        pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
         lines = [
             f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
             ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[_bg]" for line, unfmt in zip(lines, unfmt_lines)
         ]
-        pady = " " * (Console.w() if w_full else max_line_len + (2 * w_padding))
+        pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
             f"{start}[bg:{box_bg_color}]{pady}[_bg]\n"
             + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
@@ -311,10 +344,7 @@ class Console:
 
         def update_display(console_width: int) -> None:
             nonlocal select_all, last_line_count, last_console_width
-            lines = String.split_count(
-                str(prompt) + (mask_char * len(result) if mask_char else result),
-                console_width,
-            )
+            lines = String.split_count(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
             line_count = len(lines)
             if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
                 if last_console_width > console_width:
@@ -344,7 +374,7 @@ class Console:
                 result, select_all = "", False
             elif result and event.name == "backspace":
                 result = result[:-1]
-            update_display(Console.w())
+            update_display(Console.w)
 
         def handle_paste():
             nonlocal result, select_all
@@ -353,18 +383,18 @@ class Console:
             filtered_text = "".join(char for char in _pyperclip.paste() if allowed_chars == CHARS.all or char in allowed_chars)
             if max_len is None or len(result) + len(filtered_text) <= max_len:
                 result += filtered_text
-                update_display(Console.w())
+                update_display(Console.w)
 
         def handle_select_all():
             nonlocal select_all
             select_all = True
-            update_display(Console.w())
+            update_display(Console.w)
 
         def handle_character_input():
             nonlocal result
             if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_len is None or len(result) < max_len):
                 result += event.name
-                update_display(Console.w())
+                update_display(Console.w)
 
         while True:
             event = _keyboard.read_event()
@@ -387,7 +417,7 @@ class Console:
                     handle_character_input()
                 else:
                     select_all = False
-                    update_display(Console.w())
+                    update_display(Console.w)
 
     @staticmethod
     def pwd_input(

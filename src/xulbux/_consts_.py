@@ -7,6 +7,7 @@ FormattableString: TypeAlias = str
 
 @dataclass
 class COLOR:
+    """Color presets used in the XulbuX library."""
 
     text = "#A5D6FF"
     white = "#F1F2FF"
@@ -33,15 +34,16 @@ class COLOR:
     rose = "#FF609F"
 
 
-class AllTextCharacters:
+class _AllTextCharacters:
     pass
 
 
 @dataclass
 class CHARS:
+    """Strings with only certain text characters."""
 
     # CODE TO SIGNAL, ALL CHARACTERS ARE ALLOWED
-    all = AllTextCharacters
+    all = _AllTextCharacters
 
     # DIGIT SETS
     digits: str = "0123456789"
@@ -66,6 +68,7 @@ class CHARS:
 
 
 class ANSI:
+    """Constants and class-methods for use of ANSI escape codes."""
 
     escaped_char: str = "\\x1b"
     CHAR = char = "\x1b"

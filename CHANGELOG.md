@@ -14,7 +14,7 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.6.6`
+## 17.02.2025 `v1.6.6`
 * added a new method `Console.multiline_input()`
 * added two new params to the method `Console.log_box()`:<br>
   <code>w_padding: *int* = 2</code> the horizontal padding (*in chars*) to the box content<br>
@@ -28,6 +28,13 @@
 * made all classes in `_consts_` to `@dataclass` classes
 * adjusted the `Console.log_box()` method, so the box background can't be reset to nothing anymore
 * renamed the `DEFAULT` class from the `_consts_` to `COLOR`, whose colors are now directly accessible as variables (*e.g.* `COLOR.red`) and not through dictionary keys
+* changed the methods `Console.w()`, `Console.h()`, `Console.wh()` and `Console.user()` to modern class properties instead:<br>
+  `Console.w` current console columns (*in text characters*)<br>
+  `Console.h` current console lines<br>
+  `Console.wh` a tuple with the console size as (columns, lines)<br>
+  `Console.usr` the current username
+* added a new param to `Console.log()` (*and therefore also to every* `Console.log()` *preset*):<br>
+  <code>format_linebreaks: *bool* = True</code> indents the text after every linebreak to the level of the previous text, whe set to `True`
 
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already
