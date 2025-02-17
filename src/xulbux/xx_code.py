@@ -58,7 +58,7 @@ class Code:
         funcs = "|".join(funcs)
         js_pattern = _rx.compile(
             Regex.outside_strings(
-            r"""^(?:
+                r"""^(?:
                 (\$[\w_]+)\s*                      # JQUERY-STYLE VARIABLES
                 |(\$[\w_]+\s*\()                   # JQUERY-STYLE FUNCTION CALLS
                 |((""" + funcs + r")" + Regex.brackets("()") + r"""\s*) # PREDEFINED FUNCTION CALLS

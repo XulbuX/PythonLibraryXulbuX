@@ -91,9 +91,8 @@ class Json:
         from `comment_start` to `comment_end` is ignored."""
         if isinstance(update_values, str):
             update_values = [update_values]
-        valid_entries = [(parts[0].strip(), parts[1])
-            for update_value in update_values
-            if len(parts := update_value.split(str(sep[1]).strip())) == 2]
+        valid_entries = [(parts[0].strip(), parts[1]) for update_value in update_values
+                         if len(parts := update_value.split(str(sep[1]).strip())) == 2]
         value_paths, new_values = zip(*valid_entries) if valid_entries else ([], [])
         processed_data, data = Json.read(json_file, comment_start, comment_end, return_original=True)
         update = []

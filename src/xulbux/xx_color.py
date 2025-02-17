@@ -184,13 +184,7 @@ class rgba:
             if additive_alpha:
                 self.a = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
             else:
-                self.a = max(
-                    0,
-                    min(
-                    1,
-                    (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2)),
-                    ),
-                )
+                self.a = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
         else:
             self.a = None
         return rgba(self.r, self.g, self.b, None if none_alpha else self.a, _validate=False)
@@ -510,14 +504,14 @@ class hexa:
 
     def __iter__(self) -> iter:
         return iter((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}")
-            + (() if self.a is None else (f"{int(self.a * 255):02X}", )))
+                    + (() if self.a is None else (f"{int(self.a * 255):02X}", )))
 
     def __dict__(self) -> dict:
         return self.dict()
 
     def __getitem__(self, index: int) -> int:
         return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else
-            (f"{int(self.a * 255):02X}", )))[index]
+                                                                       (f"{int(self.a * 255):02X}", )))[index]
 
     def __repr__(self) -> str:
         return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"})'
@@ -539,10 +533,10 @@ class hexa:
         """Returns the color components as a dictionary with hex string values for keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
         return (
             dict(r=f"{self.r:02X}", g=f"{self.g:02X}", b=f"{self.b:02X}") if self.a is None else dict(
-            r=f"{self.r:02X}",
-            g=f"{self.g:02X}",
-            b=f"{self.b:02X}",
-            a=f"{int(self.a * 255):02X}",
+                r=f"{self.r:02X}",
+                g=f"{self.g:02X}",
+                b=f"{self.b:02X}",
+                a=f"{int(self.a * 255):02X}",
             )
         )
 
@@ -703,9 +697,9 @@ class Color:
                 return (is_valid, "0x") if get_prefix else is_valid
             elif isinstance(color, str):
                 color, prefix = ((color[1:], "#") if color.startswith("#") else
-                    (color[2:], "0x") if color.startswith("0x") else (color, None))
+                                 (color[2:], "0x") if color.startswith("0x") else (color, None))
                 return ((bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)),
-                    prefix) if get_prefix else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)))
+                         prefix) if get_prefix else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)))
         except Exception:
             return (False, None) if get_prefix else False
 
@@ -800,11 +794,11 @@ class Color:
                 return None
             return [
                 rgba(
-                int(m[0]),
-                int(m[1]),
-                int(m[2]),
-                ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
-                _validate=False,
+                    int(m[0]),
+                    int(m[1]),
+                    int(m[2]),
+                    ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
+                    _validate=False,
                 ) for m in matches
             ]
 
@@ -900,7 +894,7 @@ class Color:
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
         return ((hexa("", 255, 255, 255) if was_hexa else rgba(255, 255, 255, _validate=False)) if brightness < 128 else
-            ((0x000 if was_int else hexa("", 0, 0, 0)) if was_hexa else rgba(0, 0, 0, _validate=False)))
+                ((0x000 if was_int else hexa("", 0, 0, 0)) if was_hexa else rgba(0, 0, 0, _validate=False)))
 
     @staticmethod
     def adjust_lightness(color: rgba | hexa, lightness_change: float) -> rgba | hexa:

@@ -275,8 +275,8 @@ class Console:
         information about formatting codes, see the `xx_format_codes` module documentation."""
         confirmed = input(
             FormatCodes.to_ansi(
-            f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
-            default_color,
+                f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
+                default_color,
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
@@ -319,8 +319,8 @@ class Console:
             if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
                 if last_console_width > console_width:
                     line_count *= 2
-                for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else (line_count
-                    - 2 if line_count > last_line_count else line_count - 1)):
+                for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else (
+                        line_count - 2 if line_count > last_line_count else line_count - 1)):
                     _sys.stdout.write("\033[2K\r\033[A")
             prompt_len = len(str(prompt)) if prompt else 0
             prompt_str = lines[0][:prompt_len]

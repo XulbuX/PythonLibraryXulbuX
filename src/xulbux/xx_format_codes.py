@@ -303,7 +303,7 @@ class FormatCodes:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
                     r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)
-                                             ).startswith(f"{ANSI.char}{ANSI.start}")
+                                              ).startswith(f"{ANSI.char}{ANSI.start}")
                 ]
             else:
                 ansi_resets = []
@@ -312,8 +312,8 @@ class FormatCodes:
                 return match.group(0)
             return (
                 "".join(ansi_formats) + (
-                f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
-                if escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
+                    f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
+                    if escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
                 ) + ("" if escaped else "".join(ansi_resets))
             )
 
@@ -393,10 +393,9 @@ class FormatCodes:
         for map_key in ANSI.codes_map:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
                 return ANSI.seq().format(
-                    next(
-                    (v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)),
-                    None,
-                    )
+                    next((
+                        v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)
+                    ), None)
                 )
         rgb_match = _re.match(_COMPILED["rgb"], format_key)
         hex_match = _re.match(_COMPILED["hex"], format_key)
@@ -427,6 +426,6 @@ class FormatCodes:
         )
         return prefix_str + ":".join(
             part for part in k_parts if part not in {val
-            for values in _PREFIX.values()
-            for val in values}
+                                                     for values in _PREFIX.values()
+                                                     for val in values}
         )
