@@ -9,12 +9,12 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 ## Installation
 
 To install the library and all its dependencies, open a console and run the command:
-```prolog
+```console
 pip install xulbux
 ```
 
 To upgrade the library to the latest available version, run the following command in your console:
-```prolog
+```console
 pip install --upgrade xulbux
 ```
 
