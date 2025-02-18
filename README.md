@@ -1,9 +1,11 @@
 # **$\color{#8085FF}\Huge\textsf{XulbuX}$**
 
-**$\color{#8085FF}\textsf{XulbuX}$** is a library which includes a lot of really helpful classes, types and functions.
+**$\color{#8085FF}\textsf{XulbuX}$** is library that contains many useful classes, types, and functions,
+ranging from console logging and working with colors to file management and system operations.
+The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
 For precise information about the library, see the library's [Wiki page](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
-For the libraries latest changes, see the [change log](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
+For the libraries latest changes and updates, see the [change log](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
 
 
 ## Installation
