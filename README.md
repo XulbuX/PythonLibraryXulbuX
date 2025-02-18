@@ -65,12 +65,12 @@ from xulbux import hexa                  # types
 
 def main() -> None:
 
-    # Let the user enter a HEXA color in any HEXA format.
+    # LET THE USER ENTER A HEXA COLOR IN ANY HEXA FORMAT
     input_clr = FormatCodes.input(
       "\n[b](Enter a HEXA color in any format) [dim](>) "
     )
 
-    # Announce indexing the input color.
+    # ANNOUNCE INDEXING THE INPUT COLOR
     Console.log(
       "INDEX",
       "Indexing the input HEXA color...",
@@ -79,35 +79,35 @@ def main() -> None:
     )
 
     try:
-        # Try to convert the input color into a hexa() color.
+        # TRY TO CONVERT THE INPUT COLOR INTO A hexa() COLOR
         hexa_color = hexa(input_clr)
 
     except ValueError:
-        # Announce the error and exit the program.
+        # ANNOUNCE THE ERROR AND EXIT THE PROGRAM
         Console.fail(
           "The input HEXA color is invalid.",
           end="\n\n",
           exit=True,
         )
 
-    # Announce starting the conversion.
+    # ANNOUNCE STARTING THE CONVERSION
     Console.log(
       "CONVERT",
       "Converting the HEXA color into different types...",
       title_bg_color=COLOR.tangerine,
     )
 
-    # Convert the HEXA color into the two other color types.
+    # CONVERT THE HEXA COLOR INTO THE TWO OTHER COLOR TYPES
     rgba_color = hexa_color.to_rgba()
     hsla_color = hexa_color.to_hsla()
 
-    # Announce the successful conversion.
+    # ANNOUNCE THE SUCCESSFUL CONVERSION
     Console.done(
       "Successfully converted color into different types.",
       end="\n\n",
     )
 
-    # Pretty print the color in different types.
+    # PRETTY PRINT THE COLOR IN DIFFERENT TYPES
     FormatCodes.print(f"[b](HEXA:) [i|white]({hexa_color})")
     FormatCodes.print(f"[b](RGBA:) [i|white]({rgba_color})")
     FormatCodes.print(f"[b](HSLA:) [i|white]({hsla_color})\n")
