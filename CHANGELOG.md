@@ -24,8 +24,8 @@
   the syntax highlighting colors and styles can be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {...}</code>
 * added two new methods `Data.serialize_bytes()` and `Data.deserialize_bytes()`
 * made the method `String.to_type()` be able to also interpret and convert large complex structures
-* added the new parameter <code>strip_spaces: *bool* = True</code> to the method `regex.brackets()` which makes it possible to not ignore spaces around the content inside the brackets
-* made all classes in `_consts_` to `@dataclass` classes
+* added the new parameter <code>strip_spaces: *bool* = True</code> to the method `Regex.brackets()` which makes it possible to not ignore spaces around the content inside the brackets
+* restructured the `_consts_` library constants to use `@dataclass` classes (*and simpler structured classes*) as much as possible
 * adjusted the `Console.log_box()` method, so the box background can't be reset to nothing anymore
 * renamed the `DEFAULT` class from the `_consts_` to `COLOR`, whose colors are now directly accessible as variables (*e.g.* `COLOR.red`) and not through dictionary keys
 * changed the methods `Console.w()`, `Console.h()`, `Console.wh()` and `Console.user()` to modern class properties instead:<br>

@@ -253,7 +253,7 @@ class Console:
         - `*values` -⠀the box content (each value is on a new line)
         - `start` -⠀something to print before the log box is printed
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
-        - `box_bg_color` -⠀the box's background color
+        - `box_bg_color` -⠀the background color of the box
         - `default_color` -⠀the default text color of the `*values`
         - `w_padding` -⠀the horizontal padding (in chars) to the box content
         - `w_full` -⠀whether to make the box be the full console width or not\n
@@ -299,6 +299,41 @@ class Console:
         if end:
             Console.log("", end, end="")
         return confirmed
+
+    @staticmethod
+    def multiline_input(
+        prompt: object = "",
+        start="",
+        end="\n",
+        default_color: hexa | rgba = COLOR.cyan,
+        show_keybindings=True,
+        input_prefix=" ⤷ ",
+        reset_ansi=True,
+    ) -> str:
+        """An input where users can input (and paste) text over multiple lines.\n
+        -----------------------------------------------------------------------------------
+        - `prompt` -⠀the input prompt
+        - `start` -⠀something to print before the input
+        - `end` -⠀something to print after the input (e.g. `\\n`)
+        - `default_color` -⠀the default text color of the `prompt`
+        - `show_keybindings` -⠀whether to show the special keybindings or not
+        - `input_prefix` -⠀the prefix of the input line
+        - `reset_ansi` -⠀whether to reset the ANSI codes after the input or not
+        -----------------------------------------------------------------------------------
+        The input prompt can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` module documentation."""
+        kb = KeyBindings()
+
+        @kb.add("c-d", eager=True)  # CTRL+D
+        def _(event):
+            event.app.exit(result=event.app.current_buffer.document.text)
+
+        FormatCodes.print(start + prompt, default_color=default_color)
+        if show_keybindings:
+            FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
+        input_string = _prompt_toolkit.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
+        FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
+        return input_string
 
     @staticmethod
     def restricted_input(
@@ -417,38 +452,3 @@ class Console:
         """Password input (preset for `Console.restricted_input()`)
         that always masks the entered characters with asterisks."""
         return Console.restricted_input(prompt, start, end, default_color, allowed_chars, min_len, max_len, "*", reset_ansi)
-
-    @staticmethod
-    def multiline_input(
-        prompt: object = "",
-        start="",
-        end="\n",
-        default_color: hexa | rgba = COLOR.cyan,
-        show_keybindings=True,
-        input_prefix=" ⤷ ",
-        reset_ansi=True,
-    ) -> str:
-        """An input where users can input (and paste) text over multiple lines.\n
-        -----------------------------------------------------------------------------------
-        - `prompt` -⠀the input prompt
-        - `start` -⠀something to print before the input
-        - `end` -⠀something to print after the input (e.g. `\\n`)
-        - `default_color` -⠀the default text color of the `prompt`
-        - `show_keybindings` -⠀whether to show the special keybindings or not
-        - `input_prefix` -⠀the prefix of the input line
-        - `reset_ansi` -⠀whether to reset the ANSI codes after the input or not
-        -----------------------------------------------------------------------------------
-        The input prompt can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` module documentation."""
-        kb = KeyBindings()
-
-        @kb.add("c-d", eager=True)  # CTRL+D
-        def _(event):
-            event.app.exit(result=event.app.current_buffer.document.text)
-
-        FormatCodes.print(start + prompt, default_color=default_color)
-        if show_keybindings:
-            FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
-        input_string = _prompt_toolkit.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
-        FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
-        return input_string

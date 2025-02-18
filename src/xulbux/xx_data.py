@@ -63,8 +63,7 @@ class Data:
                     v if not isinstance(v,
                                         (list, tuple, set, frozenset, dict)) else Data.remove_empty_items(v, spaces_are_empty)
                 )
-                for k, v in data.items()
-                if not String.is_empty(v, spaces_are_empty)
+                for k, v in data.items() if not String.is_empty(v, spaces_are_empty)
             }
         if isinstance(data, (list, tuple, set, frozenset)):
             return type(data)(
@@ -166,8 +165,7 @@ class Data:
             if isinstance(item, dict):
                 return {
                     k: v
-                    for k, v in ((process_item(key), process_item(value)) for key, value in item.items())
-                    if k is not None
+                    for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
                 }
             if isinstance(item, (list, tuple, set, frozenset)):
                 processed = (v for v in map(process_item, item) if v is not None)
@@ -379,8 +377,7 @@ class Data:
 
         if isinstance(update_values, str):
             update_values = [update_values]
-        valid_entries = [(parts[0].strip(), parts[1])
-                         for update_value in update_values
+        valid_entries = [(parts[0].strip(), parts[1]) for update_value in update_values
                          if len(parts := update_value.split(str(sep).strip())) == 2]
         if not valid_entries:
             raise ValueError(f"No valid update_values found: {update_values}")
@@ -493,14 +490,14 @@ class Data:
             if not d or compactness == 2:
                 return (
                     punct["{"]
-                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items())
-                    + punct["}"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
+                               for k, v in d.items()) + punct["}"]
                 )
             if not should_expand(d.values()):
                 return (
                     punct["{"]
-                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items())
-                    + punct["}"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
+                               for k, v in d.items()) + punct["}"]
                 )
             items = []
             for k, val in d.items():
@@ -559,11 +556,11 @@ class Data:
         part. The formatting can be changed by simply adding the key with the new
         value inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        - `str: COLOR.["blue"]`
-        - `number: COLOR.["magenta"]`
-        - `literal: COLOR.["cyan"]`
-        - `type: "i|" + COLOR.["lightblue"]`
-        - `punctuation: COLOR.["darkgray"]`\n
+        - `str: COLOR.blue`
+        - `number: COLOR.magenta`
+        - `literal: COLOR.cyan`
+        - `type: "i|" + COLOR.lightblue`
+        - `punctuation: COLOR.darkgray`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ------------------------------------------------------------------------------
         For more detailed information about formatting codes, see `xx_format_codes`
