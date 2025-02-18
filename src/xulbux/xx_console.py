@@ -39,6 +39,18 @@ class _ConsoleSize:
 class _ConsoleUser:
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
+class ArgResult:
+    def __init__(self, exists: bool, value: any):
+        self.exists = exists
+        self.value = value
+
+class Args:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            if not key.isidentifier():
+                raise TypeError(f"Argument alias '{key}' is invalid. It must be a valid Python variable name.")
+            setattr(self, key, ArgResult(**value))
 # YAPF: enable
 
 
@@ -50,7 +62,33 @@ class Console:
     usr: str = _ConsoleUser()
 
     @staticmethod
-    def get_args(find_args: dict) -> dict[str, dict[str, any]]:
+    def get_args(find_args: dict[str, list[str] | tuple[str, ...]]) -> Args:
+        """Will search for the specified arguments in the command line
+        arguments and return the results as a special `Args` object.\n
+        ----------------------------------------------------------------
+        The `find_args` dictionary should have the following structure:
+        ```python
+        find_args={
+            "arg1_alias": ["-a1", "--arg1", "--argument-1"],
+            "arg2_alias": ("-a2", "--arg2", "--argument-2"),
+            ...
+        }
+        ```
+        And if the script is called via the command line:\n
+        `python script.py -a1 "argument value" --arg2`\n
+        ...it would return the following `Args` object:
+        ```python
+        Args(
+            arg1_alias=ArgResult(exists=True, value="argument value"),
+            arg2_alias=ArgResult(exists=True, value=None),
+            ...
+        )
+        ```
+        ...which can be accessed like this:\n
+        - `Args.<arg_alias>.exists` is `True` if any of the specified
+            args were found and `False` if not
+        - `Args.<arg_alias>.value` the value from behind the found arg,
+            `None` if no value was found"""
         args = _sys.argv[1:]
         results = {}
         for arg_key, arg_group in find_args.items():
@@ -64,7 +102,7 @@ class Console:
                         value = String.to_type(args[arg_index + 1])
                     break
             results[arg_key] = {"exists": exists, "value": value}
-        return results
+        return Args(**results)
 
     @staticmethod
     def pause_exit(
