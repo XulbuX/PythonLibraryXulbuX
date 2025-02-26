@@ -11,12 +11,10 @@ class ProcessNotFoundError(Exception):
     pass
 
 class _Cwd:
-    """Returns the path to the current working directory."""
     def __get__(self, obj, owner=None):
         return _os.getcwd()
 
 class _ScriptDir:
-    """Returns the path to the directory of the current script."""
     def __get__(self, obj, owner=None):
         if getattr(_sys, "frozen", False):
             base_path = _os.path.dirname(_sys.executable)
@@ -36,7 +34,9 @@ class _ScriptDir:
 class Path:
 
     cwd: str = _Cwd()
+    """The path to the current working directory."""
     script_dir: str = _ScriptDir()
+    """The path to the directory of the current script."""
 
     @staticmethod
     def extend(path: str, search_in: str | list[str] = None, raise_error: bool = False, correct_path: bool = False) -> str:

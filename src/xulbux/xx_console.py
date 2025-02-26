@@ -5,6 +5,7 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.
 """
 
+from pyparsing import C
 from ._consts_ import COLOR, CHARS
 from .xx_format_codes import FormatCodes, _COMPILED
 from .xx_string import String
@@ -24,24 +25,19 @@ import os as _os
 
 # YAPF: disable
 class _ConsoleWidth:
-    """Returns the width of the console in characters."""
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().columns
 
 class _ConsoleHeight:
-    """Returns the height of the console in lines."""
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().lines
 
 class _ConsoleSize:
-    """Returns a tuple with the width and height
-    of the console in characters and lines."""
     def __get__(self, obj, owner=None):
         size = _os.get_terminal_size()
         return (size.columns, size.lines)
 
 class _ConsoleUser:
-    """Returns the name of the current user."""
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
@@ -65,9 +61,14 @@ class Args:
 class Console:
 
     w: int = _ConsoleWidth()
+    """The width of the console in characters."""
     h: int = _ConsoleHeight()
+    """The height of the console in lines."""
     wh: tuple[int, int] = _ConsoleSize()
+    """A tuple with the width and height of
+    the console in characters and lines."""
     usr: str = _ConsoleUser()
+    """The name of the current user."""
 
     @staticmethod
     def get_args(find_args: dict[str, list[str] | tuple[str, ...]]) -> Args:
@@ -157,7 +158,8 @@ class Console:
         - `start` -⠀something to print before the log is printed
         - `end` -⠀something to print after the log is printed (e.g. `\\n`)
         - `title_bg_color` -⠀the background color of the `title`
-        - `default_color` -⠀the default text color of the `prompt`\n
+        - `default_color` -⠀the default text color of the `prompt`
+        - `_console_tabsize` -⠀the tab size of the console (default is 8)\n
         -----------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""

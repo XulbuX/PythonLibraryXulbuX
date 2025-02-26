@@ -12,8 +12,6 @@ class ProcessNotFoundError(Exception):
     pass
 
 class _IsElevated:
-    """Returns `True` if the current process has
-    elevated privileges and `False` otherwise."""
     def __get__(self, obj, owner=None):
         try:
             if _os.name == "nt":
@@ -29,6 +27,8 @@ class _IsElevated:
 class System:
 
     is_elevated: bool = _IsElevated()
+    """Is `True` if the current process has
+    elevated privileges and `False` otherwise."""
 
     @staticmethod
     def restart(prompt: object = None, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:

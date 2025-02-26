@@ -1,15 +1,20 @@
 from dataclasses import dataclass
 from typing import TypeAlias
 
+from regex import F
+
 
 FormattableString: TypeAlias = str
+"""A `str` object that is made to be formatted with the `.format()` method."""
 
 
 @dataclass
 class COLOR:
-    """Color presets used in the XulbuX library."""
+    """Color presets used in the `xulbux` library."""
 
     text = "#A5D6FF"
+    """The default text color used in the `xulbux` library."""
+
     white = "#F1F2FF"
     lightgray = "#B6B7C0"
     gray = "#7B7C8D"
@@ -40,50 +45,67 @@ class _AllTextCharacters:
 
 @dataclass
 class CHARS:
-    """Strings with only certain text characters."""
+    """Text character sets."""
 
-    # CODE TO SIGNAL, ALL CHARACTERS ARE ALLOWED
     all = _AllTextCharacters
+    """Code to signal that all characters are allowed."""
 
-    # DIGIT SETS
     digits: str = "0123456789"
+    """Digits: `0`-`9`"""
     float_digits: str = digits + "."
+    """Digits: `0`-`9` with decimal point `.`"""
     hex_digits: str = digits + "#abcdefABCDEF"
+    """Digits: `0`-`9` Letters: `a`-`f` `A`-`F` and a hashtag `#`"""
 
-    # LETTER CATEGORIES
     lowercase: str = "abcdefghijklmnopqrstuvwxyz"
+    """Lowercase letters `a`-`z`"""
     lowercase_extended: str = lowercase + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
+    """Lowercase letters `a`-`z` with all lowercase diacritic letters."""
     uppercase: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    """Uppercase letters `A`-`Z`"""
     uppercase_extended: str = uppercase + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
+    """Uppercase letters `A`-`Z` with all uppercase diacritic letters."""
 
-    # COMBINED LETTER SETS
     letters: str = lowercase + uppercase
+    """Lowercase and uppercase letters `a`-`z` and `A`-`Z`"""
     letters_extended: str = lowercase_extended + uppercase_extended
+    """Lowercase and uppercase letters `a`-`z` `A`-`Z` and all diacritic letters."""
 
-    # ASCII sets
     special_ascii: str = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    """All ASCII special characters."""
     special_ascii_extended: str = special_ascii + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    """All ASCII special characters with the extended ASCII special characters."""
     standard_ascii: str = special_ascii + digits + letters
+    """All standard ASCII characters."""
     full_ascii: str = special_ascii_extended + digits + letters_extended
+    """All characters in the ASCII table."""
 
 
 class ANSI:
     """Constants and class-methods for use of ANSI escape codes."""
 
     escaped_char: str = "\\x1b"
+    """The printable ANSI escape character."""
     CHAR = char = "\x1b"
+    """The ANSI escape character."""
     START = start = "["
+    """The start of an ANSI escape sequence."""
     SEP = sep = ";"
+    """The separator between ANSI escape sequence parts."""
     END = end = "m"
+    """The end of an ANSI escape sequence."""
     default_color_modifiers: dict[str, str] = {"lighten": "+l", "darken": "-d"}
+    """Characters to modify the lightness of the default color with."""
 
     @classmethod
-    def seq(cls, parts: int = 1) -> str:
+    def seq(cls, parts: int = 1) -> FormattableString:
         """Generate an ANSI sequence with `parts` amount of placeholders."""
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(parts)]) + cls.END
 
     seq_color: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    """The ANSI escape sequence for setting the text RGB color."""
     seq_bg_color: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    """The ANSI escape sequence for setting the background RGB color."""
 
     color_map: list[str] = [
         ########### DEFAULT CONSOLE COLOR NAMES ############
@@ -96,6 +118,7 @@ class ANSI:
         "cyan",
         "white",
     ]
+    """The console default color names."""
 
     codes_map: dict[str | tuple[str, ...], int] = {
         ################# SPECIFIC RESETS ##################
@@ -156,3 +179,4 @@ class ANSI:
         "bg:br:cyan": 106,
         "bg:br:white": 107,
     }
+    """All custom format keys and their corresponding ANSI format number codes."""

@@ -14,13 +14,14 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.6.7`
+## 26.02.2025 `v1.6.7`
 * restructured the object returned from `Console.get_args()`:<br>
   before, you accessed an arg's result with `args["<arg_alias>"]["value"]` and `args["<arg_alias>"]["exists"]`<br>	
   now, you can directly access the result with `args.<arg_alias>.value` and `args.<arg_alias>.exists`
-* made the Staticmethod `System.is_elevated()` into a class property, which now can be accessed as `System.is_elevated`
-* made the method `Path.get(cwd=True)` or `Path.get(base_dir=True)` into two class properties, which now can be accessed as `Path.cwd` and `Path.script_dir`
+* made the staticmethod `System.is_elevated()` into a class property, which now can be accessed as `System.is_elevated`
+* made the method <code>Path.get(*cwd*=True)</code> or <code>Path.get(*base_dir*=True)</code> into two class properties, which now can be accessed as `Path.cwd` and `Path.script_dir`
 * the method `File.create()` now throws a custom `SameContentFileExistsError` exception if a file with the same name and content already exists
+* added a bunch more docstrings to class properties and library constants
 
 ## 17.02.2025 `v1.6.6`
 * added a new method `Console.multiline_input()`
