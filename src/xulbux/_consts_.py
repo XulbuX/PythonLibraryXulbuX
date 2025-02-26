@@ -26,6 +26,7 @@ class COLOR:
     tangerine = "#FF9962"
     gold = "#FFAF60"
     yellow = "#FFD260"
+    lime = "#C9F16E"
     green = "#7EE787"
     teal = "#50EAAF"
     cyan = "#3EDEE6"
