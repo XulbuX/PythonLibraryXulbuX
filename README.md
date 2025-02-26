@@ -4,30 +4,34 @@
 ranging from console logging and working with colors to file management and system operations.
 The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
-For precise information about the library, see the library's [Wiki page](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
+For precise information about the library, see the library's [wiki page](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
 For the libraries latest changes and updates, see the [change log](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
 
+<br>
 
 ## Installation
 
-To install the library and all its dependencies, open a console and run the command:
+Run the following commands in a console with administrator privileges, so the actions take effect for all users.
+
+Install the library and all its dependencies with the command:
 ```console
 pip install xulbux
 ```
 
-To upgrade the library to the latest available version, run the following command in your console:
+Upgrade the library and all its dependencies to their latest available version with the command:
 ```console
 pip install --upgrade xulbux
 ```
 
+<br>
 
 ## Usage
 
-Import the full library under the alias `xx`, so it's constants, classes, types and functions are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()` and `xx.function()`:
+Import the full library under the alias `xx`, so its constants, classes, methods and types are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()`:
 ```python
 import xulbux as xx
 ```
-So you don't have to write the alias `xx` in front of everything, you can import the library's contents directly:
+So you don't have to import the full library under an alias, you can also import only certain parts of the library's contents:
 ```python
 # CONSTANTS
 from xulbux import COLOR, CHARS, ANSI
@@ -37,6 +41,7 @@ from xulbux import Code, Color, Console, ...
 from xulbux import rgba, hsla, hexa
 ```
 
+<br>
 
 ## Modules
 
@@ -55,10 +60,11 @@ from xulbux import rgba, hsla, hexa
 | <h3>[`xx_string`](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_string)</h3>             | helpful actions when working with strings. (*normalize, escape, decompose, ...*)                   |
 | <h3>`xx_system`</h3>                                                                                 | advanced system actions (*restart with message, check installed Python libs, ...*)                 |
 
+<br>
 
 ## Example Usage
 
-This is what it could look like using this module for a simple color converter:
+This is what it could look like using this library for a simple but very nice looking color converter:
 ```python
 from xulbux import COLOR                 # CONSTANTS
 from xulbux import FormatCodes, Console  # Classes
@@ -119,7 +125,7 @@ if __name__ == "__main__":
     main()
 ```
 
-
+<br>
 <br>
 
 --------------------------------------------------------------
