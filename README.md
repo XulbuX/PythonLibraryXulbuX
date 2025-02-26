@@ -45,7 +45,7 @@ from xulbux import rgba, hsla, hexa
 
 ## Modules
 
-| Name                                                                                             | Short Description                                                                                  |
+| Module Name                                                                                      | Short Description                                                                                  |
 | :----------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------- |
 | <h3>[`xx_code`](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_code)</h3>                 | advanced code-string operations (*changing the indent, finding function calls, ...*)               |
 | <h3>[`xx_color`](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_color)</h3>               | everything around colors (*converting, blending, searching colors in strings, ...*)                |
