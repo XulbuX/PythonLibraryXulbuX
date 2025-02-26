@@ -24,28 +24,36 @@ import os as _os
 
 # YAPF: disable
 class _ConsoleWidth:
+    """Returns the width of the console in characters."""
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().columns
 
 class _ConsoleHeight:
+    """Returns the height of the console in lines."""
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().lines
 
 class _ConsoleSize:
+    """Returns a tuple with the width and height
+    of the console in characters and lines."""
     def __get__(self, obj, owner=None):
         size = _os.get_terminal_size()
         return (size.columns, size.lines)
 
 class _ConsoleUser:
+    """Returns the name of the current user."""
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 class ArgResult:
+    """Exists: if the argument was found or not\n
+    Value: the value from behind the found argument"""
     def __init__(self, exists: bool, value: any):
         self.exists = exists
         self.value = value
 
 class Args:
+    """Stores arguments under their aliases with their results."""
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             if not key.isidentifier():

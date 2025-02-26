@@ -7,15 +7,14 @@ import sys as _sys
 import os as _os
 
 
+# YAPF: disable
 class ProcessNotFoundError(Exception):
     pass
 
-
-class System:
-
-    @staticmethod
-    def is_elevated() -> bool:
-        """Returns `True` if the current user is an admin and `False` otherwise."""
+class _IsElevated:
+    """Returns `True` if the current process has
+    elevated privileges and `False` otherwise."""
+    def __get__(self, obj, owner=None):
         try:
             if _os.name == "nt":
                 return _ctypes.windll.shell32.IsUserAnAdmin() != 0
@@ -24,6 +23,12 @@ class System:
         except Exception:
             pass
         return False
+# YAPF: enable
+
+
+class System:
+
+    is_elevated: bool = _IsElevated()
 
     @staticmethod
     def restart(prompt: object = None, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:

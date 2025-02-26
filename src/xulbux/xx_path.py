@@ -6,27 +6,37 @@ import sys as _sys
 import os as _os
 
 
+# YAPF: disable
+class ProcessNotFoundError(Exception):
+    pass
+
+class _Cwd:
+    """Returns the path to the current working directory."""
+    def __get__(self, obj, owner=None):
+        return _os.getcwd()
+
+class _ScriptDir:
+    """Returns the path to the directory of the current script."""
+    def __get__(self, obj, owner=None):
+        if getattr(_sys, "frozen", False):
+            base_path = _os.path.dirname(_sys.executable)
+        else:
+            main_module = _sys.modules["__main__"]
+            if hasattr(main_module, "__file__"):
+                base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
+            elif (hasattr(main_module, "__spec__") and main_module.__spec__
+                    and getattr(main_module.__spec__, "origin", None)):
+                base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
+            else:
+                raise RuntimeError("Can only get base directory if accessed from a file.")
+        return base_path
+# YAPF: enable
+
+
 class Path:
 
-    @staticmethod
-    def get(cwd: bool = False, base_dir: bool = False) -> str | list[str]:
-        paths = []
-        if cwd:
-            paths.append(_os.getcwd())
-        if base_dir:
-            if getattr(_sys, "frozen", False):
-                base_path = _os.path.dirname(_sys.executable)
-            else:
-                main_module = _sys.modules["__main__"]
-                if hasattr(main_module, "__file__"):
-                    base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
-                elif (hasattr(main_module, "__spec__") and main_module.__spec__
-                      and getattr(main_module.__spec__, "origin", None)):
-                    base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
-                else:
-                    raise RuntimeError("Can only get base directory if ran from a file.")
-            paths.append(base_path)
-        return paths[0] if len(paths) == 1 else paths
+    cwd: str = _Cwd()
+    script_dir: str = _ScriptDir()
 
     @staticmethod
     def extend(path: str, search_in: str | list[str] = None, raise_error: bool = False, correct_path: bool = False) -> str:
@@ -68,7 +78,7 @@ class Path:
             search_dirs = (drive + _os.sep) if drive else [_os.sep]
         else:
             rel_path = path.lstrip(_os.sep)
-            base_dir = Path.get(base_dir=True)
+            base_dir = Path.script_dir
             search_dirs = (
                 _os.getcwd(),
                 base_dir,

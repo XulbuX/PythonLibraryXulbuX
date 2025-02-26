@@ -22,7 +22,7 @@ class EnvPath:
         if cwd:
             path = _os.getcwd()
         elif base_dir:
-            path = Path.get(base_dir=True)
+            path = Path.script_dir
         elif path is None:
             raise ValueError("A path must be provided or either 'cwd' or 'base_dir' must be True.")
         paths = EnvPath.paths(as_list=True)
@@ -62,7 +62,7 @@ class EnvPath:
         if cwd:
             path = _os.getcwd()
         elif base_dir:
-            path = Path.get(base_dir=True)
+            path = Path.script_dir
         elif path is None:
             raise ValueError("A path must be provided or either 'cwd' or 'base_dir' must be True.")
         return _os.path.normpath(path)

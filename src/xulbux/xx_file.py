@@ -4,6 +4,10 @@ from .xx_path import Path
 import os as _os
 
 
+class SameContentFileExistsError(FileExistsError):
+    pass
+
+
 class File:
 
     @staticmethod
@@ -29,14 +33,16 @@ class File:
         force: bool = False,
     ) -> str:
         """Create a file with ot without content.\n
-        ------------------------------------------------------------------------
-        The function will throw a `FileExistsError` if the file already exists.
+        ----------------------------------------------------------------------
+        The function will throw a `FileExistsError` if a file with the same
+        name already exists and a `SameContentFileExistsError` if a file with
+        the same name and content already exists.
         To always overwrite the file, set the `force` parameter to `True`."""
         if _os.path.exists(file) and not force:
             with open(file, "r", encoding="utf-8") as existing_file:
                 existing_content = existing_file.read()
                 if existing_content == content:
-                    raise FileExistsError("Already created this file. (nothing changed)")
+                    raise SameContentFileExistsError("Already created this file. (nothing changed)")
             raise FileExistsError("File already exists.")
         with open(file, "w", encoding="utf-8") as f:
             f.write(content)
@@ -62,4 +68,4 @@ class File:
         try:
             return Path.extend(file, search_in, raise_error=True, correct_path=correct_paths)
         except FileNotFoundError:
-            return _os.path.join(Path.get(base_dir=True), file) if prefer_base_dir else _os.path.join(_os.getcwd(), file)
+            return _os.path.join(Path.script_dir, file) if prefer_base_dir else _os.path.join(_os.getcwd(), file)
