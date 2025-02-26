@@ -527,7 +527,7 @@ class Data:
             else:
                 return f"{punct['(']}\n{formatted_items}\n{' ' * current_indent}{punct[')']}"
 
-        return format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0)
+        return _re.sub(r"\s+(?=\n)", "", format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0))
 
     @staticmethod
     def print(
