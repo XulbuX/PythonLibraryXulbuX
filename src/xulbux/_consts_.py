@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import TypeAlias
 
-from regex import F
-
 
 FormattableString: TypeAlias = str
 """A `str` object that is made to be formatted with the `.format()` method."""

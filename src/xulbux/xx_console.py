@@ -5,7 +5,6 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.
 """
 
-from pyparsing import C
 from ._consts_ import COLOR, CHARS
 from .xx_format_codes import FormatCodes, _COMPILED
 from .xx_string import String
