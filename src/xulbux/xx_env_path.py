@@ -29,33 +29,21 @@ class EnvPath:
         return _os.path.normpath(path) in [_os.path.normpath(p) for p in paths]
 
     @staticmethod
-    def add_path(
-        path: str = None,
-        cwd: bool = False,
-        base_dir: bool = False,
-    ) -> None:
+    def add_path(path: str = None, cwd: bool = False, base_dir: bool = False) -> None:
         """Add a path to the PATH environment variable."""
         path = EnvPath.__get(path, cwd, base_dir)
         if not EnvPath.has_path(path):
             EnvPath.__persistent(path, add=True)
 
     @staticmethod
-    def remove_path(
-        path: str = None,
-        cwd: bool = False,
-        base_dir: bool = False,
-    ) -> None:
+    def remove_path(path: str = None, cwd: bool = False, base_dir: bool = False) -> None:
         """Remove a path from the PATH environment variable."""
         path = EnvPath.__get(path, cwd, base_dir)
         if EnvPath.has_path(path):
             EnvPath.__persistent(path, remove=True)
 
     @staticmethod
-    def __get(
-        path: str = None,
-        cwd: bool = False,
-        base_dir: bool = False,
-    ) -> list:
+    def __get(path: str = None, cwd: bool = False, base_dir: bool = False) -> list:
         """Get and/or normalize the paths.\n
         ------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""

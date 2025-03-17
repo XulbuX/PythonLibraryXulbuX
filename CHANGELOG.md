@@ -16,13 +16,16 @@
 
 ## ... `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `A formatting code: [/red]`)
-* new methods for `Args` (*the returned object from* `Console.get_args()`):<br>
+* new methods for `Args` (*the returned object from* `Console.get_args()`):
   - the `len()` function can now be used on `Args` (*the returned object from* `Console.get_args()`)
   - the `Args` object now also has the dict like methods `keys()`, `values()` and `items()`
   - you can also get the args as a dict with the `dict()` method
   - you can now use the `in` operator on `Args`
-* new methods for `ArgResult` (*a single arg-object from inside `Args`):<br>
+* new methods for `ArgResult` (*a single arg-object from inside `Args`):
   - you can now use the `bool()` function on `ArgResult` to directly see if the arg exists
+* the methods `FormatCodes.remove_ansi()` and `FormatCodes.remove_formatting()` now have a second param <code>get_removals: *bool* = False</code><br>
+  if this param is `True` additionally to the cleaned string, a list of tuples will be returned, where tuple contains the position of the removed formatting/ansi code and the removed code
+* fixed a bug in the line wrapping in all logging methods from the `xx_console` module
 
 ## 26.02.2025 `v1.6.7`
 * restructured the object returned from `Console.get_args()`:<br>

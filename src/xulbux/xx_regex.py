@@ -55,11 +55,7 @@ class Regex:
         return rf'(?<!["\'])(?:{pattern})(?!["\'])'
 
     @staticmethod
-    def all_except(
-        disallowed_pattern: str,
-        ignore_pattern: str = "",
-        is_group: bool = False,
-    ) -> str:
+    def all_except(disallowed_pattern: str, ignore_pattern: str = "", is_group: bool = False) -> str:
         """Matches everything except `disallowed_pattern`, unless the `disallowed_pattern`
         is found inside a string (`'...'` or `"..."`).\n
         ------------------------------------------------------------------------------------

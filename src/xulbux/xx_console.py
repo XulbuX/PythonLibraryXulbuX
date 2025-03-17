@@ -180,9 +180,10 @@ class Console:
         title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if format_linebreaks:
-            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(prompt).splitlines())
+            clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True)
+            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
             prompt_lst = (item for lst in prompt_lst for item in (lst if isinstance(lst, list) else [lst]))
-            prompt = f"\n{' ' * title_len}\t".join(prompt_lst)
+            prompt = f"\n{' ' * title_len}\t".join(Console.__add_back_removed_parts(list(prompt_lst), removals))
         else:
             prompt = str(prompt)
         if title == "":
@@ -198,6 +199,38 @@ class Console:
                 default_color=default_color,
                 end=end,
             )
+
+    @staticmethod
+    def __add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
+        """Adds back the removed parts into the split string parts at their original positions."""
+        lengths, cumulative_pos = [len(s) for s in split_string], [0]
+        for length in lengths:
+            cumulative_pos.append(cumulative_pos[-1] + length)
+        result, offset_adjusts = split_string.copy(), [0] * len(split_string)
+        last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
+
+        def find_string_part(pos: int) -> int:
+            left, right = 0, len(cumulative_pos) - 1
+            while left < right:
+                mid = (left + right) // 2
+                if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
+                    return mid
+                elif pos < cumulative_pos[mid]:
+                    right = mid
+                else:
+                    left = mid + 1
+            return left
+
+        for pos, removal in removals:
+            if pos >= total_length:
+                result[last_idx] = result[last_idx] + removal
+                continue
+            i = find_string_part(pos)
+            adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
+            parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
+            result[i] = ''.join(parts)
+            offset_adjusts[i] += len(removal)
+        return result
 
     @staticmethod
     def debug(

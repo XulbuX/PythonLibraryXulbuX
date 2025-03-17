@@ -333,14 +333,46 @@ class FormatCodes:
         return ansi_string.replace(ANSI.char, ANSI.escaped_char)
 
     @staticmethod
-    def remove_ansi(ansi_string: str) -> str:
-        """Removes all ANSI codes from the string."""
-        return _COMPILED["ansi_seq"].sub("", ansi_string)
+    def remove_ansi(ansi_string: str, get_removals: bool = False) -> str | tuple[str, tuple[tuple[int, str], ...]]:
+        """Removes all ANSI codes from the string.\n
+        --------------------------------------------------------------------------------------------------
+        If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
+        Each tuple contains the position of the removed ansi code and the removed ansi code."""
+        if get_removals:
+            removals = []
+
+            def replacement(match: _re.Match) -> str:
+                start_pos = match.start() - sum(len(removed) for _, removed in removals)
+                if removals and removals[-1][0] == start_pos:
+                    start_pos = removals[-1][0]
+                removals.append((start_pos, match.group()))
+                return ""
+
+            clean_string = _COMPILED["ansi_seq"].sub(replacement, ansi_string)
+            return clean_string, tuple(removals)
+        else:
+            return _COMPILED["ansi_seq"].sub("", ansi_string)
 
     @staticmethod
-    def remove_formatting(string: str) -> str:
-        """Removes all formatting codes from the string."""
-        return _COMPILED["ansi_seq"].sub("", FormatCodes.to_ansi(string))
+    def remove_formatting(string: str, get_removals: bool = False) -> str | tuple[str, tuple[tuple[int, str], ...]]:
+        """Removes all formatting codes from the string.\n
+        ----------------------------------------------------------------------------------------------------
+        If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
+        Each tuple contains the position of the removed formatting code and the removed formatting code."""
+        if get_removals:
+            removals = []
+
+            def replacement(match: _re.Match) -> str:
+                start_pos = match.start() - sum(len(removed) for _, removed in removals)
+                if removals and removals[-1][0] == start_pos:
+                    start_pos = removals[-1][0]
+                removals.append((start_pos, match.group()))
+                return ""
+
+            clean_string = _COMPILED["ansi_seq"].sub(replacement, FormatCodes.to_ansi(string))
+            return clean_string, tuple(removals)
+        else:
+            return _COMPILED["ansi_seq"].sub("", FormatCodes.to_ansi(string))
 
     @staticmethod
     def __config_console() -> None:

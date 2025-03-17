@@ -21,14 +21,13 @@ class Code:
         non_zero_indents = [i for i in indents if i > 0]
         return min(non_zero_indents) if non_zero_indents else 0
 
-    @staticmethod
-    def change_tab_size(code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
+    def change_tab_size(self, code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
         """Replaces all tabs with `new_tab_size` spaces.\n
         ----------------------------------------------------------------------------------
         If `remove_empty_lines` is `True`, empty lines will be removed in the process."""
         code_lines = String.get_lines(code, remove_empty_lines=True)
         lines = code_lines if remove_empty_lines else String.get_lines(code)
-        tab_spaces = Code.get_tab_spaces(code)
+        tab_spaces = self.get_tab_spaces(code)
         if (tab_spaces == new_tab_size) or tab_spaces == 0:
             if remove_empty_lines:
                 return "\n".join(code_lines)

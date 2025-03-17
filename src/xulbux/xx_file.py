@@ -11,11 +11,7 @@ class SameContentFileExistsError(FileExistsError):
 class File:
 
     @staticmethod
-    def rename_extension(
-        file: str,
-        new_extension: str,
-        camel_case_filename: bool = False,
-    ) -> str:
+    def rename_extension(file: str, new_extension: str, camel_case_filename: bool = False) -> str:
         """Rename the extension of a file.\n
         --------------------------------------------------------------------------
         If the `camel_case_filename` parameter is true, the filename will be made
@@ -27,11 +23,7 @@ class File:
         return _os.path.join(directory, f"{filename}{new_extension}")
 
     @staticmethod
-    def create(
-        file: str,
-        content: str = "",
-        force: bool = False,
-    ) -> str:
+    def create(file: str, content: str = "", force: bool = False) -> str:
         """Create a file with ot without content.\n
         ----------------------------------------------------------------------
         The function will throw a `FileExistsError` if a file with the same
