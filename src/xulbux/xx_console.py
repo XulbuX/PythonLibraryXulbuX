@@ -46,6 +46,8 @@ class ArgResult:
     def __init__(self, exists: bool, value: any):
         self.exists = exists
         self.value = value
+    def __bool__(self):
+        return self.exists
 
 class Args:
     """Stores arguments under their aliases with their results."""
@@ -54,6 +56,14 @@ class Args:
             if not key.isidentifier():
                 raise TypeError(f"Argument alias '{key}' is invalid. It must be a valid Python variable name.")
             setattr(self, key, ArgResult(**value))
+    def __len__(self):
+        return len(vars(self))
+    def __contains__(self, key):
+        return hasattr(self, key)
+    def keys(self):
+        return vars(self).keys()
+    def values(self):
+        return vars(self).values()
 # YAPF: enable
 
 
