@@ -65,7 +65,9 @@ class Args:
     def values(self):
         return vars(self).values()
     def items(self):
-        return {k: v.value for k, v in vars(self).items()}
+        return vars(self).items()
+    def dict(self):
+        return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
 # YAPF: enable
 
 
