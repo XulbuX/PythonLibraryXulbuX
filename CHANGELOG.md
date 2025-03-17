@@ -18,7 +18,7 @@
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `A formatting code: [/red]`)
 * new methods for `Args` (*the returned object from* `Console.get_args()`):<br>
   - the `len()` function can now be used on `Args` (*the returned object from* `Console.get_args()`)
-  - the `Args` object now also has a `keys()` and a `values()` method
+  - the `Args` object now also has the dict like methods `keys()`, `values()` and `items()`
   - you can now use the `in` operator on `Args`
 * new methods for `ArgResult` (*a single arg-object from inside `Args`):<br>
   - you can now use the `bool()` function on `ArgResult` to directly see if the arg exists

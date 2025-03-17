@@ -64,6 +64,8 @@ class Args:
         return vars(self).keys()
     def values(self):
         return vars(self).values()
+    def items(self):
+        return vars(self).items()
 # YAPF: enable
 
 
