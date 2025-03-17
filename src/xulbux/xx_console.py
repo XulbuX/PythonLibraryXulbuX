@@ -65,7 +65,7 @@ class Args:
     def values(self):
         return vars(self).values()
     def items(self):
-        return vars(self).items()
+        return {k: v.value for k, v in vars(self).items()}
 # YAPF: enable
 
 
