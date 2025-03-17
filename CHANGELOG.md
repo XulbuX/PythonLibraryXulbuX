@@ -14,9 +14,12 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.6.8`
+* made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `A formatting code: [/red]`)
+
 ## 26.02.2025 `v1.6.7`
 * restructured the object returned from `Console.get_args()`:<br>
-  before, you accessed an arg's result with `args["<arg_alias>"]["value"]` and `args["<arg_alias>"]["exists"]`<br>	
+  before, you accessed an arg's result with `args["<arg_alias>"]["value"]` and `args["<arg_alias>"]["exists"]`<br>
   now, you can directly access the result with `args.<arg_alias>.value` and `args.<arg_alias>.exists`
 * made the staticmethod `System.is_elevated()` into a class property, which now can be accessed as `System.is_elevated`
 * made the method <code>Path.get(*cwd*=True)</code> or <code>Path.get(*base_dir*=True)</code> into two class properties, which now can be accessed as `Path.cwd` and `Path.script_dir`

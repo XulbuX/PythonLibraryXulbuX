@@ -182,6 +182,8 @@ _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
         + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
         + r")?"
     ),
+    "escape_char": _re.compile(r"(\s*)(\/|\\)"),
+    "escape_char_cond": _re.compile(r"(\s*\[\s*)(\/|\\)(?!\2+)"),
     "bg?_default": _re.compile(r"(?i)((?:" + _PREFIX_RX["BG"] + r")?)\s*default"),
     "bg_default": _re.compile(r"(?i)" + _PREFIX_RX["BG"] + r"\s*default"),
     "modifier": _re.compile(
@@ -265,9 +267,11 @@ class FormatCodes:
             return color in ANSI.color_map or Color.is_valid_rgba(color) or Color.is_valid_hexa(color)
 
         def replace_keys(match: _re.Match) -> str:
-            formats = match.group(1)
-            escaped = match.group(2)
+            _formats = formats = match.group(1)
+            auto_reset_escaped = match.group(2)
             auto_reset_txt = match.group(3)
+            if formats_escaped := bool(_COMPILED["escape_char_cond"].match(match.group(0))):
+                _formats = formats = _COMPILED["escape_char"].sub(r"\1", formats)  # REMOVE / OR \\
             if auto_reset_txt and auto_reset_txt.count("[") > 0 and auto_reset_txt.count("]") > 0:
                 auto_reset_txt = FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)
             if not formats:
@@ -279,7 +283,7 @@ class FormatCodes:
                 r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k else f"[{k}]"
                 for k in format_keys
             ]
-            if auto_reset_txt and not escaped:
+            if auto_reset_txt and not auto_reset_escaped:
                 reset_keys = []
                 for k in format_keys:
                     k_lower = k.lower()
@@ -308,17 +312,20 @@ class FormatCodes:
             else:
                 ansi_resets = []
             if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.char}{ANSI.start}") >= 1) and not all(
-                    f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):
+                    f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):  # FORMATTING WAS INVALID
                 return match.group(0)
-            return (
-                "".join(ansi_formats) + (
-                    f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
-                    if escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
-                ) + ("" if escaped else "".join(ansi_resets))
-            )
+            elif formats_escaped:  # FORMATTING WAS VALID BUT ESCAPED
+                return f"[{_formats}]({auto_reset_txt})" if auto_reset_txt else f"[{_formats}]"
+            else:
+                return (
+                    "".join(ansi_formats) + (
+                        f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
+                        if auto_reset_escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
+                    ) + ("" if auto_reset_escaped else "".join(ansi_resets))
+                )
 
         string = "\n".join(_COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
-        return (FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string if use_default else string
+        return ((FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string) if use_default else string
 
     @staticmethod
     def escape_ansi(ansi_string: str) -> str:
