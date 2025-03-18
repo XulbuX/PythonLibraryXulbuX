@@ -84,7 +84,7 @@ class Console:
     """The name of the current user."""
 
     @staticmethod
-    def get_args(find_args: dict[str, list[str] | tuple[str, ...]]) -> Args:
+    def get_args(find_args: dict[str, list[str] | tuple[str, ...]], allow_spaces: bool = False) -> Args:
         """Will search for the specified arguments in the command line
         arguments and return the results as a special `Args` object.\n
         ----------------------------------------------------------------
@@ -110,20 +110,39 @@ class Console:
         - `Args.<arg_alias>.exists` is `True` if any of the specified
             args were found and `False` if not
         - `Args.<arg_alias>.value` the value from behind the found arg,
-            `None` if no value was found"""
+            `None` if no value was found\n
+        ----------------------------------------------------------------
+        Normally if `allow_spaces` is false, it will take a space as
+        the end of an args value. If it is true, it will take spaces as
+        part of the value until the next arg is found.
+        (Multiple spaces will become one space in the value.)"""
         args = _sys.argv[1:]
-        results = {}
+        args_len = len(args)
+        arg_lookup = {}
         for arg_key, arg_group in find_args.items():
-            value = None
-            exists = False
             for arg in arg_group:
-                if arg in args:
-                    exists = True
-                    arg_index = args.index(arg)
-                    if arg_index + 1 < len(args) and not args[arg_index + 1].startswith("-"):
-                        value = String.to_type(args[arg_index + 1])
-                    break
-            results[arg_key] = {"exists": exists, "value": value}
+                arg_lookup[arg] = arg_key
+        results = {key: {"exists": False, "value": None} for key in find_args}
+        i = 0
+        while i < args_len:
+            arg = args[i]
+            arg_key = arg_lookup.get(arg)
+            if arg_key:
+                results[arg_key]["exists"] = True
+                if i + 1 < args_len and not args[i + 1].startswith("-"):
+                    if not allow_spaces:
+                        results[arg_key]["value"] = String.to_type(args[i + 1])
+                        i += 1
+                    else:
+                        value_parts = []
+                        j = i + 1
+                        while j < args_len and not args[j].startswith("-"):
+                            value_parts.append(args[j])
+                            j += 1
+                        if value_parts:
+                            results[arg_key]["value"] = String.to_type(" ".join(value_parts))
+                            i = j - 1
+            i += 1
         return Args(**results)
 
     @staticmethod

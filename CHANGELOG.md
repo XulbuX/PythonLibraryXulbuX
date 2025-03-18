@@ -26,6 +26,8 @@
 * the methods `FormatCodes.remove_ansi()` and `FormatCodes.remove_formatting()` now have a second param <code>get_removals: *bool* = False</code><br>
   if this param is `True` additionally to the cleaned string, a list of tuples will be returned, where tuple contains the position of the removed formatting/ansi code and the removed code
 * fixed a bug in the line wrapping in all logging methods from the `xx_console` module
+* added a new param to the method `Console.get_args()`:<br>
+  <code>allow_spaces: *bool* = False</code> whether to take spaces as separator of arg values or as part of an arg value
 
 ## 26.02.2025 `v1.6.7`
 * restructured the object returned from `Console.get_args()`:<br>
