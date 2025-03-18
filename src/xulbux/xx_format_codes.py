@@ -359,20 +359,7 @@ class FormatCodes:
         ----------------------------------------------------------------------------------------------------
         If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
         Each tuple contains the position of the removed formatting code and the removed formatting code."""
-        if get_removals:
-            removals = []
-
-            def replacement(match: _re.Match) -> str:
-                start_pos = match.start() - sum(len(removed) for _, removed in removals)
-                if removals and removals[-1][0] == start_pos:
-                    start_pos = removals[-1][0]
-                removals.append((start_pos, match.group()))
-                return ""
-
-            clean_string = _COMPILED["ansi_seq"].sub(replacement, FormatCodes.to_ansi(string))
-            return clean_string, tuple(removals)
-        else:
-            return _COMPILED["ansi_seq"].sub("", FormatCodes.to_ansi(string))
+        return FormatCodes.remove_ansi(FormatCodes.to_ansi(string), get_removals=get_removals)
 
     @staticmethod
     def __config_console() -> None:

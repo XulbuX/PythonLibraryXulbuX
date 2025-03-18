@@ -50,7 +50,7 @@ class ArgResult:
         return self.exists
 
 class Args:
-    """Stores arguments under their aliases with their results."""
+    """Stores found command arguments under their aliases with their results."""
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             if not key.isidentifier():
@@ -60,14 +60,25 @@ class Args:
         return len(vars(self))
     def __contains__(self, key):
         return hasattr(self, key)
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self.__iter__())[key]
+        return getattr(self, key)
+    def __iter__(self):
+        for key, value in vars(self).items():
+            yield (key, {"exists": value.exists, "value": value.value})
+    def dict(self) -> dict[str, dict[str, any]]:
+        """Returns the arguments as a dictionary."""
+        return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
     def keys(self):
+        """Returns the argument aliases as `dict_keys([...])`."""
         return vars(self).keys()
     def values(self):
+        """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
     def items(self):
+        """Returns the argument aliases and results as `dict_items([...])`."""
         return vars(self).items()
-    def dict(self):
-        return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
 # YAPF: enable
 
 
