@@ -1,3 +1,4 @@
+from typing import Any
 import json as _json
 import ast as _ast
 import re as _re
@@ -6,7 +7,7 @@ import re as _re
 class String:
 
     @staticmethod
-    def to_type(string: str) -> any:
+    def to_type(string: str) -> Any:
         """Will convert a string to the found type, including complex nested structures."""
         string = string.strip()
         try:

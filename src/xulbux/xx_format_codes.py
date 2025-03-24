@@ -333,11 +333,16 @@ class FormatCodes:
         return ansi_string.replace(ANSI.char, ANSI.escaped_char)
 
     @staticmethod
-    def remove_ansi(ansi_string: str, get_removals: bool = False) -> str | tuple[str, tuple[tuple[int, str], ...]]:
+    def remove_ansi(
+        ansi_string: str,
+        get_removals: bool = False,
+        _ignore_linebreaks: bool = False,
+    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all ANSI codes from the string.\n
         --------------------------------------------------------------------------------------------------
         If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
-        Each tuple contains the position of the removed ansi code and the removed ansi code."""
+        Each tuple contains the position of the removed ansi code and the removed ansi code.\n
+        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions."""
         if get_removals:
             removals = []
 
@@ -348,18 +353,30 @@ class FormatCodes:
                 removals.append((start_pos, match.group()))
                 return ""
 
-            clean_string = _COMPILED["ansi_seq"].sub(replacement, ansi_string)
-            return clean_string, tuple(removals)
+            clean_string = _COMPILED["ansi_seq"].sub(
+                replacement,
+                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string
+            )
+            return _COMPILED["ansi_seq"].sub("", ansi_string) if _ignore_linebreaks else clean_string, tuple(removals)
         else:
             return _COMPILED["ansi_seq"].sub("", ansi_string)
 
     @staticmethod
-    def remove_formatting(string: str, get_removals: bool = False) -> str | tuple[str, tuple[tuple[int, str], ...]]:
+    def remove_formatting(
+        string: str,
+        get_removals: bool = False,
+        _ignore_linebreaks: bool = False,
+    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all formatting codes from the string.\n
-        ----------------------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------------
         If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
-        Each tuple contains the position of the removed formatting code and the removed formatting code."""
-        return FormatCodes.remove_ansi(FormatCodes.to_ansi(string), get_removals=get_removals)
+        Each tuple contains the position of the removed formatting code and the removed formatting code.\n
+        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions."""
+        return FormatCodes.remove_ansi(
+            FormatCodes.to_ansi(string),
+            get_removals=get_removals,
+            _ignore_linebreaks=_ignore_linebreaks,
+        )
 
     @staticmethod
     def __config_console() -> None:

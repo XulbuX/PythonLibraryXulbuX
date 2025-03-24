@@ -2,7 +2,7 @@ from ._consts_ import COLOR
 from .xx_format_codes import FormatCodes
 from .xx_string import String
 
-from typing import TypeAlias, Optional, Union
+from typing import TypeAlias, Optional, Union, Any
 import base64 as _base64
 import math as _math
 import re as _re
@@ -161,7 +161,7 @@ class Data:
             else:
                 return None if s.lstrip().startswith(comment_start) else s.strip() or None
 
-        def process_item(item: any) -> any:
+        def process_item(item: Any) -> Any:
             if isinstance(item, dict):
                 return {
                     k: v
@@ -310,7 +310,7 @@ class Data:
         return results if len(results) > 1 else results[0] if results else None
 
     @staticmethod
-    def get_value_by_path_id(data: DataStructure, path_id: str, get_key: bool = False) -> any:
+    def get_value_by_path_id(data: DataStructure, path_id: str, get_key: bool = False) -> Any:
         """Retrieves the value from `data` using the provided `path_id`.\n
         -------------------------------------------------------------------------------------------------
         Input your `data` along with a `path_id` that was created before using `Data.get_path_id()`.
@@ -319,7 +319,7 @@ class Data:
         The function will return the value (or key) from the path ID location, as long as the structure
         of `data` hasn't changed since creating the path ID to that value."""
 
-        def get_nested(data: DataStructure, path: list[int], get_key: bool) -> any:
+        def get_nested(data: DataStructure, path: list[int], get_key: bool) -> Any:
             parent = None
             for i, idx in enumerate(path):
                 if isinstance(data, dict):
@@ -342,18 +342,18 @@ class Data:
         return get_nested(data, Data.__sep_path_id(path_id), get_key)
 
     @staticmethod
-    def set_value_by_path_id(data: DataStructure, update_values: str | list[str], sep: str = "::") -> list | tuple | dict:
+    def set_value_by_path_id(data: DataStructure, update_values: dict[str, Any]) -> list | tuple | dict:
         """Updates the value/s from `update_values` in the `data`.\n
         --------------------------------------------------------------------------------
         Input a list, tuple or dict as `data`, along with `update_values`, which is a
-        path ID that was created before using `Data.get_path_id()`, together with the
-        new value to be inserted where the path ID points to. The path ID and the new
-        value are separated by `sep`, which per default is `::`.\n
+        dictionary where keys are path IDs and values are the new values to insert: 
+           { "1>": "new value", "path_id2": ["new value 1", "new value 2"], ... }
+        The path IDs should have been created using `Data.get_path_id()`.\n
         --------------------------------------------------------------------------------
         The value from path ID will be changed to the new value, as long as the
         structure of `data` hasn't changed since creating the path ID to that value."""
 
-        def update_nested(data: DataStructure, path: list[int], value: any) -> DataStructure:
+        def update_nested(data: DataStructure, path: list[int], value: Any) -> DataStructure:
             if len(path) == 1:
                 if isinstance(data, dict):
                     keys = list(data.keys())
@@ -375,12 +375,9 @@ class Data:
                     data = type(data)(data)
             return data
 
-        if isinstance(update_values, str):
-            update_values = [update_values]
-        valid_entries = [(parts[0].strip(), parts[1]) for update_value in update_values
-                         if len(parts := update_value.split(str(sep).strip())) == 2]
+        valid_entries = [(path_id, new_val) for path_id, new_val in update_values.items()]
         if not valid_entries:
-            raise ValueError(f"No valid update_values found: {update_values}")
+            raise ValueError(f"No valid update_values found in dictionary: {update_values}")
         for path_id, new_val in valid_entries:
             path = Data.__sep_path_id(path_id)
             data = update_nested(data, path, new_val)
@@ -431,7 +428,7 @@ class Data:
             for k, v in punct_map.items()
         }
 
-        def format_value(value: any, current_indent: int = None) -> str:
+        def format_value(value: Any, current_indent: int = None) -> str:
             if current_indent is not None and isinstance(value, dict):
                 return format_dict(value, current_indent + indent)
             elif current_indent is not None and hasattr(value, "__dict__"):

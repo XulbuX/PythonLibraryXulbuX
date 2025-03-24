@@ -14,6 +14,14 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.6.9`
+* changed the params in `Json.create()`:
+  - <code>new_file: *str* = "config"</code> is now the first param and <code>content: *dict*</code> the second one
+  - <code>new_file: *str* = "config"</code> is now called <code>json_file: *str*</code> with no default value
+* the methods `Json.update()` and `Data.set_value_by_path_id()` now intake a dictionary as `update_values` param, instead of a list of strings
+* added a new param to the methods `FormatCodes.remove_ansi()` and `FormatCodes.remove_formatting()`:<br>
+  <code>_ignore_linebreaks: *bool* = False</code> whether to include linebreaks in the removal positions or not
+
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)
 * new methods for `Args` (*the returned object from* `Console.get_args()`):

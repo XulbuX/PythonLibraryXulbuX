@@ -11,7 +11,7 @@ from .xx_string import String
 from .xx_color import Color, rgba, hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from typing import Optional
+from typing import Optional, Any
 import prompt_toolkit as _prompt_toolkit
 import pyperclip as _pyperclip
 import keyboard as _keyboard
@@ -43,7 +43,7 @@ class _ConsoleUser:
 class ArgResult:
     """Exists: if the argument was found or not\n
     Value: the value from behind the found argument"""
-    def __init__(self, exists: bool, value: any):
+    def __init__(self, exists: bool, value: Any):
         self.exists = exists
         self.value = value
     def __bool__(self):
@@ -67,7 +67,7 @@ class Args:
     def __iter__(self):
         for key, value in vars(self).items():
             yield (key, {"exists": value.exists, "value": value.value})
-    def dict(self) -> dict[str, dict[str, any]]:
+    def dict(self) -> dict[str, dict[str, Any]]:
         """Returns the arguments as a dictionary."""
         return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
     def keys(self):
@@ -210,7 +210,7 @@ class Console:
         title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if format_linebreaks:
-            clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True)
+            clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
             prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
             prompt_lst = (item for lst in prompt_lst for item in (lst if isinstance(lst, list) else [lst]))
             prompt = f"\n{' ' * title_len}\t".join(Console.__add_back_removed_parts(list(prompt_lst), removals))
