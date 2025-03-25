@@ -4,8 +4,9 @@ from .xx_path import Path
 import os as _os
 
 
-class SameContentFileExistsError(FileExistsError):
-    pass
+# YAPF: disable
+class SameContentFileExistsError(FileExistsError): ...
+# YAPF: enable
 
 
 class File:
@@ -40,24 +41,3 @@ class File:
             f.write(content)
         full_path = _os.path.abspath(file)
         return full_path
-
-    @staticmethod
-    def extend_or_make_path(
-        file: str,
-        search_in: str | list[str] = None,
-        prefer_base_dir: bool = True,
-        correct_paths: bool = False,
-    ) -> str:
-        """Tries to find the file and extend the path to be absolute and if the file was not found:\n
-        Generate the absolute path to the file in the CWD or the running program's base-directory.\n
-        ----------------------------------------------------------------------------------------------
-        If the `file` is not found in predefined directories, it will be searched in the `search_in`
-        directory/directories. If the file is still not found, it will return the path to the file in
-        the base-dir per default or to the file in the CWD if `prefer_base_dir` is set to `False`.\n
-        ----------------------------------------------------------------------------------------------
-        If `correct_paths` is true, it is possible to have typos in the `search_in` path/s and it
-        will still find the file if it is under one of those paths."""
-        try:
-            return Path.extend(file, search_in, raise_error=True, correct_path=correct_paths)
-        except FileNotFoundError:
-            return _os.path.join(Path.script_dir, file) if prefer_base_dir else _os.path.join(_os.getcwd(), file)

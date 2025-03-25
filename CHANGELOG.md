@@ -21,6 +21,8 @@
 * the methods `Json.update()` and `Data.set_value_by_path_id()` now intake a dictionary as `update_values` param, instead of a list of strings
 * added a new param to the methods `FormatCodes.remove_ansi()` and `FormatCodes.remove_formatting()`:<br>
   <code>_ignore_linebreaks: *bool* = False</code> whether to include linebreaks in the removal positions or not
+* renamed param `correct_path` in `Path.extend()` and param `correct_paths` in `File.extend_or_make_path()` to `use_closest_match`, since this name describes its functionality better
+* moved the method `extend_or_make_path()` from the `xx_file` module to the `xx_path` module and renamed it to `extend_or_make()`
 
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)

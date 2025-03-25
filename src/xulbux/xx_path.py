@@ -5,10 +5,11 @@ import shutil as _shutil
 import sys as _sys
 import os as _os
 
+from regex import P
+
 
 # YAPF: disable
-class ProcessNotFoundError(Exception):
-    pass
+class PathNotFoundError(FileNotFoundError): ...
 
 class _Cwd:
     def __get__(self, obj, owner=None):
@@ -39,9 +40,26 @@ class Path:
     """The path to the directory of the current script."""
 
     @staticmethod
-    def extend(path: str, search_in: str | list[str] = None, raise_error: bool = False, correct_path: bool = False) -> str:
-        if path in (None, ""):
-            return path
+    def extend(
+        rel_path: str,
+        search_in: str | list[str] = None,
+        raise_error: bool = False,
+        use_closest_match: bool = False,
+    ) -> Optional[str]:
+        """Tries to locate and extend a relative path to an absolute path.\n
+        --------------------------------------------------------------------------------
+        If the `rel_path` couldn't be located in predefined directories, it will be
+        searched in the `search_in` directory/s. If the `rel_path` is still not found,
+        it returns `None` or raises a `PathNotFoundError` if `raise_error` is true.\n
+        --------------------------------------------------------------------------------
+        If `use_closest_match` is true, it is possible to have typos in the `search_in`
+        path/s and it will still find the file if it is under one of those paths."""
+        if rel_path in (None, ""):
+            if raise_error:
+                raise PathNotFoundError("Path is empty.")
+            return None
+        elif _os.path.isabs(rel_path):
+            return rel_path
 
         def get_closest_match(dir: str, part: str) -> Optional[str]:
             try:
@@ -56,7 +74,7 @@ class Path:
             for part in parts:
                 if _os.path.isfile(current):
                     return current
-                closest_match = get_closest_match(current, part) if correct_path else part
+                closest_match = get_closest_match(current, part) if use_closest_match else part
                 current = _os.path.join(current, closest_match) if closest_match else None
                 if current is None:
                     return None
@@ -71,13 +89,13 @@ class Path:
                     parts[i] = _os.environ[parts[i].upper()]
             return "".join(parts)
 
-        path = _os.path.normpath(expand_env_path(path))
-        if _os.path.isabs(path):
-            drive, rel_path = _os.path.splitdrive(path)
+        rel_path = _os.path.normpath(expand_env_path(rel_path))
+        if _os.path.isabs(rel_path):
+            drive, rel_path = _os.path.splitdrive(rel_path)
             rel_path = rel_path.lstrip(_os.sep)
             search_dirs = (drive + _os.sep) if drive else [_os.sep]
         else:
-            rel_path = path.lstrip(_os.sep)
+            rel_path = rel_path.lstrip(_os.sep)
             base_dir = Path.script_dir
             search_dirs = (
                 _os.getcwd(),
@@ -92,15 +110,42 @@ class Path:
             full_path = _os.path.join(search_dir, rel_path)
             if _os.path.exists(full_path):
                 return full_path
-            match = find_path(search_dir, path_parts) if correct_path else None
+            match = find_path(search_dir, path_parts) if use_closest_match else None
             if match:
                 return match
         if raise_error:
-            raise FileNotFoundError(f"Path '{path}' not found in specified directories.")
-        return _os.path.join(search_dirs[0], rel_path)
+            raise PathNotFoundError(f"Path '{rel_path}' not found in specified directories.")
+        return None
+
+    @staticmethod
+    def extend_or_make(
+        rel_path: str,
+        search_in: str | list[str] = None,
+        prefer_script_dir: bool = True,
+        use_closest_match: bool = False,
+    ) -> str:
+        """Tries to locate and extend a relative path to an absolute path, and if the `rel_path`
+        couldn't be located, it generates a path, as if it was located.\n
+        -----------------------------------------------------------------------------------------
+        If the `rel_path` couldn't be located in predefined directories, it will be searched in
+        the `search_in` directory/s. If the `rel_path` is still not found, it will makes a path
+        that points to where the `rel_path` would be in the script directory, even though the
+        `rel_path` doesn't exist there. If `prefer_script_dir` is false, it will instead make a
+        path that points to where the `rel_path` would be in the CWD.\n
+        -----------------------------------------------------------------------------------------
+        If `use_closest_match` is true, it is possible to have typos in the `search_in` path/s
+        and it will still find the file if it is under one of those paths."""
+        try:
+            return Path.extend(rel_path, search_in, raise_error=True, use_closest_match=use_closest_match)
+        except PathNotFoundError:
+            return _os.path.join(Path.script_dir, rel_path) if prefer_script_dir else _os.path.join(_os.getcwd(), rel_path)
 
     @staticmethod
     def remove(path: str, only_content: bool = False) -> None:
+        """Removes the directory or the directory's content at the specified path.\n
+        -----------------------------------------------------------------------------
+        Normally it removes the directory and its content, but if `only_content` is
+        true, the directory is kept and only its contents are removed."""
         if not _os.path.exists(path):
             return None
         if not only_content:

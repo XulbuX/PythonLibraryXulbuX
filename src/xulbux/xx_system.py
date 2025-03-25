@@ -8,9 +8,6 @@ import os as _os
 
 
 # YAPF: disable
-class ProcessNotFoundError(Exception):
-    pass
-
 class _IsElevated:
     def __get__(self, obj, owner=None):
         try:

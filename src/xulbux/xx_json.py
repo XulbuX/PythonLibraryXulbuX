@@ -1,5 +1,6 @@
 from .xx_data import Data
 from .xx_file import File
+from .xx_path import Path
 
 from typing import Any
 import json as _json
@@ -24,7 +25,7 @@ class Json:
         additionally. (returns: `[processed_json, original_json]`)"""
         if not json_file.endswith(".json"):
             json_file += ".json"
-        file_path = File.extend_or_make_path(json_file, prefer_base_dir=True)
+        file_path = Path.extend_or_make(json_file, prefer_script_dir=True)
         with open(file_path, "r") as f:
             content = f.read()
         try:
@@ -55,7 +56,7 @@ class Json:
         To always overwrite the file, set the `force` parameter to `True`."""
         if not json_file.endswith(".json"):
             json_file += ".json"
-        file_path = File.extend_or_make_path(json_file, prefer_base_dir=True)
+        file_path = Path.extend_or_make(json_file, prefer_script_dir=True)
         File.create(
             file=file_path,
             content=Data.to_str(data, indent, compactness, as_json=True),
