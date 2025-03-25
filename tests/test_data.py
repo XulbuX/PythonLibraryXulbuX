@@ -1,6 +1,5 @@
 from xulbux import Data
 
-
 # ! DON'T CHANGE THIS DATA !
 d_comments = {
     "key1": [
@@ -29,7 +28,9 @@ d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": 
 
 
 def test_remove_comments():
-    assert Data.remove_comments(d_comments, comment_sep="__") == {
+    assert Data.remove_comments(
+        d_comments, comment_sep="__"
+    ) == {
         "key1": ["value1", "value2", "val__ue3"],
         "key3": None,
     }
@@ -46,6 +47,6 @@ def test_path_id():
     assert id2 == "1>012"
     assert Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
     assert Data.get_value_by_path_id(d1_path_id, id2) == "celery"
-    assert Data.set_value_by_path_id(d2_path_id, ["1>001::NEW1", "1>012::NEW2"]) == {
+    assert Data.set_value_by_path_id(d2_path_id, {id1: "NEW1", id2: "NEW2"}) == {
         "school": {"material": ["pencil", "NEW1", "rubber"], "subjects": ["math", "science", "NEW2"]}
     }
