@@ -72,34 +72,35 @@ class Json:
         path_sep: str = "->",
     ) -> None:
         """Update single/multiple values inside JSON files, without needing to know the rest of the data.\n
-        ------------------------------------------------------------------------------------------------------
-        The param `json_file` is the path to the JSON file or just the name of the JSON file to be updated.\n
-        ------------------------------------------------------------------------------------------------------
-        The param `update_values` is a dictionary where the keys are paths to the data to update and the
-        values are the new values to set, for example in this JSON data:
+        ----------------------------------------------------------------------------------------------------
+        The `update_values` parameter is a dictionary, where the keys are the paths to the data to update,
+        and the values are the new values to set.\n
+        Example: For this JSON data:
         ```python
         {
-          'healthy': {
-            'fruit': ['apples', 'bananas', 'oranges'],
-            'vegetables': ['carrots', 'broccoli', 'celery']
-          }
+            "healthy": {
+                "fruit": ["apples", "bananas", "oranges"],
+                "vegetables": ["carrots", "broccoli", "celery"]
+            }
         }
         ```
         ... the `update_values` dictionary could look like this:
         ```python
         {
-            "healthy->fruit->0": "strawberries",  # UPDATE A SPECIFIC LIST ITEM
-            "healthy->vegetables": ["new value", "other new value"]  # REPLACE AN ENTIRE LIST
+            # CHANGE VALUE "apples" TO "strawberries"
+            "healthy->fruit->0": "strawberries",
+            # CHANGE VALUE UNDER KEY "vegetables" TO [1, 2, 3]
+            "healthy->vegetables": [1, 2, 3]
         }
         ```
-        ... if you want to change the value of `'apples'` to `'strawberries'`, you can use
-        `{ "healthy->fruit->apples": "strawberries" }` or if you don't know that the value to update is
-        `apples` you can also use the index of the value: `{ "healthy->fruit->0": "strawberries" }`.\n
-        ⇾ If the path from `update_values` doesn't exist, it will be created.\n
-        ------------------------------------------------------------------------------------------------------
+        In this example, if you want to change the value of `"apples"`, you can use `healthy->fruit->apples`
+        as the value-path. If you don't know that the first list item is `"apples"`, you can use the items
+        list index inside the value-path, so `healthy->fruit->0`.\n
+        ⇾ If the given value-path doesn't exist, it will be created.\n
+        -----------------------------------------------------------------------------------------------------
         If only `comment_start` is found at the beginning of an item, the whole item is counted as a comment
-        and therefore ignored. If `comment_start` and `comment_end` are found inside an item, the the section
-        from `comment_start` to `comment_end` is ignored."""
+        and therefore completely ignored. If `comment_start` and `comment_end` are found inside an item, the
+        section from `comment_start` to `comment_end` is counted as a comment and ignored."""
         processed_data, data = Json.read(json_file, comment_start, comment_end, return_original=True)
         update = {}
         for value_path, new_value in update_values.items():
