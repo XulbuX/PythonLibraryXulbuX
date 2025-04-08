@@ -93,7 +93,7 @@ class Regex:
         - `r` 0-255 (int: red)
         - `g` 0-255 (int: green)
         - `b` 0-255 (int: blue)
-        - `a` 0-1 (float: opacity)\n
+        - `a` 0.0-1.0 (float: opacity)\n
         ----------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number
         can be used to separate the RGBA values, including just a space."""
@@ -126,7 +126,7 @@ class Regex:
         - `h` 0-360 (int: hue)
         - `s` 0-100 (int: saturation)
         - `l` 0-100 (int: lightness)
-        - `a` 0-1 (float: opacity)\n
+        - `a` 0.0-1.0 (float: opacity)\n
         ----------------------------------------------------------------------------
         If the `fix_sep` is set to nothing, any char that is not a letter or number
         can be used to separate the HSLA values, including just a space."""
@@ -134,9 +134,9 @@ class Regex:
             fix_sep = r"[^0-9A-Z]"
         else:
             fix_sep = _re.escape(fix_sep)
-        hsl_part = rf"""((?:0*(?:360|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])))
-            (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))
-            (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))"""
+        hsl_part = rf"""((?:0*(?:360|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9]))(?:\s*°)?)
+            (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9]))(?:\s*%)?)
+            (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9]))(?:\s*%)?)"""
         return (
             rf"""(?ix)
             (?:hsl|hsla)?\s*(?:\(?\s*{hsl_part}

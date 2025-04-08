@@ -151,10 +151,15 @@ minversion = "7.0"
 addopts = "-ra -q"
 pythonpath = ["src"]
 testpaths = [
-  "tests/test_console_info.py",
-  "tests/test_color_types.py",
+  "tests/test_code.py",
   "tests/test_color.py",
+  "tests/test_color_types.py",
+  "tests/test_console.py",
   "tests/test_data.py",
-  "tests/test_env_vars.py",
+  "tests/test_env_path.py",
+  "tests/test_file.py",
   "tests/test_format_codes.py",
+  "tests/test_json.py",
+  "tests/test_path.py",
+  "tests/test_string.py",
 ]

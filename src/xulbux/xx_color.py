@@ -97,12 +97,7 @@ class rgba:
     def __eq__(self, other: "rgba") -> bool:
         if not isinstance(other, rgba):
             return False
-        return (self.r, self.g, self.b, self.a) == (
-            other[0],
-            other[1],
-            other[2],
-            other[3],
-        )
+        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
@@ -156,9 +151,15 @@ class rgba:
             self.a = 1 - self.a
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
-    def grayscale(self) -> "rgba":
-        """Converts the color to grayscale using the luminance formula"""
-        self.r = self.g = self.b = Color.luminance(self.r, self.g, self.b)
+    def grayscale(self, method: str = "wcag2") -> "rgba":
+        """Converts the color to grayscale using the luminance formula.\n
+        ------------------------------------------------------------------
+        The `method` is the luminance calculation method to use:
+        - `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+        - `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
+        - `"simple"` Simple arithmetic mean (less accurate)
+        - `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        self.r = self.g = self.b = Color.luminance(self.r, self.g, self.b, method=method)
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
     def blend(self, other: "rgba", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
@@ -286,20 +287,15 @@ class hsla:
         return ((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))[index]
 
     def __repr__(self) -> str:
-        return f'hsla({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
+        return f'hsla({self.h}°, {self.s}%, {self.l}%{"" if self.a is None else f", {self.a}"})'
 
     def __str__(self) -> str:
-        return f'({self.h}, {self.s}, {self.l}{"" if self.a is None else f", {self.a}"})'
+        return f'({self.h}°, {self.s}%, {self.l}%{"" if self.a is None else f", {self.a}"})'
 
     def __eq__(self, other: "hsla") -> bool:
         if not isinstance(other, hsla):
             return False
-        return (self.h, self.s, self.l, self.a) == (
-            other[0],
-            other[1],
-            other[2],
-            other[3],
-        )
+        return (self.h, self.s, self.l, self.a) == (other.h, other.s, other.l, other.a)
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `'h'`, `'s'`, `'l'` and optionally `'a'`"""
@@ -363,9 +359,15 @@ class hsla:
             self.a = 1 - self.a
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
-    def grayscale(self) -> "hsla":
-        """Converts the color to grayscale using the luminance formula"""
-        l = Color.luminance(*self._hsl_to_rgb(self.h, self.s, self.l))
+    def grayscale(self, method: str = "wcag2") -> "hsla":
+        """Converts the color to grayscale using the luminance formula.\n
+        ------------------------------------------------------------------
+        The `method` is the luminance calculation method to use:
+        - `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+        - `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
+        - `"simple"` Simple arithmetic mean (less accurate)
+        - `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        l = Color.luminance(*self._hsl_to_rgb(self.h, self.s, self.l), method=method)
         self.h, self.s, self.l, _ = rgba(l, l, l, _validate=False).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
@@ -520,14 +522,10 @@ class hexa:
         return f'#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"}'
 
     def __eq__(self, other: "hexa") -> bool:
+        """Returns whether the other color is equal to this one."""
         if not isinstance(other, hexa):
             return False
-        return (self.r, self.g, self.b, self.a) == (
-            other[0],
-            other[1],
-            other[2],
-            other[3],
-        )
+        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with hex string values for keys `'r'`, `'g'`, `'b'` and optionally `'a'`"""
@@ -540,9 +538,9 @@ class hexa:
             )
         )
 
-    def values(self) -> tuple:
+    def values(self, round_alpha: bool = True) -> tuple:
         """Returns the color components as separate values `r, g, b, a`"""
-        return self.r, self.g, self.b, self.a
+        return self.r, self.g, self.b, None if self.a is None else (round(self.a, 2) if round_alpha else self.a)
 
     def to_rgba(self, round_alpha: bool = True) -> "rgba":
         """Returns the color as a `rgba()` color"""
@@ -594,9 +592,15 @@ class hexa:
             self.a = 1 - self.a
         return hexa("", self.r, self.g, self.b, self.a)
 
-    def grayscale(self) -> "hexa":
-        """Converts the color to grayscale using the luminance formula"""
-        self.r = self.g = self.b = Color.luminance(self.r, self.g, self.b)
+    def grayscale(self, method: str = "wcag2") -> "hexa":
+        """Converts the color to grayscale using the luminance formula.\n
+        ------------------------------------------------------------------
+        The `method` is the luminance calculation method to use:
+        - `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+        - `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
+        - `"simple"` Simple arithmetic mean (less accurate)
+        - `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        self.r = self.g = self.b = Color.luminance(self.r, self.g, self.b, method=method)
         return hexa("", self.r, self.g, self.b, self.a)
 
     def blend(self, other: "hexa", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
@@ -647,14 +651,20 @@ class Color:
                         0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
                         and (0 <= color[3] <= 1 or color[3] is None)
                     )
-                return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
+                elif len(color) == 3:
+                    return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
+                else:
+                    return False
             elif isinstance(color, dict):
                 if allow_alpha and Color.has_alpha(color):
                     return (
                         0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
                         and (0 <= color["a"] <= 1 or color["a"] is None)
                     )
-                return 0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
+                elif len(color) == 3:
+                    return 0 <= color["r"] <= 255 and 0 <= color["g"] <= 255 and 0 <= color["b"] <= 255
+                else:
+                    return False
             elif isinstance(color, str):
                 return bool(_re.fullmatch(Regex.rgba_str(allow_alpha=allow_alpha), color))
             return False
@@ -672,16 +682,20 @@ class Color:
                         0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
                         and (0 <= color[3] <= 1 or color[3] is None)
                     )
-                else:
+                elif len(color) == 3:
                     return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
+                else:
+                    return False
             elif isinstance(color, dict):
                 if allow_alpha and Color.has_alpha(color):
                     return (
                         0 <= color["h"] <= 360 and 0 <= color["s"] <= 100 and 0 <= color["l"] <= 100
                         and (0 <= color["a"] <= 1 or color["a"] is None)
                     )
-                else:
+                elif len(color) == 3:
                     return 0 <= color["h"] <= 360 and 0 <= color["s"] <= 100 and 0 <= color["l"] <= 100
+                else:
+                    return False
             elif isinstance(color, str):
                 return bool(_re.fullmatch(Regex.hsla_str(allow_alpha=allow_alpha), color))
         except Exception:
@@ -691,9 +705,9 @@ class Color:
     def is_valid_hexa(color: str | int, allow_alpha: bool = True, get_prefix: bool = False) -> bool | tuple[bool, str]:
         try:
             if isinstance(color, hexa):
-                return (True, "#")
+                return (True, "#") if get_prefix else True
             elif isinstance(color, int):
-                is_valid = 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
+                is_valid = 0x000000 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
                 return (is_valid, "0x") if get_prefix else is_valid
             elif isinstance(color, str):
                 color, prefix = ((color[1:], "#") if color.startswith("#") else
@@ -705,7 +719,7 @@ class Color:
 
     @staticmethod
     def is_valid(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
-        return (
+        return bool(
             Color.is_valid_rgba(color, allow_alpha) or Color.is_valid_hsla(color, allow_alpha)
             or Color.is_valid_hexa(color, allow_alpha)
         )
@@ -777,7 +791,7 @@ class Color:
         --------------------------------------------------------------------------------------------------
         If `only_first` is `True` only the first found color will be returned (not as a list)."""
         if only_first:
-            match = _re.search(Regex.rgb_str(allow_alpha=True), string)
+            match = _re.search(Regex.rgba_str(allow_alpha=True), string)
             if not match:
                 return None
             m = match.groups()
@@ -789,7 +803,7 @@ class Color:
                 _validate=False,
             )
         else:
-            matches = _re.findall(Regex.rgb_str(allow_alpha=True), string)
+            matches = _re.findall(Regex.rgba_str(allow_alpha=True), string)
             if not matches:
                 return None
             return [
@@ -865,28 +879,47 @@ class Color:
             raise ValueError(f"Invalid HEX integer '0x{hex_str}': expected in range [0x000000, 0xFFFFFF]")
 
     @staticmethod
-    def luminance(r: int, g: int, b: int, output_type: type = None) -> int | float:
-        """Gets the colors luminance using the luminance formula.\n
-        ------------------------------------------------------------
-        The param `output_type` can be set to:
-        - `int`   =⠀integer in [0, 100]
-        - `float` =⠀float in [0.0, 1.0]
-        - `None`  =⠀integer in [0, 255]"""
+    def luminance(r: int, g: int, b: int, output_type: type = None, method: str = "wcag2") -> int | float:
+        """Calculates the relative luminance of a color according to various standards.\n
+        ----------------------------------------------------------------------------------
+        The `output_type` controls the range of the returned luminance value:
+        - `int` returns integer in [0, 100]
+        - `float` returns float in [0.0, 1.0]
+        - `None` returns integer in [0, 255]\n
+        The `method` is the luminance calculation method to use:
+        - `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+        - `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
+        - `"simple"` Simple arithmetic mean (less accurate)
+        - `"bt601"` ITU-R BT.601 standard (older TV standard)"""
         r, g, b = r / 255.0, g / 255.0, b / 255.0
-        if r < 0.03928:
-            r = r / 12.92
+        if method == "simple":
+            luminance = (r + g + b) / 3
+        elif method == "bt601":
+            luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        elif method == "wcag3":
+            r = Color._linearize_srgb(r)
+            g = Color._linearize_srgb(g)
+            b = Color._linearize_srgb(b)
+            luminance = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b
         else:
-            r = ((r + 0.055) / 1.055)**2.4
-        if g < 0.03928:
-            g = g / 12.92
+            r = Color._linearize_srgb(r)
+            g = Color._linearize_srgb(g)
+            b = Color._linearize_srgb(b)
+            luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        if output_type == int:
+            return round(luminance * 100)
+        elif output_type == float:
+            return luminance
         else:
-            g = ((g + 0.055) / 1.055)**2.4
-        if b < 0.03928:
-            b = b / 12.92
+            return round(luminance * 255)
+
+    @staticmethod
+    def _linearize_srgb(c: float) -> float:
+        """Helper method to linearize sRGB component following the WCAG standard."""
+        if c <= 0.03928:
+            return c / 12.92
         else:
-            b = ((b + 0.055) / 1.055)**2.4
-        l = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return round(l * 100) if isinstance(output_type, int) else round(l * 255) if output_type is None else l
+            return ((c + 0.055) / 1.055)**2.4
 
     @staticmethod
     def text_color_for_on_bg(text_bg_color: rgba | hexa) -> rgba | hexa:

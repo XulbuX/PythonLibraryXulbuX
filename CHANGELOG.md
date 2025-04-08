@@ -23,6 +23,8 @@
   <code>_ignore_linebreaks: *bool* = False</code> whether to include linebreaks in the removal positions or not
 * renamed param `correct_path` in `Path.extend()` and param `correct_paths` in `File.extend_or_make_path()` to `use_closest_match`, since this name describes its functionality better
 * moved the method `extend_or_make_path()` from the `xx_file` module to the `xx_path` module and renamed it to `extend_or_make()`
+* added a new param to method `Color.luminance()` and to the `.grayscale()` method of all color types:
+  - <code>method: *str* = "wcag2"</code> the luminance calculation method to use
 
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)
