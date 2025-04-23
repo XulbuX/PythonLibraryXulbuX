@@ -11,15 +11,33 @@ class SameContentFileExistsError(FileExistsError): ...
 class File:
 
     @staticmethod
-    def rename_extension(file: str, new_extension: str, camel_case_filename: bool = False) -> str:
+    def rename_extension(
+        file: str,
+        new_extension: str,
+        full_extension: bool = False,
+        camel_case_filename: bool = False,
+    ) -> str:
         """Rename the extension of a file.\n
         --------------------------------------------------------------------------
+        If `full_extension` is true, everything after the first dot in the
+        filename will be treated as the extension to replace. Otherwise, only the
+        part after the last dot is replaced.\n
         If the `camel_case_filename` parameter is true, the filename will be made
         CamelCase in addition to changing the files extension."""
-        directory, filename_with_ext = _os.path.split(file)
-        filename = filename_with_ext.split(".")[0]
+        normalized_file = _os.path.normpath(file)
+        directory, filename_with_ext = _os.path.split(normalized_file)
+        if full_extension:
+            try:
+                first_dot_index = filename_with_ext.index('.')
+                filename = filename_with_ext[:first_dot_index]
+            except ValueError:
+                filename = filename_with_ext
+        else:
+            filename, _ = _os.path.splitext(filename_with_ext)
         if camel_case_filename:
             filename = String.to_camel_case(filename)
+        if new_extension and not new_extension.startswith('.'):
+            new_extension = '.' + new_extension
         return _os.path.join(directory, f"{filename}{new_extension}")
 
     @staticmethod
