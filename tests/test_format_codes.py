@@ -23,20 +23,8 @@ reset_underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_underline', '_u')]
 
 def test_codes_to_ansi():
     assert (
-        FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]", default_color="#FFF")
-        == f"{default}{bold}{black}{bg_red}"
-        + "He"
-        + invert
-        + "l"
-        + reset_invert
-        + "lo"
-        + f"{reset_bold}{reset_color}{reset_bg}"
-        + " ["
-        + f"{italic}{underline}{orange}"
-        + "world"
-        + f"{reset_italic}{reset_underline}{reset_color}"
-        + "]"
-        + default
-        + "!"
-        + reset
+        FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
+                            default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
+        + "lo" + f"{reset_bold}{reset_color}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
+        + f"{reset_italic}{reset_underline}{reset_color}" + "]" + default + "!" + reset
     )
