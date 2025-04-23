@@ -486,7 +486,7 @@ class Console:
         last_console_width = 0
 
         def update_display(console_width: int) -> None:
-            nonlocal select_all, last_line_count, last_console_width
+            nonlocal last_line_count, last_console_width
             lines = String.split_count(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
             line_count = len(lines)
             if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
