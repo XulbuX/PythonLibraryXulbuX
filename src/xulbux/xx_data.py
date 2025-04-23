@@ -346,7 +346,7 @@ class Data:
         """Updates the value/s from `update_values` in the `data`.\n
         --------------------------------------------------------------------------------
         Input a list, tuple or dict as `data`, along with `update_values`, which is a
-        dictionary where keys are path IDs and values are the new values to insert: 
+        dictionary where keys are path IDs and values are the new values to insert:
            { "1>": "new value", "path_id2": ["new value 1", "new value 2"], ... }
         The path IDs should have been created using `Data.get_path_id()`.\n
         --------------------------------------------------------------------------------

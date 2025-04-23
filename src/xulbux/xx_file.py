@@ -1,5 +1,4 @@
 from .xx_string import String
-from .xx_path import Path
 
 import os as _os
 

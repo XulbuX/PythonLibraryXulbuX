@@ -5,8 +5,6 @@ import shutil as _shutil
 import sys as _sys
 import os as _os
 
-from regex import P
-
 
 # YAPF: disable
 class PathNotFoundError(FileNotFoundError): ...
