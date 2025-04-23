@@ -77,8 +77,9 @@ class Args:
         """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
     def items(self):
-        """Returns the argument aliases and results as `dict_items([...])`."""
-        return vars(self).items()
+        """Yields tuples of `(alias, {'exists': bool, 'value': Any})`."""
+        for key, value in self.__iter__():
+            yield (key, value)
 # YAPF: enable
 
 
