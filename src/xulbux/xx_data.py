@@ -1,3 +1,4 @@
+from ast import In
 from ._consts_ import COLOR
 from .xx_format_codes import FormatCodes
 from .xx_string import String
@@ -9,6 +10,7 @@ import re as _re
 
 
 DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
+IndexIterable: TypeAlias = Union[list, tuple, set, frozenset]
 
 
 class Data:
@@ -42,16 +44,23 @@ class Data:
     @staticmethod
     def chars_count(data: DataStructure) -> int:
         """The sum of all the characters amount including the keys in dictionaries."""
+        chars_count = 0
         if isinstance(data, dict):
-            return sum(len(str(k)) + len(str(v)) for k, v in data.items())
-        return sum(len(str(item)) for item in data)
+            for k, v in data.items():
+                chars_count += len(str(k)) + (Data.chars_count(v) if isinstance(v, DataStructure) else len(str(v)))
+        elif isinstance(data, IndexIterable):
+            for item in data:
+                chars_count += Data.chars_count(item) if isinstance(item, DataStructure) else len(str(item))
+        return chars_count
 
     @staticmethod
     def strip(data: DataStructure) -> DataStructure:
         """Removes leading and trailing whitespaces from the data structure's items."""
         if isinstance(data, dict):
-            return {k: Data.strip(v) for k, v in data.items()}
-        return type(data)(map(Data.strip, data))
+            return {k.strip(): Data.strip(v) if isinstance(v, DataStructure) else v.strip() for k, v in data.items()}
+        if isinstance(data, IndexIterable):
+            return type(data)(Data.strip(item) if isinstance(item, DataStructure) else item.strip() for item in data)
+        return data
 
     @staticmethod
     def remove_empty_items(data: DataStructure, spaces_are_empty: bool = False) -> DataStructure:
@@ -59,18 +68,15 @@ class Data:
         If `spaces_are_empty` is true, it will count items with only spaces as empty."""
         if isinstance(data, dict):
             return {
-                k: (
-                    v if not isinstance(v,
-                                        (list, tuple, set, frozenset, dict)) else Data.remove_empty_items(v, spaces_are_empty)
-                )
+                k: (v if not isinstance(v, DataStructure) else Data.remove_empty_items(v, spaces_are_empty))
                 for k, v in data.items() if not String.is_empty(v, spaces_are_empty)
             }
-        if isinstance(data, (list, tuple, set, frozenset)):
+        if isinstance(data, IndexIterable):
             return type(data)(
-                item for item in ((
-                    item if not isinstance(item, (list, tuple, set, frozenset,
-                                                  dict)) else Data.remove_empty_items(item, spaces_are_empty)
-                ) for item in data if not String.is_empty(item, spaces_are_empty)) if item not in ((), {}, set(), frozenset())
+                item for item in
+                ((item if not isinstance(item, DataStructure) else Data.remove_empty_items(item, spaces_are_empty))
+                 for item in data if not String.is_empty(item, spaces_are_empty))
+                if item not in ([], (), {}, set(), frozenset())
             )
         return data
 
@@ -78,17 +84,25 @@ class Data:
     def remove_duplicates(data: DataStructure) -> DataStructure:
         """Removes all duplicates from the data structure."""
         if isinstance(data, dict):
-            return {k: Data.remove_duplicates(v) for k, v in data.items()}
+            return {k: Data.remove_duplicates(v) if isinstance(v, DataStructure) else v for k, v in data.items()}
         if isinstance(data, (list, tuple)):
-            return type(data)(
-                Data.remove_duplicates(item) if isinstance(item, (list, tuple, set, frozenset, dict)) else item
-                for item in dict.fromkeys(data)
-            )
+            result = []
+            for item in data:
+                processed_item = Data.remove_duplicates(item) if isinstance(item, DataStructure) else item
+                is_duplicate = False
+                for existing_item in result:
+                    if processed_item == existing_item:
+                        is_duplicate = True
+                        break
+                if not is_duplicate:
+                    result.append(processed_item)
+            return type(data)(result)
         if isinstance(data, (set, frozenset)):
-            return type(data)(
-                Data.remove_duplicates(item) if isinstance(item, (list, tuple, set, frozenset, dict)) else item
-                for item in data
-            )
+            processed_elements = set()
+            for item in data:
+                processed_item = Data.remove_duplicates(item) if isinstance(item, DataStructure) else item
+                processed_elements.add(processed_item)
+            return type(data)(processed_elements)
         return data
 
     @staticmethod
@@ -167,7 +181,7 @@ class Data:
                     k: v
                     for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
                 }
-            if isinstance(item, (list, tuple, set, frozenset)):
+            if isinstance(item, IndexIterable):
                 processed = (v for v in map(process_item, item) if v is not None)
                 return type(item)(processed)
             if isinstance(item, str):
@@ -283,7 +297,7 @@ class Data:
                         if ignore_not_found:
                             return None
                         raise KeyError(f"Key '{key}' not found in dict.")
-                elif isinstance(data_obj, (list, tuple, set, frozenset)):
+                elif isinstance(data_obj, IndexIterable):
                     try:
                         idx = int(key)
                         data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
@@ -328,7 +342,7 @@ class Data:
                         return keys[idx]
                     parent = data
                     data = data[keys[idx]]
-                elif isinstance(data, (list, tuple, set, frozenset)):
+                elif isinstance(data, IndexIterable):
                     if i == len(path) - 1 and get_key:
                         if parent is None or not isinstance(parent, dict):
                             raise ValueError("Cannot get key from a non-dict parent")
@@ -356,23 +370,20 @@ class Data:
         def update_nested(data: DataStructure, path: list[int], value: Any) -> DataStructure:
             if len(path) == 1:
                 if isinstance(data, dict):
-                    keys = list(data.keys())
-                    data = dict(data)
+                    keys, data = list(data.keys()), dict(data)
                     data[keys[path[0]]] = value
-                elif isinstance(data, (list, tuple, set, frozenset)):
-                    data = list(data)
+                elif isinstance(data, IndexIterable):
+                    was_t, data = type(data), list(data)
                     data[path[0]] = value
-                    data = type(data)(data)
+                    data = was_t(data)
             else:
                 if isinstance(data, dict):
-                    keys = list(data.keys())
-                    key = keys[path[0]]
-                    data = dict(data)
-                    data[key] = update_nested(data[key], path[1:], value)
-                elif isinstance(data, (list, tuple, set, frozenset)):
-                    data = list(data)
+                    keys, data = list(data.keys()), dict(data)
+                    data[keys[path[0]]] = update_nested(data[keys[path[0]]], path[1:], value)
+                elif isinstance(data, IndexIterable):
+                    was_t, data = type(data), list(data)
                     data[path[0]] = update_nested(data[path[0]], path[1:], value)
-                    data = type(data)(data)
+                    data = was_t(data)
             return data
 
         valid_entries = [(path_id, new_val) for path_id, new_val in update_values.items()]
@@ -433,7 +444,7 @@ class Data:
                 return format_dict(value, current_indent + indent)
             elif current_indent is not None and hasattr(value, "__dict__"):
                 return format_dict(value.__dict__, current_indent + indent)
-            elif current_indent is not None and isinstance(value, (list, tuple, set, frozenset)):
+            elif current_indent is not None and isinstance(value, IndexIterable):
                 return format_sequence(value, current_indent + indent)
             elif isinstance(value, (bytes, bytearray)):
                 obj_dict = Data.serialize_bytes(value)
