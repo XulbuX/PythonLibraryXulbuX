@@ -224,8 +224,8 @@ class Console:
             )
         else:
             FormatCodes.print(
-                f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title} [_]' +
-                f'\t{f"[{default_color}]" if default_color else ""}{prompt}[_]',
+                f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title} [_]'
+                + f'\t{f"[{default_color}]" if default_color else ""}{prompt}[_]',
                 default_color=default_color,
                 end=end,
             )
@@ -389,14 +389,14 @@ class Console:
         max_line_len = max(len(line) for line in unfmt_lines)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
         lines = [
-            f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full) +
-            "[_bg]" for line, unfmt in zip(lines, unfmt_lines)
+            f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
+            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[_bg]" for line, unfmt in zip(lines, unfmt_lines)
         ]
         pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
-            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n" +
-            _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines)) +
-            f"\n[bg:{box_bg_color}]{pady}[_bg]",
+            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n"
+            + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
+            + f"\n[bg:{box_bg_color}]{pady}[_bg]",
             default_color=default_color,
             sep="\n",
             end=end,

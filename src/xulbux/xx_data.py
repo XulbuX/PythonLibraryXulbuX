@@ -439,10 +439,10 @@ class Data:
                 obj_dict = Data.serialize_bytes(value)
                 return (
                     format_dict(obj_dict, current_indent + indent) if as_json else (
-                        f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}" +
-                        format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if syntax_hl else
-                        (k := next(iter(obj_dict))) +
-                        format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
+                        f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
+                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if syntax_hl else
+                        (k := next(iter(obj_dict)))
+                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
                     )
                 )
             elif isinstance(value, bool):
@@ -454,8 +454,8 @@ class Data:
             elif isinstance(value, complex):
                 return (
                     format_value(str(value).strip("()")) if as_json else (
-                        f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}" +
-                        format_sequence((value.real, value.imag), current_indent + indent)
+                        f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
+                        + format_sequence((value.real, value.imag), current_indent + indent)
                         if syntax_hl else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
                     )
                 )
@@ -464,11 +464,11 @@ class Data:
                 return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
             else:
                 return ((
-                    punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1] +
-                    punct['"'] if syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
+                    punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1]
+                    + punct['"'] if syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
                 ) if as_json else (
-                    punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1] +
-                    punct["'"] if syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
+                    punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1]
+                    + punct["'"] if syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
                 ))
 
         def should_expand(seq: list | tuple | dict) -> bool:
@@ -479,22 +479,22 @@ class Data:
             complex_types = (list, tuple, dict, set, frozenset) + ((bytes, bytearray) if as_json else ())
             complex_items = sum(1 for item in seq if isinstance(item, complex_types))
             return (
-                complex_items > 1 or (complex_items == 1 and len(seq) > 1)
-                or Data.chars_count(seq) + (len(seq) * len(sep)) > max_width
+                complex_items > 1 or (complex_items == 1 and len(seq) > 1) or Data.chars_count(seq) +
+                (len(seq) * len(sep)) > max_width
             )
 
         def format_dict(d: dict, current_indent: int) -> str:
             if not d or compactness == 2:
                 return (
-                    punct["{"] +
-                    sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
-                             for k, v in d.items()) + punct["}"]
+                    punct["{"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
+                               for k, v in d.items()) + punct["}"]
                 )
             if not should_expand(d.values()):
                 return (
-                    punct["{"] +
-                    sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
-                             for k, v in d.items()) + punct["}"]
+                    punct["{"]
+                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
+                               for k, v in d.items()) + punct["}"]
                 )
             items = []
             for k, val in d.items():
@@ -508,14 +508,14 @@ class Data:
             if not seq or compactness == 2:
                 return (
                     punct["["] + sep.join(format_value(item, current_indent)
-                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("] +
-                    sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
+                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
+                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             if not should_expand(seq):
                 return (
                     punct["["] + sep.join(format_value(item, current_indent)
-                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("] +
-                    sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
+                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
+                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
                 )
             items = [format_value(item, current_indent) for item in seq]
             formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
