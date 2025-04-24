@@ -21,10 +21,42 @@ reset_invert = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_inverse', '_invert', 
 reset_underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_underline', '_u')]}{ANSI.end}"
 
 
-def test_codes_to_ansi():
+def test_to_ansi():
     assert (
         FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
                             default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
         + "lo" + f"{reset_bold}{reset_color}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
         + f"{reset_italic}{reset_underline}{reset_color}" + "]" + default + "!" + reset
     )
+
+
+def test_escape_ansi():
+    ansi_string = f"{bold}Hello {orange}World!{reset}"
+    escaped_string = ansi_string.replace(ANSI.char, ANSI.escaped_char)
+    assert FormatCodes.escape_ansi(ansi_string) == escaped_string
+
+
+def test_remove_ansi():
+    ansi_string = f"{bold}Hello {orange}World!{reset}"
+    clean_string = "Hello World!"
+    assert FormatCodes.remove_ansi(ansi_string) == clean_string
+
+
+def test_remove_ansi_with_removals():
+    ansi_string = f"{bold}Hello {orange}World!{reset}"
+    clean_string = "Hello World!"
+    removals = ((0, bold), (6, orange), (12, reset))
+    assert FormatCodes.remove_ansi(ansi_string, get_removals=True) == (clean_string, removals)
+
+
+def test_remove_formatting():
+    format_string = "[b](Hello [#F87](World!))"
+    clean_string = "Hello World!"
+    assert FormatCodes.remove_formatting(format_string) == clean_string
+
+
+def test_remove_formatting_with_removals():
+    format_string = "[b](Hello [#F87](World!))"
+    clean_string = "Hello World!"
+    removals = ((0, bold), (6, orange), (12, reset_color), (12, reset_bold))
+    assert FormatCodes.remove_formatting(format_string, get_removals=True) == (clean_string, removals)

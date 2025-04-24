@@ -1,4 +1,5 @@
 from xulbux import Data
+
 import pytest
 
 # ! DON'T CHANGE THIS DATA !

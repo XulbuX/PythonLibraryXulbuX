@@ -1,7 +1,5 @@
 from xulbux import rgba, hexa, hsla
 
-####################### FUNCTIONS FOR CHECKING CUSTOM TYPE VALUES #######################
-
 
 def assert_rgba_equal(actual: rgba, expected: tuple):
     assert isinstance(actual, rgba)
@@ -22,9 +20,6 @@ def assert_hsla_equal(actual: hsla, expected: tuple):
 def assert_hexa_equal(actual: hexa, expected: str):
     assert isinstance(actual, hexa)
     assert str(actual) == expected
-
-
-######################################## TESTING ########################################
 
 
 def test_rgba_return_values():

@@ -1,5 +1,6 @@
 from xulbux import Console, Args, ArgResult
 from xulbux import xx_console
+
 from unittest.mock import MagicMock
 from collections import namedtuple
 import builtins
