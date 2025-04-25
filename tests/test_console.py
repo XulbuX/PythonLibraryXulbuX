@@ -87,7 +87,7 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
     for key, expected in expected_args_dict.items():
-        assert (key in args_result) == True
+        assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
         assert args_result[key].exists == expected["exists"]
         assert args_result[key].value == expected["value"]
