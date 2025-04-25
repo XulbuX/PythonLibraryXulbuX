@@ -91,16 +91,16 @@ class Path:
         if _os.path.isabs(rel_path):
             drive, rel_path = _os.path.splitdrive(rel_path)
             rel_path = rel_path.lstrip(_os.sep)
-            search_dirs = (drive + _os.sep) if drive else [_os.sep]
+            search_dirs = [(drive + _os.sep) if drive else _os.sep]
         else:
             rel_path = rel_path.lstrip(_os.sep)
             base_dir = Path.script_dir
-            search_dirs = (
+            search_dirs = [
                 _os.getcwd(),
                 base_dir,
                 _os.path.expanduser("~"),
                 _tempfile.gettempdir(),
-            )
+            ]
         if search_in:
             search_dirs.extend([search_in] if isinstance(search_in, str) else search_in)
         path_parts = rel_path.split(_os.sep)
@@ -136,7 +136,9 @@ class Path:
         try:
             return Path.extend(rel_path, search_in, raise_error=True, use_closest_match=use_closest_match)
         except PathNotFoundError:
-            return _os.path.join(Path.script_dir, rel_path) if prefer_script_dir else _os.path.join(_os.getcwd(), rel_path)
+            normalized_rel_path = _os.path.normpath(rel_path)
+            base = Path.script_dir if prefer_script_dir else _os.getcwd()
+            return _os.path.join(base, normalized_rel_path)
 
     @staticmethod
     def remove(path: str, only_content: bool = False) -> None:
@@ -147,7 +149,10 @@ class Path:
         if not _os.path.exists(path):
             return None
         if not only_content:
-            _shutil.rmtree(path)
+            if _os.path.isfile(path) or _os.path.islink(path):
+                _os.unlink(path)
+            elif _os.path.isdir(path):
+                _shutil.rmtree(path)
         elif _os.path.isdir(path):
             for filename in _os.listdir(path):
                 file_path = _os.path.join(path, filename)

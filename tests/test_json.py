@@ -1,5 +1,3 @@
-from re import S
-from token import COMMENT
 from xulbux.xx_file import SameContentFileExistsError
 from xulbux import Json
 
