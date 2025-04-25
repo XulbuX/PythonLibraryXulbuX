@@ -103,4 +103,6 @@ class String:
     @staticmethod
     def split_count(string: str, count: int) -> list[str]:
         """Will split the string every `count` characters."""
+        if count <= 0:
+            raise ValueError("Count must be greater than 0.")
         return [string[i:i + count] for i in range(0, len(string), count)]

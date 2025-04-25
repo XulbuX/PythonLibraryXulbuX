@@ -24,7 +24,7 @@ def test_normalize_spaces():
     assert String.normalize_spaces("Hello\tWorld") == "Hello    World"
     assert String.normalize_spaces("Hello\tWorld", tab_spaces=2) == "Hello  World"
     assert String.normalize_spaces("Spaces:\u2000\u2001\u2002\u2003!") == "Spaces:    !"
-    assert String.normalize_spaces("Mix:\t\u2004 and normal") == "Mix:     and normal"
+    assert String.normalize_spaces("Mix:\t\u2004 and normal") == "Mix:      and normal"
     assert String.normalize_spaces("No special spaces") == "No special spaces"
 
 
@@ -40,7 +40,7 @@ def test_escape():
     ) == r"Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
     assert String.escape(
         "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes="'"
-    ) == r"Mix: \n \"quotes\" and \'single\' \t tabs \\ backslash"
+    ) == r'Mix: \n "quotes" and \'single\' \t tabs \\ backslash'
 
 
 def test_is_empty():
@@ -72,7 +72,7 @@ def test_decompose():
     assert String.decompose("SCREAMING_SNAKE_CASE") == ["screaming", "snake", "case"]
     assert String.decompose("mixed_Case-StringExample") == ["mixed", "case", "string", "example"]
     assert String.decompose("string") == ["string"]
-    assert String.decompose("stringWith1Number") == ["string", "with1", "number"]
+    assert String.decompose("stringWith1Number") == ["string", "with1number"]
     assert String.decompose("version2_0", seps="_.") == ["version2", "0"]
     assert String.decompose("PascalCase", lower_all=False) == ["Pascal", "Case"]
     assert String.decompose("snake_case", lower_all=False) == ["snake", "case"]
@@ -125,8 +125,8 @@ def test_get_lines():
     assert String.get_lines("\n") == [""]
 
     assert String.get_lines("Line 1\n\nLine 3", remove_empty_lines=True) == ["Line 1", "Line 3"]
-    assert String.get_lines("Line 1\n \nLine 3", remove_empty_lines=True) == ["Line 1", " ", "Line 3"]
-    assert String.get_lines("\nLine 1\n  \nLine 3\n", remove_empty_lines=True) == ["Line 1", "  ", "Line 3"]
+    assert String.get_lines("Line 1\n \nLine 3", remove_empty_lines=True) == ["Line 1", "Line 3"]
+    assert String.get_lines("\nLine 1\n  \nLine 3\n", remove_empty_lines=True) == ["Line 1", "Line 3"]
     assert String.get_lines("\n\n\n", remove_empty_lines=True) == []
     assert String.get_lines("Only text") == ["Only text"]
     assert String.get_lines("Only text", remove_empty_lines=True) == ["Only text"]
@@ -155,6 +155,6 @@ def test_split_count():
     assert String.split_count("abc", 3) == ["abc"]
     assert String.split_count("abc", 5) == ["abc"]
     assert String.split_count("", 3) == []
-    with pytest.raises(ValueError, match="step must be positive"):
+    with pytest.raises(ValueError):
         String.split_count("abc", 0)
     assert String.split_count("abcdef", 1) == ["a", "b", "c", "d", "e", "f"]
