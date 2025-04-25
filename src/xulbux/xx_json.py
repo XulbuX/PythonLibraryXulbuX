@@ -103,7 +103,56 @@ class Json:
         and therefore completely ignored. If `comment_start` and `comment_end` are found inside an item, the
         section from `comment_start` to `comment_end` is counted as a comment and ignored."""
         processed_data, data = Json.read(json_file, comment_start, comment_end, return_original=True)
-        update = {}
+
+        def create_nested_path(data_obj: dict, path_keys: list[str], value: Any) -> dict:
+            current = data_obj
+            last_idx = len(path_keys) - 1
+            for i, key in enumerate(path_keys):
+                if i == last_idx:
+                    if isinstance(current, dict):
+                        current[key] = value
+                    elif isinstance(current, list) and key.isdigit():
+                        idx = int(key)
+                        while len(current) <= idx:
+                            current.append(None)
+                        current[idx] = value
+                    else:
+                        raise TypeError(f"Cannot set key '{key}' on {type(current).__name__}")
+                else:
+                    next_key = path_keys[i + 1]
+                    if isinstance(current, dict):
+                        if key not in current:
+                            current[key] = [] if next_key.isdigit() else {}
+                        current = current[key]
+                    elif isinstance(current, list) and key.isdigit():
+                        idx = int(key)
+                        while len(current) <= idx:
+                            current.append(None)
+                        if current[idx] is None:
+                            current[idx] = [] if next_key.isdigit() else {}
+                        current = current[idx]
+                    else:
+                        raise TypeError(f"Cannot navigate through {type(current).__name__}")
+            return data_obj
+
         for value_path, new_value in update_values.items():
-            update[Data.get_path_id(data=processed_data, value_paths=value_path, path_sep=path_sep)] = new_value
-        Json.create(json_file=json_file, data=Data.set_value_by_path_id(data, update), force=True)
+            try:
+                path_id = Data.get_path_id(
+                    data=processed_data,
+                    value_paths=value_path,
+                    path_sep=path_sep,
+                    ignore_not_found=True,
+                )
+                if path_id is not None:
+                    if 'update' not in locals():
+                        update = {}
+                    update[path_id] = new_value
+                else:
+                    keys = value_path.split(path_sep)
+                    data = create_nested_path(data, keys, new_value)
+            except Exception:
+                keys = value_path.split(path_sep)
+                data = create_nested_path(data, keys, new_value)
+        if 'update' in locals() and update:
+            data = Data.set_value_by_path_id(data, update)
+        Json.create(json_file=json_file, data=data, force=True)

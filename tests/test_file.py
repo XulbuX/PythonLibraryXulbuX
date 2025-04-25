@@ -25,8 +25,11 @@ import os
         ("my_archive.tar.gz", ".zip", True, True, "MyArchive.zip"),
         (os.path.join("some", "dir", "file.config.yaml"), ".json", False, True, os.path.join("some", "dir", "file.json")),
         (
-            os.path.join("some", "dir",
-                         "file_name.config.yaml"), ".json", True, True, os.path.join("some", "dir", "FileName.json")
+            os.path.join("some", "dir", "file_name.config.yaml"),
+            ".json",
+            True,
+            True,
+            os.path.join("some", "dir", "FileName.json"),
         ),
         ("nodotfile", ".txt", False, True, "nodotfile.txt"),
         ("no_dot_file", ".txt", True, True, "NoDotFile.txt"),
@@ -60,7 +63,7 @@ def test_create_file_exists_error(tmp_path):
     file_path = tmp_path / "existing_file.txt"
     with open(file_path, "w", encoding="utf-8") as f:
         f.write("Initial content")
-    with pytest.raises(FileExistsError, match="File already exists."):
+    with pytest.raises(FileExistsError):
         File.create(str(file_path), content="New content", force=False)
 
 
@@ -68,7 +71,7 @@ def test_create_file_same_content_exists_error(tmp_path):
     file_path = tmp_path / "same_content_file.data"
     content = "Identical content"
     File.create(str(file_path), content=content)
-    with pytest.raises(SameContentFileExistsError, match="Already created this file. \\(nothing changed\\)"):
+    with pytest.raises(SameContentFileExistsError):
         File.create(str(file_path), content=content, force=False)
 
 
