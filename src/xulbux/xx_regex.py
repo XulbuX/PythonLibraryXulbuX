@@ -1,7 +1,3 @@
-"""
-Very useful and complicated (generated) regex patterns.
-"""
-
 import regex as _rx
 import re as _re
 

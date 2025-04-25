@@ -3,9 +3,8 @@ from .xx_string import String
 import os as _os
 
 
-# YAPF: disable
-class SameContentFileExistsError(FileExistsError): ...
-# YAPF: enable
+class SameContentFileExistsError(FileExistsError):
+    ...
 
 
 class File:

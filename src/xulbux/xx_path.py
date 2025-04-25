@@ -6,14 +6,18 @@ import sys as _sys
 import os as _os
 
 
-# YAPF: disable
-class PathNotFoundError(FileNotFoundError): ...
+class PathNotFoundError(FileNotFoundError):
+    ...
+
 
 class _Cwd:
+
     def __get__(self, obj, owner=None):
         return _os.getcwd()
 
+
 class _ScriptDir:
+
     def __get__(self, obj, owner=None):
         if getattr(_sys, "frozen", False):
             base_path = _os.path.dirname(_sys.executable)
@@ -21,13 +25,11 @@ class _ScriptDir:
             main_module = _sys.modules["__main__"]
             if hasattr(main_module, "__file__"):
                 base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
-            elif (hasattr(main_module, "__spec__") and main_module.__spec__
-                    and getattr(main_module.__spec__, "origin", None)):
+            elif (hasattr(main_module, "__spec__") and main_module.__spec__ and getattr(main_module.__spec__, "origin", None)):
                 base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
             else:
                 raise RuntimeError("Can only get base directory if accessed from a file.")
         return base_path
-# YAPF: enable
 
 
 class Path:

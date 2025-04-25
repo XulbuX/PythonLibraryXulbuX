@@ -22,65 +22,83 @@ import sys as _sys
 import os as _os
 
 
-# YAPF: disable
 class _ConsoleWidth:
+
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().columns
 
+
 class _ConsoleHeight:
+
     def __get__(self, obj, owner=None):
         return _os.get_terminal_size().lines
 
+
 class _ConsoleSize:
+
     def __get__(self, obj, owner=None):
         size = _os.get_terminal_size()
         return (size.columns, size.lines)
 
+
 class _ConsoleUser:
+
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
 
 class ArgResult:
     """Exists: if the argument was found or not\n
     Value: the value from behind the found argument"""
+
     def __init__(self, exists: bool, value: Any):
         self.exists = exists
         self.value = value
+
     def __bool__(self):
         return self.exists
 
+
 class Args:
     """Stores found command arguments under their aliases with their results."""
+
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             if not key.isidentifier():
                 raise TypeError(f"Argument alias '{key}' is invalid. It must be a valid Python variable name.")
             setattr(self, key, ArgResult(**value))
+
     def __len__(self):
         return len(vars(self))
+
     def __contains__(self, key):
         return hasattr(self, key)
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return list(self.__iter__())[key]
         return getattr(self, key)
+
     def __iter__(self):
         for key, value in vars(self).items():
             yield (key, {"exists": value.exists, "value": value.value})
+
     def dict(self) -> dict[str, dict[str, Any]]:
         """Returns the arguments as a dictionary."""
         return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
+
     def keys(self):
         """Returns the argument aliases as `dict_keys([...])`."""
         return vars(self).keys()
+
     def values(self):
         """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
+
     def items(self):
         """Yields tuples of `(alias, {'exists': bool, 'value': Any})`."""
         for key, value in self.__iter__():
             yield (key, value)
-# YAPF: enable
 
 
 class Console:

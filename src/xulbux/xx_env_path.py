@@ -1,7 +1,3 @@
-"""
-Functions for modifying and checking the systems environment-variables (especially the PATH object).
-"""
-
 from .xx_path import Path
 
 import sys as _sys

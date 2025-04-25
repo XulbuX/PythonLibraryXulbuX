@@ -7,8 +7,8 @@ import sys as _sys
 import os as _os
 
 
-# YAPF: disable
 class _IsElevated:
+
     def __get__(self, obj, owner=None):
         try:
             if _os.name == "nt":
@@ -18,7 +18,6 @@ class _IsElevated:
         except Exception:
             pass
         return False
-# YAPF: enable
 
 
 class System:

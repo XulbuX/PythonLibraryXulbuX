@@ -1,4 +1,3 @@
-from ast import In
 from ._consts_ import COLOR
 from .xx_format_codes import FormatCodes
 from .xx_string import String
