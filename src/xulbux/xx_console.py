@@ -403,7 +403,7 @@ class Console:
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
-        lines = [line.strip() for val in values for line in val.splitlines()]
+        lines = [line.rstrip() for val in values for line in val.splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0

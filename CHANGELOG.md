@@ -27,6 +27,7 @@
   - <code>method: *str* = "wcag2"</code> the luminance calculation method to use
 * added a new param to the method `File.rename_extension()`:
   - <code>full_extension: *bool* = False</code> whether to treat everything behind the first `.` as the extension or everything behind the last `.`
+* fixed a small bug in `Console.log_box()` where the leading spaces where removed from the box content
 
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)
