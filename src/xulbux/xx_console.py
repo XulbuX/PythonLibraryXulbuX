@@ -114,33 +114,50 @@ class Console:
     """The name of the current user."""
 
     @staticmethod
-    def get_args(find_args: dict[str, list[str] | tuple[str, ...]], allow_spaces: bool = False) -> Args:
+    def get_args(
+        find_args: dict[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]],
+        allow_spaces: bool = False
+    ) -> Args:
         """Will search for the specified arguments in the command line
         arguments and return the results as a special `Args` object.\n
         ----------------------------------------------------------------
-        The `find_args` dictionary should have the following structure:
+        The `find_args` dictionary can have the following structures for each alias:
+        1. Simple list/tuple of flags (when no default value is needed):
+           ```python
+           "alias_name": ["-f", "--flag"]
+           ```
+        2. Dictionary with 'flags' and optional 'default':
+           ```python
+           "alias_name": {
+               "flags": ["-f", "--flag"],
+               "default": "some_value"  # Optional
+           }
+           ```
+        Example `find_args`:
         ```python
         find_args={
-            "arg1_alias": ["-a1", "--arg1", "--argument-1"],
-            "arg2_alias": ("-a2", "--arg2", "--argument-2"),
-            ...
+            "arg1": { # With default
+                "flags": ["-a1", "--arg1"],
+                "default": "default_val"
+            },
+            "arg2": ("-a2", "--arg2"), # Without default (original format)
+            "arg3": ["-a3"],          # Without default (list format)
+            "arg4": { # Flag with default True
+                "flags": ["-f"],
+                "default": True
+            }
         }
         ```
-        And if the script is called via the command line:\n
-        `python script.py -a1 "argument value" --arg2`\n
-        ...it would return the following `Args` object:
-        ```python
-        Args(
-            arg1_alias=ArgResult(exists=True, value="argument value"),
-            arg2_alias=ArgResult(exists=True, value=None),
-            ...
-        )
-        ```
-        ...which can be accessed like this:\n
-        - `Args.<arg_alias>.exists` is `True` if any of the specified
-            args were found and `False` if not
-        - `Args.<arg_alias>.value` the value from behind the found arg,
-            `None` if no value was found\n
+        If the script is called via the command line:\n
+        `python script.py -a1 "value1" --arg2 -f`\n
+        ...it would return an `Args` object where:
+        - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"`
+        - `args.arg2.exists` is `True`, `args.arg2.value` is `True` (flag present without value)
+        - `args.arg3.exists` is `False`, `args.arg3.value` is `None` (not present, no default)
+        - `args.arg4.exists` is `True`, `args.arg4.value` is `True` (flag present, overrides default)
+        - If an arg defined in `find_args` is *not* present in the command line:
+            - `exists` will be `False`
+            - `value` will be the specified `default` value, or `None` if no default was specified.\n
         ----------------------------------------------------------------
         Normally if `allow_spaces` is false, it will take a space as
         the end of an args value. If it is true, it will take spaces as
@@ -149,20 +166,40 @@ class Console:
         args = _sys.argv[1:]
         args_len = len(args)
         arg_lookup = {}
-        for arg_key, arg_group in find_args.items():
-            for arg in arg_group:
-                arg_lookup[arg] = arg_key
-        results = {key: {"exists": False, "value": None} for key in find_args}
+        results = {}
+        for alias, config in find_args.items():
+            flags = None
+            default_value = None
+            if isinstance(config, (list, tuple)):
+                flags = config
+            elif isinstance(config, dict):
+                if "flags" not in config:
+                    raise ValueError(f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'flags' key.")
+                flags = config["flags"]
+                default_value = config.get("default")
+                if not isinstance(flags, (list, tuple)):
+                    raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a list or tuple.")
+            else:
+                raise TypeError(f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, or dict.")
+            results[alias] = {"exists": False, "value": default_value}
+            for flag in flags:
+                if flag in arg_lookup:
+                    raise ValueError(
+                        f"Duplicate flag '{flag}' found. It's assigned to both '{arg_lookup[flag]}' and '{alias}'."
+                    )
+                arg_lookup[flag] = alias
         i = 0
         while i < args_len:
             arg = args[i]
-            arg_key = arg_lookup.get(arg)
-            if arg_key:
-                results[arg_key]["exists"] = True
+            alias = arg_lookup.get(arg)
+            if alias:
+                results[alias]["exists"] = True
+                value_found_after_flag = False
                 if i + 1 < args_len and not args[i + 1].startswith("-"):
                     if not allow_spaces:
-                        results[arg_key]["value"] = String.to_type(args[i + 1])
+                        results[alias]["value"] = String.to_type(args[i + 1])
                         i += 1
+                        value_found_after_flag = True
                     else:
                         value_parts = []
                         j = i + 1
@@ -170,8 +207,11 @@ class Console:
                             value_parts.append(args[j])
                             j += 1
                         if value_parts:
-                            results[arg_key]["value"] = String.to_type(" ".join(value_parts))
+                            results[alias]["value"] = String.to_type(" ".join(value_parts))
                             i = j - 1
+                            value_found_after_flag = True
+                if not value_found_after_flag:
+                    results[alias]["value"] = True
             i += 1
         return Args(**results)
 

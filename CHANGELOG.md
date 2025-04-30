@@ -14,7 +14,7 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.6.9`
+## 30.04.2025 `v1.6.9`
 * changed the params in `Json.create()`:
   - <code>new_file: *str* = "config"</code> is now the first param and <code>content: *dict*</code> the second one
   - <code>new_file: *str* = "config"</code> is now called <code>json_file: *str*</code> with no default value
@@ -28,6 +28,7 @@
 * added a new param to the method `File.rename_extension()`:
   - <code>full_extension: *bool* = False</code> whether to treat everything behind the first `.` as the extension or everything behind the last `.`
 * fixed a small bug in `Console.log_box()` where the leading spaces where removed from the box content
+* you can now assign default values to args in `Console.get_args()`
 
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)
