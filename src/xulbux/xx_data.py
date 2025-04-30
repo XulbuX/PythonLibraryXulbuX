@@ -355,12 +355,12 @@ class Data:
         return get_nested(data, Data.__sep_path_id(path_id), get_key)
 
     @staticmethod
-    def set_value_by_path_id(data: DataStructure, update_values: dict[str, Any]) -> list | tuple | dict:
+    def set_value_by_path_id(data: DataStructure, update_values: dict[str, Any]) -> DataStructure:
         """Updates the value/s from `update_values` in the `data`.\n
         --------------------------------------------------------------------------------
         Input a list, tuple or dict as `data`, along with `update_values`, which is a
         dictionary where keys are path IDs and values are the new values to insert:
-           { "1>": "new value", "path_id2": ["new value 1", "new value 2"], ... }
+           { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
         The path IDs should have been created using `Data.get_path_id()`.\n
         --------------------------------------------------------------------------------
         The value from path ID will be changed to the new value, as long as the
@@ -481,7 +481,7 @@ class Data:
                     + punct["'"] if syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
                 ))
 
-        def should_expand(seq: list | tuple | dict) -> bool:
+        def should_expand(seq: DataStructure) -> bool:
             if compactness == 0:
                 return True
             if compactness == 2:

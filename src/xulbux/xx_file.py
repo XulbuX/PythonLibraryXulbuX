@@ -19,8 +19,8 @@ class File:
         """Rename the extension of a file.\n
         --------------------------------------------------------------------------
         If `full_extension` is true, everything after the first dot in the
-        filename will be treated as the extension to replace. Otherwise, only the
-        part after the last dot is replaced.\n
+        filename will be treated as the extension to replace (e.g. `.tar.gz`).
+        Otherwise, only the part after the last dot is replaced (e.g. `.gz`).\n
         If the `camel_case_filename` parameter is true, the filename will be made
         CamelCase in addition to changing the files extension."""
         normalized_file = _os.path.normpath(file)
