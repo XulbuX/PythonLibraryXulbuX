@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.6.8"
+version = "1.6.9"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A Python library which includes lots of helpful classes, types and functions aiming to make common programming tasks simpler."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10.0"
 dependencies = [
   "keyboard>=0.13.5",
@@ -30,7 +31,6 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
