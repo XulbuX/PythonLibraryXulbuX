@@ -14,6 +14,9 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.7.0`
+* fixed a small bug in `Console.log()` where empty linebreaks where removed
+
 ## 30.04.2025 `v1.6.9`
 * changed the params in `Json.create()`:
   - <code>new_file: *str* = "config"</code> is now the first param and <code>content: *dict*</code> the second one

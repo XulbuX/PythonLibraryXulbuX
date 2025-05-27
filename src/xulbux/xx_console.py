@@ -270,8 +270,10 @@ class Console:
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if format_linebreaks:
             clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
-            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
-            prompt_lst = (item for lst in prompt_lst for item in (lst if isinstance(lst, list) else [lst]))
+            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).split("\n"))
+            prompt_lst = (
+                item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
+            )
             prompt = f"\n{' ' * title_len}\t".join(Console.__add_back_removed_parts(list(prompt_lst), removals))
         else:
             prompt = str(prompt)
