@@ -42,7 +42,7 @@ class Path:
     @staticmethod
     def extend(
         rel_path: str,
-        search_in: str | list[str] = None,
+        search_in: Optional[str | list[str]] = None,
         raise_error: bool = False,
         use_closest_match: bool = False,
     ) -> Optional[str]:
@@ -120,7 +120,7 @@ class Path:
     @staticmethod
     def extend_or_make(
         rel_path: str,
-        search_in: str | list[str] = None,
+        search_in: Optional[str | list[str]] = None,
         prefer_script_dir: bool = True,
         use_closest_match: bool = False,
     ) -> str:

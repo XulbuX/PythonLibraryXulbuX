@@ -50,7 +50,7 @@ class Code:
             nested_calls = _rx.findall(r"(?i)" + Regex.func_call(), func_attrs)
             if nested_calls:
                 nested_func_calls.extend(nested_calls)
-        return Data.remove_duplicates(funcs + nested_func_calls)
+        return list(Data.remove_duplicates(funcs + nested_func_calls))
 
     @staticmethod
     def is_js(code: str, funcs: list = ["__", "$t", "$lang"]) -> bool:

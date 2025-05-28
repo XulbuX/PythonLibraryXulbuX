@@ -1,3 +1,4 @@
+from typing import Optional
 import regex as _rx
 import re as _re
 
@@ -63,7 +64,7 @@ class Regex:
         return rf'({"" if is_group else "?:"}(?:(?!{ignore_pattern}).)*(?:(?!{Regex.outside_strings(disallowed_pattern)}).)*)'
 
     @staticmethod
-    def func_call(func_name: str = None) -> str:
+    def func_call(func_name: Optional[str] = None) -> str:
         """Match a function call, and get back two groups:
         1. function name
         2. the function's arguments\n

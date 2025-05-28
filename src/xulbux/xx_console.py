@@ -8,7 +8,7 @@ For more detailed information about formatting codes, see the the `xx_format_cod
 from ._consts_ import COLOR, CHARS
 from .xx_format_codes import FormatCodes, _COMPILED
 from .xx_string import String
-from .xx_color import Color, rgba, hexa
+from .xx_color import Color, Rgba, Hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from typing import Optional, Any
@@ -249,8 +249,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = None,
-        default_color: hexa | rgba = None,
+        title_bg_color: Optional[Rgba | Hexa] = None,
+        default_color: Optional[Rgba | Hexa] = None,
         _console_tabsize: int = 8,
     ) -> None:
         """Will print a formatted log message:
@@ -270,7 +270,7 @@ class Console:
         title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
         if format_linebreaks:
             clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
-            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).split("\n"))
+            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
             prompt_lst = (
                 item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             )
@@ -330,8 +330,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.yellow,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.yellow,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -348,8 +348,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.blue,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.blue,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -364,8 +364,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.teal,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.teal,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -380,8 +380,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.orange,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.orange,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -396,8 +396,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.red,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.red,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = True,
         reset_ansi=True,
@@ -413,8 +413,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: hexa | rgba = COLOR.magenta,
-        default_color: hexa | rgba = COLOR.text,
+        title_bg_color: Rgba | Hexa = COLOR.magenta,
+        default_color: Rgba | Hexa = COLOR.text,
         pause: bool = False,
         exit: bool = True,
         reset_ansi=True,
@@ -429,8 +429,8 @@ class Console:
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: str | hexa | rgba = "green",
-        default_color: hexa | rgba = "#000",
+        box_bg_color: str | Rgba | Hexa = "green",
+        default_color: Rgba | Hexa = "#000",
         w_padding: int = 2,
         w_full: bool = False,
     ) -> None:
@@ -445,7 +445,7 @@ class Console:
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
-        lines = [line.rstrip() for val in values for line in val.splitlines()]
+        lines = [line.rstrip() for val in values for line in str(val).splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
@@ -468,7 +468,7 @@ class Console:
         prompt: object = "Do you want to continue?",
         start="",
         end="\n",
-        default_color: hexa | rgba = COLOR.cyan,
+        default_color: Rgba | Hexa = COLOR.cyan,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
@@ -490,7 +490,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: hexa | rgba = COLOR.cyan,
+        default_color: Rgba | Hexa = COLOR.cyan,
         show_keybindings=True,
         input_prefix=" ⤷ ",
         reset_ansi=True,
@@ -513,7 +513,7 @@ class Console:
         def _(event):
             event.app.exit(result=event.app.current_buffer.document.text)
 
-        FormatCodes.print(start + prompt, default_color=default_color)
+        FormatCodes.print(start + str(prompt), default_color=default_color)
         if show_keybindings:
             FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
         input_string = _prompt_toolkit.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
@@ -525,11 +525,11 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: hexa | rgba = COLOR.cyan,
+        default_color: Rgba | Hexa = COLOR.cyan,
         allowed_chars: str = CHARS.all,
-        min_len: int = None,
-        max_len: int = None,
-        mask_char: str = None,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        mask_char: Optional[str] = None,
         reset_ansi: bool = True,
     ) -> Optional[str]:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
@@ -628,12 +628,22 @@ class Console:
         prompt: object = "Password: ",
         start="",
         end="\n",
-        default_color: hexa | rgba = COLOR.cyan,
+        default_color: Rgba | Hexa = COLOR.cyan,
         allowed_chars: str = CHARS.standard_ascii,
-        min_len: int = None,
-        max_len: int = None,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
         reset_ansi: bool = True,
-    ) -> str:
+    ) -> Optional[str]:
         """Password input (preset for `Console.restricted_input()`)
         that always masks the entered characters with asterisks."""
-        return Console.restricted_input(prompt, start, end, default_color, allowed_chars, min_len, max_len, "*", reset_ansi)
+        return Console.restricted_input(
+            prompt=prompt,
+            start=start,
+            end=end,
+            default_color=default_color,
+            allowed_chars=allowed_chars,
+            min_len=min_len,
+            max_len=max_len,
+            mask_char="*",
+            reset_ansi=reset_ansi,
+        )

@@ -106,7 +106,7 @@ class System:
         ---------------------------------------------------------------------------------
         Returns `True` if the current process already has elevated privileges and raises
         a `PermissionError` if the user denied the elevation or the elevation failed."""
-        if System.is_elevated():
+        if System.is_elevated:
             return True
         if _os.name == "nt":  # WINDOWS
             if win_title:

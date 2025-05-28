@@ -251,7 +251,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> str | list[str]:
+    ) -> Optional[str | list[str]]:
         """Generates a unique ID based on the path to a specific value within a nested data structure.\n
         -------------------------------------------------------------------------------------------------
         The `data` parameter is the list, tuple, or dictionary, which the id should be generated for.\n
@@ -438,14 +438,14 @@ class Data:
             for k, v in punct_map.items()
         }
 
-        def format_value(value: Any, current_indent: int = None) -> str:
+        def format_value(value: Any, current_indent: Optional[int] = None) -> str:
             if current_indent is not None and isinstance(value, dict):
                 return format_dict(value, current_indent + indent)
             elif current_indent is not None and hasattr(value, "__dict__"):
                 return format_dict(value.__dict__, current_indent + indent)
             elif current_indent is not None and isinstance(value, IndexIterable):
                 return format_sequence(value, current_indent + indent)
-            elif isinstance(value, (bytes, bytearray)):
+            elif current_indent is not None and isinstance(value, (bytes, bytearray)):
                 obj_dict = Data.serialize_bytes(value)
                 return (
                     format_dict(obj_dict, current_indent + indent) if as_json else (
@@ -461,7 +461,7 @@ class Data:
             elif isinstance(value, (int, float)):
                 val = "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
                 return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if syntax_hl else val
-            elif isinstance(value, complex):
+            elif current_indent is not None and isinstance(value, complex):
                 return (
                     format_value(str(value).strip("()")) if as_json else (
                         f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"

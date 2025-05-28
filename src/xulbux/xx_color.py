@@ -33,8 +33,34 @@ The `Color` class, which contains all sorts of different color-related methods:
 
 from .xx_regex import Regex
 
-from typing import Optional
+from typing import Annotated, TypeAlias, Iterator, Optional, Union
 import re as _re
+
+
+Int_0_255 = Annotated[int, "An integer value between 0 and 255, inclusive."]
+Float_0_1 = Annotated[float, "A float value between 0.0 and 1.0, inclusive."]
+Int_0_360 = Annotated[int, "An integer value between 0 and 360, inclusive."]
+Int_0_100 = Annotated[int, "An integer value between 0 and 100, inclusive."]
+
+Rgba: TypeAlias = Union[
+    tuple[Int_0_255, Int_0_255, Int_0_255],
+    tuple[Int_0_255, Int_0_255, Int_0_255, Float_0_1],
+    list[Int_0_255],
+    list[Union[Int_0_255, Float_0_1]],
+    dict[str, Union[int, float]],
+    "rgba",
+    str,
+]
+Hsla: TypeAlias = Union[
+    tuple[Int_0_360, Int_0_100, Int_0_100],
+    tuple[Int_0_360, Int_0_100, Int_0_100, Float_0_1],
+    list[Union[Int_0_360, Int_0_100]],
+    list[Union[Int_0_360, Int_0_100, Float_0_1]],
+    dict[str, Union[int, float]],
+    "hsla",
+    str,
+]
+Hexa: TypeAlias = Union[str, int, "hexa"]
 
 
 class rgba:
@@ -60,7 +86,7 @@ class rgba:
     - `with_alpha(alpha)` to create a new color with different alpha
     - `complementary()` to get the complementary color"""
 
-    def __init__(self, r: int, g: int, b: int, a: float = None, _validate: bool = True):
+    def __init__(self, r: int, g: int, b: int, a: Optional[float] = None, _validate: bool = True):
         if not _validate:
             self.r, self.g, self.b, self.a = r, g, b, a
             return
@@ -79,13 +105,10 @@ class rgba:
     def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator:
         return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))
 
-    def __dict__(self) -> dict:
-        return self.dict()
-
-    def __getitem__(self, index: int) -> int:
+    def __getitem__(self, index: int) -> int | float:
         return ((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))[index]
 
     def __repr__(self) -> str:
@@ -258,7 +281,7 @@ class hsla:
     - `with_alpha(alpha)` to create a new color with different alpha
     - `complementary()` to get the complementary color"""
 
-    def __init__(self, h: int, s: int, l: int, a: float = None, _validate: bool = True):
+    def __init__(self, h: int, s: int, l: int, a: Optional[float] = None, _validate: bool = True):
         if not _validate:
             self.h, self.s, self.l, self.a = h, s, l, a
             return
@@ -277,13 +300,10 @@ class hsla:
     def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator:
         return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))
 
-    def __dict__(self) -> dict:
-        return self.dict()
-
-    def __getitem__(self, index: int) -> int:
+    def __getitem__(self, index: int) -> int | float:
         return ((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))[index]
 
     def __repr__(self) -> str:
@@ -371,7 +391,7 @@ class hsla:
         self.h, self.s, self.l, _ = rgba(l, l, l, _validate=False).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
-    def blend(self, other: "hsla", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
+    def blend(self, other: "hsla", ratio: float = 0.5, additive_alpha: bool = False) -> "hsla":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
         - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
         - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
@@ -406,9 +426,9 @@ class hsla:
         return hsla((self.h + 180) % 360, self.s, self.l, self.a, _validate=False)
 
     def _hsl_to_rgb(self, h: int, s: int, l: int) -> tuple:
-        h, s, l = h / 360, s / 100, l / 100
-        if s == 0:
-            r = g = b = int(l * 255)
+        _h, _s, _l = h / 360, s / 100, l / 100
+        if _s == 0:
+            r = g = b = int(_l * 255)
         else:
 
             def hue_to_rgb(p, q, t):
@@ -424,11 +444,11 @@ class hsla:
                     return p + (q - p) * (2 / 3 - t) * 6
                 return p
 
-            q = l * (1 + s) if l < 0.5 else l + s - l * s
-            p = 2 * l - q
-            r = int(round(hue_to_rgb(p, q, h + 1 / 3) * 255))
-            g = int(round(hue_to_rgb(p, q, h) * 255))
-            b = int(round(hue_to_rgb(p, q, h - 1 / 3) * 255))
+            q = _l * (1 + _s) if _l < 0.5 else _l + _s - _l * _s
+            p = 2 * _l - q
+            r = int(round(hue_to_rgb(p, q, _h + 1 / 3) * 255))
+            g = int(round(hue_to_rgb(p, q, _h) * 255))
+            b = int(round(hue_to_rgb(p, q, _h - 1 / 3) * 255))
         return r, g, b
 
 
@@ -455,7 +475,14 @@ class hexa:
     - `with_alpha(alpha)` to create a new color with different alpha
     - `complementary()` to get the complementary color"""
 
-    def __init__(self, color: str | int, _r: int = None, _g: int = None, _b: int = None, _a: float = None):
+    def __init__(
+        self,
+        color: str | int,
+        _r: Optional[int] = None,
+        _g: Optional[int] = None,
+        _b: Optional[int] = None,
+        _a: Optional[float] = None,
+    ):
         if all(x is not None for x in (_r, _g, _b)):
             self.r, self.g, self.b, self.a = _r, _g, _b, _a
             return
@@ -504,14 +531,11 @@ class hexa:
     def __len__(self) -> int:
         return 3 if self.a is None else 4
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator:
         return iter((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}")
                     + (() if self.a is None else (f"{int(self.a * 255):02X}", )))
 
-    def __dict__(self) -> dict:
-        return self.dict()
-
-    def __getitem__(self, index: int) -> int:
+    def __getitem__(self, index: int) -> str | int:
         return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") + (() if self.a is None else
                                                                        (f"{int(self.a * 255):02X}", )))[index]
 
@@ -641,7 +665,7 @@ class hexa:
 class Color:
 
     @staticmethod
-    def is_valid_rgba(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
+    def is_valid_rgba(color: Rgba, allow_alpha: bool = True) -> bool:
         try:
             if isinstance(color, rgba):
                 return True
@@ -672,7 +696,7 @@ class Color:
             return False
 
     @staticmethod
-    def is_valid_hsla(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
+    def is_valid_hsla(color: Hsla, allow_alpha: bool = True) -> bool:
         try:
             if isinstance(color, hsla):
                 return True
@@ -702,7 +726,7 @@ class Color:
             return False
 
     @staticmethod
-    def is_valid_hexa(color: str | int, allow_alpha: bool = True, get_prefix: bool = False) -> bool | tuple[bool, str]:
+    def is_valid_hexa(color: Hexa, allow_alpha: bool = True, get_prefix: bool = False) -> bool | tuple[bool, str]:
         try:
             if isinstance(color, hexa):
                 return (True, "#") if get_prefix else True
@@ -718,14 +742,14 @@ class Color:
             return (False, None) if get_prefix else False
 
     @staticmethod
-    def is_valid(color: str | list | tuple | dict, allow_alpha: bool = True) -> bool:
+    def is_valid(color: Rgba | Hsla | Hexa, allow_alpha: bool = True) -> bool:
         return bool(
             Color.is_valid_rgba(color, allow_alpha) or Color.is_valid_hsla(color, allow_alpha)
             or Color.is_valid_hexa(color, allow_alpha)
         )
 
     @staticmethod
-    def has_alpha(color: rgba | hsla | hexa) -> bool:
+    def has_alpha(color: Rgba | Hsla | Hexa) -> bool:
         """Check if the given color has an alpha channel.\n
         ---------------------------------------------------------------------------
         Input a RGBA, HSLA or HEXA color as `color`.
@@ -747,7 +771,7 @@ class Color:
         return False
 
     @staticmethod
-    def to_rgba(color: hsla | hexa) -> rgba:
+    def to_rgba(color: Rgba | Hsla | Hexa) -> rgba:
         """Will try to convert any color type to a color of type RGBA."""
         if isinstance(color, (hsla, hexa)):
             return color.to_rgba()
@@ -760,7 +784,7 @@ class Color:
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
-    def to_hsla(color: rgba | hexa) -> hsla:
+    def to_hsla(color: Rgba | Hsla | Hexa) -> hsla:
         """Will try to convert any color type to a color of type HSLA."""
         if isinstance(color, (rgba, hexa)):
             return color.to_hsla()
@@ -773,7 +797,7 @@ class Color:
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
-    def to_hexa(color: rgba | hsla) -> hexa:
+    def to_hexa(color: Rgba | Hsla | Hexa) -> hexa:
         """Will try to convert any color type to a color of type HEXA."""
         if isinstance(color, (rgba, hsla)):
             return color.to_hexa()
@@ -821,7 +845,7 @@ class Color:
         r: int,
         g: int,
         b: int,
-        a: float = None,
+        a: Optional[float] = None,
         preserve_original: bool = False,
     ) -> int:
         """Convert RGBA channels to a HEXA integer (alpha is optional).\n
@@ -879,7 +903,7 @@ class Color:
             raise ValueError(f"Invalid HEX integer '0x{hex_str}': expected in range [0x000000, 0xFFFFFF]")
 
     @staticmethod
-    def luminance(r: int, g: int, b: int, output_type: type = None, method: str = "wcag2") -> int | float:
+    def luminance(r: int, g: int, b: int, output_type: Optional[type] = None, method: str = "wcag2") -> int | float:
         """Calculates the relative luminance of a color according to various standards.\n
         ----------------------------------------------------------------------------------
         The `output_type` controls the range of the returned luminance value:
@@ -891,21 +915,21 @@ class Color:
         - `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
         - `"simple"` Simple arithmetic mean (less accurate)
         - `"bt601"` ITU-R BT.601 standard (older TV standard)"""
-        r, g, b = r / 255.0, g / 255.0, b / 255.0
+        _r, _g, _b = r / 255.0, g / 255.0, b / 255.0
         if method == "simple":
-            luminance = (r + g + b) / 3
+            luminance = (_r + _g + _b) / 3
         elif method == "bt601":
-            luminance = 0.299 * r + 0.587 * g + 0.114 * b
+            luminance = 0.299 * _r + 0.587 * _g + 0.114 * _b
         elif method == "wcag3":
-            r = Color._linearize_srgb(r)
-            g = Color._linearize_srgb(g)
-            b = Color._linearize_srgb(b)
-            luminance = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b
+            _r = Color._linearize_srgb(_r)
+            _g = Color._linearize_srgb(_g)
+            _b = Color._linearize_srgb(_b)
+            luminance = 0.2126729 * _r + 0.7151522 * _g + 0.0721750 * _b
         else:
-            r = Color._linearize_srgb(r)
-            g = Color._linearize_srgb(g)
-            b = Color._linearize_srgb(b)
-            luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            _r = Color._linearize_srgb(_r)
+            _g = Color._linearize_srgb(_g)
+            _b = Color._linearize_srgb(_b)
+            luminance = 0.2126 * _r + 0.7152 * _g + 0.0722 * _b
         if output_type == int:
             return round(luminance * 100)
         elif output_type == float:
@@ -922,7 +946,7 @@ class Color:
             return ((c + 0.055) / 1.055)**2.4
 
     @staticmethod
-    def text_color_for_on_bg(text_bg_color: rgba | hexa) -> rgba | hexa:
+    def text_color_for_on_bg(text_bg_color: Rgba | Hexa) -> rgba | hexa:
         was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
@@ -930,7 +954,7 @@ class Color:
                 ((0x000 if was_int else hexa("", 0, 0, 0)) if was_hexa else rgba(0, 0, 0, _validate=False)))
 
     @staticmethod
-    def adjust_lightness(color: rgba | hexa, lightness_change: float) -> rgba | hexa:
+    def adjust_lightness(color: Rgba | Hexa, lightness_change: float) -> rgba | hexa:
         """In- or decrease the lightness of the input color.\n
         -----------------------------------------------------------------------------------------------------
         - color (rgba|hexa): HEX or RGBA color
@@ -949,7 +973,7 @@ class Color:
         return hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa else hsla(h, s, l, a, _validate=False).to_rgba()
 
     @staticmethod
-    def adjust_saturation(color: rgba | hexa, saturation_change: float) -> rgba | hexa:
+    def adjust_saturation(color: Rgba | Hexa, saturation_change: float) -> rgba | hexa:
         """In- or decrease the saturation of the input color.\n
         -----------------------------------------------------------------------------------------------------------
         - color (rgba|hexa): HEX or RGBA color

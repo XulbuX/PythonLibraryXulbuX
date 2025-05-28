@@ -153,14 +153,17 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 from ._consts_ import ANSI
 from .xx_string import String
 from .xx_regex import Regex
-from .xx_color import Color, rgba, hexa
+from .xx_color import Color, Rgba, Hexa
 
-from typing import Optional, Pattern
+from typing import TypeAlias, Optional
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import re as _re
 
+
+Pattern: TypeAlias = _re.Pattern[str] | _rx.Pattern[str]
+Match: TypeAlias = _re.Match[str] | _rx.Match[str]
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
 
@@ -205,7 +208,7 @@ class FormatCodes:
     @staticmethod
     def print(
         *values: object,
-        default_color: rgba | hexa = None,
+        default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
         sep: str = " ",
         end: str = "\n",
@@ -223,7 +226,7 @@ class FormatCodes:
     @staticmethod
     def input(
         prompt: object = "",
-        default_color: rgba | hexa = None,
+        default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
         reset_ansi: bool = False,
     ) -> str:
@@ -243,7 +246,7 @@ class FormatCodes:
     @staticmethod
     def to_ansi(
         string: str,
-        default_color: rgba | hexa = None,
+        default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
         _default_start: bool = True,
     ) -> str:
@@ -253,9 +256,9 @@ class FormatCodes:
         `xx_format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
-        if Color.is_valid_rgba(default_color, False):
+        if default_color and Color.is_valid_rgba(default_color, False):
             use_default = True
-        elif Color.is_valid_hexa(default_color, False):
+        elif default_color and Color.is_valid_hexa(default_color, False):
             use_default, default_color = True, Color.to_rgba(default_color)
         else:
             use_default = False
@@ -264,9 +267,9 @@ class FormatCodes:
             string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
 
         def is_valid_color(color: str) -> bool:
-            return color in ANSI.color_map or Color.is_valid_rgba(color) or Color.is_valid_hexa(color)
+            return bool((color in ANSI.color_map) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
 
-        def replace_keys(match: _re.Match) -> str:
+        def replace_keys(match: Match) -> str:
             _formats = formats = match.group(1)
             auto_reset_escaped = match.group(2)
             auto_reset_txt = match.group(3)
@@ -346,7 +349,7 @@ class FormatCodes:
         if get_removals:
             removals = []
 
-            def replacement(match: _re.Match) -> str:
+            def replacement(match: Match) -> str:
                 start_pos = match.start() - sum(len(removed) for _, removed in removals)
                 if removals and removals[-1][0] == start_pos:
                     start_pos = removals[-1][0]
@@ -394,8 +397,8 @@ class FormatCodes:
     @staticmethod
     def __get_default_ansi(
         default_color: tuple,
-        format_key: str = None,
-        brightness_steps: int = None,
+        format_key: Optional[str] = None,
+        brightness_steps: Optional[int] = None,
         _modifiers: tuple[str, str] = (ANSI.default_color_modifiers["lighten"], ANSI.default_color_modifiers["darken"]),
     ) -> Optional[str]:
         """Get the `default_color` and lighter/darker versions of it as ANSI code."""
@@ -424,7 +427,7 @@ class FormatCodes:
         return (ANSI.seq_bg_color if is_bg else ANSI.seq_color).format(*new_rgb[:3])
 
     @staticmethod
-    def __get_replacement(format_key: str, default_color: rgba = None, brightness_steps: int = 20) -> str:
+    def __get_replacement(format_key: str, default_color: Optional[Rgba] = None, brightness_steps: int = 20) -> str:
         """Gives you the corresponding ANSI code for the given format key.
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""

@@ -35,7 +35,7 @@ class Json:
         processed_data = Data.remove_comments(data, comment_start, comment_end)
         if not processed_data:
             raise ValueError(f"The JSON file '{file_path}' is empty or contains only comments.")
-        return (processed_data, data) if return_original else processed_data
+        return (dict(processed_data), dict(data)) if return_original else dict(processed_data)
 
     @staticmethod
     def create(
@@ -144,7 +144,7 @@ class Json:
                     ignore_not_found=True,
                 )
                 if path_id is not None:
-                    if 'update' not in locals():
+                    if "update" not in locals():
                         update = {}
                     update[path_id] = new_value
                 else:
@@ -153,6 +153,6 @@ class Json:
             except Exception:
                 keys = value_path.split(path_sep)
                 data = create_nested_path(data, keys, new_value)
-        if 'update' in locals() and update:
+        if "update" in locals() and update:
             data = Data.set_value_by_path_id(data, update)
-        Json.create(json_file=json_file, data=data, force=True)
+        Json.create(json_file=json_file, data=dict(data), force=True)
