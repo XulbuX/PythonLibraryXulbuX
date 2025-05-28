@@ -1,6 +1,10 @@
-from typing import Optional
+from typing import TypeAlias, Optional
 import regex as _rx
 import re as _re
+
+
+Pattern: TypeAlias = _re.Pattern[str] | _rx.Pattern[str]
+Match: TypeAlias = _re.Match[str] | _rx.Match[str]
 
 
 class Regex:

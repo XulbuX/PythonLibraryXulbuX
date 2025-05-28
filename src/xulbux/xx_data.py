@@ -166,7 +166,7 @@ class Data:
 
         def process_string(s: str) -> Optional[str]:
             if comment_end:
-                match = pattern.match(s)
+                match = pattern.match(s)  # type: ignore[unbound]
                 if match:
                     start, end = match.group(1).strip(), match.group(2).strip()
                     return f"{start}{comment_sep if start and end else ''}{end}" or None
@@ -223,7 +223,7 @@ class Data:
                 return True
             if type(d1) is not type(d2):
                 return False
-            if isinstance(d1, dict):
+            if isinstance(d1, dict) and isinstance(d2, dict):
                 if set(d1.keys()) != set(d2.keys()):
                     return False
                 return all(compare(d1[key], d2[key], ignore_paths, current_path + [key]) for key in d1)
@@ -251,7 +251,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> Optional[str | list[str]]:
+    ) -> Optional[str | list[Optional[str]]]:
         """Generates a unique ID based on the path to a specific value within a nested data structure.\n
         -------------------------------------------------------------------------------------------------
         The `data` parameter is the list, tuple, or dictionary, which the id should be generated for.\n
@@ -413,7 +413,8 @@ class Data:
         - `2` keeps everything collapsed (all on one line)\n
         ------------------------------------------------------------------------------
         If `as_json` is set to `True`, the output will be in valid JSON format."""
-        if syntax_hl := _syntax_highlighting not in (None, False):
+        _syntax_hl = {}
+        if do_syntax_hl := _syntax_highlighting not in (None, False):
             if _syntax_highlighting is True:
                 _syntax_highlighting = {}
             elif not isinstance(_syntax_highlighting, dict):
@@ -426,15 +427,15 @@ class Data:
                 "punctuation": (f"[{COLOR.darkgray}]", "[_c]"),
             }
             _syntax_hl.update({
-                k: [f"[{v}]", "[_]"] if k in _syntax_hl and v not in ("", None) else ["", ""]
+                k: (f"[{v}]", "[_]") if k in _syntax_hl and v not in ("", None) else ("", "")
                 for k, v in _syntax_highlighting.items()
             })
             sep = f"{_syntax_hl['punctuation'][0]}{sep}{_syntax_hl['punctuation'][1]}"
         punct_map = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
         punct = {
-            k: ((f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if syntax_hl else v[1])
+            k: ((f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v[1])
                 if isinstance(v, (list, tuple)) else
-                (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if syntax_hl else v))
+                (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v))
             for k, v in punct_map.items()
         }
 
@@ -450,38 +451,38 @@ class Data:
                 return (
                     format_dict(obj_dict, current_indent + indent) if as_json else (
                         f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
-                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if syntax_hl else
+                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if do_syntax_hl else
                         (k := next(iter(obj_dict)))
                         + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
                     )
                 )
             elif isinstance(value, bool):
                 val = str(value).lower() if as_json else str(value)
-                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
+                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if do_syntax_hl else val
             elif isinstance(value, (int, float)):
                 val = "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
-                return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if syntax_hl else val
+                return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if do_syntax_hl else val
             elif current_indent is not None and isinstance(value, complex):
                 return (
                     format_value(str(value).strip("()")) if as_json else (
                         f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
                         + format_sequence((value.real, value.imag), current_indent + indent)
-                        if syntax_hl else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
+                        if do_syntax_hl else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
                     )
                 )
             elif value is None:
                 val = "null" if as_json else "None"
-                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if syntax_hl else val
+                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if do_syntax_hl else val
             else:
                 return ((
                     punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1]
-                    + punct['"'] if syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
+                    + punct['"'] if do_syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
                 ) if as_json else (
                     punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1]
-                    + punct["'"] if syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
+                    + punct["'"] if do_syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
                 ))
 
-        def should_expand(seq: DataStructure) -> bool:
+        def should_expand(seq: IndexIterable) -> bool:
             if compactness == 0:
                 return True
             if compactness == 2:
@@ -500,7 +501,7 @@ class Data:
                     + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
                                for k, v in d.items()) + punct["}"]
                 )
-            if not should_expand(d.values()):
+            if not should_expand(list(d.values())):
                 return (
                     punct["{"]
                     + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"

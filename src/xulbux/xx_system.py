@@ -14,7 +14,7 @@ class _IsElevated:
             if _os.name == "nt":
                 return _ctypes.windll.shell32.IsUserAnAdmin() != 0
             elif _os.name == "posix":
-                return _os.geteuid() == 0
+                return _os.geteuid() == 0  # type: ignore[attr-defined]
         except Exception:
             pass
         return False
@@ -22,7 +22,7 @@ class _IsElevated:
 
 class System:
 
-    is_elevated: bool = _IsElevated()
+    is_elevated: bool = _IsElevated()  # type: ignore[assignment]
     """Is `True` if the current process has
     elevated privileges and `False` otherwise."""
 
@@ -54,7 +54,7 @@ class System:
                 if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND PS
                     raise RuntimeError("Processes are still running. Use the parameter `force=True` to restart anyway.")
             if prompt:
-                _subprocess.Popen(["notify-send", "System Restart", prompt])
+                _subprocess.Popen(["notify-send", "System Restart", str(prompt)])
                 _time.sleep(wait)
             try:
                 _subprocess.run(["sudo", "shutdown", "-r", "now"])
@@ -95,7 +95,7 @@ class System:
             return missing
 
     @staticmethod
-    def elevate(win_title: Optional[str] = None, args: Optional[list] = None) -> bool:
+    def elevate(win_title: Optional[str] = None, args: list = []) -> bool:
         """Attempts to start a new process with elevated privileges.\n
         ---------------------------------------------------------------------------------
         The param `win_title` is window the title of the elevated process.

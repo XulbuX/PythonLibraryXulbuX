@@ -23,9 +23,9 @@ class _ScriptDir:
             base_path = _os.path.dirname(_sys.executable)
         else:
             main_module = _sys.modules["__main__"]
-            if hasattr(main_module, "__file__"):
+            if hasattr(main_module, "__file__") and main_module.__file__ is not None:
                 base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
-            elif (hasattr(main_module, "__spec__") and main_module.__spec__ and getattr(main_module.__spec__, "origin", None)):
+            elif (hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None):
                 base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
             else:
                 raise RuntimeError("Can only get base directory if accessed from a file.")
@@ -34,9 +34,9 @@ class _ScriptDir:
 
 class Path:
 
-    cwd: str = _Cwd()
+    cwd: str = _Cwd()  # type: ignore[assignment]
     """The path to the current working directory."""
-    script_dir: str = _ScriptDir()
+    script_dir: str = _ScriptDir()  # type: ignore[assignment]
     """The path to the directory of the current script."""
 
     @staticmethod
@@ -136,7 +136,7 @@ class Path:
         If `use_closest_match` is true, it is possible to have typos in the `search_in` path/s
         and it will still find the file if it is under one of those paths."""
         try:
-            return Path.extend(rel_path, search_in, raise_error=True, use_closest_match=use_closest_match)
+            return str(Path.extend(rel_path, search_in, raise_error=True, use_closest_match=use_closest_match))
         except PathNotFoundError:
             normalized_rel_path = _os.path.normpath(rel_path)
             base = Path.script_dir if prefer_script_dir else _os.getcwd()

@@ -14,9 +14,10 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.7.0`
+## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed
-* fixed the type hints for the whole library
+* updated the type hints for the whole library
+* fixed possibly unbound variables for the whole library
 
 ## 30.04.2025 `v1.6.9`
 * changed the params in `Json.create()`:

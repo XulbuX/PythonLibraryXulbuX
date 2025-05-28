@@ -152,18 +152,15 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 
 from ._consts_ import ANSI
 from .xx_string import String
-from .xx_regex import Regex
-from .xx_color import Color, Rgba, Hexa
+from .xx_regex import Regex, Match, Pattern
+from .xx_color import Color, rgba, Rgba, Hexa
 
-from typing import TypeAlias, Optional
+from typing import Optional
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import re as _re
 
-
-Pattern: TypeAlias = _re.Pattern[str] | _rx.Pattern[str]
-Match: TypeAlias = _re.Match[str] | _rx.Match[str]
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
 
@@ -256,9 +253,9 @@ class FormatCodes:
         `xx_format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
-        if default_color and Color.is_valid_rgba(default_color, False):
+        if default_color and Color.is_valid_rgba(default_color, False):  # type: ignore[assignment]
             use_default = True
-        elif default_color and Color.is_valid_hexa(default_color, False):
+        elif default_color and Color.is_valid_hexa(default_color, False):  # type: ignore[assignment]
             use_default, default_color = True, Color.to_rgba(default_color)
         else:
             use_default = False
@@ -283,8 +280,8 @@ class FormatCodes:
                 formats = FormatCodes.to_ansi(formats, default_color, brightness_steps, False)
             format_keys = [k.strip() for k in formats.split("|") if k.strip()]
             ansi_formats = [
-                r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k else f"[{k}]"
-                for k in format_keys
+                r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k  # type: ignore[assignment]
+                else f"[{k}]" for k in format_keys
             ]
             if auto_reset_txt and not auto_reset_escaped:
                 reset_keys = []
@@ -309,8 +306,9 @@ class FormatCodes:
                     else:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
-                    r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)
-                                              ).startswith(f"{ANSI.char}{ANSI.start}")
+                    r for k in reset_keys
+                    if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)  # type: ignore[assignment]
+                        ).startswith(f"{ANSI.char}{ANSI.start}")
                 ]
             else:
                 ansi_resets = []
@@ -328,7 +326,8 @@ class FormatCodes:
                 )
 
         string = "\n".join(_COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
-        return ((FormatCodes.__get_default_ansi(default_color) if _default_start else "") + string) if use_default else string
+        return (((FormatCodes.__get_default_ansi(default_color) or "") if _default_start else "")  # type: ignore[assignment]
+                + string) if use_default else string
 
     @staticmethod
     def escape_ansi(ansi_string: str) -> str:
@@ -406,8 +405,9 @@ class FormatCodes:
             return (ANSI.seq_bg_color if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
                 *default_color[:3]
             )
-        if not (format_key in _modifiers[0] or format_key in _modifiers[1]):
+        if format_key is None or not (format_key in _modifiers[0] or format_key in _modifiers[1]):
             return None
+        assert format_key is not None
         match = _COMPILED["modifier"].match(format_key)
         if not match:
             return None
@@ -418,12 +418,13 @@ class FormatCodes:
             if adjust and adjust > 0:
                 modifiers = mod
                 break
+        new_rgb = default_color
         if adjust == 0:
             return None
         elif modifiers in _modifiers[0]:
-            new_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust)
+            new_rgb = tuple(Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust))
         elif modifiers in _modifiers[1]:
-            new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust)
+            new_rgb = tuple(Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust))
         return (ANSI.seq_bg_color if is_bg else ANSI.seq_color).format(*new_rgb[:3])
 
     @staticmethod
@@ -432,9 +433,10 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
         use_default = default_color and Color.is_valid_rgba(default_color, False)
+        _default_color = tuple(Color.to_rgba(default_color))  # type: ignore[assignment]
         _format_key, format_key = format_key, FormatCodes.__normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
         if use_default:
-            if new_default_color := FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps):
+            if new_default_color := FormatCodes.__get_default_ansi(_default_color, format_key, brightness_steps):
                 return new_default_color
         for map_key in ANSI.codes_map:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
@@ -443,8 +445,8 @@ class FormatCodes:
                         v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)
                     ), None)
                 )
-        rgb_match = _re.match(_COMPILED["rgb"], format_key)
-        hex_match = _re.match(_COMPILED["hex"], format_key)
+        rgb_match = _COMPILED["rgb"].match(format_key)
+        hex_match = _COMPILED["hex"].match(format_key)
         try:
             if rgb_match:
                 is_bg = rgb_match.group(1)

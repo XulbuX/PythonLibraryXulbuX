@@ -103,14 +103,14 @@ class Args:
 
 class Console:
 
-    w: int = _ConsoleWidth()
+    w: int = _ConsoleWidth()  # type: ignore[assignment]
     """The width of the console in characters."""
-    h: int = _ConsoleHeight()
+    h: int = _ConsoleHeight()  # type: ignore[assignment]
     """The height of the console in lines."""
-    wh: tuple[int, int] = _ConsoleSize()
+    wh: tuple[int, int] = _ConsoleSize()  # type: ignore[assignment]
     """A tuple with the width and height of
     the console in characters and lines."""
-    usr: str = _ConsoleUser()
+    usr: str = _ConsoleUser()  # type: ignore[assignment]
     """The name of the current user."""
 
     @staticmethod
@@ -274,7 +274,9 @@ class Console:
             prompt_lst = (
                 item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             )
-            prompt = f"\n{' ' * title_len}\t".join(Console.__add_back_removed_parts(list(prompt_lst), removals))
+            prompt = f"\n{' ' * title_len}\t".join(
+                Console.__add_back_removed_parts(list(prompt_lst), removals)  # type: ignore[assignment]
+            )
         else:
             prompt = str(prompt)
         if title == "":
@@ -526,7 +528,7 @@ class Console:
         start="",
         end="\n",
         default_color: Rgba | Hexa = COLOR.cyan,
-        allowed_chars: str = CHARS.all,
+        allowed_chars: str = CHARS.all,  # type: ignore[assignment]
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
         mask_char: Optional[str] = None,
@@ -540,7 +542,7 @@ class Console:
         ---------------------------------------------------------------------------------------
         The input can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `xx_format_codes` module documentation."""
-        FormatCodes.print(start + prompt, default_color=default_color, end="")
+        FormatCodes.print(start + str(prompt), default_color=default_color, end="")
         result = ""
         select_all = False
         last_line_count = 1
@@ -596,7 +598,8 @@ class Console:
 
         def handle_character_input():
             nonlocal result
-            if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_len is None or len(result) < max_len):
+            if event.name is not None and ((allowed_chars == CHARS.all or event.name in allowed_chars) and
+                                           (max_len is None or len(result) < max_len)):
                 result += event.name
                 update_display(Console.w)
 
@@ -617,7 +620,7 @@ class Console:
                     return None
                 elif event.name == "space":
                     handle_character_input()
-                elif len(event.name) == 1:
+                elif event.name is not None and len(event.name) == 1:
                     handle_character_input()
                 else:
                     select_all = False

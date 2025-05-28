@@ -26,6 +26,8 @@ class Json:
         if not json_file.endswith(".json"):
             json_file += ".json"
         file_path = Path.extend_or_make(json_file, prefer_script_dir=True)
+        if file_path is None:
+            raise FileNotFoundError(f"Could not find JSON file: {json_file}")
         with open(file_path, "r") as f:
             content = f.read()
         try:
@@ -135,19 +137,18 @@ class Json:
                         raise TypeError(f"Cannot navigate through {type(current).__name__}")
             return data_obj
 
+        update = {}
         for value_path, new_value in update_values.items():
             try:
                 path_id = Data.get_path_id(
                     data=processed_data,
                     value_paths=value_path,
                     path_sep=path_sep,
-                    ignore_not_found=True,
                 )
                 if path_id is not None:
-                    if "update" not in locals():
-                        update = {}
                     update[path_id] = new_value
                 else:
+                    keys = value_path.split(path_sep)
                     keys = value_path.split(path_sep)
                     data = create_nested_path(data, keys, new_value)
             except Exception:
