@@ -34,10 +34,10 @@ class Json:
             data = _json.loads(content)
         except _json.JSONDecodeError as e:
             raise ValueError(f"Error parsing JSON in '{file_path}':  {str(e)}")
-        processed_data = Data.remove_comments(data, comment_start, comment_end)
+        processed_data = dict(Data.remove_comments(data, comment_start, comment_end))
         if not processed_data:
             raise ValueError(f"The JSON file '{file_path}' is empty or contains only comments.")
-        return (dict(processed_data), dict(data)) if return_original else dict(processed_data)
+        return (processed_data, data) if return_original else processed_data
 
     @staticmethod
     def create(

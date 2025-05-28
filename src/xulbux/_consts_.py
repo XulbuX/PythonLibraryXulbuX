@@ -26,6 +26,7 @@ class COLOR:
     yellow = "#FFD260"
     lime = "#C9F16E"
     green = "#7EE787"
+    neongreen = "#4CFF85"
     teal = "#50EAAF"
     cyan = "#3EDEE6"
     ice = "#77DBEF"

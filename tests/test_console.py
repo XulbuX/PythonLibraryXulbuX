@@ -129,12 +129,12 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     for key, expected in expected_args_dict.items():
         assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
-        assert args_result[key].exists == expected["exists"]
-        assert args_result[key].value == expected["value"]
+        assert args_result[key].exists == expected["exists"]  # type: ignore[access]
+        assert args_result[key].value == expected["value"]  # type: ignore[access]
         assert bool(args_result[key]) == expected["exists"]
     assert list(args_result.keys()) == list(expected_args_dict.keys())
-    assert [v.exists for v in args_result.values()] == [d['exists'] for d in expected_args_dict.values()]
-    assert [v.value for v in args_result.values()] == [d['value'] for d in expected_args_dict.values()]
+    assert [v.exists for v in args_result.values()] == [d["exists"] for d in expected_args_dict.values()]
+    assert [v.value for v in args_result.values()] == [d["value"] for d in expected_args_dict.values()]
     assert len(args_result) == len(expected_args_dict)
 
 
@@ -191,7 +191,7 @@ def test_get_args_invalid_alias():
 
 def test_get_args_invalid_config():
     with pytest.raises(TypeError, match="Invalid configuration type for alias 'bad_config'. Must be a list, tuple, or dict."):
-        Console.get_args({"bad_config": 123})
+        Console.get_args({"bad_config": 123})  # type: ignore[assignment]
 
     with pytest.raises(ValueError,
                        match="Invalid configuration for alias 'missing_flags'. Dictionary must contain a 'flags' key."):

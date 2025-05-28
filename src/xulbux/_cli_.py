@@ -7,11 +7,13 @@ from .xx_console import Console
 def help_command():
     """Show some info about the library, with a brief explanation of how to use it."""
     color = {
-        "lib": COLOR.ice,
-        "import": COLOR.red,
-        "class": COLOR.lavender,
-        "types": COLOR.lightblue,
+        "class": COLOR.tangerine,
+        "const": COLOR.red,
+        "func": COLOR.cyan,
+        "import": COLOR.neongreen,
+        "lib": COLOR.orange,
         "punctuators": COLOR.darkgray,
+        "code_border": COLOR.gray,
     }
     FormatCodes.print(
         rf"""  [_|b|#7075FF]               __  __
@@ -22,29 +24,20 @@ def help_command():
 
   [i|{COLOR.coral}]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
-  [b|#75A2FF]Usage:[*]
-    [{color['punctuators']}]# GENERAL LIBRARY[*]
-    [{color['import']}]import [{color['lib']}]xulbux [{color['import']}]as [{color['lib']}]xx[*]
-    [{color['punctuators']}]# CUSTOM TYPES[*]
-    [{color['import']}]from [{color['lib']}]xulbux [{color['import']}]import [{color['lib']}]rgba[{color['punctuators']}], [{color['lib']}]hsla[{color['punctuators']}], [{color['lib']}]hexa[*]
-
-  [b|#75A2FF]Includes:[*]
-    [dim](•) CUSTOM TYPES:
-       [dim](•) [{color['class']}]rgba[{color['punctuators']}]/([i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]float[_|{color['punctuators']}])[*]
-       [dim](•) [{color['class']}]hsla[{color['punctuators']}]/([i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]float[_|{color['punctuators']}])[*]
-       [dim](•) [{color['class']}]hexa[{color['punctuators']}]/([i|{color['types']}]str[_|{color['punctuators']}]|[i|{color['types']}]int[_|{color['punctuators']}])[*]
-    [dim](•) CODE STRING OPERATIONS   [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Code[*]
-    [dim](•) WORKING WITH COLORS      [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Color[*]
-    [dim](•) CONSOLE LOG AND ACTIONS  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Console[*]
-    [dim](•) PATH OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Path[*]
-    [dim](•) FILE OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]File[*]
-    [dim](•) JSON FILE OPERATIONS     [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Json[*]
-    [dim](•) SYSTEM ACTIONS           [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]System[*]
-    [dim](•) MANAGE THE ENV PATH VAR  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]EnvPath[*]
-    [dim](•) EASY PRETTY PRINTING     [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]FormatCodes[*]
-    [dim](•) DATA OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Data[*]
-    [dim](•) STRING OPERATIONS        [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]String[*]
-    [dim](•) REGEX PATTERN TEMPLATES  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Regex[*]
+  [b|#FCFCFF]Usage:[*]
+  [dim|{color['code_border']}](╭────────────────────────────────────────────────────╮)
+  [dim|{color['code_border']}](│) [{color['punctuators']}]# CONSTANTS[*]                                        [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [{color['import']}]from [{color['lib']}]xulbux [{color['import']}]import [{color['const']}]COLOR[{color['punctuators']}], [{color['const']}]CHARS[{color['punctuators']}], [{color['const']}]ANSI[*]              [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [{color['punctuators']}]# Classes[*]                                          [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [{color['import']}]from [{color['lib']}]xulbux [{color['import']}]import [{color['class']}]Code[{color['punctuators']}], [{color['class']}]Color[{color['punctuators']}], [{color['class']}]Console[{color['punctuators']}], ...[*]       [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [{color['punctuators']}]# types[*]                                            [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [{color['import']}]from [{color['lib']}]xulbux [{color['import']}]import [{color['func']}]rgba[{color['punctuators']}], [{color['func']}]hsla[{color['punctuators']}], [{color['func']}]hexa[*]                [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](╰────────────────────────────────────────────────────╯)
+  [b|#FCFCFF]Documentation:[*]
+  [dim|{color['code_border']}](╭────────────────────────────────────────────────────╮)
+  [dim|{color['code_border']}](│) [#DADADD]For more information see the GitHub page.          [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](│) [u|#8085FF](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) [dim|{color['code_border']}](│)
+  [dim|{color['code_border']}](╰────────────────────────────────────────────────────╯)
   [_]
   [dim](Press any key to exit...)
   """,

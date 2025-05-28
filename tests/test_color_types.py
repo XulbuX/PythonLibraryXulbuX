@@ -23,7 +23,7 @@ def assert_hexa_equal(actual: hexa, expected: str):
 
 
 def test_rgba_return_values():
-    assert_rgba_equal(rgba(255, 0, 0, 0.5), rgba(255, 0, 0, 0.5))
+    assert_rgba_equal(rgba(255, 0, 0, 0.5), (255, 0, 0, 0.5))
     assert_hsla_equal(rgba(255, 0, 0, 0.5).to_hsla(), (0, 100, 50, 0.5))
     assert_hexa_equal(rgba(255, 0, 0, 0.5).to_hexa(), "#FF00007F")
     assert rgba(255, 0, 0, 0.5).has_alpha() is True
@@ -49,7 +49,7 @@ def test_rgba_return_values():
 
 
 def test_hsla_return_values():
-    assert_hsla_equal(hsla(0, 100, 50, 0.5), hsla(0, 100, 50, 0.5))
+    assert_hsla_equal(hsla(0, 100, 50, 0.5), (0, 100, 50, 0.5))
     assert_rgba_equal(hsla(0, 100, 50, 0.5).to_rgba(), (255, 0, 0, 0.5))
     assert_hexa_equal(hsla(0, 100, 50, 0.5).to_hexa(), "#FF00007F")
     assert hsla(0, 100, 50, 0.5).has_alpha() is True

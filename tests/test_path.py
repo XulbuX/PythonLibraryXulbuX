@@ -60,7 +60,7 @@ def test_extend(setup_test_environment):
 
     # EMPTY PATH
     assert Path.extend("") is None
-    assert Path.extend(None) is None
+    assert Path.extend(None) is None  # type: ignore[assignment]
     with pytest.raises(PathNotFoundError, match="Path is empty."):
         Path.extend("", raise_error=True)
 

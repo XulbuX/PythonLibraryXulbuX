@@ -16,8 +16,9 @@
 
 ## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed
-* updated the type hints for the whole library
+* corrected and added missing type hints for the whole library
 * fixed possibly unbound variables for the whole library
+* updated the client command `xx-help`
 
 ## 30.04.2025 `v1.6.9`
 * changed the params in `Json.create()`:

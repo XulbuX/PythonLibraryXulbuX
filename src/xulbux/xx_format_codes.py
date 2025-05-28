@@ -433,7 +433,7 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
         use_default = default_color and Color.is_valid_rgba(default_color, False)
-        _default_color = tuple(Color.to_rgba(default_color))  # type: ignore[assignment]
+        _default_color = tuple(Color.to_rgba(default_color)) if use_default else ()  # type: ignore[assignment]
         _format_key, format_key = format_key, FormatCodes.__normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
         if use_default:
             if new_default_color := FormatCodes.__get_default_ansi(_default_color, format_key, brightness_steps):

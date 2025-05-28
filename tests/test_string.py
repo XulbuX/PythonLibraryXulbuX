@@ -44,14 +44,14 @@ def test_escape():
 
 
 def test_is_empty():
-    assert String.is_empty(None) is True
+    assert String.is_empty(None) is True  # type: ignore[assignment]
     assert String.is_empty("") is True
     assert String.is_empty("   ") is False
     assert String.is_empty("   ", spaces_are_empty=True) is True
     assert String.is_empty("Not Empty") is False
     assert String.is_empty(" Not Empty ", spaces_are_empty=True) is False
-    assert String.is_empty(123) is False
-    assert String.is_empty([]) is False
+    assert String.is_empty(123) is False  # type: ignore[assignment]
+    assert String.is_empty([]) is False  # type: ignore[assignment]
 
 
 def test_single_char_repeats():

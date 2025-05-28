@@ -82,9 +82,9 @@ UPDATE_DATA_END = {
 
 
 def test_read_simple(tmp_path):
-    file_path = create_test_json(tmp_path, "simple.json", SIMPLE_DATA_STR)
+    file_path = create_test_json(tmp_path, "simple.json", SIMPLE_DATA)
     data = Json.read(str(file_path))
-    assert data == SIMPLE_DATA_STR
+    assert data == SIMPLE_DATA
 
 
 def test_read_with_comments(tmp_path):
@@ -178,7 +178,7 @@ def test_update_with_comments(tmp_path):
     Json.update(str(file_path), COMMENT_UPDATE_VALUES)
 
     try:
-        final_data = Json.read(str(file_path))
+        final_data: dict = Json.read(str(file_path))  # type: ignore[assignment]
         assert final_data["config"]["version"] == 2.0
         assert final_data["config"]["features"] == ["c", "b"]
         assert final_data["user"] == "Cool Test User"

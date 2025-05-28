@@ -189,7 +189,7 @@ class rgba:
         self.r = self.g = self.b = int(Color.luminance(self.r, self.g, self.b, method=method))
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
-    def blend(self, other: "rgba", ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
+    def blend(self, other: Rgba, ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
         - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
         - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
@@ -198,7 +198,7 @@ class rgba:
             raise ValueError("'ratio' must be a float/int in [0.0, 1.0]")
         elif not isinstance(other, rgba):
             if Color.is_valid_rgba(other):
-                other = rgba(*other, _validate=False)
+                other = Color.to_rgba(other)
             else:
                 raise TypeError("'other' must be a valid RGBA color")
         ratio *= 2
@@ -399,7 +399,7 @@ class hsla:
         self.h, self.s, self.l, _ = rgba(l, l, l, _validate=False).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
-    def blend(self, other: "hsla", ratio: float = 0.5, additive_alpha: bool = False) -> "hsla":
+    def blend(self, other: Hsla, ratio: float = 0.5, additive_alpha: bool = False) -> "hsla":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
         - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
         - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
@@ -639,7 +639,7 @@ class hexa:
         self.r = self.g = self.b = int(Color.luminance(self.r, self.g, self.b, method=method))
         return hexa("", self.r, self.g, self.b, self.a)
 
-    def blend(self, other: "hexa", ratio: float = 0.5, additive_alpha: bool = False) -> "hexa":
+    def blend(self, other: Hexa, ratio: float = 0.5, additive_alpha: bool = False) -> "hexa":
         """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):
         - if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
         - if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
@@ -985,7 +985,7 @@ class Color:
         return hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa else hsla(h, s, l, a, _validate=False).to_rgba()
 
     @staticmethod
-    def adjust_saturation(color: Rgba | Hexa, saturation_change: float) -> rgba | hexa:
+    def adjust_saturation(color: Rgba | Hsla | Hexa, saturation_change: float) -> rgba | hexa:
         """In- or decrease the saturation of the input color.\n
         -----------------------------------------------------------------------------------------------------------
         - color (rgba|hexa): HEX or RGBA color

@@ -42,7 +42,7 @@ def test_serialize_bytes():
     assert base64.b64decode(serialized_non_utf8["bytes"]).decode("latin-1") == non_utf8_bytes.decode("latin-1")
 
     with pytest.raises(TypeError):
-        Data.serialize_bytes("not bytes")
+        Data.serialize_bytes("not bytes")  # type: ignore[assignment]
 
 
 def test_deserialize_bytes():
@@ -139,7 +139,9 @@ def test_is_equal():
 
 
 def test_get_path_id():
-    id1, id2 = Data.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])
+    id1, id2 = Data.get_path_id(
+        d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"]
+    )  # type: ignore[return-value]
     assert id1 == "1>001"
     assert id2 == "1>012"
     assert Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
@@ -151,8 +153,8 @@ def test_get_path_id():
 
 def test_get_value_by_path_id():
     data = {"a": [1, {"b": "c"}], "d": ("e", "f")}
-    path_id_1 = Data.get_path_id(data, "a->1->b")
-    path_id_2 = Data.get_path_id(data, "d->1")
+    path_id_1 = str(Data.get_path_id(data, "a->1->b"))
+    path_id_2 = str(Data.get_path_id(data, "d->1"))
 
     assert path_id_1 == "1>010"
     assert path_id_2 == "1>11"
@@ -172,11 +174,11 @@ def test_set_value_by_path_id():
     path_id_c = Data.get_path_id(data, "a->1->b")
     path_id_f = Data.get_path_id(data, "d->1")
 
-    updated_data = Data.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})
+    updated_data = Data.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})  # type: ignore[assignment]
     expected_data = {"a": [1, {"b": "NEW_C"}], "d": ("e", "NEW_F")}
     assert updated_data == expected_data
 
-    updated_data_types = Data.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})
+    updated_data_types = Data.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})  # type: ignore[assignment]
     expected_data_types = {"a": [1, {"b": [1, 2]}], "d": ("e", {"x": 1})}
     assert updated_data_types == expected_data_types
 
