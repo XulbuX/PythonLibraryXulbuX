@@ -4,8 +4,8 @@
 ranging from console logging and working with colors to file management and system operations.
 The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
-For precise information about the library, see the library's [wiki page](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
-For the libraries latest changes and updates, see the [change log](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
+For precise information about the library, see the library's [**wiki page**](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
+For the libraries latest changes and updates, see the [**change log**](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
 
 <br>
 
@@ -129,4 +129,4 @@ if __name__ == "__main__":
 <br>
 
 --------------------------------------------------------------
-[View this library on PyPI](https://pypi.org/project/XulbuX/)
+[View this library on **PyPI**](https://pypi.org/project/XulbuX/)
