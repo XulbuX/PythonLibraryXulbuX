@@ -182,7 +182,7 @@ class rgba:
             self.a = 1 - self.a
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
-    def grayscale(self, method: str = "wcag2") -> "rgba":
+    def grayscale(self, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> "rgba":
         """Converts the color to grayscale using the luminance formula.\n
         ------------------------------------------------------------------
         The `method` is the luminance calculation method to use:
@@ -391,7 +391,7 @@ class hsla:
             self.a = 1 - self.a
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
-    def grayscale(self, method: str = "wcag2") -> "hsla":
+    def grayscale(self, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> "hsla":
         """Converts the color to grayscale using the luminance formula.\n
         ------------------------------------------------------------------
         The `method` is the luminance calculation method to use:
@@ -632,7 +632,7 @@ class hexa:
             self.a = 1 - self.a
         return hexa("", self.r, self.g, self.b, self.a)
 
-    def grayscale(self, method: str = "wcag2") -> "hexa":
+    def grayscale(self, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> "hexa":
         """Converts the color to grayscale using the luminance formula.\n
         ------------------------------------------------------------------
         The `method` is the luminance calculation method to use:
@@ -925,7 +925,13 @@ class Color:
             raise ValueError(f"Invalid HEX integer '0x{hex_str}': expected in range [0x000000, 0xFFFFFF]")
 
     @staticmethod
-    def luminance(r: int, g: int, b: int, output_type: Optional[type] = None, method: str = "wcag2") -> int | float:
+    def luminance(
+        r: int,
+        g: int,
+        b: int,
+        output_type: Optional[type] = None,
+        method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
+    ) -> int | float:
         """Calculates the relative luminance of a color according to various standards.\n
         ----------------------------------------------------------------------------------
         The `output_type` controls the range of the returned luminance value:

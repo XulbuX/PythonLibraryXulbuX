@@ -11,7 +11,7 @@ from .xx_string import String
 from .xx_color import Color, Rgba, Hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from typing import Optional, Any
+from typing import Optional, Literal, Any
 import prompt_toolkit as _prompt_toolkit
 import pyperclip as _pyperclip
 import keyboard as _keyboard
@@ -427,18 +427,18 @@ class Console:
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
-    def log_box(
+    def log_box_filled(
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: str | Rgba | Hexa = "green",
+        box_bg_color: Rgba | Hexa = "green",
         default_color: Rgba | Hexa = "#000",
         w_padding: int = 2,
         w_full: bool = False,
     ) -> None:
-        """Will print a box, containing a formatted log message:
+        """Will print a box with a colored background, containing a formatted log message:
         - `*values` -⠀the box content (each value is on a new line)
-        - `start` -⠀something to print before the log box is printed
+        - `start` -⠀something to print before the log box is printed (e.g. `\\n`)
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
         - `box_bg_color` -⠀the background color of the box
         - `default_color` -⠀the default text color of the `*values`
@@ -447,23 +447,92 @@ class Console:
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
-        lines = [line.rstrip() for val in values for line in str(val).splitlines()]
-        unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
-        max_line_len = max(len(line) for line in unfmt_lines)
+        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
         lines = [
             f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
-            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[_bg]" for line, unfmt in zip(lines, unfmt_lines)
+            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
         ]
         pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
-            f"{start}[bg:{box_bg_color}]{pady}[_bg]\n"
+            f"{start}[bg:{box_bg_color}]{pady}[*]\n"
             + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
-            + f"\n[bg:{box_bg_color}]{pady}[_bg]",
+            + f"\n[bg:{box_bg_color}]{pady}[*]",
+            default_color=default_color or "#000",
+            sep="\n",
+            end=end,
+        )
+
+    @staticmethod
+    def log_box_bordered(
+        *values: object,
+        start: str = "",
+        end: str = "\n",
+        border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
+        border_style: str | Rgba | Hexa = "dim",
+        default_color: Optional[Rgba | Hexa] = None,
+        w_padding: int = 1,
+        w_full: bool = False,
+        _border_chars: Optional[tuple[str, str, str, str, str, str, str, str]] = None,
+    ) -> None:
+        """Will print a bordered box, containing a formatted log message:
+        - `*values` -⠀the box content (each value is on a new line)
+        - `start` -⠀something to print before the log box is printed (e.g. `\\n`)
+        - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
+        - `border_type` -⠀one of the predefined border character sets
+        - `default_color` -⠀the default text color of the `*values`
+        - `w_padding` -⠀the horizontal padding (in chars) to the box content
+        - `w_full` -⠀whether to make the box be the full console width or not
+        - `_border_chars` -⠀define your own border characters set (overwrites `border_type`)\n
+        ---------------------------------------------------------------------------------------
+        The box content can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see `xx_format_codes` module documentation.\n
+        ---------------------------------------------------------------------------------------
+        The `border_type` can be one of the following:
+        - `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│')`
+        - `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│')`
+        - `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃')`
+        - `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║')`\n
+        The order of the characters is always:
+        1. top-left corner
+        2. top border
+        3. top-right corner
+        4. right border
+        5. bottom-right corner
+        6. bottom border
+        7. bottom-left corner
+        8. left border"""
+        borders = {
+            "standard": ('┌', '─', '┐', '│', '┘', '─', '└', '│'),
+            "rounded": ('╭', '─', '╮', '│', '╯', '─', '╰', '│'),
+            "strong": ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃'),
+            "double": ('╔', '═', '╗', '║', '╝', '═', '╚', '║'),
+        }
+        border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
+        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values)
+        pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+        border_l = f"[{border_style}]{border_chars[7]}[_]"
+        border_r = f"[{border_style}]{border_chars[3]}[_]"
+        lines = [
+            f"{border_l}{' ' * w_padding}{line}[_]" + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r
+            for line, unfmt in zip(lines, unfmt_lines)
+        ]
+        border_t = f"[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
+        border_b = f"[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+        FormatCodes.print(
+            f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
             default_color=default_color,
             sep="\n",
             end=end,
         )
+
+    @staticmethod
+    def __prepare_log_box(values: tuple[object, ...]) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
+        """Prepares the log box content and returns it along with the max line length."""
+        lines = [line.rstrip() for val in values for line in str(val).splitlines()]
+        unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
+        max_line_len = max(len(line) for line in unfmt_lines)
+        return lines, unfmt_lines, max_line_len  # type: ignore[return]
 
     @staticmethod
     def confirm(

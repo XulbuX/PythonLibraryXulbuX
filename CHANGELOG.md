@@ -16,6 +16,8 @@
 
 ## ... `v1.7.1`
 * fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
+* renamed the method `Console.log_box()` to `Console.log_box_filled()`
+* added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color
 
 ## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed
