@@ -253,9 +253,9 @@ class FormatCodes:
         `xx_format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
-        if default_color and Color.is_valid_rgba(default_color, False):  # type: ignore[assignment]
+        if default_color and Color.is_valid_rgba(default_color, False):
             use_default = True
-        elif default_color and Color.is_valid_hexa(default_color, False):  # type: ignore[assignment]
+        elif default_color and Color.is_valid_hexa(default_color, False):
             use_default, default_color = True, Color.to_rgba(default_color)
         else:
             use_default = False

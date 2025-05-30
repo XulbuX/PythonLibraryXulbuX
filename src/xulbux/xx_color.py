@@ -969,7 +969,7 @@ class Color:
 
     @staticmethod
     def text_color_for_on_bg(text_bg_color: Rgba | Hexa) -> rgba | hexa | int:
-        was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)  # type: ignore[assignment]
+        was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
         return (((0xFFFFFF if was_int else hexa("", 255, 255, 255)) if was_hexa else rgba(255, 255, 255, _validate=False))
@@ -984,22 +984,22 @@ class Color:
         - lightness_change (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
         -----------------------------------------------------------------------------------------------------
         returns (rgba|hexa): the adjusted color in the format of the input color"""
-        was_hexa = Color.is_valid_hexa(color)  # type: ignore[assignment]
-        _color: hsla = Color.to_hsla(color)  # type: ignore[assignment]
+        was_hexa = Color.is_valid_hexa(color)
+        _color: hsla = Color.to_hsla(color)
         h, s, l, a = (int(_color[0]), int(_color[1]), int(_color[2]), _color[3] if Color.has_alpha(_color) else None)
         l = int(max(0, min(100, l + lightness_change * 100)))
         return hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa else hsla(h, s, l, a, _validate=False).to_rgba()
 
     @staticmethod
-    def adjust_saturation(color: Rgba | Hsla | Hexa, saturation_change: float) -> rgba | hexa:
+    def adjust_saturation(color: Rgba | Hexa, saturation_change: float) -> rgba | hexa:
         """In- or decrease the saturation of the input color.\n
         -----------------------------------------------------------------------------------------------------------
         - color (rgba|hexa): HEX or RGBA color
         - saturation_change (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
         -----------------------------------------------------------------------------------------------------------
         returns (rgba|hexa): the adjusted color in the format of the input color"""
-        was_hexa = Color.is_valid_hexa(color)  # type: ignore[assignment]
-        _color: hsla = Color.to_hsla(color)  # type: ignore[assignment]
+        was_hexa = Color.is_valid_hexa(color)
+        _color: hsla = Color.to_hsla(color)
         h, s, l, a = (int(_color[0]), int(_color[1]), int(_color[2]), _color[3] if Color.has_alpha(_color) else None)
         s = int(max(0, min(100, s + saturation_change * 100)))
         return hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa else hsla(h, s, l, a, _validate=False).to_rgba()
