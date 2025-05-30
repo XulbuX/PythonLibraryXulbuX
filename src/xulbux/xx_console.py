@@ -11,7 +11,7 @@ from .xx_string import String
 from .xx_color import Color, Rgba, Hexa
 
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from typing import Optional, Literal, Any
+from typing import Optional, Literal, Mapping, Any, cast
 import prompt_toolkit as _prompt_toolkit
 import pyperclip as _pyperclip
 import keyboard as _keyboard
@@ -48,31 +48,40 @@ class _ConsoleUser:
 
 
 class ArgResult:
-    """Exists: if the argument was found or not\n
-    Value: the value from behind the found argument"""
+    """Represents the result of a parsed command-line argument and contains the following attributes:
+    - `exists` -⠀if the argument was found or not
+    - `value` -⠀the value given with the found argument\n
+    --------------------------------------------------------------------------------------------------------
+    When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
     def __init__(self, exists: bool, value: Any):
-        self.exists = exists
-        self.value = value
+        self.exists: bool = exists
+        self.value: Any = value
 
     def __bool__(self):
         return self.exists
 
 
 class Args:
-    """Stores found command arguments under their aliases with their results."""
+    """Container for parsed command-line arguments, allowing attribute-style access.
+    For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
+    Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            if not key.isidentifier():
-                raise TypeError(f"Argument alias '{key}' is invalid. It must be a valid Python variable name.")
-            setattr(self, key, ArgResult(**value))
+    def __init__(self, **kwargs: dict[str, Any]):
+        for alias_name, data_dict in kwargs.items():
+            if not alias_name.isidentifier():
+                raise TypeError(f"Argument alias '{alias_name}' is invalid. It must be a valid Python variable name.")
+            arg_result_instance = ArgResult(exists=data_dict["exists"], value=data_dict["value"])
+            setattr(self, alias_name, arg_result_instance)
 
     def __len__(self):
         return len(vars(self))
 
     def __contains__(self, key):
         return hasattr(self, key)
+
+    def __getattr__(self, name: str) -> ArgResult:
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -115,7 +124,7 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: dict[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]],
+        find_args: Mapping[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]],
         allow_spaces: bool = False
     ) -> Args:
         """Will search for the specified arguments in the command line
@@ -275,7 +284,7 @@ class Console:
                 item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             )
             prompt = f"\n{' ' * title_len}\t".join(
-                Console.__add_back_removed_parts(list(prompt_lst), removals)  # type: ignore[assignment]
+                Console.__add_back_removed_parts(list(prompt_lst), cast(tuple[tuple[int, str], ...], removals))
             )
         else:
             prompt = str(prompt)
@@ -532,7 +541,7 @@ class Console:
         lines = [line.rstrip() for val in values for line in str(val).splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
-        return lines, unfmt_lines, max_line_len  # type: ignore[return]
+        return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
     @staticmethod
     def confirm(

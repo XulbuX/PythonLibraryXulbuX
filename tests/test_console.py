@@ -229,7 +229,7 @@ def test_multiline_input(mock_prompt_toolkit, mock_formatcodes_print):
 
     mock_prompt_toolkit.assert_called_once()
     pt_args, pt_kwargs = mock_prompt_toolkit.call_args
-    assert pt_args == (" ⤷ ", )
+    assert pt_args == (" ⮡ ", )
     assert pt_kwargs.get('multiline') is True
     assert pt_kwargs.get('wrap_lines') is True
     assert 'key_bindings' in pt_kwargs

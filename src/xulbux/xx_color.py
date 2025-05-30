@@ -33,7 +33,7 @@ The `Color` class, which contains all sorts of different color-related methods:
 
 from .xx_regex import Regex
 
-from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union, Any
+from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union, Any, cast
 import re as _re
 
 
@@ -500,7 +500,7 @@ class hexa:
         self.b: int
         self.a: Optional[float]
         if all(x is not None for x in (_r, _g, _b)):
-            self.r, self.g, self.b, self.a = _r, _g, _b, _a  # type: ignore[assignment]
+            self.r, self.g, self.b, self.a = cast(int, _r), cast(int, _g), cast(int, _b), _a
             return
         if isinstance(color, hexa):
             raise ValueError("Color is already a hexa() color")
@@ -800,7 +800,7 @@ class Color:
         elif Color.is_valid_hsla(color):
             return hsla(*color, _validate=False).to_rgba()  # type: ignore[not-iterable]
         elif Color.is_valid_hexa(color):
-            return hexa(color).to_rgba()  # type: ignore[assignment]
+            return hexa(cast(str | int, color)).to_rgba()
         elif Color.is_valid_rgba(color):
             return color if isinstance(color, rgba) else (rgba(*color, _validate=False))  # type: ignore[not-iterable]
         raise ValueError(f"Invalid color format '{color}'")
@@ -813,7 +813,7 @@ class Color:
         elif Color.is_valid_rgba(color):
             return rgba(*color, _validate=False).to_hsla()  # type: ignore[not-iterable]
         elif Color.is_valid_hexa(color):
-            return hexa(color).to_hsla()  # type: ignore[assignment]
+            return hexa(cast(str | int, color)).to_hsla()
         elif Color.is_valid_hsla(color):
             return color if isinstance(color, hsla) else (hsla(*color, _validate=False))  # type: ignore[not-iterable]
         raise ValueError(f"Invalid color format '{color}'")
@@ -828,7 +828,7 @@ class Color:
         elif Color.is_valid_hsla(color):
             return hsla(*color, _validate=False).to_hexa()  # type: ignore[not-iterable]
         elif Color.is_valid_hexa(color):
-            return color if isinstance(color, hexa) else hexa(color)  # type: ignore[assignment]
+            return color if isinstance(color, hexa) else hexa(cast(str | int, color))
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
