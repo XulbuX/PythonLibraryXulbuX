@@ -14,6 +14,9 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.7.1`
+* fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
+
 ## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed
 * corrected and added missing type hints for the whole library

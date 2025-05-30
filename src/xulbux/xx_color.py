@@ -33,7 +33,7 @@ The `Color` class, which contains all sorts of different color-related methods:
 
 from .xx_regex import Regex
 
-from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union
+from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union, Any
 import re as _re
 
 
@@ -41,6 +41,10 @@ Int_0_100 = Annotated[int, "An integer value between 0 and 100, inclusive."]
 Int_0_255 = Annotated[int, "An integer value between 0 and 255, inclusive."]
 Int_0_360 = Annotated[int, "An integer value between 0 and 360, inclusive."]
 Float_0_1 = Annotated[float, "A float value between 0.0 and 1.0, inclusive."]
+
+AnyRgba: TypeAlias = Any
+AnyHsla: TypeAlias = Any
+AnyHexa: TypeAlias = Any
 
 Rgba: TypeAlias = Union[
     tuple[Int_0_255, Int_0_255, Int_0_255],
@@ -677,7 +681,7 @@ class hexa:
 class Color:
 
     @staticmethod
-    def is_valid_rgba(color: Rgba, allow_alpha: bool = True) -> bool:
+    def is_valid_rgba(color: AnyRgba, allow_alpha: bool = True) -> bool:
         try:
             if isinstance(color, rgba):
                 return True
@@ -685,7 +689,7 @@ class Color:
                 if allow_alpha and Color.has_alpha(color):
                     return (
                         0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
-                        and (0 <= color[3] <= 1 or color[3] is None)  # type: ignore[index]
+                        and (0 <= color[3] <= 1 or color[3] is None)
                     )
                 elif len(color) == 3:
                     return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
@@ -708,7 +712,7 @@ class Color:
             return False
 
     @staticmethod
-    def is_valid_hsla(color: Hsla, allow_alpha: bool = True) -> bool:
+    def is_valid_hsla(color: AnyHsla, allow_alpha: bool = True) -> bool:
         try:
             if isinstance(color, hsla):
                 return True
@@ -716,7 +720,7 @@ class Color:
                 if allow_alpha and Color.has_alpha(color):
                     return (
                         0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
-                        and (0 <= color[3] <= 1 or color[3] is None)  # type: ignore[index]
+                        and (0 <= color[3] <= 1 or color[3] is None)
                     )
                 elif len(color) == 3:
                     return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
@@ -734,12 +738,13 @@ class Color:
                     return False
             elif isinstance(color, str):
                 return bool(_re.fullmatch(Regex.hsla_str(allow_alpha=allow_alpha), color))
+            return False
         except Exception:
             return False
 
     @staticmethod
     def is_valid_hexa(
-        color: Hexa,
+        color: AnyHexa,
         allow_alpha: bool = True,
         get_prefix: bool = False,
     ) -> bool | tuple[bool, Optional[Literal['#', '0x']]]:
@@ -754,14 +759,15 @@ class Color:
                                  (color[2:], "0x") if color.startswith("0x") else (color, None))
                 return ((bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)),
                          prefix) if get_prefix else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)))
+            return False
         except Exception:
             return (False, None) if get_prefix else False
 
     @staticmethod
-    def is_valid(color: Rgba | Hsla | Hexa, allow_alpha: bool = True) -> bool:
+    def is_valid(color: AnyRgba | AnyHsla | AnyHexa, allow_alpha: bool = True) -> bool:
         return bool(
-            Color.is_valid_rgba(color, allow_alpha) or Color.is_valid_hsla(color, allow_alpha)  # type: ignore[assignment]
-            or Color.is_valid_hexa(color, allow_alpha)  # type: ignore[assignment]
+            Color.is_valid_rgba(color, allow_alpha) or Color.is_valid_hsla(color, allow_alpha)
+            or Color.is_valid_hexa(color, allow_alpha)
         )
 
     @staticmethod
@@ -772,7 +778,7 @@ class Color:
         Returns `True` if the color has an alpha channel and `False` otherwise."""
         if isinstance(color, (rgba, hsla, hexa)):
             return color.has_alpha()
-        if Color.is_valid_hexa(color):  # type: ignore[assignment]
+        if Color.is_valid_hexa(color):
             if isinstance(color, str):
                 if color.startswith("#"):
                     color = color[1:]
@@ -791,11 +797,11 @@ class Color:
         """Will try to convert any color type to a color of type RGBA."""
         if isinstance(color, (hsla, hexa)):
             return color.to_rgba()
-        elif Color.is_valid_hsla(color):  # type: ignore[assignment]
+        elif Color.is_valid_hsla(color):
             return hsla(*color, _validate=False).to_rgba()  # type: ignore[not-iterable]
-        elif Color.is_valid_hexa(color):  # type: ignore[assignment]
+        elif Color.is_valid_hexa(color):
             return hexa(color).to_rgba()  # type: ignore[assignment]
-        elif Color.is_valid_rgba(color):  # type: ignore[assignment]
+        elif Color.is_valid_rgba(color):
             return color if isinstance(color, rgba) else (rgba(*color, _validate=False))  # type: ignore[not-iterable]
         raise ValueError(f"Invalid color format '{color}'")
 
@@ -804,11 +810,11 @@ class Color:
         """Will try to convert any color type to a color of type HSLA."""
         if isinstance(color, (rgba, hexa)):
             return color.to_hsla()
-        elif Color.is_valid_rgba(color):  # type: ignore[assignment]
+        elif Color.is_valid_rgba(color):
             return rgba(*color, _validate=False).to_hsla()  # type: ignore[not-iterable]
-        elif Color.is_valid_hexa(color):  # type: ignore[assignment]
+        elif Color.is_valid_hexa(color):
             return hexa(color).to_hsla()  # type: ignore[assignment]
-        elif Color.is_valid_hsla(color):  # type: ignore[assignment]
+        elif Color.is_valid_hsla(color):
             return color if isinstance(color, hsla) else (hsla(*color, _validate=False))  # type: ignore[not-iterable]
         raise ValueError(f"Invalid color format '{color}'")
 
@@ -817,11 +823,11 @@ class Color:
         """Will try to convert any color type to a color of type HEXA."""
         if isinstance(color, (rgba, hsla)):
             return color.to_hexa()
-        elif Color.is_valid_rgba(color):  # type: ignore[assignment]
+        elif Color.is_valid_rgba(color):
             return rgba(*color, _validate=False).to_hexa()  # type: ignore[not-iterable]
-        elif Color.is_valid_hsla(color):  # type: ignore[assignment]
+        elif Color.is_valid_hsla(color):
             return hsla(*color, _validate=False).to_hexa()  # type: ignore[not-iterable]
-        elif Color.is_valid_hexa(color):  # type: ignore[assignment]
+        elif Color.is_valid_hexa(color):
             return color if isinstance(color, hexa) else hexa(color)  # type: ignore[assignment]
         raise ValueError(f"Invalid color format '{color}'")
 
