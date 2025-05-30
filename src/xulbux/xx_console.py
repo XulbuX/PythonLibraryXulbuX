@@ -469,7 +469,7 @@ class Console:
         start: str = "",
         end: str = "\n",
         border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-        border_style: str | Rgba | Hexa = "dim",
+        border_style: str | Rgba | Hexa = f"dim|{COLOR.gray}",
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 1,
         w_full: bool = False,
