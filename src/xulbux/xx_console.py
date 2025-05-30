@@ -563,7 +563,7 @@ class Console:
         end="\n",
         default_color: Rgba | Hexa = COLOR.cyan,
         show_keybindings=True,
-        input_prefix=" ⤷ ",
+        input_prefix=" ⮡ ",
         reset_ansi=True,
     ) -> str:
         """An input where users can input (and paste) text over multiple lines.\n
