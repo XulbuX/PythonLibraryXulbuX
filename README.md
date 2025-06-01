@@ -1,6 +1,6 @@
-# **$\color{#8085FF}\Huge\textsf{XulbuX}$**
+# **$\Huge\textsf{XulbuX}$**
 
-**$\color{#8085FF}\textsf{XulbuX}$** is library that contains many useful classes, types, and functions,
+**XulbuX** is library that contains many useful classes, types, and functions,
 ranging from console logging and working with colors to file management and system operations.
 The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
@@ -75,15 +75,15 @@ def main() -> None:
 
     # LET THE USER ENTER A HEXA COLOR IN ANY HEXA FORMAT
     input_clr = FormatCodes.input(
-      "\n[b](Enter a HEXA color in any format) [dim](>) "
+        "\n[b](Enter a HEXA color in any format) [dim](>) "
     )
 
     # ANNOUNCE INDEXING THE INPUT COLOR
     Console.log(
-      "INDEX",
-      "Indexing the input HEXA color...",
-      start="\n",
-      title_bg_color=COLOR.blue,
+        "INDEX",
+        "Indexing the input HEXA color...",
+        start="\n",
+        title_bg_color=COLOR.blue,
     )
 
     try:
@@ -93,16 +93,16 @@ def main() -> None:
     except ValueError:
         # ANNOUNCE THE ERROR AND EXIT THE PROGRAM
         Console.fail(
-          "The input HEXA color is invalid.",
-          end="\n\n",
-          exit=True,
+            "The input HEXA color is invalid.",
+            end="\n\n",
+            exit=True,
         )
 
     # ANNOUNCE STARTING THE CONVERSION
     Console.log(
-      "CONVERT",
-      "Converting the HEXA color into different types...",
-      title_bg_color=COLOR.tangerine,
+        "CONVERT",
+        "Converting the HEXA color into different types...",
+        title_bg_color=COLOR.tangerine,
     )
 
     # CONVERT THE HEXA COLOR INTO THE TWO OTHER COLOR TYPES
@@ -111,8 +111,8 @@ def main() -> None:
 
     # ANNOUNCE THE SUCCESSFUL CONVERSION
     Console.done(
-      "Successfully converted color into different types.",
-      end="\n\n",
+        "Successfully converted color into different types.",
+        end="\n\n",
     )
 
     # PRETTY PRINT THE COLOR IN DIFFERENT TYPES
