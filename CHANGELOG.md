@@ -18,6 +18,7 @@
 * fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
 * renamed the method `Console.log_box()` to `Console.log_box_filled()`
 * added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color
+* the module `xx_format_codes` now treats the `[*]` to-default-color-reset as a normal full-reset, when no `default_color` is set, instead of just counting it as an invalid format code
 
 ## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed

@@ -466,7 +466,7 @@ class Console:
         FormatCodes.print(
             f"{start}[bg:{box_bg_color}]{pady}[*]\n"
             + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
-            + f"\n[bg:{box_bg_color}]{pady}[*]",
+            + f"\n[bg:{box_bg_color}]{pady}[_]",
             default_color=default_color or "#000",
             sep="\n",
             end=end,
@@ -520,7 +520,7 @@ class Console:
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
-        border_l = f"[{border_style}]{border_chars[7]}[_]"
+        border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
         lines = [
             f"{border_l}{' ' * w_padding}{line}[_]" + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r

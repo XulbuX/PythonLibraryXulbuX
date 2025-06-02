@@ -133,6 +133,7 @@ the formatting code:
 #### Additional Formatting Codes when a `default_color` is set
 
 1. `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
+  (*if no `default_color` it resets everything, including the text color*)
 2. `[*color]` will reset the text color, just like `[_color]`, but then also make it `default_color`
 3. `[default]` will just color the text in `default_color`
 4. `[background:default]` `[BG:default]` will color the background in `default_color`
@@ -263,6 +264,8 @@ class FormatCodes:
         if default_color is not None:
             string = _COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
             string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
+        else:
+            string = _COMPILED["*"].sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
         def is_valid_color(color: str) -> bool:
             return bool((color in ANSI.color_map) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
