@@ -25,8 +25,8 @@ def test_to_ansi():
     assert (
         FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
                             default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
-        + "lo" + f"{reset_bold}{reset_color}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
-        + f"{reset_italic}{reset_underline}{reset_color}" + "]" + default + "!" + reset
+        + "lo" + f"{reset_bold}{default}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
+        + f"{reset_italic}{reset_underline}{default}" + "]" + default + "!" + reset
     )
 
 
@@ -58,5 +58,5 @@ def test_remove_formatting():
 def test_remove_formatting_with_removals():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
-    removals = ((0, bold), (6, orange), (12, reset_color), (12, reset_bold))
+    removals = ((0, bold), (6, orange), (12, default), (12, reset_bold))
     assert FormatCodes.remove_formatting(format_string, get_removals=True) == (clean_string, removals)
