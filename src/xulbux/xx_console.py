@@ -117,8 +117,7 @@ class Console:
     h: int = _ConsoleHeight()  # type: ignore[assignment]
     """The height of the console in lines."""
     wh: tuple[int, int] = _ConsoleSize()  # type: ignore[assignment]
-    """A tuple with the width and height of
-    the console in characters and lines."""
+    """A tuple with the width and height of the console in characters and lines."""
     usr: str = _ConsoleUser()  # type: ignore[assignment]
     """The name of the current user."""
 
