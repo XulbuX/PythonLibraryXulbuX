@@ -134,7 +134,7 @@ the formatting code:
 
 1. `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
   (*if no `default_color` it resets everything, including the text color*)
-2. `[*color]` will reset the text color, just like `[_color]`, but then also make it `default_color`
+2. `[*color]` `[*c]` will reset the text color, just like `[_color]`, but then also make it `default_color`
 3. `[default]` will just color the text in `default_color`
 4. `[background:default]` `[BG:default]` will color the background in `default_color`
 
@@ -175,7 +175,7 @@ _PREFIX_RX: dict[str, str] = {
 }
 _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
-    "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]"),
+    "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*c(?:olor)?\s*([^]_]*?)\]"),
     "ansi_seq": _re.compile(ANSI.char + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
     "formatting": _rx.compile(
         Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
@@ -261,9 +261,9 @@ class FormatCodes:
         else:
             use_default = False
         default_color = cast(rgba, default_color) if use_default else None
-        if default_color is not None:
+        if use_default:
             string = _COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-            string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
+            string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` OR `[…|*c|…]` WITH `[…|default|…]`
         else:
             string = _COMPILED["*"].sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
@@ -296,7 +296,7 @@ class FormatCodes:
                         if k_set & _PREFIX["BR"]:
                             for i in range(len(k)):
                                 if is_valid_color(k[i:]):
-                                    reset_keys.extend(["_bg", "_color"])
+                                    reset_keys.extend(["_bg", "default"] if use_default else ["_bg", "_c"])
                                     break
                         else:
                             for i in range(len(k)):
@@ -306,7 +306,7 @@ class FormatCodes:
                     elif is_valid_color(k) or any(
                             k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon):])
                             for prefix in _PREFIX["BR"]):
-                        reset_keys.append("_color")
+                        reset_keys.append("default" if use_default else "_c")
                     else:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
