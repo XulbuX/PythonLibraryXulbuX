@@ -59,4 +59,4 @@ def test_remove_formatting_with_removals():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
     removals = ((0, bold), (6, orange), (12, default), (12, reset_bold))
-    assert FormatCodes.remove_formatting(format_string, get_removals=True) == (clean_string, removals)
+    assert FormatCodes.remove_formatting(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
