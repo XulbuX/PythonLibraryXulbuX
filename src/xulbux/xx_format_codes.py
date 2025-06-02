@@ -369,19 +369,17 @@ class FormatCodes:
     @staticmethod
     def remove_formatting(
         string: str,
+        default_color: Optional[Rgba | Hexa] = None,
         get_removals: bool = False,
-        _has_default_color: bool = True,
         _ignore_linebreaks: bool = False,
     ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all formatting codes from the string.\n
         ---------------------------------------------------------------------------------------------------
         If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
         Each tuple contains the position of the removed formatting code and the removed formatting code.\n
-        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions.\n
-        If `_has_default_color` is true, it will count the `default_color` format codes as valid and
-        removes them. Otherwise their counted as invalid and not removed."""
+        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions."""
         return FormatCodes.remove_ansi(
-            FormatCodes.to_ansi(string, default_color=("#000" if _has_default_color else None)),
+            FormatCodes.to_ansi(string, default_color=default_color),
             get_removals=get_removals,
             _ignore_linebreaks=_ignore_linebreaks,
         )
