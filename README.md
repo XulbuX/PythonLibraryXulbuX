@@ -116,9 +116,11 @@ def main() -> None:
     )
 
     # PRETTY PRINT THE COLOR IN DIFFERENT TYPES
-    FormatCodes.print(f"[b](HEXA:) [i|white]({hexa_color})")
-    FormatCodes.print(f"[b](RGBA:) [i|white]({rgba_color})")
-    FormatCodes.print(f"[b](HSLA:) [i|white]({hsla_color})\n")
+    Console.log_box_bordered(
+        f"[b](HEXA:) [i|white]({hexa_color})",
+        f"[b](RGBA:) [i|white]({rgba_color})",
+        f"[b](HSLA:) [i|white]({hsla_color})",
+    )
 
 
 if __name__ == "__main__":
