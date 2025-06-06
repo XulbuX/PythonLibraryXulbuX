@@ -11,13 +11,13 @@ class Regex:
 
     @staticmethod
     def quotes() -> str:
-        """Matches everything inside quotes. (strings)\n
+        """Matches pairs of quotes. (strings)\n
         --------------------------------------------------------------------------------
         Will create two named groups:
         - `quote` the quote type (single or double)
         - `string` everything inside the found quote pair\n
-        --------------------------------------------------------------------------------
-        Attention: Requires non standard library `regex` not standard library `re`!"""
+        ---------------------------------------------------------------------------------
+        Attention: Requires non-standard library `regex`, not standard library `re`!"""
         return r'(?P<quote>[\'"])(?P<string>(?:\\.|(?!\g<quote>).)*?)\g<quote>'
 
     @staticmethod
@@ -28,16 +28,16 @@ class Regex:
         strip_spaces: bool = True,
         ignore_in_strings: bool = True,
     ) -> str:
-        """Matches everything inside brackets, including other nested brackets.\n
-        --------------------------------------------------------------------------------
+        """Matches everything inside pairs of brackets, including other nested brackets.\n
+        -----------------------------------------------------------------------------------
         If `is_group` is true, you will be able to reference the matched content as a
         group (e.g. `match.group(…)` or `r'\\…'`).
         If `strip_spaces` is true, it will ignore spaces around the content inside the
         brackets.
         If `ignore_in_strings` is true and a bracket is inside a string (e.g. `'...'`
         or `"..."`), it will not be counted as the matching closing bracket.\n
-        --------------------------------------------------------------------------------
-        Attention: Requires non standard library `regex` not standard library `re`!"""
+        -----------------------------------------------------------------------------------
+        Attention: Requires non-standard library `regex`, not standard library `re`!"""
         g, b1, b2, s1, s2 = (
             "" if is_group else "?:",
             _rx.escape(bracket1) if len(bracket1) == 1 else bracket1,
@@ -73,8 +73,8 @@ class Regex:
         1. function name
         2. the function's arguments\n
         If no `func_name` is given, it will match any function call.\n
-        --------------------------------------------------------------------------------
-        Attention: Requires non standard library `regex` not standard library `re`!"""
+        ---------------------------------------------------------------------------------
+        Attention: Requires non-standard library `regex`, not standard library `re`!"""
         return (
             r"(?<=\b)(" + (r"[\w_]+" if func_name is None else func_name) + r")\s*" + Regex.brackets("(", ")", is_group=True)
         )
