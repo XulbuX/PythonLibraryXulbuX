@@ -2,6 +2,11 @@
 .vscode/
 .python-version
 
+# CREDENTIALS & CONFIGURATION
+.env
+.npmrc
+.pypirc
+
 # COMPILED FILES & CACHES
 __pycache__/
 *.py[cod]
