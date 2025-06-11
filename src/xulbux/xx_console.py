@@ -275,7 +275,11 @@ class Console:
         information about formatting codes, see `xx_format_codes` module documentation."""
         title = "" if title is None else title.strip().upper()
         title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
-        title_color = "_color" if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
+        if title_bg_color is not None and Color.is_valid(title_bg_color):
+            title_bg_color = Color.to_hexa(title_bg_color)
+            title_color = Color.text_color_for_on_bg(title_bg_color)
+        else:
+            title_color = "_color" if title_bg_color is None else "#000"
         if format_linebreaks:
             clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
             prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
@@ -457,6 +461,8 @@ class Console:
         information about formatting codes, see `xx_format_codes` module documentation."""
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
+        if box_bg_color is not None and Color.is_valid(box_bg_color):
+            box_bg_color = Color.to_hexa(box_bg_color)
         lines = [
             f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
             ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
@@ -518,7 +524,10 @@ class Console:
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
+        print(unfmt_lines)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+        if border_style is not None and Color.is_valid(border_style):
+            border_style = Color.to_hexa(border_style)
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
         lines = [
@@ -536,11 +545,11 @@ class Console:
 
     @staticmethod
     def __prepare_log_box(
-        values: tuple[object, ...], 
+        values: tuple[object, ...],
         default_color: Optional[Rgba | Hexa] = None,
     ) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
         """Prepares the log box content and returns it along with the max line length."""
-        lines = [line.rstrip() for val in values for line in str(val).splitlines()]
+        lines = [line for val in values for line in str(val).splitlines()]
         unfmt_lines = [FormatCodes.remove_formatting(line, default_color) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
