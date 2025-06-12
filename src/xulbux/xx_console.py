@@ -25,20 +25,29 @@ import os as _os
 class _ConsoleWidth:
 
     def __get__(self, obj, owner=None):
-        return _os.get_terminal_size().columns
+        try:
+            return _os.get_terminal_size().columns
+        except OSError:
+            return 80
 
 
 class _ConsoleHeight:
 
     def __get__(self, obj, owner=None):
-        return _os.get_terminal_size().lines
+        try:
+            return _os.get_terminal_size().lines
+        except OSError:
+            return 24
 
 
 class _ConsoleSize:
 
     def __get__(self, obj, owner=None):
-        size = _os.get_terminal_size()
-        return (size.columns, size.lines)
+        try:
+            size = _os.get_terminal_size()
+            return (size.columns, size.lines)
+        except OSError:
+            return (80, 24)
 
 
 class _ConsoleUser:

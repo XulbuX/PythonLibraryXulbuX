@@ -14,6 +14,9 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.7.2`
+* the `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error
+
 ## 11.06.2025 `v1.7.1`
 * fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
 * renamed the method `Console.log_box()` to `Console.log_box_filled()`
