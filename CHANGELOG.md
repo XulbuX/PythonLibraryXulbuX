@@ -14,6 +14,9 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.7.3`
+* removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user
+
 ## 17.06.2025 `v1.7.2`
 * the `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error
 * it wasn't actually possible to use default console colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()` so that option was completely removed again

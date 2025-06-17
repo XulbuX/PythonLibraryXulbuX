@@ -353,7 +353,6 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.yellow,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
@@ -362,7 +361,7 @@ class Console:
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
         if active:
-            Console.log("DEBUG", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+            Console.log("DEBUG", prompt, format_linebreaks, start, end, COLOR.yellow, default_color)
             Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -371,14 +370,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.blue,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("INFO", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+        Console.log("INFO", prompt, format_linebreaks, start, end, COLOR.blue, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -387,14 +385,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.teal,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("DONE", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+        Console.log("DONE", prompt, format_linebreaks, start, end, COLOR.teal, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -403,14 +400,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.orange,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("WARN", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+        Console.log("WARN", prompt, format_linebreaks, start, end, COLOR.orange, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -419,7 +415,6 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.red,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = True,
@@ -427,7 +422,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("FAIL", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+        Console.log("FAIL", prompt, format_linebreaks, start, end, COLOR.red, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -436,7 +431,6 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[Rgba | Hexa] = COLOR.magenta,
         default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = True,
@@ -444,7 +438,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("EXIT", prompt, format_linebreaks, start, end, title_bg_color, default_color)
+        Console.log("EXIT", prompt, format_linebreaks, start, end, COLOR.magenta, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
