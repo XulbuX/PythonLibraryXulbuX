@@ -19,19 +19,20 @@ dependencies = [
   "regex>=2023.10.3",
 ]
 optional-dependencies = { dev = [
-  "pytest>=7.4.2",
   "black>=23.7.0",
-  "isort>=5.12.0",
-  "flake8>=6.1.0",
   "flake8-pyproject>=1.2.3",
+  "flake8>=6.1.0",
+  "isort>=5.12.0",
+  "pytest>=7.4.2",
 ] }
 classifiers = [
-  "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.10",
   "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = [
@@ -39,17 +40,17 @@ keywords = [
   "arguments",
   "attributes",
   "classes",
-  "cmd",
   "client",
+  "cmd",
   "code",
   "codes",
   "color",
   "commands",
   "console",
-  "consts",
   "constants",
-  "convert",
+  "consts",
   "conversion",
+  "convert",
   "data",
   "debug",
   "easier",
@@ -96,12 +97,12 @@ keywords = [
 ]
 
 [project.urls]
-"Bug Reports" = "https://github.com/XulbuX/PythonLibraryXulbuX/issues"
-"Changelog" = "https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md"
-"Documentation" = "https://github.com/XulbuX/PythonLibraryXulbuX/wiki"
 "Homepage" = "https://github.com/XulbuX/PythonLibraryXulbuX"
-"License" = "https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/LICENSE"
+"Documentation" = "https://github.com/XulbuX/PythonLibraryXulbuX/wiki"
 "Source Code" = "https://github.com/XulbuX/PythonLibraryXulbuX/tree/main/src"
+"Changelog" = "https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md"
+"Bug Reports" = "https://github.com/XulbuX/PythonLibraryXulbuX/issues"
+"License" = "https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/LICENSE"
 
 
 [project.scripts]
@@ -152,8 +153,8 @@ addopts = "-ra -q"
 pythonpath = ["src"]
 testpaths = [
   "tests/test_code.py",
-  "tests/test_color.py",
   "tests/test_color_types.py",
+  "tests/test_color.py",
   "tests/test_console.py",
   "tests/test_data.py",
   "tests/test_env_path.py",
