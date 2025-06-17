@@ -1,4 +1,6 @@
-# **$\Huge\textsf{XulbuX}$**
+# **XulbuX**
+
+![](https://img.shields.io/pypi/v/xulbux?labelColor=404560&color=7075FF) ![](https://img.shields.io/pypi/dm/xulbux?labelColor=405555&color=70FFEE) ![](https://img.shields.io/github/license/XulbuX/PythonLibraryXulbuX?labelColor=405555&color=70FFEE) ![](https://img.shields.io/github/last-commit/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065) ![](https://img.shields.io/github/issues/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065)
 
 **XulbuX** is library that contains many useful classes, types, and functions,
 ranging from console logging and working with colors to file management and system operations.
