@@ -16,6 +16,10 @@
 
 ## ... `v1.7.2`
 * the `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error
+* it wasn't actually possible to use default console colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()` so that option was completely removed again
+* upgraded the speed of `FormatCodes.to_ansi()` by adding the internal ability to skip the `default_color` validation
+* fixed type hints for the whole library
+* fixed a small bug in `Console.pause_exit()`, where the key, pressed to unpause wasn't suppressed, so it was written into the next console input after unpausing
 
 ## 11.06.2025 `v1.7.1`
 * fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
@@ -23,7 +27,7 @@
 * added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color
 * the module `xx_format_codes` now treats the `[*]` to-default-color-reset as a normal full-reset, when no `default_color` is set, instead of just counting it as an invalid format code
 * fixed bug where entering a color as HEX integer in the color params of the methods `Console.log()`, `Console.log_box_filled()` and `Console.log_box_bordered()` would not work, because it was not properly converted to a format code
-* you can now use default console colors (*e.g.* `green`, `red`, ...) for the color params in `Console.log()`
+* you can now use default console colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()`
 * the methods `Console.log_box_filled()` and `Console.log_box_bordered()` no longer right-strip spaces, so you can make multiple log boxes the same width, by adding spaces to the end of the text
 
 ## 28.05.2025 `v1.7.0`

@@ -133,10 +133,13 @@ the formatting code:
 #### Additional Formatting Codes when a `default_color` is set
 
 1. `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
-  (*if no `default_color` it resets everything, including the text color*)
+  (if no `default_color` is set, it resets everything, exactly like `[_]`)
 2. `[*color]` `[*c]` will reset the text color, just like `[_color]`, but then also make it `default_color`
+  (if no `default_color` is set, both are treated as invalid formatting codes)
 3. `[default]` will just color the text in `default_color`
+  (if no `default_color` is set, it's treated as an invalid formatting code)
 4. `[background:default]` `[BG:default]` will color the background in `default_color`
+  (if no `default_color` is set, both are treated as invalid formatting codes)\n
 
 Unlike the standard console colors, the default color can be changed by using the following modifiers:
 
@@ -149,6 +152,7 @@ Unlike the standard console colors, the default color can be changed by using th
 - `[ddd]` will darken the `default_color` text by `3 × brightness_steps`%
 - ... etc.
 Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.
+All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
 from ._consts_ import ANSI
@@ -165,6 +169,11 @@ import re as _re
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
 
+_ANSI_SEQ_1: str = ANSI.seq(1)
+_DEFAULT_COLOR_MODS: dict[str, str] = {
+    "lighten": "+l",
+    "darken": "-d",
+}
 _PREFIX: dict[str, set[str]] = {
     "BG": {"background", "bg"},
     "BR": {"bright", "br"},
@@ -190,7 +199,7 @@ _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "modifier": _re.compile(
         r"(?i)((?:BG\s*:)?)\s*("
         + "|".join(
-            [f"{_re.escape(m)}+" for m in ANSI.default_color_modifiers["lighten"] + ANSI.default_color_modifiers["darken"]]
+            [f"{_re.escape(m)}+" for m in _DEFAULT_COLOR_MODS["lighten"] + _DEFAULT_COLOR_MODS["darken"]]
         )
         + r")$"
     ),
@@ -247,6 +256,7 @@ class FormatCodes:
         default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
         _default_start: bool = True,
+        _validate_default: bool = True,
     ) -> str:
         """Convert the formatting codes inside a string to ANSI formatting.\n
         -------------------------------------------------------------------------
@@ -254,16 +264,20 @@ class FormatCodes:
         `xx_format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
-        if default_color and Color.is_valid_rgba(default_color, False):
-            use_default = True
-        elif default_color and Color.is_valid_hexa(default_color, False):
-            use_default, default_color = True, Color.to_rgba(default_color)
+        use_default, default_specified = False, default_color is not None
+        if _validate_default and default_specified:
+            if Color.is_valid_rgba(default_color, False):
+                use_default = True
+            elif Color.is_valid_hexa(default_color, False):
+                use_default, default_color = True, Color.to_rgba(default_color)  # type: ignore[assignment]
         else:
-            use_default = False
-        default_color = cast(rgba, default_color) if use_default else None
+            use_default = default_specified
+        default_color = cast(Optional[rgba], default_color)
         if use_default:
             string = _COMPILED["*"].sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-            string = _COMPILED["*color"].sub(r"[\1default\2]", string)  # REPLACE `[…|*color|…]` OR `[…|*c|…]` WITH `[…|default|…]`
+            string = _COMPILED["*color"].sub(
+                r"[\1default\2]", string
+            )  # REPLACE `[…|*color|…]` OR `[…|*c|…]` WITH `[…|default|…]`
         else:
             string = _COMPILED["*"].sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
@@ -277,11 +291,23 @@ class FormatCodes:
             if formats_escaped := bool(_COMPILED["escape_char_cond"].match(match.group(0))):
                 _formats = formats = _COMPILED["escape_char"].sub(r"\1", formats)  # REMOVE / OR \\
             if auto_reset_txt and auto_reset_txt.count("[") > 0 and auto_reset_txt.count("]") > 0:
-                auto_reset_txt = FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)
+                auto_reset_txt = FormatCodes.to_ansi(
+                    auto_reset_txt,
+                    default_color,
+                    brightness_steps,
+                    _default_start=False,
+                    _validate_default=False,
+                )
             if not formats:
                 return match.group(0)
             if formats.count("[") > 0 and formats.count("]") > 0:
-                formats = FormatCodes.to_ansi(formats, default_color, brightness_steps, False)
+                formats = FormatCodes.to_ansi(
+                    formats,
+                    default_color,
+                    brightness_steps,
+                    _default_start=False,
+                    _validate_default=False,
+                )
             format_keys = [k.strip() for k in formats.split("|") if k.strip()]
             ansi_formats = [
                 r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k else f"[{k}]"
@@ -323,13 +349,13 @@ class FormatCodes:
             else:
                 return (
                     "".join(ansi_formats) + (
-                        f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})"
+                        f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, _default_start=False, _validate_default=False)})"
                         if auto_reset_escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
                     ) + ("" if auto_reset_escaped else "".join(ansi_resets))
                 )
 
         string = "\n".join(_COMPILED["formatting"].sub(replace_keys, line) for line in string.split("\n"))
-        return (((FormatCodes.__get_default_ansi(default_color.values()) or "") if _default_start else "")
+        return (((FormatCodes.__get_default_ansi(default_color) or "") if _default_start else "")
                 + string) if default_color is not None else string
 
     @staticmethod
@@ -399,19 +425,21 @@ class FormatCodes:
 
     @staticmethod
     def __get_default_ansi(
-        default_color: tuple[int, int, int],
+        default_color: rgba,
         format_key: Optional[str] = None,
         brightness_steps: Optional[int] = None,
-        _modifiers: tuple[str, str] = (ANSI.default_color_modifiers["lighten"], ANSI.default_color_modifiers["darken"]),
+        _modifiers: tuple[str, str] = (_DEFAULT_COLOR_MODS["lighten"], _DEFAULT_COLOR_MODS["darken"]),
     ) -> Optional[str]:
         """Get the `default_color` and lighter/darker versions of it as ANSI code."""
-        if not brightness_steps or (format_key and _COMPILED["bg?_default"].search(format_key)):
+        if not isinstance(default_color, rgba):
+            return None
+        _default_color: tuple[int, int, int] = tuple(default_color)[:3]
+        if brightness_steps is None or (format_key and _COMPILED["bg?_default"].search(format_key)):
             return (ANSI.seq_bg_color if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
-                *default_color[:3]
+                *_default_color
             )
         if format_key is None or not (format_key in _modifiers[0] or format_key in _modifiers[1]):
             return None
-        assert format_key is not None
         match = _COMPILED["modifier"].match(format_key)
         if not match:
             return None
@@ -422,7 +450,7 @@ class FormatCodes:
             if adjust and adjust > 0:
                 modifiers = mod
                 break
-        new_rgb = default_color
+        new_rgb = _default_color
         if adjust == 0:
             return None
         elif modifiers in _modifiers[0]:
@@ -436,15 +464,13 @@ class FormatCodes:
         """Gives you the corresponding ANSI code for the given format key.
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
-        use_default = default_color and Color.is_valid_rgba(default_color, False)
-        _default_color = tuple(Color.to_rgba(default_color)) if default_color is not None else tuple()
         _format_key, format_key = format_key, FormatCodes.__normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
-        if use_default:
-            if new_default_color := FormatCodes.__get_default_ansi(_default_color, format_key, brightness_steps):
-                return new_default_color
+        if default_color and (new_default_color := FormatCodes.__get_default_ansi(default_color, format_key,
+                                                                                  brightness_steps)):
+            return new_default_color
         for map_key in ANSI.codes_map:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
-                return ANSI.seq().format(
+                return _ANSI_SEQ_1.format(
                     next((
                         v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)
                     ), None)

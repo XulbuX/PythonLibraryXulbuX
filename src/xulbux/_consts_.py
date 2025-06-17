@@ -94,8 +94,6 @@ class ANSI:
     """The separator between ANSI escape sequence parts."""
     END = end = "m"
     """The end of an ANSI escape sequence."""
-    default_color_modifiers: dict[str, str] = {"lighten": "+l", "darken": "-d"}
-    """Characters to modify the lightness of the default color with."""
 
     @classmethod
     def seq(cls, parts: int = 1) -> FormattableString:
@@ -107,7 +105,7 @@ class ANSI:
     seq_bg_color: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
     """The ANSI escape sequence for setting the background RGB color."""
 
-    color_map: list[str] = [
+    color_map: tuple[str, ...] = (
         ########### DEFAULT CONSOLE COLOR NAMES ############
         "black",
         "red",
@@ -117,7 +115,7 @@ class ANSI:
         "magenta",
         "cyan",
         "white",
-    ]
+    )
     """The console default color names."""
 
     codes_map: dict[str | tuple[str, ...], int] = {

@@ -53,7 +53,7 @@ class Code:
         return list(Data.remove_duplicates(funcs + nested_func_calls))
 
     @staticmethod
-    def is_js(code: str, funcs: list = ["__", "$t", "$lang"]) -> bool:
+    def is_js(code: str, funcs: list[str] = ["__", "$t", "$lang"]) -> bool:
         """Will check if the code is very likely to be JavaScript."""
         if not code or len(code.strip()) < 3:
             return False

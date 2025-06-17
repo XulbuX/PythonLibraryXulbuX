@@ -240,13 +240,13 @@ class Console:
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
-        """Will print the `last_prompt` and then pause the program if `pause` is set
+        """Will print the `prompt` and then pause the program if `pause` is set
         to `True` and after the pause, exit the program if `exit` is set to `True`."""
         print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
         if pause:
-            _keyboard.read_event()
+            _keyboard.read_key(suppress=True)
         if exit:
             _sys.exit(exit_code)
 
@@ -353,8 +353,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.yellow,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.yellow,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -371,8 +371,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.blue,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.blue,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -387,8 +387,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.teal,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.teal,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -403,8 +403,8 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.orange,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.orange,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -419,11 +419,11 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.red,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.red,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = True,
-        reset_ansi=True,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
@@ -436,11 +436,11 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Rgba | Hexa = COLOR.magenta,
-        default_color: Rgba | Hexa = COLOR.text,
+        title_bg_color: Optional[Rgba | Hexa] = COLOR.magenta,
+        default_color: Optional[Rgba | Hexa] = COLOR.text,
         pause: bool = False,
         exit: bool = True,
-        reset_ansi=True,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
@@ -452,8 +452,8 @@ class Console:
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: Rgba | Hexa = "green",
-        default_color: Rgba | Hexa = "#000",
+        box_bg_color: str | Rgba | Hexa = "green",
+        default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 2,
         w_full: bool = False,
     ) -> None:
@@ -503,6 +503,7 @@ class Console:
         - `start` -⠀something to print before the log box is printed (e.g. `\\n`)
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
         - `border_type` -⠀one of the predefined border character sets
+        - `border_style` -⠀the style of the border (special formatting codes)
         - `default_color` -⠀the default text color of the `*values`
         - `w_padding` -⠀the horizontal padding (in chars) to the box content
         - `w_full` -⠀whether to make the box be the full console width or not
@@ -568,7 +569,7 @@ class Console:
         prompt: object = "Do you want to continue?",
         start="",
         end="\n",
-        default_color: Rgba | Hexa = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
@@ -578,7 +579,7 @@ class Console:
         confirmed = input(
             FormatCodes.to_ansi(
                 f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
-                default_color,
+                default_color=default_color,
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
@@ -590,7 +591,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: Rgba | Hexa = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
         show_keybindings=True,
         input_prefix=" ⮡ ",
         reset_ansi=True,
@@ -625,7 +626,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: Rgba | Hexa = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
         allowed_chars: str = CHARS.all,  # type: ignore[assignment]
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
@@ -729,7 +730,7 @@ class Console:
         prompt: object = "Password: ",
         start="",
         end="\n",
-        default_color: Rgba | Hexa = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
         allowed_chars: str = CHARS.standard_ascii,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
