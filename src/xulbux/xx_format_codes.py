@@ -56,11 +56,13 @@ the formatting code:
   - `[(255, 0, 136)]`
   - `[255, 0, 136]`
 - HEX colors:
-  Change the text color directly with a HEX color inside the square brackets. (If `RGB` or `RRGGBB` formatting code is used,
+  Change the text color directly with a HEX color inside the square brackets. (Whether the `RGB` or `RRGGBB` HEX format is used,
   and if there's a `#` or `0x` prefix, doesn't matter.)
   Examples:
+  - `[0x7788FF]`
   - `[#7788FF]`
   - `[7788FF]`
+  - `[0x78F]`
   - `[#78F]`
   - `[78F]`
 - background RGB / HEX colors:
