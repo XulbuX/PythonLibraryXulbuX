@@ -450,6 +450,7 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 2,
         w_full: bool = False,
+        indent: int = 0,
     ) -> None:
         """Will print a box with a colored background, containing a formatted log message:
         - `*values` -⠀the box content (each value is on a new line)
@@ -458,7 +459,8 @@ class Console:
         - `box_bg_color` -⠀the background color of the box
         - `default_color` -⠀the default text color of the `*values`
         - `w_padding` -⠀the horizontal padding (in chars) to the box content
-        - `w_full` -⠀whether to make the box be the full console width or not\n
+        - `w_full` -⠀whether to make the box be the full console width or not
+        - `indent` -⠀the indentation of the box (in chars)\n
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `xx_format_codes` module documentation."""
@@ -466,15 +468,16 @@ class Console:
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
         if box_bg_color is not None and Color.is_valid(box_bg_color):
             box_bg_color = Color.to_hexa(box_bg_color)
+        spaces_l = " " * indent
         lines = [
-            f"[bg:{box_bg_color}]{' ' * w_padding}{line}" + " " *
-            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
+            f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
+            + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
+            (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
         ]
         pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         FormatCodes.print(
-            f"{start}[bg:{box_bg_color}]{pady}[*]\n"
-            + _COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", "\n".join(lines))
-            + f"\n[bg:{box_bg_color}]{pady}[_]",
+            f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n" + "\n".join(lines)
+            + f"\n{spaces_l}[bg:{box_bg_color}]{pady}[_]",
             default_color=default_color or "#000",
             sep="\n",
             end=end,
@@ -490,6 +493,7 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 1,
         w_full: bool = False,
+        indent: int = 0,
         _border_chars: Optional[tuple[str, str, str, str, str, str, str, str]] = None,
     ) -> None:
         """Will print a bordered box, containing a formatted log message:
@@ -501,6 +505,7 @@ class Console:
         - `default_color` -⠀the default text color of the `*values`
         - `w_padding` -⠀the horizontal padding (in chars) to the box content
         - `w_full` -⠀whether to make the box be the full console width or not
+        - `indent` -⠀the indentation of the box (in chars)
         - `_border_chars` -⠀define your own border characters set (overwrites `border_type`)\n
         ---------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
@@ -528,18 +533,18 @@ class Console:
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
-        print(unfmt_lines)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
         if border_style is not None and Color.is_valid(border_style):
             border_style = Color.to_hexa(border_style)
+        spaces_l = " " * indent
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
         lines = [
-            f"{border_l}{' ' * w_padding}{line}[_]" + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r
-            for line, unfmt in zip(lines, unfmt_lines)
+            f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
+            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
         ]
-        border_t = f"[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
-        border_b = f"[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
+        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
         FormatCodes.print(
             f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
             default_color=default_color,

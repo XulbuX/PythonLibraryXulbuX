@@ -14,8 +14,11 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.7.3`
+## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user
+* added a new param to the methods `Console.log_box_filled()` and `Console.log_box_bordered()`:<br>
+  <code>indent: *int* = 0</code> the indentation of the box (in chars)
+* fixed a bug in `Console.log_box_filled()` where the box background color would sometimes not stop at the box's edge, but would continue to the end of the console line
 
 ## 17.06.2025 `v1.7.2`
 * the `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error
