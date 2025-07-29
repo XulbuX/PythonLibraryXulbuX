@@ -9,6 +9,10 @@ The library is designed to simplify common programming tasks and improve code re
 For precise information about the library, see the library's [**documentation**](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
 For the libraries latest changes and updates, see the [**change log**](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
 
+### Highlights, you should definitely check out:
+
+[![xx_format_codes](https://img.shields.io/badge/xx__format__codes-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_format_codes) [![xx_console](https://img.shields.io/badge/xx__console-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_console) [![xx_color](https://img.shields.io/badge/xx__color-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_color)
+
 <br>
 
 ## Installation
