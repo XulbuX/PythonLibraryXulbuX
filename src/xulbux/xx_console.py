@@ -132,7 +132,8 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]],
+        find_args: Mapping[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]
+                           | Literal["before", "after"]],
         allow_spaces: bool = False
     ) -> Args:
         """Will search for the specified arguments in the command line
@@ -150,24 +151,31 @@ class Console:
                "default": "some_value"  # Optional
            }
            ```
+        3. Positional argument collection (string value):
+           ```python
+           "alias_name": "before"  # Collects non-flagged args before first flag
+           "alias_name": "after"   # Collects non-flagged args after last flag
+           ```
         Example `find_args`:
         ```python
         find_args={
-            "arg1": { # With default
+            "text": "before",           # Positional args before flags
+            "arg1": {                   # With default
                 "flags": ["-a1", "--arg1"],
                 "default": "default_val"
             },
-            "arg2": ("-a2", "--arg2"), # Without default (original format)
-            "arg3": ["-a3"],          # Without default (list format)
-            "arg4": { # Flag with default True
+            "arg2": ("-a2", "--arg2"),  # Without default (original format)
+            "arg3": ["-a3"],            # Without default (list format)
+            "arg4": {                   # Flag with default True
                 "flags": ["-f"],
                 "default": True
             }
         }
         ```
         If the script is called via the command line:\n
-        `python script.py -a1 "value1" --arg2 -f`\n
+        `python script.py Hello World -a1 "value1" --arg2 -f`\n
         ...it would return an `Args` object where:
+        - `args.text.exists` is `True`, `args.text.value` is `["Hello", "World"]`
         - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"`
         - `args.arg2.exists` is `True`, `args.arg2.value` is `True` (flag present without value)
         - `args.arg3.exists` is `False`, `args.arg3.value` is `None` (not present, no default)
@@ -176,19 +184,46 @@ class Console:
             - `exists` will be `False`
             - `value` will be the specified `default` value, or `None` if no default was specified.\n
         ----------------------------------------------------------------
+        For positional arguments:
+        - `"before"`: Collects all non-flagged arguments that appear before the first flag
+        - `"after"`: Collects all non-flagged arguments that appear after the last flag's value
+        ----------------------------------------------------------------
         Normally if `allow_spaces` is false, it will take a space as
         the end of an args value. If it is true, it will take spaces as
-        part of the value until the next arg is found.
+        part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
         args = _sys.argv[1:]
         args_len = len(args)
         arg_lookup = {}
         results = {}
+        positional_configs = {}
+        before_count = 0
+        after_count = 0
+
+        # PARSE "find_args" CONFIGURATION
         for alias, config in find_args.items():
             flags = None
             default_value = None
-            if isinstance(config, (list, tuple)):
+
+            if isinstance(config, str):
+                # HANDLE POSITIONAL ARGUMENT COLLECTION
+                if config not in ("before", "after"):
+                    raise ValueError(
+                        f"Invalid positional argument type '{config}' for alias '{alias}'. Must be 'before' or 'after'."
+                    )
+                if config == "before":
+                    before_count += 1
+                    if before_count > 1:
+                        raise ValueError("Only one alias can have the value 'before' for positional argument collection.")
+                elif config == "after":
+                    after_count += 1
+                    if after_count > 1:
+                        raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
+                positional_configs[alias] = config
+                results[alias] = {"exists": False, "value": []}
+            elif isinstance(config, (list, tuple)):
                 flags = config
+                results[alias] = {"exists": False, "value": default_value}
             elif isinstance(config, dict):
                 if "flags" not in config:
                     raise ValueError(f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'flags' key.")
@@ -196,15 +231,52 @@ class Console:
                 default_value = config.get("default")
                 if not isinstance(flags, (list, tuple)):
                     raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a list or tuple.")
+                results[alias] = {"exists": False, "value": default_value}
             else:
-                raise TypeError(f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, or dict.")
-            results[alias] = {"exists": False, "value": default_value}
-            for flag in flags:
-                if flag in arg_lookup:
-                    raise ValueError(
-                        f"Duplicate flag '{flag}' found. It's assigned to both '{arg_lookup[flag]}' and '{alias}'."
-                    )
-                arg_lookup[flag] = alias
+                raise TypeError(f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, dict, or string.")
+
+            # BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGUMENTS
+            if flags is not None:
+                for flag in flags:
+                    if flag in arg_lookup:
+                        raise ValueError(
+                            f"Duplicate flag '{flag}' found. It's assigned to both '{arg_lookup[flag]}' and '{alias}'."
+                        )
+                    arg_lookup[flag] = alias
+
+        # FIND POSITIONS OF FIRST AND LAST FLAGS FOR POSITIONAL ARGUMENT COLLECTION
+        first_flag_pos = None
+        last_flag_with_value_pos = None
+
+        for i, arg in enumerate(args):
+            if arg in arg_lookup:
+                if first_flag_pos is None:
+                    first_flag_pos = i
+                # CHECK IF THIS FLAG HAS A VALUE FOLLOWING IT
+                flag_has_value = (i + 1 < args_len and not args[i + 1].startswith("-") and args[i + 1] not in arg_lookup)
+                if flag_has_value:
+                    if not allow_spaces:
+                        last_flag_with_value_pos = i + 1
+                    else:
+                        # FIND THE END OF THE MULTI-WORD VALUE
+                        j = i + 1
+                        while j < args_len and not args[j].startswith("-") and args[j] not in arg_lookup:
+                            j += 1
+                        last_flag_with_value_pos = j - 1
+
+        # COLLECT "before" POSITIONAL ARGUMENTS
+        for alias, pos_type in positional_configs.items():
+            if pos_type == "before":
+                before_args = []
+                end_pos = first_flag_pos if first_flag_pos is not None else args_len
+                for i in range(end_pos):
+                    if not args[i].startswith("-"):
+                        before_args.append(String.to_type(args[i]))
+                if before_args:
+                    results[alias]["exists"] = len(before_args) > 0
+                    results[alias]["value"] = before_args
+
+        # PROCESS FLAGGED ARGUMENTS
         i = 0
         while i < args_len:
             arg = args[i]
@@ -230,6 +302,30 @@ class Console:
                 if not value_found_after_flag:
                     results[alias]["value"] = True
             i += 1
+
+        # COLLECT "after" POSITIONAL ARGUMENTS
+        for alias, pos_type in positional_configs.items():
+            if pos_type == "after":
+                after_args = []
+                start_pos = (last_flag_with_value_pos + 1) if last_flag_with_value_pos is not None else 0
+                # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
+                if last_flag_with_value_pos is None and first_flag_pos is not None:
+                    # FIND THE LAST FLAG POSITION
+                    last_flag_pos = None
+                    for i, arg in enumerate(args):
+                        if arg in arg_lookup:
+                            last_flag_pos = i
+                    if last_flag_pos is not None:
+                        start_pos = last_flag_pos + 1
+
+                for i in range(start_pos, args_len):
+                    if not args[i].startswith("-") and args[i] not in arg_lookup:
+                        after_args.append(String.to_type(args[i]))
+
+                if after_args:
+                    results[alias]["exists"] = len(after_args) > 0
+                    results[alias]["value"] = after_args
+
         return Args(**results)
 
     @staticmethod

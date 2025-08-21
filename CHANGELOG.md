@@ -14,6 +14,11 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.8.0`
+* new options for the param `find_args` from the method `Console.get_args()`:
+  previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it
+  new, instead of flags, you can also once ose `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
+
 ## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user
 * added a new param to the methods `Console.log_box_filled()` and `Console.log_box_bordered()`:<br>
