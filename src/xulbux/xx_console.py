@@ -63,7 +63,7 @@ class ArgResult:
     --------------------------------------------------------------------------------------------------------
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, exists: bool, value: Any):
+    def __init__(self, exists: bool, value: Any | list[Any]):
         self.exists: bool = exists
         self.value: Any = value
 
@@ -76,12 +76,11 @@ class Args:
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
     Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs: dict[str, Any]):
+    def __init__(self, **kwargs: dict[str, Any | list[Any]]):
         for alias_name, data_dict in kwargs.items():
             if not alias_name.isidentifier():
                 raise TypeError(f"Argument alias '{alias_name}' is invalid. It must be a valid Python variable name.")
-            arg_result_instance = ArgResult(exists=data_dict["exists"], value=data_dict["value"])
-            setattr(self, alias_name, arg_result_instance)
+            setattr(self, alias_name, ArgResult(exists=cast(bool, data_dict["exists"]), value=data_dict["value"]))
 
     def __len__(self):
         return len(vars(self))
@@ -273,8 +272,8 @@ class Console:
                     if not args[i].startswith("-"):
                         before_args.append(String.to_type(args[i]))
                 if before_args:
-                    results[alias]["exists"] = len(before_args) > 0
                     results[alias]["value"] = before_args
+                    results[alias]["exists"] = len(before_args) > 0
 
         # PROCESS FLAGGED ARGUMENTS
         i = 0
@@ -323,8 +322,8 @@ class Console:
                         after_args.append(String.to_type(args[i]))
 
                 if after_args:
-                    results[alias]["exists"] = len(after_args) > 0
                     results[alias]["value"] = after_args
+                    results[alias]["exists"] = len(after_args) > 0
 
         return Args(**results)
 
