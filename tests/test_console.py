@@ -190,7 +190,9 @@ def test_get_args_invalid_alias():
 
 
 def test_get_args_invalid_config():
-    with pytest.raises(TypeError, match="Invalid configuration type for alias 'bad_config'. Must be a list, tuple, or dict."):
+    with pytest.raises(
+            TypeError, match=
+            "Invalid configuration type for alias 'bad_config'. Must be a list, tuple, dict or literal 'before' / 'after'."):
         Console.get_args({"bad_config": 123})  # type: ignore[assignment]
 
     with pytest.raises(ValueError,

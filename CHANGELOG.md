@@ -18,6 +18,8 @@
 * new options for the param `find_args` from the method `Console.get_args()`:
   previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it
   new, instead of flags, you can also once ose `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
+* changed the default `default_color` for all `Console` class input methods to `COLOR.ice`
+* added a new method `Console.input()` which works like the normal Python `input()`, but supports format codes and has some other useful features
 
 ## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user

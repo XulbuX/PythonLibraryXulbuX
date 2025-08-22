@@ -232,7 +232,9 @@ class Console:
                     raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a list or tuple.")
                 results[alias] = {"exists": False, "value": default_value}
             else:
-                raise TypeError(f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, dict, or string.")
+                raise TypeError(
+                    f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, dict or literal 'before' / 'after'."
+                )
 
             # BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGUMENTS
             if flags is not None:
@@ -662,11 +664,17 @@ class Console:
     def confirm(
         prompt: object = "Do you want to continue?",
         start="",
-        end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
+        end="",
+        default_color: Optional[Rgba | Hexa] = COLOR.ice,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
+        ---------------------------------------------------------------------------------------
+        - `prompt` -⠀the input prompt
+        - `start` -⠀something to print before the input
+        - `end` -⠀something to print after the input (e.g. `\\n`)
+        - `default_color` -⠀the default text color of the `prompt`
+        - `default_is_yes` -⠀the default answer if the user just presses enter
         ---------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `xx_format_codes` module documentation."""
@@ -677,21 +685,44 @@ class Console:
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
-            Console.log("", end, end="")
+            FormatCodes.print(end, end="")
         return confirmed
+
+    @staticmethod
+    def input(
+        prompt: object = "",
+        start="",
+        end="",
+        default_color: Optional[Rgba | Hexa] = COLOR.ice,
+        default_value: str = "",
+    ) -> str:
+        """Acts like a normal Python input with some more useful features.\n
+        ---------------------------------------------------------------------------------------
+        - `prompt` -⠀the input prompt
+        - `start` -⠀something to print before the input
+        - `end` -⠀something to print after the input (e.g. `\\n`)
+        - `default_color` -⠀the default text color of the `prompt`
+        - `default_value` -⠀the default return value if the user just presses enter
+        ---------------------------------------------------------------------------------------
+        The input prompt can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see the `xx_format_codes` module documentation."""
+        input_str = input(FormatCodes.to_ansi(f"{start}  {str(prompt)}[_] ", default_color=default_color))
+        if end:
+            FormatCodes.print(end, end="")
+        return input_str if input_str else default_value
 
     @staticmethod
     def multiline_input(
         prompt: object = "",
         start="",
         end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.ice,
         show_keybindings=True,
         input_prefix=" ⮡ ",
         reset_ansi=True,
     ) -> str:
-        """An input where users can input (and paste) text over multiple lines.\n
-        -----------------------------------------------------------------------------------
+        """An input where users can write (and paste) text over multiple lines.\n
+        ---------------------------------------------------------------------------------------
         - `prompt` -⠀the input prompt
         - `start` -⠀something to print before the input
         - `end` -⠀something to print after the input (e.g. `\\n`)
@@ -699,9 +730,9 @@ class Console:
         - `show_keybindings` -⠀whether to show the special keybindings or not
         - `input_prefix` -⠀the prefix of the input line
         - `reset_ansi` -⠀whether to reset the ANSI codes after the input or not
-        -----------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` module documentation."""
+        information about formatting codes, see the `xx_format_codes` module documentation."""
         kb = KeyBindings()
 
         @kb.add("c-d", eager=True)  # CTRL+D
@@ -720,7 +751,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.ice,
         allowed_chars: str = CHARS.all,  # type: ignore[assignment]
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
@@ -824,7 +855,7 @@ class Console:
         prompt: object = "Password: ",
         start="",
         end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.cyan,
+        default_color: Optional[Rgba | Hexa] = COLOR.ice,
         allowed_chars: str = CHARS.standard_ascii,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
