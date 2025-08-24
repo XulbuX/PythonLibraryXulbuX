@@ -27,7 +27,6 @@
 * removed the `xx_` from all the library modules since it's redundant, and without it the imports look more professional and cleaner
 * renamed the previously internal module `_consts_` to `consts`, since you are now sometimes able to use constants in combination with library methods
 * removed the wildcard imports from the `__init__.py` file, so now you can only access the main classes directly with `from xulbux import …` and for the rest you have to import the module first
-* xxx
 
 ## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user
