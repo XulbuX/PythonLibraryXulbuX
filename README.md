@@ -1,8 +1,8 @@
 # **XulbuX**
 
-![](https://img.shields.io/pypi/v/xulbux?labelColor=404560&color=7075FF) ![](https://img.shields.io/pypi/dm/xulbux?labelColor=404560&color=7075FF) ![](https://img.shields.io/github/license/XulbuX/PythonLibraryXulbuX?labelColor=405555&color=70FFEE) ![](https://img.shields.io/github/last-commit/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065) ![](https://img.shields.io/github/issues/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065)
+[![](https://img.shields.io/pypi/v/xulbux?labelColor=404560&color=7075FF)](https://pypi.org/project/xulbux) [![](https://img.shields.io/pypi/dm/xulbux?labelColor=404560&color=7075FF)](https://clickpy.clickhouse.com/dashboard/xulbux) [![](https://img.shields.io/github/license/XulbuX/PythonLibraryXulbuX?labelColor=405555&color=70FFEE)](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/LICENSE) [![](https://img.shields.io/github/last-commit/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065)](https://github.com/XulbuX/PythonLibraryXulbuX/commits) [![](https://img.shields.io/github/issues/XulbuX/PythonLibraryXulbuX?labelColor=554045&color=FF6065)](https://github.com/XulbuX/PythonLibraryXulbuX/issues)
 
-**XulbuX** is library that contains many useful classes, types, and functions,
+**XulbuX** is a library that contains many useful classes, types, and functions,
 ranging from console logging and working with colors to file management and system operations.
 The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
@@ -33,7 +33,7 @@ pip install --upgrade xulbux
 
 ## Usage
 
-Import the full library under the alias `xx`, so its constants, classes, methods and types are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()`:
+Import the full library under the alias `xx`, so its constants, classes, methods, and types are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()`:
 ```python
 import xulbux as xx
 ```
@@ -137,4 +137,4 @@ if __name__ == "__main__":
 <br>
 
 --------------------------------------------------------------
-[View this library on **PyPI**](https://pypi.org/project/XulbuX/)
+[View this library on **PyPI**](https://pypi.org/project/xulbux)
