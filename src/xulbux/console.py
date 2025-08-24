@@ -691,7 +691,7 @@ class Console:
         information about formatting codes, see the `format_codes` module documentation."""
         confirmed = input(
             FormatCodes.to_ansi(
-                f'{start}{str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
+                f'{start}{str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}): )',
                 default_color=default_color,
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
