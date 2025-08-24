@@ -1,7 +1,7 @@
-from ._consts_ import COLOR
 from . import __version__
-from .xx_format_codes import FormatCodes
-from .xx_console import Console
+from .consts import COLOR
+from .format_codes import FormatCodes
+from .console import Console
 
 
 def help_command():

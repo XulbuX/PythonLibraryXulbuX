@@ -1,6 +1,6 @@
-from .xx_string import String
-from .xx_regex import Regex
-from .xx_data import Data
+from .string import String
+from .regex import Regex
+from .data import Data
 
 import regex as _rx
 

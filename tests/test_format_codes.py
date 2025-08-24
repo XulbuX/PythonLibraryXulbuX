@@ -1,5 +1,5 @@
-from xulbux._consts_ import ANSI
-from xulbux import FormatCodes
+from xulbux.consts import ANSI
+from xulbux.format_codes import FormatCodes
 
 
 black = ANSI.seq_color.format(0, 0, 0)

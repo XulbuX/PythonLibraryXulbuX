@@ -1,4 +1,4 @@
-from xulbux import Data
+from xulbux.data import Data
 
 import pytest
 

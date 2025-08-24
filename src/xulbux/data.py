@@ -1,6 +1,6 @@
-from ._consts_ import COLOR
-from .xx_format_codes import FormatCodes
-from .xx_string import String
+from .consts import COLOR
+from .format_codes import FormatCodes
+from .string import String
 
 from typing import TypeAlias, Optional, Union, Any
 import base64 as _base64
@@ -571,7 +571,7 @@ class Data:
         - `punctuation: COLOR.darkgray`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ------------------------------------------------------------------------------
-        For more detailed information about formatting codes, see `xx_format_codes`
+        For more detailed information about formatting codes, see `format_codes`
         module documentation."""
         FormatCodes.print(
             Data.to_str(data, indent, compactness, max_width, sep, as_json, syntax_highlighting),

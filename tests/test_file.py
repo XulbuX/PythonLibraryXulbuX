@@ -1,5 +1,4 @@
-from xulbux.xx_file import SameContentFileExistsError
-from xulbux import File
+from xulbux.file import SameContentFileExistsError, File
 
 import pytest
 import os

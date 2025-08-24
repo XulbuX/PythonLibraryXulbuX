@@ -1,4 +1,4 @@
-from xulbux import rgba, hexa, hsla
+from xulbux.color import rgba, hexa, hsla
 
 
 def assert_rgba_equal(actual: rgba, expected: tuple):

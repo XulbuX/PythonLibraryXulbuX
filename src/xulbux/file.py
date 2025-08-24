@@ -1,4 +1,4 @@
-from .xx_string import String
+from .string import String
 
 import os as _os
 

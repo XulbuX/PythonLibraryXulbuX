@@ -1,5 +1,5 @@
-from xulbux import Console, Args, ArgResult
-from xulbux import xx_console
+from xulbux.console import Console, Args, ArgResult
+from xulbux import console
 
 from unittest.mock import MagicMock
 from collections import namedtuple
@@ -12,13 +12,13 @@ import sys
 def mock_terminal_size(monkeypatch):
     TerminalSize = namedtuple('TerminalSize', ['columns', 'lines'])
     mock_get_terminal_size = lambda: TerminalSize(columns=80, lines=24)
-    monkeypatch.setattr(xx_console._os, 'get_terminal_size', mock_get_terminal_size)
+    monkeypatch.setattr(console._os, 'get_terminal_size', mock_get_terminal_size)
 
 
 @pytest.fixture
 def mock_formatcodes_print(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr(xx_console.FormatCodes, 'print', mock)
+    monkeypatch.setattr(console.FormatCodes, 'print', mock)
     return mock
 
 
@@ -32,7 +32,7 @@ def mock_builtin_input(monkeypatch):
 @pytest.fixture
 def mock_prompt_toolkit(monkeypatch):
     mock = MagicMock(return_value="mocked multiline input")
-    monkeypatch.setattr(xx_console._prompt_toolkit, 'prompt', mock)
+    monkeypatch.setattr(console._prompt_toolkit, 'prompt', mock)
     return mock
 
 

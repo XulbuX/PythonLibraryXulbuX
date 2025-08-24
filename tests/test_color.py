@@ -1,4 +1,4 @@
-from xulbux import Color, rgba, hsla, hexa
+from xulbux.color import Color, rgba, hsla, hexa
 
 
 def test_rgba_to_hex_int_and_back():

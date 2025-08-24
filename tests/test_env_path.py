@@ -1,4 +1,4 @@
-from xulbux import EnvPath
+from xulbux.env_path import EnvPath
 
 
 def test_get_paths():

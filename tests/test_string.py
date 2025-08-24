@@ -1,4 +1,4 @@
-from xulbux import String
+from xulbux.string import String
 
 import pytest
 

@@ -1,4 +1,4 @@
-from xulbux import Code
+from xulbux.code import Code
 
 
 def test_add_indent():

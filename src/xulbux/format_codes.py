@@ -157,10 +157,10 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from ._consts_ import ANSI
-from .xx_string import String
-from .xx_regex import Regex, Match, Pattern
-from .xx_color import Color, rgba, Rgba, Hexa
+from .consts import ANSI
+from .string import String
+from .regex import Regex, Match, Pattern
+from .color import Color, rgba, Rgba, Hexa
 
 from typing import Optional, cast
 import ctypes as _ctypes
@@ -226,7 +226,7 @@ class FormatCodes:
         """A print function, whose print values can be formatted using formatting codes.\n
         -----------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
-        `xx_format_codes` module documentation."""
+        `format_codes` module documentation."""
         FormatCodes.__config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
         if flush:
@@ -245,7 +245,7 @@ class FormatCodes:
         user confirms the input and the program continues to run.\n
         -------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
-        `xx_format_codes` module documentation."""
+        `format_codes` module documentation."""
         FormatCodes.__config_console()
         user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
         if reset_ansi:
@@ -263,7 +263,7 @@ class FormatCodes:
         """Convert the formatting codes inside a string to ANSI formatting.\n
         -------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
-        `xx_format_codes` module documentation."""
+        `format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
         use_default, default_specified = False, default_color is not None

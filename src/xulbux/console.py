@@ -2,14 +2,15 @@
 Functions for logging and other small actions within the console.\n
 ----------------------------------------------------------------------------------------------------------
 You can also use special formatting codes directly inside the log message to change their appearance.
-For more detailed information about formatting codes, see the the `xx_format_codes` module documentation.
+For more detailed information about formatting codes, see the the `format_codes` module documentation.
 """
 
-from ._consts_ import COLOR, CHARS
-from .xx_format_codes import FormatCodes, _COMPILED
-from .xx_string import String
-from .xx_color import Color, Rgba, Hexa
+from .consts import COLOR, CHARS
+from .format_codes import FormatCodes, _COMPILED
+from .string import String
+from .color import Color, Rgba, Hexa
 
+from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from typing import Optional, Literal, Mapping, Any, cast
 import prompt_toolkit as _prompt_toolkit
@@ -17,9 +18,19 @@ import pyperclip as _pyperclip
 import keyboard as _keyboard
 import getpass as _getpass
 import shutil as _shutil
-import mouse as _mouse
 import sys as _sys
 import os as _os
+
+
+class _RestrictedInputValidator(Validator):
+
+    def __init__(self, min_len: Optional[int] = None):
+        self.min_len = min_len
+
+    def validate(self, document):
+        text = document.text
+        if self.min_len is not None and len(text) < self.min_len:
+            raise ValidationError(message=f"Input too short (minimum {self.min_len} characters)")
 
 
 class _ConsoleWidth:
@@ -378,7 +389,7 @@ class Console:
         - `_console_tabsize` -⠀the tab size of the console (default is 8)\n
         -----------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` module documentation."""
+        information about formatting codes, see `format_codes` module documentation."""
         title = "" if title is None else title.strip().upper()
         title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
         if title_bg_color is not None and Color.is_valid(title_bg_color):
@@ -439,7 +450,7 @@ class Console:
             i = find_string_part(pos)
             adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
             parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
-            result[i] = ''.join(parts)
+            result[i] = "".join(parts)
             offset_adjusts[i] += len(removal)
         return result
 
@@ -560,7 +571,7 @@ class Console:
         - `indent` -⠀the indentation of the box (in chars)\n
         -----------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` module documentation."""
+        information about formatting codes, see `format_codes` module documentation."""
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
         if box_bg_color is not None and Color.is_valid(box_bg_color):
@@ -606,7 +617,7 @@ class Console:
         - `_border_chars` -⠀define your own border characters set (overwrites `border_type`)\n
         ---------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see `xx_format_codes` module documentation.\n
+        information about formatting codes, see `format_codes` module documentation.\n
         ---------------------------------------------------------------------------------------
         The `border_type` can be one of the following:
         - `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│')`
@@ -677,39 +688,16 @@ class Console:
         - `default_is_yes` -⠀the default answer if the user just presses enter
         ---------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` module documentation."""
+        information about formatting codes, see the `format_codes` module documentation."""
         confirmed = input(
             FormatCodes.to_ansi(
-                f'{start}  {str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
+                f'{start}{str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}):  )',
                 default_color=default_color,
             )
         ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
         if end:
             FormatCodes.print(end, end="")
         return confirmed
-
-    @staticmethod
-    def input(
-        prompt: object = "",
-        start="",
-        end="",
-        default_color: Optional[Rgba | Hexa] = COLOR.ice,
-        default_value: str = "",
-    ) -> str:
-        """Acts like a normal Python input with some more useful features.\n
-        ---------------------------------------------------------------------------------------
-        - `prompt` -⠀the input prompt
-        - `start` -⠀something to print before the input
-        - `end` -⠀something to print after the input (e.g. `\\n`)
-        - `default_color` -⠀the default text color of the `prompt`
-        - `default_value` -⠀the default return value if the user just presses enter
-        ---------------------------------------------------------------------------------------
-        The input prompt can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` module documentation."""
-        input_str = input(FormatCodes.to_ansi(f"{start}  {str(prompt)}[_] ", default_color=default_color))
-        if end:
-            FormatCodes.print(end, end="")
-        return input_str if input_str else default_value
 
     @staticmethod
     def multiline_input(
@@ -732,7 +720,7 @@ class Console:
         - `reset_ansi` -⠀whether to reset the ANSI codes after the input or not
         ---------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` module documentation."""
+        information about formatting codes, see the `format_codes` module documentation."""
         kb = KeyBindings()
 
         @kb.add("c-d", eager=True)  # CTRL+D
@@ -747,7 +735,7 @@ class Console:
         return input_string
 
     @staticmethod
-    def restricted_input(
+    def input(
         prompt: object = "",
         start="",
         end="\n",
@@ -756,121 +744,144 @@ class Console:
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
         mask_char: Optional[str] = None,
-        reset_ansi: bool = True,
-    ) -> Optional[str]:
+    ) -> str:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
         - what text characters the user is allowed to type and
         - the minimum and/or maximum length of the users input
         - optional mask character (hide user input, e.g. for passwords)
         - reset the ANSI formatting codes after the user continues\n
         ---------------------------------------------------------------------------------------
-        The input can be formatted with special formatting codes. For more detailed
-        information about formatting codes, see the `xx_format_codes` module documentation."""
-        FormatCodes.print(start + str(prompt), default_color=default_color, end="")
-        result = ""
-        select_all = False
-        last_line_count = 1
-        last_console_width = 0
+        The input prompt can be formatted with special formatting codes. For more detailed
+        information about formatting codes, see the `format_codes` module documentation."""
+        validator = _RestrictedInputValidator(min_len)
+        kb = KeyBindings()
 
-        def update_display(console_width: int) -> None:
-            nonlocal last_line_count, last_console_width
-            lines = String.split_count(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
-            line_count = len(lines)
-            if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
-                if last_console_width > console_width:
-                    line_count *= 2
-                for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else (
-                        line_count - 2 if line_count > last_line_count else line_count - 1)):
-                    _sys.stdout.write("\033[2K\r\033[A")
-            prompt_len = len(str(prompt)) if prompt else 0
-            prompt_str = lines[0][:prompt_len]
-            input_str = (
-                lines[0][prompt_len:] if len(lines) == 1 else "\n".join([lines[0][prompt_len:]] + lines[1:])
-            )  # SEPARATE THE PROMPT AND THE INPUT
-            _sys.stdout.write(
-                "\033[2K\r" + FormatCodes.to_ansi(prompt_str) + ("\033[7m" if select_all else "") + input_str + "\033[27m"
-            )
-            last_line_count, last_console_width = line_count, console_width
+        @kb.add("c-c")
+        def _(event):
+            raise KeyboardInterrupt
 
-        def handle_enter():
-            if min_len is not None and len(result) < min_len:
-                return False
-            FormatCodes.print(f"[_]{end}" if reset_ansi else end, default_color=default_color)
-            return True
+        @kb.add("escape")
+        def _(event):
+            event.app.exit(result="")
 
-        def handle_backspace_delete():
-            nonlocal result, select_all
-            if select_all:
-                result, select_all = "", False
-            elif result and event.name == "backspace":
-                result = result[:-1]
-            update_display(Console.w)
+        # FIX CLOSURE ISSUE BY CREATING SEPARATE FUNCTIONS FOR EACH CHARACTER
+        def create_char_handler(character):
 
-        def handle_paste():
-            nonlocal result, select_all
-            if select_all:
-                result, select_all = "", False
-            filtered_text = "".join(char for char in _pyperclip.paste() if allowed_chars == CHARS.all or char in allowed_chars)
-            if max_len is None or len(result) + len(filtered_text) <= max_len:
-                result += filtered_text
-                update_display(Console.w)
+            def char_handler(event):
+                buffer = event.app.current_buffer
+                if ((allowed_chars == CHARS.all or character in allowed_chars)
+                        and (max_len is None or len(buffer.text) < max_len)):
+                    buffer.insert_text(character)
 
-        def handle_select_all():
-            nonlocal select_all
-            select_all = True
-            update_display(Console.w)
+            return char_handler
 
-        def handle_character_input():
-            nonlocal result
-            if event.name is not None and ((allowed_chars == CHARS.all or event.name in allowed_chars) and
-                                           (max_len is None or len(result) < max_len)):
-                result += event.name
-                update_display(Console.w)
+        # BIND PRINTABLE ASCII CHARACTERS
+        for i in range(32, 127):
+            char = chr(i)
+            if char not in ("\t", "\n", "\r"):
+                kb.add(char)(create_char_handler(char))
 
-        while True:
-            event = _keyboard.read_event()
-            if event.event_type == "down":
-                if event.name == "enter" and handle_enter():
-                    return result.rstrip("\n")
-                elif event.name in ("backspace", "delete", "entf"):
-                    handle_backspace_delete()
-                elif (event.name == "v" and _keyboard.is_pressed("ctrl")) or _mouse.is_pressed("right"):
-                    handle_paste()
-                elif event.name == "a" and _keyboard.is_pressed("ctrl"):
-                    handle_select_all()
-                elif event.name == "c" and _keyboard.is_pressed("ctrl"):
+        @kb.add("c-v")
+        def _(event):
+            try:
+                buffer = event.app.current_buffer
+                clipboard_text = _pyperclip.paste()
+                filtered_text = ""
+                for char in clipboard_text:
+                    if (allowed_chars == CHARS.all
+                            or char in allowed_chars) and (max_len is None or len(buffer.text) + len(filtered_text) < max_len):
+                        filtered_text += char
+                buffer.insert_text(filtered_text)
+            except:
+                pass
+
+        FormatCodes.print(f"{start}{str(prompt)}[_] ", default_color=default_color, end="")
+
+        try:
+            if mask_char is not None:
+                from prompt_toolkit.application import Application
+                from prompt_toolkit.buffer import Buffer
+                from prompt_toolkit.layout.containers import Window
+                from prompt_toolkit.layout.controls import FormattedTextControl
+                from prompt_toolkit.layout.layout import Layout
+
+                buffer = Buffer(validator=validator)
+                display_text = [("", "")]
+
+                def update_display():
+                    nonlocal display_text
+                    text = buffer.text
+                    display_text = [("", mask_char * len(text) if mask_char else text)]
+
+                buffer.on_text_changed.add_handler(lambda buffer: update_display())
+                app_kb = KeyBindings()
+
+                @app_kb.add("c-c")
+                def _(event):
                     raise KeyboardInterrupt
-                elif event.name == "esc":
-                    return None
-                elif event.name == "space":
-                    handle_character_input()
-                elif event.name is not None and len(event.name) == 1:
-                    handle_character_input()
-                else:
-                    select_all = False
-                    update_display(Console.w)
 
-    @staticmethod
-    def pwd_input(
-        prompt: object = "Password: ",
-        start="",
-        end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.ice,
-        allowed_chars: str = CHARS.standard_ascii,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
-        reset_ansi: bool = True,
-    ) -> Optional[str]:
-        """Password input (preset for `Console.restricted_input()`)
-        that always masks the entered characters with asterisks."""
-        return Console.restricted_input(
-            prompt=prompt,
-            start=start,
-            end=end,
-            default_color=default_color,
-            allowed_chars=allowed_chars,
-            min_len=min_len,
-            max_len=max_len,
-            mask_char="*",
-            reset_ansi=reset_ansi,
-        )
+                @app_kb.add("escape")
+                def _(event):
+                    event.app.exit(result="")
+
+                @app_kb.add("enter")
+                def _(event):
+                    if validator:
+                        try:
+                            validator.validate(buffer.document)
+                            event.app.exit(result=buffer.text)
+                        except ValidationError:
+                            pass
+                    else:
+                        event.app.exit(result=buffer.text)
+
+                @app_kb.add("backspace")
+                def _(event):
+                    if buffer.text:
+                        buffer.delete_before_cursor(1)
+                        update_display()
+
+                for i in range(32, 127):
+                    char = chr(i)
+                    if char not in ("\t", "\n", "\r"):
+
+                        def make_handler(c):
+
+                            def handler(event):
+                                if (allowed_chars == CHARS.all or c in allowed_chars) and (max_len is None
+                                                                                           or len(buffer.text) < max_len):
+                                    buffer.insert_text(c)
+                                    update_display()
+
+                            return handler
+
+                        app_kb.add(char)(make_handler(char))
+
+                @app_kb.add("c-v")
+                def _(event):
+                    try:
+                        clipboard_text = _pyperclip.paste()
+                        filtered_text = ""
+                        for char in clipboard_text:
+                            if (allowed_chars == CHARS.all or char
+                                    in allowed_chars) and (max_len is None or len(buffer.text) + len(filtered_text) < max_len):
+                                filtered_text += char
+                        buffer.insert_text(filtered_text)
+                        update_display()
+                    except:
+                        pass
+
+                control = FormattedTextControl(lambda: display_text)
+                layout = Layout(Window(content=control))
+                app = Application(layout=layout, key_bindings=app_kb, full_screen=False)
+
+                result = app.run()
+
+            else:
+                # NO MASKING NEEDED, USE REGULAR PROMPT
+                result = _prompt_toolkit.prompt("", validator=validator, validate_while_typing=False, key_bindings=kb)
+        except (EOFError, KeyboardInterrupt):
+            result = ""
+
+        FormatCodes.print(end, default_color=default_color, end="")
+        return result

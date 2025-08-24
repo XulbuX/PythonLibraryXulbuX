@@ -31,7 +31,7 @@ The `Color` class, which contains all sorts of different color-related methods:
     - saturation
 """
 
-from .xx_regex import Regex
+from .regex import Regex
 
 from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union, Any, cast
 import re as _re

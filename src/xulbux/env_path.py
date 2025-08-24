@@ -1,4 +1,4 @@
-from .xx_path import Path
+from .path import Path
 
 from typing import Optional
 import sys as _sys
