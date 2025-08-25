@@ -1,4 +1,4 @@
-from xulbux.consts import ANSI
+from xulbux.base.consts import ANSI
 from xulbux.format_codes import FormatCodes
 
 

@@ -5,7 +5,7 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `format_codes` module documentation.
 """
 
-from .consts import COLOR, CHARS
+from .base.consts import COLOR, CHARS
 from .format_codes import FormatCodes, _COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa

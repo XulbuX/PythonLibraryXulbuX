@@ -1,4 +1,4 @@
-from .consts import COLOR
+from .base.consts import COLOR
 from .format_codes import FormatCodes
 from .string import String
 

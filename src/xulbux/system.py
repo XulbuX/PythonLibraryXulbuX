@@ -23,16 +23,16 @@ class _IsElevated:
 class System:
 
     is_elevated: bool = _IsElevated()  # type: ignore[assignment]
-    """Is `True` if the current process has
-    elevated privileges and `False` otherwise."""
+    """Is `True` if the current process has elevated privileges and `False` otherwise."""
 
     @staticmethod
-    def restart(prompt: object = None, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
-        """Starts a system restart:
-        - `prompt` is the message to be displayed in the systems restart notification.
-        - `wait` is the time to wait until restarting in seconds.
-        - `continue_program` is whether to continue the current Python program after calling this function.
-        - `force` is whether to force a restart even if other processes are still running."""
+    def restart(prompt: object = "", wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
+        """Restarts the system with some advanced options\n
+        --------------------------------------------------------------------------------------------------
+        - `prompt` -⠀the message to be displayed in the systems restart notification
+        - `wait` -⠀the time to wait until restarting in seconds
+        - `continue_program` -⠀whether to continue the current Python program after calling this function
+        - `force` -⠀whether to force a restart even if other processes are still running"""
         system = _platform.system().lower()
         if system == "windows":
             if not force:
@@ -69,9 +69,9 @@ class System:
     @staticmethod
     def check_libs(lib_names: list[str], install_missing: bool = False, confirm_install: bool = True) -> Optional[list[str]]:
         """Checks if the given list of libraries are installed. If not:
-        - If `install_missing` is `False` the missing libraries will be returned as a list.
-        - If `install_missing` is `True` the missing libraries will be installed.
-        - If `confirm_install` is `True` the user will first be asked if they want to install the missing libraries."""
+        - If `install_missing` is false, the missing libraries will be returned as a list.
+        - If `install_missing` is true, the missing libraries will be installed.
+        - If `confirm_install` is true, the user will first be asked if they want to install the missing libraries."""
         missing = []
         for lib in lib_names:
             try:

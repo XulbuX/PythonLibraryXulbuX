@@ -157,7 +157,7 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from .consts import ANSI
+from .base.consts import ANSI
 from .string import String
 from .regex import Regex, Match, Pattern
 from .color import Color, rgba, Rgba, Hexa

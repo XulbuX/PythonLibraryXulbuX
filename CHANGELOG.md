@@ -25,7 +25,7 @@
 * removed method `Console.pwd_input()`, since you can now simply use `Console.input(mask_char="*")` instead, which does the exact same thing
 * removed the CLI command `xx-help`, since it was redundant because there's already the CLI command `xulbux-help`
 * removed the `xx_` from all the library modules since it's redundant, and without it the imports look more professional and cleaner
-* renamed the previously internal module `_consts_` to `consts`, since you are now sometimes able to use constants in combination with library methods
+* renamed the previously internal module `_consts_` to `consts` and made it accessible via `from xulbux.base.consts import …`, since you should be able to use library constants without them being "internal"
 * removed the wildcard imports from the `__init__.py` file, so now you can only access the main classes directly with `from xulbux import …` and for the rest you have to import the specific module first
 
 ## 29.07.2025 `v1.7.3`

@@ -1,5 +1,5 @@
 from . import __version__
-from .consts import COLOR
+from .base.consts import COLOR
 from .format_codes import FormatCodes
 from .console import Console
 
