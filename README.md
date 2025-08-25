@@ -9,9 +9,9 @@ The library is designed to simplify common programming tasks and improve code re
 For precise information about the library, see the library's [**documentation**](https://github.com/XulbuX/PythonLibraryXulbuX/wiki).<br>
 For the libraries latest changes and updates, see the [**change log**](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/CHANGELOG.md).
 
-### Highlights, you should definitely check out:
+### The best modules, you have to check out:
 
-[![xx_format_codes](https://img.shields.io/badge/xx__format__codes-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_format_codes) [![xx_console](https://img.shields.io/badge/xx__console-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_console) [![xx_color](https://img.shields.io/badge/xx__color-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_color)
+[![format_codes](https://img.shields.io/badge/format__codes-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/format_codes) [![console](https://img.shields.io/badge/console-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console) [![color](https://img.shields.io/badge/color-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color)
 
 <br>
 
@@ -51,20 +51,20 @@ from xulbux import rgba, hsla, hexa
 
 ## Modules
 
-| Module                                                                                                                                                     | Short Description                                                                                  |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
-| [![xx_code](https://img.shields.io/badge/xx__code-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_code)                          | advanced code-string operations (*changing the indent, finding function calls, ...*)               |
-| [![xx_color](https://img.shields.io/badge/xx__color-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_color)                       | everything around colors (*converting, blending, searching colors in strings, ...*)                |
-| [![xx_console](https://img.shields.io/badge/xx__console-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_console)                 | advanced actions related to the console (*pretty logging, advanced inputs, ...*)                   |
-| [![xx_data](https://img.shields.io/badge/xx__data-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_data)                          | advanced operations with data structures (*compare, generate path ID's, pretty print/format, ...*) |
-| [![xx_env_path](https://img.shields.io/badge/xx__env__path-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_env_path)             | getting and editing the PATH variable (*get paths, check for paths, add paths, ...*)               |
-| [![xx_file](https://img.shields.io/badge/xx__file-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_file)                          | advanced working with files (*create files, rename file-extensions, ...*)                          |
-| [![xx_format_codes](https://img.shields.io/badge/xx__format__codes-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_format_codes) | easy pretty printing with custom format codes (*print, inputs, custom format codes to ANSI, ...*)  |
-| [![xx_json](https://img.shields.io/badge/xx__json-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_json)                          | advanced working with json files (*read, create, update, ...*)                                     |
-| [![xx_path](https://img.shields.io/badge/xx__path-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_path)                          | advanced path operations (*get paths, smart-extend relative paths, delete paths, ...*)             |
-| ![xx_regex](https://img.shields.io/badge/xx__regex-6065FF?style=flat)                                                                                      | generated regex pattern-templates (*match bracket- and quote pairs, match colors, ...*)            |
-| [![xx_string](https://img.shields.io/badge/xx__string-6065FF?style=flat)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/xx_string)                    | helpful actions when working with strings. (*normalize, escape, decompose, ...*)                   |
-| ![xx_system](https://img.shields.io/badge/xx__system-6065FF?style=flat)                                                                                    | advanced system actions (*restart with message, check installed Python libs, ...*)                 |
+| Module                                                                                                                                                    | Short Description                                                                                  |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| [![code](https://img.shields.io/badge/code-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/code)                          | advanced code-string operations (*changing the indent, finding function calls, ...*)               |
+| [![color](https://img.shields.io/badge/color-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color)                       | everything around colors (*converting, blending, searching colors in strings, ...*)                |
+| [![console](https://img.shields.io/badge/console-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console)                 | advanced actions related to the console (*pretty logging, advanced inputs, ...*)                   |
+| [![data](https://img.shields.io/badge/data-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/data)                          | advanced operations with data structures (*compare, generate path ID's, pretty print/format, ...*) |
+| [![env_path](https://img.shields.io/badge/env__path-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/env_path)             | getting and editing the PATH variable (*get paths, check for paths, add paths, ...*)               |
+| [![file](https://img.shields.io/badge/file-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/file)                          | advanced working with files (*create files, rename file-extensions, ...*)                          |
+| [![format_codes](https://img.shields.io/badge/format__codes-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/format_codes) | easy pretty printing with custom format codes (*print, inputs, custom format codes to ANSI, ...*)  |
+| [![json](https://img.shields.io/badge/json-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/json)                          | advanced working with json files (*read, create, update, ...*)                                     |
+| [![path](https://img.shields.io/badge/path-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/path)                          | advanced path operations (*get paths, smart-extend relative paths, delete paths, ...*)             |
+| ![regex](https://img.shields.io/badge/regex-FF7E58?style=for-the-badge)                                                                                   | generated regex pattern-templates (*match bracket- and quote pairs, match colors, ...*)            |
+| [![string](https://img.shields.io/badge/string-FF7E58?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/string)                    | helpful actions when working with strings. (*normalize, escape, decompose, ...*)                   |
+| ![system](https://img.shields.io/badge/system-FF7E58?style=for-the-badge)                                                                                 | advanced system actions (*restart with message, check installed Python libs, ...*)                 |
 
 <br>
 
