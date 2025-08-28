@@ -32,7 +32,7 @@ def mock_builtin_input(monkeypatch):
 @pytest.fixture
 def mock_prompt_toolkit(monkeypatch):
     mock = MagicMock(return_value="mocked multiline input")
-    monkeypatch.setattr(console._prompt_toolkit, 'prompt', mock)
+    monkeypatch.setattr(console._pt, 'prompt', mock)
     return mock
 
 
