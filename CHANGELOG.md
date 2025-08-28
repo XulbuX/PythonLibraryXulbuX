@@ -27,6 +27,7 @@
 * renamed the previously internal module `_consts_` to `consts` and made it accessible via `from xulbux.base.consts import …`, since you should be able to use library constants without them being "internal"
 * the constants form inside the `consts` module are now all uppercase (*except the class methods*), to make clear that they're constants
 * removed the wildcard imports from the `__init__.py` file, so now you can only access the main classes directly with `from xulbux import …` and for the rest you have to import the specific module first
+* now `prompt` from `Console.pause_exit()` also supports custom formatting codes and the method new pauses per default (*without exiting*)
 
 ## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user

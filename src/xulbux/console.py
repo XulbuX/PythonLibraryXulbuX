@@ -332,15 +332,15 @@ class Console:
 
     @staticmethod
     def pause_exit(
-        pause: bool = False,
+        pause: bool = True,
         exit: bool = False,
         prompt: object = "",
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
-        """Will print the `prompt` and then pause the program if `pause` is set
-        to `True` and after the pause, exit the program if `exit` is set to `True`."""
-        print(prompt, end="", flush=True)
+        """Will print the `prompt` and then pause the program if `pause` is
+        true and after the pause, exit the program if `exit` is set true."""
+        FormatCodes.print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
         if pause:

@@ -106,7 +106,7 @@ keywords = [
 "License" = "https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/LICENSE"
 
 [project.scripts]
-xulbux-help = "xulbux._cli_:help_command"
+xulbux-help = "xulbux.cli.help:show_help"
 
 [tool.black]
 line-length = 127
