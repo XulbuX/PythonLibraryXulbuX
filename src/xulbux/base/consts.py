@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import TypeAlias
 
 
@@ -6,85 +5,79 @@ FormattableString: TypeAlias = str
 """A `str` object that is made to be formatted with the `.format()` method."""
 
 
-@dataclass
 class COLOR:
-    """Color presets used in the `xulbux` library."""
+    """Hexa color presets."""
 
-    text = "#A5D6FF"
-    """The default text color used in the `xulbux` library."""
-
-    white = "#F1F2FF"
-    lightgray = "#B6B7C0"
-    gray = "#7B7C8D"
-    darkgray = "#67686C"
-    black = "#202125"
-    red = "#FF606A"
-    coral = "#FF7069"
-    orange = "#FF876A"
-    tangerine = "#FF9962"
-    gold = "#FFAF60"
-    yellow = "#FFD260"
-    lime = "#C9F16E"
-    green = "#7EE787"
-    neongreen = "#4CFF85"
-    teal = "#50EAAF"
-    cyan = "#3EDEE6"
-    ice = "#77DBEF"
-    lightblue = "#60AAFF"
-    blue = "#8085FF"
-    lavender = "#9B7DFF"
-    purple = "#AD68FF"
-    magenta = "#C860FF"
-    pink = "#F162EF"
-    rose = "#FF609F"
+    WHITE = "#F1F2FF"
+    LIGHT_GRAY = "#B6B7C0"
+    GRAY = "#7B7C8D"
+    DARK_GRAY = "#67686C"
+    BLACK = "#202125"
+    RED = "#FF606A"
+    CORAL = "#FF7069"
+    ORANGE = "#FF876A"
+    TANGERINE = "#FF9962"
+    GOLD = "#FFAF60"
+    YELLOW = "#FFD260"
+    LIME = "#C9F16E"
+    GREEN = "#7EE787"
+    NEON_GREEN = "#4CFF85"
+    TEAL = "#50EAAF"
+    CYAN = "#3EDEE6"
+    ICE = "#77DBEF"
+    LIGHT_BLUE = "#60AAFF"
+    BLUE = "#8085FF"
+    LAVENDER = "#9B7DFF"
+    PURPLE = "#AD68FF"
+    MAGENTA = "#C860FF"
+    PINK = "#F162EF"
+    ROSE = "#FF609F"
 
 
-class _AllTextCharacters:
-    pass
-
-
-@dataclass
 class CHARS:
     """Text character sets."""
 
-    all = _AllTextCharacters
+    class _AllTextChars:
+        pass
+
+    ALL = _AllTextChars
     """Code to signal that all characters are allowed."""
 
-    digits: str = "0123456789"
+    DIGITS = "0123456789"
     """Digits: `0`-`9`"""
-    float_digits: str = digits + "."
+    FLOAT_DIGITS = DIGITS + "."
     """Digits: `0`-`9` with decimal point `.`"""
-    hex_digits: str = digits + "#abcdefABCDEF"
+    HEX_DIGITS = DIGITS + "#abcdefABCDEF"
     """Digits: `0`-`9` Letters: `a`-`f` `A`-`F` and a hashtag `#`"""
 
-    lowercase: str = "abcdefghijklmnopqrstuvwxyz"
+    LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
     """Lowercase letters `a`-`z`"""
-    lowercase_extended: str = lowercase + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
+    LOWERCASE_EXTENDED = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
     """Lowercase letters `a`-`z` with all lowercase diacritic letters."""
-    uppercase: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     """Uppercase letters `A`-`Z`"""
-    uppercase_extended: str = uppercase + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
+    UPPERCASE_EXTENDED = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
     """Uppercase letters `A`-`Z` with all uppercase diacritic letters."""
 
-    letters: str = lowercase + uppercase
+    LETTERS = LOWERCASE + UPPERCASE
     """Lowercase and uppercase letters `a`-`z` and `A`-`Z`"""
-    letters_extended: str = lowercase_extended + uppercase_extended
+    LETTERS_EXTENDED = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
     """Lowercase and uppercase letters `a`-`z` `A`-`Z` and all diacritic letters."""
 
-    special_ascii: str = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    SPECIAL_ASCII = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
     """All ASCII special characters."""
-    special_ascii_extended: str = special_ascii + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    SPECIAL_ASCII_EXTENDED = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
     """All ASCII special characters with the extended ASCII special characters."""
-    standard_ascii: str = special_ascii + digits + letters
+    STANDARD_ASCII = SPECIAL_ASCII + DIGITS + LETTERS
     """All standard ASCII characters."""
-    full_ascii: str = special_ascii_extended + digits + letters_extended
+    FULL_ASCII = SPECIAL_ASCII_EXTENDED + DIGITS + LETTERS_EXTENDED
     """All characters in the ASCII table."""
 
 
 class ANSI:
-    """Constants and class-methods for use of ANSI escape codes."""
+    """Constants and methods for use of ANSI escape codes"""
 
-    escaped_char: str = "\\x1b"
+    ESCAPED_CHAR = "\\x1b"
     """The printable ANSI escape character."""
     CHAR = char = "\x1b"
     """The ANSI escape character."""
@@ -100,12 +93,12 @@ class ANSI:
         """Generate an ANSI sequence with `parts` amount of placeholders."""
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(parts)]) + cls.END
 
-    seq_color: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    SEQ_COLOR: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
     """The ANSI escape sequence for setting the text RGB color."""
-    seq_bg_color: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    SEQ_BG_COLOR: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
     """The ANSI escape sequence for setting the background RGB color."""
 
-    color_map: tuple[str, ...] = (
+    COLOR_MAP: tuple[str, ...] = (
         ########### DEFAULT CONSOLE COLOR NAMES ############
         "black",
         "red",
@@ -118,7 +111,7 @@ class ANSI:
     )
     """The console default color names."""
 
-    codes_map: dict[str | tuple[str, ...], int] = {
+    CODES_MAP: dict[str | tuple[str, ...], int] = {
         ################# SPECIFIC RESETS ##################
         "_": 0,
         ("_bold", "_b"): 22,

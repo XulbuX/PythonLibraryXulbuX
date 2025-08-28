@@ -10,29 +10,29 @@ import sys
 
 @pytest.fixture
 def mock_terminal_size(monkeypatch):
-    TerminalSize = namedtuple('TerminalSize', ['columns', 'lines'])
+    TerminalSize = namedtuple("TerminalSize", ["columns", "lines"])
     mock_get_terminal_size = lambda: TerminalSize(columns=80, lines=24)
-    monkeypatch.setattr(console._os, 'get_terminal_size', mock_get_terminal_size)
+    monkeypatch.setattr(console._os, "get_terminal_size", mock_get_terminal_size)
 
 
 @pytest.fixture
 def mock_formatcodes_print(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr(console.FormatCodes, 'print', mock)
+    monkeypatch.setattr(console.FormatCodes, "print", mock)
     return mock
 
 
 @pytest.fixture
 def mock_builtin_input(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr(builtins, 'input', mock)
+    monkeypatch.setattr(builtins, "input", mock)
     return mock
 
 
 @pytest.fixture
 def mock_prompt_toolkit(monkeypatch):
     mock = MagicMock(return_value="mocked multiline input")
-    monkeypatch.setattr(console._pt, 'prompt', mock)
+    monkeypatch.setattr(console._pt, "prompt", mock)
     return mock
 
 
@@ -124,13 +124,17 @@ def test_console_size(mock_terminal_size):
         # 'before' SPECIAL CASE
         (["script.py", "arg1", "arg2", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
          {"before": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
+        (["script.py", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
+         {"before": {"exists": False, "value": []}, "file": {"exists": True, "value": "file.txt"}}),
         # 'after' SPECIAL CASE
         (["script.py", "-f", "file.txt", "arg1", "arg2"], {"after": "after", "file": ["-f"]},
          {"after": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
+        (["script.py", "-f", "file.txt"], {"after": "after", "file": ["-f"]},
+         {"after": {"exists": False, "value": []}, "file": {"exists": True, "value": "file.txt"}}),
     ]
 )
 def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
-    monkeypatch.setattr(sys, 'argv', argv)
+    monkeypatch.setattr(sys, "argv", argv)
     args_result = Console.get_args(find_args, allow_spaces=False)
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
@@ -183,7 +187,7 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     ]
 )
 def test_get_args_with_spaces(monkeypatch, argv, find_args, expected_args_dict):
-    monkeypatch.setattr(sys, 'argv', argv)
+    monkeypatch.setattr(sys, "argv", argv)
     args_result = Console.get_args(find_args, allow_spaces=True)
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
@@ -230,19 +234,19 @@ def test_multiline_input(mock_prompt_toolkit, mock_formatcodes_print):
     reset_call = mock_formatcodes_print.call_args_list[2]
 
     assert prompt_call.args == ("Enter text:", )
-    assert prompt_call.kwargs == {'default_color': '#BCA'}
+    assert prompt_call.kwargs == {"default_color": "#BCA"}
 
     assert "[dim][[b](CTRL+D)[dim] : end of input][_dim]" in keybind_call.args[0]
 
-    assert reset_call.args == ('[_]', )
-    assert reset_call.kwargs == {'end': ''}
+    assert reset_call.args == ("[_]", )
+    assert reset_call.kwargs == {"end": ""}
 
     mock_prompt_toolkit.assert_called_once()
     pt_args, pt_kwargs = mock_prompt_toolkit.call_args
     assert pt_args == (" ⮡ ", )
-    assert pt_kwargs.get('multiline') is True
-    assert pt_kwargs.get('wrap_lines') is True
-    assert 'key_bindings' in pt_kwargs
+    assert pt_kwargs.get("multiline") is True
+    assert pt_kwargs.get("wrap_lines") is True
+    assert "key_bindings" in pt_kwargs
 
 
 def test_multiline_input_no_bindings(mock_prompt_toolkit, mock_formatcodes_print):
@@ -253,7 +257,7 @@ def test_multiline_input_no_bindings(mock_prompt_toolkit, mock_formatcodes_print
     reset_call = mock_formatcodes_print.call_args_list[1]
 
     assert prompt_call.args == ("Enter text:", )
-    assert reset_call.args == ('[_]', )
-    assert reset_call.kwargs == {'end': 'DONE'}
+    assert reset_call.args == ("[_]", )
+    assert reset_call.kwargs == {"end": "DONE"}
 
     mock_prompt_toolkit.assert_called_once()

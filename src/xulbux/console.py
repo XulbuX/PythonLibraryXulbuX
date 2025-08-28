@@ -451,7 +451,7 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
@@ -459,7 +459,7 @@ class Console:
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
         if active:
-            Console.log("DEBUG", prompt, format_linebreaks, start, end, COLOR.yellow, default_color)
+            Console.log("DEBUG", prompt, format_linebreaks, start, end, COLOR.YELLOW, default_color)
             Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -468,13 +468,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("INFO", prompt, format_linebreaks, start, end, COLOR.blue, default_color)
+        Console.log("INFO", prompt, format_linebreaks, start, end, COLOR.BLUE, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -483,13 +483,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("DONE", prompt, format_linebreaks, start, end, COLOR.teal, default_color)
+        Console.log("DONE", prompt, format_linebreaks, start, end, COLOR.TEAL, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -498,13 +498,13 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("WARN", prompt, format_linebreaks, start, end, COLOR.orange, default_color)
+        Console.log("WARN", prompt, format_linebreaks, start, end, COLOR.ORANGE, default_color)
         Console.pause_exit(pause, exit)
 
     @staticmethod
@@ -513,14 +513,14 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = True,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("FAIL", prompt, format_linebreaks, start, end, COLOR.red, default_color)
+        Console.log("FAIL", prompt, format_linebreaks, start, end, COLOR.RED, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -529,14 +529,14 @@ class Console:
         format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.text,
+        default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = True,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("EXIT", prompt, format_linebreaks, start, end, COLOR.magenta, default_color)
+        Console.log("EXIT", prompt, format_linebreaks, start, end, COLOR.MAGENTA, default_color)
         Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -587,7 +587,7 @@ class Console:
         start: str = "",
         end: str = "\n",
         border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-        border_style: str | Rgba | Hexa = f"dim|{COLOR.gray}",
+        border_style: str | Rgba | Hexa = f"dim|{COLOR.GRAY}",
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 1,
         w_full: bool = False,
@@ -734,7 +734,7 @@ class Console:
         mask_char: Optional[str] = None,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
-        allowed_chars: str = CHARS.all,  #type: ignore[assignment]
+        allowed_chars: str = CHARS.ALL,  #type: ignore[assignment]
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
     ) -> str:
@@ -766,7 +766,7 @@ class Console:
                 text_to_validate = result_text if mask_char else document.text
                 if min_len and len(text_to_validate) < min_len:
                     raise ValidationError(message="", cursor_position=len(document.text))
-                if validator and not validator(text_to_validate):
+                if validator and validator(text_to_validate) not in ("", None):
                     raise ValidationError(message="", cursor_position=len(document.text))
 
         def bottom_toolbar() -> _pt.formatted_text.ANSI:
@@ -801,7 +801,7 @@ class Console:
             removed_chars = set()
             if not text: return "", removed_chars
             processed_text = "".join(c for c in text if ord(c) >= 32)
-            if allowed_chars != CHARS.all:
+            if allowed_chars != CHARS.ALL:
                 filtered_text = ""
                 for char in processed_text:
                     if char in allowed_chars:

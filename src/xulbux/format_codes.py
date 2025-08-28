@@ -187,7 +187,7 @@ _PREFIX_RX: dict[str, str] = {
 _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "*": _re.compile(r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]"),
     "*color": _re.compile(r"\[\s*([^]_]*?)\s*\*c(?:olor)?\s*([^]_]*?)\]"),
-    "ansi_seq": _re.compile(ANSI.char + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
+    "ansi_seq": _re.compile(ANSI.CHAR + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
     "formatting": _rx.compile(
         Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
         + r"(?:\s*([/\\]?)\s*"
@@ -249,7 +249,7 @@ class FormatCodes:
         FormatCodes.__config_console()
         user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
         if reset_ansi:
-            _sys.stdout.write(f"{ANSI.char}[0m")
+            _sys.stdout.write(f"{ANSI.CHAR}[0m")
         return user_input
 
     @staticmethod
@@ -284,7 +284,7 @@ class FormatCodes:
             string = _COMPILED["*"].sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
         def is_valid_color(color: str) -> bool:
-            return bool((color in ANSI.color_map) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
+            return bool((color in ANSI.COLOR_MAP) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
 
         def replace_keys(match: Match) -> str:
             _formats = formats = match.group(1)
@@ -339,12 +339,12 @@ class FormatCodes:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
                     r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)
-                                              ).startswith(f"{ANSI.char}{ANSI.start}")
+                                              ).startswith(f"{ANSI.CHAR}{ANSI.START}")
                 ]
             else:
                 ansi_resets = []
-            if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.char}{ANSI.start}") >= 1) and not all(
-                    f.startswith(f"{ANSI.char}{ANSI.start}") for f in ansi_formats):  # FORMATTING WAS INVALID
+            if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1) and not all(
+                    f.startswith(f"{ANSI.CHAR}{ANSI.START}") for f in ansi_formats):  # FORMATTING WAS INVALID
                 return match.group(0)
             elif formats_escaped:  # FORMATTING WAS VALID BUT ESCAPED
                 return f"[{_formats}]({auto_reset_txt})" if auto_reset_txt else f"[{_formats}]"
@@ -363,7 +363,7 @@ class FormatCodes:
     @staticmethod
     def escape_ansi(ansi_string: str) -> str:
         """Escapes all ANSI codes in the string, so they are visible when output to the console."""
-        return ansi_string.replace(ANSI.char, ANSI.escaped_char)
+        return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
 
     @staticmethod
     def remove_ansi(
@@ -437,7 +437,7 @@ class FormatCodes:
             return None
         _default_color: tuple[int, int, int] = tuple(default_color)[:3]
         if brightness_steps is None or (format_key and _COMPILED["bg?_default"].search(format_key)):
-            return (ANSI.seq_bg_color if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.seq_color).format(
+            return (ANSI.SEQ_BG_COLOR if format_key and _COMPILED["bg_default"].search(format_key) else ANSI.SEQ_COLOR).format(
                 *_default_color
             )
         if format_key is None or not (format_key in _modifiers[0] or format_key in _modifiers[1]):
@@ -459,7 +459,7 @@ class FormatCodes:
             new_rgb = tuple(Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust))
         elif modifiers in _modifiers[1]:
             new_rgb = tuple(Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust))
-        return (ANSI.seq_bg_color if is_bg else ANSI.seq_color).format(*new_rgb[:3])
+        return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_COLOR).format(*new_rgb[:3])
 
     @staticmethod
     def __get_replacement(format_key: str, default_color: Optional[rgba], brightness_steps: int = 20) -> str:
@@ -470,11 +470,11 @@ class FormatCodes:
         if default_color and (new_default_color := FormatCodes.__get_default_ansi(default_color, format_key,
                                                                                   brightness_steps)):
             return new_default_color
-        for map_key in ANSI.codes_map:
+        for map_key in ANSI.CODES_MAP:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
                 return _ANSI_SEQ_1.format(
                     next((
-                        v for k, v in ANSI.codes_map.items() if format_key == k or (isinstance(k, tuple) and format_key in k)
+                        v for k, v in ANSI.CODES_MAP.items() if format_key == k or (isinstance(k, tuple) and format_key in k)
                     ), None)
                 )
         rgb_match = _COMPILED["rgb"].match(format_key)
@@ -484,13 +484,13 @@ class FormatCodes:
                 is_bg = rgb_match.group(1)
                 r, g, b = map(int, rgb_match.groups()[1:])
                 if Color.is_valid_rgba((r, g, b)):
-                    return ANSI.seq_bg_color.format(r, g, b) if is_bg else ANSI.seq_color.format(r, g, b)
+                    return ANSI.SEQ_BG_COLOR.format(r, g, b) if is_bg else ANSI.SEQ_COLOR.format(r, g, b)
             elif hex_match:
                 is_bg = hex_match.group(1)
                 rgb = Color.to_rgba(hex_match.group(2))
                 return (
-                    ANSI.seq_bg_color.format(rgb[0], rgb[1], rgb[2])
-                    if is_bg else ANSI.seq_color.format(rgb[0], rgb[1], rgb[2])
+                    ANSI.SEQ_BG_COLOR.format(rgb[0], rgb[1], rgb[2])
+                    if is_bg else ANSI.SEQ_COLOR.format(rgb[0], rgb[1], rgb[2])
                 )
         except Exception:
             pass

@@ -159,11 +159,11 @@ def test_adjust_lightness():
 
 def test_adjust_saturation():
     color = hsla(0, 50, 50)
-    saturated = Color.adjust_saturation(color, 0.5)
+    saturated = Color.adjust_saturation(color, 0.5)  # type: ignore[assignment]
     assert isinstance(saturated, rgba)
     assert saturated.to_hsla().s > color.s
     color = hsla(0, 100, 50)
-    desaturated = Color.adjust_saturation(color, -0.5)
+    desaturated = Color.adjust_saturation(color, -0.5)  # type: ignore[assignment]
     assert isinstance(desaturated, rgba)
     assert desaturated.to_hsla().s < color.s
     desaturated = Color.adjust_saturation(hexa("#FF0000"), -1.0)

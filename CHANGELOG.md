@@ -20,12 +20,12 @@
   new, instead of flags, you can also once use the literal `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
 * changed the default `default_color` for all `Console` class input methods to `None`
 * the method `Console.restricted_input()` now returns an empty string instead of `None` if the user didn't input anything
-* fixed several small bugs for `Console.restricted_input()` regarding the ANSI formatting of the input prompt and the input text in the console
 * completely rewrote `Console.restricted_input()`, so now it's actually usable, and renamed it to just `Console.input()`
 * removed method `Console.pwd_input()`, since you can now simply use `Console.input(mask_char="*")` instead, which does the exact same thing
 * removed the CLI command `xx-help`, since it was redundant because there's already the CLI command `xulbux-help`
 * removed the `xx_` from all the library modules since it's redundant, and without it the imports look more professional and cleaner
 * renamed the previously internal module `_consts_` to `consts` and made it accessible via `from xulbux.base.consts import …`, since you should be able to use library constants without them being "internal"
+* the constants form inside the `consts` module are now all uppercase (*except the class methods*), to make clear that they're constants
 * removed the wildcard imports from the `__init__.py` file, so now you can only access the main classes directly with `from xulbux import …` and for the rest you have to import the specific module first
 
 ## 29.07.2025 `v1.7.3`

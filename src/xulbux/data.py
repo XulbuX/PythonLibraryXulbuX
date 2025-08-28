@@ -420,11 +420,11 @@ class Data:
             elif not isinstance(_syntax_highlighting, dict):
                 raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(_syntax_highlighting)}")
             _syntax_hl = {
-                "str": (f"[{COLOR.blue}]", "[_c]"),
-                "number": (f"[{COLOR.magenta}]", "[_c]"),
-                "literal": (f"[{COLOR.cyan}]", "[_c]"),
-                "type": (f"[i|{COLOR.lightblue}]", "[_i|_c]"),
-                "punctuation": (f"[{COLOR.darkgray}]", "[_c]"),
+                "str": (f"[{COLOR.BLUE}]", "[_c]"),
+                "number": (f"[{COLOR.MAGENTA}]", "[_c]"),
+                "literal": (f"[{COLOR.CYAN}]", "[_c]"),
+                "type": (f"[i|{COLOR.LIGHT_BLUE}]", "[_i|_c]"),
+                "punctuation": (f"[{COLOR.DARK_GRAY}]", "[_c]"),
             }
             _syntax_hl.update({
                 k: (f"[{v}]", "[_]") if k in _syntax_hl and v not in ("", None) else ("", "")
@@ -564,11 +564,11 @@ class Data:
         part. The formatting can be changed by simply adding the key with the new
         value inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        - `str: COLOR.blue`
-        - `number: COLOR.magenta`
-        - `literal: COLOR.cyan`
-        - `type: "i|" + COLOR.lightblue`
-        - `punctuation: COLOR.darkgray`\n
+        - `str: COLOR.BLUE`
+        - `number: COLOR.MAGENTA`
+        - `literal: COLOR.CYAN`
+        - `type: "i|" + COLOR.LIGHT_BLUE`
+        - `punctuation: COLOR.DARK_GRAY`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ------------------------------------------------------------------------------
         For more detailed information about formatting codes, see `format_codes`

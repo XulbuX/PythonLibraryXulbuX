@@ -2,23 +2,23 @@ from xulbux.base.consts import ANSI
 from xulbux.format_codes import FormatCodes
 
 
-black = ANSI.seq_color.format(0, 0, 0)
-bg_red = f"{ANSI.char}{ANSI.start}{ANSI.codes_map['bg:red']}{ANSI.end}"
-default = ANSI.seq_color.format(255, 255, 255)
-orange = ANSI.seq_color.format(255, 136, 119)
+black = ANSI.SEQ_COLOR.format(0, 0, 0)
+bg_red = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['bg:red']}{ANSI.END}"
+default = ANSI.SEQ_COLOR.format(255, 255, 255)
+orange = ANSI.SEQ_COLOR.format(255, 136, 119)
 
-bold = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('bold', 'b')]}{ANSI.end}"
-invert = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('inverse', 'invert', 'in')]}{ANSI.end}"
-italic = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('italic', 'i')]}{ANSI.end}"
-underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('underline', 'u')]}{ANSI.end}"
+bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('bold', 'b')]}{ANSI.END}"
+invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('inverse', 'invert', 'in')]}{ANSI.END}"
+italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('italic', 'i')]}{ANSI.END}"
+underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('underline', 'u')]}{ANSI.END}"
 
-reset = f"{ANSI.char}{ANSI.start}{ANSI.codes_map['_']}{ANSI.end}"
-reset_bg = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_background', '_bg')]}{ANSI.end}"
-reset_bold = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_bold', '_b')]}{ANSI.end}"
-reset_color = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_color', '_c')]}{ANSI.end}"
-reset_italic = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_italic', '_i')]}{ANSI.end}"
-reset_invert = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_inverse', '_invert', '_in')]}{ANSI.end}"
-reset_underline = f"{ANSI.char}{ANSI.start}{ANSI.codes_map[('_underline', '_u')]}{ANSI.end}"
+reset = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_']}{ANSI.END}"
+reset_bg = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_background', '_bg')]}{ANSI.END}"
+reset_bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_bold', '_b')]}{ANSI.END}"
+reset_color = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_color', '_c')]}{ANSI.END}"
+reset_italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_italic', '_i')]}{ANSI.END}"
+reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_inverse', '_invert', '_in')]}{ANSI.END}"
+reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_underline', '_u')]}{ANSI.END}"
 
 
 def test_to_ansi():
@@ -32,7 +32,7 @@ def test_to_ansi():
 
 def test_escape_ansi():
     ansi_string = f"{bold}Hello {orange}World!{reset}"
-    escaped_string = ansi_string.replace(ANSI.char, ANSI.escaped_char)
+    escaped_string = ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
     assert FormatCodes.escape_ansi(ansi_string) == escaped_string
 
 

@@ -31,6 +31,15 @@ pip install --upgrade xulbux
 
 <br>
 
+## CLI Commands
+
+When the library is installed, the following commands are available in the console:
+| Command          | Description                                      |
+| :--------------- | :----------------------------------------------- |
+| `xulbux-help`    | shows some information about the library         |
+
+<br>
+
 ## Usage
 
 Import the full library under the alias `xx`, so its constants, classes, methods, and types are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()`:
@@ -39,12 +48,12 @@ import xulbux as xx
 ```
 So you don't have to import the full library under an alias, you can also import only certain parts of the library's contents:
 ```python
-# CONSTANTS
-from xulbux import COLOR, CHARS, ANSI
-# Classes
+# LIBRARY CONSTANTS
+from xulbux.base.consts import COLOR, CHARS, ANSI
+# Main Classes
 from xulbux import Code, Color, Console, ...
-# types
-from xulbux import rgba, hsla, hexa
+# module specific imports
+from xulbux.color import rgba, hsla, hexa
 ```
 
 <br>
@@ -71,18 +80,22 @@ from xulbux import rgba, hsla, hexa
 
 ## Example Usage
 
-This is what it could look like using this library for a simple but very nice looking color converter:
+This is what it could look like using this library for a simple but ultra good-looking color converter:
 ```python
-from xulbux import COLOR                 # CONSTANTS
-from xulbux import FormatCodes, Console  # Classes
-from xulbux import hexa                  # types
+from xulbux.base.consts import COLOR, CHARS
+from xulbux.color import hexa
+from xulbux import Console
 
 
 def main() -> None:
 
     # LET THE USER ENTER A HEXA COLOR IN ANY HEXA FORMAT
-    input_clr = FormatCodes.input(
-        "\n[b](Enter a HEXA color in any format) [dim](>) "
+    input_clr = Console.input(
+        "[b](Enter a HEXA color in any format) > ",
+        start="\n",
+        placeholder="#7075FF",
+        max_len=7,
+        allowed_chars=CHARS.HEX_DIGITS,
     )
 
     # ANNOUNCE INDEXING THE INPUT COLOR
@@ -90,7 +103,7 @@ def main() -> None:
         "INDEX",
         "Indexing the input HEXA color...",
         start="\n",
-        title_bg_color=COLOR.blue,
+        title_bg_color=COLOR.BLUE,
     )
 
     try:
@@ -109,7 +122,7 @@ def main() -> None:
     Console.log(
         "CONVERT",
         "Converting the HEXA color into different types...",
-        title_bg_color=COLOR.tangerine,
+        title_bg_color=COLOR.TANGERINE,
     )
 
     # CONVERT THE HEXA COLOR INTO THE TWO OTHER COLOR TYPES
