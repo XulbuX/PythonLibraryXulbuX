@@ -770,7 +770,7 @@ class Console:
                     raise ValidationError(message="", cursor_position=len(document.text))
 
         def bottom_toolbar() -> _pt.formatted_text.ANSI:
-            nonlocal tried_pasting, filtered_chars
+            nonlocal tried_pasting
             try:
                 if mask_char:
                     text_to_check = result_text
