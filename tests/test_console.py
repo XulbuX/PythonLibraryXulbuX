@@ -119,6 +119,14 @@ def test_console_size(mock_terminal_size):
         # LIST FLAG PROVIDED, DICT NOT PROVIDED (USES DEFAULT)
         (["script.py", "-l"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]
                                }, {"config": {"exists": False, "value": "prod.cfg"}, "log": {"exists": True, "value": True}}),
+
+        # --- 'before' / 'after' SPECIAL CASES ---
+        # 'before' SPECIAL CASE
+        (["script.py", "arg1", "arg2", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
+         {"before": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
+        # 'after' SPECIAL CASE
+        (["script.py", "-f", "file.txt", "arg1", "arg2"], {"after": "after", "file": ["-f"]},
+         {"after": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
     ]
 )
 def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):

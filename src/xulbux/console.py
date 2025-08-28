@@ -732,8 +732,8 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         placeholder: Optional[str] = None,
         mask_char: Optional[str] = None,
-        max_len: Optional[int] = None,
         min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
         allowed_chars: str = CHARS.all,  #type: ignore[assignment]
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
@@ -746,8 +746,8 @@ class Console:
         - `default_color` -⠀the default text color of the `prompt`
         - `placeholder` -⠀a placeholder text that is shown when the input is empty
         - `mask_char` -⠀if set, the input will be masked with this character
-        - `max_len` -⠀the maximum length of the input
-        - `min_len` -⠀the minimum length of the input
+        - `min_len` -⠀the minimum length of the input (required to submit)
+        - `max_len` -⠀the maximum length of the input (can't write further if reached)
         - `allowed_chars` -⠀a string of characters that are allowed to be inputted
           (default allows all characters)
         - `allow_paste` -⠀whether to allow pasting text into the input or not

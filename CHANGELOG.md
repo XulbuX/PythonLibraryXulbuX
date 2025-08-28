@@ -18,7 +18,7 @@
 * new options for the param `find_args` from the method `Console.get_args()`:
   previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it
   new, instead of flags, you can also once use the literal `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
-* changed the default `default_color` for all `Console` class input methods to `COLOR.ice`
+* changed the default `default_color` for all `Console` class input methods to `None`
 * the method `Console.restricted_input()` now returns an empty string instead of `None` if the user didn't input anything
 * fixed several small bugs for `Console.restricted_input()` regarding the ANSI formatting of the input prompt and the input text in the console
 * completely rewrote `Console.restricted_input()`, so now it's actually usable, and renamed it to just `Console.input()`
