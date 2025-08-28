@@ -10,27 +10,17 @@ from .format_codes import FormatCodes, _COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from typing import Optional, Literal, Mapping, Any, cast
-import prompt_toolkit as _prompt_toolkit
-import pyperclip as _pyperclip
+from typing import Callable, Optional, Literal, Mapping, Any, cast
+from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
+from prompt_toolkit.validation import ValidationError, Validator
+from prompt_toolkit.styles import Style
+from prompt_toolkit.keys import Keys
+import prompt_toolkit as _pt
 import keyboard as _keyboard
 import getpass as _getpass
 import shutil as _shutil
 import sys as _sys
 import os as _os
-
-
-class _RestrictedInputValidator(Validator):
-
-    def __init__(self, min_len: Optional[int] = None):
-        self.min_len = min_len
-
-    def validate(self, document):
-        text = document.text
-        if self.min_len is not None and len(text) < self.min_len:
-            raise ValidationError(message=f"Input too short (minimum {self.min_len} characters)")
 
 
 class _ConsoleWidth:
@@ -676,7 +666,7 @@ class Console:
         prompt: object = "Do you want to continue?",
         start="",
         end="",
-        default_color: Optional[Rgba | Hexa] = COLOR.ice,
+        default_color: Optional[Rgba | Hexa] = None,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
@@ -704,7 +694,7 @@ class Console:
         prompt: object = "",
         start="",
         end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.ice,
+        default_color: Optional[Rgba | Hexa] = None,
         show_keybindings=True,
         input_prefix=" ⮡ ",
         reset_ansi=True,
@@ -730,7 +720,7 @@ class Console:
         FormatCodes.print(start + str(prompt), default_color=default_color)
         if show_keybindings:
             FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
-        input_string = _prompt_toolkit.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
+        input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
         FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
         return input_string
 
@@ -738,150 +728,176 @@ class Console:
     def input(
         prompt: object = "",
         start="",
-        end="\n",
-        default_color: Optional[Rgba | Hexa] = COLOR.ice,
-        allowed_chars: str = CHARS.all,  # type: ignore[assignment]
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        end="",
+        default_color: Optional[Rgba | Hexa] = None,
+        placeholder: Optional[str] = None,
         mask_char: Optional[str] = None,
+        max_len: Optional[int] = None,
+        min_len: Optional[int] = None,
+        allowed_chars: str = CHARS.all,  #type: ignore[assignment]
+        allow_paste: bool = True,
+        validator: Optional[Callable[[str], Optional[str]]] = None,
     ) -> str:
-        """Acts like a standard Python `input()` with the advantage, that you can specify:
-        - what text characters the user is allowed to type and
-        - the minimum and/or maximum length of the users input
-        - optional mask character (hide user input, e.g. for passwords)
-        - reset the ANSI formatting codes after the user continues\n
-        ---------------------------------------------------------------------------------------
+        """Acts like a standard Python `input()` a bunch of cool extra features.\n
+        ------------------------------------------------------------------------------------
+        - `prompt` -⠀the input prompt
+        - `start` -⠀something to print before the input
+        - `end` -⠀something to print after the input (e.g. `\\n`)
+        - `default_color` -⠀the default text color of the `prompt`
+        - `placeholder` -⠀a placeholder text that is shown when the input is empty
+        - `mask_char` -⠀if set, the input will be masked with this character
+        - `max_len` -⠀the maximum length of the input
+        - `min_len` -⠀the minimum length of the input
+        - `allowed_chars` -⠀a string of characters that are allowed to be inputted
+          (default allows all characters)
+        - `allow_paste` -⠀whether to allow pasting text into the input or not
+        - `validator` -⠀a function that takes the input string and returns a string error
+          message if invalid, or nothing if valid
+        ------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        validator = _RestrictedInputValidator(min_len)
-        kb = KeyBindings()
+        result_text = ""
+        tried_pasting = False
+        filtered_chars = set()
 
-        @kb.add("c-c")
-        def _(event):
-            raise KeyboardInterrupt
+        class InputValidator(Validator):
 
-        @kb.add("escape")
-        def _(event):
-            event.app.exit(result="")
+            def validate(self, document) -> None:
+                text_to_validate = result_text if mask_char else document.text
+                if min_len and len(text_to_validate) < min_len:
+                    raise ValidationError(message="", cursor_position=len(document.text))
+                if validator and not validator(text_to_validate):
+                    raise ValidationError(message="", cursor_position=len(document.text))
 
-        # FIX CLOSURE ISSUE BY CREATING SEPARATE FUNCTIONS FOR EACH CHARACTER
-        def create_char_handler(character):
-
-            def char_handler(event):
-                buffer = event.app.current_buffer
-                if ((allowed_chars == CHARS.all or character in allowed_chars)
-                        and (max_len is None or len(buffer.text) < max_len)):
-                    buffer.insert_text(character)
-
-            return char_handler
-
-        # BIND PRINTABLE ASCII CHARACTERS
-        for i in range(32, 127):
-            char = chr(i)
-            if char not in ("\t", "\n", "\r"):
-                kb.add(char)(create_char_handler(char))
-
-        @kb.add("c-v")
-        def _(event):
+        def bottom_toolbar() -> _pt.formatted_text.ANSI:
+            nonlocal tried_pasting, filtered_chars
             try:
-                buffer = event.app.current_buffer
-                clipboard_text = _pyperclip.paste()
+                if mask_char:
+                    text_to_check = result_text
+                else:
+                    app = _pt.application.get_app()
+                    text_to_check = app.current_buffer.text
+                toolbar_msgs = []
+                if max_len and len(text_to_check) > max_len:
+                    toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
+                if validator and text_to_check and (validation_error_msg := validator(text_to_check)) not in ("", None):
+                    toolbar_msgs.append(f"[b|#000|bg:br:red] {validation_error_msg} [_bg]")
+                if filtered_chars:
+                    plural = "" if len(char_list := "".join(sorted(filtered_chars))) == 1 else "s"
+                    toolbar_msgs.append(f"[b|#000|bg:yellow]( Char{plural} '{char_list}' not allowed )")
+                    filtered_chars.clear()
+                if min_len and len(text_to_check) < min_len:
+                    toolbar_msgs.append(f"[b|#000|bg:yellow]( Need {min_len - len(text_to_check)} more chars )")
+                if tried_pasting:
+                    toolbar_msgs.append("[b|#000|bg:br:yellow]( Pasting disabled )")
+                    tried_pasting = False
+                if max_len and len(text_to_check) == max_len:
+                    toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
+                return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
+            except Exception:
+                return _pt.formatted_text.ANSI("")
+
+        def process_insert_text(text: str) -> tuple[str, set[str]]:
+            removed_chars = set()
+            if not text: return "", removed_chars
+            processed_text = "".join(c for c in text if ord(c) >= 32)
+            if allowed_chars != CHARS.all:
                 filtered_text = ""
-                for char in clipboard_text:
-                    if (allowed_chars == CHARS.all
-                            or char in allowed_chars) and (max_len is None or len(buffer.text) + len(filtered_text) < max_len):
+                for char in processed_text:
+                    if char in allowed_chars:
                         filtered_text += char
-                buffer.insert_text(filtered_text)
-            except:
+                    else:
+                        removed_chars.add(char)
+                processed_text = filtered_text
+            if max_len:
+                if (remaining_space := max_len - len(result_text)) > 0:
+                    if len(processed_text) > remaining_space:
+                        processed_text = processed_text[:remaining_space]
+                else:
+                    processed_text = ""
+            return processed_text, removed_chars
+
+        def insert_text_event(event: KeyPressEvent) -> None:
+            nonlocal result_text, filtered_chars
+            try:
+                insert_text = event.data
+                if not insert_text: return
+                buffer = event.app.current_buffer
+                cursor_pos = buffer.cursor_position
+                insert_text, filtered_chars = process_insert_text(insert_text)
+                if insert_text:
+                    result_text = result_text[:cursor_pos] + insert_text + result_text[cursor_pos:]
+                    if mask_char:
+                        buffer.insert_text(mask_char[0] * len(insert_text))
+                    else:
+                        buffer.insert_text(insert_text)
+            except Exception:
                 pass
 
-        FormatCodes.print(f"{start}{str(prompt)}[_] ", default_color=default_color, end="")
-
-        try:
-            if mask_char is not None:
-                from prompt_toolkit.application import Application
-                from prompt_toolkit.buffer import Buffer
-                from prompt_toolkit.layout.containers import Window
-                from prompt_toolkit.layout.controls import FormattedTextControl
-                from prompt_toolkit.layout.layout import Layout
-
-                buffer = Buffer(validator=validator)
-                display_text = [("", "")]
-
-                def update_display():
-                    nonlocal display_text
-                    text = buffer.text
-                    display_text = [("", mask_char * len(text) if mask_char else text)]
-
-                buffer.on_text_changed.add_handler(lambda buffer: update_display())
-                app_kb = KeyBindings()
-
-                @app_kb.add("c-c")
-                def _(event):
-                    raise KeyboardInterrupt
-
-                @app_kb.add("escape")
-                def _(event):
-                    event.app.exit(result="")
-
-                @app_kb.add("enter")
-                def _(event):
-                    if validator:
-                        try:
-                            validator.validate(buffer.document)
-                            event.app.exit(result=buffer.text)
-                        except ValidationError:
-                            pass
+        def remove_text_event(event: KeyPressEvent, is_backspace: bool = False) -> None:
+            nonlocal result_text
+            try:
+                buffer = event.app.current_buffer
+                cursor_pos = buffer.cursor_position
+                has_selection = buffer.selection_state is not None
+                if has_selection:
+                    start, end = buffer.document.selection_range()
+                    result_text = result_text[:start] + result_text[end:]
+                    buffer.cursor_position = start
+                    buffer.delete(end - start)
+                else:
+                    if is_backspace:
+                        if cursor_pos > 0:
+                            result_text = result_text[:cursor_pos - 1] + result_text[cursor_pos:]
+                            buffer.delete_before_cursor(1)
                     else:
-                        event.app.exit(result=buffer.text)
+                        if cursor_pos < len(result_text):
+                            result_text = result_text[:cursor_pos] + result_text[cursor_pos + 1:]
+                            buffer.delete(1)
+            except Exception:
+                pass
 
-                @app_kb.add("backspace")
-                def _(event):
-                    if buffer.text:
-                        buffer.delete_before_cursor(1)
-                        update_display()
+        kb = KeyBindings()
 
-                for i in range(32, 127):
-                    char = chr(i)
-                    if char not in ("\t", "\n", "\r"):
+        @kb.add(Keys.Delete)
+        def _(event: KeyPressEvent) -> None:
+            remove_text_event(event)
 
-                        def make_handler(c):
+        @kb.add(Keys.Backspace)
+        def _(event: KeyPressEvent) -> None:
+            remove_text_event(event, is_backspace=True)
 
-                            def handler(event):
-                                if (allowed_chars == CHARS.all or c in allowed_chars) and (max_len is None
-                                                                                           or len(buffer.text) < max_len):
-                                    buffer.insert_text(c)
-                                    update_display()
+        @kb.add(Keys.ControlA)
+        def _(event: KeyPressEvent) -> None:
+            buffer = event.app.current_buffer
+            buffer.cursor_position = 0
+            buffer.start_selection()
+            buffer.cursor_position = len(buffer.text)
 
-                            return handler
-
-                        app_kb.add(char)(make_handler(char))
-
-                @app_kb.add("c-v")
-                def _(event):
-                    try:
-                        clipboard_text = _pyperclip.paste()
-                        filtered_text = ""
-                        for char in clipboard_text:
-                            if (allowed_chars == CHARS.all or char
-                                    in allowed_chars) and (max_len is None or len(buffer.text) + len(filtered_text) < max_len):
-                                filtered_text += char
-                        buffer.insert_text(filtered_text)
-                        update_display()
-                    except:
-                        pass
-
-                control = FormattedTextControl(lambda: display_text)
-                layout = Layout(Window(content=control))
-                app = Application(layout=layout, key_bindings=app_kb, full_screen=False)
-
-                result = app.run()
-
+        @kb.add(Keys.BracketedPaste)
+        def _(event: KeyPressEvent) -> None:
+            if allow_paste:
+                insert_text_event(event)
             else:
-                # NO MASKING NEEDED, USE REGULAR PROMPT
-                result = _prompt_toolkit.prompt("", validator=validator, validate_while_typing=False, key_bindings=kb)
-        except (EOFError, KeyboardInterrupt):
-            result = ""
+                nonlocal tried_pasting
+                tried_pasting = True
 
-        FormatCodes.print(end, default_color=default_color, end="")
-        return result
+        @kb.add(Keys.Any)
+        def _(event: KeyPressEvent) -> None:
+            insert_text_event(event)
+
+        custom_style = Style.from_dict({'bottom-toolbar': 'noreverse'})
+        session = _pt.PromptSession(
+            message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
+            validator=InputValidator(),
+            validate_while_typing=True,
+            key_bindings=kb,
+            bottom_toolbar=bottom_toolbar,
+            placeholder=_pt.formatted_text.ANSI(FormatCodes.to_ansi(f"[i|br:black]{placeholder}[_i|_c]"))
+            if placeholder else "",
+            style=custom_style,
+        )
+        FormatCodes.print(start, end="")
+        session.prompt()
+        FormatCodes.print(end, end="")
+        return result_text
