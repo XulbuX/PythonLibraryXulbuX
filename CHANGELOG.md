@@ -14,7 +14,7 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.8.0`
+## 28.08.2025 `v1.8.0`
 * new options for the param `find_args` from the method `Console.get_args()`:
   previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it
   new, instead of flags, you can also once use the literal `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
