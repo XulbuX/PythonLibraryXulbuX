@@ -366,9 +366,12 @@ class Console:
         end: str = "\n",
         title_bg_color: Optional[Rgba | Hexa] = None,
         default_color: Optional[Rgba | Hexa] = None,
-        _console_tabsize: int = 8,
+        tab_size: int = 8,
+        title_px: int = 1,
+        title_mx: int = 2,
     ) -> None:
-        """Will print a formatted log message:
+        """Prints a nicely formatted log message.\n
+        -------------------------------------------------------------------------------------------
         - `title` -⠀the title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, etc.)
         - `prompt` -⠀the log message
         - `format_linebreaks` -⠀whether to format (indent after) the line breaks or not
@@ -376,38 +379,40 @@ class Console:
         - `end` -⠀something to print after the log is printed (e.g. `\\n`)
         - `title_bg_color` -⠀the background color of the `title`
         - `default_color` -⠀the default text color of the `prompt`
-        - `_console_tabsize` -⠀the tab size of the console (default is 8)\n
-        -----------------------------------------------------------------------------------
+        - `tab_size` -⠀the tab size used for the log (default is 8 like console tabs)
+        - `title_px` -⠀the horizontal padding (in chars) to the title (if `title_bg_color` is set)
+        - `title_mx` -⠀the horizontal margin (in chars) to the title\n
+        -------------------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
+        has_title_bg = title_bg_color is not None and Color.is_valid(title_bg_color)
         title = "" if title is None else title.strip().upper()
-        title_len, tab_len = len(title) + 4, _console_tabsize - ((len(title) + 4) % _console_tabsize)
-        if title_bg_color is not None and Color.is_valid(title_bg_color):
-            title_bg_color = Color.to_hexa(title_bg_color)
-            title_color = Color.text_color_for_on_bg(title_bg_color)
-        else:
-            title_color = "_color" if title_bg_color is None else "#000"
+        title_fg = Color.text_color_for_on_bg(
+            Color.to_hexa(title_bg_color)  # type: ignore[assignment]
+        ) if has_title_bg else "_color"
+        px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
+        tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
         if format_linebreaks:
             clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
-            prompt_lst = (String.split_count(l, Console.w - (title_len + tab_len)) for l in str(clean_prompt).splitlines())
+            prompt_lst = (
+                String.split_count(l, Console.w - (title_len + len(tab) + 2 * len(mx))) for l in str(clean_prompt).splitlines()
+            )
             prompt_lst = (
                 item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             )
-            prompt = f"\n{' ' * title_len}\t".join(
+            prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(
                 Console.__add_back_removed_parts(list(prompt_lst), cast(tuple[tuple[int, str], ...], removals))
             )
-        else:
-            prompt = str(prompt)
         if title == "":
             FormatCodes.print(
-                f'{start}  {f"[{default_color}]" if default_color else ""}{str(prompt)}[_]',
+                f'{start}  {f"[{default_color}]" if default_color else ""}{prompt}[_]',
                 default_color=default_color,
                 end=end,
             )
         else:
             FormatCodes.print(
-                f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title} [_]'
-                + f'\t{f"[{default_color}]" if default_color else ""}{prompt}[_]',
+                f"{start}{mx}[bold][{title_fg}]{f'[BG:{title_bg_color}]' if title_bg_color else ''}{px}{title}{px}[_]{mx}"
+                + f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]",
                 default_color=default_color,
                 end=end,
             )
