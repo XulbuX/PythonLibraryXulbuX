@@ -14,12 +14,13 @@
 
 # <br><b>Changelog</b><br>
 
-## ... `v1.8.1`
+## 20.08.2025 `v1.8.1`
 * renamed the param `_console_tabsize` form the method `Console.log()` to `tab_size`, and it will now just set the size for the log directly instead of specifying, what the console's tab size is
 * fixed several small bugs regarding the tabs and text wrapping inside `Console.log()`
 * added two new params to `Console.log()`:
   - <code>title_px: *int* = 1</code> the horizontal padding (*in chars*) to the title (*if* `title_bg_color` *is set*)
   - <code>title_mx: *int* = 2</code> the horizontal margin (*in chars*) to the title
+* fixed a critical bug which caused the package to not install properly and make the whole library not work
 
 ## 28.08.2025 `v1.8.0`
 * new options for the param `find_args` from the method `Console.get_args()`:
