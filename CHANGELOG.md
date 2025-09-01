@@ -15,14 +15,14 @@
 # <br><b>Changelog</b><br>
 
 ## 20.08.2025 `v1.8.1`
+* **fixed a critical bug which caused the package to not install properly and make the whole library not work**
 * renamed the param `_console_tabsize` form the method `Console.log()` to `tab_size`, and it will now just set the size for the log directly instead of specifying, what the console's tab size is
 * fixed several small bugs regarding the tabs and text wrapping inside `Console.log()`
 * added two new params to `Console.log()`:
   - <code>title_px: *int* = 1</code> the horizontal padding (*in chars*) to the title (*if* `title_bg_color` *is set*)
   - <code>title_mx: *int* = 2</code> the horizontal margin (*in chars*) to the title
-* fixed a critical bug which caused the package to not install properly and make the whole library not work
 
-## 28.08.2025 `v1.8.0`
+## 28.08.2025 `v1.8.0` **⚠️This release is broken!**
 * new options for the param `find_args` from the method `Console.get_args()`:
   previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it
   new, instead of flags, you can also once use the literal `"before"` and once `"after"`, which corresponds to all non-flagged values before or after all flagged values
@@ -138,9 +138,9 @@
 * added the params <code>start: *str* = ""</code>, <code>end: *str* = "\n"</code> and <code>default_color: *rgba* | *hexa* = DEFAULT.color["cyan"]</code> to `Console.restricted_input()` and `Console.pwd_input()`
 
 ## 22.01.2025 `v1.6.4`
-* fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`
+* **fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`**
 
-## 22.01.2025 `v1.6.3`
+## 22.01.2025 `v1.6.3` **⚠️This release is broken!**
 * fixed a small bug in `xx_format_codes`:<br>
   inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset
   now this is fixed and auto-reset-formatting works as expected
@@ -262,7 +262,7 @@
 ## 28.10.2024 `v1.5.2`
 * new parameter <code>correct_path:*bool*</code> in `Path.extend()`:
   this makes sure, that typos in the path will only be corrected if this parameter is set to `True`
-* fFixed bug in `Path.extend()`, where an empty string was taken as a valid path for the current directory `./`
+* fixed bug in `Path.extend()`, where an empty string was taken as a valid path for the current directory `./`
 * fixed color validation bug:<br>
   `Color.is_valid_rgba()`and `Color.is_valid_hsla()` would not accept an alpha channel of `None`<br>
   `Color.is_valid_rgba()` was still checking for an alpha channel from `0` to `255` instead of `0` to `1`
