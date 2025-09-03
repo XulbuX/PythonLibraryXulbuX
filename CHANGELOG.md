@@ -14,6 +14,9 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.8.2`
+* the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
+
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**
 * renamed the param `_console_tabsize` form the method `Console.log()` to `tab_size`, and it will now just set the size for the log directly instead of specifying, what the console's tab size is
