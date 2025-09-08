@@ -10,7 +10,7 @@ from .format_codes import FormatCodes, _COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from typing import Callable, Optional, Literal, Mapping, Any, cast
+from typing import Callable, Optional, Literal, Mapping, TypeVar, Any, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -729,8 +729,10 @@ class Console:
         FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
         return input_string
 
+    T = TypeVar("T")
+
     @staticmethod
-    def input[T](
+    def input(
         prompt: object = "",
         start="",
         end="",
@@ -914,7 +916,7 @@ class Console:
         if result_text in ("", None):
             if has_default: return default_val
             result_text = ""
-        
+
         if output_type == str:
             return result_text  # type: ignore[return-value]
         else:
