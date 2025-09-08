@@ -17,8 +17,8 @@
 ## ... `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
 * added two new params to `Console.input()`:
-  - <code>default_val: *Optional[T]* = None</code> the default value to return if the input is empty
-  - <code>output_type: *T* = str</code> the type (*class*) to convert the input to before returning it
+  - <code>default_val: Optional[T] = None</code> the default value to return if the input is empty
+  - <code>output_type: type[T] = *str*</code> the type (*class*) to convert the input to before returning it
 
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**
@@ -227,7 +227,7 @@
 * added methods to get the width and height of the console (*in characters and lines*):<br>
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
-  <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
+  <code>Cmd.wh() -> tuple[*int*, *int*]</code> a tuple with width and height
 * added the method <code>split_count(*string*, *count*) -> list[*str*]</code> to `xx_string`
 * added doc-strings to every method in `xx_string`
 * updated the `Cmd.restricted_input()` method:
