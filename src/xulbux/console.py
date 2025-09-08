@@ -730,7 +730,7 @@ class Console:
         return input_string
 
     @staticmethod
-    def input(
+    def input[T](
         prompt: object = "",
         start="",
         end="",
@@ -742,7 +742,9 @@ class Console:
         allowed_chars: str = CHARS.ALL,  #type: ignore[assignment]
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
-    ) -> str:
+        default_val: Optional[T] = None,
+        output_type: type[T] = str,  # type: ignore[assignment]
+    ) -> T:
         """Acts like a standard Python `input()` a bunch of cool extra features.\n
         ------------------------------------------------------------------------------------
         - `prompt` -⠀the input prompt
@@ -758,12 +760,15 @@ class Console:
         - `allow_paste` -⠀whether to allow pasting text into the input or not
         - `validator` -⠀a function that takes the input string and returns a string error
           message if invalid, or nothing if valid
+        - `default_val` -⠀the default value to return if the input is empty
+        - `output_type` -⠀the type (class) to convert the input to before returning it\n
         ------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
         result_text = ""
         tried_pasting = False
         filtered_chars = set()
+        has_default = default_val is not None
 
         class InputValidator(Validator):
 
@@ -905,4 +910,16 @@ class Console:
         FormatCodes.print(start, end="")
         session.prompt()
         FormatCodes.print(end, end="")
-        return result_text
+
+        if result_text in ("", None):
+            if has_default: return default_val
+            result_text = ""
+        
+        if output_type == str:
+            return result_text  # type: ignore[return-value]
+        else:
+            try:
+                return output_type(result_text)  # type: ignore[call-arg]
+            except (ValueError, TypeError):
+                if has_default: return default_val
+                raise

@@ -16,6 +16,9 @@
 
 ## ... `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
+* added two new params to `Console.input()`:
+  - <code>default_val: *Optional[T]* = None</code> the default value to return if the input is empty
+  - <code>output_type: *T* = str</code> the type (*class*) to convert the input to before returning it
 
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**
