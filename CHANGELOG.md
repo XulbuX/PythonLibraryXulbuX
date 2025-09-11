@@ -19,6 +19,9 @@
 * added two new params to `Console.input()`:
   - <code>default_val: Optional[T] = None</code> the default value to return if the input is empty
   - <code>output_type: type[T] = *str*</code> the type (*class*) to convert the input to before returning it
+* spaces between a format code and the auto-reset-brackets are no longer allowed, so `[red]␣(text)` will not be automatically reset and output as `␣(text)`
+* added a new class to `ProgressBar` to the `console` module
+* made small performance improvement in `FormatCodes.to_ansi()`
 
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**

@@ -190,7 +190,7 @@ _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "ansi_seq": _re.compile(ANSI.CHAR + r"(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"),
     "formatting": _rx.compile(
         Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
-        + r"(?:\s*([/\\]?)\s*"
+        + r"(?:([/\\]?)"
         + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
         + r")?"
     ),
@@ -317,6 +317,7 @@ class FormatCodes:
             ]
             if auto_reset_txt and not auto_reset_escaped:
                 reset_keys = []
+                default_color_resets = ("_bg", "default") if use_default else ("_bg", "_c")
                 for k in format_keys:
                     k_lower = k.lower()
                     k_set = set(k_lower.split(":"))
@@ -324,7 +325,7 @@ class FormatCodes:
                         if k_set & _PREFIX["BR"]:
                             for i in range(len(k)):
                                 if is_valid_color(k[i:]):
-                                    reset_keys.extend(["_bg", "default"] if use_default else ["_bg", "_c"])
+                                    reset_keys.extend(default_color_resets)
                                     break
                         else:
                             for i in range(len(k)):
@@ -334,7 +335,7 @@ class FormatCodes:
                     elif is_valid_color(k) or any(
                             k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon):])
                             for prefix in _PREFIX["BR"]):
-                        reset_keys.append("default" if use_default else "_c")
+                        reset_keys.append(default_color_resets[1])
                     else:
                         reset_keys.append(f"_{k}")
                 ansi_resets = [
