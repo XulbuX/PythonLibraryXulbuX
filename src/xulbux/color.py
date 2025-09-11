@@ -92,9 +92,13 @@ class rgba:
 
     def __init__(self, r: int, g: int, b: int, a: Optional[float] = None, _validate: bool = True):
         self.r: int
+        """The red channel (`0`–`255`)"""
         self.g: int
+        """The green channel (`0`–`255`)"""
         self.b: int
+        """The blue channel (`0`–`255`)"""
         self.a: Optional[float]
+        """The alpha channel (`0.0`–`1.0`) or `None` if not set"""
         if not _validate:
             self.r, self.g, self.b, self.a = r, g, b, a
             return
@@ -291,9 +295,13 @@ class hsla:
 
     def __init__(self, h: int, s: int, l: int, a: Optional[float] = None, _validate: bool = True):
         self.h: int
+        """The hue channel (`0`–`360`)"""
         self.s: int
+        """The saturation channel (`0`–`100`)"""
         self.l: int
+        """The lightness channel (`0`–`100`)"""
         self.a: Optional[float]
+        """The alpha channel (`0.0`–`1.0`) or `None` if not set"""
         if not _validate:
             self.h, self.s, self.l, self.a = h, s, l, a
             return
@@ -496,9 +504,13 @@ class hexa:
         _a: Optional[float] = None,
     ):
         self.r: int
+        """The red channel (`0`–`255`)"""
         self.g: int
+        """The green channel (`0`–`255`)"""
         self.b: int
+        """The blue channel (`0`–`255`)"""
         self.a: Optional[float]
+        """The alpha channel (`0.0`–`1.0`) or `None` if not set"""
         if all(x is not None for x in (_r, _g, _b)):
             self.r, self.g, self.b, self.a = cast(int, _r), cast(int, _g), cast(int, _b), _a
             return

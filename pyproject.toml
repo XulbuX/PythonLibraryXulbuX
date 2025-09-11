@@ -163,5 +163,7 @@ testpaths = [
   "tests/test_format_codes.py",
   "tests/test_json.py",
   "tests/test_path.py",
+  "tests/test_regex.py",
   "tests/test_string.py",
+  "tests/test_system.py",
 ]

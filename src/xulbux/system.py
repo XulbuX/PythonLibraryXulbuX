@@ -12,7 +12,7 @@ class _IsElevated:
     def __get__(self, obj, owner=None):
         try:
             if _os.name == "nt":
-                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
+                return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[attr-defined]
             elif _os.name == "posix":
                 return _os.geteuid() == 0  # type: ignore[attr-defined]
         except Exception:

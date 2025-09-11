@@ -22,6 +22,9 @@
 * spaces between a format code and the auto-reset-brackets are no longer allowed, so `[red]␣(text)` will not be automatically reset and output as `␣(text)`
 * added a new class to `ProgressBar` to the `console` module
 * made small performance improvement in `FormatCodes.to_ansi()`
+* added missing docstrings to several public class variables
+* added the missing tests for methods in the `console` module
+* added test for the last two modules that didn't have test until now: `regex` and `system`
 
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**

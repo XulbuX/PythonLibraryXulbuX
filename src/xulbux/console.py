@@ -78,7 +78,9 @@ class ArgResult:
 
     def __init__(self, exists: bool, value: Any | list[Any]):
         self.exists: bool = exists
+        """Whether the argument was found or not."""
         self.value: Any = value
+        """The value given with the found argument."""
 
     def __bool__(self):
         return self.exists
@@ -969,28 +971,81 @@ class ProgressBar:
     ):
         self.active: bool = False
         """Whether the progress bar is currently active (intercepting stdout) or not."""
-        self.min_width: int = max(1, min_width)
+        self.min_width: int
         """The min width of the progress bar in chars."""
-        self.max_width: int = max(self.min_width, max_width)
+        self.max_width: int
         """The max width of the progress bar in chars."""
-        self.bar_format: str = bar_format
+        self.bar_format: str
         """The format string used to render the progress bar."""
-        self.limited_bar_format: str = limited_bar_format
+        self.limited_bar_format: str
         """The simplified format string used when the console width is too small."""
-        self.chars: tuple[str, ...] = chars
+        self.chars: tuple[str, ...]
         """A tuple of characters ordered from full to empty progress."""
+
+        self.set_width(min_width, max_width)
+        self.set_bar_format(bar_format, limited_bar_format)
+        self.set_chars(chars)
 
         self._buffer: list[str] = []
         self._original_stdout: Optional[TextIO] = None
         self._current_progress_str: str = ""
         self._last_line_len: int = 0
 
+    def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
+        """Set the width of the progress bar.\n
+        --------------------------------------------------------------
+        - `min_width` -⠀the min width of the progress bar in chars
+        - `max_width` -⠀the max width of the progress bar in chars"""
+        if min_width is not None:
+            if min_width < 1:
+                raise ValueError("Minimum width must be at least 1.")
+            self.min_width = max(1, min_width)
+        if max_width is not None:
+            if max_width < 1:
+                raise ValueError("Maximum width must be at least 1.")
+            self.max_width = max(self.min_width, max_width)
+
+    def set_bar_format(self, bar_format: Optional[str] = None, limited_bar_format: Optional[str] = None) -> None:
+        """Set the format string used to render the progress bar.\n
+        --------------------------------------------------------------------------------------------------
+        - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
+          * `{label}` `{l}`
+          * `{bar}` `{b}`
+          * `{current}` `{c}`
+          * `{total}` `{t}`
+          * `{percentage}` `{percent}` `{p}`
+        - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+        --------------------------------------------------------------------------------------------------
+        The bar format (also limited) can additionally be formatted with special formatting codes. For
+        more detailed information about formatting codes, see the `format_codes` module documentation."""
+        if bar_format is not None:
+            if not _COMPILED["bar"].search(bar_format):
+                raise ValueError("'bar_format' must contain the '{bar}' or '{b}' placeholder.")
+            self.bar_format = bar_format
+        if limited_bar_format is not None:
+            if not _COMPILED["bar"].search(limited_bar_format):
+                raise ValueError("'limited_bar_format' must contain the '{bar}' or '{b}' placeholder.")
+            self.limited_bar_format = limited_bar_format
+
+    def set_chars(self, chars: tuple[str, ...]) -> None:
+        """Set the characters used to render the progress bar.\n
+        --------------------------------------------------------------------------
+        - `chars` -⠀a tuple of characters ordered from full to empty progress<br>
+          The first character represents completely filled sections, intermediate
+          characters create smooth transitions, and the last character represents
+          empty sections. If None, uses default Unicode block characters."""
+        if len(chars) < 2:
+            raise ValueError("'chars' must contain at least two characters (full and empty).")
+        if not all(len(c) == 1 for c in chars if isinstance(c, str)):
+            raise ValueError("All 'chars' items must be single-character strings.")
+        self.chars = chars
+
     def show_progress(self, current: int, total: int, label: Optional[str] = None) -> None:
         """Show or update the progress bar.\n
-        -----------------------------------------------------------------------------------------
-        - `current` -⠀the current progress value (below 0 or greater than `total` hides the bar)
-        - `total` -⠀the total value representing 100% progress (must be greater than 0)
-        - `label` -⠀an optional label to display alongside the progress bar"""
+        -------------------------------------------------------------------------------------------
+        - `current` -⠀the current progress value (below `0` or greater than `total` hides the bar)
+        - `total` -⠀the total value representing 100% progress (must be greater than `0`)
+        - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder"""
         if total <= 0:
             raise ValueError("Total must be greater than 0.")
 
@@ -1011,38 +1066,31 @@ class ProgressBar:
             self._clear_progress_line()
             self._stop_intercepting()
 
-    def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
-        """Set the width of the progress bar.\n
-        --------------------------------------------------------------
-        - `min_width` -⠀the min width of the progress bar in chars
-        - `max_width` -⠀the max width of the progress bar in chars"""
-        self.min_width = self.min_width if min_width is None else max(1, min_width)
-        self.max_width = self.max_width if max_width is None else max(self.min_width, max_width)
+    @contextmanager
+    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[Callable[[int], None], None, None]:
+        """Context manager for automatic cleanup. Returns a function to update progress.\n
+        --------------------------------------------------------------------------------------
+        - `total` -⠀the total value representing 100% progress (must be greater than `0`)
+        - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder
+        --------------------------------------------------------------------------------------
+        Example usage:
+        ```python
+        with ProgressBar().progress_context(500, "Loading") as update_progress:
+            for i in range(500):
+                # Do some work...
+                update_progress(i)  # Update progress
+        ```"""
+        try:
 
-    def set_bar_format(self, bar_format: Optional[str] = None, limited_bar_format: Optional[str] = None) -> None:
-        """Set the format string used to render the progress bar.\n
-        --------------------------------------------------------------------------------------------------
-        - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
-          * `{label}` `{l}`
-          * `{bar}` `{b}`
-          * `{current}` `{c}`
-          * `{total}` `{t}`
-          * `{percentage}` `{percent}` `{p}`
-        - `limited_bar_format` -⠀a simplified format string used when the console width is too small
-        --------------------------------------------------------------------------------------------------
-        The bar format (also limited) can additionally be formatted with special formatting codes. For
-        more detailed information about formatting codes, see the `format_codes` module documentation."""
-        self.bar_format = "{l} |{b}| [b]({c})/{t} [dim](([i]({p}%)))" if bar_format is None else bar_format
-        self.limited_bar_format = "|{b}|" if limited_bar_format is None else limited_bar_format
+            def update_progress(current: int) -> None:
+                self.show_progress(current, total, label)
 
-    def set_chars(self, chars: Optional[tuple[str, ...]] = None) -> None:
-        """Set the characters used to render the progress bar.\n
-        --------------------------------------------------------------------------
-        - `chars` -⠀a tuple of characters ordered from full to empty progress<br>
-          The first character represents completely filled sections, intermediate
-          characters create smooth transitions, and the last character represents
-          empty sections. If None, uses default Unicode block characters."""
-        self.chars = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " ") if chars is None else chars
+            yield update_progress
+        except Exception:
+            self._emergency_cleanup()
+            raise
+        finally:
+            self.hide_progress()
 
     def _start_intercepting(self) -> None:
         self.active = True
@@ -1131,32 +1179,6 @@ class ProgressBar:
         if self._current_progress_str and self._original_stdout:
             self._original_stdout.write(f"{self._current_progress_str}")
             self._original_stdout.flush()
-
-    @contextmanager
-    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[Callable[[int], None], None, None]:
-        """Context manager for automatic cleanup. Returns a function to update progress.\n
-        -----------------------------------------------------------------------------------
-        - `total` -⠀the total value representing 100% progress
-        - `label` -⠀an optional label to display alongside the progress bar
-        -----------------------------------------------------------------------------------
-        Example usage:
-        ```python
-        with ProgressBar().progress_context(500, "Loading") as update_progress:
-            for i in range(501):
-                # Do some work...
-                update_progress(i)  # Update progress
-        ```"""
-        try:
-
-            def update_progress(current: int) -> None:
-                self.show_progress(current, total, label)
-
-            yield update_progress
-        except Exception:
-            self._emergency_cleanup()
-            raise
-        finally:
-            self.hide_progress()
 
 
 class _InterceptedOutput(_io.StringIO):

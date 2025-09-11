@@ -1,11 +1,12 @@
-from xulbux.console import Console, Args, ArgResult
+from xulbux.console import Console, Args, ArgResult, ProgressBar
 from xulbux import console
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, call
 from collections import namedtuple
 import builtins
 import pytest
 import sys
+import io
 
 
 @pytest.fixture
@@ -34,6 +35,9 @@ def mock_prompt_toolkit(monkeypatch):
     mock = MagicMock(return_value="mocked multiline input")
     monkeypatch.setattr(console._pt, "prompt", mock)
     return mock
+
+
+################################################## CONSOLE TESTS ##################################################
 
 
 def test_console_user():
@@ -261,3 +265,386 @@ def test_multiline_input_no_bindings(mock_prompt_toolkit, mock_formatcodes_print
     assert reset_call.kwargs == {"end": "DONE"}
 
     mock_prompt_toolkit.assert_called_once()
+
+
+def test_pause_exit_pause_only(monkeypatch):
+    mock_keyboard = MagicMock()
+    mock_formatcodes_print = MagicMock()
+    monkeypatch.setattr(console._keyboard, "read_key", mock_keyboard)
+    monkeypatch.setattr(console.FormatCodes, "print", mock_formatcodes_print)
+
+    Console.pause_exit(pause=True, exit=False, prompt="Press any key...")
+
+    mock_formatcodes_print.assert_called_once_with("Press any key...", end="", flush=True)
+    mock_keyboard.assert_called_once_with(suppress=True)
+
+
+def test_pause_exit_with_exit(monkeypatch):
+    mock_keyboard = MagicMock()
+    mock_formatcodes_print = MagicMock()
+    mock_sys_exit = MagicMock()
+    monkeypatch.setattr(console._keyboard, "read_key", mock_keyboard)
+    monkeypatch.setattr(console.FormatCodes, "print", mock_formatcodes_print)
+    monkeypatch.setattr(console._sys, "exit", mock_sys_exit)
+
+    Console.pause_exit(pause=True, exit=True, prompt="Exiting...", exit_code=1)
+
+    mock_formatcodes_print.assert_called_once_with("Exiting...", end="", flush=True)
+    mock_keyboard.assert_called_once_with(suppress=True)
+    mock_sys_exit.assert_called_once_with(1)
+
+
+def test_pause_exit_reset_ansi(monkeypatch):
+    mock_keyboard = MagicMock()
+    mock_formatcodes_print = MagicMock()
+    monkeypatch.setattr(console._keyboard, "read_key", mock_keyboard)
+    monkeypatch.setattr(console.FormatCodes, "print", mock_formatcodes_print)
+
+    Console.pause_exit(pause=True, exit=False, reset_ansi=True)
+
+    assert mock_formatcodes_print.call_count == 2
+    assert mock_formatcodes_print.call_args_list[1] == call("[_]", end="")
+
+
+def test_cls(monkeypatch):
+    mock_shutil = MagicMock()
+    mock_os_system = MagicMock()
+    mock_print = MagicMock()
+    monkeypatch.setattr(console._shutil, "which", mock_shutil)
+    monkeypatch.setattr(console._os, "system", mock_os_system)
+    monkeypatch.setattr(builtins, "print", mock_print)
+
+    mock_shutil.side_effect = lambda cmd: cmd == "cls"
+    Console.cls()
+    mock_os_system.assert_called_with("cls")
+    mock_print.assert_called_with("\033[0m", end="", flush=True)
+
+    mock_os_system.reset_mock()
+    mock_print.reset_mock()
+
+    mock_shutil.side_effect = lambda cmd: cmd == "clear"
+    Console.cls()
+    mock_os_system.assert_called_with("clear")
+    mock_print.assert_called_with("\033[0m", end="", flush=True)
+
+
+def test_log_basic(mock_formatcodes_print):
+    Console.log("INFO", "Test message")
+
+    mock_formatcodes_print.assert_called_once()
+    args, kwargs = mock_formatcodes_print.call_args
+    assert "INFO" in args[0]
+    assert "Test message" in args[0]
+    assert kwargs["end"] == "\n"
+
+
+def test_log_no_title(mock_formatcodes_print):
+    Console.log(title=None, prompt="Just a message")
+
+    mock_formatcodes_print.assert_called_once()
+    args, kwargs = mock_formatcodes_print.call_args
+    assert "Just a message" in args[0]
+
+
+def test_debug_active(mock_formatcodes_print):
+    Console.debug("Debug message", active=True)
+
+    assert mock_formatcodes_print.call_count == 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "DEBUG" in args[0]
+    assert "Debug message" in args[0]
+
+
+def test_debug_inactive(mock_formatcodes_print):
+    Console.debug("Debug message", active=False)
+
+    mock_formatcodes_print.assert_not_called()
+
+
+def test_info(mock_formatcodes_print):
+    Console.info("Info message")
+
+    assert mock_formatcodes_print.call_count == 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "INFO" in args[0]
+    assert "Info message" in args[0]
+
+
+def test_done(mock_formatcodes_print):
+    Console.done("Task completed")
+
+    assert mock_formatcodes_print.call_count == 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "DONE" in args[0]
+    assert "Task completed" in args[0]
+
+
+def test_warn(mock_formatcodes_print):
+    Console.warn("Warning message")
+
+    assert mock_formatcodes_print.call_count == 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "WARN" in args[0]
+    assert "Warning message" in args[0]
+
+
+def test_fail(mock_formatcodes_print, monkeypatch):
+    mock_sys_exit = MagicMock()
+    monkeypatch.setattr(console._sys, "exit", mock_sys_exit)
+
+    Console.fail("Error occurred")
+
+    assert mock_formatcodes_print.call_count >= 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "FAIL" in args[0]
+    assert "Error occurred" in args[0]
+
+    mock_sys_exit.assert_called_once_with(0)
+
+
+def test_exit_method(mock_formatcodes_print, monkeypatch):
+    mock_sys_exit = MagicMock()
+    monkeypatch.setattr(console._sys, "exit", mock_sys_exit)
+
+    Console.exit("Program ending")
+
+    assert mock_formatcodes_print.call_count >= 2
+    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    assert "EXIT" in args[0]
+    assert "Program ending" in args[0]
+
+    mock_sys_exit.assert_called_once_with(0)
+
+
+def test_log_box_filled(mock_formatcodes_print):
+    Console.log_box_filled("Line 1", "Line 2", box_bg_color="green")
+
+    mock_formatcodes_print.assert_called_once()
+    args, kwargs = mock_formatcodes_print.call_args
+    assert "Line 1" in args[0]
+    assert "Line 2" in args[0]
+
+
+def test_log_box_bordered(mock_formatcodes_print):
+    Console.log_box_bordered("Content line", border_type="rounded")
+
+    mock_formatcodes_print.assert_called_once()
+    args, kwargs = mock_formatcodes_print.call_args
+    assert "Content line" in args[0]
+
+
+def test_confirm_yes(mock_builtin_input):
+    mock_builtin_input.return_value = "y"
+    result = Console.confirm("Continue?")
+    assert result is True
+
+
+def test_confirm_no(mock_builtin_input):
+    mock_builtin_input.return_value = "n"
+    result = Console.confirm("Continue?")
+    assert result is False
+
+
+def test_confirm_default_yes(mock_builtin_input):
+    mock_builtin_input.return_value = ""
+    result = Console.confirm("Continue?", default_is_yes=True)
+    assert result is True
+
+
+def test_confirm_default_no(mock_builtin_input):
+    mock_builtin_input.return_value = ""
+    result = Console.confirm("Continue?", default_is_yes=False)
+    assert result is False
+
+
+################################################## PROGRESSBAR TESTS ##################################################
+
+
+def test_progressbar_init():
+    pb = ProgressBar(min_width=5, max_width=30)
+    assert pb.min_width == 5
+    assert pb.max_width == 30
+    assert pb.active is False
+    assert len(pb.chars) == 9
+
+
+def test_progressbar_set_width():
+    pb = ProgressBar()
+    pb.set_width(min_width=15, max_width=60)
+    assert pb.min_width == 15
+    assert pb.max_width == 60
+
+
+def test_progressbar_set_width_invalid():
+    pb = ProgressBar()
+    with pytest.raises(TypeError):
+        pb.set_width(min_width="not_int")  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        pb.set_width(min_width=0)
+    with pytest.raises(TypeError):
+        pb.set_width(max_width="not_int")  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        pb.set_width(max_width=0)
+
+
+def test_progressbar_set_bar_format():
+    pb = ProgressBar()
+    pb.set_bar_format(bar_format="{l} [{b}] {p}%", limited_bar_format="[{b}]")
+    assert pb.bar_format == "{l} [{b}] {p}%"
+    assert pb.limited_bar_format == "[{b}]"
+
+
+def test_progressbar_set_bar_format_invalid():
+    pb = ProgressBar()
+    with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
+        pb.set_bar_format(bar_format="Progress: {p}%")
+    with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
+        pb.set_bar_format(limited_bar_format="Progress: {p}%")
+
+
+def test_progressbar_set_chars():
+    pb = ProgressBar()
+    custom_chars = ("█", "▓", "▒", "░", " ")
+    pb.set_chars(custom_chars)
+    assert pb.chars == custom_chars
+
+
+def test_progressbar_set_chars_invalid():
+    pb = ProgressBar()
+    with pytest.raises(ValueError, match="must contain at least two characters"):
+        pb.set_chars(("█", ))
+    with pytest.raises(ValueError, match="must be single-character strings"):
+        pb.set_chars(("█", "▓▓", " "))
+
+
+def test_progressbar_show_progress_invalid_total():
+    pb = ProgressBar()
+    with pytest.raises(ValueError, match="Total must be greater than 0"):
+        pb.show_progress(10, 0)
+    with pytest.raises(ValueError, match="Total must be greater than 0"):
+        pb.show_progress(10, -5)
+
+
+@patch('sys.stdout', new_callable=io.StringIO)
+def test_progressbar_show_progress(mock_stdout):
+    pb = ProgressBar()
+    with patch.object(pb, '_original_stdout', mock_stdout):
+        pb._original_stdout = mock_stdout
+        pb.active = True
+        pb._draw_progress_bar(50, 100, "Loading")
+    output = mock_stdout.getvalue()
+    assert len(output) > 0
+
+
+def test_progressbar_hide_progress():
+    pb = ProgressBar()
+    pb.active = True
+    pb._original_stdout = MagicMock()
+    pb.hide_progress()
+    assert pb.active is False
+    assert pb._original_stdout is None
+
+
+def test_progressbar_progress_context():
+    pb = ProgressBar()
+    with patch.object(pb, 'show_progress') as mock_show, patch.object(pb, 'hide_progress') as mock_hide:
+        with pb.progress_context(100, "Testing") as update_progress:
+            update_progress(25)
+            update_progress(50)
+        assert mock_show.call_count == 2
+        mock_show.assert_any_call(25, 100, "Testing")
+        mock_show.assert_any_call(50, 100, "Testing")
+        mock_hide.assert_called_once()
+
+
+def test_progressbar_progress_context_exception():
+    pb = ProgressBar()
+    with (patch.object(pb, 'show_progress') as mock_show, patch.object(pb, 'hide_progress') as
+          mock_hide, patch.object(pb, '_emergency_cleanup') as mock_cleanup):
+        with pytest.raises(ValueError):
+            with pb.progress_context(100, "Testing") as update_progress:
+                update_progress(25)
+                raise ValueError("Test exception")
+        mock_cleanup.assert_called_once()
+        mock_hide.assert_called_once()
+
+
+def test_progressbar_create_bar():
+    pb = ProgressBar()
+
+    bar = pb._create_bar(50, 100, 10)
+    assert len(bar) == 10
+    assert bar[0] == pb.chars[0]
+    assert bar[-1] == pb.chars[-1]
+
+    bar = pb._create_bar(100, 100, 10)
+    assert len(bar) == 10
+    assert all(c == pb.chars[0] for c in bar)
+
+    bar = pb._create_bar(0, 100, 10)
+    assert len(bar) == 10
+    assert all(c == pb.chars[-1] for c in bar)
+
+
+def test_progressbar_intercepted_output():
+    pb = ProgressBar()
+    intercepted = console._InterceptedOutput(pb)
+    result = intercepted.write("test content")
+    assert result == len("test content")
+    assert "test content" in pb._buffer
+    intercepted.flush()
+
+
+def test_progressbar_emergency_cleanup():
+    pb = ProgressBar()
+    pb.active = True
+    original_stdout = MagicMock()
+    pb._original_stdout = original_stdout
+    pb._emergency_cleanup()
+    assert pb.active is False
+
+
+def test_progressbar_get_formatted_info_and_bar_width(mock_terminal_size):
+    pb = ProgressBar()
+    formatted, bar_width = pb._get_formatted_info_and_bar_width("{l} |{b}| {c}/{t} ({p}%)", 50, 100, 50.0, "Loading")
+    assert "Loading" in formatted
+    assert "50" in formatted
+    assert "100" in formatted
+    assert "50.0" in formatted
+    assert isinstance(bar_width, int)
+    assert bar_width > 0
+
+
+def test_progressbar_start_stop_intercepting():
+    pb = ProgressBar()
+    original_stdout = sys.stdout
+
+    pb._start_intercepting()
+    assert pb.active is True
+    assert pb._original_stdout == original_stdout
+    assert isinstance(sys.stdout, console._InterceptedOutput)
+
+    pb._stop_intercepting()
+    assert pb.active is False
+    assert pb._original_stdout is None
+    assert sys.stdout == original_stdout
+
+
+def test_progressbar_clear_progress_line():
+    pb = ProgressBar()
+    mock_stdout = MagicMock()
+    pb._original_stdout = mock_stdout
+    pb._last_line_len = 20
+    pb._clear_progress_line()
+    mock_stdout.write.assert_called_once()
+    mock_stdout.flush.assert_called_once()
+
+
+def test_progressbar_redraw_progress_bar():
+    pb = ProgressBar()
+    mock_stdout = MagicMock()
+    pb._original_stdout = mock_stdout
+    pb._current_progress_str = "Loading |████████████| 50%"
+    pb._redraw_progress_bar()
+    mock_stdout.write.assert_called_once_with("Loading |████████████| 50%")
+    mock_stdout.flush.assert_called_once()
