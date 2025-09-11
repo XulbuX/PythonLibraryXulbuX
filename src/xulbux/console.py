@@ -1141,10 +1141,10 @@ class ProgressBar:
         -----------------------------------------------------------------------------------
         Example usage:
         ```python
-        with pb2.progress_context(500, "Loading") as update_progress:
-            for i in range(500):
+        with ProgressBar().progress_context(500, "Loading") as update_progress:
+            for i in range(501):
                 # Do some work...
-                update_progress(i + 1)  # Update progress
+                update_progress(i)  # Update progress
         ```"""
         try:
 
