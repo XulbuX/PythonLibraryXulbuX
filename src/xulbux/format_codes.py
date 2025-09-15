@@ -166,6 +166,7 @@ from typing import Optional, cast
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
+import os as _os
 import re as _re
 
 
@@ -419,11 +420,16 @@ class FormatCodes:
         global _CONSOLE_ANSI_CONFIGURED
         if not _CONSOLE_ANSI_CONFIGURED:
             _sys.stdout.flush()
-            kernel32 = _ctypes.windll.kernel32
-            h = kernel32.GetStdHandle(-11)
-            mode = _ctypes.c_ulong()
-            kernel32.GetConsoleMode(h, _ctypes.byref(mode))
-            kernel32.SetConsoleMode(h, mode.value | 0x0004)
+            if _os.name == "nt":
+                try:
+                    # ENABLE VT100 MODE ON WINDOWS TO BE ABLE TO USE ANSI CODES
+                    kernel32 = _ctypes.windll.kernel32
+                    h = kernel32.GetStdHandle(-11)
+                    mode = _ctypes.c_ulong()
+                    kernel32.GetConsoleMode(h, _ctypes.byref(mode))
+                    kernel32.SetConsoleMode(h, mode.value | 0x0004)
+                except Exception:
+                    pass
             _CONSOLE_ANSI_CONFIGURED = True
 
     @staticmethod

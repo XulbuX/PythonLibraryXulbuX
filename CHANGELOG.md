@@ -17,6 +17,7 @@
 ## ... `v1.8.3`
 * adjusted the look of the prompts and inputs of the `System.check_libs()` method
 * adjusted error messages throughout the whole library to all be structured about the same
+* fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems
 
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
