@@ -36,8 +36,10 @@ def test_check_libs_nonexistent_module():
 @patch('builtins.input', return_value='n')  # Decline installation
 def test_check_libs_decline_install(mock_input, mock_subprocess):
     """Test check_libs when user declines installation"""
-    with pytest.raises(ImportError, match="Missing required libraries"):
-        System.check_libs(["nonexistent_module_12345"], install_missing=True, confirm_install=True)
+    result = System.check_libs(["nonexistent_module_12345"], install_missing=True)
+    assert isinstance(result, list)
+    assert "nonexistent_module_12345" in result
+    mock_subprocess.assert_not_called()
 
 
 @pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test")

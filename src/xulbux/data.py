@@ -24,11 +24,14 @@ class Data:
             except UnicodeDecodeError:
                 pass
             return {key: _base64.b64encode(data).decode("utf-8"), "encoding": "base64"}
-        raise TypeError("Unsupported data type")
+        raise TypeError(f"Unsupported data type '{type(data)}'")
 
     @staticmethod
     def deserialize_bytes(obj: dict[str, str]) -> bytes | bytearray:
-        """Converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type."""
+        """Tries to converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type.\n
+        --------------------------------------------------------------------------------------------------------
+        If the serialized object was created with `Data.serialize_bytes()`, it will work.
+        If it fails to decode the data, it will raise a `ValueError`."""
         for key in ("bytes", "bytearray"):
             if key in obj and "encoding" in obj:
                 if obj["encoding"] == "utf-8":
@@ -36,9 +39,9 @@ class Data:
                 elif obj["encoding"] == "base64":
                     data = _base64.b64decode(obj[key].encode("utf-8"))
                 else:
-                    raise ValueError("Unknown encoding method")
+                    raise ValueError(f"Unknown encoding method '{obj['encoding']}'")
                 return bytearray(data) if key == "bytearray" else data
-        raise ValueError("Invalid serialized data")
+        raise ValueError(f"Invalid serialized data: {obj}")
 
     @staticmethod
     def chars_count(data: DataStructure) -> int:
@@ -387,7 +390,7 @@ class Data:
 
         valid_entries = [(path_id, new_val) for path_id, new_val in update_values.items()]
         if not valid_entries:
-            raise ValueError(f"No valid update_values found in dictionary: {update_values}")
+            raise ValueError(f"No valid 'update_values' found in dictionary: {update_values}")
         for path_id, new_val in valid_entries:
             path = Data.__sep_path_id(path_id)
             data = update_nested(data, path, new_val)
@@ -581,7 +584,7 @@ class Data:
     @staticmethod
     def __sep_path_id(path_id: str) -> list[int]:
         if path_id.count(">") != 1:
-            raise ValueError(f"Invalid path ID: {path_id}")
+            raise ValueError(f"Invalid path ID '{path_id}'")
         id_part_len = int(path_id.split(">")[0])
         path_ids_str = path_id.split(">")[1]
         return [int(path_ids_str[i:i + id_part_len]) for i in range(0, len(path_ids_str), id_part_len)]

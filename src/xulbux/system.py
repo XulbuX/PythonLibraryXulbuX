@@ -1,3 +1,6 @@
+from .format_codes import FormatCodes
+from .console import Console
+
 from typing import Optional
 import subprocess as _subprocess
 import platform as _platform
@@ -68,10 +71,14 @@ class System:
 
     @staticmethod
     def check_libs(lib_names: list[str], install_missing: bool = False, confirm_install: bool = True) -> Optional[list[str]]:
-        """Checks if the given list of libraries are installed. If not:
-        - If `install_missing` is false, the missing libraries will be returned as a list.
-        - If `install_missing` is true, the missing libraries will be installed.
-        - If `confirm_install` is true, the user will first be asked if they want to install the missing libraries."""
+        """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
+        ------------------------------------------------------------------------------------------------------------
+        - `lib_names` -⠀a list of library names to check
+        - `install_missing` -⠀whether to directly missing libraries will be installed automatically using pip
+        - `confirm_install` -⠀whether the user will be asked for confirmation before installing missing libraries\n
+        ------------------------------------------------------------------------------------------------------------
+        If some libraries are missing or they could not be installed, their names will be returned as a list.
+        If all libraries are installed (or were installed successfully), `None` will be returned."""
         missing = []
         for lib in lib_names:
             try:
@@ -83,14 +90,18 @@ class System:
         elif not install_missing:
             return missing
         if confirm_install:
-            print("The following required libraries are missing:")
+            FormatCodes.print("[b](The following required libraries are missing:)")
             for lib in missing:
-                print(f"- {lib}")
-            if input("Do you want to install them now (Y/n):  ").strip().lower() not in ("", "y", "yes"):
-                raise ImportError("Missing required libraries.")
+                FormatCodes.print(f" [dim](•) [i]{lib}[_i]", end="\n\n")
+            if not Console.confirm("Do you want to install them now?"):
+                return missing
         try:
-            _subprocess.check_call([_sys.executable, "-m", "pip", "install"] + missing)
-            return None
+            for lib in missing:
+                _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
+                missing.remove(lib)
+            if len(missing) == 0:
+                return None
+            return missing
         except _subprocess.CalledProcessError:
             return missing
 

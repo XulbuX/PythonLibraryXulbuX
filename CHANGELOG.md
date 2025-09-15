@@ -14,6 +14,10 @@
 
 # <br><b>Changelog</b><br>
 
+## ... `v1.8.3`
+* adjusted the look of the prompts and inputs of the `System.check_libs()` method
+* adjusted error messages throughout the whole library to all be structured about the same
+
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
 * added two new params to `Console.input()`:

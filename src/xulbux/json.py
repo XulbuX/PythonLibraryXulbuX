@@ -134,7 +134,7 @@ class Json:
                             current[idx] = [] if next_key.isdigit() else {}
                         current = current[idx]
                     else:
-                        raise TypeError(f"Cannot navigate through {type(current).__name__}")
+                        raise TypeError(f"Cannot navigate through '{type(current).__name__}'")
             return data_obj
 
         update = {}

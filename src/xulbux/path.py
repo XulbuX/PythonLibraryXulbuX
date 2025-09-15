@@ -46,7 +46,7 @@ class Path:
         raise_error: bool = False,
         use_closest_match: bool = False,
     ) -> Optional[str]:
-        """Tries to locate and extend a relative path to an absolute path.\n
+        """Tries to resolve and extend a relative path to an absolute path.\n
         --------------------------------------------------------------------------------
         If the `rel_path` couldn't be located in predefined directories, it will be
         searched in the `search_in` directory/s. If the `rel_path` is still not found,
