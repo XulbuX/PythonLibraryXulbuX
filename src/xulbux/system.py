@@ -70,11 +70,21 @@ class System:
             raise NotImplementedError(f"Restart not implemented for `{system}`")
 
     @staticmethod
-    def check_libs(lib_names: list[str], install_missing: bool = False, confirm_install: bool = True) -> Optional[list[str]]:
+    def check_libs(
+        lib_names: list[str],
+        install_missing: bool = False,
+        missing_libs_msgs: tuple[str, str] = (
+            "The following required libraries are missing:",
+            "Do you want to install them now?",
+        ),
+        confirm_install: bool = True,
+    ) -> Optional[list[str]]:
         """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
         ------------------------------------------------------------------------------------------------------------
         - `lib_names` -⠀a list of library names to check
         - `install_missing` -⠀whether to directly missing libraries will be installed automatically using pip
+        - `missing_libs_msgs` -⠀two messages: the first one is displayed when missing libraries are found,
+          the second one is the confirmation message before installing missing libraries
         - `confirm_install` -⠀whether the user will be asked for confirmation before installing missing libraries\n
         ------------------------------------------------------------------------------------------------------------
         If some libraries are missing or they could not be installed, their names will be returned as a list.
@@ -90,15 +100,19 @@ class System:
         elif not install_missing:
             return missing
         if confirm_install:
-            FormatCodes.print("[b](The following required libraries are missing:)")
+            FormatCodes.print(f"[b]({missing_libs_msgs[0]})")
             for lib in missing:
-                FormatCodes.print(f" [dim](•) [i]{lib}[_i]", end="\n\n")
-            if not Console.confirm("Do you want to install them now?"):
+                FormatCodes.print(f" [dim](•) [i]{lib}[_i]")
+            print()
+            if not Console.confirm(missing_libs_msgs[1], end="\n"):
                 return missing
         try:
             for lib in missing:
-                _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
-                missing.remove(lib)
+                try:
+                    _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
+                    missing.remove(lib)
+                except _subprocess.CalledProcessError:
+                    pass
             if len(missing) == 0:
                 return None
             return missing

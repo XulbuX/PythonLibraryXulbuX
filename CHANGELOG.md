@@ -16,6 +16,8 @@
 
 ## ... `v1.8.3`
 * adjusted the look of the prompts and inputs of the `System.check_libs()` method
+* added a new param to `System.check_libs()`:<br>
+  <code>missing_libs_msgs: tuple[str, str] = (...)</code> two messages: the first one is displayed when missing libraries are found, the second one is the confirmation message before installing missing libraries
 * adjusted error messages throughout the whole library to all be structured about the same
 * fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems
 
