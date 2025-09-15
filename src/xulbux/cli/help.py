@@ -20,8 +20,8 @@ def get_latest_version() -> Optional[str]:
 
 def is_latest_version() -> Optional[bool]:
     try:
-        latest = get_latest_version()
-        if latest in ("", None): return None
+        if (latest := get_latest_version()) in ("", None):
+            return None
         latest_v_parts = tuple(int(part) for part in latest.lower().lstrip("v").split('.'))
         installed_v_parts = tuple(int(part) for part in __version__.lower().lstrip("v").split('.'))
         return latest_v_parts <= installed_v_parts

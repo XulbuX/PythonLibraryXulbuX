@@ -302,4 +302,5 @@ def test_regex_hexa_str_no_alpha():
 
     for color in invalid_colors:
         match = re.match(pattern, color)
-        if match: assert match.group() != color
+        if match:
+            assert match.group() != color
