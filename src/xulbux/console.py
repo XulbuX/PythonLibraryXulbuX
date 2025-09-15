@@ -755,7 +755,7 @@ class Console:
         mask_char: Optional[str] = None,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
-        allowed_chars: str = CHARS.ALL,  #type: ignore[assignment]
+        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Optional[T] = None,
@@ -825,7 +825,8 @@ class Console:
 
         def process_insert_text(text: str) -> tuple[str, set[str]]:
             removed_chars = set()
-            if not text: return "", removed_chars
+            if not text:
+                return "", removed_chars
             processed_text = "".join(c for c in text if ord(c) >= 32)
             if allowed_chars != CHARS.ALL:
                 filtered_text = ""
@@ -846,8 +847,8 @@ class Console:
         def insert_text_event(event: KeyPressEvent) -> None:
             nonlocal result_text, filtered_chars
             try:
-                insert_text = event.data
-                if not insert_text: return
+                if not (insert_text := event.data):
+                    return
                 buffer = event.app.current_buffer
                 cursor_pos = buffer.cursor_position
                 insert_text, filtered_chars = process_insert_text(insert_text)
@@ -928,7 +929,8 @@ class Console:
         FormatCodes.print(end, end="")
 
         if result_text in ("", None):
-            if has_default: return default_val
+            if has_default:
+                return default_val
             result_text = ""
 
         if output_type == str:
@@ -937,7 +939,8 @@ class Console:
             try:
                 return output_type(result_text)  # type: ignore[call-arg]
             except (ValueError, TypeError):
-                if has_default: return default_val
+                if has_default:
+                    return default_val
                 raise
 
 

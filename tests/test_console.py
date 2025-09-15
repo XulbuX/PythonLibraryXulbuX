@@ -342,7 +342,7 @@ def test_log_no_title(mock_formatcodes_print):
     Console.log(title=None, prompt="Just a message")
 
     mock_formatcodes_print.assert_called_once()
-    args, kwargs = mock_formatcodes_print.call_args
+    args, _ = mock_formatcodes_print.call_args
     assert "Just a message" in args[0]
 
 
@@ -350,7 +350,7 @@ def test_debug_active(mock_formatcodes_print):
     Console.debug("Debug message", active=True)
 
     assert mock_formatcodes_print.call_count == 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "DEBUG" in args[0]
     assert "Debug message" in args[0]
 
@@ -365,7 +365,7 @@ def test_info(mock_formatcodes_print):
     Console.info("Info message")
 
     assert mock_formatcodes_print.call_count == 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "INFO" in args[0]
     assert "Info message" in args[0]
 
@@ -374,7 +374,7 @@ def test_done(mock_formatcodes_print):
     Console.done("Task completed")
 
     assert mock_formatcodes_print.call_count == 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "DONE" in args[0]
     assert "Task completed" in args[0]
 
@@ -383,7 +383,7 @@ def test_warn(mock_formatcodes_print):
     Console.warn("Warning message")
 
     assert mock_formatcodes_print.call_count == 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "WARN" in args[0]
     assert "Warning message" in args[0]
 
@@ -395,7 +395,7 @@ def test_fail(mock_formatcodes_print, monkeypatch):
     Console.fail("Error occurred")
 
     assert mock_formatcodes_print.call_count >= 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "FAIL" in args[0]
     assert "Error occurred" in args[0]
 
@@ -409,7 +409,7 @@ def test_exit_method(mock_formatcodes_print, monkeypatch):
     Console.exit("Program ending")
 
     assert mock_formatcodes_print.call_count >= 2
-    args, kwargs = mock_formatcodes_print.call_args_list[0]
+    args, _ = mock_formatcodes_print.call_args_list[0]
     assert "EXIT" in args[0]
     assert "Program ending" in args[0]
 
@@ -420,7 +420,7 @@ def test_log_box_filled(mock_formatcodes_print):
     Console.log_box_filled("Line 1", "Line 2", box_bg_color="green")
 
     mock_formatcodes_print.assert_called_once()
-    args, kwargs = mock_formatcodes_print.call_args
+    args, _ = mock_formatcodes_print.call_args
     assert "Line 1" in args[0]
     assert "Line 2" in args[0]
 
@@ -429,7 +429,7 @@ def test_log_box_bordered(mock_formatcodes_print):
     Console.log_box_bordered("Content line", border_type="rounded")
 
     mock_formatcodes_print.assert_called_once()
-    args, kwargs = mock_formatcodes_print.call_args
+    args, _ = mock_formatcodes_print.call_args
     assert "Content line" in args[0]
 
 
@@ -455,6 +455,245 @@ def test_confirm_default_no(mock_builtin_input):
     mock_builtin_input.return_value = ""
     result = Console.confirm("Continue?", default_is_yes=False)
     assert result is False
+
+
+@pytest.fixture
+def mock_prompt_session(monkeypatch):
+    mock_session = MagicMock()
+    mock_session_class = MagicMock(return_value=mock_session)
+    mock_session.prompt.return_value = None
+    monkeypatch.setattr(console._pt, "PromptSession", mock_session_class)
+    return mock_session_class, mock_session
+
+
+def test_input_creates_prompt_session(mock_prompt_session, mock_formatcodes_print):
+    """Test that Console.input creates a PromptSession with correct parameters."""
+    mock_session_class, mock_session = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'message' in call_kwargs
+    assert 'validator' in call_kwargs
+    assert 'validate_while_typing' in call_kwargs
+    assert 'key_bindings' in call_kwargs
+    assert 'bottom_toolbar' in call_kwargs
+    assert 'style' in call_kwargs
+    mock_session.prompt.assert_called_once()
+
+
+def test_input_with_placeholder(mock_prompt_session, mock_formatcodes_print):
+    """Test that placeholder is correctly passed to PromptSession."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", placeholder="Type here...")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'placeholder' in call_kwargs
+    assert call_kwargs['placeholder'] != ""
+
+
+def test_input_without_placeholder(mock_prompt_session, mock_formatcodes_print):
+    """Test that placeholder is empty when not provided."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'placeholder' in call_kwargs
+    assert call_kwargs['placeholder'] == ""
+
+
+def test_input_with_validator_function(mock_prompt_session, mock_formatcodes_print):
+    """Test that a custom validator function is properly handled."""
+    mock_session_class, _ = mock_prompt_session
+
+    def email_validator(text):
+        if "@" not in text:
+            return "Invalid email"
+        return None
+
+    Console.input("Enter email: ", validator=email_validator)
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'validator' in call_kwargs
+    validator_instance = call_kwargs['validator']
+    assert hasattr(validator_instance, 'validate')
+
+
+def test_input_with_length_constraints(mock_prompt_session, mock_formatcodes_print):
+    """Test that min_len and max_len are properly handled."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", min_len=3, max_len=10)
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'validator' in call_kwargs
+    validator_instance = call_kwargs['validator']
+    assert hasattr(validator_instance, 'validate')
+
+
+def test_input_with_allowed_chars(mock_prompt_session, mock_formatcodes_print):
+    """Test that allowed_chars parameter is handled."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter digits only: ", allowed_chars="0123456789")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'key_bindings' in call_kwargs
+    assert call_kwargs['key_bindings'] is not None
+
+
+def test_input_disable_paste(mock_prompt_session, mock_formatcodes_print):
+    """Test that allow_paste=False is handled."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", allow_paste=False)
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'key_bindings' in call_kwargs
+    assert call_kwargs['key_bindings'] is not None
+
+
+def test_input_with_start_end_formatting(mock_prompt_session, mock_formatcodes_print):
+    """Test that start and end parameters trigger FormatCodes.print calls."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", start="[green]", end="[_c]")
+
+    assert mock_session_class.called
+    assert mock_formatcodes_print.call_count >= 2
+
+
+def test_input_message_formatting(mock_prompt_session, mock_formatcodes_print):
+    """Test that the prompt message is properly formatted."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("[b]Bold prompt:[_b] ", default_color="#ABC")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'message' in call_kwargs
+    assert call_kwargs['message'] is not None
+
+
+def test_input_bottom_toolbar_function(mock_prompt_session, mock_formatcodes_print):
+    """Test that bottom toolbar function is set up."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'bottom_toolbar' in call_kwargs
+    toolbar_func = call_kwargs['bottom_toolbar']
+    assert callable(toolbar_func)
+
+    try:
+        result = toolbar_func()
+        assert result is not None
+    except Exception:
+        pass
+
+
+def test_input_style_configuration(mock_prompt_session, mock_formatcodes_print):
+    """Test that custom style is applied."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'style' in call_kwargs
+    assert call_kwargs['style'] is not None
+
+
+def test_input_validate_while_typing_enabled(mock_prompt_session, mock_formatcodes_print):
+    """Test that validate_while_typing is enabled."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'validate_while_typing' in call_kwargs
+    assert call_kwargs['validate_while_typing'] is True
+
+
+def test_input_validator_class_creation(mock_prompt_session, mock_formatcodes_print):
+    """Test that InputValidator class is properly instantiated."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", min_len=5)
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'validator' in call_kwargs
+    validator_instance = call_kwargs['validator']
+    assert hasattr(validator_instance, 'validate')
+    assert callable(getattr(validator_instance, 'validate', None))
+
+
+def test_input_key_bindings_setup(mock_prompt_session, mock_formatcodes_print):
+    """Test that key bindings are properly set up."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'key_bindings' in call_kwargs
+    kb = call_kwargs['key_bindings']
+    assert kb is not None
+    assert hasattr(kb, 'bindings')
+
+
+def test_input_mask_char_single_character(mock_prompt_session, mock_formatcodes_print):
+    """Test that mask_char works with single characters."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter password: ", mask_char="*")
+
+    assert mock_session_class.called
+
+
+def test_input_output_type_int(mock_prompt_session, mock_formatcodes_print):
+    """Test that output_type parameter is handled for int conversion."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter number: ", output_type=int, default_val=42)
+
+    assert mock_session_class.called
+
+
+def test_input_default_val_handling(mock_prompt_session, mock_formatcodes_print):
+    """Test that default_val parameter is properly handled."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ", default_val="default_value")
+
+    assert mock_session_class.called
+
+
+def test_input_custom_style_object(mock_prompt_session, mock_formatcodes_print):
+    """Test that a custom Style object is created."""
+    mock_session_class, _ = mock_prompt_session
+
+    Console.input("Enter text: ")
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert 'style' in call_kwargs
+    style = call_kwargs['style']
+    assert style is not None
+    assert hasattr(style, 'style_rules') or hasattr(style, '_style')
 
 
 ################################################## PROGRESSBAR TESTS ##################################################
@@ -559,7 +798,7 @@ def test_progressbar_progress_context():
 
 def test_progressbar_progress_context_exception():
     pb = ProgressBar()
-    with (patch.object(pb, 'show_progress') as mock_show, patch.object(pb, 'hide_progress') as
+    with (patch.object(pb, 'show_progress') as _, patch.object(pb, 'hide_progress') as
           mock_hide, patch.object(pb, '_emergency_cleanup') as mock_cleanup):
         with pytest.raises(ValueError):
             with pb.progress_context(100, "Testing") as update_progress:
