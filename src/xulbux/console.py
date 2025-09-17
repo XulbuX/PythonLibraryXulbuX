@@ -27,7 +27,11 @@ import io as _io
 
 
 _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
+    "label": _re.compile(r"(?i)\{(?:label|l)\}"),
     "bar": _re.compile(r"(?i)\{(?:bar|b)\}"),
+    "current": _re.compile(r"(?i)\{(?:current|c)\}"),
+    "total": _re.compile(r"(?i)\{(?:total|t)\}"),
+    "percentage": _re.compile(r"(?i)\{(?:percentage|percent|p)\}"),
 }
 
 
@@ -1129,8 +1133,9 @@ class ProgressBar:
             formatted, bar_width = self._get_formatted_info_and_bar_width(
                 self.limited_bar_format, current, total, percentage, label
             )
-        bar = FormatCodes.to_ansi(self._create_bar(current, total, max(1, bar_width)) + "[*]")
-        self._current_progress_str = progress_text = formatted.format(bar=bar, b=bar)
+        bar = self._create_bar(current, total, max(1, bar_width)) + "[*]"
+        progress_text = _COMPILED["bar"].sub(FormatCodes.to_ansi(bar), formatted)
+        self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
         self._original_stdout.write(f"\r{progress_text}")
         self._original_stdout.flush()
@@ -1143,19 +1148,12 @@ class ProgressBar:
         percentage: float,
         label: Optional[str] = None,
     ) -> tuple[str, int]:
-        formatted = bar_format.format(
-            label=(label := "" if label is None else label),
-            l=label,
-            current=current,
-            c=current,
-            total=total,
-            t=total,
-            percentage=(percent := f"{percentage:.1f}"),
-            percent=percent,
-            p=percent,
-        )
+        formatted = _COMPILED["label"].sub(label or "", bar_format)
+        formatted = _COMPILED["current"].sub(str(current), formatted)
+        formatted = _COMPILED["total"].sub(str(total), formatted)
+        formatted = _COMPILED["percentage"].sub(f"{percentage:.1f}", formatted)
         formatted = FormatCodes.to_ansi(formatted)
-        bar_space = Console.w - len(FormatCodes.remove_ansi(formatted.format(bar="", b="")))
+        bar_space = Console.w - len(FormatCodes.remove_ansi(_COMPILED["bar"].sub("", formatted)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
         return formatted, bar_width
 

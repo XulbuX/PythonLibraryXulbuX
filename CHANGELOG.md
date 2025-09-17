@@ -20,7 +20,6 @@
   <code>missing_libs_msgs: tuple[str, str] = (...)</code> two messages: the first one is displayed when missing libraries are found, the second one is the confirmation message before installing missing libraries
 * adjusted error messages throughout the whole library to all be structured about the same
 * fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems
-* made some small performance improvements to the `ProgressBar` class
 
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
