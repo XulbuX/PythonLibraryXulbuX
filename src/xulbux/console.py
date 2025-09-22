@@ -269,14 +269,14 @@ class Console:
                 if first_flag_pos is None:
                     first_flag_pos = i
                 # CHECK IF THIS FLAG HAS A VALUE FOLLOWING IT
-                flag_has_value = (i + 1 < args_len and not args[i + 1].startswith("-") and args[i + 1] not in arg_lookup)
+                flag_has_value = (i + 1 < args_len and args[i + 1] not in arg_lookup)
                 if flag_has_value:
                     if not allow_spaces:
                         last_flag_with_value_pos = i + 1
                     else:
                         # FIND THE END OF THE MULTI-WORD VALUE
                         j = i + 1
-                        while j < args_len and not args[j].startswith("-") and args[j] not in arg_lookup:
+                        while j < args_len and args[j] not in arg_lookup:
                             j += 1
                         last_flag_with_value_pos = j - 1
 
@@ -286,7 +286,7 @@ class Console:
                 before_args = []
                 end_pos = first_flag_pos if first_flag_pos is not None else args_len
                 for i in range(end_pos):
-                    if not args[i].startswith("-"):
+                    if args[i] not in arg_lookup:
                         before_args.append(String.to_type(args[i]))
                 if before_args:
                     results[alias]["value"] = before_args
@@ -300,7 +300,7 @@ class Console:
             if alias:
                 results[alias]["exists"] = True
                 value_found_after_flag = False
-                if i + 1 < args_len and not args[i + 1].startswith("-"):
+                if i + 1 < args_len and args[i + 1] not in arg_lookup:
                     if not allow_spaces:
                         results[alias]["value"] = String.to_type(args[i + 1])
                         i += 1
@@ -308,7 +308,7 @@ class Console:
                     else:
                         value_parts = []
                         j = i + 1
-                        while j < args_len and not args[j].startswith("-"):
+                        while j < args_len and args[j] not in arg_lookup:
                             value_parts.append(args[j])
                             j += 1
                         if value_parts:
@@ -335,7 +335,7 @@ class Console:
                         start_pos = last_flag_pos + 1
 
                 for i in range(start_pos, args_len):
-                    if not args[i].startswith("-") and args[i] not in arg_lookup:
+                    if args[i] not in arg_lookup:
                         after_args.append(String.to_type(args[i]))
 
                 if after_args:

@@ -227,6 +227,93 @@ def test_get_args_duplicate_flag():
         Console.get_args({"arg1": {"flags": ["--long"]}, "arg2": ("-a", "--long")})
 
 
+def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
+    """Test that values starting with dashes are not treated as flags unless explicitly defined"""
+    monkeypatch.setattr(sys, "argv", ["script.py", "-v", "-42", "--input", "-3.14"])
+    find_args = {"verbose": ["-v"], "input": ["--input"]}
+    result = Console.get_args(find_args)
+
+    assert result.verbose.exists is True
+    assert result.verbose.value == -42
+    assert result.input.exists is True
+    assert result.input.value == -3.14
+
+
+def test_get_args_dash_strings_as_values(monkeypatch):
+    """Test that dash-prefixed strings are treated as values when not defined as flags"""
+    monkeypatch.setattr(sys, "argv", ["script.py", "-f", "--not-a-flag", "-t", "-another-value"])
+    find_args = {"file": ["-f"], "text": ["-t"]}
+    result = Console.get_args(find_args)
+
+    assert result.file.exists is True
+    assert result.file.value == "--not-a-flag"
+    assert result.text.exists is True
+    assert result.text.value == "-another-value"
+
+
+def test_get_args_positional_with_dashes_before(monkeypatch):
+    """Test that positional 'before' arguments include dash-prefixed values"""
+    monkeypatch.setattr(sys, "argv", ["script.py", "-123", "--some-file", "normal", "-v"])
+    find_args = {"before_args": "before", "verbose": ["-v"]}
+    result = Console.get_args(find_args)
+
+    assert result.before_args.exists is True
+    assert result.before_args.value == [-123, "--some-file", "normal"]
+    assert result.verbose.exists is True
+    assert result.verbose.value is True
+
+
+def test_get_args_positional_with_dashes_after(monkeypatch):
+    """Test that positional 'after' arguments include dash-prefixed values"""
+    monkeypatch.setattr(sys, "argv", ["script.py", "-v", "value", "-123", "--output-file", "-negative"])
+    find_args = {"verbose": ["-v"], "after_args": "after"}
+    result = Console.get_args(find_args)
+
+    assert result.verbose.exists is True
+    assert result.verbose.value == "value"
+    assert result.after_args.exists is True
+    assert result.after_args.value == [-123, "--output-file", "-negative"]
+
+
+def test_get_args_multiword_with_dashes(monkeypatch):
+    """Test multiword values with dashes when allow_spaces=True"""
+    monkeypatch.setattr(sys, "argv", ["script.py", "-m", "start", "-middle", "--end", "-f", "other"])
+    find_args = {"message": ["-m"], "file": ["-f"]}
+    result = Console.get_args(find_args, allow_spaces=True)
+
+    assert result.message.exists is True
+    assert result.message.value == "start -middle --end"
+    assert result.file.exists is True
+    assert result.file.value == "other"
+
+
+def test_get_args_mixed_dash_scenarios(monkeypatch):
+    """Test complex scenario mixing defined flags with dash-prefixed values"""
+    monkeypatch.setattr(
+        sys, "argv", [
+            "script.py", "before1", "-not-flag", "before2", "-v", "--verbose-mode", "-d", "-42", "--file", "--my-file.txt",
+            "after1", "-also-not-flag"
+        ]
+    )
+    find_args = {"before": "before", "verbose": ["-v"], "debug": ["-d"], "file": ["--file"], "after": "after"}
+    result = Console.get_args(find_args)
+
+    assert result.before.exists is True
+    assert result.before.value == ["before1", "-not-flag", "before2"]
+
+    assert result.verbose.exists is True
+    assert result.verbose.value == "--verbose-mode"
+
+    assert result.debug.exists is True
+    assert result.debug.value == -42
+
+    assert result.file.exists is True
+    assert result.file.value == "--my-file.txt"
+
+    assert result.after.exists is True
+    assert result.after.value == ["after1", "-also-not-flag"]
+
+
 def test_multiline_input(mock_prompt_toolkit, mock_formatcodes_print):
     expected_input = "mocked multiline input"
     result = Console.multiline_input("Enter text:", show_keybindings=True, default_color="#BCA")
