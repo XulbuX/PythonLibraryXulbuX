@@ -74,20 +74,20 @@ def test_console_size(mock_terminal_size):
                          }, {"file": {"exists": False, "value": None}, "debug": {"exists": False, "value": None}}),
         # SIMPLE FLAG
         (["script.py", "-d"], {"file": ["-f"], "debug": ["-d"]
-                               }, {"file": {"exists": False, "value": None}, "debug": {"exists": True, "value": True}}),
+                               }, {"file": {"exists": False, "value": None}, "debug": {"exists": True, "value": None}}),
         # FLAG WITH VALUE
         (["script.py", "-f", "test.txt"], {"file": ["-f"], "debug": ["-d"]},
          {"file": {"exists": True, "value": "test.txt"}, "debug": {"exists": False, "value": None}}),
         # LONG FLAGS WITH VALUE AND FLAG
         (["script.py", "--file", "path/to/file", "--debug"], {"file": ["-f", "--file"], "debug": ["-d", "--debug"]},
-         {"file": {"exists": True, "value": "path/to/file"}, "debug": {"exists": True, "value": True}}),
+         {"file": {"exists": True, "value": "path/to/file"}, "debug": {"exists": True, "value": None}}),
         # VALUE WITH SPACE (IGNORED DUE TO allow_spaces=False)
         (["script.py", "-f", "file with spaces"], {"file": ["-f"]}, {"file": {"exists": True, "value": "file with spaces"}}),
         # UNKNOWN ARG
         (["script.py", "-x"], {"file": ["-f"]}, {"file": {"exists": False, "value": None}}),
         # TWO FLAGS
         (["script.py", "-f", "-d"], {"file": ["-f"], "debug": ["-d"]
-                                     }, {"file": {"exists": True, "value": True}, "debug": {"exists": True, "value": True}}),
+                                     }, {"file": {"exists": True, "value": None}, "debug": {"exists": True, "value": None}}),
         # NUMERIC VALUE
         (["script.py", "-n", "123"], {"num": ["-n"]}, {"num": {"exists": True, "value": 123}}),
         # BOOLEAN VALUE (True)
@@ -102,29 +102,27 @@ def test_console_size(mock_terminal_size):
         # VALUE OVERRIDES DEFAULT (string)
         (["script.py", "-o", "my_file.log"], {"output": {"flags": ["-o"], "default": "out.txt"}, "verbose": ["-v"]},
          {"output": {"exists": True, "value": "my_file.log"}, "verbose": {"exists": False, "value": None}}),
-        # FLAG PRESENCE OVERRIDES DEFAULT (string -> True)
+        # FLAG PRESENCE OVERRIDES DEFAULT (string -> None)
         (["script.py", "-o"], {"output": {"flags": ["-o"], "default": "out.txt"}, "verbose": ["-v"]
-                               }, {"output": {"exists": True, "value": True}, "verbose": {"exists": False, "value": None}}),
-        # FLAG PRESENCE OVERRIDES DEFAULT (False -> True)
+                               }, {"output": {"exists": True, "value": None}, "verbose": {"exists": False, "value": None}}),
+        # FLAG PRESENCE OVERRIDES DEFAULT (False -> None)
         (["script.py", "-v"], {
             "output": {"flags": ["-o"], "default": "out.txt"}, "verbose": {"flags": ["-v"], "default": False}
-        }, {"output": {"exists": False, "value": "out.txt"}, "verbose": {"exists": True, "value": True}}),
+        }, {"output": {"exists": False, "value": "out.txt"}, "verbose": {"exists": True, "value": None}}),
         # DEFAULT USED (int)
         (["script.py"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": False, "value": 1}}),
         # VALUE OVERRIDES DEFAULT (int)
         (["script.py", "-m", "2"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": 2}}),
-        # FLAG PRESENCE OVERRIDES DEFAULT (int -> True)
-        (["script.py", "-m"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": True}}),
-
-        # --- MIXED list/tuple AND dict FORMATS (allow_spaces=False) ---
+        # FLAG PRESENCE OVERRIDES DEFAULT (int -> None)
+        (["script.py", "-m"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": None}}
+         ),  # --- MIXED list/tuple AND dict FORMATS (allow_spaces=False) ---
         # DICT VALUE PROVIDED, LIST NOT PROVIDED
         (["script.py", "--config", "dev.cfg"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]},
          {"config": {"exists": True, "value": "dev.cfg"}, "log": {"exists": False, "value": None}}),
         # LIST FLAG PROVIDED, DICT NOT PROVIDED (USES DEFAULT)
-        (["script.py", "-l"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]
-                               }, {"config": {"exists": False, "value": "prod.cfg"}, "log": {"exists": True, "value": True}}),
-
-        # --- 'before' / 'after' SPECIAL CASES ---
+        (["script.py", "-l"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]}, {
+            "config": {"exists": False, "value": "prod.cfg"}, "log": {"exists": True, "value": None}
+        }),  # --- 'before' / 'after' SPECIAL CASES ---
         # 'before' SPECIAL CASE
         (["script.py", "arg1", "arg2", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
          {"before": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
@@ -159,13 +157,13 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
         # --- CASES WITH SPACES (allow_spaces=True) ---
         # SIMPLE VALUE WITH SPACES
         (["script.py", "-f", "file with spaces", "-d"], {"file": ["-f"], "debug": ["-d"]},
-         {"file": {"exists": True, "value": "file with spaces"}, "debug": {"exists": True, "value": True}}),
+         {"file": {"exists": True, "value": "file with spaces"}, "debug": {"exists": True, "value": None}}),
         # LONG VALUE WITH SPACES
         (["script.py", "--message", "Hello", "world", "how", "are", "you"
           ], {"message": ["--message"]}, {"message": {"exists": True, "value": "Hello world how are you"}}),
         # VALUE WITH SPACES FOLLOWED BY ANOTHER FLAG
         (["script.py", "-m", "this is", "a message", "--flag"], {"message": ["-m"], "flag": ["--flag"]},
-         {"message": {"exists": True, "value": "this is a message"}, "flag": {"exists": True, "value": True}}),
+         {"message": {"exists": True, "value": "this is a message"}, "flag": {"exists": True, "value": None}}),
         # VALUE WITH SPACES AT THE END
         (["script.py", "-m", "end", "of", "args"], {"message": ["-m"]}, {"message": {"exists": True, "value": "end of args"}}),
 
@@ -175,10 +173,11 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
          {"msg": {"exists": True, "value": "Default message"}, "other": {"exists": False, "value": None}}),
         # DEFAULT USED WHEN OTHER FLAG PRESENT
         (["script.py", "-o"], {"msg": {"flags": ["--msg"], "default": "No message"}, "other": ["-o"]
-                               }, {"msg": {"exists": False, "value": "No message"}, "other": {"exists": True, "value": True}}),
+                               }, {"msg": {"exists": False, "value": "No message"}, "other": {"exists": True, "value": None}}),
         # FLAG PRESENCE OVERRIDES DEFAULT (str -> True)
+        # FLAG WITH NO VALUE SHOULD HAVE None AS VALUE
         (["script.py", "--msg"], {"msg": {"flags": ["--msg"], "default": "No message"}, "other": ["-o"]
-                                  }, {"msg": {"exists": True, "value": True}, "other": {"exists": False, "value": None}}),
+                                  }, {"msg": {"exists": True, "value": None}, "other": {"exists": False, "value": None}}),
 
         # --- MIXED FORMATS WITH SPACES (allow_spaces=True) ---
         # LIST VALUE WITH SPACES, dict VALUE PROVIDED
@@ -195,6 +194,29 @@ def test_get_args_with_spaces(monkeypatch, argv, find_args, expected_args_dict):
     args_result = Console.get_args(find_args, allow_spaces=True)
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
+
+
+def test_get_args_flag_without_value(monkeypatch):
+    """Test that flags without values have None as their value, not True."""
+    # TEST SINGLE FLAG WITHOUT VALUE AT END OF ARGS
+    monkeypatch.setattr(sys, "argv", ["script.py", "--verbose"])
+    args_result = Console.get_args({"verbose": ["--verbose"]})
+    assert args_result.verbose.exists is True
+    assert args_result.verbose.value is None
+
+    # TEST FLAG WITHOUT VALUE FOLLOWED BY ANOTHER FLAG
+    monkeypatch.setattr(sys, "argv", ["script.py", "--verbose", "--debug"])
+    args_result = Console.get_args({"verbose": ["--verbose"], "debug": ["--debug"]})
+    assert args_result.verbose.exists is True
+    assert args_result.verbose.value is None
+    assert args_result.debug.exists is True
+    assert args_result.debug.value is None
+
+    # TEST FLAG WITH DEFAULT VALUE BUT NO PROVIDED VALUE
+    monkeypatch.setattr(sys, "argv", ["script.py", "--mode"])
+    args_result = Console.get_args({"mode": {"flags": ["--mode"], "default": "production"}})
+    assert args_result.mode.exists is True
+    assert args_result.mode.value is None
 
 
 def test_get_args_invalid_alias():
@@ -260,7 +282,7 @@ def test_get_args_positional_with_dashes_before(monkeypatch):
     assert result.before_args.exists is True
     assert result.before_args.value == [-123, "--some-file", "normal"]
     assert result.verbose.exists is True
-    assert result.verbose.value is True
+    assert result.verbose.value is None
 
 
 def test_get_args_positional_with_dashes_after(monkeypatch):

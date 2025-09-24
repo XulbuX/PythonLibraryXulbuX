@@ -316,7 +316,7 @@ class Console:
                             i = j - 1
                             value_found_after_flag = True
                 if not value_found_after_flag:
-                    results[alias]["value"] = True
+                    results[alias]["value"] = None
             i += 1
 
         # COLLECT "after" POSITIONAL ARGUMENTS
