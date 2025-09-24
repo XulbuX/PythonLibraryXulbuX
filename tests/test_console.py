@@ -458,7 +458,7 @@ def test_log_no_title(mock_formatcodes_print):
 def test_debug_active(mock_formatcodes_print):
     Console.debug("Debug message", active=True)
 
-    assert mock_formatcodes_print.call_count == 2
+    assert mock_formatcodes_print.call_count == 3
     args, _ = mock_formatcodes_print.call_args_list[0]
     assert "DEBUG" in args[0]
     assert "Debug message" in args[0]
@@ -473,7 +473,7 @@ def test_debug_inactive(mock_formatcodes_print):
 def test_info(mock_formatcodes_print):
     Console.info("Info message")
 
-    assert mock_formatcodes_print.call_count == 2
+    assert mock_formatcodes_print.call_count == 3
     args, _ = mock_formatcodes_print.call_args_list[0]
     assert "INFO" in args[0]
     assert "Info message" in args[0]
@@ -482,7 +482,7 @@ def test_info(mock_formatcodes_print):
 def test_done(mock_formatcodes_print):
     Console.done("Task completed")
 
-    assert mock_formatcodes_print.call_count == 2
+    assert mock_formatcodes_print.call_count == 3
     args, _ = mock_formatcodes_print.call_args_list[0]
     assert "DONE" in args[0]
     assert "Task completed" in args[0]
@@ -491,7 +491,7 @@ def test_done(mock_formatcodes_print):
 def test_warn(mock_formatcodes_print):
     Console.warn("Warning message")
 
-    assert mock_formatcodes_print.call_count == 2
+    assert mock_formatcodes_print.call_count == 3
     args, _ = mock_formatcodes_print.call_args_list[0]
     assert "WARN" in args[0]
     assert "Warning message" in args[0]

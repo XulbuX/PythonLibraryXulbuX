@@ -346,9 +346,9 @@ class Console:
 
     @staticmethod
     def pause_exit(
+        prompt: object = "",
         pause: bool = True,
         exit: bool = False,
-        prompt: object = "",
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
@@ -473,13 +473,15 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
+        exit_code: int = 0,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `DEBUG` log message with the options to pause
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
         if active:
             Console.log("DEBUG", prompt, format_linebreaks, start, end, COLOR.YELLOW, default_color)
-            Console.pause_exit(pause, exit)
+            Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def info(
@@ -490,11 +492,13 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
+        exit_code: int = 0,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("INFO", prompt, format_linebreaks, start, end, COLOR.BLUE, default_color)
-        Console.pause_exit(pause, exit)
+        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def done(
@@ -505,11 +509,13 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
+        exit_code: int = 0,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("DONE", prompt, format_linebreaks, start, end, COLOR.TEAL, default_color)
-        Console.pause_exit(pause, exit)
+        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def warn(
@@ -520,11 +526,13 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
+        exit_code: int = 0,
+        reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("WARN", prompt, format_linebreaks, start, end, COLOR.ORANGE, default_color)
-        Console.pause_exit(pause, exit)
+        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def fail(
@@ -535,12 +543,13 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = True,
+        exit_code: int = 0,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("FAIL", prompt, format_linebreaks, start, end, COLOR.RED, default_color)
-        Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
+        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def exit(
@@ -551,12 +560,13 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = True,
+        exit_code: int = 0,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
         Console.log("EXIT", prompt, format_linebreaks, start, end, COLOR.MAGENTA, default_color)
-        Console.pause_exit(pause, exit, reset_ansi=reset_ansi)
+        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
     def log_box_filled(

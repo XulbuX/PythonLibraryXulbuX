@@ -21,6 +21,10 @@
 * adjusted error messages throughout the whole library to all be structured about the same
 * fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems
 * the `Console.get_args()` method will now treat everything as values (*even if it starts with* `-` *or* `--`) unless it's specified in the `find_args` param
+* reordered the params of `Console.pause_exit()` to be more logical
+* added two new param to all the `Console.log()` presets:<br>
+  <code>exit_code: *int* = 0</code> the exit code to use if `exit` is true
+  <code>reset_ansi: *bool* = True</code> whether to reset all ANSI formatting after pausing/exiting or not
 
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
