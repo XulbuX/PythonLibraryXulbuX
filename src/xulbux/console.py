@@ -526,7 +526,7 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = False,
-        exit_code: int = 0,
+        exit_code: int = 1,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
@@ -543,7 +543,7 @@ class Console:
         default_color: Optional[Rgba | Hexa] = None,
         pause: bool = False,
         exit: bool = True,
-        exit_code: int = 0,
+        exit_code: int = 1,
         reset_ansi: bool = True,
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause

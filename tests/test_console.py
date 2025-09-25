@@ -508,7 +508,7 @@ def test_fail(mock_formatcodes_print, monkeypatch):
     assert "FAIL" in args[0]
     assert "Error occurred" in args[0]
 
-    mock_sys_exit.assert_called_once_with(0)
+    mock_sys_exit.assert_called_once_with(1)
 
 
 def test_exit_method(mock_formatcodes_print, monkeypatch):
