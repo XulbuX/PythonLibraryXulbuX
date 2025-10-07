@@ -10,7 +10,7 @@ from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, Any, cast
+from typing import Generator, TypedDict, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, Any, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -27,6 +27,10 @@ import io as _io
 
 
 _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
+    "hr": _re.compile(r"(?i)\{hr\}"),
+    "hr_no_nl": _re.compile(r"(?i)(?<!\n){hr}(?!\n)"),
+    "hr_r_nl": _re.compile(r"(?i)(?<!\n){hr}(?=\n)"),
+    "hr_l_nl": _re.compile(r"(?i)(?<=\n){hr}(?!\n)"),
     "label": _re.compile(r"(?i)\{(?:label|l)\}"),
     "bar": _re.compile(r"(?i)\{(?:bar|b)\}"),
     "current": _re.compile(r"(?i)\{(?:current|c)\}"),
@@ -67,6 +71,11 @@ class _ConsoleUser:
 
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
+
+class _ArgConfigWithDefault(TypedDict):
+    flags: list[str] | tuple[str, ...]
+    default: Any
 
 
 class ArgResult:
@@ -146,8 +155,10 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[str, list[str] | tuple[str, ...] | dict[str, list[str] | tuple[str, ...] | Any]
-                           | Literal["before", "after"]],
+        find_args: Mapping[
+            str,
+            list[str] | tuple[str, ...] | _ArgConfigWithDefault | Literal["before", "after"],
+        ],
         allow_spaces: bool = False
     ) -> Args:
         """Will search for the specified arguments in the command line
@@ -241,8 +252,11 @@ class Console:
             elif isinstance(config, dict):
                 if "flags" not in config:
                     raise ValueError(f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'flags' key.")
-                flags = config["flags"]
-                default_value = config.get("default")
+                if "default" not in config:
+                    raise ValueError(
+                        f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'default' key. Use a simple list/tuple if no default value is needed."
+                    )
+                flags, default_value = config["flags"], config["default"]
                 if not isinstance(flags, (list, tuple)):
                     raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a list or tuple.")
                 results[alias] = {"exists": False, "value": default_value}
@@ -621,7 +635,7 @@ class Console:
         w_padding: int = 1,
         w_full: bool = False,
         indent: int = 0,
-        _border_chars: Optional[tuple[str, str, str, str, str, str, str, str]] = None,
+        _border_chars: Optional[tuple[str, str, str, str, str, str, str, str, str, str, str]] = None,
     ) -> None:
         """Will print a bordered box, containing a formatted log message:
         - `*values` -⠀the box content (each value is on a new line)
@@ -634,15 +648,17 @@ class Console:
         - `w_full` -⠀whether to make the box be the full console width or not
         - `indent` -⠀the indentation of the box (in chars)
         - `_border_chars` -⠀define your own border characters set (overwrites `border_type`)\n
-        ---------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------
+        You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
+        ---------------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation.\n
-        ---------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------
         The `border_type` can be one of the following:
-        - `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│')`
-        - `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│')`
-        - `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃')`
-        - `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║')`\n
+        - `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
+        - `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤')`
+        - `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫')`
+        - `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣')`\n
         The order of the characters is always:
         1. top-left corner
         2. top border
@@ -651,27 +667,31 @@ class Console:
         5. bottom-right corner
         6. bottom border
         7. bottom-left corner
-        8. left border"""
+        8. left border
+        9. left horizontal rule connector
+        10. horizontal rule
+        11. right horizontal rule connector"""
         borders = {
-            "standard": ('┌', '─', '┐', '│', '┘', '─', '└', '│'),
-            "rounded": ('╭', '─', '╮', '│', '╯', '─', '╰', '│'),
-            "strong": ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃'),
-            "double": ('╔', '═', '╗', '║', '╝', '═', '╚', '║'),
+            "standard": ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤'),
+            "rounded": ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤'),
+            "strong": ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫'),
+            "double": ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣'),
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
-        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
+        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color, has_rules=True)
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
         if border_style is not None and Color.is_valid(border_style):
             border_style = Color.to_hexa(border_style)
         spaces_l = " " * indent
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
+        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
+        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
         lines = [
-            f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
+            h_rule if _COMPILED["hr"].match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
             ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
         ]
-        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
-        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
         FormatCodes.print(
             f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
             default_color=default_color,
@@ -683,9 +703,42 @@ class Console:
     def __prepare_log_box(
         values: tuple[object, ...],
         default_color: Optional[Rgba | Hexa] = None,
+        has_rules: bool = False,
     ) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
         """Prepares the log box content and returns it along with the max line length."""
-        lines = [line for val in values for line in str(val).splitlines()]
+        if has_rules:
+            lines = []
+            for val in values:
+                val_str, result_parts, current_pos = str(val), [], 0
+                for match in _COMPILED["hr"].finditer(val_str):
+                    start, end = match.span()
+                    should_split_before = start > 0 and val_str[start - 1] != '\n'
+                    should_split_after = end < len(val_str) and val_str[end] != '\n'
+
+                    if should_split_before:
+                        if start > current_pos:
+                            result_parts.append(val_str[current_pos:start])
+                        if should_split_after:
+                            result_parts.append(match.group())
+                            current_pos = end
+                        else:
+                            current_pos = start
+                    else:
+                        if should_split_after:
+                            result_parts.append(val_str[current_pos:end])
+                            current_pos = end
+
+                if current_pos < len(val_str):
+                    result_parts.append(val_str[current_pos:])
+
+                if not result_parts:
+                    result_parts.append(val_str)
+
+                for part in result_parts:
+                    lines.extend(part.splitlines())
+        else:
+            lines = [line for val in values for line in str(val).splitlines()]
+
         unfmt_lines = [FormatCodes.remove_formatting(line, default_color) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len

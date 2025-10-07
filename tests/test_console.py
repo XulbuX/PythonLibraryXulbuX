@@ -235,18 +235,24 @@ def test_get_args_invalid_config():
 
     with pytest.raises(ValueError,
                        match="Invalid configuration for alias 'missing_flags'. Dictionary must contain a 'flags' key."):
-        Console.get_args({"missing_flags": {"default": "value"}})
+        Console.get_args({"missing_flags": {"default": "value"}})  # type: ignore[assignment]
+
+    with pytest.raises(
+            ValueError, match=
+            "Invalid configuration for alias 'bad_flags'. Dictionary must contain a 'default' key. Use a simple list/tuple if no default value is needed."
+    ):
+        Console.get_args({"bad_flags": {"flags": ["--flag"]}})  # type: ignore[assignment]
 
     with pytest.raises(ValueError, match="Invalid 'flags' for alias 'bad_flags'. Must be a list or tuple."):
-        Console.get_args({"bad_flags": {"flags": "not-a-list"}})
+        Console.get_args({"bad_flags": {"flags": "not-a-list", "default": "value"}})  # type: ignore[assignment]
 
 
 def test_get_args_duplicate_flag():
     with pytest.raises(ValueError, match="Duplicate flag '-f' found. It's assigned to both 'file1' and 'file2'."):
-        Console.get_args({"file1": ["-f", "--file1"], "file2": {"flags": ["-f", "--file2"]}})
+        Console.get_args({"file1": ["-f", "--file1"], "file2": {"flags": ["-f", "--file2"], "default": ...}})
 
     with pytest.raises(ValueError, match="Duplicate flag '--long' found. It's assigned to both 'arg1' and 'arg2'."):
-        Console.get_args({"arg1": {"flags": ["--long"]}, "arg2": ("-a", "--long")})
+        Console.get_args({"arg1": {"flags": ["--long"], "default": ...}, "arg2": ("-a", "--long")})
 
 
 def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
