@@ -10,7 +10,7 @@ from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from typing import Generator, TypedDict, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, Any, cast
+from typing import Generator, TypedDict, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, Any, overload, cast, Protocol
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -1007,6 +1007,25 @@ class Console:
                 raise
 
 
+class _ProgressUpdater(Protocol):
+    """Protocol for progress update function with proper type hints."""
+
+    @overload
+    def __call__(self, current: int) -> None:
+        """Update the current progress value."""
+        ...
+
+    @overload
+    def __call__(self, current: int, label: str) -> None:
+        """Update both current progress value and label."""
+        ...
+
+    @overload
+    def __call__(self, *, label: str) -> None:
+        """Update the progress label only (keyword-only)."""
+        ...
+
+
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------
@@ -1133,23 +1152,69 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[Callable[[int], None], None, None]:
+    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[_ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
-        --------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
         - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder
-        --------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
+        The returned callable accepts keyword arguments. At least one of these parameters must be provided:
+        - `current` -⠀update the current progress value
+        - `label` -⠀update the progress label\n
+
         Example usage:
         ```python
-        with ProgressBar().progress_context(500, "Loading") as update_progress:
-            for i in range(500):
+        with ProgressBar().progress_context(500, "Loading...") as update_progress:
+            update_progress(0)  # Show empty bar at start
+
+            for i in range(400):
                 # Do some work...
                 update_progress(i)  # Update progress
+
+            update_progress(label="Finalizing...")  # Update label
+
+            for i in range(400, 500):
+                # Do some work...
+                update_progress(i, f"Finalizing ({i})")  # Update both
         ```"""
+        current_progress = 0
+        current_label = label
+
         try:
 
-            def update_progress(current: int) -> None:
-                self.show_progress(current, total, label)
+            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN '_ProgressUpdater' PROTOCOL
+                """Update the progress bar's current value and/or label."""
+                nonlocal current_progress, current_label
+                current = label = None
+
+                if len(args) > 2:
+                    raise TypeError(f"update_progress() takes at most 2 positional arguments ({len(args)} given)")
+                elif len(args) >= 1:
+                    current = args[0]
+                    if len(args) >= 2:
+                        label = args[1]
+
+                if "current" in kwargs:
+                    if current is not None:
+                        raise TypeError("update_progress() got multiple values for argument 'current'")
+                    current = kwargs["current"]
+                if "label" in kwargs:
+                    if label is not None:
+                        raise TypeError("update_progress() got multiple values for argument 'label'")
+                    label = kwargs["label"]
+
+                if unexpected := set(kwargs.keys()) - {"current", "label"}:
+                    raise TypeError(f"update_progress() got unexpected keyword argument(s): {', '.join(unexpected)}")
+
+                if current is None and label is None:
+                    raise TypeError("At least one of 'current' or 'label' must be provided")
+
+                if current is not None:
+                    current_progress = current
+                if label is not None:
+                    current_label = label
+
+                self.show_progress(current_progress, total, current_label)
 
             yield update_progress
         except Exception:

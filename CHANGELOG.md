@@ -27,6 +27,7 @@
   <code>reset_ansi: *bool* = True</code> whether to reset all ANSI formatting after pausing/exiting or not
 * made the type hints and value checks for `Console.get_args()` more strict
 * you can now insert horizontal rules inside a `Console.log_box_bordered()` by putting `{hr}` in the text
+* made it possible to also update the title within a `ProgressBar.progress_context()` using the returned callable with the new kwarg `label`
 
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
