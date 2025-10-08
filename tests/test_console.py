@@ -67,8 +67,8 @@ def test_console_size(mock_terminal_size):
 
 
 @pytest.mark.parametrize(
+    # CASES WITHOUT SPACES (allow_spaces=False)
     "argv, find_args, expected_args_dict", [
-        # --- CASES WITHOUT SPACES (allow_spaces=False) ---
         # NO ARGS PROVIDED
         (["script.py"], {"file": ["-f"], "debug": ["-d"]
                          }, {"file": {"exists": False, "value": None}, "debug": {"exists": False, "value": None}}),
@@ -88,6 +88,11 @@ def test_console_size(mock_terminal_size):
         # TWO FLAGS
         (["script.py", "-f", "-d"], {"file": ["-f"], "debug": ["-d"]
                                      }, {"file": {"exists": True, "value": None}, "debug": {"exists": True, "value": None}}),
+        # CASE SENSITIVE FLAGS
+        (["script.py", "-i", "input.txt", "-I", "ignore"], {"input": ["-i"], "ignore": ["-I"], "help": ["-h"]}, {
+            "input": {"exists": True, "value": "input.txt"}, "ignore": {"exists": True, "value": "ignore"}, "help":
+            {"exists": False, "value": None}
+        }),
         # NUMERIC VALUE
         (["script.py", "-n", "123"], {"num": ["-n"]}, {"num": {"exists": True, "value": 123}}),
         # BOOLEAN VALUE (True)
@@ -114,15 +119,17 @@ def test_console_size(mock_terminal_size):
         # VALUE OVERRIDES DEFAULT (int)
         (["script.py", "-m", "2"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": 2}}),
         # FLAG PRESENCE OVERRIDES DEFAULT (int -> None)
-        (["script.py", "-m"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": None}}
-         ),  # --- MIXED list/tuple AND dict FORMATS (allow_spaces=False) ---
+        (["script.py", "-m"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": None}}),
+
+        # --- MIXED list/tuple AND dict FORMATS (allow_spaces=False) ---
         # DICT VALUE PROVIDED, LIST NOT PROVIDED
         (["script.py", "--config", "dev.cfg"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]},
          {"config": {"exists": True, "value": "dev.cfg"}, "log": {"exists": False, "value": None}}),
         # LIST FLAG PROVIDED, DICT NOT PROVIDED (USES DEFAULT)
-        (["script.py", "-l"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]}, {
-            "config": {"exists": False, "value": "prod.cfg"}, "log": {"exists": True, "value": None}
-        }),  # --- 'before' / 'after' SPECIAL CASES ---
+        (["script.py", "-l"], {"config": {"flags": ["-c", "--config"], "default": "prod.cfg"}, "log": ["-l"]
+                               }, {"config": {"exists": False, "value": "prod.cfg"}, "log": {"exists": True, "value": None}}),
+
+        # --- 'before' / 'after' SPECIAL CASES ---
         # 'before' SPECIAL CASE
         (["script.py", "arg1", "arg2", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
          {"before": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
@@ -133,6 +140,20 @@ def test_console_size(mock_terminal_size):
          {"after": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
         (["script.py", "-f", "file.txt"], {"after": "after", "file": ["-f"]},
          {"after": {"exists": False, "value": []}, "file": {"exists": True, "value": "file.txt"}}),
+
+        # --- CUSTOM PREFIX TESTS ---
+        # COLON AND SLASH PREFIXES
+        (["script.py", ":config", "dev.json", "/output", "result.txt"], {"config": [":config"], "output": ["/output"]},
+         {"config": {"exists": True, "value": "dev.json"}, "output": {"exists": True, "value": "result.txt"}}),
+        # WORD FLAGS WITHOUT PREFIXES
+        (["script.py", "verbose", "help", "123"], {"verbose": ["verbose"], "help": ["help"], "number": ["-n"]}, {
+            "verbose": {"exists": True, "value": None}, "help": {"exists": True, "value": 123}, "number":
+            {"exists": False, "value": None}
+        }),
+        # MIXED CUSTOM PREFIXES WITH DEFAULTS
+        (["script.py", "@user", "admin"], {
+            "user": {"flags": ["@user"], "default": "guest"}, "mode": {"flags": ["++mode"], "default": "normal"}
+        }, {"user": {"exists": True, "value": "admin"}, "mode": {"exists": False, "value": "normal"}}),
     ]
 )
 def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
@@ -153,8 +174,8 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
 
 
 @pytest.mark.parametrize(
+    # CASES WITH SPACES (allow_spaces=True)
     "argv, find_args, expected_args_dict", [
-        # --- CASES WITH SPACES (allow_spaces=True) ---
         # SIMPLE VALUE WITH SPACES
         (["script.py", "-f", "file with spaces", "-d"], {"file": ["-f"], "debug": ["-d"]},
          {"file": {"exists": True, "value": "file with spaces"}, "debug": {"exists": True, "value": None}}),
@@ -166,6 +187,9 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
          {"message": {"exists": True, "value": "this is a message"}, "flag": {"exists": True, "value": None}}),
         # VALUE WITH SPACES AT THE END
         (["script.py", "-m", "end", "of", "args"], {"message": ["-m"]}, {"message": {"exists": True, "value": "end of args"}}),
+        # CASE SENSITIVE FLAGS WITH SPACES
+        (["script.py", "-t", "this is", "a test", "-T", "UPPERCASE"], {"text": ["-t"], "title": ["-T"]},
+         {"text": {"exists": True, "value": "this is a test"}, "title": {"exists": True, "value": "UPPERCASE"}}),
 
         # --- CASES WITH DEFAULTS (dict FORMAT, allow_spaces=True) ---
         # VALUE WITH SPACE OVERRIDES DEFAULT
@@ -187,6 +211,14 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
         # LIST VALUE WITH SPACES, dict NOT PROVIDED (USES DEFAULT)
         (["script.py", "-f", "another file"], {"file": ["-f"], "mode": {"flags": ["--mode"], "default": "prod"}},
          {"file": {"exists": True, "value": "another file"}, "mode": {"exists": False, "value": "prod"}}),
+
+        # --- CUSTOM PREFIX TESTS WITH SPACES ---
+        # QUESTION MARK AND DOUBLE PLUS PREFIXES WITH MULTIWORD VALUES
+        (["script.py", "?help", "show", "detailed", "info", "++mode", "test"], {"help": ["?help"], "mode": ["++mode"]},
+         {"help": {"exists": True, "value": "show detailed info"}, "mode": {"exists": True, "value": "test"}}),
+        # AT SYMBOL PREFIX WITH SPACES
+        (["script.py", "@message", "Hello", "World", "How", "are", "you"
+          ], {"message": ["@message"]}, {"message": {"exists": True, "value": "Hello World How are you"}}),
     ]
 )
 def test_get_args_with_spaces(monkeypatch, argv, find_args, expected_args_dict):

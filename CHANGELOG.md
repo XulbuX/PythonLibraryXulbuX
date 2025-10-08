@@ -22,9 +22,9 @@
 * fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems
 * the `Console.get_args()` method will now treat everything as values (*even if it starts with* `-` *or* `--`) unless it's specified in the `find_args` param
 * reordered the params of `Console.pause_exit()` to be more logical
-* added two new param to all the `Console.log()` presets:<br>
-  <code>exit_code: *int* = 0</code> the exit code to use if `exit` is true
-  <code>reset_ansi: *bool* = True</code> whether to reset all ANSI formatting after pausing/exiting or not
+* added two new params to all the `Console.log()` presets:<br>
+  - <code>exit_code: *int* = 0</code> the exit code to use if `exit` is true
+  - <code>reset_ansi: *bool* = True</code> whether to reset all ANSI formatting after pausing/exiting or not
 * made the type hints and value checks for `Console.get_args()` more strict
 * you can now insert horizontal rules inside a `Console.log_box_bordered()` by putting `{hr}` in the text
 * made it possible to also update the title within a `ProgressBar.progress_context()` using the returned callable with the new kwarg `label`
