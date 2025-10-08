@@ -228,19 +228,16 @@ def test_get_args_invalid_alias():
 
 
 def test_get_args_invalid_config():
-    with pytest.raises(
-            TypeError, match=
-            "Invalid configuration type for alias 'bad_config'. Must be a list, tuple, dict or literal 'before' / 'after'."):
+    with pytest.raises(TypeError, match="Invalid configuration type for alias 'bad_config'. "
+                       "Must be a list, tuple, dict or literal 'before' / 'after'."):
         Console.get_args({"bad_config": 123})  # type: ignore[assignment]
 
     with pytest.raises(ValueError,
                        match="Invalid configuration for alias 'missing_flags'. Dictionary must contain a 'flags' key."):
         Console.get_args({"missing_flags": {"default": "value"}})  # type: ignore[assignment]
 
-    with pytest.raises(
-            ValueError, match=
-            "Invalid configuration for alias 'bad_flags'. Dictionary must contain a 'default' key. Use a simple list/tuple if no default value is needed."
-    ):
+    with pytest.raises(ValueError, match="Invalid configuration for alias 'bad_flags'. "
+                       "Dictionary must contain a 'default' key. Use a simple list/tuple if no default value is needed."):
         Console.get_args({"bad_flags": {"flags": ["--flag"]}})  # type: ignore[assignment]
 
     with pytest.raises(ValueError, match="Invalid 'flags' for alias 'bad_flags'. Must be a list or tuple."):
