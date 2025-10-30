@@ -503,6 +503,7 @@ from XulbuX import rgb, hsl, hexa
   </tbody>
 </table>
 
+<br>
 
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
   <a href="#top" title="scroll to top">
