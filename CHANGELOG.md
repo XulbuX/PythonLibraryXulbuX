@@ -1,5 +1,5 @@
 <div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
-  <a href="#release"><abbr title="go to bottom" style="text-decoration:none">
+  <a href="#release" title="scroll to bottom">
     <div style="
       font-size: 2em;
       font-weight: bold;
@@ -8,7 +8,7 @@
       text-align: center;
       justify-content: center;
     "><span style="display:none">go to bottom </span>🠫</div>
-  </abbr></a>
+  </a>
 </div>
 
 
@@ -505,7 +505,7 @@ from XulbuX import rgb, hsl, hexa
 
 
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
-  <a href="#top"><abbr title="go to top" style="text-decoration:none">
+  <a href="#top" title="scroll to top">
     <div style="
       font-size: 2em;
       font-weight: bold;
@@ -514,5 +514,5 @@ from XulbuX import rgb, hsl, hexa
       text-align: center;
       justify-content: center;
     "><span style="display:none">go to top </span>🠩</div>
-  </abbr></a>
+  </a>
 </div>
