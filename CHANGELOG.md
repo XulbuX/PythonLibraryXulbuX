@@ -7,7 +7,7 @@
       border-radius: 0.2em;
       text-align: center;
       justify-content: center;
-    "><span style="display:none">go to bottom </span>🠫</div>
+    "><span style="display:none">scroll to bottom </span>🠫</div>
   </a>
 </div>
 
@@ -513,6 +513,6 @@ from XulbuX import rgb, hsl, hexa
       border-radius: 0.2em;
       text-align: center;
       justify-content: center;
-    "><span style="display:none">go to top </span>🠩</div>
+    "><span style="display:none">scroll to top </span>🠩</div>
   </a>
 </div>
