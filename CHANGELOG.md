@@ -285,7 +285,7 @@
 <span id="v1-5-6" />
 
 ## 11.11.2024 `v1.5.6`
-* moved the whole library to its own repository: [PythonLibraryXulbuX](https://github.com/XulbuX/PythonLibraryXulbuX)
+* moved the whole library to its own repository: **[PythonLibraryXulbuX](https://github.com/XulbuX/PythonLibraryXulbuX)**
 * updated all connections and links
 
 <span id="v1-5-5" />
