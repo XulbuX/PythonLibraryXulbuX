@@ -14,6 +14,8 @@
 
 # <br><b>Changelog</b><br>
 
+<span id="v1-8-3" />
+
 ## 08.10.2025 `v1.8.3`
 * adjusted the look of the prompts and inputs of the `System.check_libs()` method
 * added a new param to `System.check_libs()`:<br>
@@ -29,6 +31,8 @@
 * you can now insert horizontal rules inside a `Console.log_box_bordered()` by putting `{hr}` in the text
 * made it possible to also update the title within a `ProgressBar.progress_context()` using the returned callable with the new kwarg `label`
 
+<span id="v1-8-2" />
+
 ## 11.09.2025 `v1.8.2`
 * the client command `xulbux-help` now tells you that there's a newer version of the library available, if you're not using the latest version
 * added two new params to `Console.input()`:
@@ -41,6 +45,8 @@
 * added the missing tests for methods in the `console` module
 * added test for the last two modules that didn't have test until now: `regex` and `system`
 
+<span id="v1-8-1" />
+
 ## 20.08.2025 `v1.8.1`
 * **fixed a critical bug which caused the package to not install properly and make the whole library not work**
 * renamed the param `_console_tabsize` form the method `Console.log()` to `tab_size`, and it will now just set the size for the log directly instead of specifying, what the console's tab size is
@@ -48,6 +54,8 @@
 * added two new params to `Console.log()`:
   - <code>title_px: *int* = 1</code> the horizontal padding (*in chars*) to the title (*if* `title_bg_color` *is set*)
   - <code>title_mx: *int* = 2</code> the horizontal margin (*in chars*) to the title
+
+<span id="v1-8-0" />
 
 ## 28.08.2025 `v1.8.0` **⚠️This release is broken!**
 * new options for the param `find_args` from the method `Console.get_args()`:
@@ -64,11 +72,15 @@
 * removed the wildcard imports from the `__init__.py` file, so now you can only access the main classes directly with `from xulbux import …` and for the rest you have to import the specific module first
 * now `prompt` from `Console.pause_exit()` also supports custom formatting codes and the method new pauses per default (*without exiting*)
 
+<span id="v1-7-3" />
+
 ## 29.07.2025 `v1.7.3`
 * removed the param `title_bg_color` from the `Console.log()` preset methods, since that is part of the preset and doesn't need to be changed by the user
 * added a new param to the methods `Console.log_box_filled()` and `Console.log_box_bordered()`:<br>
   <code>indent: *int* = 0</code> the indentation of the box (in chars)
 * fixed a bug in `Console.log_box_filled()` where the box background color would sometimes not stop at the box's edge, but would continue to the end of the console line
+
+<span id="v1-7-2" />
 
 ## 17.06.2025 `v1.7.2`
 * the `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error
@@ -76,6 +88,8 @@
 * upgraded the speed of `FormatCodes.to_ansi()` by adding the internal ability to skip the `default_color` validation
 * fixed type hints for the whole library
 * fixed a small bug in `Console.pause_exit()`, where the key, pressed to unpause wasn't suppressed, so it was written into the next console input after unpausing
+
+<span id="v1-7-1" />
 
 ## 11.06.2025 `v1.7.1`
 * fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch
@@ -86,11 +100,15 @@
 * you can now use default console colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()`
 * the methods `Console.log_box_filled()` and `Console.log_box_bordered()` no longer right-strip spaces, so you can make multiple log boxes the same width, by adding spaces to the end of the text
 
+<span id="v1-7-0" />
+
 ## 28.05.2025 `v1.7.0`
 * fixed a small bug in `Console.log()` where empty linebreaks where removed
 * corrected and added missing type hints for the whole library
 * fixed possibly unbound variables for the whole library
 * updated the client command `xx-help`
+
+<span id="v1-6-9" />
 
 ## 30.04.2025 `v1.6.9`
 * changed the params in `Json.create()`:
@@ -102,11 +120,13 @@
 * renamed param `correct_path` in `Path.extend()` and param `correct_paths` in `File.extend_or_make_path()` to `use_closest_match`, since this name describes its functionality better
 * moved the method `extend_or_make_path()` from the `xx_file` module to the `xx_path` module and renamed it to `extend_or_make()`
 * added a new param to method `Color.luminance()` and to the `.grayscale()` method of all color types:
-  - <code>method: *str* = "wcag2"</code> the luminance calculation method to use
+  <code>method: *str* = "wcag2"</code> the luminance calculation method to use
 * added a new param to the method `File.rename_extension()`:
-  - <code>full_extension: *bool* = False</code> whether to treat everything behind the first `.` as the extension or everything behind the last `.`
+  <code>full_extension: *bool* = False</code> whether to treat everything behind the first `.` as the extension or everything behind the last `.`
 * fixed a small bug in `Console.log_box()` where the leading spaces where removed from the box content
 * you can now assign default values to args in `Console.get_args()`
+
+<span id="v1-6-8" />
 
 ## 18.03.2025 `v1.6.8`
 * made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`)
@@ -123,6 +143,8 @@
 * added a new param to the method `Console.get_args()`:<br>
   <code>allow_spaces: *bool* = False</code> whether to take spaces as separator of arg values or as part of an arg value
 
+<span id="v1-6-7" />
+
 ## 26.02.2025 `v1.6.7`
 * restructured the object returned from `Console.get_args()`:<br>
   before, you accessed an arg's result with `args["<arg_alias>"]["value"]` and `args["<arg_alias>"]["exists"]`<br>
@@ -132,11 +154,13 @@
 * the method `File.create()` now throws a custom `SameContentFileExistsError` exception if a file with the same name and content already exists
 * added a bunch more docstrings to class properties and library constants
 
+<span id="v1-6-6" />
+
 ## 17.02.2025 `v1.6.6`
 * added a new method `Console.multiline_input()`
 * added two new params to the method `Console.log_box()`:<br>
-  <code>w_padding: *int* = 2</code> the horizontal padding (*in chars*) to the box content<br>
-  <code>w_full: *bool* = False</code> whether to make the box be the full console width or not
+  - <code>w_padding: *int* = 2</code> the horizontal padding (*in chars*) to the box content<br>
+  - <code>w_full: *bool* = False</code> whether to make the box be the full console width or not
 * fixed a small bug in `Data.print()` where two params passed to `Data.to_str()` where swapped, which caused an error
 * the method `Data.print()` now per default syntax highlights the console output:<br>
   the syntax highlighting colors and styles can be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {...}</code>
@@ -154,18 +178,24 @@
 * added a new param to `Console.log()` (*and therefore also to every* `Console.log()` *preset*):<br>
   <code>format_linebreaks: *bool* = True</code> indents the text after every linebreak to the level of the previous text, whe set to `True`
 
+<span id="v1-6-5" />
+
 ## 29.01.2025 `v1.6.5`
 * now the method `FormatCodes.to_ansi()` automatically converts the param `string` to a *`str`* if it isn't one already
 * added a new method `FormatCodes.remove_codes()`
 * added a new method `FormatCodes.remove_ansi()`
 * added a new method `Console.log_box()`
 * changed the default values of two params in the `Console.log()` method and every log preset:<br>
-  <code>start: *str* = "\n"</code> has been changed to <code>start: *str* = ""</code><br>
-  <code>end: *str* = "\n\n"</code> has been changed to <code>end: *str* = "\n"</code>
+  - <code>start: *str* = "\n"</code> has been changed to <code>start: *str* = ""</code><br>
+  - <code>end: *str* = "\n\n"</code> has been changed to <code>end: *str* = "\n"</code>
 * added the params <code>start: *str* = ""</code>, <code>end: *str* = "\n"</code> and <code>default_color: *rgba* | *hexa* = DEFAULT.color["cyan"]</code> to `Console.restricted_input()` and `Console.pwd_input()`
+
+<span id="v1-6-4" />
 
 ## 22.01.2025 `v1.6.4`
 * **fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`**
+
+<span id="v1-6-3" />
 
 ## 22.01.2025 `v1.6.3` **⚠️This release is broken!**
 * fixed a small bug in `xx_format_codes`:<br>
@@ -175,6 +205,8 @@
   if this param is true and a bracket is inside a string (e.g. `'...'` or `"..."`), it will not be counted as the matching closing bracket
 * removed `lru_cache` from the `xx_format_codes` module's internal methods, since it was unnecessary
 * adjusted `FormatCodes.__config_console()` so it can only be called once per process
+
+<span id="v1-6-2" />
 
 ## 20.01.2025 `v1.6.2`
 * moved the method `is_admin()` from `xx_console` to `xx_system`
@@ -187,6 +219,8 @@
 * added a new param <code>reset_ansi: *bool* = False</code> to `FormatCodes.input()`:<br>
   if this param is true, all formatting will be reset after the user confirmed the input and the program continues
 
+<span id="v1-6-1" />
+
 ## 15.01.2025 `v1.6.1`
 * changed the order the params in `File.create()`:<br>
   until now the param <code>content: *str* = ""</code> was the first param and <code>file: *str* = ""</code>
@@ -198,10 +232,14 @@
 * adjusted the usages of `File.create()` and `File.make_path()` inside `xx_json` accordingly
 * removed all line breaks and other Markdown formatting from docstrings, since not all IDEs support them
 
+<span id="v1-6-0" />
+
 ## 07.01.2025 `v1.6.0`
 * fixed a small bug in `to_camel_case()` in the `xx_string` module:<br>
   previously, it would return only the first part of the decomposed string
   now it correctly returns all decomposed string parts, joined in CamelCase
+
+<span id="v1-5-9" />
 
 ## 21.12.2024 `v1.5.9`
 * fixed bugs in method `to_ansi()` in module `xx_format_codes`:<br>
@@ -214,6 +252,8 @@
 * a lot of updates in the Wiki and README
 * fixed a small bug in the help client-command:<br>
   added back the default text color
+
+<span id="v1-5-8" />
 
 ## 21.11.2024 `v1.5.8`
 * renamed the library from `XulbuX` to `xulbux` for better naming conventions
@@ -229,6 +269,8 @@
 * Added a `hexa_str()` preset to the `xx_regex` module
 * introduced a new test for the methods from the `Color` class in `xx_color`
 
+<span id="v1-5-7" />
+
 ## 15.11.2024 `v1.5.7`
 * change the testing modules to be able to run together with the library `pytest`
 * added formatting checks, using `black`, `isort` and `flake8`
@@ -240,15 +282,19 @@
 * added additional tests for the custom color types
 * updated the whole `xx_format_codes` module for more efficiency and speed
 
+<span id="v1-5-6" />
+
 ## 11.11.2024 `v1.5.6`
 * moved the whole library to its own repository: [PythonLibraryXulbuX](https://github.com/XulbuX/PythonLibraryXulbuX)
 * updated all connections and links
 
+<span id="v1-5-5" />
+
 ## 11.11.2024 `v1.5.5`
 * added methods to get the width and height of the console (*in characters and lines*):<br>
-  <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
-  <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
-  <code>Cmd.wh() -> tuple[*int*, *int*]</code> a tuple with width and height
+  - <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
+  - <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
+  - <code>Cmd.wh() -> tuple[*int*, *int*]</code> a tuple with width and height
 * added the method <code>split_count(*string*, *count*) -> list[*str*]</code> to `xx_string`
 * added doc-strings to every method in `xx_string`
 * updated the `Cmd.restricted_input()` method:
@@ -258,6 +304,8 @@
   - not the prompt supports custom format codes
 * added required non-standard libraries to the project file
 * added more metadata to the project file
+
+<span id="v1-5-4" />
 
 ## 06.11.2024 `v1.5.4`
 * made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
@@ -270,21 +318,25 @@
   would get the path to the temporary extracted directory, which is created when running the EXE file<br>
   now it gets the actual base directory of the currently running file
 
+<span id="v1-5-3" />
+
 ## 30.10.2024 `v1.5.3`
 * restructured the values in `_consts_.py`
 * added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
 * added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
-* refactored the whole library's code after the [`PEPs`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
+* refactored the whole library's code after the [`PEPs`](https://peps.python.org) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
   - changed the indent to 4 spaces
   - no more inline control statements (*except it's only a tiny statement and body*)
 * added new methods to `Color`:<br>
-  <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
-  <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
-  <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
+  - <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
+  - <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
+  - <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
 * fixed the `grayscale()` method of `rgba()`, `hsla()` and `hexa()`:<br>
   the method would previously just return the color, fully desaturated (*not grayscale*)<br>
   now this is fixed, and the method uses the luminance formula, to get the actual grayscale value
 * all the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
+
+<span id="v1-5-2" />
 
 ## 28.10.2024 `v1.5.2`
 * new parameter <code>correct_path:*bool*</code> in `Path.extend()`:
@@ -297,6 +349,8 @@
   previously, it would return `True` if the alpha channel was `None`<br>
   now in such cases it will return `False`
 
+<span id="v1-5-1" />
+
 ## 28.10.2024 `v1.5.1`
 * renamed all library files for a better naming convention
 * now all methods in `xx_color` support both HEX prefixes (`#` *and* `0x`)
@@ -304,11 +358,13 @@
 * fixed bug when initializing a `hexa()` object:<br>
   would throw an error, even if the color was valid
 
+<span id="v1-5-0" />
+
 ## 27.10.2024 `v1.5.0`
 * split all classes into separate files, so users can download only parts of the library more easily
 * added a `__help__.py` file, which will show some information about the library and how to use it, when it's run as a script or when the `help()` function is called
 * added a lot more metadata to the library:<br>
-  `__version__` (*was already added in update [v1.4.2](#update-1-4-2)*)<br>
+  `__version__` (*was already added in update [v1.4.2](#v1-4-2)*)<br>
   `__author__`<br>
   `__email__`<br>
   `__license__`<br>
@@ -317,19 +373,25 @@
   `__description__`<br>
   `__all__`
 
-## <span id="update-1-4-2">27.10.2024 `v1.4.2` `v1.4.3`</span>
+<span id="v1-4-2" /><span id="v1-4-3" />
+
+## 27.10.2024 `v1.4.2` `v1.4.3`
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`
 * removed unnecessary parts when checking for missing required libraries
 * you can now get the libraries current version by accessing the attribute `XulbuX.__version__`
 
+<span id="v1-4-1" />
+
 ## 26.10.2024 `v1.4.1`
 * added methods to each color type:<br>
-  <code>is_grayscale() -> *self*</code><br>
-  <code>is_opaque() -> *self*</code>
+  - <code>is_grayscale() -> *self*</code><br>
+  - <code>is_opaque() -> *self*</code>
 * added additional error checking to the color types
 * made error messages for the color types clearer
 * updated the <code>blend(*other*, *ratio*)</code> method of all color types to use additive blending except for the alpha-channel
 * fixed problem with method-chaining for all color types
+
+<span id="v1-4-0" />
 
 ## 25.10.2024 `v1.4.0`
 * huge update to the custom color types:
@@ -348,8 +410,12 @@
     <code>with_alpha(*alpha*) -> *self*</code><br>
     <code>complementary() -> *self*</code>
 
+<span id="v1-3-1" />
+
 ## 23.10.2024 `v1.3.1`
 * now rounds the alpha channel to maximal 2 decimals, if converting from `hexa()` to `rgba()` or `hsla()` 
+
+<span id="v1-3-0" />
 
 ## 21.10.2024 `v1.3.0`
 * fixed the custom types `rgba()`, `hsla()` and `hexa()`:<br>
@@ -370,46 +436,70 @@
 * set default value for param `allow_alpha:bool` to `True` for methods:<br>
   `Color.is_valid_rgba()`, `Color.is_valid_hsla()`, `Color.is_valid_hexa()`, `Color.is_valid()`
 
+<span id="v1-2-4" /><span id="v1-2-5" />
+
 ## 18.10.2024 `v1.2.4` `v1.2.5`
 * renamed the class `rgb()` to `rgba()` to communicate, more clearly, that it supports an alpha channel
 * renamed the class `hsl()` to `hsla()` to communicate, more clearly, that it supports an alpha channel
 * added more info to the `README.md` as well as additional links
 * adjusted the structure inside `CHANGELOG.md` for a better overview and readability
 
+<span id="v1-2-3" />
+
 ## 18.10.2024 `v1.2.3`
 * added project links to the Python-project-file
 * `CHANGELOG.md` improvements
 * `README.md` improvements
+
+<span id="v-1-2-1" /><span id="v-1-2-2" />
 
 ## 18.10.2024 `v1.2.1` `v1.2.2`
 * fixed bug in method <code>Path.get(*base_dir*=True)</code>:<br>
   Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
   This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
 
+<span id="v1-2-0" />
+
 ## 17.10.2024 `v1.2.0`
 * new method in the `Path` class: `Path.remove()`
+
+<span id="v1-1-9" />
 
 ## 17.10.2024 `v1.1.9`
 * corrected the naming of classes to comply with Python naming standards
 
+<span id="v1-1-8" />
+
 ## 17.10.2024 `v1.1.8`
 * added support for all OSes to the OS-dependent methods
+
+<span id="v1-1-6" /><span id="v1-1-7" />
 
 ## 17.10.2024 `v1.1.6` `v1.1.7`
 * fixed the `Cmd.cls()` method:<br>
   There was a bug where, on Windows 10, the ANSI formats weren't cleared.
 
+<span id="v-1-1-4" /><span id="v-1-1-5" />
+
 ## 17.10.2024 `v1.1.4` `v1.1.5`
 * added link to `CHANGELOG.md` to the `README.md` file
+
+<span id="v1-1-3" />
 
 ## 17.10.2024 `v1.1.3`
 * changed the default value of the param `compactness:int` in the method `Data.print()` to `1` instead of `0`
 
+<span id="v-1-1-1" /><span id="v-1-1-2" />
+
 ## 17.10.2024 `v1.1.1` `v1.1.2`
 * adjusted the library's description
 
+<span id="v1-1-0" />
+
 ## 16.10.2024 `v1.1.0`
 * made it possible to also auto-reset the color and not only the predefined formats, using the [auto-reset-format](#auto-reset-format) (`[format](Automatically resetting)`)
+
+<span id="v1-0-9" />
 
 ## 16.10.2024 `v1.0.9`
 * added a library description, which gets shown if it's ran directly
@@ -424,9 +514,13 @@
   ```
   prints: <code><u>(Automatically resetting) following text</u></code>
 
+<span id="v-1-0-7" /><span id="v-1-0-8" />
+
 ## 16.10.2024 `v1.0.7` `v1.0.8`
 * added `input()` method to the `FormatCodes` class, so you can make pretty looking input prompts
 * added warning for no network connection when trying to [install missing libraries](#improved-lib-importing)
+
+<span id="v1-0-6" />
 
 ## 15.10.2024 `v1.0.6`
 * <span id="improved-lib-importing">improved **$\color{#8085FF}\textsf{XulbuX}$** library importing:</span><br>
@@ -434,14 +528,18 @@
 * moved constant variables into a separate file
 * fixed issue where configuration file wasn't created and loaded correctly
 
+<span id="v1-0-1" /><span id="v1-0-2" /><span id="v1-0-3" /><span id="v1-0-4" /><span id="v1-0-5" />
+
 ## 15.10.2024 `v1.0.1` `v1.0.2` `v1.0.3` `v1.0.4` `v1.0.5`
 * fixed `f-string` issues for Python 3.10:<br>
   **1:** no use of same quotes inside f-strings<br>
   **2:** no backslash escaping in f-strings
 
-## <span id="release">14.10.2024 `v1.0.0`</span>
-$\color{#F90}\Huge\textsf{RELEASE!\ 🤩🎉}$<br>
-**at release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
+<span id="release" /><span id="v1-0-0" />
+
+## 14.10.2024 `v1.0.0`
+$\color{#F90}\Huge\textsf{INITIAL RELEASE!\ 🤩🎉}$<br>
+**At initial release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
 ```python
 # GENERAL LIBRARY
 import XulbuX as xx
