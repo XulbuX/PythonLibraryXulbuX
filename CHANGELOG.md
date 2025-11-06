@@ -324,7 +324,7 @@
 * restructured the values in `_consts_.py`
 * added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
 * added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
-* refactored the whole library's code after the [`PEPs`](https://peps.python.org) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
+* refactored the whole library's code after the **[PEPs](https://peps.python.org)** and **[The Zen of Python](https://peps.python.org/pep-0020/#the-zen-of-python)** 🫡:
   - changed the indent to 4 spaces
   - no more inline control statements (*except it's only a tiny statement and body*)
 * added new methods to `Color`:<br>
@@ -487,7 +487,7 @@
 <span id="v1-1-3" />
 
 ## 17.10.2024 `v1.1.3`
-* changed the default value of the param `compactness:int` in the method `Data.print()` to `1` instead of `0`
+* changed the default value of the param <code>compactness: *int*</code> in the method `Data.print()` to `1` instead of `0`
 
 <span id="v-1-1-1" /><span id="v-1-1-2" />
 
