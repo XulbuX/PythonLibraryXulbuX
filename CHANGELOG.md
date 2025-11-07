@@ -54,7 +54,7 @@
 <span id="v1-8-1" />
 
 ## 20.08.2025 `v1.8.1`
-* **fixed a critical bug which caused the package to not install properly and make the whole library not work**
+* **<u>HOTFIX:</u> fixed a critical bug which caused the package to not install properly and make the whole library not work**
 * renamed the param `_console_tabsize` form the method `Console.log()` to `tab_size`, and it will now just set the size for the log directly instead of specifying, what the console's tab size is
 * fixed several small bugs regarding the tabs and text wrapping inside `Console.log()`
 * added two new params to `Console.log()`:
@@ -199,7 +199,7 @@
 <span id="v1-6-4" />
 
 ## 22.01.2025 `v1.6.4`
-* **fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`**
+* **<u>HOTFIX:</u> fixed a heavy bug, where the library could not be imported after the last update, because of a bug in `xx_format_codes`**
 
 <span id="v1-6-3" />
 
