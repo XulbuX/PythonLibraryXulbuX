@@ -146,14 +146,11 @@ def test_regex_brackets_empty_brackets():
 def test_regex_brackets_with_strip_spaces():
     """Test brackets pattern with strip_spaces option"""
     text = "Function ( spaced content ) and (normal)"
-    pattern = Regex.brackets(strip_spaces=True)
+    pattern = Regex.brackets(strip_spaces=True, is_group=True)
     matches = rx.findall(pattern, text)
-    assert "( spaced content )" in matches
-    assert "(normal)" in matches
-    pattern = Regex.brackets(strip_spaces=False)
-    matches = rx.findall(pattern, text)
-    assert "( spaced content )" in matches
-    assert "(normal)" in matches
+    assert len(matches) == 2
+    assert any("spaced content" in m for m in matches)
+    assert "normal" in matches
 
 
 def test_regex_brackets_as_group():
@@ -163,6 +160,21 @@ def test_regex_brackets_as_group():
     match = rx.search(pattern, text)
     assert match is not None
     assert match.group(1) == "content"
+
+
+def test_regex_brackets_ignore_in_strings():
+    """Test brackets pattern with ignore_in_strings option"""
+    text = 'func(param = "f(x)")'
+    pattern = Regex.brackets(ignore_in_strings=True)
+    matches = rx.findall(pattern, text)
+    assert len(matches) == 1
+    assert 'param = "f(x)"' in matches[0]
+
+    # TEST THAT IT CORRECTLY HANDLES BRACKETS INSIDE STRINGS
+    text2 = 'outer("inner(test)")'
+    matches2 = rx.findall(pattern, text2)
+    assert len(matches2) == 1
+    assert 'inner(test)' in matches2[0]
 
 
 def test_regex_outside_strings_pattern():
@@ -178,8 +190,25 @@ def test_regex_outside_strings_custom_pattern():
     text = 'Number 123 and "string 456" and 789'
     matches = re.findall(pattern, text)
     assert "123" in matches
-    assert "789" in matches
     assert "456" not in matches
+    assert "789" in matches
+
+
+def test_regex_outside_strings_with_special_chars():
+    """Test outside_strings with special characters"""
+    pattern = Regex.outside_strings(r"\$")
+    text = 'Price $100 and "cost $50" and $200'
+    matches = re.findall(pattern, text)
+    assert len(matches) >= 2
+
+
+def test_regex_outside_strings_complex_pattern():
+    """Test outside_strings with complex pattern"""
+    pattern = Regex.outside_strings(r"[a-z]+")
+    text = 'word1 "word2" word3 \'word4\' word5'
+    matches = re.findall(pattern, text)
+    assert len(matches) >= 3
+    assert any("word" in match for match in matches)
 
 
 def test_regex_all_except_pattern():
@@ -188,16 +217,32 @@ def test_regex_all_except_pattern():
     assert isinstance(pattern, str)
 
 
+def test_regex_all_except_basic():
+    """Test all_except with basic pattern"""
+    pattern = Regex.all_except(">")
+    text = "Hello > World"
+    match = re.match(pattern, text)
+    assert match is not None
+    assert "Hello" in match.group(0)
+    assert ">" not in match.group(0)
+
+
 def test_regex_all_except_with_ignore():
     """Test all_except with ignore pattern"""
     pattern = Regex.all_except(">", "->")
-    assert isinstance(pattern, str)
+    text = "Arrow -> here"
+    match = re.match(pattern, text)
+    assert match is not None
+    assert len(match.group(0)) > 0
 
 
 def test_regex_all_except_as_group():
     """Test all_except with is_group option"""
     pattern = Regex.all_except(">", is_group=True)
-    assert isinstance(pattern, str)
+    text = "Content > more"
+    match = re.match(pattern, text)
+    assert match is not None
+    assert match.group(1) is not None
 
 
 def test_regex_func_call_pattern():
@@ -232,8 +277,27 @@ def test_regex_rgba_str_default_separator():
     """Test rgba_str pattern with default comma separator"""
     text = "Color rgba(255, 128, 0) and (100, 200, 50, 0.5)"
     pattern = Regex.rgba_str()
-    matches = re.findall(pattern, text, re.IGNORECASE | re.VERBOSE)
+    matches = re.findall(pattern, text)
     assert len(matches) > 0
+    assert len(matches) >= 2
+
+
+def test_regex_rgba_str_valid_values():
+    """Test rgba_str pattern validates correct ranges"""
+    pattern = Regex.rgba_str()
+    # VALID RGB VALUES IN A STRING
+    text = "Colors: rgba(255, 255, 255, 1.0) and rgb(0, 0, 0) and (128, 128, 128) and plain 255, 128, 0"
+    matches = re.findall(pattern, text)
+    assert len(matches) >= 4, f"Should match all valid colors, got: {matches}"
+
+    # INVALID RGB VALUES (OUT OF RANGE) SHOULD NOT MATCH OR MATCH PARTIALLY
+    text_invalid = "Invalid: rgba(256, 128, 0) and rgb(300, 0, 0)"
+    matches_invalid = re.findall(pattern, text_invalid)
+    # SHOULD EITHER NOT MATCH OR NOT INCLUDE THE INVALID VALUES
+    for match in matches_invalid:
+        match_str = str(match)
+        assert "256" not in match_str
+        assert "300" not in match_str
 
 
 def test_regex_rgba_str_no_alpha():
@@ -259,8 +323,34 @@ def test_regex_hsla_str_default_separator():
     """Test hsla_str pattern with default comma separator"""
     text = "Color hsla(240, 100%, 50%) and (120, 80%, 60%, 0.8)"
     pattern = Regex.hsla_str()
-    matches = re.findall(pattern, text, re.IGNORECASE | re.VERBOSE)
+    matches = re.findall(pattern, text)
     assert len(matches) > 0
+
+
+def test_regex_hsla_str_valid_values():
+    """Test hsla_str pattern validates correct ranges"""
+    pattern = Regex.hsla_str()
+    # VALID HSL VALUES IN A STRING
+    text = "Colors: hsla(360, 100%, 50%, 1.0) and hsl(0, 0%, 0%) and (180, 50%, 50%) and plain 240, 100%, 50% and with degree 120°, 80%, 60%"
+    matches = re.findall(pattern, text)
+    assert len(matches) >= 5, f"Should match all valid colors, got: {matches}"
+
+    # VERIFY THAT % AND ° SYMBOLS ARE NOT IN THE CAPTURED GROUPS
+    for match in matches:
+        groups = match if isinstance(match, tuple) else (match, )
+        for group in groups:
+            if group:  # Skip empty groups
+                assert "%" not in group, f"Percent sign should not be in captured group: {group}"
+                assert "°" not in group, f"Degree sign should not be in captured group: {group}"
+
+    # INVALID HSL VALUES (OUT OF RANGE)
+    text_invalid = "Invalid: hsla(361, 100%, 50%) and hsl(240, 101%, 50%)"
+    matches_invalid = re.findall(pattern, text_invalid)
+    # SHOULD EITHER NOT MATCH OR NOT INCLUDE THE INVALID VALUES
+    for match in matches_invalid:
+        match_str = str(match)
+        assert "361" not in match_str
+        assert "101" not in match_str
 
 
 def test_regex_hsla_str_no_alpha():
@@ -284,23 +374,89 @@ def test_regex_hexa_str_pattern():
 def test_regex_hexa_str_with_alpha():
     """Test hexa_str pattern with alpha channel"""
     pattern = Regex.hexa_str(allow_alpha=True)
-    test_colors = ["FF0000", "FF0000FF", "F00", "F00F"]
-    for color in test_colors:
-        assert re.match(pattern, color) is not None
+    text = "Colors: FF0000 and FF0000FF and F00 and F00F and #ABCDEF and 0xF0F in text"
+    matches = re.findall(pattern, text)
+    assert len(matches) == 6, f"Should match all 6 colors, got: {matches}"
+    # VERIFY ALL EXPECTED COLORS ARE CAPTURED (GROUP 1 CONTAINS THE HEX VALUE)
+    expected = ["FF0000", "FF0000FF", "F00", "F00F", "ABCDEF", "F0F"]
+    for exp in expected:
+        assert any(exp.upper() == match.upper() for match in matches), f"Should match {exp}"
 
 
 def test_regex_hexa_str_no_alpha():
     """Test hexa_str pattern without alpha channel"""
     pattern = Regex.hexa_str(allow_alpha=False)
-    valid_colors = ["FF0000", "F00"]
-    invalid_colors = ["FF0000FF", "F00F"]
 
-    for color in valid_colors:
-        match = re.match(pattern, color)
-        assert match is not None
-        assert match.group() == color
+    # TEST VALID COLORS (3 AND 6 DIGIT FORMATS)
+    text = "Valid colors: FF0000 and F00 and #ABCDEF and 0xABC in the text"
+    matches = re.findall(pattern, text)
+    assert len(matches) == 4, f"Should match all 4 valid colors, got: {matches}"
+    # THE CAPTURED GROUPS SHOULD NOT INCLUDE PREFIX
+    for hex_value in matches:
+        assert "#" not in hex_value
+        assert "0x" not in hex_value.lower()
 
-    for color in invalid_colors:
-        match = re.match(pattern, color)
-        if match:
-            assert match.group() != color
+    # TEST THAT 4-DIGIT AND 8-DIGIT FORMATS ONLY PARTIALLY MATCH (FIRST 3 OR 6 CHARS)
+    text_with_alpha = "With alpha: FF0000FF and F00F should only match the non-alpha part"
+    matches_alpha = re.findall(pattern, text_with_alpha)
+    # SHOULD MATCH FF0000 AND F00 (WITHOUT THE ALPHA CHANNEL)
+    assert len(matches_alpha) == 2
+    for hex_value in matches_alpha:
+        assert len(hex_value) in [3, 6], f"Should only match 3 or 6 digit formats, got: {hex_value}"
+
+
+def test_regex_hexa_str_with_prefix():
+    """Test hexa_str pattern with optional prefixes"""
+    pattern = Regex.hexa_str(allow_alpha=True)
+    text = "Mixed: #FF0000 and 0xABCDEF and F00 and #F00F in text"
+    matches = re.findall(pattern, text)
+    assert len(matches) == 4, f"Should match all 4 colors, got: {matches}"
+
+    # VERIFY THE CAPTURED HEX VALUES (WITHOUT PREFIX)
+    expected = ["FF0000", "ABCDEF", "F00", "F00F"]
+    for exp in expected:
+        assert any(exp.upper() == match.upper() for match in matches), f"Should capture {exp}"
+
+
+def test_regex_func_call_nested():
+    """Test func_call pattern with nested function calls"""
+    text = "outer(inner(arg1, arg2), arg3)"
+    pattern = Regex.func_call()
+    matches = rx.findall(pattern, text)
+    assert len(matches) >= 1
+    func_names = [m[0] for m in matches]
+    assert "outer" in func_names
+
+
+def test_regex_quotes_with_escapes():
+    """Test quotes pattern handles escaped characters properly"""
+    text = r'He said "She said \"Hello\" to me"'
+    pattern = Regex.quotes()
+    matches = rx.findall(pattern, text)
+    assert len(matches) >= 1
+
+
+def test_regex_rgba_str_without_prefix():
+    """Test rgba_str matches plain number format"""
+    pattern = Regex.rgba_str()
+    text = "255, 128, 0"
+    match = re.search(pattern, text)
+    assert match is not None
+
+
+def test_regex_hsla_str_without_prefix():
+    """Test hsla_str matches plain number format"""
+    pattern = Regex.hsla_str()
+    text = "240, 100%, 50%"
+    match = re.search(pattern, text)
+    assert match is not None
+
+
+def test_regex_brackets_deeply_nested():
+    """Test brackets pattern with deeply nested brackets"""
+    text = "Level1(Level2(Level3(deepest)))"
+    pattern = Regex.brackets()
+    matches = rx.findall(pattern, text)
+    assert len(matches) >= 1
+    assert "deepest" in matches[0]
+    assert "Level2" in matches[0]

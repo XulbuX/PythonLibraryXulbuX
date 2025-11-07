@@ -42,22 +42,6 @@ def test_check_libs_decline_install(mock_input, mock_subprocess):
     mock_subprocess.assert_not_called()
 
 
-@pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test")
-def test_elevate_windows_already_elevated():
-    """Test elevate on Windows when already elevated"""
-    with patch.object(System, 'is_elevated', True):
-        result = System.elevate()
-        assert result is True
-
-
-@pytest.mark.skipif(os.name == 'nt', reason="POSIX-specific test")
-def test_elevate_posix_already_elevated():
-    """Test elevate on POSIX when already elevated"""
-    with patch.object(System, 'is_elevated', True):
-        result = System.elevate()
-        assert result is True
-
-
 @patch('xulbux.system._platform.system')
 @patch('xulbux.system._subprocess.check_output')
 @patch('xulbux.system._os.system')
@@ -87,3 +71,19 @@ def test_restart_unsupported_system(mock_subprocess, mock_platform):
     mock_subprocess.return_value = b"some output"
     with pytest.raises(NotImplementedError, match="Restart not implemented for `unknown`"):
         System.restart()
+
+
+@pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test")
+def test_elevate_windows_already_elevated():
+    """Test elevate on Windows when already elevated"""
+    with patch.object(System, 'is_elevated', True):
+        result = System.elevate()
+        assert result is True
+
+
+@pytest.mark.skipif(os.name == 'nt', reason="POSIX-specific test")
+def test_elevate_posix_already_elevated():
+    """Test elevate on POSIX when already elevated"""
+    with patch.object(System, 'is_elevated', True):
+        result = System.elevate()
+        assert result is True

@@ -14,6 +14,12 @@
 
 # <br><b>Changelog</b><br>
 
+<span id="v1-8-4" />
+
+## ... `v1.8.4`
+* adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups
+* fixed that `Regex.hexa_str()` couldn't match HEXA colors anywhere inside a string, but only if the whole string was just the HEXA color
+
 <span id="v1-8-3" />
 
 ## 08.10.2025 `v1.8.3`
