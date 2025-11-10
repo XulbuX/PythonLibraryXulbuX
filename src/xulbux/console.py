@@ -10,7 +10,7 @@ from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from typing import Generator, TypedDict, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, Any, overload, cast, Protocol
+from typing import Generator, TypedDict, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -78,18 +78,33 @@ class _ArgConfigWithDefault(TypedDict):
     default: Any
 
 
+class _ArgResultRegular(TypedDict):
+    """TypedDict for regular flagged argument results."""
+    exists: bool
+    value: Optional[str]
+
+
+class _ArgResultPositional(TypedDict):
+    """TypedDict for positional 'before'/'after' argument results."""
+    exists: bool
+    values: list[str]
+
+
 class ArgResult:
     """Represents the result of a parsed command-line argument and contains the following attributes:
     - `exists` -⠀if the argument was found or not
-    - `value` -⠀the value given with the found argument\n
+    - `value` -⠀the value given with the found argument as a string (only for regular flagged arguments)
+    - `values` -⠀the list of values for positional arguments (only for `"before"`/`"after"` arguments)\n
     --------------------------------------------------------------------------------------------------------
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, exists: bool, value: Any | list[Any]):
+    def __init__(self, exists: bool, value: Optional[str] = None, values: Optional[list[str]] = None):
         self.exists: bool = exists
         """Whether the argument was found or not."""
-        self.value: Any = value
-        """The value given with the found argument."""
+        self.value: Optional[str] = value
+        """The value given with the found argument as a string (only for regular flagged arguments)."""
+        self.values: list[str] = cast(list[str], values)
+        """The list of values for positional arguments (only for `"before"`/`"after"` arguments)."""
 
     def __bool__(self):
         return self.exists
@@ -100,11 +115,20 @@ class Args:
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
     Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs: dict[str, Any | list[Any]]):
+    def __init__(self, **kwargs: dict[str, str | list[str]]):
         for alias_name, data_dict in kwargs.items():
             if not alias_name.isidentifier():
                 raise TypeError(f"Argument alias '{alias_name}' is invalid. It must be a valid Python variable name.")
-            setattr(self, alias_name, ArgResult(exists=cast(bool, data_dict["exists"]), value=data_dict["value"]))
+            if "values" in data_dict:
+                setattr(
+                    self, alias_name,
+                    ArgResult(exists=cast(bool, data_dict["exists"]), values=cast(list[str], data_dict["values"]))
+                )
+            else:
+                setattr(
+                    self, alias_name,
+                    ArgResult(exists=cast(bool, data_dict["exists"]), value=cast(Optional[str], data_dict["value"]))
+                )
 
     def __len__(self):
         return len(vars(self))
@@ -120,13 +144,22 @@ class Args:
             return list(self.__iter__())[key]
         return getattr(self, key)
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
         for key, value in vars(self).items():
-            yield (key, {"exists": value.exists, "value": value.value})
+            if value.values is not None:
+                yield (key, _ArgResultPositional(exists=value.exists, values=value.values))
+            else:
+                yield (key, _ArgResultRegular(exists=value.exists, value=value.value))
 
-    def dict(self) -> dict[str, dict[str, Any]]:
+    def dict(self) -> dict[str, _ArgResultRegular | _ArgResultPositional]:
         """Returns the arguments as a dictionary."""
-        return {k: {"exists": v.exists, "value": v.value} for k, v in vars(self).items()}
+        result: dict[str, _ArgResultRegular | _ArgResultPositional] = {}
+        for k, v in vars(self).items():
+            if v.values is not None:
+                result[k] = _ArgResultPositional(exists=v.exists, values=v.values)
+            else:
+                result[k] = _ArgResultRegular(exists=v.exists, value=v.value)
+        return result
 
     def keys(self):
         """Returns the argument aliases as `dict_keys([...])`."""
@@ -136,10 +169,10 @@ class Args:
         """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
 
-    def items(self):
-        """Yields tuples of `(alias, {'exists': bool, 'value': Any})`."""
-        for key, value in self.__iter__():
-            yield (key, value)
+    def items(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
+        """Yields tuples of `(alias, _ArgResultRegular | _ArgResultPositional)`."""
+        for key, val in self.__iter__():
+            yield (key, val)
 
 
 class Console:
@@ -200,14 +233,15 @@ class Console:
         If the script is called via the command line:\n
         `python script.py Hello World -a1 "value1" --arg2 -f`\n
         ...it would return an `Args` object where:
-        - `args.text.exists` is `True`, `args.text.value` is `["Hello", "World"]`
+        - `args.text.exists` is `True`, `args.text.values` is `["Hello", "World"]`
         - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"`
-        - `args.arg2.exists` is `True`, `args.arg2.value` is `True` (flag present without value)
+        - `args.arg2.exists` is `True`, `args.arg2.value` is `None` (flag present without value)
         - `args.arg3.exists` is `False`, `args.arg3.value` is `None` (not present, no default)
-        - `args.arg4.exists` is `True`, `args.arg4.value` is `True` (flag present, overrides default)
+        - `args.arg4.exists` is `True`, `args.arg4.value` is `None` (flag present, no value provided)
         - If an arg defined in `find_args` is *not* present in the command line:
             - `exists` will be `False`
-            - `value` will be the specified `default` value, or `None` if no default was specified.\n
+            - `value` will be the specified `default` value, or `None` if no default was specified.
+            - `values` will be `[]` for positional "before"/"after" arguments.\n
         ----------------------------------------------------------------
         For positional arguments:
         - `"before"`: Collects all non-flagged arguments that appear before the first flag
@@ -245,7 +279,7 @@ class Console:
                     if after_count > 1:
                         raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
                 positional_configs[alias] = config
-                results[alias] = {"exists": False, "value": []}
+                results[alias] = {"exists": False, "values": []}
             elif isinstance(config, (list, tuple)):
                 flags = config
                 results[alias] = {"exists": False, "value": default_value}
@@ -301,9 +335,9 @@ class Console:
                 end_pos = first_flag_pos if first_flag_pos is not None else args_len
                 for i in range(end_pos):
                     if args[i] not in arg_lookup:
-                        before_args.append(String.to_type(args[i]))
+                        before_args.append(args[i])
                 if before_args:
-                    results[alias]["value"] = before_args
+                    results[alias]["values"] = before_args
                     results[alias]["exists"] = len(before_args) > 0
 
         # PROCESS FLAGGED ARGUMENTS
@@ -316,7 +350,7 @@ class Console:
                 value_found_after_flag = False
                 if i + 1 < args_len and args[i + 1] not in arg_lookup:
                     if not allow_spaces:
-                        results[alias]["value"] = String.to_type(args[i + 1])
+                        results[alias]["value"] = args[i + 1]
                         i += 1
                         value_found_after_flag = True
                     else:
@@ -326,7 +360,7 @@ class Console:
                             value_parts.append(args[j])
                             j += 1
                         if value_parts:
-                            results[alias]["value"] = String.to_type(" ".join(value_parts))
+                            results[alias]["value"] = " ".join(value_parts)
                             i = j - 1
                             value_found_after_flag = True
                 if not value_found_after_flag:
@@ -350,10 +384,10 @@ class Console:
 
                 for i in range(start_pos, args_len):
                     if args[i] not in arg_lookup:
-                        after_args.append(String.to_type(args[i]))
+                        after_args.append(args[i])
 
                 if after_args:
-                    results[alias]["value"] = after_args
+                    results[alias]["values"] = after_args
                     results[alias]["exists"] = len(after_args) > 0
 
         return Args(**results)

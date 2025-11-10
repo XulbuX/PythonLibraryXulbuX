@@ -93,12 +93,12 @@ def test_console_size(mock_terminal_size):
             "input": {"exists": True, "value": "input.txt"}, "ignore": {"exists": True, "value": "ignore"}, "help":
             {"exists": False, "value": None}
         }),
-        # NUMERIC VALUE
-        (["script.py", "-n", "123"], {"num": ["-n"]}, {"num": {"exists": True, "value": 123}}),
-        # BOOLEAN VALUE (True)
-        (["script.py", "-b", "true"], {"bool_arg": ["-b"]}, {"bool_arg": {"exists": True, "value": True}}),
-        # BOOLEAN VALUE (False)
-        (["script.py", "-b", "False"], {"bool_arg": ["-b"]}, {"bool_arg": {"exists": True, "value": False}}),
+        # NUMERIC VALUE (REMAINS AS STRING)
+        (["script.py", "-n", "123"], {"num": ["-n"]}, {"num": {"exists": True, "value": "123"}}),
+        # BOOLEAN VALUE (REMAINS AS STRING)
+        (["script.py", "-b", "true"], {"bool_arg": ["-b"]}, {"bool_arg": {"exists": True, "value": "true"}}),
+        # BOOLEAN VALUE (REMAINS AS STRING)
+        (["script.py", "-b", "False"], {"bool_arg": ["-b"]}, {"bool_arg": {"exists": True, "value": "False"}}),
 
         # --- CASES WITH DEFAULTS (dict FORMAT, allow_spaces=False) ---
         # DEFAULT USED (string)
@@ -116,8 +116,8 @@ def test_console_size(mock_terminal_size):
         }, {"output": {"exists": False, "value": "out.txt"}, "verbose": {"exists": True, "value": None}}),
         # DEFAULT USED (int)
         (["script.py"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": False, "value": 1}}),
-        # VALUE OVERRIDES DEFAULT (int)
-        (["script.py", "-m", "2"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": 2}}),
+        # VALUE OVERRIDES DEFAULT (int BECOMES STRING)
+        (["script.py", "-m", "2"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": "2"}}),
         # FLAG PRESENCE OVERRIDES DEFAULT (int -> None)
         (["script.py", "-m"], {"mode": {"flags": ["-m"], "default": 1}}, {"mode": {"exists": True, "value": None}}),
 
@@ -132,14 +132,14 @@ def test_console_size(mock_terminal_size):
         # --- 'before' / 'after' SPECIAL CASES ---
         # 'before' SPECIAL CASE
         (["script.py", "arg1", "arg2", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
-         {"before": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
+         {"before": {"exists": True, "values": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
         (["script.py", "-f", "file.txt"], {"before": "before", "file": ["-f"]},
-         {"before": {"exists": False, "value": []}, "file": {"exists": True, "value": "file.txt"}}),
+         {"before": {"exists": False, "values": []}, "file": {"exists": True, "value": "file.txt"}}),
         # 'after' SPECIAL CASE
         (["script.py", "-f", "file.txt", "arg1", "arg2"], {"after": "after", "file": ["-f"]},
-         {"after": {"exists": True, "value": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
+         {"after": {"exists": True, "values": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}}),
         (["script.py", "-f", "file.txt"], {"after": "after", "file": ["-f"]},
-         {"after": {"exists": False, "value": []}, "file": {"exists": True, "value": "file.txt"}}),
+         {"after": {"exists": False, "values": []}, "file": {"exists": True, "value": "file.txt"}}),
 
         # --- CUSTOM PREFIX TESTS ---
         # COLON AND SLASH PREFIXES
@@ -147,7 +147,7 @@ def test_console_size(mock_terminal_size):
          {"config": {"exists": True, "value": "dev.json"}, "output": {"exists": True, "value": "result.txt"}}),
         # WORD FLAGS WITHOUT PREFIXES
         (["script.py", "verbose", "help", "123"], {"verbose": ["verbose"], "help": ["help"], "number": ["-n"]}, {
-            "verbose": {"exists": True, "value": None}, "help": {"exists": True, "value": 123}, "number":
+            "verbose": {"exists": True, "value": None}, "help": {"exists": True, "value": "123"}, "number":
             {"exists": False, "value": None}
         }),
         # MIXED CUSTOM PREFIXES WITH DEFAULTS
@@ -165,11 +165,14 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
         assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
         assert args_result[key].exists == expected["exists"]  # type: ignore[access]
-        assert args_result[key].value == expected["value"]  # type: ignore[access]
+        # Check if this is a positional arg (has 'values') or regular arg (has 'value')
+        if "values" in expected:
+            assert args_result[key].values == expected["values"]  # type: ignore[access]
+        else:
+            assert args_result[key].value == expected["value"]  # type: ignore[access]
         assert bool(args_result[key]) == expected["exists"]
     assert list(args_result.keys()) == list(expected_args_dict.keys())
     assert [v.exists for v in args_result.values()] == [d["exists"] for d in expected_args_dict.values()]
-    assert [v.value for v in args_result.values()] == [d["value"] for d in expected_args_dict.values()]
     assert len(args_result) == len(expected_args_dict)
 
 
@@ -291,9 +294,9 @@ def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
     result = Console.get_args(find_args)
 
     assert result.verbose.exists is True
-    assert result.verbose.value == -42
+    assert result.verbose.value == "-42"
     assert result.input.exists is True
-    assert result.input.value == -3.14
+    assert result.input.value == "-3.14"
 
 
 def test_get_args_dash_strings_as_values(monkeypatch):
@@ -315,7 +318,7 @@ def test_get_args_positional_with_dashes_before(monkeypatch):
     result = Console.get_args(find_args)
 
     assert result.before_args.exists is True
-    assert result.before_args.value == [-123, "--some-file", "normal"]
+    assert result.before_args.values == ["-123", "--some-file", "normal"]
     assert result.verbose.exists is True
     assert result.verbose.value is None
 
@@ -329,7 +332,7 @@ def test_get_args_positional_with_dashes_after(monkeypatch):
     assert result.verbose.exists is True
     assert result.verbose.value == "value"
     assert result.after_args.exists is True
-    assert result.after_args.value == [-123, "--output-file", "-negative"]
+    assert result.after_args.values == ["-123", "--output-file", "-negative"]
 
 
 def test_get_args_multiword_with_dashes(monkeypatch):
@@ -356,19 +359,19 @@ def test_get_args_mixed_dash_scenarios(monkeypatch):
     result = Console.get_args(find_args)
 
     assert result.before.exists is True
-    assert result.before.value == ["before1", "-not-flag", "before2"]
+    assert result.before.values == ["before1", "-not-flag", "before2"]
 
     assert result.verbose.exists is True
     assert result.verbose.value == "--verbose-mode"
 
     assert result.debug.exists is True
-    assert result.debug.value == -42
+    assert result.debug.value == "-42"
 
     assert result.file.exists is True
     assert result.file.value == "--my-file.txt"
 
     assert result.after.exists is True
-    assert result.after.value == ["after1", "-also-not-flag"]
+    assert result.after.values == ["after1", "-also-not-flag"]
 
 
 def test_multiline_input(mock_prompt_toolkit, mock_formatcodes_print):

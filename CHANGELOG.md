@@ -19,6 +19,11 @@
 ## ... `v1.8.4`
 * adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups
 * fixed that `Regex.hexa_str()` couldn't match HEXA colors anywhere inside a string, but only if the whole string was just the HEXA color
+* the method `Console.get_args()` no longer tries to convert found arg values to their respective types, since that caused too many unwanted, wrong type conversions
+* **BREAKING CHANGE:** `ArgResult` now has separate properties for different argument types to improve type safety and eliminate the need for type casting when accessing argument values:
+  - `value` (<code>Optional[*str*]</code>) – for regular flagged arguments
+  - `values` (<code>list[*str*]</code>) – for positional `"before"`/`"after"` arguments
+* added `_ArgResultRegular` and `_ArgResultPositional` TypedDict classes for better type hints in `Args.dict()` and `Args.items()` methods
 
 <span id="v1-8-3" />
 
