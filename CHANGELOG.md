@@ -16,7 +16,7 @@
 
 <span id="v1-8-4" />
 
-## ... `v1.8.4`
+## 11.11.2025 `v1.8.4` 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉
 * adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups
 * fixed that `Regex.hexa_str()` couldn't match HEXA colors anywhere inside a string, but only if the whole string was just the HEXA color
 * the method `Console.get_args()` no longer tries to convert found arg values to their respective types, since that caused too many unwanted, wrong type conversions
