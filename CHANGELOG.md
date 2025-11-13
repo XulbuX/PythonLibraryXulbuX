@@ -18,6 +18,7 @@
 
 ## ... `v1.8.5`
 * made the help command `xulbux-help` new primarily use console default colors so it fits the user's console theme
+* changed the default `box_bg_color` in `Console.log_box_filled()` from `green` to `br:green`
 
 ## 11.11.2025 `v1.8.4` 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉
 * adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups

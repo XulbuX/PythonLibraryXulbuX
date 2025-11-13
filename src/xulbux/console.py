@@ -621,7 +621,7 @@ class Console:
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: str | Rgba | Hexa = "green",
+        box_bg_color: str | Rgba | Hexa = "br:green",
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 2,
         w_full: bool = False,
