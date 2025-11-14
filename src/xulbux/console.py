@@ -455,7 +455,7 @@ class Console:
         px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
         tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
         if format_linebreaks:
-            clean_prompt, removals = FormatCodes.remove_formatting(str(prompt), get_removals=True, _ignore_linebreaks=True)
+            clean_prompt, removals = FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True)
             prompt_lst = (
                 String.split_count(l, Console.w - (title_len + len(tab) + 2 * len(mx))) for l in str(clean_prompt).splitlines()
             )
@@ -773,7 +773,7 @@ class Console:
         else:
             lines = [line for val in values for line in str(val).splitlines()]
 
-        unfmt_lines = [FormatCodes.remove_formatting(line, default_color) for line in lines]
+        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines)
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 

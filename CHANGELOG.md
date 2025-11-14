@@ -19,6 +19,10 @@
 ## ... `v1.8.5`
 * made the help command `xulbux-help` new primarily use console default colors so it fits the user's console theme
 * changed the default `box_bg_color` in `Console.log_box_filled()` from `green` to `br:green`
+* removed the `*c` and `*color` formatting codes, since the user should just use `default` to achieve the exact same instead
+* fixed a bug in all methods of `FormatCodes`, where as soon as you used more than a single modifier format code (*e.g.* `[ll]` *or* `[++]`), it was treated as invalid and ignored
+* renamed the method `FormatCodes.remove_formatting()` to `FormatCodes.remove()`
+* added a new method `FormatCodes.escape()` which will escape all valid formatting codes in a string
 
 ## 11.11.2025 `v1.8.4` 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉
 * adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups

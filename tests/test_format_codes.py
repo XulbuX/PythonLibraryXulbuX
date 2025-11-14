@@ -36,6 +36,47 @@ def test_escape_ansi():
     assert FormatCodes.escape_ansi(ansi_string) == escaped_string
 
 
+def test_escape():
+    # TEST BASIC FORMATTING CODES
+    assert FormatCodes.escape("[b]Hello[_]") == "[/b]Hello[/_]"
+    assert FormatCodes.escape("[bold|italic]Text[_]") == "[/bold|italic]Text[/_]"
+
+    # TEST WITH COLORS
+    assert FormatCodes.escape("[#F87]Hello[_]") == "[/#F87]Hello[/_]"
+    assert FormatCodes.escape("[rgb(255, 136, 119)]Hello[_]") == "[/rgb(255, 136, 119)]Hello[/_]"
+
+    # TEST WITH DEFAULT COLOR
+    assert FormatCodes.escape("[default]Hello", default_color="#FFF") == "[/default]Hello"
+    assert FormatCodes.escape("[bg:default]Hello", default_color="#FFF") == "[/bg:default]Hello"
+
+    # TEST WITH * FORMATTING CODE
+    assert FormatCodes.escape("[*]Hello", default_color="#FFF") == "[/*]Hello"
+    assert FormatCodes.escape("[b|*]Hello", default_color="#FFF") == "[/b|*]Hello"
+
+    # TEST WITH AUTO-RESET
+    assert FormatCodes.escape("[b](Hello)") == "[/b](Hello)"
+    assert FormatCodes.escape("[*](Hello)", default_color="#FFF") == "[/*](Hello)"
+
+    # TEST INVALID FORMATTING CODES (SHOULD REMAIN UNCHANGED)
+    assert FormatCodes.escape("[invalid]Hello") == "[invalid]Hello"
+    assert FormatCodes.escape("[default]Hello") == "[default]Hello"  # NO 'default_color'
+    assert FormatCodes.escape("[*]Hello") == "[/*]Hello"  # NO 'default_color'
+
+    # TEST ALREADY ESCAPED CODES
+    assert FormatCodes.escape("[/b]Hello") == "[/b]Hello"
+    assert FormatCodes.escape("[/*]Hello", default_color="#FFF") == "[/*]Hello"
+
+    # TEST WITH BRIGHTNESS MODIFIERS
+    assert FormatCodes.escape("[l]Hello", default_color="#FFF") == "[/l]Hello"
+    assert FormatCodes.escape("[ll]Hello", default_color="#FFF") == "[/ll]Hello"
+    assert FormatCodes.escape("[+]Hello", default_color="#FFF") == "[/+]Hello"
+    assert FormatCodes.escape("[++]Hello", default_color="#FFF") == "[/++]Hello"
+    assert FormatCodes.escape("[d]Hello", default_color="#FFF") == "[/d]Hello"
+    assert FormatCodes.escape("[dd]Hello", default_color="#FFF") == "[/dd]Hello"
+    assert FormatCodes.escape("[-]Hello", default_color="#FFF") == "[/-]Hello"
+    assert FormatCodes.escape("[--]Hello", default_color="#FFF") == "[/--]Hello"
+
+
 def test_remove_ansi():
     ansi_string = f"{bold}Hello {orange}World!{reset}"
     clean_string = "Hello World!"
@@ -52,11 +93,11 @@ def test_remove_ansi_with_removals():
 def test_remove_formatting():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
-    assert FormatCodes.remove_formatting(format_string) == clean_string
+    assert FormatCodes.remove(format_string) == clean_string
 
 
 def test_remove_formatting_with_removals():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
     removals = ((0, default), (0, bold), (6, orange), (12, default), (12, reset_bold))
-    assert FormatCodes.remove_formatting(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
+    assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
