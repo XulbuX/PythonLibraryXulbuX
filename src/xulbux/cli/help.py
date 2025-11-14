@@ -31,16 +31,16 @@ def is_latest_version() -> Optional[bool]:
 URL = "https://pypi.org/pypi/xulbux/json"
 IS_LATEST_VERSION = is_latest_version()
 CLR = {
-    "border": "black",
+    "border": "dim|br:black",
     "class": "br:cyan",
     "const": "br:blue",
     "func": "br:green",
     "heading": "br:white",
     "import": "magenta",
     "lib": "br:magenta",
-    "link": "br:blue",
+    "link": "u|br:blue",
     "notice": "br:yellow",
-    "punctuators": "br:black",
+    "punctuator": "br:black",
     "text": "white",
 }
 HELP = FormatCodes.to_ansi(
@@ -52,20 +52,20 @@ HELP = FormatCodes.to_ansi(
 
   [i|#9095FF]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
-  [b|{CLR['heading']}]Usage:[*]
-  [{CLR['border']}]╭────────────────────────────────────────────────────╮[*]
-  [{CLR['border']}]│ [i|{CLR['punctuators']}](# LIBRARY CONSTANTS)[*]                                [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuators']}].[{CLR['lib']}]base[{CLR['punctuators']}].[{CLR['lib']}]consts [{CLR['import']}]import [{CLR['const']}]COLOR[{CLR['punctuators']}], [{CLR['const']}]CHARS[{CLR['punctuators']}], [{CLR['const']}]ANSI[*]  [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [i|{CLR['punctuators']}](# Main Classes)[*]                                     [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [{CLR['import']}]from [{CLR['lib']}]xulbux [{CLR['import']}]import [{CLR['class']}]Code[{CLR['punctuators']}], [{CLR['class']}]Color[{CLR['punctuators']}], [{CLR['class']}]Console[{CLR['punctuators']}], ...[*]       [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [i|{CLR['punctuators']}](# module specific imports)[*]                          [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuators']}].[{CLR['lib']}]color [{CLR['import']}]import [{CLR['func']}]rgba[{CLR['punctuators']}], [{CLR['func']}]hsla[{CLR['punctuators']}], [{CLR['func']}]hexa[*]          [{CLR['border']}](│)
-  [{CLR['border']}]╰────────────────────────────────────────────────────╯[*]
-  [b|{CLR['heading']}]Documentation:[*]
-  [{CLR['border']}]╭────────────────────────────────────────────────────╮[*]
-  [{CLR['border']}]│ [{CLR['text']}]For more information see the GitHub page.          [{CLR['border']}]│[*]
-  [{CLR['border']}]│ [u|{CLR['link']}](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) [{CLR['border']}]│[*]
-  [{CLR['border']}]╰────────────────────────────────────────────────────╯[*]
+  [b|{CLR['heading']}](Usage:)[*]
+  [{CLR['border']}](╭────────────────────────────────────────────────────╮)[*]
+  [{CLR['border']}](│) [i|{CLR['punctuator']}](# LIBRARY CONSTANTS)[*]                                [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuator']}].[{CLR['lib']}]base[{CLR['punctuator']}].[{CLR['lib']}]consts [{CLR['import']}]import [{CLR['const']}]COLOR[{CLR['punctuator']}], [{CLR['const']}]CHARS[{CLR['punctuator']}], [{CLR['const']}]ANSI[*]  [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [i|{CLR['punctuator']}](# Main Classes)[*]                                     [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux [{CLR['import']}]import [{CLR['class']}]Code[{CLR['punctuator']}], [{CLR['class']}]Color[{CLR['punctuator']}], [{CLR['class']}]Console[{CLR['punctuator']}], ...[*]       [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [i|{CLR['punctuator']}](# module specific imports)[*]                          [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuator']}].[{CLR['lib']}]color [{CLR['import']}]import [{CLR['func']}]rgba[{CLR['punctuator']}], [{CLR['func']}]hsla[{CLR['punctuator']}], [{CLR['func']}]hexa[*]          [{CLR['border']}](│)
+  [{CLR['border']}](╰────────────────────────────────────────────────────╯)[*]
+  [b|{CLR['heading']}](Documentation:)[*]
+  [{CLR['border']}](╭────────────────────────────────────────────────────╮)[*]
+  [{CLR['border']}](│) [{CLR['text']}]For more information see the GitHub page.          [{CLR['border']}](│)[*]
+  [{CLR['border']}](│) [{CLR['link']}](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) [{CLR['border']}](│)[*]
+  [{CLR['border']}](╰────────────────────────────────────────────────────╯)[*]
   [_]"""
 )
 
