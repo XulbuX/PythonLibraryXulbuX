@@ -23,6 +23,7 @@
 * Changed the default `box_bg_color` in `Console.log_box_filled()` from `green` to `br:green`.
 * Fixed a bug in all methods of `FormatCodes`, where as soon as you used more than a single modifier format code (*e.g.* `[ll]` *or* `[++]`), it was treated as invalid and ignored.
 * Added a new method `FormatCodes.escape()` which will escape all valid formatting codes in a string.
+* Again refactored the whole `CHANGELOG.md` to use actual sentences and add a `BREAKING CHANGES` section to more clearly highlight breaking changes.
 
 **BREAKING CHANGES:**
 * Removed the `*c` and `*color` formatting codes, since the user should just use `default` to achieve the exact same instead.
