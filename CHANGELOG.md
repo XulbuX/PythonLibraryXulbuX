@@ -48,7 +48,7 @@
 
 * Adjusted the look of the prompts and inputs of the `System.check_libs()` method.
 * Added a new param to `System.check_libs()`:<br>
-  <code>missing_libs_msgs: tuple[str, str] = (...)</code> two messages: The first one is displayed when missing libraries are found. The second one is the confirmation message before installing missing libraries.
+  <code>missing_libs_msgs: tuple[str, str] = (…)</code> two messages: The first one is displayed when missing libraries are found. The second one is the confirmation message before installing missing libraries.
 * Adjusted error messages throughout the whole library to all be structured about the same.
 * Fixed a small bug in `FormatCodes.__config_console()`, where it would cause an exception, because it tried to configure Windows specific console settings on non-Windows systems.
 * The `Console.get_args()` method will now treat everything as values (*even if it starts with* `-` *or* `--`) unless it's specified in the `find_args` param.
@@ -143,7 +143,7 @@
 
 ## 11.06.2025 `v1.7.1`
 
-* Fixed an issue with the `Color.is_valid_...()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch.
+* Fixed an issue with the `Color.is_valid_…()` and `Color.is_valid()` methods, where you were not able to input any color without a type mismatch.
 * Added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color.
 * The module `xx_format_codes` now treats the `[*]` to-default-color-reset as a normal full-reset, when no `default_color` is set, instead of just counting it as an invalid format code.
 * Fixed bug where entering a color as HEX integer in the color params of the methods `Console.log()`, `Console.log_box_filled()` and `Console.log_box_bordered()` would not work, because it was not properly converted to a format code.
@@ -230,7 +230,7 @@
   - <code>w_full: *bool* = False</code> whether to make the box be the full console width or not
 * Fixed a small bug in `Data.print()` where two params passed to `Data.to_str()` where swapped, which caused an error.
 * The method `Data.print()` now per default syntax highlights the console output:<br>
-  The syntax highlighting colors and styles can now be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {...}</code>.
+  The syntax highlighting colors and styles can now be customized via the new param <code>syntax_highlighting: dict[*str*, *str*] = {…}</code>.
 * Added two new methods `Data.serialize_bytes()` and `Data.deserialize_bytes()`.
 * Made the method `String.to_type()` be able to also interpret and convert large complex structures.
 * Added the new parameter <code>strip_spaces: *bool* = True</code> to the method `Regex.brackets()` which makes it possible to not ignore spaces around the content inside the brackets.
@@ -277,7 +277,7 @@
   Inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset.<br>
   Now this is fixed and auto-reset-formatting works as expected.
 * Added a new param <code>ignore_in_strings: *bool* = True</code> to `Regex.brackets()`:<br>
-  If this param is true and a bracket is inside a string (e.g. `'...'` or `"..."`), it will not be counted as the matching closing bracket.
+  If this param is true and a bracket is inside a string (e.g. `'…'` or `"…"`), it will not be counted as the matching closing bracket.
 * Removed `lru_cache` from the `xx_format_codes` module's internal methods, since it was unnecessary.
 * Adjusted `FormatCodes.__config_console()` so it can only be called once per process.
 
