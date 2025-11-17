@@ -17,7 +17,7 @@
 
 <span id="v1-8-4" />
 
-## ... `v1.8.5`
+## 14.11.2025 `v1.8.5`
 
 * Made the help command `xulbux-help` new primarily use console default colors so it fits the user's console theme.
 * Changed the default `box_bg_color` in `Console.log_box_filled()` from `green` to `br:green`.
