@@ -222,10 +222,17 @@ class FormatCodes:
         end: str = "\n",
         flush: bool = True,
     ) -> None:
-        """A print function, whose print values can be formatted using formatting codes.\n
-        -----------------------------------------------------------------------------------
-        For exact information about how to use special formatting codes, see the
-        `format_codes` module documentation."""
+        """A print function, whose print `values` can be formatted using formatting codes.\n
+        --------------------------------------------------------------------------------------------------
+        - `values` -⠀the values to print
+        - `default_color` -⠀the default text color to use if no other text color was applied
+        - `brightness_steps` -⠀the amount to increase/decrease default-color brightness per modifier code
+        - `sep` -⠀the separator to use between multiple values
+        - `end` -⠀the string to append at the end of the printed values
+        - `flush` -⠀whether to flush the output buffer after printing\n
+        --------------------------------------------------------------------------------------------------
+        For exact information about how to use special formatting codes,
+        see the `format_codes` module documentation."""
         FormatCodes.__config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
         if flush:
@@ -238,11 +245,14 @@ class FormatCodes:
         brightness_steps: int = 20,
         reset_ansi: bool = False,
     ) -> str:
-        """An input, whose prompt can be formatted using formatting codes.\n
-        -------------------------------------------------------------------------
-        If `reset_ansi` is true, all ANSI formatting will be reset, after the
-        user confirms the input and the program continues to run.\n
-        -------------------------------------------------------------------------
+        """An input, whose `prompt` can be formatted using formatting codes.\n
+        --------------------------------------------------------------------------------------------------
+        - `prompt` -⠀the prompt to show to the user
+        - `default_color` -⠀the default text color to use if no other text color was applied
+        - `brightness_steps` -⠀the amount to increase/decrease default-color brightness per modifier code
+        - `reset_ansi` -⠀if true, all ANSI formatting will be reset, after the user confirmed the input
+          and the program continues to run\n
+        --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `format_codes` module documentation."""
         FormatCodes.__config_console()
@@ -260,9 +270,15 @@ class FormatCodes:
         _validate_default: bool = True,
     ) -> str:
         """Convert the formatting codes inside a string to ANSI formatting.\n
-        -------------------------------------------------------------------------
-        For exact information about how to use special formatting codes, see the
-        `format_codes` module documentation."""
+        --------------------------------------------------------------------------------------------------
+        - `string` -⠀the string that contains the formatting codes to convert
+        - `default_color` -⠀the default text color to use if no other text color was applied
+        - `brightness_steps` -⠀the amount to increase/decrease default-color brightness per modifier code
+        - `_default_start` -⠀whether to start the string with the `default_color` ANSI code, if set
+        - `_validate_default` -⠀whether to validate the `default_color` before use\n
+        --------------------------------------------------------------------------------------------------
+        For exact information about how to use special formatting codes,
+        see the `format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
         if _validate_default:
@@ -354,19 +370,20 @@ class FormatCodes:
                 + string) if default_color is not None else string
 
     @staticmethod
-    def escape_ansi(ansi_string: str) -> str:
-        """Escapes all ANSI codes in the string, so they are visible when output to the console."""
-        return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
-
-    @staticmethod
     def escape(string: str, default_color: Optional[Rgba | Hexa] = None, _escape_char: Literal["/", "\\"] = "/") -> str:
         """Escapes all valid formatting codes in the string, so they are visible when output
         to the console using `FormatCodes.print()`. Invalid formatting codes remain unchanged.\n
         -----------------------------------------------------------------------------------------
-        For exact information about how to use special formatting codes, see the
-        `format_codes` module documentation."""
+        - `string` -⠀the string that contains the formatting codes to escape
+        - `default_color` -⠀the default text color to use if no other text color was applied
+        - `_escape_char` -⠀the character to use to escape formatting codes (`/` or `\\`)\n
+        -----------------------------------------------------------------------------------------
+        For exact information about how to use special formatting codes,
+        see the `format_codes` module documentation."""
         if not isinstance(string, str):
             string = str(string)
+        if not _escape_char in {"/", "\\"}:
+            raise ValueError("'_escape_char' must be either '/' or '\\'")
 
         use_default, default_color = FormatCodes.__validate_default_color(default_color)
 
@@ -405,16 +422,44 @@ class FormatCodes:
         return "\n".join(_COMPILED["formatting"].sub(escape_format_code, l) for l in string.split("\n"))
 
     @staticmethod
+    def escape_ansi(ansi_string: str) -> str:
+        """Escapes all ANSI codes in the string, so they are visible when output to the console.\n
+        -------------------------------------------------------------------------------------------
+        - `ansi_string` -⠀the string that contains the ANSI codes to escape"""
+        return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
+
+    @staticmethod
+    def remove(
+        string: str,
+        default_color: Optional[Rgba | Hexa] = None,
+        get_removals: bool = False,
+        _ignore_linebreaks: bool = False,
+    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
+        """Removes all formatting codes from the string with optional tracking of removed codes.\n
+        --------------------------------------------------------------------------------------------------------
+        - `string` -⠀the string that contains the formatting codes to remove
+        - `default_color` -⠀the default text color to use if no other text color was applied
+        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
+          where each tuple contains the position of the removed formatting code and the removed formatting code
+        - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
+        return FormatCodes.remove_ansi(
+            FormatCodes.to_ansi(string, default_color=default_color),
+            get_removals=get_removals,
+            _ignore_linebreaks=_ignore_linebreaks,
+        )
+
+    @staticmethod
     def remove_ansi(
         ansi_string: str,
         get_removals: bool = False,
         _ignore_linebreaks: bool = False,
     ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
-        """Removes all ANSI codes from the string.\n
-        --------------------------------------------------------------------------------------------------
-        If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
-        Each tuple contains the position of the removed ansi code and the removed ansi code.\n
-        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions."""
+        """Removes all ANSI codes from the string with optional tracking of removed codes.\n
+        ---------------------------------------------------------------------------------------------------
+        - `ansi_string` -⠀the string that contains the ANSI codes to remove
+        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
+          where each tuple contains the position of the removed ansi code and the removed ansi code
+        - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
         if get_removals:
             removals = []
 
@@ -432,24 +477,6 @@ class FormatCodes:
             return _COMPILED["ansi_seq"].sub("", ansi_string) if _ignore_linebreaks else clean_string, tuple(removals)
         else:
             return _COMPILED["ansi_seq"].sub("", ansi_string)
-
-    @staticmethod
-    def remove(
-        string: str,
-        default_color: Optional[Rgba | Hexa] = None,
-        get_removals: bool = False,
-        _ignore_linebreaks: bool = False,
-    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
-        """Removes all formatting codes from the string.\n
-        ---------------------------------------------------------------------------------------------------
-        If `get_removals` is true, additionally to the cleaned string, a list of tuples will be returned.
-        Each tuple contains the position of the removed formatting code and the removed formatting code.\n
-        If `_ignore_linebreaks` is true, linebreaks will be ignored for the removal positions."""
-        return FormatCodes.remove_ansi(
-            FormatCodes.to_ansi(string, default_color=default_color),
-            get_removals=get_removals,
-            _ignore_linebreaks=_ignore_linebreaks,
-        )
 
     @staticmethod
     def __config_console() -> None:

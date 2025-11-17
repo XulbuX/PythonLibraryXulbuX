@@ -15,7 +15,13 @@
 # <br><b>Changelog</b><br>
 
 
-<span id="v1-8-4" />
+<span id="v1-8-6" />
+
+## ... `v1.8.6`
+* Standardized the docstrings for all public methods in the whole library to use the same style and format.
+
+
+<span id="v1-8-5" />
 
 ## 14.11.2025 `v1.8.5`
 
@@ -26,9 +32,11 @@
 * Again refactored the whole `CHANGELOG.md` to use actual sentences and add a `BREAKING CHANGES` section to more clearly highlight breaking changes.
 
 **BREAKING CHANGES:**
-* Removed the `*c` and `*color` formatting codes, since the user should just use `default` to achieve the exact same instead.
+* Removed the `*c` and `*color` formatting codes, since the user should just use the code `default` to achieve the exact same instead.
 * Renamed the method `FormatCodes.remove_formatting()` to `FormatCodes.remove()`.
 
+
+<span id="v1-8-4" />
 
 ## 11.11.2025 `v1.8.4` 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉
 

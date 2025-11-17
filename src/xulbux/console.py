@@ -627,7 +627,8 @@ class Console:
         w_full: bool = False,
         indent: int = 0,
     ) -> None:
-        """Will print a box with a colored background, containing a formatted log message:
+        """Will print a box with a colored background, containing a formatted log message.\n
+        -------------------------------------------------------------------------------------
         - `*values` -⠀the box content (each value is on a new line)
         - `start` -⠀something to print before the log box is printed (e.g. `\\n`)
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
@@ -636,7 +637,7 @@ class Console:
         - `w_padding` -⠀the horizontal padding (in chars) to the box content
         - `w_full` -⠀whether to make the box be the full console width or not
         - `indent` -⠀the indentation of the box (in chars)\n
-        -----------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
@@ -671,7 +672,8 @@ class Console:
         indent: int = 0,
         _border_chars: Optional[tuple[str, str, str, str, str, str, str, str, str, str, str]] = None,
     ) -> None:
-        """Will print a bordered box, containing a formatted log message:
+        """Will print a bordered box, containing a formatted log message.\n
+        ---------------------------------------------------------------------------------------------
         - `*values` -⠀the box content (each value is on a new line)
         - `start` -⠀something to print before the log box is printed (e.g. `\\n`)
         - `end` -⠀something to print after the log box is printed (e.g. `\\n`)
