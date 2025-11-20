@@ -26,6 +26,7 @@
 * Added a new internal method `Regex._clean()`, which is used to clean up regex patterns, defined as multi-line strings.
 * Moved custom exception classes to their own file `base/exceptions.py` for better structure and readability.
 * Moved custom types to their own file `base/types.py` for better structure and readability.
+* Removed unnecessary duplicate code in several methods throughout the library.
 
 **BREAKING CHANGES:**
 * The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists or tuples, since the order of flags doesn't matter and sets have better performance for lookups.
