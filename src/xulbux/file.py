@@ -38,7 +38,7 @@ class File:
 
         if full_extension:
             try:
-                first_dot_index = filename_with_ext.index('.')
+                first_dot_index = filename_with_ext.index(".")
                 filename = filename_with_ext[:first_dot_index]
             except ValueError:
                 filename = filename_with_ext
@@ -47,8 +47,8 @@ class File:
 
         if camel_case_filename:
             filename = String.to_camel_case(filename)
-        if new_extension and not new_extension.startswith('.'):
-            new_extension = '.' + new_extension
+        if new_extension and not new_extension.startswith("."):
+            new_extension = "." + new_extension
 
         return _os.path.join(directory, f"{filename}{new_extension}")
 

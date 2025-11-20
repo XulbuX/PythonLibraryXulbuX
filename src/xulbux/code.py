@@ -99,7 +99,7 @@ class Code:
                 return True
 
         direct_js_patterns = [
-            r"^[\s\n]*\$\(['\"][^'\"]+['\"]\)\.[\w]+\([^\)]*\);?[\s\n]*$",  # jQuery calls
+            r"""^[\s\n]*\$\(["'][^"']+["']\)\.[\w]+\([^\)]*\);?[\s\n]*$""",  # jQuery calls
             r"^[\s\n]*\$\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # $.ajax(), etc.
             r"^[\s\n]*\(\s*function\s*\(\)\s*\{.*\}\s*\)\(\);?[\s\n]*$",  # IIFE
             r"^[\s\n]*document\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # document.getElementById()
@@ -141,9 +141,9 @@ class Code:
                          ]
 
         line_endings = [line.strip() for line in code.splitlines() if line.strip()]
-        if (semicolon_endings := sum(1 for line in line_endings if line.endswith(';'))) >= 1:
+        if (semicolon_endings := sum(1 for line in line_endings if line.endswith(";"))) >= 1:
             js_score += min(semicolon_endings, 2)
-        if (opening_braces := code.count('{')) > 0 and opening_braces == code.count('}'):
+        if (opening_braces := code.count("{")) > 0 and opening_braces == code.count("}"):
             js_score += 1
 
         for pattern, score in js_indicators:

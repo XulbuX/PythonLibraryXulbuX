@@ -102,20 +102,25 @@ class EnvPath:
                 key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Environment", 0, _winreg.KEY_ALL_ACCESS)
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)
-            except ImportError:
-                print("Warning: Unable to make persistent changes on Windows.")
+            except Exception as e:
+                raise RuntimeError(f"Failed to update PATH in registry:\n  {str(e).replace('\n', '  \n')}")
 
         else:  # UNIX-LIKE (LINUX/macOS)
             shell_rc_file = _os.path.expanduser(
-                "~/.bashrc" if _os.path.exists(_os.path.expanduser("~/.bashrc")) else "~/.zshrc"
+                "~/.bashrc" if _os.path.exists(_os.path.expanduser("~/.bashrc")) \
+                else "~/.zshrc"
             )
+
             with open(shell_rc_file, "r+") as f:
                 content = f.read()
                 f.seek(0)
+
                 if remove:
                     new_content = [l for l in content.splitlines() if not l.endswith(f':{path}"')]
                     f.write("\n".join(new_content))
                 else:
                     f.write(f'{content.rstrip()}\n# Added by XulbuX\nexport PATH="{new_path}"\n')
+
                 f.truncate()
+
             _os.system(f"source {shell_rc_file}")

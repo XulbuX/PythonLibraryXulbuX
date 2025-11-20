@@ -40,6 +40,7 @@ def test_get_func_calls():
     assert ("foo", "") in result
     assert ("bar", "1, 2") in result
     assert ("baz", "'test'") in result
+
     sample = "outer(inner1(), inner2(param))"
     result = Code.get_func_calls(sample)
     assert len(result) >= 3
@@ -47,7 +48,9 @@ def test_get_func_calls():
     assert "outer" in function_names
     assert "inner1" in function_names
     assert "inner2" in function_names
+
     assert not Code.get_func_calls("no function calls here")
+
     sample = "obj.method()\nobj.other_method(123)"
     result = Code.get_func_calls(sample)
     assert len(result) == 2

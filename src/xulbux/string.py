@@ -56,9 +56,9 @@ class String:
             .replace("\b", r"\b").replace("\f", r"\f").replace("\a", r"\a")
 
         if str_quotes == '"':
-            return string.replace(r"\\'", "'").replace(r'"', r"\"")
+            return string.replace("\\'", "'").replace('"', r"\"")
         elif str_quotes == "'":
-            return string.replace(r'\\"', '"').replace(r"'", r"\'")
+            return string.replace('\\"', '"').replace("'", r"\'")
         else:
             return string
 

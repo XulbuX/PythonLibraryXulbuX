@@ -106,8 +106,8 @@ class ArgResult:
             raise TypeError(f"The 'value' parameter must be a string or None, got {type(value)}")
         if not isinstance(values, (list, type(None))):
             raise TypeError(f"The 'values' parameter must be a list of strings or None, got {type(values)}")
-        if value is None and values is None:
-            raise ValueError("Either 'value' or 'values' parameter must be provided.")
+        if value is not None and values is not None:
+            raise ValueError("The 'value' and 'values' parameters are mutually exclusive. Only one can be set.")
 
         self.exists: bool = exists
         """Whether the argument was found or not."""
@@ -533,7 +533,7 @@ class Console:
 
         if title == "":
             FormatCodes.print(
-                f'{start}  {f"[{default_color}]" if default_color else ""}{prompt}[_]',
+                f"{start}  {f'[{default_color}]' if default_color else ''}{prompt}[_]",
                 default_color=default_color,
                 end=end,
             )
@@ -887,10 +887,10 @@ class Console:
             border_style = Color.to_hexa(border_style)
 
         borders = {
-            "standard": ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤'),
-            "rounded": ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤'),
-            "strong": ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫'),
-            "double": ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣'),
+            "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
+            "rounded": ("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤"),
+            "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
+            "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
 
@@ -931,8 +931,8 @@ class Console:
                 val_str, result_parts, current_pos = str(val), [], 0
                 for match in _COMPILED["hr"].finditer(val_str):
                     start, end = match.span()
-                    should_split_before = start > 0 and val_str[start - 1] != '\n'
-                    should_split_after = end < len(val_str) and val_str[end] != '\n'
+                    should_split_before = start > 0 and val_str[start - 1] != "\n"
+                    should_split_after = end < len(val_str) and val_str[end] != "\n"
 
                     if should_split_before:
                         if start > current_pos:
@@ -989,7 +989,7 @@ class Console:
 
         confirmed = input(
             FormatCodes.to_ansi(
-                f'{start}{str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}): )',
+                f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
                 default_color=default_color,
             )
         ).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
@@ -1353,18 +1353,20 @@ class ProgressBar:
         --------------------------------------------------------------
         - `min_width` -⠀the min width of the progress bar in chars
         - `max_width` -⠀the max width of the progress bar in chars"""
-        if not isinstance(min_width, (int, type(None))):
-            raise TypeError(f"'min_width' must be an integer or None, got {type(min_width)}")
-        if not isinstance(max_width, (int, type(None))):
-            raise TypeError(f"'max_width' must be an integer or None, got {type(max_width)}")
-
         if min_width is not None:
-            if min_width < 1:
-                raise ValueError("Minimum width must be at least 1.")
+            if not isinstance(min_width, int):
+                raise TypeError(f"The 'min_width' parameter must be an integer or None, got {type(min_width)}")
+            elif min_width < 1:
+                raise ValueError(f"The 'min_width' parameter must be a positive integer, got {min_width!r}")
+
             self.min_width = max(1, min_width)
+
         if max_width is not None:
-            if max_width < 1:
-                raise ValueError("Maximum width must be at least 1.")
+            if not isinstance(max_width, int):
+                raise TypeError(f"The 'max_width' parameter must be an integer or None, got {type(max_width)}")
+            elif max_width < 1:
+                raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
+
             self.max_width = max(self.min_width, max_width)
 
     def set_bar_format(self, bar_format: Optional[str] = None, limited_bar_format: Optional[str] = None) -> None:
@@ -1381,17 +1383,17 @@ class ProgressBar:
         The bar format (also limited) can additionally be formatted with special formatting codes. For
         more detailed information about formatting codes, see the `format_codes` module documentation."""
         if not isinstance(bar_format, (str, type(None))):
-            raise TypeError(f"'bar_format' must be a string or None, got {type(bar_format)}")
+            raise TypeError(f"The 'bar_format' parameter must be a string or None, got {type(bar_format)}")
         if not isinstance(limited_bar_format, (str, type(None))):
-            raise TypeError(f"'limited_bar_format' must be a string or None, got {type(limited_bar_format)}")
+            raise TypeError(f"The 'limited_bar_format' parameter must be a string or None, got {type(limited_bar_format)}")
 
         if bar_format is not None:
             if not _COMPILED["bar"].search(bar_format):
-                raise ValueError("'bar_format' must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
             self.bar_format = bar_format
         if limited_bar_format is not None:
             if not _COMPILED["bar"].search(limited_bar_format):
-                raise ValueError("'limited_bar_format' must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
             self.limited_bar_format = limited_bar_format
 
     def set_chars(self, chars: tuple[str, ...]) -> None:
@@ -1403,8 +1405,9 @@ class ProgressBar:
           empty sections. If None, uses default Unicode block characters."""
         if len(chars) < 2:
             raise ValueError("The 'chars' parameter must contain at least two characters (full and empty).")
-        elif any(not isinstance(c, str) or len(c) != 1 for c in chars):
+        elif not all(isinstance(c, str) and len(c) == 1 for c in chars):
             raise ValueError("All elements of 'chars' must be single-character strings.")
+
         self.chars = chars
 
     def show_progress(self, current: int, total: int, label: Optional[str] = None) -> None:
@@ -1484,7 +1487,7 @@ class ProgressBar:
                 current = label = None
 
                 if len(args) > 2:
-                    raise TypeError(f"update_progress() takes at most 2 positional arguments ({len(args)} given)")
+                    raise TypeError(f"update_progress() takes at most 2 positional arguments, got {len(args)}")
                 elif len(args) >= 1:
                     current = args[0]
                     if len(args) >= 2:
@@ -1492,18 +1495,18 @@ class ProgressBar:
 
                 if "current" in kwargs:
                     if current is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'current'")
+                        raise TypeError("update_progress() got multiple values for argument 'current'.")
                     current = kwargs["current"]
                 if "label" in kwargs:
                     if label is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'label'")
+                        raise TypeError("update_progress() got multiple values for argument 'label'.")
                     label = kwargs["label"]
 
                 if unexpected := set(kwargs.keys()) - {"current", "label"}:
-                    raise TypeError(f"update_progress() got unexpected keyword argument(s): {', '.join(unexpected)}")
+                    raise TypeError(f"update_progress() got unexpected keyword arguments: {', '.join(unexpected)}")
 
                 if current is None and label is None:
-                    raise TypeError("At least one of 'current' or 'label' must be provided")
+                    raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
 
                 if current is not None:
                     current_progress = current

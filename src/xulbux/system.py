@@ -140,7 +140,7 @@ class System:
             for lib in missing:
                 FormatCodes.print(f" [dim](•) [i]{lib}[_i]")
             print()
-            if not Console.confirm(missing_libs_msgs['should_install'], end="\n"):
+            if not Console.confirm(missing_libs_msgs["should_install"], end="\n"):
                 return missing
 
         try:

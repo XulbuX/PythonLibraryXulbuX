@@ -23,10 +23,12 @@ class Data:
             raise TypeError(f"The 'data' parameter must be a bytes or bytearray object, got {type(data)}")
 
         key = "bytearray" if isinstance(data, bytearray) else "bytes"
+
         try:
             return {key: data.decode("utf-8"), "encoding": "utf-8"}
         except UnicodeDecodeError:
             pass
+
         return {key: _base64.b64encode(data).decode("utf-8"), "encoding": "base64"}
 
     @staticmethod
@@ -48,6 +50,7 @@ class Data:
                     data = _base64.b64decode(obj[key].encode("utf-8"))
                 else:
                     raise ValueError(f"Unknown encoding method '{obj['encoding']}'")
+
                 return bytearray(data) if key == "bytearray" else data
 
         raise ValueError(f"Invalid serialized data:\n  {obj}")
@@ -131,12 +134,15 @@ class Data:
             for item in data:
                 processed_item = Data.remove_duplicates(item) if isinstance(item, DataStructure) else item
                 is_duplicate = False
+
                 for existing_item in result:
                     if processed_item == existing_item:
                         is_duplicate = True
                         break
+
                 if not is_duplicate:
                     result.append(processed_item)
+
             return type(data)(result)
 
         if isinstance(data, (set, frozenset)):
@@ -214,17 +220,19 @@ class Data:
         if not isinstance(comment_sep, str):
             raise TypeError(f"The 'comment_sep' parameter must be a string, got {type(comment_sep)}")
 
-        has_comment_end = len(comment_end) > 0
-
-        if has_comment_end:
-            pattern = _re.compile(
-                rf"^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$"
+        pattern = _re.compile(
+            rf"""^(
+                (?:(?!{_re.escape(comment_start)}).)*
             )
+            {_re.escape(comment_start)}
+            (?:(?:(?!{_re.escape(comment_end)}).)*)
+            (?:{_re.escape(comment_end)})?
+            (.*?)$"""
+        ) if len(comment_end) > 0 else None
 
         def process_string(s: str) -> Optional[str]:
-            if has_comment_end:
-                match = pattern.match(s)  # type: ignore[unbound]
-                if match:
+            if pattern:
+                if (match := pattern.match(s)):
                     start, end = match.group(1).strip(), match.group(2).strip()
                     return f"{start}{comment_sep if start and end else ''}{end}" or None
                 return s.strip() or None
@@ -315,6 +323,7 @@ class Data:
         processed_data1 = Data.remove_comments(data1, comment_start, comment_end)
         processed_data2 = Data.remove_comments(data2, comment_start, comment_end)
         processed_ignore_paths = process_ignore_paths(ignore_paths)
+
         return compare(processed_data1, processed_data2, processed_ignore_paths)
 
     @staticmethod
@@ -372,6 +381,7 @@ class Data:
                         if ignore_not_found:
                             return None
                         raise TypeError(f"Key '{key}' is invalid for a dict type.")
+
                     try:
                         idx = list(data_obj.keys()).index(key)
                         data_obj = data_obj[key]
@@ -434,6 +444,7 @@ class Data:
                         return keys[idx]
                     parent = data
                     data = data[keys[idx]]
+
                 elif isinstance(data, IndexIterable):
                     if i == len(path) - 1 and get_key:
                         if parent is None or not isinstance(parent, dict):
@@ -441,8 +452,10 @@ class Data:
                         return next(key for key, value in parent.items() if value is data)
                     parent = data
                     data = list(data)[idx]  # CONVERT TO LIST FOR INDEXING
+
                 else:
                     raise TypeError(f"Unsupported type '{type(data)}' at path '{path[:i+1]}'")
+
             return data
 
         return get_nested(data, Data.__sep_path_id(path_id), get_key)
@@ -628,18 +641,13 @@ class Data:
             )
 
         def format_dict(d: dict, current_indent: int) -> str:
-            if not d or compactness == 2:
-                return (
-                    punct["{"]
-                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
-                               for k, v in d.items()) + punct["}"]
-                )
-            if not should_expand(list(d.values())):
-                return (
-                    punct["{"]
-                    + sep.join(f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
-                               for k, v in d.items()) + punct["}"]
-                )
+            if compactness == 2 or not (d or should_expand(list(d.values()))):
+                return punct["{"] \
+                    + sep.join(
+                        f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" \
+                        for k, v in d.items()
+                    ) \
+                    + punct["}"]
 
             items = []
             for k, val in d.items():
@@ -651,26 +659,19 @@ class Data:
         def format_sequence(seq, current_indent: int) -> str:
             if as_json:
                 seq = list(seq)
-            if not seq or compactness == 2:
-                return (
-                    punct["["] + sep.join(format_value(item, current_indent)
-                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
-                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
-                )
-            if not should_expand(seq):
-                return (
-                    punct["["] + sep.join(format_value(item, current_indent)
-                                          for item in seq) + punct["]"] if isinstance(seq, list) else punct["("]
-                    + sep.join(format_value(item, current_indent) for item in seq) + punct[")"]
-                )
+
+            if compactness == 2 or not (seq or should_expand(seq)):
+                return punct["["] \
+                    + (s := sep.join(format_value(item, current_indent) for item in seq)) \
+                    + (punct["]"] if isinstance(seq, list) else punct["("]) \
+                    + s \
+                    + punct[")"]
 
             items = [format_value(item, current_indent) for item in seq]
             formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
+            brackets = (punct["["], punct["]"]) if isinstance(seq, list) else (punct["("], punct[")"])
 
-            if isinstance(seq, list):
-                return f"{punct['[']}\n{formatted_items}\n{' ' * current_indent}{punct[']']}"
-            else:
-                return f"{punct['(']}\n{formatted_items}\n{' ' * current_indent}{punct[')']}"
+            return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"
 
         return _re.sub(r"\s+(?=\n)", "", format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0))
 
@@ -730,8 +731,13 @@ class Data:
 
     @staticmethod
     def __sep_path_id(path_id: str) -> list[int]:
-        if path_id.count(">") != 1:
-            raise ValueError(f"Invalid path ID '{path_id}'")
-        id_part_len = int(path_id.split(">")[0])
-        path_ids_str = path_id.split(">")[1]
-        return [int(path_ids_str[i:i + id_part_len]) for i in range(0, len(path_ids_str), id_part_len)]
+        if len(split_id := path_id.split(">")) == 2:
+            id_part_len, path_id_parts = split_id
+
+            if (id_part_len.isdigit() and path_id_parts.isdigit()):
+                id_part_len = int(id_part_len)
+
+                if id_part_len > 0 and (len(path_id_parts) % id_part_len == 0):
+                    return [int(path_id_parts[i:i + id_part_len]) for i in range(0, len(path_id_parts), id_part_len)]
+
+        raise ValueError(f"Path ID '{path_id}' is an invalid format.")
