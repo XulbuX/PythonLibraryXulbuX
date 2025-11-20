@@ -1,3 +1,5 @@
+from .path import Path
+
 from typing import Optional
 import sys as _sys
 import os as _os
@@ -72,14 +74,17 @@ class EnvPath:
         """Get and/or normalize the given path, CWD or base directory.\n
         ------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
-        if not isinstance(path, (str, type(None))):
-            raise TypeError(f"The 'path' parameter must be a string or None, got {type(path)}")
-        if not isinstance(cwd, bool):
-            raise TypeError(f"The 'cwd' parameter must be a boolean, got {type(cwd)}")
-        if not isinstance(base_dir, bool):
-            raise TypeError(f"The 'base_dir' parameter must be a boolean, got {type(base_dir)}")
+        if cwd:
+            if base_dir:
+                raise ValueError("Both 'cwd' and 'base_dir' cannot be True at the same time.")
+            path = Path.cwd
+        elif base_dir:
+            path = Path.script_dir
 
-        return _os.path.normpath(EnvPath.__get(path, cwd, base_dir))
+        if path is None:
+            raise ValueError("No path provided. Please provide a 'path' or set either 'cwd' or 'base_dir' to True.")
+
+        return _os.path.normpath(path)
 
     @staticmethod
     def __persistent(path: str, remove: bool = False) -> None:

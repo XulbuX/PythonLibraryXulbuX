@@ -506,11 +506,8 @@ class hsla:
           * if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
           * if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
         - `additive_alpha` -⠀whether to blend the alpha channels additively or not"""
-        if not isinstance(other, hsla):
-            if Color.is_valid_hsla(other):
-                other = Color.to_hsla(other)
-            else:
-                raise TypeError(f"The 'other' parameter must be a valid HSLA color, got {type(other)}")
+        if not Color.is_valid_hsla(other):
+            raise TypeError(f"The 'other' parameter must be a valid HSLA color, got {type(other)}")
         if not isinstance(ratio, float):
             raise TypeError(f"The 'ratio' parameter must be a float, got {type(ratio)}")
         elif not (0.0 <= ratio <= 1.0):
@@ -820,11 +817,8 @@ class hexa:
           * if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
           * if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
         - `additive_alpha` -⠀whether to blend the alpha channels additively or not"""
-        if not isinstance(other, hexa):
-            if Color.is_valid_hexa(other):
-                other = Color.to_hexa(other)
-            else:
-                raise TypeError(f"The 'other' parameter must be a valid HEXA color, got {type(other)}")
+        if not Color.is_valid_hexa(other):
+            raise TypeError(f"The 'other' parameter must be a valid HEXA color, got {type(other)}")
         if not isinstance(ratio, float):
             raise TypeError(f"The 'ratio' parameter must be a float, got {type(ratio)}")
         elif not (0.0 <= ratio <= 1.0):
@@ -1321,6 +1315,7 @@ class Color:
             raise ValueError(f"The 'saturation_change' parameter must be in range [-1.0, 1.0], got {saturation_change!r}")
 
         hsla_color: hsla = Color.to_hsla(color)
+
         h, s, l, a = (
             int(hsla_color[0]), int(hsla_color[1]), int(hsla_color[2]), \
             hsla_color[3] if Color.has_alpha(hsla_color) else None

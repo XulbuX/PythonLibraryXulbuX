@@ -3,17 +3,17 @@ from xulbux.color import Color, rgba, hsla, hexa
 
 def test_rgba_to_hex_int_and_back():
     blue = Color.rgba_to_hex_int(0, 0, 255)
-    black = Color.rgba_to_hex_int(0, 0, 0, 1)
-    _blue = Color.rgba_to_hex_int(0, 0, 255, preserve_original=True)
-    _black = Color.rgba_to_hex_int(0, 0, 0, 1, preserve_original=True)
+    black = Color.rgba_to_hex_int(0, 0, 0, 1.0)
+    preserved_blue = Color.rgba_to_hex_int(0, 0, 255, preserve_original=True)
+    preserved_black = Color.rgba_to_hex_int(0, 0, 0, 1.0, preserve_original=True)
     assert blue == 0x0100FF
     assert black == 0x010000FF
-    assert _blue == 0x0000FF
-    assert _black == 0x000000FF
+    assert preserved_blue == 0x0000FF
+    assert preserved_black == 0x000000FF
     assert Color.hex_int_to_rgba(blue).values() == (0, 0, 255, None)
     assert Color.hex_int_to_rgba(black).values() == (0, 0, 0, 1.0)
-    assert Color.hex_int_to_rgba(_blue).values() == (0, 0, 255, None)
-    assert Color.hex_int_to_rgba(_black).values() == (0, 0, 255, None)
+    assert Color.hex_int_to_rgba(preserved_blue).values() == (0, 0, 255, None)
+    assert Color.hex_int_to_rgba(preserved_black).values() == (0, 0, 255, None)
     assert Color.hex_int_to_rgba(blue, preserve_original=True).values() == (1, 0, 255, None)
     assert Color.hex_int_to_rgba(black, preserve_original=True).values() == (1, 0, 0, 1.0)
 
@@ -158,14 +158,12 @@ def test_adjust_lightness():
 
 
 def test_adjust_saturation():
-    color = hsla(0, 50, 50)
-    saturated = Color.adjust_saturation(color, 0.5)  # type: ignore[assignment]
+    color = rgba(128, 80, 80)
+    saturated = Color.adjust_saturation(color, 0.25)  # type: ignore[assignment]
     assert isinstance(saturated, rgba)
-    assert saturated.to_hsla().s > color.s
-    color = hsla(0, 100, 50)
-    desaturated = Color.adjust_saturation(color, -0.5)  # type: ignore[assignment]
-    assert isinstance(desaturated, rgba)
-    assert desaturated.to_hsla().s < color.s
+    assert saturated.to_hsla().s > color.to_hsla().s
+    assert saturated == rgba(155, 54, 54)
+
     desaturated = Color.adjust_saturation(hexa("#FF0000"), -1.0)
     assert isinstance(desaturated, hexa)
     assert desaturated.is_grayscale() is True
