@@ -23,6 +23,7 @@
 * Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
 * Refactored/reformatted the code of the whole library, to introduce more clear code structure with more room to breathe.
 * Made the really complex regex patterns in the `Regex` class all multi-line for better readability.
+* Added a new internal method `Regex._clean()`, which is used to clean up regex patterns, defined as multi-line strings.
 * Moved custom exception classes to their own file `base/exceptions.py` for better structure and readability.
 * Moved custom types to their own file `base/types.py` for better structure and readability.
 
