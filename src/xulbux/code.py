@@ -71,12 +71,10 @@ class Code:
         if not isinstance(code, str):
             raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
 
-        funcs = _rx.findall(r"(?i)" + Regex.func_call(), code)
         nested_func_calls = []
 
-        for _, func_attrs in funcs:
-            nested_calls = _rx.findall(r"(?i)" + Regex.func_call(), func_attrs)
-            if nested_calls:
+        for _, func_attrs in (funcs := _rx.findall(r"(?i)" + Regex.func_call(), code)):
+            if (nested_calls := _rx.findall(r"(?i)" + Regex.func_call(), func_attrs)):
                 nested_func_calls.extend(nested_calls)
 
         return list(Data.remove_duplicates(funcs + nested_func_calls))

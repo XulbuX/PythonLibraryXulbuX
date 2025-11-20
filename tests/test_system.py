@@ -69,7 +69,7 @@ def test_restart_unsupported_system(mock_subprocess, mock_platform):
     """Test restart on unsupported system"""
     mock_platform.return_value.lower.return_value = "unknown"
     mock_subprocess.return_value = b"some output"
-    with pytest.raises(NotImplementedError, match="Restart not implemented for `unknown`"):
+    with pytest.raises(NotImplementedError, match="Restart not implemented for 'unknown' systems."):
         System.restart()
 
 

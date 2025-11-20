@@ -31,13 +31,21 @@ def test_normalize_spaces():
 def test_escape():
     assert String.escape("Line 1\nLine 2\tTabbed") == r"Line 1\nLine 2\tTabbed"
     assert String.escape("Path: C:\\Users\\Name") == r"Path: C:\\Users\\Name"
-    assert String.escape('String with "double quotes"') == r'String with \"double quotes\"'
-    assert String.escape("String with 'single quotes'") == r"String with 'single quotes'"
-    assert String.escape('String with "double quotes"', str_quotes="'") == r'String with "double quotes"'
-    assert String.escape("String with 'single quotes'", str_quotes="'") == r"String with \'single quotes\'"
+    # DEFAULT: NO ESCAPING QUOTES
+    assert String.escape('String with "double quotes"') == 'String with "double quotes"'
+    assert String.escape("String with 'single quotes'") == "String with 'single quotes'"
     assert String.escape(
         "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
+    ) == r"""Mix: \n "quotes" and 'single' \t tabs \\ backslash"""
+    # ESCAPE DOUBLE QUOTES
+    assert String.escape('String with "double quotes"', str_quotes='"') == r'String with \"double quotes\"'
+    assert String.escape("String with 'single quotes'", str_quotes='"') == r"String with 'single quotes'"
+    assert String.escape(
+        "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes='"'
     ) == r"Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
+    # ESCAPE SINGLE QUOTES
+    assert String.escape('String with "double quotes"', str_quotes="'") == r'String with "double quotes"'
+    assert String.escape("String with 'single quotes'", str_quotes="'") == r"String with \'single quotes\'"
     assert String.escape(
         "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes="'"
     ) == r'Mix: \n "quotes" and \'single\' \t tabs \\ backslash'

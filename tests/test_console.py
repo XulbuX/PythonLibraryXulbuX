@@ -1021,9 +1021,9 @@ def test_progressbar_set_chars_invalid():
 
 def test_progressbar_show_progress_invalid_total():
     pb = ProgressBar()
-    with pytest.raises(ValueError, match="Total must be greater than 0"):
+    with pytest.raises(ValueError, match="The 'total' parameter must be a positive integer."):
         pb.show_progress(10, 0)
-    with pytest.raises(ValueError, match="Total must be greater than 0"):
+    with pytest.raises(ValueError, match="The 'total' parameter must be a positive integer."):
         pb.show_progress(10, -5)
 
 

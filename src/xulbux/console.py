@@ -775,7 +775,7 @@ class Console:
         elif indent < 0:
             raise ValueError("The 'indent' parameter must be a non-negative integer.")
 
-        if box_bg_color is not None and Color.is_valid(box_bg_color):
+        if Color.is_valid(box_bg_color):
             box_bg_color = Color.to_hexa(box_bg_color)
 
         lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
@@ -1104,7 +1104,7 @@ class Console:
                 raise TypeError(f"The 'max_len' parameter must be an integer or None, got {type(max_len)}")
             elif max_len < 0:
                 raise ValueError("The 'max_len' parameter must be a non-negative integer.")
-        if not isinstance(allowed_chars, str):
+        if not (allowed_chars == CHARS.ALL or isinstance(allowed_chars, str)):
             raise TypeError(f"The 'allowed_chars' parameter must be a string, got {type(allowed_chars)}")
         if not isinstance(allow_paste, bool):
             raise TypeError(f"The 'allow_paste' parameter must be a boolean, got {type(allow_paste)}")

@@ -56,7 +56,8 @@ class Regex:
         s2 = "" if strip_spaces else r"\s*"
 
         if ignore_in_strings:
-            return rf"""{b1}{s1}({g}{s2}(?:
+            return Regex._clean(
+                rf"""{b1}{s1}({g}{s2}(?:
                 [^{b1}{b2}"']
                 |"(?:\\.|[^"\\])*"
                 |'(?:\\.|[^'\\])*'
@@ -67,14 +68,17 @@ class Regex:
                     |(?R)
                 )*{b2}
             )*{s2}){s1}{b2}"""
+            )
         else:
-            return rf"""{b1}{s1}({g}{s2}(?:
+            return Regex._clean(
+                rf"""{b1}{s1}({g}{s2}(?:
                 [^{b1}{b2}]
                 |{b1}(?:
                     [^{b1}{b2}]
                     |(?R)
                 )*{b2}
             )*{s2}){s1}{b2}"""
+            )
 
     @staticmethod
     def outside_strings(pattern: str = r".*") -> str:
@@ -104,10 +108,12 @@ class Regex:
 
         g = "" if is_group else "?:"
 
-        return rf"""({g}
+        return Regex._clean(
+            rf"""({g}
             (?:(?!{ignore_pattern}).)*
             (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
         )"""
+        )
 
     @staticmethod
     def func_call(func_name: Optional[str] = None) -> str:
@@ -119,9 +125,8 @@ class Regex:
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
         if func_name is None:
             func_name = r"[\w_]+"
-        else:
-            if not isinstance(func_name, str):
-                raise TypeError(f"The 'func_name' parameter must be a string or None, got {type(func_name)}")
+        elif not isinstance(func_name, str):
+            raise TypeError(f"The 'func_name' parameter must be a string or None, got {type(func_name)}")
 
         return rf"""(?<=\b)({func_name})\s*{Regex.brackets("(", ")", is_group=True)}"""
 
@@ -160,14 +165,14 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
-        return rf"""(?ix)(?:rgb|rgba)?\s*(?:
+        return Regex._clean(rf"""(?ix)(?:rgb|rgba)?\s*(?:
             \(?\s*{rgb_part}
                 (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
             \s*\)?
         )""" if allow_alpha else \
         rf"""(?ix)(?:rgb|rgba)?\s*(?:
             \(?\s*{rgb_part}\s*\)?
-        )"""
+        )""")
 
     @staticmethod
     def hsla_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
@@ -204,14 +209,14 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
-        return rf"""(?ix)(?:hsl|hsla)?\s*(?:
+        return Regex._clean(rf"""(?ix)(?:hsl|hsla)?\s*(?:
             \(?\s*{hsl_part}
                 (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
             \s*\)?
         )""" if allow_alpha else \
         rf"""(?ix)(?:hsl|hsla)?\s*(?:
             \(?\s*{hsl_part}\s*\)?
-        )"""
+        )""")
 
     @staticmethod
     def hexa_str(allow_alpha: bool = True) -> str:
@@ -231,3 +236,8 @@ class Regex:
 
         return r"(?i)(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})" \
             if allow_alpha else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
+
+    @staticmethod
+    def _clean(pattern: str) -> str:
+        """Internal method, to make a multiline-string regex pattern into a single-line pattern."""
+        return "".join(l.strip() for l in pattern.splitlines()).strip()

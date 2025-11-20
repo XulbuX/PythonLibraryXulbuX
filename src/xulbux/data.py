@@ -1,6 +1,7 @@
 from .base.consts import COLOR
 from .format_codes import FormatCodes
 from .string import String
+from .regex import Regex
 
 from typing import TypeAlias, Optional, Union, Any
 import base64 as _base64
@@ -220,15 +221,15 @@ class Data:
         if not isinstance(comment_sep, str):
             raise TypeError(f"The 'comment_sep' parameter must be a string, got {type(comment_sep)}")
 
-        pattern = _re.compile(
-            rf"""^(
+        pattern = _re.compile(Regex._clean( \
+                rf"""^(
                 (?:(?!{_re.escape(comment_start)}).)*
             )
             {_re.escape(comment_start)}
             (?:(?:(?!{_re.escape(comment_end)}).)*)
             (?:{_re.escape(comment_end)})?
             (.*?)$"""
-        ) if len(comment_end) > 0 else None
+        )) if len(comment_end) > 0 else None
 
         def process_string(s: str) -> Optional[str]:
             if pattern:
@@ -641,10 +642,10 @@ class Data:
             )
 
         def format_dict(d: dict, current_indent: int) -> str:
-            if compactness == 2 or not (d or should_expand(list(d.values()))):
+            if compactness == 2 or not d or not should_expand(list(d.values())):
                 return punct["{"] \
                     + sep.join(
-                        f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" \
+                        f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
                         for k, v in d.items()
                     ) \
                     + punct["}"]
@@ -660,16 +661,13 @@ class Data:
             if as_json:
                 seq = list(seq)
 
-            if compactness == 2 or not (seq or should_expand(seq)):
-                return punct["["] \
-                    + (s := sep.join(format_value(item, current_indent) for item in seq)) \
-                    + (punct["]"] if isinstance(seq, list) else punct["("]) \
-                    + s \
-                    + punct[")"]
+            brackets = (punct["["], punct["]"]) if isinstance(seq, list) else (punct["("], punct[")"])
+
+            if compactness == 2 or not seq or not should_expand(seq):
+                return f"{brackets[0]}{sep.join(format_value(item, current_indent) for item in seq)}{brackets[1]}"
 
             items = [format_value(item, current_indent) for item in seq]
             formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
-            brackets = (punct["["], punct["]"]) if isinstance(seq, list) else (punct["("], punct[")"])
 
             return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"
 
