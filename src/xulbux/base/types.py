@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Uni
 import regex as _rx
 import re as _re
 
+# PREVENT CIRCULAR IMPORTS
 if TYPE_CHECKING:
     from ..color import rgba, hsla, hexa
 
