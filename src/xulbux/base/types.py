@@ -9,10 +9,10 @@ if TYPE_CHECKING:
 #
 ################################################## COLOR ##################################################
 
-Int_0_100 = Annotated[int, "An integer value between 0 and 100, inclusive."]
-Int_0_255 = Annotated[int, "An integer value between 0 and 255, inclusive."]
-Int_0_360 = Annotated[int, "An integer value between 0 and 360, inclusive."]
-Float_0_1 = Annotated[float, "A float value between 0.0 and 1.0, inclusive."]
+Int_0_100 = Annotated[int, "An integer in range [0, 100]."]
+Int_0_255 = Annotated[int, "An integer in range [0, 255]."]
+Int_0_360 = Annotated[int, "An integer in range [0, 360]."]
+Float_0_1 = Annotated[float, "A float in range [0.0, 1.0]."]
 
 AnyRgba: TypeAlias = Any
 AnyHsla: TypeAlias = Any
