@@ -1,16 +1,14 @@
+from .base.types import DataStructure, IndexIterable
 from .base.consts import COLOR
+
 from .format_codes import FormatCodes
 from .string import String
 from .regex import Regex
 
-from typing import TypeAlias, Optional, Union, Any
+from typing import Optional, Any
 import base64 as _base64
 import math as _math
 import re as _re
-
-
-DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
-IndexIterable: TypeAlias = Union[list, tuple, set, frozenset]
 
 
 class Data:

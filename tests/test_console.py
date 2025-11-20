@@ -1,4 +1,4 @@
-from xulbux.console import Console, Args, ArgResult, ProgressBar
+from xulbux.console import ProgressBar, Console, ArgResult, Args
 from xulbux import console
 
 from unittest.mock import MagicMock, patch, call

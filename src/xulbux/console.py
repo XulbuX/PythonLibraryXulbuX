@@ -5,12 +5,14 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `format_codes` module documentation.
 """
 
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional
 from .base.consts import COLOR, CHARS, ANSI
+
 from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
 from .string import String
 from .color import Color, Rgba, Hexa
 
-from typing import Generator, TypedDict, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
+from typing import Generator, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -71,24 +73,6 @@ class _ConsoleUser:
 
     def __get__(self, obj, owner=None):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
-
-
-class _ArgConfigWithDefault(TypedDict):
-    """TypedDict for flagged argument configuration with default value."""
-    flags: set[str]
-    default: str
-
-
-class _ArgResultRegular(TypedDict):
-    """TypedDict for regular flagged argument results."""
-    exists: bool
-    value: Optional[str]
-
-
-class _ArgResultPositional(TypedDict):
-    """TypedDict for positional `"before"`/`"after"` argument results."""
-    exists: bool
-    values: list[str]
 
 
 class ArgResult:
@@ -165,21 +149,21 @@ class Args:
             return list(self.__iter__())[key]
         return getattr(self, key)
 
-    def __iter__(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
+    def __iter__(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
         for key, val in vars(self).items():
             if val.values is not None:
-                yield (key, _ArgResultPositional(exists=val.exists, values=val.values))
+                yield (key, ArgResultPositional(exists=val.exists, values=val.values))
             else:
-                yield (key, _ArgResultRegular(exists=val.exists, value=val.value))
+                yield (key, ArgResultRegular(exists=val.exists, value=val.value))
 
-    def dict(self) -> dict[str, _ArgResultRegular | _ArgResultPositional]:
+    def dict(self) -> dict[str, ArgResultRegular | ArgResultPositional]:
         """Returns the arguments as a dictionary."""
-        result: dict[str, _ArgResultRegular | _ArgResultPositional] = {}
+        result: dict[str, ArgResultRegular | ArgResultPositional] = {}
         for key, val in vars(self).items():
             if val.values is not None:
-                result[key] = _ArgResultPositional(exists=val.exists, values=val.values)
+                result[key] = ArgResultPositional(exists=val.exists, values=val.values)
             else:
-                result[key] = _ArgResultRegular(exists=val.exists, value=val.value)
+                result[key] = ArgResultRegular(exists=val.exists, value=val.value)
         return result
 
     def keys(self):
@@ -190,7 +174,7 @@ class Args:
         """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
 
-    def items(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
+    def items(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
         """Yields tuples of `(alias, _ArgResultRegular | _ArgResultPositional)`."""
         for key, val in self.__iter__():
             yield (key, val)
@@ -209,7 +193,7 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[str, set[str] | _ArgConfigWithDefault | Literal["before", "after"]],
+        find_args: Mapping[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]],
         allow_spaces: bool = False,
     ) -> Args:
         """Will search for the specified arguments in the command line

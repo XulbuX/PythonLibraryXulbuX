@@ -1,10 +1,7 @@
+from .base.exceptions import SameContentFileExistsError
 from .string import String
 
 import os as _os
-
-
-class SameContentFileExistsError(FileExistsError):
-    ...
 
 
 class File:

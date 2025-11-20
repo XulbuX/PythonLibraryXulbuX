@@ -155,10 +155,12 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
+from .base.types import Pattern, Match, Rgba, Hexa
 from .base.consts import ANSI
+
 from .string import String
-from .regex import Regex, Match, Pattern
-from .color import Color, rgba, Rgba, Hexa
+from .regex import Regex
+from .color import Color, rgba
 
 from typing import Optional, Literal, cast
 import ctypes as _ctypes

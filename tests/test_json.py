@@ -1,4 +1,4 @@
-from xulbux.file import SameContentFileExistsError
+from xulbux.base.exceptions import SameContentFileExistsError
 from xulbux.json import Json
 
 import pytest

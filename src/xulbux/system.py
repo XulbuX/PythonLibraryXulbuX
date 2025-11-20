@@ -1,7 +1,9 @@
+from .base.types import MissingLibsMsgs
+
 from .format_codes import FormatCodes
 from .console import Console
 
-from typing import TypedDict, Optional
+from typing import Optional
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
@@ -21,12 +23,6 @@ class _IsElevated:
         except Exception:
             pass
         return False
-
-
-class _MissingLibsMsgs(TypedDict):
-    """TypedDict for the `missing_libs_msgs` parameter in `System.check_libs()`."""
-    found_missing: str
-    should_install: str
 
 
 class System:
@@ -94,7 +90,7 @@ class System:
     def check_libs(
         lib_names: list[str],
         install_missing: bool = False,
-        missing_libs_msgs: _MissingLibsMsgs = {
+        missing_libs_msgs: MissingLibsMsgs = {
             "found_missing": "The following required libraries are missing:",
             "should_install": "Do you want to install them now?",
         },

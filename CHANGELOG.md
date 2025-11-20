@@ -23,6 +23,8 @@
 * Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
 * Refactored/reformatted the code of the whole library, to introduce more clear code structure with more room to breathe.
 * Made the really complex regex patterns in the `Regex` class all multi-line for better readability.
+* Moved custom exception classes to their own file `base/exceptions.py` for better structure and readability.
+* Moved custom types to their own file `base/types.py` for better structure and readability.
 
 **BREAKING CHANGES:**
 * The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists or tuples, since the order of flags doesn't matter and sets have better performance for lookups.

@@ -31,40 +31,11 @@ The `Color` class, which contains all sorts of different color-related methods:
     - saturation
 """
 
+from .base.types import AnyRgba, AnyHsla, AnyHexa, Rgba, Hsla, Hexa
 from .regex import Regex
 
-from typing import Annotated, TypeAlias, Iterator, Optional, Literal, Union, Any, cast
+from typing import Iterator, Optional, Literal, cast
 import re as _re
-
-
-Int_0_100 = Annotated[int, "An integer value between 0 and 100, inclusive."]
-Int_0_255 = Annotated[int, "An integer value between 0 and 255, inclusive."]
-Int_0_360 = Annotated[int, "An integer value between 0 and 360, inclusive."]
-Float_0_1 = Annotated[float, "A float value between 0.0 and 1.0, inclusive."]
-
-AnyRgba: TypeAlias = Any
-AnyHsla: TypeAlias = Any
-AnyHexa: TypeAlias = Any
-
-Rgba: TypeAlias = Union[
-    tuple[Int_0_255, Int_0_255, Int_0_255],
-    tuple[Int_0_255, Int_0_255, Int_0_255, Float_0_1],
-    list[Int_0_255],
-    list[Union[Int_0_255, Float_0_1]],
-    dict[str, Union[int, float]],
-    "rgba",
-    str,
-]
-Hsla: TypeAlias = Union[
-    tuple[Int_0_360, Int_0_100, Int_0_100],
-    tuple[Int_0_360, Int_0_100, Int_0_100, Float_0_1],
-    list[Union[Int_0_360, Int_0_100]],
-    list[Union[Int_0_360, Int_0_100, Float_0_1]],
-    dict[str, Union[int, float]],
-    "hsla",
-    str,
-]
-Hexa: TypeAlias = Union[str, int, "hexa"]
 
 
 class rgba:

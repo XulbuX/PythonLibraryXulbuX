@@ -1,13 +1,11 @@
+from .base.exceptions import PathNotFoundError
+
 from typing import Optional
 import tempfile as _tempfile
 import difflib as _difflib
 import shutil as _shutil
 import sys as _sys
 import os as _os
-
-
-class PathNotFoundError(FileNotFoundError):
-    ...
 
 
 class _Cwd:
