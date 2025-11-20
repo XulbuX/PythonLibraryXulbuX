@@ -11,20 +11,31 @@ class File:
 
     @staticmethod
     def rename_extension(
-        file: str,
+        file_path: str,
         new_extension: str,
         full_extension: bool = False,
         camel_case_filename: bool = False,
     ) -> str:
         """Rename the extension of a file.\n
-        --------------------------------------------------------------------------
-        If `full_extension` is true, everything after the first dot in the
-        filename will be treated as the extension to replace (e.g. `.tar.gz`).
-        Otherwise, only the part after the last dot is replaced (e.g. `.gz`).\n
-        If the `camel_case_filename` parameter is true, the filename will be made
-        CamelCase in addition to changing the files extension."""
-        normalized_file = _os.path.normpath(file)
+        ----------------------------------------------------------------------------
+        - `file_path` -⠀the path to the file whose extension should be changed
+        - `new_extension` -⠀the new extension for the file (with or without dot)
+        - `full_extension` -⠀whether to replace the full extension (e.g. `.tar.gz`)
+          or just the last part of it (e.g. `.gz`)
+        - `camel_case_filename` -⠀whether to convert the filename to CamelCase
+          in addition to changing the files extension"""
+        if not isinstance(file_path, str):
+            raise TypeError(f"The 'file_path' parameter must be a string, got {type(file_path)}")
+        if not isinstance(new_extension, str):
+            raise TypeError(f"The 'new_extension' parameter must be a string, got {type(new_extension)}")
+        if not isinstance(full_extension, bool):
+            raise TypeError(f"The 'full_extension' parameter must be a boolean, got {type(full_extension)}")
+        if not isinstance(camel_case_filename, bool):
+            raise TypeError(f"The 'camel_case_filename' parameter must be a boolean, got {type(camel_case_filename)}")
+
+        normalized_file = _os.path.normpath(file_path)
         directory, filename_with_ext = _os.path.split(normalized_file)
+
         if full_extension:
             try:
                 first_dot_index = filename_with_ext.index('.')
@@ -33,27 +44,41 @@ class File:
                 filename = filename_with_ext
         else:
             filename, _ = _os.path.splitext(filename_with_ext)
+
         if camel_case_filename:
             filename = String.to_camel_case(filename)
         if new_extension and not new_extension.startswith('.'):
             new_extension = '.' + new_extension
+
         return _os.path.join(directory, f"{filename}{new_extension}")
 
     @staticmethod
-    def create(file: str, content: str = "", force: bool = False) -> str:
+    def create(file_path: str, content: str = "", force: bool = False) -> str:
         """Create a file with ot without content.\n
-        ----------------------------------------------------------------------
-        The function will throw a `FileExistsError` if a file with the same
-        name already exists and a `SameContentFileExistsError` if a file with
-        the same name and content already exists.
-        To always overwrite the file, set the `force` parameter to `True`."""
-        if _os.path.exists(file) and not force:
-            with open(file, "r", encoding="utf-8") as existing_file:
+        ------------------------------------------------------------------
+        - `file_path` -⠀the path where the file should be created
+        - `content` -⠀the content to write into the file
+        - `force` -⠀if true, will overwrite existing files
+          without throwing an error (errors explained below)\n
+        ------------------------------------------------------------------
+        The method will throw a `FileExistsError` if a file with the same
+        name already exists and a `SameContentFileExistsError` if a file
+        with the same name and same content already exists."""
+        if not isinstance(file_path, str):
+            raise TypeError(f"The 'file_path' parameter must be a string, got {type(file_path)}")
+        if not isinstance(content, str):
+            raise TypeError(f"The 'content' parameter must be a string, got {type(content)}")
+        if not isinstance(force, bool):
+            raise TypeError(f"The 'force' parameter must be a boolean, got {type(force)}")
+
+        if _os.path.exists(file_path) and not force:
+            with open(file_path, "r", encoding="utf-8") as existing_file:
                 existing_content = existing_file.read()
                 if existing_content == content:
                     raise SameContentFileExistsError("Already created this file. (nothing changed)")
             raise FileExistsError("File already exists.")
-        with open(file, "w", encoding="utf-8") as f:
+
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
-        full_path = _os.path.abspath(file)
-        return full_path
+
+        return _os.path.abspath(file_path)

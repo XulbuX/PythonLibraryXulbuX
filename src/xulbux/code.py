@@ -9,57 +9,95 @@ class Code:
 
     @staticmethod
     def add_indent(code: str, indent: int) -> str:
-        """Adds `indent` spaces at the beginning of each line."""
-        indented_lines = [" " * indent + line for line in code.splitlines()]
-        return "\n".join(indented_lines)
+        """Adds `indent` spaces at the beginning of each line.\n
+        --------------------------------------------------------------------------
+        - `code` -⠀the code to indent
+        - `indent` -⠀the amount of spaces to add at the beginning of each line"""
+        if not isinstance(code, str):
+            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
+        if not isinstance(indent, int):
+            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
+        elif indent < 0:
+            raise ValueError(f"The 'indent' parameter must be non-negative, got {indent!r}")
+
+        return "\n".join(" " * indent + line for line in code.splitlines())
 
     @staticmethod
     def get_tab_spaces(code: str) -> int:
-        """Will try to get the amount of spaces used for indentation."""
-        code_lines = String.get_lines(code, remove_empty_lines=True)
-        indents = [len(line) - len(line.lstrip()) for line in code_lines]
-        non_zero_indents = [i for i in indents if i > 0]
-        return min(non_zero_indents) if non_zero_indents else 0
+        """Will try to get the amount of spaces used for indentation.\n
+        ----------------------------------------------------------------
+        - `code` -⠀the code to analyze"""
+        if not isinstance(code, str):
+            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
+
+        indents = [len(line) - len(line.lstrip()) for line in String.get_lines(code, remove_empty_lines=True)]
+        return min(non_zero_indents) if (non_zero_indents := [i for i in indents if i > 0]) else 0
 
     @staticmethod
     def change_tab_size(code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
         """Replaces all tabs with `new_tab_size` spaces.\n
-        ----------------------------------------------------------------------------------
-        If `remove_empty_lines` is `True`, empty lines will be removed in the process."""
-        code_lines = String.get_lines(code, remove_empty_lines=True)
-        lines = code_lines if remove_empty_lines else String.get_lines(code)
-        tab_spaces = Code.get_tab_spaces(code)
-        if (tab_spaces == new_tab_size) or tab_spaces == 0:
+        --------------------------------------------------------------------------------
+        - `code` -⠀the code to modify the tab size of
+        - `new_tab_size` -⠀the new amount of spaces per tab
+        - `remove_empty_lines` -⠀is true, empty lines will be removed in the process"""
+        if not isinstance(code, str):
+            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
+        if not isinstance(new_tab_size, int):
+            raise TypeError(f"The 'new_tab_size' parameter must be an integer, got {type(new_tab_size)}")
+        elif new_tab_size < 0:
+            raise ValueError(f"The 'new_tab_size' parameter must be non-negative, got {new_tab_size!r}")
+        if not isinstance(remove_empty_lines, bool):
+            raise TypeError(f"The 'remove_empty_lines' parameter must be a boolean, got {type(remove_empty_lines)}")
+
+        code_lines = String.get_lines(code, remove_empty_lines=remove_empty_lines)
+
+        if ((tab_spaces := Code.get_tab_spaces(code)) == new_tab_size) or tab_spaces == 0:
             if remove_empty_lines:
                 return "\n".join(code_lines)
             return code
+
         result = []
-        for line in lines:
-            stripped = line.lstrip()
-            indent_level = (len(line) - len(stripped)) // tab_spaces
-            new_indent = " " * (indent_level * new_tab_size)
-            result.append(new_indent + stripped)
+        for line in code_lines:
+            indent_level = (len(line) - len(stripped := line.lstrip())) // tab_spaces
+            result.append((" " * (indent_level * new_tab_size)) + stripped)
+
         return "\n".join(result)
 
     @staticmethod
     def get_func_calls(code: str) -> list:
-        """Will try to get all function calls and return them as a list."""
+        """Will try to get all function calls and return them as a list.\n
+        -------------------------------------------------------------------
+        - `code` -⠀the code to analyze"""
+        if not isinstance(code, str):
+            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
+
         funcs = _rx.findall(r"(?i)" + Regex.func_call(), code)
         nested_func_calls = []
+
         for _, func_attrs in funcs:
             nested_calls = _rx.findall(r"(?i)" + Regex.func_call(), func_attrs)
             if nested_calls:
                 nested_func_calls.extend(nested_calls)
+
         return list(Data.remove_duplicates(funcs + nested_func_calls))
 
     @staticmethod
-    def is_js(code: str, funcs: list[str] = ["__", "$t", "$lang"]) -> bool:
-        """Will check if the code is very likely to be JavaScript."""
-        if not code or len(code.strip()) < 3:
+    def is_js(code: str, funcs: set[str] = {"__", "$t", "$lang"}) -> bool:
+        """Will check if the code is very likely to be JavaScript.\n
+        -------------------------------------------------------------
+        - `code` -⠀the code to analyze
+        - `funcs` -⠀a list of custom function names to check for"""
+        if not isinstance(code, str):
+            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
+        elif len(code.strip()) < 3:
             return False
+        if not isinstance(funcs, set):
+            raise TypeError(f"The 'funcs' parameter must be a set, got {type(funcs)}")
+
         for func in funcs:
             if _rx.match(r"^[\s\n]*" + _rx.escape(func) + r"\([^\)]*\)[\s\n]*$", code):
                 return True
+
         direct_js_patterns = [
             r"^[\s\n]*\$\(['\"][^'\"]+['\"]\)\.[\w]+\([^\)]*\);?[\s\n]*$",  # jQuery calls
             r"^[\s\n]*\$\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # $.ajax(), etc.
@@ -71,6 +109,7 @@ class Code:
         for pattern in direct_js_patterns:
             if _rx.match(pattern, code):
                 return True
+
         arrow_function_patterns = [
             r"^[\s\n]*\b[\w_]+\s*=\s*\([^\)]*\)\s*=>\s*[^;{]*[;]?[\s\n]*$",  # const x = (y) => y*2;
             r"^[\s\n]*\b[\w_]+\s*=\s*[\w_]+\s*=>\s*[^;{]*[;]?[\s\n]*$",  # const x = y => y*2;
@@ -80,6 +119,8 @@ class Code:
         for pattern in arrow_function_patterns:
             if _rx.match(pattern, code):
                 return True
+
+        js_score = 0
         funcs_pattern = r"(" + "|".join(_rx.escape(f) for f in funcs) + r")" + Regex.brackets("()")
         js_indicators = [(r"\b(var|let|const)\s+[\w_$]+", 2),  # JS variable declarations
                          (r"\$[\w_$]+\s*=", 2),  # jQuery-style variables
@@ -98,18 +139,17 @@ class Code:
                          (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # Try-catch
                          (r";[\s\n]*$", 0.5),  # Semicolon line endings
                          ]
-        js_score = 0
+
         line_endings = [line.strip() for line in code.splitlines() if line.strip()]
-        semicolon_endings = sum(1 for line in line_endings if line.endswith(';'))
-        if semicolon_endings >= 1:
+        if (semicolon_endings := sum(1 for line in line_endings if line.endswith(';'))) >= 1:
             js_score += min(semicolon_endings, 2)
-        opening_braces = code.count('{')
-        closing_braces = code.count('}')
-        if opening_braces > 0 and opening_braces == closing_braces:
+        if (opening_braces := code.count('{')) > 0 and opening_braces == code.count('}'):
             js_score += 1
+
         for pattern, score in js_indicators:
             regex = _rx.compile(pattern, _rx.IGNORECASE)
             matches = regex.findall(code)
             if matches:
                 js_score += len(matches) * score
+
         return js_score >= 2

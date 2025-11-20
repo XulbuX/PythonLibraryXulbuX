@@ -47,14 +47,20 @@ class Path:
         use_closest_match: bool = False,
     ) -> Optional[str]:
         """Tries to resolve and extend a relative path to an absolute path.\n
-        --------------------------------------------------------------------------------
-        If the `rel_path` couldn't be located in predefined directories, it will be
-        searched in the `search_in` directory/s. If the `rel_path` is still not found,
-        it returns `None` or raises a `PathNotFoundError` if `raise_error` is true.\n
-        --------------------------------------------------------------------------------
-        If `use_closest_match` is true, it is possible to have typos in the `search_in`
-        path/s and it will still find the file if it is under one of those paths."""
-        if rel_path in (None, ""):
+        -------------------------------------------------------------------------------------------
+        - `rel_path` -⠀the relative path to extend
+        - `search_in` -⠀a directory or a list of directories to search in,
+          in addition to the predefined directories (see exact procedure below)
+        - `raise_error` -⠀if true, raises a `PathNotFoundError` if
+          the path couldn't be found (otherwise it returns `None`)
+        - `use_closest_match` -⠀if true, it will try to find the closest matching file/folder
+          names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`\n
+        -------------------------------------------------------------------------------------------
+        If the `rel_path` couldn't be located in predefined directories,
+        it will be searched in the `search_in` directory/s.<br>
+        If the `rel_path` is still not found, it returns `None` or
+        raises a `PathNotFoundError` if `raise_error` is true."""
+        if rel_path in {"", None}:
             if raise_error:
                 raise PathNotFoundError("Path is empty.")
             return None
@@ -126,15 +132,22 @@ class Path:
     ) -> str:
         """Tries to locate and extend a relative path to an absolute path, and if the `rel_path`
         couldn't be located, it generates a path, as if it was located.\n
-        -----------------------------------------------------------------------------------------
-        If the `rel_path` couldn't be located in predefined directories, it will be searched in
-        the `search_in` directory/s. If the `rel_path` is still not found, it will makes a path
-        that points to where the `rel_path` would be in the script directory, even though the
-        `rel_path` doesn't exist there. If `prefer_script_dir` is false, it will instead make a
-        path that points to where the `rel_path` would be in the CWD.\n
-        -----------------------------------------------------------------------------------------
-        If `use_closest_match` is true, it is possible to have typos in the `search_in` path/s
-        and it will still find the file if it is under one of those paths."""
+        -------------------------------------------------------------------------------------------
+        - `rel_path` -⠀the relative path to extend or make
+        - `search_in` -⠀a directory or a list of directories to search in,
+          in addition to the predefined directories (see exact procedure below)
+        - `prefer_script_dir` -⠀if true, the script directory is preferred
+          when making a new path (otherwise the CWD is preferred)
+        - `use_closest_match` -⠀if true, it will try to find the closest matching file/folder
+          names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`\n
+        -------------------------------------------------------------------------------------------
+        If the `rel_path` couldn't be located in predefined directories,
+        it will be searched in the `search_in` directory/s.<br>
+        If the `rel_path` is still not found, it will makes a path
+        that points to where the `rel_path` would be in the script directory,
+        even though the `rel_path` doesn't exist there.<br>
+        If `prefer_script_dir` is false, it will instead make a path
+        that points to where the `rel_path` would be in the CWD."""
         try:
             return str(Path.extend(rel_path, search_in, raise_error=True, use_closest_match=use_closest_match))
         except PathNotFoundError:
@@ -146,8 +159,9 @@ class Path:
     def remove(path: str, only_content: bool = False) -> None:
         """Removes the directory or the directory's content at the specified path.\n
         -----------------------------------------------------------------------------
-        Normally it removes the directory and its content, but if `only_content` is
-        true, the directory is kept and only its contents are removed."""
+        - `path` -⠀the path to the directory or file to remove
+        - `only_content` -⠀if true, only the content of the directory is removed
+          and the directory itself is kept"""
         if not _os.path.exists(path):
             return None
         if not only_content:

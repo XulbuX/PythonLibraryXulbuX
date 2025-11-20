@@ -16,7 +16,7 @@ def test_to_type():
     assert String.to_type('{"c": [3, 4], "d": null}') == {"c": [3, 4], "d": None}
     assert String.to_type("(1, 'two', 3.0)") == (1, "two", 3.0)
     assert String.to_type("just a string") == "just a string"
-    assert String.to_type("  {'key': [1, 'val']}  ") == {'key': [1, 'val']}
+    assert String.to_type("  {'key': [1, 'val']}  ") == {"key": [1, "val"]}
     assert String.to_type("invalid { structure") == "invalid { structure"
 
 
@@ -30,7 +30,7 @@ def test_normalize_spaces():
 
 def test_escape():
     assert String.escape("Line 1\nLine 2\tTabbed") == r"Line 1\nLine 2\tTabbed"
-    assert String.escape('Path: C:\\Users\\Name') == r"Path: C:\\Users\\Name"
+    assert String.escape("Path: C:\\Users\\Name") == r"Path: C:\\Users\\Name"
     assert String.escape('String with "double quotes"') == r'String with \"double quotes\"'
     assert String.escape("String with 'single quotes'") == r"String with 'single quotes'"
     assert String.escape('String with "double quotes"', str_quotes="'") == r'String with "double quotes"'
@@ -44,14 +44,12 @@ def test_escape():
 
 
 def test_is_empty():
-    assert String.is_empty(None) is True  # type: ignore[assignment]
+    assert String.is_empty(None) is True
     assert String.is_empty("") is True
     assert String.is_empty("   ") is False
     assert String.is_empty("   ", spaces_are_empty=True) is True
     assert String.is_empty("Not Empty") is False
     assert String.is_empty(" Not Empty ", spaces_are_empty=True) is False
-    assert String.is_empty(123) is False  # type: ignore[assignment]
-    assert String.is_empty([]) is False  # type: ignore[assignment]
 
 
 def test_single_char_repeats():

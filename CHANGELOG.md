@@ -15,10 +15,18 @@
 # <br><b>Changelog</b><br>
 
 
-<span id="v1-8-6" />
+<span id="v1-9-0" />
 
-## ... `v1.8.6`
-* Standardized the docstrings for all public methods in the whole library to use the same style and format.
+## ... `v1.9.0` Big Update 🚀
+* Standardized the docstrings for all public methods in the whole library to use the same style and structure.
+* Replaced left over single quotes in the tests with double quotes for consistency.
+* Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
+* Refactored/reformatted the code of the whole library, to introduce more clear code structure with more room to breathe.
+* Made the really complex regex patterns in the `Regex` class all multi-line for better readability.
+
+**BREAKING CHANGES:**
+* The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists or tuples, since the order of flags doesn't matter and sets have better performance for lookups.
+* All library methods will now throw errors if the params aren't of the expected type.
 
 
 <span id="v1-8-5" />

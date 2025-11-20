@@ -62,7 +62,7 @@ def test_regex_quotes_escaped_quotes():
 
 def test_regex_quotes_nested_quotes():
     """Test quotes pattern with nested quotes of different types"""
-    text = '''He said "She said 'Hello' to me" yesterday'''
+    text = """He said "She said 'Hello' to me" yesterday"""
     pattern = Regex.quotes()
     matches = rx.findall(pattern, text)
     assert matches == [('"', "She said 'Hello' to me")]
@@ -174,7 +174,7 @@ def test_regex_brackets_ignore_in_strings():
     text2 = 'outer("inner(test)")'
     matches2 = rx.findall(pattern, text2)
     assert len(matches2) == 1
-    assert 'inner(test)' in matches2[0]
+    assert "inner(test)" in matches2[0]
 
 
 def test_regex_outside_strings_pattern():
@@ -205,7 +205,7 @@ def test_regex_outside_strings_with_special_chars():
 def test_regex_outside_strings_complex_pattern():
     """Test outside_strings with complex pattern"""
     pattern = Regex.outside_strings(r"[a-z]+")
-    text = 'word1 "word2" word3 \'word4\' word5'
+    text = "word1 \"word2\" word3 'word4' word5"
     matches = re.findall(pattern, text)
     assert len(matches) >= 3
     assert any("word" in match for match in matches)
