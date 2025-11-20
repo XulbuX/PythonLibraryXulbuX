@@ -1,8 +1,9 @@
-from ..color import rgba, hsla, hexa
-
-from typing import Annotated, TypeAlias, TypedDict, Optional, Union, Any
+from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Union, Any
 import regex as _rx
 import re as _re
+
+if TYPE_CHECKING:
+    from ..color import rgba, hsla, hexa
 
 #
 ################################################## COLOR ##################################################
