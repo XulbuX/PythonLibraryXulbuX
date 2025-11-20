@@ -768,7 +768,7 @@ class Console:
         if not isinstance(start, str):
             raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
         # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(box_bg_color, (str, Rgba, Hexa)):
+        if not (isinstance(box_bg_color, str) or Color.is_valid_rgba(box_bg_color) or Color.is_valid_hexa(box_bg_color)):
             raise TypeError(f"The 'box_bg_color' parameter must be a string, Rgba, or Hexa color, got {type(box_bg_color)}")
         # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
         if not isinstance(w_padding, int):
@@ -862,7 +862,7 @@ class Console:
             raise ValueError(
                 f"The 'border_type' parameter must be one of 'standard', 'rounded', 'strong', or 'double', got '{border_type!r}'"
             )
-        if not isinstance(border_style, (str, Rgba, Hexa)):
+        if not (isinstance(border_style, str) or Color.is_valid_rgba(border_style) or Color.is_valid_hexa(border_style)):
             raise TypeError(f"The 'border_style' parameter must be a string, Rgba, or Hexa color, got {type(border_style)}")
         # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
         if not isinstance(w_padding, int):
