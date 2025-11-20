@@ -95,7 +95,7 @@ def test_console_size(mock_terminal_size):
         ),
         # VALUE WITH SPACES (ONLY FIRST PART DUE TO allow_spaces=False)
         (
-            ["script.py", "-t", "text with spaces"],
+            ["script.py", "-t", "text", "with", "spaces"],
             {"text": {"-t"}},
             {"text": {"exists": True, "value": "text"}},
         ),
@@ -122,7 +122,7 @@ def test_console_size(mock_terminal_size):
             },
         ),
 
-        # --- CASES WITH DEFAULTS (dict FORMAT, allow_spaces=False) ---
+        # --- CASES WITH DEFAULT VALUES ---
         # DEFAULT USED
         (
             ["script.py"],
@@ -165,9 +165,9 @@ def test_console_size(mock_terminal_size):
         # --- 'before' / 'after' SPECIAL CASES ---
         # 'before' SPECIAL CASE
         (
-            ["script.py", "arg1", "arg2", "-f", "file.txt"],
+            ["script.py", "arg1", "arg2.1 arg2.2", "-f", "file.txt"],
             {"before": "before", "file": {"-f"}},
-            {"before": {"exists": True, "values": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}},
+            {"before": {"exists": True, "values": ["arg1", "arg2.1 arg2.2"]}, "file": {"exists": True, "value": "file.txt"}},
         ),
         (
             ["script.py", "-f", "file.txt"],
@@ -176,9 +176,9 @@ def test_console_size(mock_terminal_size):
         ),
         # 'after' SPECIAL CASE
         (
-            ["script.py", "-f", "file.txt", "arg1", "arg2"],
+            ["script.py", "-f", "file.txt", "arg1", "arg2.1 arg2.2"],
             {"after": "after", "file": {"-f"}},
-            {"after": {"exists": True, "values": ["arg1", "arg2"]}, "file": {"exists": True, "value": "file.txt"}},
+            {"after": {"exists": True, "values": ["arg1", "arg2.1 arg2.2"]}, "file": {"exists": True, "value": "file.txt"}},
         ),
         (
             ["script.py", "-f", "file.txt"],
@@ -220,7 +220,7 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
         assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
         assert args_result[key].exists == expected["exists"]  # type: ignore[access]
-        # Check if this is a positional arg (has 'values') or regular arg (has 'value')
+        # CHECK IF THIS IS A POSITIONAL ARG (HAS 'values') OR REGULAR ARG (HAS 'value')
         if "values" in expected:
             assert args_result[key].values == expected["values"]  # type: ignore[access]
         else:
@@ -300,28 +300,23 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
             {"file": {"exists": True, "value": "another file"}, "mode": {"exists": False, "value": "prod"}},
         ),
 
-        # --- 'before' / 'after' SPECIAL CASES ---
+        # --- 'before' / 'after' SPECIAL CASES (ARE NOT AFFECTED BY allow_spaces) ---
         # 'before' SPECIAL CASE
         (
-            ["script.py", "arg1", "arg2", "-f", "file.txt"],
+            ["script.py", "arg1", "arg2.1 arg2.2", "-f", "file.txt"],
             {"before": "before", "file": {"-f"}},
-            {"before": {"exists": True, "values": ["arg1 arg2"]}, "file": {"exists": True, "value": "file.txt"}},
-        ),
-        (
-            ["script.py", "-f", "file.txt"],
-            {"before": "before", "file": {"-f"}},
-            {"before": {"exists": False, "values": []}, "file": {"exists": True, "value": "file.txt"}},
+            {"before": {"exists": True, "values": ["arg1", "arg2.1 arg2.2"]}, "file": {"exists": True, "value": "file.txt"}},
         ),
         # 'after' SPECIAL CASE
         (
-            ["script.py", "-f", "file.txt", "arg1", "arg2"],
+            ["script.py", "-f", "file.txt", "arg1", "arg2.1 arg2.2"],
             {"after": "after", "file": {"-f"}},
-            {"after": {"exists": True, "values": ["arg1 arg2"]}, "file": {"exists": True, "value": "file.txt"}},
+            {"after": {"exists": False, "values": []}, "file": {"exists": True, "value": "file.txt arg1 arg2.1 arg2.2"}},
         ),
         (
-            ["script.py", "-f", "file.txt"],
+            ["script.py", "arg1", "arg2.1 arg2.2"],
             {"after": "after", "file": {"-f"}},
-            {"after": {"exists": False, "values": []}, "file": {"exists": True, "value": "file.txt"}},
+            {"after": {"exists": True, "values": ["arg1", "arg2.1 arg2.2"]}, "file": {"exists": False, "value": None}},
         ),
 
         # --- CUSTOM PREFIX TESTS WITH SPACES ---

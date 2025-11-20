@@ -216,7 +216,14 @@ class Console:
         arguments and return the results as a special `Args` object.\n
         -----------------------------------------------------------------------------------------------------------
         - `find_args` -⠀a dictionary defining the argument aliases and their flags/configuration (explained below)
-        - `allow_spaces` -⠀if true, spaces count as part of an argument value, else they end the value\n
+        - `allow_spaces` -⠀if true , flagged argument values can span multiple space-separated tokens until the
+          next flag is encountered, otherwise only the immediate next token is captured as the value:<br>
+          This allows passing multi-word values without quotes
+          (e.g. `-f hello world` instead of `-f "hello world"`).<br>
+          * This setting does not affect `"before"`/`"after"` positional arguments,
+            which always treat each token separately.<br>
+          * When `allow_spaces=True`, positional `"after"` arguments will always be empty if any flags
+            are present, as all tokens following the last flag are consumed as that flag's value.\n
         -----------------------------------------------------------------------------------------------------------
         The `find_args` dictionary can have the following structures for each alias:
         1. Simple set of flags (when no default value is needed):
