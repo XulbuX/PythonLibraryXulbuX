@@ -44,7 +44,7 @@ Rgba: TypeAlias = Union[
     list[Int_0_255],
     list[Union[Int_0_255, Float_0_1]],
     dict[str, Union[int, float]],
-    rgba,
+    "rgba",
     str,
 ]
 """Matches all supported RGBA color value formats."""
@@ -54,11 +54,11 @@ Hsla: TypeAlias = Union[
     list[Union[Int_0_360, Int_0_100]],
     list[Union[Int_0_360, Int_0_100, Float_0_1]],
     dict[str, Union[int, float]],
-    hsla,
+    "hsla",
     str,
 ]
 """Matches all supported HSLA color value formats."""
-Hexa: TypeAlias = Union[str, int, hexa]
+Hexa: TypeAlias = Union[str, int, "hexa"]
 """Matches all supported hexadecimal color value formats."""
 
 AnyRgba: TypeAlias = Any
