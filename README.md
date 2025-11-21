@@ -42,13 +42,14 @@ When the library is installed, the following commands are available in the conso
 
 ## Usage
 
-Import the full library under the alias `xx`, so its constants, classes, methods, and types are accessible with `xx.CONSTANT.value`, `xx.Class.method()`, `xx.type()`:
+Import the full library under the alias `xx`, so its modules and main classes are accessible with `xx.module.Class`, `xx.MainClass.method()`:
 ```python
 import xulbux as xx
 ```
+
 So you don't have to import the full library under an alias, you can also import only certain parts of the library's contents:
 ```python
-# LIBRARY CONSTANTS
+# LIBRARY SUB MODULES
 from xulbux.base.consts import COLOR, CHARS, ANSI
 # Main Classes
 from xulbux import Code, Color, Console, ...
