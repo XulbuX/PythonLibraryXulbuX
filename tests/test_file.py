@@ -1,4 +1,5 @@
-from xulbux.file import SameContentFileExistsError, File
+from xulbux.base.exceptions import SameContentFileExistsError
+from xulbux.file import File
 
 import pytest
 import os

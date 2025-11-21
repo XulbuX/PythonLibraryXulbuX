@@ -11,7 +11,8 @@ d_comments = {
         ">> FULL VALUE IS A COMMENT  value4",
     ],
     ">> FULL KEY + ALL ITS VALUES ARE A COMMENT  key2": ["value", "value", "value"],
-    "key3": ">> ALL THE KEYS VALUES ARE COMMENTS  value",
+    "key3":
+    ">> ALL THE KEYS VALUES ARE COMMENTS  value",
 }
 
 d1_equal = {
@@ -32,7 +33,7 @@ d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": 
 def test_serialize_bytes():
     utf8_bytes = b"Hello"
     utf8_bytearray = bytearray(b"World")
-    non_utf8_bytes = b'\x80abc'
+    non_utf8_bytes = b"\x80abc"
 
     assert Data.serialize_bytes(utf8_bytes) == {"bytes": "Hello", "encoding": "utf-8"}
     assert Data.serialize_bytes(utf8_bytearray) == {"bytearray": "World", "encoding": "utf-8"}
@@ -49,7 +50,7 @@ def test_deserialize_bytes():
     utf8_serialized_bytes = {"bytes": "Hello", "encoding": "utf-8"}
     utf8_serialized_bytearray = {"bytearray": "World", "encoding": "utf-8"}
     import base64
-    non_utf8_bytes = b'\x80abc'
+    non_utf8_bytes = b"\x80abc"
     base64_encoded = base64.b64encode(non_utf8_bytes).decode("utf-8")
     base64_serialized_bytes = {"bytes": base64_encoded, "encoding": "base64"}
 

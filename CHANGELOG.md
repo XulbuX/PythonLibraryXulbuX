@@ -15,10 +15,25 @@
 # <br><b>Changelog</b><br>
 
 
-<span id="v1-8-6" />
+<span id="v1-9-0" />
 
-## ... `v1.8.6`
-* Standardized the docstrings for all public methods in the whole library to use the same style and format.
+## 21.11.2025 `v1.9.0` Big Update 🚀
+* Standardized the docstrings for all public methods in the whole library to use the same style and structure.
+* Replaced left over single quotes with double quotes for consistency.
+* Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
+* Refactored/reformatted the code of the whole library, to introduce more clear code structure with more room to breathe.
+* Made the really complex regex patterns in the `Regex` class all multi-line for better readability.
+* Added a new internal method `Regex._clean()`, which is used to clean up the regex patterns, defined as multi-line strings.
+* Moved custom exception classes to their own file `base/exceptions.py`, so the user can easily import them all from the same place.
+* Moved custom types to their own file `base/types.py`, so the user can easily import them all from the same place.
+* Removed unnecessary duplicate code in several methods throughout the library.
+* Introduced some minor performance improvements in a few methods, that might be called very often in a short time span.
+* Added a small description to the docstrings of all modules and their main classes.
+
+**BREAKING CHANGES:**
+* The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists/tuples, since the order of flags doesn't matter and sets have better performance for lookups.
+* Added missing type checking to all public methods in the whole library, so now they will all throw errors if the params aren't of the expected type.
+* Removed the second definitions of constants in with lowercase names in the `ANSI` class inside the `consts` module, so now you can only access them with their uppercase names (*e.g.* `ANSI.CHAR` instead of `ANSI.char`).
 
 
 <span id="v1-8-5" />

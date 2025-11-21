@@ -1,16 +1,16 @@
 """
-Functions for logging and other small actions within the console.\n
-----------------------------------------------------------------------------------------------------------
-You can also use special formatting codes directly inside the log message to change their appearance.
-For more detailed information about formatting codes, see the the `format_codes` module documentation.
+This module provides the `Console` class, which offers
+methods for logging and other actions within the console.
 """
 
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
-from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
-from .string import String
-from .color import Color, Rgba, Hexa
 
-from typing import Generator, TypedDict, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, Any, overload, cast
+from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
+from .string import String
+from .color import Color, hexa
+
+from typing import Generator, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -73,25 +73,8 @@ class _ConsoleUser:
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
-class _ArgConfigWithDefault(TypedDict):
-    flags: list[str] | tuple[str, ...]
-    default: Any
-
-
-class _ArgResultRegular(TypedDict):
-    """TypedDict for regular flagged argument results."""
-    exists: bool
-    value: Optional[str]
-
-
-class _ArgResultPositional(TypedDict):
-    """TypedDict for positional 'before'/'after' argument results."""
-    exists: bool
-    values: list[str]
-
-
 class ArgResult:
-    """Represents the result of a parsed command-line argument and contains the following attributes:
+    """Represents the result of a parsed command-line argument, containing the following attributes:
     - `exists` -⠀if the argument was found or not
     - `value` -⠀the value given with the found argument as a string (only for regular flagged arguments)
     - `values` -⠀the list of values for positional arguments (only for `"before"`/`"after"` arguments)\n
@@ -99,6 +82,15 @@ class ArgResult:
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
     def __init__(self, exists: bool, value: Optional[str] = None, values: Optional[list[str]] = None):
+        if not isinstance(exists, bool):
+            raise TypeError(f"The 'exists' parameter must be a boolean, got {type(exists)}")
+        if not isinstance(value, (str, type(None))):
+            raise TypeError(f"The 'value' parameter must be a string or None, got {type(value)}")
+        if not isinstance(values, (list, type(None))):
+            raise TypeError(f"The 'values' parameter must be a list of strings or None, got {type(values)}")
+        if value is not None and values is not None:
+            raise ValueError("The 'value' and 'values' parameters are mutually exclusive. Only one can be set.")
+
         self.exists: bool = exists
         """Whether the argument was found or not."""
         self.value: Optional[str] = value
@@ -111,14 +103,25 @@ class ArgResult:
 
 
 class Args:
-    """Container for parsed command-line arguments, allowing attribute-style access.
+    """Container for parsed command-line arguments, allowing attribute-style access.\n
+    --------------------------------------------------------------------------------------
+    - `kwargs` -⠀a mapping of argument aliases to their corresponding data dictionaries\n
+    --------------------------------------------------------------------------------------
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
     Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs: dict[str, str | list[str]]):
+    def __init__(self, **kwargs: Mapping[str, str | list[str]]):
+        if not kwargs:
+            raise ValueError("At least one argument must be provided to initialize Args.")
+        if not all(isinstance(data_dict, Mapping) for data_dict in kwargs.values()):
+            raise TypeError(
+                f"All argument values must be mappings (e.g. dict), got "
+                f"{[type(v) for v in kwargs.values() if not isinstance(v, Mapping)]}"
+            )
+
         for alias_name, data_dict in kwargs.items():
             if not alias_name.isidentifier():
-                raise TypeError(f"Argument alias '{alias_name}' is invalid. It must be a valid Python variable name.")
+                raise TypeError(f"Argument alias '{alias_name}' is invalid: It must be a valid Python variable name.")
             if "values" in data_dict:
                 setattr(
                     self, alias_name,
@@ -137,28 +140,28 @@ class Args:
         return hasattr(self, key)
 
     def __getattr__(self, name: str) -> ArgResult:
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute {name}")
 
     def __getitem__(self, key):
         if isinstance(key, int):
             return list(self.__iter__())[key]
         return getattr(self, key)
 
-    def __iter__(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
-        for key, value in vars(self).items():
-            if value.values is not None:
-                yield (key, _ArgResultPositional(exists=value.exists, values=value.values))
+    def __iter__(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
+        for key, val in vars(self).items():
+            if val.values is not None:
+                yield (key, ArgResultPositional(exists=val.exists, values=val.values))
             else:
-                yield (key, _ArgResultRegular(exists=value.exists, value=value.value))
+                yield (key, ArgResultRegular(exists=val.exists, value=val.value))
 
-    def dict(self) -> dict[str, _ArgResultRegular | _ArgResultPositional]:
+    def dict(self) -> dict[str, ArgResultRegular | ArgResultPositional]:
         """Returns the arguments as a dictionary."""
-        result: dict[str, _ArgResultRegular | _ArgResultPositional] = {}
-        for k, v in vars(self).items():
-            if v.values is not None:
-                result[k] = _ArgResultPositional(exists=v.exists, values=v.values)
+        result: dict[str, ArgResultRegular | ArgResultPositional] = {}
+        for key, val in vars(self).items():
+            if val.values is not None:
+                result[key] = ArgResultPositional(exists=val.exists, values=val.values)
             else:
-                result[k] = _ArgResultRegular(exists=v.exists, value=v.value)
+                result[key] = ArgResultRegular(exists=val.exists, value=val.value)
         return result
 
     def keys(self):
@@ -169,13 +172,14 @@ class Args:
         """Returns the argument results as `dict_values([...])`."""
         return vars(self).values()
 
-    def items(self) -> Generator[tuple[str, _ArgResultRegular | _ArgResultPositional], None, None]:
+    def items(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
         """Yields tuples of `(alias, _ArgResultRegular | _ArgResultPositional)`."""
         for key, val in self.__iter__():
             yield (key, val)
 
 
 class Console:
+    """This class provides methods for logging and other actions within the console."""
 
     w: int = _ConsoleWidth()  # type: ignore[assignment]
     """The width of the console in characters."""
@@ -188,28 +192,35 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[
-            str,
-            list[str] | tuple[str, ...] | _ArgConfigWithDefault | Literal["before", "after"],
-        ],
-        allow_spaces: bool = False
+        find_args: Mapping[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]],
+        allow_spaces: bool = False,
     ) -> Args:
         """Will search for the specified arguments in the command line
         arguments and return the results as a special `Args` object.\n
-        ----------------------------------------------------------------
+        -----------------------------------------------------------------------------------------------------------
+        - `find_args` -⠀a dictionary defining the argument aliases and their flags/configuration (explained below)
+        - `allow_spaces` -⠀if true , flagged argument values can span multiple space-separated tokens until the
+          next flag is encountered, otherwise only the immediate next token is captured as the value:<br>
+          This allows passing multi-word values without quotes
+          (e.g. `-f hello world` instead of `-f "hello world"`).<br>
+          * This setting does not affect `"before"`/`"after"` positional arguments,
+            which always treat each token separately.<br>
+          * When `allow_spaces=True`, positional `"after"` arguments will always be empty if any flags
+            are present, as all tokens following the last flag are consumed as that flag's value.\n
+        -----------------------------------------------------------------------------------------------------------
         The `find_args` dictionary can have the following structures for each alias:
-        1. Simple list/tuple of flags (when no default value is needed):
+        1. Simple set of flags (when no default value is needed):
            ```python
-           "alias_name": ["-f", "--flag"]
+           "alias_name": {"-f", "--flag"}
            ```
-        2. Dictionary with 'flags' and optional 'default':
+        2. Dictionary with `"flags"` and `"default"` value:
            ```python
            "alias_name": {
-               "flags": ["-f", "--flag"],
-               "default": "some_value"  # Optional
+               "flags": {"-f", "--flag"},
+               "default": "some_value",
            }
            ```
-        3. Positional argument collection (string value):
+        3. Positional argument collection using the literals `"before"` or `"after"`:
            ```python
            "alias_name": "before"  # Collects non-flagged args before first flag
            "alias_name": "after"   # Collects non-flagged args after last flag
@@ -217,58 +228,56 @@ class Console:
         Example `find_args`:
         ```python
         find_args={
-            "text": "before",           # Positional args before flags
-            "arg1": {                   # With default
-                "flags": ["-a1", "--arg1"],
-                "default": "default_val"
+            "text": "before",           # Positional args before flagged args
+            "arg1": {"-a1", "--arg1"},  # Just flags
+            "arg2": {"-a2", "--arg2"},  # Just flags
+            "arg3": {                   # With default value
+                "flags": {"-a3", "--arg3"},
+                "default": "default_val",
             },
-            "arg2": ("-a2", "--arg2"),  # Without default (original format)
-            "arg3": ["-a3"],            # Without default (list format)
-            "arg4": {                   # Flag with default True
-                "flags": ["-f"],
-                "default": True
-            }
         }
         ```
         If the script is called via the command line:\n
-        `python script.py Hello World -a1 "value1" --arg2 -f`\n
+        `python script.py Hello World -a1 "value1" --arg2`\n
         ...it would return an `Args` object where:
         - `args.text.exists` is `True`, `args.text.values` is `["Hello", "World"]`
-        - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"`
+        - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"` (flag present with value)
         - `args.arg2.exists` is `True`, `args.arg2.value` is `None` (flag present without value)
-        - `args.arg3.exists` is `False`, `args.arg3.value` is `None` (not present, no default)
-        - `args.arg4.exists` is `True`, `args.arg4.value` is `None` (flag present, no value provided)
-        - If an arg defined in `find_args` is *not* present in the command line:
-            - `exists` will be `False`
-            - `value` will be the specified `default` value, or `None` if no default was specified.
-            - `values` will be `[]` for positional "before"/"after" arguments.\n
-        ----------------------------------------------------------------
+        - `args.arg3.exists` is `False`, `args.arg3.value` is `"default_val"` (not present, has default value)\n
+        -----------------------------------------------------------------------------------------------------------
+        If an arg, defined with flags in `find_args`, is NOT present in the command line:
+          * `exists` will be `False`
+          * `value` will be the specified `default` value, or `None` if no default was specified
+          * `values` will be `[]` for positional `"before"`/`"after"` arguments\n
+        -----------------------------------------------------------------------------------------------------------
         For positional arguments:
-        - `"before"`: Collects all non-flagged arguments that appear before the first flag
-        - `"after"`: Collects all non-flagged arguments that appear after the last flag's value
-        ----------------------------------------------------------------
-        Normally if `allow_spaces` is false, it will take a space as
-        the end of an args value. If it is true, it will take spaces as
-        part of the value up until the next arg-flag is found.
+        - `"before"` collects all non-flagged arguments that appear before the first flag
+        - `"after"` collects all non-flagged arguments that appear after the last flag's value
+        -----------------------------------------------------------------------------------------------------------
+        Normally if `allow_spaces` is false, it will take a space as the end of an args value. If it is true,
+        it will take spaces as part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
+        positional_configs, arg_lookup, results = {}, {}, {}
+        before_count, after_count = 0, 0
         args = _sys.argv[1:]
         args_len = len(args)
-        arg_lookup = {}
-        results = {}
-        positional_configs = {}
-        before_count = 0
-        after_count = 0
 
-        # PARSE "find_args" CONFIGURATION
+        if not isinstance(find_args, Mapping):
+            raise TypeError(f"The 'find_args' parameter must be a mapping (e.g. dict), got {type(find_args)}")
+        if not isinstance(allow_spaces, bool):
+            raise TypeError(f"The 'allow_spaces' parameter must be a boolean, got {type(allow_spaces)}")
+
+        # PARSE 'find_args' CONFIGURATION
         for alias, config in find_args.items():
-            flags = None
-            default_value = None
+            flags, default_value = None, None
 
+            if not alias.isidentifier():
+                raise TypeError(f"Argument alias '{alias}' is invalid: It must be a valid Python variable name.")
             if isinstance(config, str):
                 # HANDLE POSITIONAL ARGUMENT COLLECTION
-                if config not in ("before", "after"):
+                if config not in {"before", "after"}:
                     raise ValueError(
-                        f"Invalid positional argument type '{config}' for alias '{alias}'. Must be 'before' or 'after'."
+                        f"Invalid positional argument type '{config}' for alias '{alias}'. Must be either 'before' or 'after'."
                     )
                 if config == "before":
                     before_count += 1
@@ -280,23 +289,27 @@ class Console:
                         raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
                 positional_configs[alias] = config
                 results[alias] = {"exists": False, "values": []}
-            elif isinstance(config, (list, tuple)):
+            elif isinstance(config, set):
                 flags = config
                 results[alias] = {"exists": False, "value": default_value}
             elif isinstance(config, dict):
                 if "flags" not in config:
                     raise ValueError(f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'flags' key.")
-                if "default" not in config:
+                elif "default" not in config:
                     raise ValueError(
-                        f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'default' key. Use a simple list/tuple if no default value is needed."
+                        f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'default' key.\n"
+                        "Use a simple set of strings if no default value is needed and only flags are to be specified."
                     )
+                if not isinstance(config["flags"], set):
+                    raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a set of strings.")
+                if not isinstance(config["default"], str):
+                    raise ValueError(f"Invalid 'default' value for alias '{alias}'. Must be a string.")
                 flags, default_value = config["flags"], config["default"]
-                if not isinstance(flags, (list, tuple)):
-                    raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a list or tuple.")
                 results[alias] = {"exists": False, "value": default_value}
             else:
                 raise TypeError(
-                    f"Invalid configuration type for alias '{alias}'. Must be a list, tuple, dict or literal 'before' / 'after'."
+                    f"Invalid configuration type for alias '{alias}'.\n"
+                    "Must be a set, dict, literal 'before' or literal 'after'."
                 )
 
             # BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGUMENTS
@@ -400,8 +413,24 @@ class Console:
         exit_code: int = 0,
         reset_ansi: bool = False,
     ) -> None:
-        """Will print the `prompt` and then pause the program if `pause` is
-        true and after the pause, exit the program if `exit` is set true."""
+        """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
+        --------------------------------------------------------------------------------------------------
+        - `prompt` -⠀the message to print before pausing/exiting
+        - `pause` -⠀whether to pause and wait for a key press after printing the prompt
+        - `exit` -⠀whether to exit the program after printing the prompt (and pausing if `pause` is true)
+        - `exit_code` -⠀the exit code to use when exiting the program
+        - `reset_ansi` -⠀whether to reset the ANSI formatting after printing the prompt"""
+        if not isinstance(pause, bool):
+            raise TypeError(f"The 'pause' parameter must be a boolean, got {type(pause)}")
+        if not isinstance(exit, bool):
+            raise TypeError(f"The 'exit' parameter must be a boolean, got {type(exit)}")
+        if not isinstance(exit_code, int):
+            raise TypeError(f"The 'exit_code' parameter must be an integer, got {type(exit_code)}")
+        elif exit_code < 0:
+            raise ValueError("The 'exit_code' parameter must be a non-negative integer.")
+        if not isinstance(reset_ansi, bool):
+            raise TypeError(f"The 'reset_ansi' parameter must be a boolean, got {type(reset_ansi)}")
+
         FormatCodes.print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
@@ -447,13 +476,39 @@ class Console:
         -------------------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
-        has_title_bg = title_bg_color is not None and Color.is_valid(title_bg_color)
+        if not isinstance(title, (str, type(None))):
+            raise TypeError(f"The 'title' parameter must be a string or None, got {type(title)}")
+        if not isinstance(format_linebreaks, bool):
+            raise TypeError(f"The 'format_linebreaks' parameter must be a boolean, got {type(format_linebreaks)}")
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        has_title_bg = False
+        if title_bg_color is not None:
+            if (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
+                title_bg_color, has_title_bg = Color.to_hexa(cast(Rgba | Hexa, title_bg_color)), True
+            else:
+                raise ValueError(f"The 'title_bg_color' parameter must be a valid Rgba or Hexa color, got {title_bg_color!r}")
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(tab_size, int):
+            raise TypeError(f"The 'tab_size' parameter must be an integer, got {type(tab_size)}")
+        elif tab_size < 0:
+            raise ValueError("The 'tab_size' parameter must be a non-negative integer.")
+        if not isinstance(title_px, int):
+            raise TypeError(f"The 'title_px' parameter must be an integer, got {type(title_px)}")
+        elif title_px < 0:
+            raise ValueError("The 'title_px' parameter must be a non-negative integer.")
+        if not isinstance(title_mx, int):
+            raise TypeError(f"The 'title_mx' parameter must be an integer, got {type(title_mx)}")
+        elif title_mx < 0:
+            raise ValueError("The 'title_mx' parameter must be a non-negative integer.")
+
         title = "" if title is None else title.strip().upper()
-        title_fg = Color.text_color_for_on_bg(
-            Color.to_hexa(title_bg_color)  # type: ignore[assignment]
-        ) if has_title_bg else "_color"
+        title_fg = Color.text_color_for_on_bg(cast(hexa, title_bg_color)) if has_title_bg else "_color"
+
         px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
         tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
+
         if format_linebreaks:
             clean_prompt, removals = FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True)
             prompt_lst = (
@@ -465,9 +520,10 @@ class Console:
             prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(
                 Console.__add_back_removed_parts(list(prompt_lst), cast(tuple[tuple[int, str], ...], removals))
             )
+
         if title == "":
             FormatCodes.print(
-                f'{start}  {f"[{default_color}]" if default_color else ""}{prompt}[_]',
+                f"{start}  {f'[{default_color}]' if default_color else ''}{prompt}[_]",
                 default_color=default_color,
                 end=end,
             )
@@ -509,6 +565,7 @@ class Console:
             parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
             result[i] = "".join(parts)
             offset_adjusts[i] += len(removal)
+
         return result
 
     @staticmethod
@@ -527,8 +584,19 @@ class Console:
         """A preset for `log()`: `DEBUG` log message with the options to pause
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
+        if not isinstance(active, bool):
+            raise TypeError(f"The 'active' parameter must be a boolean, got {type(active)}")
+
         if active:
-            Console.log("DEBUG", prompt, format_linebreaks, start, end, COLOR.YELLOW, default_color)
+            Console.log(
+                title="DEBUG",
+                prompt=prompt,
+                format_linebreaks=format_linebreaks,
+                start=start,
+                end=end,
+                title_bg_color=COLOR.YELLOW,
+                default_color=default_color,
+            )
             Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -545,7 +613,15 @@ class Console:
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("INFO", prompt, format_linebreaks, start, end, COLOR.BLUE, default_color)
+        Console.log(
+            title="INFO",
+            prompt=prompt,
+            format_linebreaks=format_linebreaks,
+            start=start,
+            end=end,
+            title_bg_color=COLOR.BLUE,
+            default_color=default_color,
+        )
         Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -562,7 +638,15 @@ class Console:
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("DONE", prompt, format_linebreaks, start, end, COLOR.TEAL, default_color)
+        Console.log(
+            title="DONE",
+            prompt=prompt,
+            format_linebreaks=format_linebreaks,
+            start=start,
+            end=end,
+            title_bg_color=COLOR.TEAL,
+            default_color=default_color,
+        )
         Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -579,7 +663,15 @@ class Console:
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("WARN", prompt, format_linebreaks, start, end, COLOR.ORANGE, default_color)
+        Console.log(
+            title="WARN",
+            prompt=prompt,
+            format_linebreaks=format_linebreaks,
+            start=start,
+            end=end,
+            title_bg_color=COLOR.ORANGE,
+            default_color=default_color,
+        )
         Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -596,7 +688,15 @@ class Console:
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("FAIL", prompt, format_linebreaks, start, end, COLOR.RED, default_color)
+        Console.log(
+            title="FAIL",
+            prompt=prompt,
+            format_linebreaks=format_linebreaks,
+            start=start,
+            end=end,
+            title_bg_color=COLOR.RED,
+            default_color=default_color,
+        )
         Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -613,7 +713,15 @@ class Console:
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log("EXIT", prompt, format_linebreaks, start, end, COLOR.MAGENTA, default_color)
+        Console.log(
+            title="EXIT",
+            prompt=prompt,
+            format_linebreaks=format_linebreaks,
+            start=start,
+            end=end,
+            title_bg_color=COLOR.MAGENTA,
+            default_color=default_color,
+        )
         Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @staticmethod
@@ -640,17 +748,38 @@ class Console:
         -------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
-        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
-        pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
-        if box_bg_color is not None and Color.is_valid(box_bg_color):
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not (isinstance(box_bg_color, str) or Color.is_valid_rgba(box_bg_color) or Color.is_valid_hexa(box_bg_color)):
+            raise TypeError(f"The 'box_bg_color' parameter must be a string, Rgba, or Hexa color, got {type(box_bg_color)}")
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(w_padding, int):
+            raise TypeError(f"The 'w_padding' parameter must be an integer, got {type(w_padding)}")
+        elif w_padding < 0:
+            raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
+        if not isinstance(w_full, bool):
+            raise TypeError(f"The 'w_full' parameter must be a boolean, got {type(w_full)}")
+        if not isinstance(indent, int):
+            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
+        elif indent < 0:
+            raise ValueError("The 'indent' parameter must be a non-negative integer.")
+
+        if Color.is_valid(box_bg_color):
             box_bg_color = Color.to_hexa(box_bg_color)
+
+        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
+
         spaces_l = " " * indent
+        pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
+        pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
+
         lines = [
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
             + _FC_COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
             (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
         ]
-        pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
+
         FormatCodes.print(
             f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n" + "\n".join(lines)
             + f"\n{spaces_l}[bg:{box_bg_color}]{pady}[_]",
@@ -707,27 +836,71 @@ class Console:
         9. left horizontal rule connector
         10. horizontal rule
         11. right horizontal rule connector"""
-        borders = {
-            "standard": ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤'),
-            "rounded": ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤'),
-            "strong": ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫'),
-            "double": ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣'),
-        }
-        border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
-        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color, has_rules=True)
-        pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(border_type, str):
+            raise TypeError(f"The 'border_type' parameter must be a string, got {type(border_type)}")
+        elif border_type not in {"standard", "rounded", "strong", "double"} and _border_chars is None:
+            raise ValueError(
+                f"The 'border_type' parameter must be one of 'standard', 'rounded', 'strong', or 'double', got '{border_type!r}'"
+            )
+        if not (isinstance(border_style, str) or Color.is_valid_rgba(border_style) or Color.is_valid_hexa(border_style)):
+            raise TypeError(f"The 'border_style' parameter must be a string, Rgba, or Hexa color, got {type(border_style)}")
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(w_padding, int):
+            raise TypeError(f"The 'w_padding' parameter must be an integer, got {type(w_padding)}")
+        elif w_padding < 0:
+            raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
+        if not isinstance(w_full, bool):
+            raise TypeError(f"The 'w_full' parameter must be a boolean, got {type(w_full)}")
+        if not isinstance(indent, int):
+            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
+        elif indent < 0:
+            raise ValueError("The 'indent' parameter must be a non-negative integer.")
+        if _border_chars is not None:
+            if not isinstance(_border_chars, tuple):
+                raise TypeError(f"The '_border_chars' parameter must be a tuple, got {type(_border_chars)}")
+            elif len(_border_chars) != 11:
+                raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
+            for i, char in enumerate(_border_chars):
+                if not isinstance(char, str):
+                    raise TypeError(
+                        f"All elements of '_border_chars' must be strings, but element {i} is of type {type(char)}"
+                    )
+                elif len(char) != 1:
+                    raise ValueError(
+                        f"All elements of '_border_chars' must be single characters, but element {i} is '{char}' with length {len(char)}"
+                    )
+
         if border_style is not None and Color.is_valid(border_style):
             border_style = Color.to_hexa(border_style)
+
+        borders = {
+            "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
+            "rounded": ("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤"),
+            "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
+            "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
+        }
+        border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
+
+        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color, has_rules=True)
+
         spaces_l = " " * indent
+        pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
         border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
         border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+
         h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
+
         lines = [
             h_rule if _COMPILED["hr"].match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
             ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
         ]
+
         FormatCodes.print(
             f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
             default_color=default_color,
@@ -748,8 +921,8 @@ class Console:
                 val_str, result_parts, current_pos = str(val), [], 0
                 for match in _COMPILED["hr"].finditer(val_str):
                     start, end = match.span()
-                    should_split_before = start > 0 and val_str[start - 1] != '\n'
-                    should_split_after = end < len(val_str) and val_str[end] != '\n'
+                    should_split_before = start > 0 and val_str[start - 1] != "\n"
+                    should_split_after = end < len(val_str) and val_str[end] != "\n"
 
                     if should_split_before:
                         if start > current_pos:
@@ -782,27 +955,35 @@ class Console:
     @staticmethod
     def confirm(
         prompt: object = "Do you want to continue?",
-        start="",
-        end="",
+        start: str = "",
+        end: str = "",
         default_color: Optional[Rgba | Hexa] = None,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
-        ---------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
         - `prompt` -⠀the input prompt
         - `start` -⠀something to print before the input
         - `end` -⠀something to print after the input (e.g. `\\n`)
         - `default_color` -⠀the default text color of the `prompt`
         - `default_is_yes` -⠀the default answer if the user just presses enter
-        ---------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(default_is_yes, bool):
+            raise TypeError(f"The 'default_is_yes' parameter must be a boolean, got {type(default_is_yes)}")
+
         confirmed = input(
             FormatCodes.to_ansi(
-                f'{start}{str(prompt)} [_|dim](({"Y" if default_is_yes else "y"}/{"n" if default_is_yes else "N"}): )',
+                f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
                 default_color=default_color,
             )
-        ).strip().lower() in (("", "y", "yes") if default_is_yes else ("y", "yes"))
+        ).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
+
         if end:
             FormatCodes.print(end, end="")
         return confirmed
@@ -810,12 +991,12 @@ class Console:
     @staticmethod
     def multiline_input(
         prompt: object = "",
-        start="",
-        end="\n",
+        start: str = "",
+        end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
-        show_keybindings=True,
-        input_prefix=" ⮡ ",
-        reset_ansi=True,
+        show_keybindings: bool = True,
+        input_prefix: str = " ⮡ ",
+        reset_ansi: bool = True,
     ) -> str:
         """An input where users can write (and paste) text over multiple lines.\n
         ---------------------------------------------------------------------------------------
@@ -829,6 +1010,17 @@ class Console:
         ---------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if not isinstance(show_keybindings, bool):
+            raise TypeError(f"The 'show_keybindings' parameter must be a boolean, got {type(show_keybindings)}")
+        if not isinstance(input_prefix, str):
+            raise TypeError(f"The 'input_prefix' parameter must be a string, got {type(input_prefix)}")
+        if not isinstance(reset_ansi, bool):
+            raise TypeError(f"The 'reset_ansi' parameter must be a boolean, got {type(reset_ansi)}")
+
         kb = KeyBindings()
 
         @kb.add("c-d", eager=True)  # CTRL+D
@@ -840,6 +1032,7 @@ class Console:
             FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
         input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
         FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
+
         return input_string
 
     T = TypeVar("T")
@@ -847,8 +1040,8 @@ class Console:
     @staticmethod
     def input(
         prompt: object = "",
-        start="",
-        end="",
+        start: str = "",
+        end: str = "",
         default_color: Optional[Rgba | Hexa] = None,
         placeholder: Optional[str] = None,
         mask_char: Optional[str] = None,
@@ -880,10 +1073,43 @@ class Console:
         ------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        result_text = ""
-        tried_pasting = False
-        filtered_chars = set()
+        if not isinstance(start, str):
+            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
+        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
+        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
+        if placeholder is not None and not isinstance(placeholder, str):
+            raise TypeError(f"The 'placeholder' parameter must be a string or None, got {type(placeholder)}")
+        if mask_char is not None:
+            if not isinstance(mask_char, str):
+                raise TypeError(f"The 'mask_char' parameter must be a string or None, got {type(mask_char)}")
+            elif len(mask_char) != 1:
+                raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
+        if min_len is not None:
+            if not isinstance(min_len, int):
+                raise TypeError(f"The 'min_len' parameter must be an integer or None, got {type(min_len)}")
+            elif min_len < 0:
+                raise ValueError("The 'min_len' parameter must be a non-negative integer.")
+        if max_len is not None:
+            if not isinstance(max_len, int):
+                raise TypeError(f"The 'max_len' parameter must be an integer or None, got {type(max_len)}")
+            elif max_len < 0:
+                raise ValueError("The 'max_len' parameter must be a non-negative integer.")
+        if not (allowed_chars is CHARS.ALL or isinstance(allowed_chars, str)):
+            raise TypeError(f"The 'allowed_chars' parameter must be a string, got {type(allowed_chars)}")
+        if not isinstance(allow_paste, bool):
+            raise TypeError(f"The 'allow_paste' parameter must be a boolean, got {type(allow_paste)}")
+        if validator is not None and not callable(validator):
+            raise TypeError(f"The 'validator' parameter must be a callable function or None, got {type(validator)}")
+        if default_val is not None and not isinstance(default_val, output_type):
+            raise TypeError(
+                f"The 'default_val' parameter must be of type {output_type.__name__} or None, got {type(default_val)}"
+            )
+        if not isinstance(output_type, type):
+            raise TypeError(f"The 'output_type' parameter must be a type, got {type(output_type)}")
+
+        filtered_chars, result_text = set(), ""
         has_default = default_val is not None
+        tried_pasting = False
 
         class InputValidator(Validator):
 
@@ -891,7 +1117,7 @@ class Console:
                 text_to_validate = result_text if mask_char else document.text
                 if min_len and len(text_to_validate) < min_len:
                     raise ValidationError(message="", cursor_position=len(document.text))
-                if validator and validator(text_to_validate) not in ("", None):
+                if validator and validator(text_to_validate) not in {"", None}:
                     raise ValidationError(message="", cursor_position=len(document.text))
 
         def bottom_toolbar() -> _pt.formatted_text.ANSI:
@@ -905,7 +1131,7 @@ class Console:
                 toolbar_msgs = []
                 if max_len and len(text_to_check) > max_len:
                     toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
-                if validator and text_to_check and (validation_error_msg := validator(text_to_check)) not in ("", None):
+                if validator and text_to_check and (validation_error_msg := validator(text_to_check)) not in {"", None}:
                     toolbar_msgs.append(f"[b|#000|bg:br:red] {validation_error_msg} [_bg]")
                 if filtered_chars:
                     plural = "" if len(char_list := "".join(sorted(filtered_chars))) == 1 else "s"
@@ -927,7 +1153,7 @@ class Console:
             if not text:
                 return "", removed_chars
             processed_text = "".join(c for c in text if ord(c) >= 32)
-            if allowed_chars != CHARS.ALL:
+            if allowed_chars is not CHARS.ALL:
                 filtered_text = ""
                 for char in processed_text:
                     if char in allowed_chars:
@@ -1012,7 +1238,7 @@ class Console:
         def _(event: KeyPressEvent) -> None:
             insert_text_event(event)
 
-        custom_style = Style.from_dict({'bottom-toolbar': 'noreverse'})
+        custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
         session = _pt.PromptSession(
             message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
             validator=InputValidator(),
@@ -1027,7 +1253,7 @@ class Console:
         session.prompt()
         FormatCodes.print(end, end="")
 
-        if result_text in ("", None):
+        if result_text in {"", None}:
             if has_default:
                 return default_val
             result_text = ""
@@ -1118,12 +1344,19 @@ class ProgressBar:
         - `min_width` -⠀the min width of the progress bar in chars
         - `max_width` -⠀the max width of the progress bar in chars"""
         if min_width is not None:
-            if min_width < 1:
-                raise ValueError("Minimum width must be at least 1.")
+            if not isinstance(min_width, int):
+                raise TypeError(f"The 'min_width' parameter must be an integer or None, got {type(min_width)}")
+            elif min_width < 1:
+                raise ValueError(f"The 'min_width' parameter must be a positive integer, got {min_width!r}")
+
             self.min_width = max(1, min_width)
+
         if max_width is not None:
-            if max_width < 1:
-                raise ValueError("Maximum width must be at least 1.")
+            if not isinstance(max_width, int):
+                raise TypeError(f"The 'max_width' parameter must be an integer or None, got {type(max_width)}")
+            elif max_width < 1:
+                raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
+
             self.max_width = max(self.min_width, max_width)
 
     def set_bar_format(self, bar_format: Optional[str] = None, limited_bar_format: Optional[str] = None) -> None:
@@ -1139,13 +1372,18 @@ class ProgressBar:
         --------------------------------------------------------------------------------------------------
         The bar format (also limited) can additionally be formatted with special formatting codes. For
         more detailed information about formatting codes, see the `format_codes` module documentation."""
+        if not isinstance(bar_format, (str, type(None))):
+            raise TypeError(f"The 'bar_format' parameter must be a string or None, got {type(bar_format)}")
+        if not isinstance(limited_bar_format, (str, type(None))):
+            raise TypeError(f"The 'limited_bar_format' parameter must be a string or None, got {type(limited_bar_format)}")
+
         if bar_format is not None:
             if not _COMPILED["bar"].search(bar_format):
-                raise ValueError("'bar_format' must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
             self.bar_format = bar_format
         if limited_bar_format is not None:
             if not _COMPILED["bar"].search(limited_bar_format):
-                raise ValueError("'limited_bar_format' must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
             self.limited_bar_format = limited_bar_format
 
     def set_chars(self, chars: tuple[str, ...]) -> None:
@@ -1156,9 +1394,10 @@ class ProgressBar:
           characters create smooth transitions, and the last character represents
           empty sections. If None, uses default Unicode block characters."""
         if len(chars) < 2:
-            raise ValueError("'chars' must contain at least two characters (full and empty).")
-        if not all(len(c) == 1 for c in chars if isinstance(c, str)):
-            raise ValueError("All 'chars' items must be single-character strings.")
+            raise ValueError("The 'chars' parameter must contain at least two characters (full and empty).")
+        elif not all(isinstance(c, str) and len(c) == 1 for c in chars):
+            raise ValueError("All elements of 'chars' must be single-character strings.")
+
         self.chars = chars
 
     def show_progress(self, current: int, total: int, label: Optional[str] = None) -> None:
@@ -1167,8 +1406,16 @@ class ProgressBar:
         - `current` -⠀the current progress value (below `0` or greater than `total` hides the bar)
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
         - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder"""
-        if total <= 0:
-            raise ValueError("Total must be greater than 0.")
+        if not isinstance(current, int):
+            raise TypeError(f"The 'current' parameter must be an integer, got {type(current)}")
+        elif current < 0:
+            raise ValueError("The 'current' parameter must be a non-negative integer.")
+        if not isinstance(total, int):
+            raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
+        elif total <= 0:
+            raise ValueError("The 'total' parameter must be a positive integer.")
+        if label is not None and not isinstance(label, str):
+            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
 
         try:
             if not self.active:
@@ -1213,8 +1460,14 @@ class ProgressBar:
                 # Do some work...
                 update_progress(i, f"Finalizing ({i})")  # Update both
         ```"""
-        current_progress = 0
-        current_label = label
+        if not isinstance(total, int):
+            raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
+        elif total <= 0:
+            raise ValueError("The 'total' parameter must be a positive integer.")
+        if label is not None and not isinstance(label, str):
+            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
+
+        current_label, current_progress = label, 0
 
         try:
 
@@ -1224,7 +1477,7 @@ class ProgressBar:
                 current = label = None
 
                 if len(args) > 2:
-                    raise TypeError(f"update_progress() takes at most 2 positional arguments ({len(args)} given)")
+                    raise TypeError(f"update_progress() takes at most 2 positional arguments, got {len(args)}")
                 elif len(args) >= 1:
                     current = args[0]
                     if len(args) >= 2:
@@ -1232,18 +1485,18 @@ class ProgressBar:
 
                 if "current" in kwargs:
                     if current is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'current'")
+                        raise TypeError("update_progress() got multiple values for argument 'current'.")
                     current = kwargs["current"]
                 if "label" in kwargs:
                     if label is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'label'")
+                        raise TypeError("update_progress() got multiple values for argument 'label'.")
                     label = kwargs["label"]
 
                 if unexpected := set(kwargs.keys()) - {"current", "label"}:
-                    raise TypeError(f"update_progress() got unexpected keyword argument(s): {', '.join(unexpected)}")
+                    raise TypeError(f"update_progress() got unexpected keyword arguments: {', '.join(unexpected)}")
 
                 if current is None and label is None:
-                    raise TypeError("At least one of 'current' or 'label' must be provided")
+                    raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
 
                 if current is not None:
                     current_progress = current

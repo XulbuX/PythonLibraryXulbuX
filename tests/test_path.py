@@ -1,4 +1,5 @@
-from xulbux.path import PathNotFoundError, Path
+from xulbux.base.exceptions import PathNotFoundError
+from xulbux.path import Path
 
 import tempfile
 import pytest

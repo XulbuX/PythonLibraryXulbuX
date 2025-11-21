@@ -37,22 +37,25 @@ def test_get_func_calls():
     sample = "foo()\nbar(1, 2)\nbaz('test')"
     result = Code.get_func_calls(sample)
     assert len(result) == 3
-    assert ('foo', '') in result
-    assert ('bar', '1, 2') in result
-    assert ('baz', "'test'") in result
+    assert ("foo", "") in result
+    assert ("bar", "1, 2") in result
+    assert ("baz", "'test'") in result
+
     sample = "outer(inner1(), inner2(param))"
     result = Code.get_func_calls(sample)
     assert len(result) >= 3
     function_names = [match[0] for match in result]
-    assert 'outer' in function_names
-    assert 'inner1' in function_names
-    assert 'inner2' in function_names
+    assert "outer" in function_names
+    assert "inner1" in function_names
+    assert "inner2" in function_names
+
     assert not Code.get_func_calls("no function calls here")
+
     sample = "obj.method()\nobj.other_method(123)"
     result = Code.get_func_calls(sample)
     assert len(result) == 2
-    assert ('method', '') in result
-    assert ('other_method', '123') in result
+    assert ("method", "") in result
+    assert ("other_method", "123") in result
 
 
 def test_is_js():
@@ -74,5 +77,5 @@ function test() {
     js_sample = "const func = () => { return 42; }"
     assert Code.is_js(js_sample) is True
     js_sample = "customFunc()"
-    assert Code.is_js(js_sample, funcs=["customFunc"]) is True
+    assert Code.is_js(js_sample, funcs={"customFunc"}) is True
     assert Code.is_js(js_sample) is False

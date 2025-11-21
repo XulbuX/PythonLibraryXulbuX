@@ -84,10 +84,12 @@ def test_remove_ansi():
 
 
 def test_remove_ansi_with_removals():
-    ansi_string = f"{bold}Hello {orange}World!{reset}"
-    clean_string = "Hello World!"
+    ansi_string = f"{bold}Hello\n{orange}World!{reset}"
+    clean_string = "Hello\nWorld!"
     removals = ((0, bold), (6, orange), (12, reset))
     assert FormatCodes.remove_ansi(ansi_string, get_removals=True) == (clean_string, removals)
+    removals = ((0, bold), (5, orange), (11, reset))
+    assert FormatCodes.remove_ansi(ansi_string, get_removals=True, _ignore_linebreaks=True) == (clean_string, removals)
 
 
 def test_remove_formatting():
@@ -101,3 +103,11 @@ def test_remove_formatting_with_removals():
     clean_string = "Hello World!"
     removals = ((0, default), (0, bold), (6, orange), (12, default), (12, reset_bold))
     assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
+    format_string = "[b](Hello)\n[#F87](World!)"
+    clean_string = "Hello\nWorld!"
+    removals = ((0, default), (0, bold), (5, reset_bold), (6, orange), (12, default))
+    assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
+    removals = ((0, default), (0, bold), (5, reset_bold), (5, orange), (11, default))
+    assert FormatCodes.remove(
+        format_string, default_color="#FFF", get_removals=True, _ignore_linebreaks=True
+    ) == (clean_string, removals)

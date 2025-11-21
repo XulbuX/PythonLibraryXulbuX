@@ -1,12 +1,12 @@
-from typing import TypeAlias
+"""
+This module contains constant values used throughout the library.
+"""
 
-
-FormattableString: TypeAlias = str
-"""A `str` object that is made to be formatted with the `.format()` method."""
+from .types import FormattableString, AllTextChars
 
 
 class COLOR:
-    """Hexa color presets."""
+    """Hexadecimal color presets."""
 
     WHITE = "#F1F2FF"
     LIGHT_GRAY = "#B6B7C0"
@@ -35,68 +35,65 @@ class COLOR:
 
 
 class CHARS:
-    """Text character sets."""
+    """Character set constants for text validation and filtering."""
 
-    class _AllTextChars:
-        pass
-
-    ALL = _AllTextChars
-    """Code to signal that all characters are allowed."""
+    ALL = AllTextChars()
+    """Sentinel value indicating all characters are allowed."""
 
     DIGITS = "0123456789"
-    """Digits: `0`-`9`"""
-    FLOAT_DIGITS = DIGITS + "."
-    """Digits: `0`-`9` with decimal point `.`"""
-    HEX_DIGITS = DIGITS + "#abcdefABCDEF"
-    """Digits: `0`-`9` Letters: `a`-`f` `A`-`F` and a hashtag `#`"""
+    """Numeric digits: `0`-`9`"""
+    FLOAT_DIGITS = "." + DIGITS
+    """Numeric digits with decimal point: `0`-`9` and `.`"""
+    HEX_DIGITS = "#" + DIGITS + "abcdefABCDEF"
+    """Hexadecimal digits: `0`-`9`, `a`-`f`, `A`-`F`, and `#`"""
 
     LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
-    """Lowercase letters `a`-`z`"""
+    """Lowercase ASCII letters: `a`-`z`"""
     LOWERCASE_EXTENDED = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
-    """Lowercase letters `a`-`z` with all lowercase diacritic letters."""
+    """Lowercase ASCII letters with diacritic marks."""
     UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    """Uppercase letters `A`-`Z`"""
+    """Uppercase ASCII letters: `A`-`Z`"""
     UPPERCASE_EXTENDED = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
-    """Uppercase letters `A`-`Z` with all uppercase diacritic letters."""
+    """Uppercase ASCII letters with diacritic marks."""
 
     LETTERS = LOWERCASE + UPPERCASE
-    """Lowercase and uppercase letters `a`-`z` and `A`-`Z`"""
+    """All ASCII letters: `a`-`z` and `A`-`Z`"""
     LETTERS_EXTENDED = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
-    """Lowercase and uppercase letters `a`-`z` `A`-`Z` and all diacritic letters."""
+    """All ASCII letters with diacritic marks."""
 
     SPECIAL_ASCII = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-    """All ASCII special characters."""
+    """Standard ASCII special characters and symbols."""
     SPECIAL_ASCII_EXTENDED = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
-    """All ASCII special characters with the extended ASCII special characters."""
-    STANDARD_ASCII = SPECIAL_ASCII + DIGITS + LETTERS
-    """All standard ASCII characters."""
-    FULL_ASCII = SPECIAL_ASCII_EXTENDED + DIGITS + LETTERS_EXTENDED
-    """All characters in the ASCII table."""
+    """Standard and extended ASCII special characters."""
+    STANDARD_ASCII = DIGITS + LETTERS + SPECIAL_ASCII
+    """All standard ASCII characters (letters, digits, and symbols)."""
+    FULL_ASCII = DIGITS + LETTERS_EXTENDED + SPECIAL_ASCII_EXTENDED
+    """Complete ASCII character set including extended characters."""
 
 
 class ANSI:
-    """Constants and methods for use of ANSI escape codes"""
+    """Constants and utilities for ANSI escape code sequences."""
 
     ESCAPED_CHAR = "\\x1b"
-    """The printable ANSI escape character."""
-    CHAR = char = "\x1b"
-    """The ANSI escape character."""
-    START = start = "["
-    """The start of an ANSI escape sequence."""
-    SEP = sep = ";"
-    """The separator between ANSI escape sequence parts."""
-    END = end = "m"
-    """The end of an ANSI escape sequence."""
+    """Printable ANSI escape character."""
+    CHAR = "\x1b"
+    """ANSI escape character."""
+    START = "["
+    """Start of an ANSI escape sequence."""
+    SEP = ";"
+    """Separator between ANSI escape sequence parts."""
+    END = "m"
+    """End of an ANSI escape sequence."""
 
     @classmethod
-    def seq(cls, parts: int = 1) -> FormattableString:
-        """Generate an ANSI sequence with `parts` amount of placeholders."""
-        return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(parts)]) + cls.END
+    def seq(cls, placeholders: int = 1) -> FormattableString:
+        """Generates an ANSI escape sequence with the specified number of placeholders."""
+        return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
 
     SEQ_COLOR: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """The ANSI escape sequence for setting the text RGB color."""
+    """ANSI escape sequence with three placeholders for setting the RGB text color."""
     SEQ_BG_COLOR: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """The ANSI escape sequence for setting the background RGB color."""
+    """ANSI escape sequence with three placeholders for setting the RGB background color."""
 
     COLOR_MAP: tuple[str, ...] = (
         ########### DEFAULT CONSOLE COLOR NAMES ############
@@ -109,7 +106,7 @@ class ANSI:
         "cyan",
         "white",
     )
-    """The console default color names."""
+    """The standard terminal color names."""
 
     CODES_MAP: dict[str | tuple[str, ...], int] = {
         ################# SPECIFIC RESETS ##################
@@ -170,4 +167,4 @@ class ANSI:
         "bg:br:cyan": 106,
         "bg:br:white": 107,
     }
-    """All custom format keys and their corresponding ANSI format number codes."""
+    """Dictionary mapping format keys to their corresponding ANSI code numbers."""

@@ -1,4 +1,4 @@
-from xulbux.file import SameContentFileExistsError
+from xulbux.base.exceptions import SameContentFileExistsError
 from xulbux.json import Json
 
 import pytest
@@ -30,13 +30,13 @@ COMMENT_DATA = {
     "object": {">>": "whole key & value is a comment"},
     ">>": "whole key & value is a comment",
 }
-COMMENT_DATA_STR = '''{
+COMMENT_DATA_STR = """{
   "key1": "value with no comments",
   "key2": "value >>inline comment<<",
   "list": [1, ">>item is a comment", 2, "item >>inline comment<<"],
   "object": {">>": "whole key & value is a comment"},
   ">>": "whole key & value is a comment"
-}'''
+}"""
 COMMENT_DATA_PROCESSED = {
     "key1": "value with no comments",
     "key2": "value",
@@ -44,27 +44,27 @@ COMMENT_DATA_PROCESSED = {
     "object": {},
 }
 
-COMMENT_DATA_START = '''{
+COMMENT_DATA_START = """{
   "config": {
     "version >>ADJUSTED AUTOMATICALLY<<": 1.0,
     "features": ["a", "b"],
     ">>": "Features ^ must be adjusted manually"
   },
   "user": "Test User >>DON'T TOUCH<<"
-}'''
+}"""
 COMMENT_UPDATE_VALUES = {
     "config->version": 2.0,
     "config->features->0": "c",
     "user": "Cool Test User",
 }
-COMMENT_DATA_END = '''{
+COMMENT_DATA_END = """{
   "config": {
     "version >>ADJUSTED AUTOMATICALLY<<": 2.0,
     "features": ["c", "b"],
     ">>": "Features ↑ must be adjusted manually"
   },
   "user": "Cool Test User >>DON'T TOUCH<<"
-}'''
+}"""
 
 UPDATE_DATA_START = {
     "config": {"version": 1.0, "features": ["a", "b"]},
