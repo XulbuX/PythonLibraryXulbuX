@@ -101,11 +101,13 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color"><img src="https://img.shields.io/badge/color-B272FC?style=for-the-badge" alt="color"></a></td>
-      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with colors in various formats.</td>
+      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with<br>
+        colors in various formats.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console"><img src="https://img.shields.io/badge/console-B272FC?style=for-the-badge" alt="console"></a></td>
-      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging and other actions within the console.</td>
+      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging<br>
+        and other actions within the console.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/data"><img src="https://img.shields.io/badge/data-B272FC?style=for-the-badge" alt="data"></a></td>
@@ -117,15 +119,17 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/file"><img src="https://img.shields.io/badge/file-B272FC?style=for-the-badge" alt="file"></a></td>
-      <td><code>File</code> class, which includes methods to work with files and file paths</td>
+      <td><code>File</code> class, which includes methods to work with files and file paths.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
-      <td><code>FormatCodes</code> class, which includes methods to print and work with strings that contain special formatting codes, which are then converted to ANSI codes for pretty console output.</td>
+      <td><code>FormatCodes</code> class, which includes methods to print and work with strings that contain<br>
+        special formatting codes, which are then converted to ANSI codes for pretty console output.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>
-      <td><code>Json</code> class, which includes methods to read, create and update JSON files, with support for comments inside the JSON data.</td>
+      <td><code>Json</code> class, which includes methods to read, create and update JSON files,<br>
+        with support for comments inside the JSON data.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/path"><img src="https://img.shields.io/badge/path-B272FC?style=for-the-badge" alt="path"></a></td>
@@ -133,7 +137,8 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/regex"><img src="https://img.shields.io/badge/regex-B272FC?style=for-the-badge" alt="regex"></a></td>
-      <td><code>Regex</code> class, which includes methods to dynamically generate complex regex patterns for common use cases.</td>
+      <td><code>Regex</code> class, which includes methods to dynamically generate complex regex patterns<br>
+        for common use cases.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/string"><img src="https://img.shields.io/badge/string-B272FC?style=for-the-badge" alt="string"></a></td>
