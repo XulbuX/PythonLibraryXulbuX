@@ -17,7 +17,7 @@
 
 <span id="v1-9-0" />
 
-## ... `v1.9.0` Big Update 🚀
+## 21.11.2025 `v1.9.0` Big Update 🚀
 * Standardized the docstrings for all public methods in the whole library to use the same style and structure.
 * Replaced left over single quotes with double quotes for consistency.
 * Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
