@@ -538,12 +538,14 @@ class FormatCodes:
                 removals.append((start_pos, match.group()))
                 return ""
 
-            return (
-                _COMPILED["ansi_seq"].sub("", ansi_string) if _ignore_linebreaks \
-                else _COMPILED["ansi_seq"].sub(replacement,
-                    ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string
-                )
-            ), tuple(removals)
+            clean_string = _COMPILED["ansi_seq"].sub(
+                replacement,
+                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string  # REMOVE LINEBREAKS FOR POSITIONS
+            )
+            if _ignore_linebreaks:
+                clean_string = _COMPILED["ansi_seq"].sub("", ansi_string)  # BUT KEEP LINEBREAKS IN RETURNED CLEAN STRING
+
+            return clean_string, tuple(removals)
 
         else:
             return _COMPILED["ansi_seq"].sub("", ansi_string)

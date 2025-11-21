@@ -5,12 +5,12 @@ You can also use special formatting codes directly inside the log message to cha
 For more detailed information about formatting codes, see the the `format_codes` module documentation.
 """
 
-from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
-from .format_codes import FormatCodes, _COMPILED as _FC_COMPILED
+from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
 from .string import String
-from .color import Color, Rgba, Hexa
+from .color import Color, hexa
 
 from typing import Generator, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -484,8 +484,12 @@ class Console:
         if not isinstance(start, str):
             raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
         # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if title_bg_color is not None and not (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
-            raise ValueError(f"The 'title_bg_color' parameter must be a valid Rgba or Hexa color, got {title_bg_color!r}")
+        has_title_bg = False
+        if title_bg_color is not None:
+            if (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
+                title_bg_color, has_title_bg = Color.to_hexa(cast(Rgba | Hexa, title_bg_color)), True
+            else:
+                raise ValueError(f"The 'title_bg_color' parameter must be a valid Rgba or Hexa color, got {title_bg_color!r}")
         # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
         if not isinstance(tab_size, int):
             raise TypeError(f"The 'tab_size' parameter must be an integer, got {type(tab_size)}")
@@ -500,12 +504,8 @@ class Console:
         elif title_mx < 0:
             raise ValueError("The 'title_mx' parameter must be a non-negative integer.")
 
-        has_title_bg = title_bg_color is not None and Color.is_valid(title_bg_color)
-
         title = "" if title is None else title.strip().upper()
-        title_fg = Color.text_color_for_on_bg(
-            Color.to_hexa(title_bg_color)  # type: ignore[assignment]
-        ) if has_title_bg else "_color"
+        title_fg = Color.text_color_for_on_bg(cast(hexa, title_bg_color)) if has_title_bg else "_color"
 
         px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
         tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
