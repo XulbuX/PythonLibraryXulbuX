@@ -60,21 +60,91 @@ from xulbux.color import rgba, hsla, hexa
 
 ## Modules
 
-| Module                                                                                                                                                    | Short Description                                                                           |
-| :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| [![base](https://img.shields.io/badge/base-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/base)                          | includes more modules like library constants                                                |
-| [![code](https://img.shields.io/badge/code-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/code)                          | advanced code-string operations (*changing the indent, finding function calls, ...*)        |
-| [![color](https://img.shields.io/badge/color-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color)                       | everything around colors (*converting, blending, searching colors in strings, ...*)         |
-| [![console](https://img.shields.io/badge/console-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console)                 | advanced actions related to the console (*pretty logging, advanced inputs, ...*)            |
-| [![data](https://img.shields.io/badge/data-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/data)                          | advanced operations with data structures (*compare, generate path IDs, pretty print, ...*)  |
-| [![env_path](https://img.shields.io/badge/env__path-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/env_path)             | getting and editing the PATH variable (*get paths, check for paths, add paths, ...*)        |
-| [![file](https://img.shields.io/badge/file-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/file)                          | advanced working with files (*create files, rename file-extensions, ...*)                   |
-| [![format_codes](https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/format_codes) | easy pretty printing using custom format codes (*print, inputs, format codes to ANSI, ...*) |
-| [![json](https://img.shields.io/badge/json-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/json)                          | advanced working with json files (*read, create, update, ...*)                              |
-| [![path](https://img.shields.io/badge/path-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/path)                          | advanced path operations (*get paths, smart-extend relative paths, delete paths, ...*)      |
-| [![regex](https://img.shields.io/badge/regex-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/regex)                       | generated regex pattern-templates (*match bracket- and quote pairs, match colors, ...*)     |
-| [![string](https://img.shields.io/badge/string-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/string)                    | helpful actions when working with strings. (*normalize, escape, decompose, ...*)            |
-| [![system](https://img.shields.io/badge/system-B272FC?style=for-the-badge)](https://github.com/XulbuX/PythonLibraryXulbuX/wiki/system)                    | advanced system actions (*restart with message, check installed Python libs, ...*)          |
+<table>
+  <thead>
+    <tr>
+      <th align="left">Main Module</th>
+      <th align="left">Contents</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/base"><img src="https://img.shields.io/badge/base-B272FC?style=for-the-badge" alt="base"></a></td>
+      <td>
+        <table>
+          <thead>
+            <tr>
+              <th align="left">Sub Module</th>
+              <th align="left">Contents</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/base#consts"><img src="https://img.shields.io/badge/consts-B272FC?style=for-the-badge" alt="consts"></a></td>
+              <td>Constant values used throughout the library.</td>
+            </tr>
+            <tr>
+              <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/base#exceptions"><img src="https://img.shields.io/badge/exceptions-B272FC?style=for-the-badge" alt="exceptions"></a></td>
+              <td>Custom exception classes used throughout the library.</td>
+            </tr>
+            <tr>
+              <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/base#types"><img src="https://img.shields.io/badge/types-B272FC?style=for-the-badge" alt="types"></a></td>
+              <td>Custom type definitions used throughout the library.</td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/code"><img src="https://img.shields.io/badge/code-B272FC?style=for-the-badge" alt="code"></a></td>
+      <td><code>Code</code> class, which includes methods to work with code strings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color"><img src="https://img.shields.io/badge/color-B272FC?style=for-the-badge" alt="color"></a></td>
+      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with colors in various formats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console"><img src="https://img.shields.io/badge/console-B272FC?style=for-the-badge" alt="console"></a></td>
+      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging and other actions within the console.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/data"><img src="https://img.shields.io/badge/data-B272FC?style=for-the-badge" alt="data"></a></td>
+      <td><code>Data</code> class, which includes methods to work with nested data structures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/env_path"><img src="https://img.shields.io/badge/env__path-B272FC?style=for-the-badge" alt="env_path"></a></td>
+      <td><code>EnvPath</code> class, which includes methods to work with the PATH environment variable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/file"><img src="https://img.shields.io/badge/file-B272FC?style=for-the-badge" alt="file"></a></td>
+      <td><code>File</code> class, which includes methods to work with files and file paths</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
+      <td><code>FormatCodes</code> class, which includes methods to print and work with strings that contain special formatting codes, which are then converted to ANSI codes for pretty console output.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>
+      <td><code>Json</code> class, which includes methods to read, create and update JSON files, with support for comments inside the JSON data.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/path"><img src="https://img.shields.io/badge/path-B272FC?style=for-the-badge" alt="path"></a></td>
+      <td><code>Path</code> class, which includes methods to work with file and directory paths.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/regex"><img src="https://img.shields.io/badge/regex-B272FC?style=for-the-badge" alt="regex"></a></td>
+      <td><code>Regex</code> class, which includes methods to dynamically generate complex regex patterns for common use cases.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/string"><img src="https://img.shields.io/badge/string-B272FC?style=for-the-badge" alt="string"></a></td>
+      <td><code>String</code> class, which includes various utility methods for string manipulation and conversion.</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/system"><img src="https://img.shields.io/badge/system-B272FC?style=for-the-badge" alt="system"></a></td>
+      <td><code>System</code> class, which includes methods to interact with the underlying operating system.</td>
+    </tr>
+  </tbody>
+</table>
 
 <br>
 

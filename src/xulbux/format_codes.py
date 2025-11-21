@@ -1,5 +1,5 @@
 """
-This module provides the `FormatCodes` class, which offers methods to print and work with strings that
+This module provides the `FormatCodes` class, which includes methods to print and work with strings that
 contain special formatting codes, which are then converted to ANSI codes for pretty console output.
 
 ------------------------------------------------------------------------------------------------------------------------------------

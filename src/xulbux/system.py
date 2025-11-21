@@ -1,5 +1,5 @@
 """
-This module provides the `System` class, which offers
+This module provides the `System` class, which includes
 methods to interact with the underlying operating system.
 """
 

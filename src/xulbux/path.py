@@ -1,5 +1,5 @@
 """
-This module provides the `Path` class, which offers methods to work with file and directory paths.
+This module provides the `Path` class, which includes methods to work with file and directory paths.
 """
 
 from .base.exceptions import PathNotFoundError
