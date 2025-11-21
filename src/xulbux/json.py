@@ -1,3 +1,8 @@
+"""
+This module provides the `Json` class, which offers methods to read, create and update JSON files,
+with support for comments inside the JSON data.
+"""
+
 from .data import Data
 from .file import File
 from .path import Path
@@ -7,6 +12,8 @@ import json as _json
 
 
 class Json:
+    """This class provides methods to read, create and update JSON files,
+    with support for comments inside the JSON data."""
 
     @staticmethod
     def read(

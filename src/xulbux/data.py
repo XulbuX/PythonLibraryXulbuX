@@ -1,3 +1,8 @@
+"""
+This module provides the `Data` class, which offers
+methods to work with nested data structures.
+"""
+
 from .base.types import DataStructure, IndexIterable
 from .base.consts import COLOR
 
@@ -12,6 +17,7 @@ import re as _re
 
 
 class Data:
+    """This class includes methods to work with nested data structures (dictionaries and lists)."""
 
     @staticmethod
     def serialize_bytes(data: bytes | bytearray) -> dict[str, str]:

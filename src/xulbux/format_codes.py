@@ -1,13 +1,12 @@
 """
-Methods to transform formatting codes to ANSI and use them for pretty console output:
-- `FormatCodes.print()` (print a special format-codes containing string)
-- `FormatCodes.input()` (input with a special format-codes containing prompt)
-- `FormatCodes.to_ansi()` (transform all special format-codes into ANSI codes in a string)\n
+This module provides the `FormatCodes` class, which offers methods to print and work with strings that
+contain special formatting codes, which are then converted to ANSI codes for pretty console output.
+
 ------------------------------------------------------------------------------------------------------------------------------------
 ### The Easy Formatting
 
 First, let's take a look at a small example of what a highly styled print string with formatting could look like using this module:
-```regex
+```
 This here is just unformatted text. [b|u|br:blue](Next we have text that is bright blue + bold + underlined.)\\n
 [#000|bg:#F67](Then there's also black text with a red background.) And finally the ([i](boring)) plain text again.
 ```
@@ -30,19 +29,19 @@ A list of all possible formatting keys can be found under all possible formattin
 #### Auto Resetting Formatting Codes
 
 Certain formatting can automatically be reset, behind a certain amount of text, just like shown in the following example:
-```regex
+```
 This is plain text, [br:blue](which is bright blue now.) Now it was automatically reset to plain again.
 ```
 
 This will only reset formatting codes, that have a specific reset listed below.
 That means if you use it where another formatting is already applied, that formatting is still there after the automatic reset:
-```regex
+```
 [cyan]This is cyan text, [dim](which is dimmed now.) Now it's not dimmed any more but still cyan.
 ```
 
 If you want to ignore the auto-reset functionality of `()` brackets, you can put a `\\` or `/` between them and
 the formatting code:
-```regex
+```
 [cyan]This is cyan text, [u]/(which is underlined now.) And now it is still underlined and cyan.
 ```
 
@@ -214,6 +213,8 @@ _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
 
 
 class FormatCodes:
+    """This class provides methods to print and work with strings that contain special formatting codes,
+    which are then converted to ANSI codes for pretty console output."""
 
     @staticmethod
     def print(

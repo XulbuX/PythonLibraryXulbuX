@@ -1,3 +1,8 @@
+"""
+This module provides the `String` class, which offers
+various utility methods for string manipulation and conversion.
+"""
+
 from typing import Optional, Literal, Any
 import json as _json
 import ast as _ast
@@ -5,6 +10,7 @@ import re as _re
 
 
 class String:
+    """This class provides various utility methods for string manipulation and conversion."""
 
     @staticmethod
     def to_type(string: str) -> Any:

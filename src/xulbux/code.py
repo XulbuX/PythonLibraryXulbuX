@@ -1,3 +1,7 @@
+"""
+This module provides the `Code` class, which offers methods to work with code strings.
+"""
+
 from .string import String
 from .regex import Regex
 from .data import Data
@@ -6,6 +10,7 @@ import regex as _rx
 
 
 class Code:
+    """This class includes methods to work with code strings."""
 
     @staticmethod
     def add_indent(code: str, indent: int) -> str:

@@ -1,34 +1,9 @@
 """
-`rgba`:
-    An RGB/RGBA color: is a tuple of 3 integers, representing the red (`0`-`255`), green (`0`-`255`), and blue (`0`-`255`).
-    Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).
-`hsla`:
-    An HSL/HSB color: is a tuple of 3 integers, representing the hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).
-    Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).
-`hexa`:
-    A HEX color: is a string in the format `RGB`, `RGBA`, `RRGGBB` or `RRGGBBAA` (where `R` `G` `B` `A` are hexadecimal digits).
+This module provides the `rgba`, `hsla` and `hexa` classes, which offer
+methods to manipulate colors in their respective color spaces.<br>
 
--------------------------------------------------------------------------------------------------------------------------------------
-The `Color` class, which contains all sorts of different color-related methods:
-- validate colors:
-    - is valid rgba
-    - is valid hsla
-    - is valid hexa
-    - is valid in any format
-- check if a color has an alpha channel
-- convert between different color formats:
-    - color to rgba
-    - color to hsla
-    - color to hexa
-- recognize colors inside strings and convert them to color types:
-    - string to rgba
-- convert an RGBA color to a HEX integer
-- convert a HEX integer to an RGBA color
-- get a colors luminance from the RGB channels
-- get the optimal text color for on a colored background
-- adjust different color channels:
-    - brightness
-    - saturation
+This module also provides the `Color` class, which
+includes methods to work with colors in various formats.
 """
 
 from .base.types import AnyRgba, AnyHsla, AnyHexa, Rgba, Hsla, Hexa
@@ -831,6 +806,7 @@ class hexa:
 
 
 class Color:
+    """This class includes methods to work with colors in different formats."""
 
     @staticmethod
     def is_valid_rgba(color: AnyRgba, allow_alpha: bool = True) -> bool:

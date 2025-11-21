@@ -1,3 +1,8 @@
+"""
+This module provides the `File` class, which includes
+methods to work with files and file paths.
+"""
+
 from .base.exceptions import SameContentFileExistsError
 from .string import String
 
@@ -5,6 +10,7 @@ import os as _os
 
 
 class File:
+    """This class includes methods to work with files and file paths."""
 
     @staticmethod
     def rename_extension(

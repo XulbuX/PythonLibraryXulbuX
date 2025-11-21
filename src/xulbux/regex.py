@@ -1,9 +1,15 @@
+"""
+This module provides the `Regex` class, which offers methods
+to dynamically generate complex regex patterns for common use cases.
+"""
+
 from typing import Optional
 import regex as _rx
 import re as _re
 
 
 class Regex:
+    """This class provides methods to dynamically generate complex regex patterns for common use cases."""
 
     @staticmethod
     def quotes() -> str:

@@ -1,3 +1,8 @@
+"""
+This module provides the `EnvPath` class, which includes
+methods to work with the PATH environment variable.
+"""
+
 from .path import Path
 
 from typing import Optional
@@ -6,6 +11,7 @@ import os as _os
 
 
 class EnvPath:
+    """This class includes methods to work with the PATH environment variable."""
 
     @staticmethod
     def paths(as_list: bool = False) -> str | list:

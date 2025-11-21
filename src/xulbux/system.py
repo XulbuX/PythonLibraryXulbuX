@@ -1,3 +1,8 @@
+"""
+This module provides the `System` class, which offers
+methods to interact with the underlying operating system.
+"""
+
 from .base.types import MissingLibsMsgs
 
 from .format_codes import FormatCodes
@@ -26,6 +31,7 @@ class _IsElevated:
 
 
 class System:
+    """This class provides methods to interact with the underlying operating system."""
 
     is_elevated: bool = _IsElevated()  # type: ignore[assignment]
     """Is `True` if the current process has elevated privileges and `False` otherwise."""

@@ -1,3 +1,7 @@
+"""
+This module provides the `Path` class, which offers methods to work with file and directory paths.
+"""
+
 from .base.exceptions import PathNotFoundError
 
 from typing import Optional
@@ -31,6 +35,7 @@ class _ScriptDir:
 
 
 class Path:
+    """This class provides methods to work with file and directory paths."""
 
     cwd: str = _Cwd()  # type: ignore[assignment]
     """The path to the current working directory."""

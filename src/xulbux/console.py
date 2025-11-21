@@ -1,8 +1,6 @@
 """
-Functions for logging and other small actions within the console.\n
-----------------------------------------------------------------------------------------------------------
-You can also use special formatting codes directly inside the log message to change their appearance.
-For more detailed information about formatting codes, see the the `format_codes` module documentation.
+This module provides the `Console` class, which offers
+methods for logging and other actions within the console.
 """
 
 from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, Rgba, Hexa
@@ -181,6 +179,7 @@ class Args:
 
 
 class Console:
+    """This class provides methods for logging and other actions within the console."""
 
     w: int = _ConsoleWidth()  # type: ignore[assignment]
     """The width of the console in characters."""
