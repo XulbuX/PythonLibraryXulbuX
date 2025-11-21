@@ -338,6 +338,7 @@
   New the param <code>file: *str* = ""</code> is the first param and <code>content: *str* = ""</code> is the second.
 * Renamed `File.make_path()` to a more descriptive name `File.extend_or_make_path()` and adjusted the usages of `File.create()` and `File.make_path()` inside `xx_json` accordingly.
 
+
 <span id="v1-6-0" />
 
 ## 07.01.2025 `v1.6.0`
@@ -605,7 +606,7 @@
 * Improved `README.md`.
 
 
-<span id="v-1-2-1" /><span id="v-1-2-2" />
+<span id="v1-2-1" /><span id="v1-2-2" />
 
 ## 18.10.2024 `v1.2.1` `v1.2.2`
 
@@ -645,7 +646,7 @@
   There was a bug where only on Windows 10, the ANSI formats weren't cleared.
 
 
-<span id="v-1-1-4" /><span id="v-1-1-5" />
+<span id="v1-1-4" /><span id="v1-1-5" />
 
 ## 17.10.2024 `v1.1.4` `v1.1.5`
 
@@ -659,7 +660,7 @@
 * Changed the default value of the param <code>compactness: *int*</code> in the method `Data.print()` to `1` instead of `0`.
 
 
-<span id="v-1-1-1" /><span id="v-1-1-2" />
+<span id="v1-1-1" /><span id="v1-1-2" />
 
 ## 17.10.2024 `v1.1.1` `v1.1.2`
 
@@ -690,7 +691,7 @@
   prints: <code><u>(Automatically resetting) following text</u></code>
 
 
-<span id="v-1-0-7" /><span id="v-1-0-8" />
+<span id="v1-0-7" /><span id="v1-0-8" />
 
 ## 16.10.2024 `v1.0.7` `v1.0.8`
 
