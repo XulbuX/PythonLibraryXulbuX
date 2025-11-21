@@ -15,12 +15,13 @@ import re as _re
 
 class rgba:
     """An RGB/RGBA color object that includes a bunch of methods to manipulate the color.\n
-    --------------------------------------------------------------------------------------------
-    - `r` -⠀the red channel in range [0, 255]
-    - `g` -⠀the green channel in range [0, 255]
-    - `b` -⠀the blue channel in range [0, 255]
-    - `a` -⠀the alpha channel in range [0.0, 1.0] or `None` if the color has no alpha channel\n
-    --------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------
+    - `r` -⠀the red channel in range [0, 255] inclusive
+    - `g` -⠀the green channel in range [0, 255] inclusive
+    - `b` -⠀the blue channel in range [0, 255] inclusive
+    - `a` -⠀the alpha channel in range [0.0, 1.0] inclusive
+      or `None` if the color has no alpha channel\n
+    ----------------------------------------------------------------------------------------
     Includes methods:
     - `to_hsla()` to convert to HSL color
     - `to_hexa()` to convert to HEX color
@@ -42,13 +43,13 @@ class rgba:
 
     def __init__(self, r: int, g: int, b: int, a: Optional[float] = None, _validate: bool = True):
         self.r: int
-        """The red channel in range [0, 255]."""
+        """The red channel in range [0, 255] inclusive."""
         self.g: int
-        """The green channel in range [0, 255]."""
+        """The green channel in range [0, 255] inclusive."""
         self.b: int
-        """The blue channel in range [0, 255]."""
+        """The blue channel in range [0, 255] inclusive."""
         self.a: Optional[float]
-        """The alpha channel in range [0.0, 1.0] or `None` if not set."""
+        """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
         if not _validate:
             self.r, self.g, self.b, self.a = r, g, b, a
@@ -57,12 +58,14 @@ class rgba:
         if any(isinstance(x, rgba) for x in (r, g, b)):
             raise ValueError("Color is already an rgba() color object.")
         if not all(isinstance(x, int) and (0 <= x <= 255) for x in (r, g, b)):
-            raise ValueError(f"The 'r', 'g' and 'b' parameters must be integers in range [0, 255], got {r=} {g=} {b=}")
+            raise ValueError(
+                f"The 'r', 'g' and 'b' parameters must be integers in range [0, 255] inclusive, got {r=} {g=} {b=}"
+            )
         if a is not None:
             if not isinstance(a, float):
                 raise TypeError(f"The 'a' parameter must be a float, got {type(a)}")
             elif not (0.0 <= a <= 1.0):
-                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0], got {a!r}")
+                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
 
         self.r, self.g, self.b = r, g, b
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
@@ -109,41 +112,41 @@ class rgba:
         return self.a is not None
 
     def lighten(self, amount: float) -> "rgba":
-        """Increases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_hsla().lighten(amount).to_rgba().values()
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
     def darken(self, amount: float) -> "rgba":
-        """Decreases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_hsla().darken(amount).to_rgba().values()
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
     def saturate(self, amount: float) -> "rgba":
-        """Increases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_hsla().saturate(amount).to_rgba().values()
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
     def desaturate(self, amount: float) -> "rgba":
-        """Decreases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_hsla().desaturate(amount).to_rgba().values()
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
@@ -180,8 +183,8 @@ class rgba:
         return rgba(self.r, self.g, self.b, self.a, _validate=False)
 
     def blend(self, other: Rgba, ratio: float = 0.5, additive_alpha: bool = False) -> "rgba":
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0].\n
-        -----------------------------------------------------------------------------------------------------
+        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------------
         - `other` -⠀the other RGBA color to blend with
         - `ratio` -⠀the blend ratio between the two colors:
           * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
@@ -196,7 +199,7 @@ class rgba:
         if not isinstance(ratio, float):
             raise TypeError(f"The 'ratio' parameter must be a float, got {type(ratio)}")
         elif not (0.0 <= ratio <= 1.0):
-            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0], got {ratio!r}")
+            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
         if not isinstance(additive_alpha, bool):
             raise TypeError(f"The 'additive_alpha' parameter must be a boolean, got {type(additive_alpha)}")
 
@@ -241,7 +244,7 @@ class rgba:
         if not isinstance(alpha, float):
             raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
         elif not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0], got {alpha!r}")
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         return rgba(self.r, self.g, self.b, alpha, _validate=False)
 
@@ -274,12 +277,13 @@ class rgba:
 
 class hsla:
     """A HSL/HSLA color object that includes a bunch of methods to manipulate the color.\n
-    --------------------------------------------------------------------------------------------
-    - `h` -⠀the hue channel in range [0, 360]
-    - `s` -⠀the saturation channel in range [0, 100]
-    - `l` -⠀the lightness channel in range [0, 100]
-    - `a` -⠀the alpha channel in range [0.0, 1.0] or `None` if the color has no alpha channel\n
-    --------------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------
+    - `h` -⠀the hue channel in range [0, 360] inclusive
+    - `s` -⠀the saturation channel in range [0, 100] inclusive
+    - `l` -⠀the lightness channel in range [0, 100] inclusive
+    - `a` -⠀the alpha channel in range [0.0, 1.0] inclusive
+      or `None` if the color has no alpha channel\n
+    ---------------------------------------------------------------------------------------
     Includes methods:
     - `to_rgba()` to convert to RGB color
     - `to_hexa()` to convert to HEX color
@@ -301,13 +305,13 @@ class hsla:
 
     def __init__(self, h: int, s: int, l: int, a: Optional[float] = None, _validate: bool = True):
         self.h: int
-        """The hue channel in range [0, 360]."""
+        """The hue channel in range [0, 360] inclusive."""
         self.s: int
-        """The saturation channel in range [0, 100]."""
+        """The saturation channel in range [0, 100] inclusive."""
         self.l: int
-        """The lightness channel in range [0, 100]."""
+        """The lightness channel in range [0, 100] inclusive."""
         self.a: Optional[float]
-        """The alpha channel in range [0.0, 1.0] or `None` if not set."""
+        """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
         if not _validate:
             self.h, self.s, self.l, self.a = h, s, l, a
@@ -316,14 +320,14 @@ class hsla:
         if any(isinstance(x, hsla) for x in (h, s, l)):
             raise ValueError("Color is already a hsla() color object.")
         if not (isinstance(h, int) and (0 <= h <= 360)):
-            raise ValueError(f"The 'h' parameter must be an integer in range [0, 360], got {h!r}")
+            raise ValueError(f"The 'h' parameter must be an integer in range [0, 360] inclusive, got {h!r}")
         if not all(isinstance(x, int) and (0 <= x <= 100) for x in (s, l)):
-            raise ValueError(f"The 's' and 'l' parameters must be integers in range [0, 100], got {s=} {l=}")
+            raise ValueError(f"The 's' and 'l' parameters must be integers in range [0, 100] inclusive, got {s=} {l=}")
         if a is not None:
             if not isinstance(a, float):
                 raise TypeError(f"The 'a' parameter must be a float, got {type(a)}")
             elif not (0.0 <= a <= 1.0):
-                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0], got {a!r}")
+                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
 
         self.h, self.s, self.l = h, s, l
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
@@ -371,41 +375,41 @@ class hsla:
         return self.a is not None
 
     def lighten(self, amount: float) -> "hsla":
-        """Increases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.l = int(min(100, self.l + (100 - self.l) * amount))
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
     def darken(self, amount: float) -> "hsla":
-        """Decreases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.l = int(max(0, self.l * (1 - amount)))
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
     def saturate(self, amount: float) -> "hsla":
-        """Increases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.s = int(min(100, self.s + (100 - self.s) * amount))
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
     def desaturate(self, amount: float) -> "hsla":
-        """Decreases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.s = int(max(0, self.s * (1 - amount)))
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
@@ -444,8 +448,8 @@ class hsla:
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
 
     def blend(self, other: Hsla, ratio: float = 0.5, additive_alpha: bool = False) -> "hsla":
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0].\n
-        -----------------------------------------------------------------------------------------------------
+        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------------
         - `other` -⠀the other HSLA color to blend with
         - `ratio` -⠀the blend ratio between the two colors:
           * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
@@ -457,7 +461,7 @@ class hsla:
         if not isinstance(ratio, float):
             raise TypeError(f"The 'ratio' parameter must be a float, got {type(ratio)}")
         elif not (0.0 <= ratio <= 1.0):
-            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0], got {ratio!r}")
+            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
         if not isinstance(additive_alpha, bool):
             raise TypeError(f"The 'additive_alpha' parameter must be a boolean, got {type(additive_alpha)}")
 
@@ -485,7 +489,7 @@ class hsla:
         if not isinstance(alpha, float):
             raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
         elif not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0], got {alpha!r}")
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         return hsla(self.h, self.s, self.l, alpha, _validate=False)
 
@@ -560,13 +564,13 @@ class hexa:
         _a: Optional[float] = None,
     ):
         self.r: int
-        """The red channel in range [0, 255]."""
+        """The red channel in range [0, 255] inclusive."""
         self.g: int
-        """The green channel in range [0, 255]."""
+        """The green channel in range [0, 255] inclusive."""
         self.b: int
-        """The blue channel in range [0, 255]."""
+        """The blue channel in range [0, 255] inclusive."""
         self.a: Optional[float]
-        """The alpha channel in range [0.0, 1.0] or `None` if not set."""
+        """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
         if all(x is not None for x in (_r, _g, _b)):
             self.r, self.g, self.b, self.a = cast(int, _r), cast(int, _g), cast(int, _b), _a
@@ -684,41 +688,41 @@ class hexa:
         return self.a is not None
 
     def lighten(self, amount: float) -> "hexa":
-        """Increases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_rgba(False).lighten(amount).values()
         return hexa("", self.r, self.g, self.b, self.a)
 
     def darken(self, amount: float) -> "hexa":
-        """Decreases the colors lightness by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_rgba(False).darken(amount).values()
         return hexa("", self.r, self.g, self.b, self.a)
 
     def saturate(self, amount: float) -> "hexa":
-        """Increases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_rgba(False).saturate(amount).values()
         return hexa("", self.r, self.g, self.b, self.a)
 
     def desaturate(self, amount: float) -> "hexa":
-        """Decreases the colors saturation by the specified amount in range [0.0, 1.0]."""
+        """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
         if not isinstance(amount, float):
             raise TypeError(f"The 'amount' parameter must be a float, got {type(amount)}")
         elif not (0.0 <= amount <= 1.0):
-            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0], got {amount!r}")
+            raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
         self.r, self.g, self.b, self.a = self.to_rgba(False).desaturate(amount).values()
         return hexa("", self.r, self.g, self.b, self.a)
@@ -755,8 +759,8 @@ class hexa:
         return hexa("", self.r, self.g, self.b, self.a)
 
     def blend(self, other: Hexa, ratio: float = 0.5, additive_alpha: bool = False) -> "hexa":
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0].\n
-        -----------------------------------------------------------------------------------------------------
+        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------------
         - `other` -⠀the other HEXA color to blend with
         - `ratio` -⠀the blend ratio between the two colors:
           * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
@@ -768,7 +772,7 @@ class hexa:
         if not isinstance(ratio, float):
             raise TypeError(f"The 'ratio' parameter must be a float, got {type(ratio)}")
         elif not (0.0 <= ratio <= 1.0):
-            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0], got {ratio!r}")
+            raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
         if not isinstance(additive_alpha, bool):
             raise TypeError(f"The 'additive_alpha' parameter must be a boolean, got {type(additive_alpha)}")
 
@@ -796,7 +800,7 @@ class hexa:
         if not isinstance(alpha, float):
             raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
         elif not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0], got {alpha!r}")
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         return hexa("", self.r, self.g, self.b, alpha)
 
@@ -1105,7 +1109,7 @@ class Color:
         if not isinstance(preserve_original, bool):
             raise TypeError(f"The 'preserve_original' parameter must be an boolean, got {type(preserve_original)}")
         elif not 0 <= hex_int <= 0xFFFFFFFF:
-            raise ValueError(f"Expected HEX integer in range [0x000000, 0xFFFFFFFF], got 0x{hex_int:X}")
+            raise ValueError(f"Expected HEX integer in range [0x000000, 0xFFFFFFFF] inclusive, got 0x{hex_int:X}")
 
         if len(hex_str := f"{hex_int:X}") <= 6:
             hex_str = hex_str.zfill(6)
@@ -1140,11 +1144,11 @@ class Color:
     ) -> int | float:
         """Calculates the relative luminance of a color according to various standards.\n
         ----------------------------------------------------------------------------------
-        - `r`, `g`, `b` -⠀the red, green and blue channels in range [0, 255]
+        - `r`, `g`, `b` -⠀the red, green and blue channels in range [0, 255] inclusive
         - `output_type` -⠀the range of the returned luminance value:
-          * `int` returns integer in range [0, 100]
-          * `float` returns float in range [0.0, 1.0]
-          * `None` returns integer in range [0, 255]
+          * `int` returns integer in range [0, 100] inclusive
+          * `float` returns float in range [0.0, 1.0] inclusive
+          * `None` returns integer in range [0, 255] inclusive
         - `method` -⠀the luminance calculation method to use:
           * `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
           * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
@@ -1185,11 +1189,11 @@ class Color:
     def _linearize_srgb(c: float) -> float:
         """Helper method to linearize sRGB component following the WCAG standard.\n
         ----------------------------------------------------------------------------
-        - `c` -⠀the sRGB component value in range [0.0, 1.0]"""
+        - `c` -⠀the sRGB component value in range [0.0, 1.0] inclusive"""
         if not isinstance(c, float):
             raise TypeError(f"The 'c' parameter must be a float, got {type(c)}")
         elif not 0.0 <= c <= 1.0:
-            raise ValueError(f"The 'c' parameter must be in range [0.0, 1.0], got {c!r}")
+            raise ValueError(f"The 'c' parameter must be in range [0.0, 1.0] inclusive, got {c!r}")
 
         if c <= 0.03928:
             return c / 12.92
@@ -1231,7 +1235,9 @@ class Color:
         if not isinstance(lightness_change, float):
             raise TypeError(f"The 'lightness_change' parameter must be a float, got {type(lightness_change)}")
         elif not -1.0 <= lightness_change <= 1.0:
-            raise ValueError(f"The 'lightness_change' parameter must be in range [-1.0, 1.0], got {lightness_change!r}")
+            raise ValueError(
+                f"The 'lightness_change' parameter must be in range [-1.0, 1.0] inclusive, got {lightness_change!r}"
+            )
 
         hsla_color: hsla = Color.to_hsla(color)
         h, s, l, a = (
@@ -1259,7 +1265,9 @@ class Color:
         if not isinstance(saturation_change, float):
             raise TypeError(f"The 'saturation_change' parameter must be a float, got {type(saturation_change)}")
         elif not -1.0 <= saturation_change <= 1.0:
-            raise ValueError(f"The 'saturation_change' parameter must be in range [-1.0, 1.0], got {saturation_change!r}")
+            raise ValueError(
+                f"The 'saturation_change' parameter must be in range [-1.0, 1.0] inclusive, got {saturation_change!r}"
+            )
 
         hsla_color: hsla = Color.to_hsla(color)
 

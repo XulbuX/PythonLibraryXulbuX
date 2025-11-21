@@ -1,8 +1,12 @@
+"""
+This module contains all custom exception classes used throughout the library.
+"""
+
 ################################################## FILE ##################################################
 
 
 class SameContentFileExistsError(FileExistsError):
-    """Exception raised when a file with the same name and content already exists."""
+    """Raised when attempting to create a file that already exists with identical content."""
     ...
 
 
@@ -10,5 +14,5 @@ class SameContentFileExistsError(FileExistsError):
 
 
 class PathNotFoundError(FileNotFoundError):
-    """Exception raised when a specified path could not be found."""
+    """Raised when a file system path does not exist or cannot be accessed."""
     ...

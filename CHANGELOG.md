@@ -33,6 +33,7 @@
 **BREAKING CHANGES:**
 * The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists/tuples, since the order of flags doesn't matter and sets have better performance for lookups.
 * Added missing type checking to all public methods in the whole library, so now they will all throw errors if the params aren't of the expected type.
+* Removed the second definitions of constants in with lowercase names in the `ANSI` class inside the `consts` module, so now you can only access them with their uppercase names (*e.g.* `ANSI.CHAR` instead of `ANSI.char`).
 
 
 <span id="v1-8-5" />

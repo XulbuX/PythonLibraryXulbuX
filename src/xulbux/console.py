@@ -1094,7 +1094,7 @@ class Console:
                 raise TypeError(f"The 'max_len' parameter must be an integer or None, got {type(max_len)}")
             elif max_len < 0:
                 raise ValueError("The 'max_len' parameter must be a non-negative integer.")
-        if not (allowed_chars == CHARS.ALL or isinstance(allowed_chars, str)):
+        if not (allowed_chars is CHARS.ALL or isinstance(allowed_chars, str)):
             raise TypeError(f"The 'allowed_chars' parameter must be a string, got {type(allowed_chars)}")
         if not isinstance(allow_paste, bool):
             raise TypeError(f"The 'allow_paste' parameter must be a boolean, got {type(allow_paste)}")
@@ -1153,7 +1153,7 @@ class Console:
             if not text:
                 return "", removed_chars
             processed_text = "".join(c for c in text if ord(c) >= 32)
-            if allowed_chars != CHARS.ALL:
+            if allowed_chars is not CHARS.ALL:
                 filtered_text = ""
                 for char in processed_text:
                     if char in allowed_chars:
