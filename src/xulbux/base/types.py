@@ -2,7 +2,7 @@
 This module contains all custom type definitions used throughout the library.
 """
 
-from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Union, Any
+from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any, overload
 import regex as _rx
 import re as _re
 
@@ -77,7 +77,6 @@ class AllTextChars:
     ...
 
 
-#
 ################################################## TypedDict ##################################################
 
 
@@ -103,3 +102,25 @@ class MissingLibsMsgs(TypedDict):
     """Configuration schema for custom messages in `System.check_libs()` when checking library dependencies."""
     found_missing: str
     should_install: str
+
+
+################################################## Protocol ##################################################
+
+
+class ProgressUpdater(Protocol):
+    """Protocol for a progress updater function used in console progress bars."""
+
+    @overload
+    def __call__(self, current: int) -> None:
+        """Update the current progress value."""
+        ...
+
+    @overload
+    def __call__(self, current: int, label: str) -> None:
+        """Update both current progress value and label."""
+        ...
+
+    @overload
+    def __call__(self, *, label: str) -> None:
+        """Update the progress label only (keyword-only)."""
+        ...

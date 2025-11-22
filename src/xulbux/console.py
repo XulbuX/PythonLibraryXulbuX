@@ -3,14 +3,14 @@ This module provides the `Console` class, which offers
 methods for logging and other actions within the console.
 """
 
-from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, Rgba, Hexa
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
 from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
 from .string import String
 from .color import Color, hexa
 
-from typing import Generator, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
+from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -1269,25 +1269,6 @@ class Console:
                 raise
 
 
-class _ProgressUpdater(Protocol):
-    """Protocol for progress update function with proper type hints."""
-
-    @overload
-    def __call__(self, current: int) -> None:
-        """Update the current progress value."""
-        ...
-
-    @overload
-    def __call__(self, current: int, label: str) -> None:
-        """Update both current progress value and label."""
-        ...
-
-    @overload
-    def __call__(self, *, label: str) -> None:
-        """Update the progress label only (keyword-only)."""
-        ...
-
-
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------
@@ -1435,7 +1416,7 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[_ProgressUpdater, None, None]:
+    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         ----------------------------------------------------------------------------------------------------
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
@@ -1471,7 +1452,7 @@ class ProgressBar:
 
         try:
 
-            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN '_ProgressUpdater' PROTOCOL
+            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN 'ProgressUpdater' PROTOCOL
                 """Update the progress bar's current value and/or label."""
                 nonlocal current_progress, current_label
                 current = label = None
