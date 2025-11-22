@@ -3,14 +3,14 @@ This module provides the `Console` class, which offers
 methods for logging and other actions within the console.
 """
 
-from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, Rgba, Hexa
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
 from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
 from .string import String
 from .color import Color, hexa
 
-from typing import Generator, Callable, Optional, Protocol, Literal, Mapping, Pattern, TypeVar, TextIO, overload, cast
+from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -20,6 +20,7 @@ import prompt_toolkit as _pt
 import keyboard as _keyboard
 import getpass as _getpass
 import shutil as _shutil
+import time as _time
 import sys as _sys
 import os as _os
 import re as _re
@@ -1269,25 +1270,6 @@ class Console:
                 raise
 
 
-class _ProgressUpdater(Protocol):
-    """Protocol for progress update function with proper type hints."""
-
-    @overload
-    def __call__(self, current: int) -> None:
-        """Update the current progress value."""
-        ...
-
-    @overload
-    def __call__(self, current: int, label: str) -> None:
-        """Update both current progress value and label."""
-        ...
-
-    @overload
-    def __call__(self, *, label: str) -> None:
-        """Update the progress label only (keyword-only)."""
-        ...
-
-
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------
@@ -1337,6 +1319,8 @@ class ProgressBar:
         self._original_stdout: Optional[TextIO] = None
         self._current_progress_str: str = ""
         self._last_line_len: int = 0
+        self._last_update_time: float = 0.0
+        self._min_update_interval: float = 0.05  # 50ms = 20 UPDATES/SECOND MAX
 
     def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
         """Set the width of the progress bar.\n
@@ -1406,13 +1390,23 @@ class ProgressBar:
         - `current` -⠀the current progress value (below `0` or greater than `total` hides the bar)
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
         - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder"""
+        # VALIDATE TYPES NEEDED FOR THROTTLING LOGIC
         if not isinstance(current, int):
             raise TypeError(f"The 'current' parameter must be an integer, got {type(current)}")
-        elif current < 0:
-            raise ValueError("The 'current' parameter must be a non-negative integer.")
         if not isinstance(total, int):
             raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
-        elif total <= 0:
+
+        # THROTTLE UPDATES (UNLESS IT'S THE FINAL UPDATE)
+        current_time = _time.time()
+        if not (current >= total or current < 0) \
+            and (current_time - self._last_update_time) < self._min_update_interval:
+            return
+        self._last_update_time = current_time
+
+        # REMAINING TYPE VALIDATION
+        if current < 0:
+            raise ValueError("The 'current' parameter must be a non-negative integer.")
+        if total <= 0:
             raise ValueError("The 'total' parameter must be a positive integer.")
         if label is not None and not isinstance(label, str):
             raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
@@ -1435,7 +1429,7 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[_ProgressUpdater, None, None]:
+    def progress_context(self, total: int, label: Optional[str] = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         ----------------------------------------------------------------------------------------------------
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
@@ -1471,11 +1465,12 @@ class ProgressBar:
 
         try:
 
-            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN '_ProgressUpdater' PROTOCOL
+            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN 'ProgressUpdater' PROTOCOL
                 """Update the progress bar's current value and/or label."""
                 nonlocal current_progress, current_label
                 current = label = None
 
+                # PARSE ARGUMENTS FIRST
                 if len(args) > 2:
                     raise TypeError(f"update_progress() takes at most 2 positional arguments, got {len(args)}")
                 elif len(args) >= 1:
@@ -1498,10 +1493,20 @@ class ProgressBar:
                 if current is None and label is None:
                     raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
 
+                # VALIDATE AND UPDATE VALUES
                 if current is not None:
+                    if not isinstance(current, int):
+                        raise TypeError(f"The 'current' parameter must be an integer, got {type(current)}")
                     current_progress = current
                 if label is not None:
                     current_label = label
+
+                # THROTTLE UPDATES (UNLESS IT'S THE FINAL UPDATE)
+                current_time = _time.time()
+                if not (current_progress >= total or current_progress < 0) \
+                    and (current_time - self._last_update_time) < self._min_update_interval:
+                    return
+                self._last_update_time = current_time
 
                 self.show_progress(current_progress, total, current_label)
 
@@ -1524,6 +1529,7 @@ class ProgressBar:
         self.active = False
         self._buffer.clear()
         self._last_line_len = 0
+        self._last_update_time = 0.0
         self._current_progress_str = ""
 
     def _emergency_cleanup(self) -> None:

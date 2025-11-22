@@ -1,6 +1,6 @@
 """
-This module provides the `Json` class, which offers methods to read, create and update JSON files,
-with support for comments inside the JSON data.
+This module provides the `Json` class, which includes methods to read,
+create and update JSON files, with support for comments inside the JSON data.
 """
 
 from .data import Data
