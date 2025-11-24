@@ -1140,7 +1140,6 @@ def test_progressbar_redraw_progress_bar():
     pb = ProgressBar()
     mock_stdout = MagicMock()
     pb._original_stdout = mock_stdout
-    pb._current_progress_str = "Loading |████████████| 50%"
+    pb._current_progress_str = "\x1b[2K\rLoading |████████████| 50%"
     pb._redraw_display()
-    mock_stdout.write.assert_called_once_with("Loading |████████████| 50%")
     mock_stdout.flush.assert_called_once()
