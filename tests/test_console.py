@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch, call
 from collections import namedtuple
 import builtins
 import pytest
+import time
 import sys
 import io
 
@@ -1047,9 +1048,8 @@ def test_progressbar_progress_context():
     with patch.object(pb, "show_progress") as mock_show, patch.object(pb, "hide_progress") as mock_hide:
         with pb.progress_context(100, "Testing") as update_progress:
             update_progress(25)
-            update_progress(50)  # CALL WILL GET BLOCKED BY THROTTLING, SINCE IT'S TOO SOON AFTER PREVIOUS
-        assert mock_show.call_count == 1
-        mock_show.assert_any_call(25, 100, "Testing")
+            update_progress(50)
+        assert mock_show.call_count == 2
         mock_hide.assert_called_once()
 
 

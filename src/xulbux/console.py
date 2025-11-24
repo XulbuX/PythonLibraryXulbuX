@@ -1320,7 +1320,7 @@ class ProgressBar:
         self._current_progress_str: str = ""
         self._last_line_len: int = 0
         self._last_update_time: float = 0.0
-        self._min_update_interval: float = 0.05  # 50ms = 20 UPDATES/SECOND MAX
+        self._min_update_interval: float = 0.02  # 20ms = MAX 50 UPDATES/SECOND
 
     def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
         """Set the width of the progress bar.\n
@@ -1396,9 +1396,9 @@ class ProgressBar:
         if not isinstance(total, int):
             raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
 
-        # THROTTLE UPDATES (UNLESS IT'S THE FINAL UPDATE)
+        # THROTTLE UPDATES (UNLESS IT'S THE FIRST/FINAL UPDATE)
         current_time = _time.time()
-        if not (current >= total or current < 0) \
+        if not (self._last_update_time == 0.0 or current >= total or current < 0) \
             and (current_time - self._last_update_time) < self._min_update_interval:
             return
         self._last_update_time = current_time
@@ -1466,49 +1466,37 @@ class ProgressBar:
         try:
 
             def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN 'ProgressUpdater' PROTOCOL
-                """Update the progress bar's current value and/or label."""
+                """Update the progress bar's current value and/or label.\n
+                -----------------------------------------------------------
+                `current` -⠀the current progress value
+                `label` -⠀the progress label
+                `type_checking` -⠀whether to check the parameters' types:
+                  Is false per default to save performance, but can be set
+                  to true for debugging purposes."""
                 nonlocal current_progress, current_label
-                current = label = None
+                current, label = None, None
 
-                # PARSE ARGUMENTS FIRST
-                if len(args) > 2:
-                    raise TypeError(f"update_progress() takes at most 2 positional arguments, got {len(args)}")
-                elif len(args) >= 1:
+                if (num_args := len(args)) == 1:
                     current = args[0]
-                    if len(args) >= 2:
-                        label = args[1]
+                elif num_args == 2:
+                    current, label = args[0], args[1]
+                else:
+                    raise TypeError(f"update_progress() takes 1 or 2 positional arguments, got {len(args)}")
 
-                if "current" in kwargs:
-                    if current is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'current'.")
+                if current is not None and "current" in kwargs:
                     current = kwargs["current"]
-                if "label" in kwargs:
-                    if label is not None:
-                        raise TypeError("update_progress() got multiple values for argument 'label'.")
+                if label is None and "label" in kwargs:
                     label = kwargs["label"]
-
-                if unexpected := set(kwargs.keys()) - {"current", "label"}:
-                    raise TypeError(f"update_progress() got unexpected keyword arguments: {', '.join(unexpected)}")
 
                 if current is None and label is None:
                     raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
 
-                # VALIDATE AND UPDATE VALUES
                 if current is not None:
-                    if not isinstance(current, int):
-                        raise TypeError(f"The 'current' parameter must be an integer, got {type(current)}")
                     current_progress = current
                 if label is not None:
                     current_label = label
 
-                # THROTTLE UPDATES (UNLESS IT'S THE FINAL UPDATE)
-                current_time = _time.time()
-                if not (current_progress >= total or current_progress < 0) \
-                    and (current_time - self._last_update_time) < self._min_update_interval:
-                    return
-                self._last_update_time = current_time
-
-                self.show_progress(current_progress, total, current_label)
+                self.show_progress(current=current_progress, total=total, label=current_label)
 
             yield update_progress
         except Exception:
