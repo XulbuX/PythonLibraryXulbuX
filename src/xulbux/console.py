@@ -1,6 +1,6 @@
 """
-This module provides the `Console` class, which offers
-methods for logging and other actions within the console.
+This module provides the `Console`, `ProgressBar`, and `Spinner` classes
+which offer methods for logging and other actions within the console.
 """
 
 from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
@@ -17,6 +17,7 @@ from prompt_toolkit.styles import Style
 from contextlib import contextmanager
 from prompt_toolkit.keys import Keys
 import prompt_toolkit as _pt
+import threading as _threading
 import keyboard as _keyboard
 import getpass as _getpass
 import shutil as _shutil
@@ -37,6 +38,7 @@ _COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
     "current": _re.compile(r"(?i)\{(?:current|c)\}"),
     "total": _re.compile(r"(?i)\{(?:total|t)\}"),
     "percentage": _re.compile(r"(?i)\{(?:percentage|percent|p)\}"),
+    "animation": _re.compile(r"(?i)\{(?:animation|a)\}"),
 }
 
 
@@ -1505,47 +1507,21 @@ class ProgressBar:
         finally:
             self.hide_progress()
 
-    def _start_intercepting(self) -> None:
-        self.active = True
-        self._original_stdout = _sys.stdout
-        _sys.stdout = _InterceptedOutput(self)
-
-    def _stop_intercepting(self) -> None:
-        if self._original_stdout:
-            _sys.stdout = self._original_stdout
-            self._original_stdout = None
-        self.active = False
-        self._buffer.clear()
-        self._last_line_len = 0
-        self._last_update_time = 0.0
-        self._current_progress_str = ""
-
-    def _emergency_cleanup(self) -> None:
-        """Emergency cleanup to restore stdout in case of exceptions."""
-        try:
-            self._stop_intercepting()
-        except Exception:
-            pass
-
-    def _flush_buffer(self) -> None:
-        if self._buffer and self._original_stdout:
-            self._clear_progress_line()
-            for content in self._buffer:
-                self._original_stdout.write(content)
-                self._original_stdout.flush()
-            self._buffer.clear()
-
     def _draw_progress_bar(self, current: int, total: int, label: Optional[str] = None) -> None:
         if total <= 0 or not self._original_stdout:
             return
+
         percentage = min(100, (current / total) * 100)
+
         formatted, bar_width = self._get_formatted_info_and_bar_width(self.bar_format, current, total, percentage, label)
         if bar_width < self.min_width:
             formatted, bar_width = self._get_formatted_info_and_bar_width(
                 self.limited_bar_format, current, total, percentage, label
             )
-        bar = self._create_bar(current, total, max(1, bar_width)) + "[*]"
+
+        bar = f"{self._create_bar(current, total, max(1, bar_width))}[*]"
         progress_text = _COMPILED["bar"].sub(FormatCodes.to_ansi(bar), formatted)
+
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
         self._original_stdout.write(f"\r{progress_text}")
@@ -1584,21 +1560,265 @@ class ProgressBar:
                 bar.append(self.chars[-1])
         return "".join(bar)
 
+    def _start_intercepting(self) -> None:
+        self.active = True
+        self._original_stdout = _sys.stdout
+        _sys.stdout = _InterceptedOutput(self)
+
+    def _stop_intercepting(self) -> None:
+        if self._original_stdout:
+            _sys.stdout = self._original_stdout
+            self._original_stdout = None
+        self.active = False
+        self._buffer.clear()
+        self._last_line_len = 0
+        self._last_update_time = 0.0
+        self._current_progress_str = ""
+
+    def _emergency_cleanup(self) -> None:
+        """Emergency cleanup to restore stdout in case of exceptions."""
+        try:
+            self._stop_intercepting()
+        except Exception:
+            pass
+
     def _clear_progress_line(self) -> None:
         if self._last_line_len > 0 and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
             self._original_stdout.flush()
 
-    def _redraw_progress_bar(self) -> None:
+    def _flush_buffer(self) -> None:
+        if self._buffer and self._original_stdout:
+            self._clear_progress_line()
+            for content in self._buffer:
+                self._original_stdout.write(content)
+                self._original_stdout.flush()
+            self._buffer.clear()
+
+    def _redraw_display(self) -> None:
         if self._current_progress_str and self._original_stdout:
-            self._original_stdout.write(f"{self._current_progress_str}")
+            self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_progress_str}")
+            self._original_stdout.flush()
+
+
+class Spinner:
+    """A console spinner for indeterminate processes with customizable appearance.
+    This class intercepts stdout to allow printing while the animation is active.\n
+    ---------------------------------------------------------------------------------------------
+    - `label` -⠀the current label text
+    - `spinner_format` -⠀the format string used to render the spinner, containing placeholders:
+      * `{label}` `{l}`
+      * `{animation}` `{a}`
+    - `frames` -⠀a tuple of strings representing the animation frames
+    - `interval` -⠀the time in seconds between each animation frame
+    ---------------------------------------------------------------------------------------------
+    The `spinner_format` can additionally be formatted with special formatting codes. For more
+    detailed information about formatting codes, see the `format_codes` module documentation."""
+
+    def __init__(
+        self,
+        label: Optional[str] = None,
+        spinner_format: str = "{l} [b]({a}) ",
+        frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
+        interval: float = 0.2,
+    ):
+        self.animation_format: str
+        """The format string used to render the spinner."""
+        self.frames: tuple[str, ...]
+        """A tuple of strings representing the animation frames."""
+        self.interval: float
+        """The time in seconds between each animation frame."""
+        self.label: Optional[str]
+        """The current label text."""
+        self.active: bool = False
+        """Whether the spinner is currently active (intercepting stdout) or not."""
+
+        self.update_label(label)
+        self.set_format(spinner_format)
+        self.set_frames(frames)
+        self.set_interval(interval)
+
+        self._buffer: list[str] = []
+        self._original_stdout: Optional[TextIO] = None
+        self._current_animation_str: str = ""
+        self._last_line_len: int = 0
+        self._frame_index: int = 0
+        self._stop_event: Optional[_threading.Event] = None
+        self._animation_thread: Optional[_threading.Thread] = None
+
+    def set_format(self, animation_format: str) -> None:
+        """Set the format string used to render the spinner.\n
+        ----------------------------------------------------------------------------------------------
+        - `animation_format` -⠀the format string used to render the spinner, containing placeholders:
+            * `{label}` `{l}`
+            * `{animation}` `{a}`"""
+        if not isinstance(animation_format, str):
+            raise TypeError(f"The 'animation_format' parameter must be a string, got {type(animation_format)}")
+        elif not _COMPILED["animation"].search(animation_format):
+            raise ValueError("The 'animation_format' parameter value must contain the '{animation}' or '{a}' placeholder.")
+
+        self.animation_format = animation_format
+
+    def set_frames(self, frames: tuple[str, ...]) -> None:
+        """Set the frames used for the spinner animation.\n
+        ---------------------------------------------------------------------
+        - `frames` -⠀a tuple of strings representing the animation frames"""
+        if not isinstance(frames, tuple):
+            raise TypeError(f"The 'frames' parameter must be a tuple of strings, got {type(frames)}")
+        elif len(frames) < 2:
+            raise ValueError("The 'frames' parameter must contain at least two frames.")
+        elif not all(isinstance(frame, str) for frame in frames):
+            raise TypeError("All elements of the 'frames' parameter must be strings.")
+
+        self.frames = frames
+
+    def set_interval(self, interval: int | float) -> None:
+        """Set the time interval between each animation frame.\n
+        -------------------------------------------------------------------
+        - `interval` -⠀the time in seconds between each animation frame"""
+        if not isinstance(interval, (int, float)):
+            raise TypeError(f"The 'interval' parameter must be a number, got {type(interval)}")
+        elif interval <= 0:
+            raise ValueError("The 'interval' parameter must be positive.")
+
+        self.interval = interval
+
+    def start(self, label: Optional[str] = None) -> None:
+        """Start the spinner animation and intercept stdout.\n
+        ----------------------------------------------------------
+        - `label` -⠀the label to display alongside the spinner"""
+        if self.active:
+            return
+        if label is not None and not isinstance(label, str):
+            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
+
+        self.label = label or self.label
+        self._start_intercepting()
+        self._stop_event = _threading.Event()
+        self._animation_thread = _threading.Thread(target=self._animation_loop, daemon=True)
+        self._animation_thread.start()
+
+    def stop(self) -> None:
+        """Stop and hide the spinner and restore normal console output."""
+        if self.active:
+            if self._stop_event:
+                self._stop_event.set()
+            if self._animation_thread:
+                self._animation_thread.join()
+
+            self._stop_event = None
+            self._animation_thread = None
+            self._frame_index = 0
+
+            self._clear_spinner_line()
+            self._stop_intercepting()
+
+    def update_label(self, label: Optional[str]) -> None:
+        """Update the spinner's label text.\n
+        --------------------------------------
+        - `new_label` -⠀the new label text"""
+        if not isinstance(label, (str, type(None))):
+            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
+
+        self.label = label
+
+    @contextmanager
+    def context(self, label: Optional[str] = None) -> Generator[Callable[[str], None], None, None]:
+        """Context manager for automatic cleanup. Returns a function to update the label.\n
+        ----------------------------------------------------------------------------------------------
+        - `label` -⠀the label to display alongside the spinner
+        -----------------------------------------------------------------------------------------------
+        The returned callable accepts a single parameter:
+        - `new_label` -⠀the new label text\n
+
+        Example usage:
+        ```python
+        with Spinner().context("Starting...") as update_label:
+            time.sleep(2)
+            update_label("Processing...")
+            time.sleep(3)
+            update_label("Finishing...")
+            time.sleep(2)
+        ```"""
+        try:
+            self.start(label)
+            yield self.update_label
+        except Exception:
+            self._emergency_cleanup()
+            raise
+        finally:
+            self.stop()
+
+    def _animation_loop(self) -> None:
+        """The internal thread target that runs the animation loop."""
+        self._frame_index = 0
+        while self._stop_event and not self._stop_event.is_set():
+            try:
+                if not self.active or not self._original_stdout:
+                    break
+
+                self._flush_buffer()
+
+                frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
+                formatted_template = FormatCodes.to_ansi(_COMPILED["label"].sub(self.label or "", self.animation_format))
+                final_str = _COMPILED["animation"].sub(frame, formatted_template)
+
+                self._current_animation_str = final_str
+                self._last_line_len = len(final_str)
+                self._redraw_display()
+                self._frame_index += 1
+
+            except Exception:
+                self._emergency_cleanup()
+                break
+
+            if self._stop_event:
+                self._stop_event.wait(self.interval)
+
+    def _start_intercepting(self) -> None:
+        self.active = True
+        self._original_stdout = _sys.stdout
+        _sys.stdout = _InterceptedOutput(self)
+
+    def _stop_intercepting(self) -> None:
+        if self._original_stdout:
+            _sys.stdout = self._original_stdout
+            self._original_stdout = None
+        self.active = False
+        self._buffer.clear()
+        self._last_line_len = 0
+        self._current_animation_str = ""
+
+    def _emergency_cleanup(self) -> None:
+        """Emergency cleanup to restore stdout in case of exceptions."""
+        try:
+            self._stop_intercepting()
+        except Exception:
+            pass
+
+    def _clear_spinner_line(self) -> None:
+        if self._last_line_len > 0 and self._original_stdout:
+            self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
+            self._original_stdout.flush()
+
+    def _flush_buffer(self) -> None:
+        if self._buffer and self._original_stdout:
+            self._clear_spinner_line()
+            for content in self._buffer:
+                self._original_stdout.write(content)
+                self._original_stdout.flush()
+            self._buffer.clear()
+
+    def _redraw_display(self) -> None:
+        if self._current_animation_str and self._original_stdout:
+            self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_animation_str}")
             self._original_stdout.flush()
 
 
 class _InterceptedOutput(_io.StringIO):
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
-    def __init__(self, progress_bar: ProgressBar):
+    def __init__(self, progress_bar: ProgressBar | Spinner):
         super().__init__()
         self.progress_bar = progress_bar
 
@@ -1615,7 +1835,7 @@ class _InterceptedOutput(_io.StringIO):
         try:
             if self.progress_bar.active and self.progress_bar._buffer:
                 self.progress_bar._flush_buffer()
-                self.progress_bar._redraw_progress_bar()
+                self.progress_bar._redraw_display()
         except Exception:
             self.progress_bar._emergency_cleanup()
             raise
