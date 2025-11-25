@@ -1618,12 +1618,15 @@ class Spinner:
     def __init__(
         self,
         label: Optional[str] = None,
-        spinner_format: str = "{l} [b]({a}) ",
+        spinner_format: list[str] | tuple[str, ...] = ["{l}", "[b]({a}) "],
+        sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
     ):
-        self.animation_format: str
-        """The format string used to render the spinner."""
+        self.spinner_format: list[str] | tuple[str, ...]
+        """The format strings used to render the spinner (joined by `sep`)."""
+        self.sep: str
+        """The separator string used to join multiple format strings."""
         self.frames: tuple[str, ...]
         """A tuple of strings representing the animation frames."""
         self.interval: float
@@ -1634,7 +1637,7 @@ class Spinner:
         """Whether the spinner is currently active (intercepting stdout) or not."""
 
         self.update_label(label)
-        self.set_format(spinner_format)
+        self.set_format(spinner_format, sep)
         self.set_frames(frames)
         self.set_interval(interval)
 
@@ -1646,18 +1649,26 @@ class Spinner:
         self._stop_event: Optional[_threading.Event] = None
         self._animation_thread: Optional[_threading.Thread] = None
 
-    def set_format(self, animation_format: str) -> None:
+    def set_format(self, spinner_format: list[str] | tuple[str, ...], sep: Optional[str] = None) -> None:
         """Set the format string used to render the spinner.\n
-        ----------------------------------------------------------------------------------------------
-        - `animation_format` -⠀the format string used to render the spinner, containing placeholders:
-            * `{label}` `{l}`
-            * `{animation}` `{a}`"""
-        if not isinstance(animation_format, str):
-            raise TypeError(f"The 'animation_format' parameter must be a string, got {type(animation_format)}")
-        elif not _COMPILED["animation"].search(animation_format):
-            raise ValueError("The 'animation_format' parameter value must contain the '{animation}' or '{a}' placeholder.")
+        ---------------------------------------------------------------------------------------------
+        - `spinner_format` -⠀the format strings used to render the spinner, containing placeholders:
+          * `{label}` `{l}`
+          * `{animation}` `{a}`
+        - `sep` -⠀the separator string used to join multiple format strings"""
+        if not isinstance(spinner_format, (list, tuple)):
+            raise TypeError(f"The 'spinner_format' parameter must be a list or tuple, got {type(spinner_format)}")
+        elif not all(isinstance(fmt, str) for fmt in spinner_format):
+            raise TypeError("All elements of the 'spinner_format' parameter must be strings.")
+        elif not any(_COMPILED["animation"].search(fmt) for fmt in spinner_format):
+            raise ValueError(
+                "At least one format string in 'spinner_format' must contain the '{animation}' or '{a}' placeholder."
+            )
+        if sep is not None and not isinstance(sep, str):
+            raise TypeError(f"The 'sep' parameter must be a string or None, got {type(sep)}")
 
-        self.animation_format = animation_format
+        self.spinner_format = spinner_format
+        self.sep = sep or self.sep
 
     def set_frames(self, frames: tuple[str, ...]) -> None:
         """Set the frames used for the spinner animation.\n
@@ -1760,11 +1771,15 @@ class Spinner:
                 self._flush_buffer()
 
                 frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
-                formatted_template = FormatCodes.to_ansi(_COMPILED["label"].sub(self.label or "", self.animation_format))
-                final_str = _COMPILED["animation"].sub(frame, formatted_template)
+                formatted = FormatCodes.to_ansi(self.sep.join(
+                    s for s in ( \
+                        _COMPILED["animation"].sub(frame, _COMPILED["label"].sub(self.label or "", s))
+                        for s in self.spinner_format
+                    ) if s
+                ))
 
-                self._current_animation_str = final_str
-                self._last_line_len = len(final_str)
+                self._current_animation_str = formatted
+                self._last_line_len = len(formatted)
                 self._redraw_display()
                 self._frame_index += 1
 
