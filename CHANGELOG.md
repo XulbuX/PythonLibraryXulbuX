@@ -17,7 +17,7 @@
 
 <span id="v1-9-1" />
 
-## ... `v1.9.1`
+## 26.11.2025 `v1.9.1`
 * Unified the module and class docstring styles throughout the whole library.
 * Moved the Protocol `ProgressUpdater` from the `console` module to the `types` module.
 * Added throttling to the `ProgressBar` update methods to impact the actual process' performance as little as possible.
