@@ -1312,7 +1312,7 @@ class ProgressBar:
         self.limited_bar_format: list[str] | tuple[str, ...]
         """The simplified format strings used when the console width is too small."""
         self.sep: str
-        """The separator string used to join multiple format strings."""
+        """The separator string used to join multiple bar-format strings."""
         self.chars: tuple[str, ...]
         """A tuple of characters ordered from full to empty progress."""
 
@@ -1658,7 +1658,7 @@ class Spinner:
         self.spinner_format: list[str] | tuple[str, ...]
         """The format strings used to render the spinner (joined by `sep`)."""
         self.sep: str
-        """The separator string used to join multiple format strings."""
+        """The separator string used to join multiple spinner-format strings."""
         self.frames: tuple[str, ...]
         """A tuple of strings representing the animation frames."""
         self.interval: float
