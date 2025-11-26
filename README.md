@@ -183,11 +183,11 @@ def main() -> None:
     )
 
     try:
-        # TRY TO CONVERT THE INPUT COLOR INTO A hexa() COLOR
+        # TRY TO CONVERT THE INPUT STRING INTO A hexa() OBJECT
         hexa_color = hexa(input_clr)
 
     except ValueError:
-        # ANNOUNCE THE ERROR AND EXIT THE PROGRAM
+        # ANNOUNCE THE INVALID INPUT COLOR AND EXIT THE PROGRAM
         Console.fail(
             "The input HEXA color is invalid.",
             end="\n\n",
@@ -201,7 +201,7 @@ def main() -> None:
         title_bg_color=COLOR.TANGERINE,
     )
 
-    # CONVERT THE HEXA COLOR INTO THE TWO OTHER COLOR TYPES
+    # CONVERT THE HEXA COLOR INTO THE TWO OTHER COLOR FORMATS
     rgba_color = hexa_color.to_rgba()
     hsla_color = hexa_color.to_hsla()
 
@@ -211,7 +211,7 @@ def main() -> None:
         end="\n\n",
     )
 
-    # PRETTY PRINT THE COLOR IN DIFFERENT TYPES
+    # PRETTY PRINT THE COLOR IN DIFFERENT FORMATS
     Console.log_box_bordered(
         f"[b](HEXA:) [i|white]({hexa_color})",
         f"[b](RGBA:) [i|white]({rgba_color})",
@@ -221,6 +221,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 ```
 
 <br>
