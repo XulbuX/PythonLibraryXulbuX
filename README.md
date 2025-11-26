@@ -102,12 +102,12 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/color"><img src="https://img.shields.io/badge/color-B272FC?style=for-the-badge" alt="color"></a></td>
-      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with<br>
+      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with<br>
         colors in various formats.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/XulbuX/PythonLibraryXulbuX/wiki/console"><img src="https://img.shields.io/badge/console-B272FC?style=for-the-badge" alt="console"></a></td>
-      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging<br>
+      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging<br>
         and other actions within the console.</td>
     </tr>
     <tr>
