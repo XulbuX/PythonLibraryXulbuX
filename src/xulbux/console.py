@@ -1296,8 +1296,9 @@ class ProgressBar:
         self,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: str = "{l} |{b}| [b]({c})/{t} [dim](([i]({p}%)))",
-        limited_bar_format: str = "|{b}|",
+        bar_format: list[str] | tuple[str, ...] = ["{l}", "|{b}|", "[b]({c})/{t}", "[dim](([i]({p}%)))"],
+        limited_bar_format: list[str] | tuple[str, ...] = ["|{b}|"],
+        sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ):
         self.active: bool = False
@@ -1306,15 +1307,17 @@ class ProgressBar:
         """The min width of the progress bar in chars."""
         self.max_width: int
         """The max width of the progress bar in chars."""
-        self.bar_format: str
-        """The format string used to render the progress bar."""
-        self.limited_bar_format: str
-        """The simplified format string used when the console width is too small."""
+        self.bar_format: list[str] | tuple[str, ...]
+        """The format strings used to render the progress bar (joined by `sep`)."""
+        self.limited_bar_format: list[str] | tuple[str, ...]
+        """The simplified format strings used when the console width is too small."""
+        self.sep: str
+        """The separator string used to join multiple format strings."""
         self.chars: tuple[str, ...]
         """A tuple of characters ordered from full to empty progress."""
 
         self.set_width(min_width, max_width)
-        self.set_bar_format(bar_format, limited_bar_format)
+        self.set_bar_format(bar_format, limited_bar_format, sep)
         self.set_chars(chars)
 
         self._buffer: list[str] = []
@@ -1345,7 +1348,12 @@ class ProgressBar:
 
             self.max_width = max(self.min_width, max_width)
 
-    def set_bar_format(self, bar_format: Optional[str] = None, limited_bar_format: Optional[str] = None) -> None:
+    def set_bar_format(
+        self,
+        bar_format: Optional[list[str] | tuple[str, ...]] = None,
+        limited_bar_format: Optional[list[str] | tuple[str, ...]] = None,
+        sep: Optional[str] = None,
+    ) -> None:
         """Set the format string used to render the progress bar.\n
         --------------------------------------------------------------------------------------------------
         - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
@@ -1355,22 +1363,37 @@ class ProgressBar:
           * `{total}` `{t}`
           * `{percentage}` `{percent}` `{p}`
         - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+        - `sep` -⠀the separator string used to join multiple format strings
         --------------------------------------------------------------------------------------------------
         The bar format (also limited) can additionally be formatted with special formatting codes. For
         more detailed information about formatting codes, see the `format_codes` module documentation."""
-        if not isinstance(bar_format, (str, type(None))):
-            raise TypeError(f"The 'bar_format' parameter must be a string or None, got {type(bar_format)}")
-        if not isinstance(limited_bar_format, (str, type(None))):
-            raise TypeError(f"The 'limited_bar_format' parameter must be a string or None, got {type(limited_bar_format)}")
-
         if bar_format is not None:
-            if not _COMPILED["bar"].search(bar_format):
+            if not isinstance(bar_format, (list, tuple)):
+                raise TypeError(f"The 'bar_format' parameter must be a list or tuple of strings, got {type(bar_format)}")
+            elif not all(isinstance(s, str) for s in bar_format):
+                raise ValueError("All elements of the 'bar_format' parameter must be strings.")
+            elif not any(_COMPILED["bar"].search(s) for s in bar_format):
                 raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
+
             self.bar_format = bar_format
+
         if limited_bar_format is not None:
-            if not _COMPILED["bar"].search(limited_bar_format):
+            if not isinstance(limited_bar_format, (list, tuple)):
+                raise TypeError(
+                    f"The 'limited_bar_format' parameter must be a list or tuple of strings, got {type(limited_bar_format)}"
+                )
+            elif not all(isinstance(s, str) for s in limited_bar_format):
+                raise ValueError("All elements of the 'limited_bar_format' parameter must be strings.")
+            elif not any(_COMPILED["bar"].search(s) for s in limited_bar_format):
                 raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
+
             self.limited_bar_format = limited_bar_format
+
+        if sep is not None:
+            if not isinstance(sep, str):
+                raise TypeError(f"The 'sep' parameter must be a string or None, got {type(sep)}")
+
+            self.sep = sep
 
     def set_chars(self, chars: tuple[str, ...]) -> None:
         """Set the characters used to render the progress bar.\n
@@ -1529,20 +1552,29 @@ class ProgressBar:
 
     def _get_formatted_info_and_bar_width(
         self,
-        bar_format: str,
+        bar_format: list[str] | tuple[str, ...],
         current: int,
         total: int,
         percentage: float,
         label: Optional[str] = None,
     ) -> tuple[str, int]:
-        formatted = _COMPILED["label"].sub(label or "", bar_format)
-        formatted = _COMPILED["current"].sub(str(current), formatted)
-        formatted = _COMPILED["total"].sub(str(total), formatted)
-        formatted = _COMPILED["percentage"].sub(f"{percentage:.1f}", formatted)
-        formatted = FormatCodes.to_ansi(formatted)
-        bar_space = Console.w - len(FormatCodes.remove_ansi(_COMPILED["bar"].sub("", formatted)))
+        fmt_parts = []
+
+        for s in bar_format:
+            fmt_part = _COMPILED["label"].sub(label or "", s)
+            fmt_part = _COMPILED["current"].sub(str(current), fmt_part)
+            fmt_part = _COMPILED["total"].sub(str(total), fmt_part)
+            fmt_part = _COMPILED["percentage"].sub(f"{percentage:.1f}", fmt_part)
+            if fmt_part:
+                fmt_parts.append(fmt_part)
+
+        fmt_str = self.sep.join(fmt_parts)
+        fmt_str = FormatCodes.to_ansi(fmt_str)
+
+        bar_space = Console.w - len(FormatCodes.remove_ansi(_COMPILED["bar"].sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
-        return formatted, bar_width
+
+        return fmt_str, bar_width
 
     def _create_bar(self, current: int, total: int, bar_width: int) -> str:
         progress = current / total if total > 0 else 0

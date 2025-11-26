@@ -987,17 +987,17 @@ def test_progressbar_set_width_invalid():
 
 def test_progressbar_set_bar_format():
     pb = ProgressBar()
-    pb.set_bar_format(bar_format="{l} [{b}] {p}%", limited_bar_format="[{b}]")
-    assert pb.bar_format == "{l} [{b}] {p}%"
-    assert pb.limited_bar_format == "[{b}]"
+    pb.set_bar_format(bar_format=["{l}", "[{b}]", "{p}%"], limited_bar_format=["[{b}]"])
+    assert pb.bar_format == ["{l}", "[{b}]", "{p}%"]
+    assert pb.limited_bar_format == ["[{b}]"]
 
 
 def test_progressbar_set_bar_format_invalid():
     pb = ProgressBar()
     with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(bar_format="Progress: {p}%")
+        pb.set_bar_format(bar_format=["Progress: {p}%"])
     with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(limited_bar_format="Progress: {p}%")
+        pb.set_bar_format(limited_bar_format=["Progress: {p}%"])
 
 
 def test_progressbar_set_chars():
@@ -1102,7 +1102,8 @@ def test_progressbar_emergency_cleanup():
 
 def test_progressbar_get_formatted_info_and_bar_width(mock_terminal_size):
     pb = ProgressBar()
-    formatted, bar_width = pb._get_formatted_info_and_bar_width("{l} |{b}| {c}/{t} ({p}%)", 50, 100, 50.0, "Loading")
+    formatted, bar_width = pb._get_formatted_info_and_bar_width(["{l}", "|{b}|", "{c}/{t}", "({p}%)"], 50, 100, 50.0,
+                                                                "Loading")
     assert "Loading" in formatted
     assert "50" in formatted
     assert "100" in formatted
