@@ -184,13 +184,13 @@ class Args:
 class Console:
     """This class provides methods for logging and other actions within the console."""
 
-    w: int = _ConsoleWidth()  # type: ignore[assignment]
+    w: int = cast(int, _ConsoleWidth())
     """The width of the console in characters."""
-    h: int = _ConsoleHeight()  # type: ignore[assignment]
+    h: int = cast(int, _ConsoleHeight())
     """The height of the console in lines."""
-    size: tuple[int, int] = _ConsoleSize()  # type: ignore[assignment]
+    size: tuple[int, int] = cast(tuple[int, int], _ConsoleSize())
     """A tuple with the width and height of the console in characters and lines."""
-    user: str = _ConsoleUser()  # type: ignore[assignment]
+    user: str = cast(str, _ConsoleUser())
     """The name of the current user."""
 
     @staticmethod
@@ -1054,7 +1054,7 @@ class Console:
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Optional[T] = None,
-        output_type: type[T] = str,  # type: ignore[assignment]
+        output_type: type[T] = str,
     ) -> T:
         """Acts like a standard Python `input()` a bunch of cool extra features.\n
         ------------------------------------------------------------------------------------

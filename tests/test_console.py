@@ -220,12 +220,12 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     for key, expected in expected_args_dict.items():
         assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
-        assert args_result[key].exists == expected["exists"]  # type: ignore[access]
+        assert args_result[key].exists == expected["exists"]  # type: ignore[cannot-access-attr]
         # CHECK IF THIS IS A POSITIONAL ARG (HAS 'values') OR REGULAR ARG (HAS 'value')
         if "values" in expected:
-            assert args_result[key].values == expected["values"]  # type: ignore[access]
+            assert args_result[key].values == expected["values"]  # type: ignore[cannot-access-attr]
         else:
-            assert args_result[key].value == expected["value"]  # type: ignore[access]
+            assert args_result[key].value == expected["value"]  # type: ignore[cannot-access-attr]
         assert bool(args_result[key]) == expected["exists"]
     assert list(args_result.keys()) == list(expected_args_dict.keys())
     assert [v.exists for v in args_result.values()] == [d["exists"] for d in expected_args_dict.values()]
@@ -388,7 +388,7 @@ def test_get_args_invalid_config():
         Console.get_args({"bad_flags": {"flags": ["--flag"]}})  # type: ignore[assignment]
 
     with pytest.raises(ValueError, match="Invalid 'flags' for alias 'bad_flags'. Must be a set of strings."):
-        Console.get_args({"bad_flags": {"flags": "not-a-list", "default": "value"}})  # type: ignore[assignment]
+        Console.get_args({"bad_flags": {"flags": "not-a-set", "default": "value"}})  # type: ignore[assignment]
 
 
 def test_get_args_duplicate_flag():

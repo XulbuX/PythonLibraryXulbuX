@@ -27,7 +27,7 @@ def test_is_valid_rgba():
     assert Color.is_valid_rgba({"r": 255, "g": 0, "b": 0, "a": 0.5}) is True
     assert Color.is_valid_rgba(rgba(255, 0, 0)) is True
     assert Color.is_valid_rgba((300, 0, 0)) is False
-    assert Color.is_valid_rgba((255, 0)) is False  # type: ignore[assignment]
+    assert Color.is_valid_rgba((255, 0)) is False
     assert Color.is_valid_rgba((255, 0, 0, 2)) is False
     assert Color.is_valid_rgba("not a color") is False
     assert Color.is_valid_rgba((255, 0, 0), allow_alpha=False) is True
@@ -45,7 +45,7 @@ def test_is_valid_hsla():
     assert Color.is_valid_hsla((370, 100, 50)) is False
     assert Color.is_valid_hsla((0, 101, 50)) is False
     assert Color.is_valid_hsla((0, 100, 101)) is False
-    assert Color.is_valid_hsla((0, 100)) is False  # type: ignore[assignment]
+    assert Color.is_valid_hsla((0, 100)) is False
     assert Color.is_valid_hsla("not a color") is False
     assert Color.is_valid_hsla((0, 100, 50), allow_alpha=False) is True
     assert Color.is_valid_hsla((0, 100, 50, 0.5), allow_alpha=False) is False
@@ -117,8 +117,8 @@ def test_str_to_rgba():
     assert color.values() == (255, 0, 0, 0.5)
     colors = Color.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5)")
     assert len(colors) == 2  # type: ignore[assignment]
-    assert colors[0].values() == (255, 0, 0, None)  # type: ignore
-    assert colors[1].values() == (0, 255, 0, 0.5)  # type: ignore
+    assert colors[0].values() == (255, 0, 0, None)  # type: ignore[not-subscriptable]
+    assert colors[1].values() == (0, 255, 0, 0.5)  # type: ignore[not-subscriptable]
     assert Color.str_to_rgba("No colors here") is None
 
 
@@ -159,7 +159,7 @@ def test_adjust_lightness():
 
 def test_adjust_saturation():
     color = rgba(128, 80, 80)
-    saturated = Color.adjust_saturation(color, 0.25)  # type: ignore[assignment]
+    saturated = Color.adjust_saturation(color, 0.25)
     assert isinstance(saturated, rgba)
     assert saturated.to_hsla().s > color.to_hsla().s
     assert saturated == rgba(155, 54, 54)
