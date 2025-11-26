@@ -42,7 +42,7 @@ def mock_prompt_toolkit(monkeypatch):
 
 
 def test_console_user():
-    user_output = Console.usr
+    user_output = Console.user
     assert isinstance(user_output, str)
     assert user_output != ""
 
@@ -60,7 +60,7 @@ def test_console_height(mock_terminal_size):
 
 
 def test_console_size(mock_terminal_size):
-    size_output = Console.wh
+    size_output = Console.size
     assert isinstance(size_output, tuple)
     assert len(size_output) == 2
     assert size_output[0] == 80
