@@ -1,5 +1,5 @@
 """
-This module provides the `String` class, which offers
+This module provides the `String` class, which includes
 various utility methods for string manipulation and conversion.
 """
 

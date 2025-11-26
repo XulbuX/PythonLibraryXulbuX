@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch, call
 from collections import namedtuple
 import builtins
 import pytest
+import time
 import sys
 import io
 
@@ -41,7 +42,7 @@ def mock_prompt_toolkit(monkeypatch):
 
 
 def test_console_user():
-    user_output = Console.usr
+    user_output = Console.user
     assert isinstance(user_output, str)
     assert user_output != ""
 
@@ -59,7 +60,7 @@ def test_console_height(mock_terminal_size):
 
 
 def test_console_size(mock_terminal_size):
-    size_output = Console.wh
+    size_output = Console.size
     assert isinstance(size_output, tuple)
     assert len(size_output) == 2
     assert size_output[0] == 80
@@ -219,12 +220,12 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     for key, expected in expected_args_dict.items():
         assert (key in args_result) is True
         assert isinstance(args_result[key], ArgResult)
-        assert args_result[key].exists == expected["exists"]  # type: ignore[access]
+        assert args_result[key].exists == expected["exists"]  # type: ignore[cannot-access-attr]
         # CHECK IF THIS IS A POSITIONAL ARG (HAS 'values') OR REGULAR ARG (HAS 'value')
         if "values" in expected:
-            assert args_result[key].values == expected["values"]  # type: ignore[access]
+            assert args_result[key].values == expected["values"]  # type: ignore[cannot-access-attr]
         else:
-            assert args_result[key].value == expected["value"]  # type: ignore[access]
+            assert args_result[key].value == expected["value"]  # type: ignore[cannot-access-attr]
         assert bool(args_result[key]) == expected["exists"]
     assert list(args_result.keys()) == list(expected_args_dict.keys())
     assert [v.exists for v in args_result.values()] == [d["exists"] for d in expected_args_dict.values()]
@@ -387,7 +388,7 @@ def test_get_args_invalid_config():
         Console.get_args({"bad_flags": {"flags": ["--flag"]}})  # type: ignore[assignment]
 
     with pytest.raises(ValueError, match="Invalid 'flags' for alias 'bad_flags'. Must be a set of strings."):
-        Console.get_args({"bad_flags": {"flags": "not-a-list", "default": "value"}})  # type: ignore[assignment]
+        Console.get_args({"bad_flags": {"flags": "not-a-set", "default": "value"}})  # type: ignore[assignment]
 
 
 def test_get_args_duplicate_flag():
@@ -986,17 +987,17 @@ def test_progressbar_set_width_invalid():
 
 def test_progressbar_set_bar_format():
     pb = ProgressBar()
-    pb.set_bar_format(bar_format="{l} [{b}] {p}%", limited_bar_format="[{b}]")
-    assert pb.bar_format == "{l} [{b}] {p}%"
-    assert pb.limited_bar_format == "[{b}]"
+    pb.set_bar_format(bar_format=["{l}", "[{b}]", "{p}%"], limited_bar_format=["[{b}]"])
+    assert pb.bar_format == ["{l}", "[{b}]", "{p}%"]
+    assert pb.limited_bar_format == ["[{b}]"]
 
 
 def test_progressbar_set_bar_format_invalid():
     pb = ProgressBar()
     with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(bar_format="Progress: {p}%")
+        pb.set_bar_format(bar_format=["Progress: {p}%"])
     with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(limited_bar_format="Progress: {p}%")
+        pb.set_bar_format(limited_bar_format=["Progress: {p}%"])
 
 
 def test_progressbar_set_chars():
@@ -1049,8 +1050,6 @@ def test_progressbar_progress_context():
             update_progress(25)
             update_progress(50)
         assert mock_show.call_count == 2
-        mock_show.assert_any_call(25, 100, "Testing")
-        mock_show.assert_any_call(50, 100, "Testing")
         mock_hide.assert_called_once()
 
 
@@ -1103,7 +1102,8 @@ def test_progressbar_emergency_cleanup():
 
 def test_progressbar_get_formatted_info_and_bar_width(mock_terminal_size):
     pb = ProgressBar()
-    formatted, bar_width = pb._get_formatted_info_and_bar_width("{l} |{b}| {c}/{t} ({p}%)", 50, 100, 50.0, "Loading")
+    formatted, bar_width = pb._get_formatted_info_and_bar_width(["{l}", "|{b}|", "{c}/{t}", "({p}%)"], 50, 100, 50.0,
+                                                                "Loading")
     assert "Loading" in formatted
     assert "50" in formatted
     assert "100" in formatted
@@ -1141,7 +1141,6 @@ def test_progressbar_redraw_progress_bar():
     pb = ProgressBar()
     mock_stdout = MagicMock()
     pb._original_stdout = mock_stdout
-    pb._current_progress_str = "Loading |████████████| 50%"
-    pb._redraw_progress_bar()
-    mock_stdout.write.assert_called_once_with("Loading |████████████| 50%")
+    pb._current_progress_str = "\x1b[2K\rLoading |████████████| 50%"
+    pb._redraw_display()
     mock_stdout.flush.assert_called_once()

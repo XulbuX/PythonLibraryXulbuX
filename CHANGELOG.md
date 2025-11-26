@@ -15,6 +15,21 @@
 # <br><b>Changelog</b><br>
 
 
+<span id="v1-9-1" />
+
+## 26.11.2025 `v1.9.1`
+* Unified the module and class docstring styles throughout the whole library.
+* Moved the Protocol `ProgressUpdater` from the `console` module to the `types` module.
+* Added throttling to the `ProgressBar` update methods to impact the actual process' performance as little as possible.
+* Added a new class `Spinner` to the `console` module, which is used to display a spinner animation in the console during an ongoing process.
+
+**BREAKING CHANGES:**
+* Made the value input into the params `bar_format` and `limited_bar_format` of `ProgressBar` be a list/tuple of strings instead of a single string, so the user can define multiple formats for different console widths.
+* Added a new param <code>sep: *str* = " "</code> to the `ProgressBar` class, which is used to join multiple bar-format strings.
+* Renamed the class property `Console.wh` to `Console.size`, since it describes the property better.
+* Renamed the class property `Console.usr` to `Console.user`, since it describes the property better.
+* Added missing type checking to methods in the `path` module.
+
 <span id="v1-9-0" />
 
 ## 21.11.2025 `v1.9.0` Big Update 🚀

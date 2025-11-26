@@ -1,5 +1,5 @@
 """
-This module provides the `System` class, which offers
+This module provides the `System` class, which includes
 methods to interact with the underlying operating system.
 """
 
@@ -8,7 +8,7 @@ from .base.types import MissingLibsMsgs
 from .format_codes import FormatCodes
 from .console import Console
 
-from typing import Optional
+from typing import Optional, cast
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
@@ -33,7 +33,7 @@ class _IsElevated:
 class System:
     """This class provides methods to interact with the underlying operating system."""
 
-    is_elevated: bool = _IsElevated()  # type: ignore[assignment]
+    is_elevated: bool = cast(bool, _IsElevated())
     """Is `True` if the current process has elevated privileges and `False` otherwise."""
 
     @staticmethod

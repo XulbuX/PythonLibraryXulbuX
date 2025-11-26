@@ -1,5 +1,5 @@
 """
-This module provides the `Regex` class, which offers methods
+This module provides the `Regex` class, which includes methods
 to dynamically generate complex regex patterns for common use cases.
 """
 
