@@ -529,7 +529,7 @@
 
 <span id="v1-4-2" /><span id="v1-4-3" />
 
-## 27.10.2024 `v1.4.2` `v1.4.3`
+## 27.10.2024 `v1.4.2` `v1.4.3`
 
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`.
 * Removed unnecessary parts when checking for missing required libraries.
@@ -602,7 +602,7 @@
 
 <span id="v1-2-4" /><span id="v1-2-5" />
 
-## 18.10.2024 `v1.2.4` `v1.2.5`
+## 18.10.2024 `v1.2.4` `v1.2.5`
 
 * Added more info to the `README.md` as well as additional links.
 * Adjusted the structure inside `CHANGELOG.md` for a better overview and readability.
@@ -623,7 +623,7 @@
 
 <span id="v1-2-1" /><span id="v1-2-2" />
 
-## 18.10.2024 `v1.2.1` `v1.2.2`
+## 18.10.2024 `v1.2.1` `v1.2.2`
 
 * Fixed bug in method <code>Path.get(*base_dir*=True)</code>:<br>
   Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
@@ -655,7 +655,7 @@
 
 <span id="v1-1-6" /><span id="v1-1-7" />
 
-## 17.10.2024 `v1.1.6` `v1.1.7`
+## 17.10.2024 `v1.1.6` `v1.1.7`
 
 * Fixed the `Cmd.cls()` method:<br>
   There was a bug where only on Windows 10, the ANSI formats weren't cleared.
@@ -663,7 +663,7 @@
 
 <span id="v1-1-4" /><span id="v1-1-5" />
 
-## 17.10.2024 `v1.1.4` `v1.1.5`
+## 17.10.2024 `v1.1.4` `v1.1.5`
 
 * Added links to the `CHANGELOG.md` and `README.md` files.
 
@@ -677,7 +677,7 @@
 
 <span id="v1-1-1" /><span id="v1-1-2" />
 
-## 17.10.2024 `v1.1.1` `v1.1.2`
+## 17.10.2024 `v1.1.1` `v1.1.2`
 
 * Adjusted the library's description.
 
@@ -708,7 +708,7 @@
 
 <span id="v1-0-7" /><span id="v1-0-8" />
 
-## 16.10.2024 `v1.0.7` `v1.0.8`
+## 16.10.2024 `v1.0.7` `v1.0.8`
 
 * Added `input()` method to the `FormatCodes` class, so you can make pretty looking input prompts.
 * Added warning for no network connection when trying to [install missing libraries](#improved-lib-importing).
@@ -728,7 +728,7 @@
 
 <span id="v1-0-1" /><span id="v1-0-2" /><span id="v1-0-3" /><span id="v1-0-4" /><span id="v1-0-5" />
 
-## 15.10.2024 `v1.0.1` `v1.0.2` `v1.0.3` `v1.0.4` `v1.0.5`
+## 15.10.2024 `v1.0.1` `v1.0.2` `v1.0.3` `v1.0.4` `v1.0.5`
 
 * Fixed `f-string` issues for Python 3.10:
   1. Not making use of same quotes inside f-strings any more.
