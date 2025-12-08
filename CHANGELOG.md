@@ -510,7 +510,7 @@
 
 <span id="v1-5-0" />
 
-## 27.10.2024 `v1.5.0`
+## 27.10.2024 `v1.5.0` Big Update 🚀
 
 * Added a `__help__.py` file, which will show some information about the library and how to use it, when it's run as a script or when the `help()` function is called.
 * Added a lot more metadata to the library:<br>
@@ -551,7 +551,7 @@
 
 <span id="v1-4-0" />
 
-## 25.10.2024 `v1.4.0`
+## 25.10.2024 `v1.4.0` Big Update 🚀
 
 * Huge update to the custom color types:
   - Now all type-methods support chaining.
@@ -579,7 +579,7 @@
 
 <span id="v1-3-0" />
 
-## 21.10.2024 `v1.3.0`
+## 21.10.2024 `v1.3.0` Big Update 🚀
 
 * Fixed the custom types `rgba()`, `hsla()` and `hexa()`:<br>
   - `rgba()`:<br>
