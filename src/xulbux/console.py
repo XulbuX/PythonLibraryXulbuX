@@ -6,9 +6,10 @@ which offer methods for logging and other actions within the console.
 from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
-from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
+from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
 from .string import String
 from .color import Color, hexa
+from .regex import LazyRegex
 
 from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -27,19 +28,19 @@ import os as _os
 import re as _re
 import io as _io
 
-
-_COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
-    "hr": _re.compile(r"(?i)\{hr\}"),
-    "hr_no_nl": _re.compile(r"(?i)(?<!\n){hr}(?!\n)"),
-    "hr_r_nl": _re.compile(r"(?i)(?<!\n){hr}(?=\n)"),
-    "hr_l_nl": _re.compile(r"(?i)(?<=\n){hr}(?!\n)"),
-    "label": _re.compile(r"(?i)\{(?:label|l)\}"),
-    "bar": _re.compile(r"(?i)\{(?:bar|b)\}"),
-    "current": _re.compile(r"(?i)\{(?:current|c)\}"),
-    "total": _re.compile(r"(?i)\{(?:total|t)\}"),
-    "percentage": _re.compile(r"(?i)\{(?:percentage|percent|p)\}"),
-    "animation": _re.compile(r"(?i)\{(?:animation|a)\}"),
-}
+# PRECOMPILE REGULAR EXPRESSIONS
+_PATTERNS = LazyRegex(
+    hr=r"(?i){hr}",
+    hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",
+    hr_r_nl=r"(?i)(?<!\n){hr}(?=\n)",
+    hr_l_nl=r"(?i)(?<=\n){hr}(?!\n)",
+    label=r"(?i){(?:label|l)}",
+    bar=r"(?i){(?:bar|b)}",
+    current=r"(?i){(?:current|c)}",
+    total=r"(?i){(?:total|t)}",
+    percentage=r"(?i){(?:percentage|percent|p)}",
+    animation=r"(?i){(?:animation|a)}",
+)
 
 
 class _ConsoleWidth:
@@ -779,7 +780,7 @@ class Console:
 
         lines = [
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
-            + _FC_COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
+            + _FC_PATTERNS.formatting.sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
             (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
         ]
 
@@ -900,7 +901,7 @@ class Console:
         h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
 
         lines = [
-            h_rule if _COMPILED["hr"].match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
+            h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
             ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
         ]
 
@@ -922,7 +923,7 @@ class Console:
             lines = []
             for val in values:
                 val_str, result_parts, current_pos = str(val), [], 0
-                for match in _COMPILED["hr"].finditer(val_str):
+                for match in _PATTERNS.hr.finditer(val_str):
                     start, end = match.span()
                     should_split_before = start > 0 and val_str[start - 1] != "\n"
                     should_split_after = end < len(val_str) and val_str[end] != "\n"
@@ -1372,7 +1373,7 @@ class ProgressBar:
                 raise TypeError(f"The 'bar_format' parameter must be a list or tuple of strings, got {type(bar_format)}")
             elif not all(isinstance(s, str) for s in bar_format):
                 raise ValueError("All elements of the 'bar_format' parameter must be strings.")
-            elif not any(_COMPILED["bar"].search(s) for s in bar_format):
+            elif not any(_PATTERNS.bar.search(s) for s in bar_format):
                 raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
 
             self.bar_format = bar_format
@@ -1384,7 +1385,7 @@ class ProgressBar:
                 )
             elif not all(isinstance(s, str) for s in limited_bar_format):
                 raise ValueError("All elements of the 'limited_bar_format' parameter must be strings.")
-            elif not any(_COMPILED["bar"].search(s) for s in limited_bar_format):
+            elif not any(_PATTERNS.bar.search(s) for s in limited_bar_format):
                 raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
 
             self.limited_bar_format = limited_bar_format
@@ -1543,7 +1544,7 @@ class ProgressBar:
             )
 
         bar = f"{self._create_bar(current, total, max(1, bar_width))}[*]"
-        progress_text = _COMPILED["bar"].sub(FormatCodes.to_ansi(bar), formatted)
+        progress_text = _PATTERNS.bar.sub(FormatCodes.to_ansi(bar), formatted)
 
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
@@ -1561,17 +1562,17 @@ class ProgressBar:
         fmt_parts = []
 
         for s in bar_format:
-            fmt_part = _COMPILED["label"].sub(label or "", s)
-            fmt_part = _COMPILED["current"].sub(str(current), fmt_part)
-            fmt_part = _COMPILED["total"].sub(str(total), fmt_part)
-            fmt_part = _COMPILED["percentage"].sub(f"{percentage:.1f}", fmt_part)
+            fmt_part = _PATTERNS.label.sub(label or "", s)
+            fmt_part = _PATTERNS.current.sub(str(current), fmt_part)
+            fmt_part = _PATTERNS.total.sub(str(total), fmt_part)
+            fmt_part = _PATTERNS.percentage.sub(f"{percentage:.1f}", fmt_part)
             if fmt_part:
                 fmt_parts.append(fmt_part)
 
         fmt_str = self.sep.join(fmt_parts)
         fmt_str = FormatCodes.to_ansi(fmt_str)
 
-        bar_space = Console.w - len(FormatCodes.remove_ansi(_COMPILED["bar"].sub("", fmt_str)))
+        bar_space = Console.w - len(FormatCodes.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -1692,7 +1693,7 @@ class Spinner:
             raise TypeError(f"The 'spinner_format' parameter must be a list or tuple, got {type(spinner_format)}")
         elif not all(isinstance(fmt, str) for fmt in spinner_format):
             raise TypeError("All elements of the 'spinner_format' parameter must be strings.")
-        elif not any(_COMPILED["animation"].search(fmt) for fmt in spinner_format):
+        elif not any(_PATTERNS.animation.search(fmt) for fmt in spinner_format):
             raise ValueError(
                 "At least one format string in 'spinner_format' must contain the '{animation}' or '{a}' placeholder."
             )
@@ -1805,7 +1806,7 @@ class Spinner:
                 frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
                 formatted = FormatCodes.to_ansi(self.sep.join(
                     s for s in ( \
-                        _COMPILED["animation"].sub(frame, _COMPILED["label"].sub(self.label or "", s))
+                        _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", s))
                         for s in self.spinner_format
                     ) if s
                 ))

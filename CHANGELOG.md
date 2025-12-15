@@ -15,6 +15,18 @@
 # <br><b>Changelog</b><br>
 
 
+<span id="v1-9-2" />
+
+## ... `v1.9.2`
+* Added a new class `LazyRegex` to the `regex` module, which is used to define regex patterns that are only compiled when they are used for the first time.
+* Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
+
+**BREAKING CHANGES:**
+* Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.
+* Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
+* Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not a standard class that should be imported directly.
+
+
 <span id="v1-9-1" />
 
 ## 26.11.2025 `v1.9.1`

@@ -1,4 +1,4 @@
-__version__ = "1.9.1"
+__version__ = "1.9.2"
 
 __author__ = "XulbuX"
 __email__ = "xulbux.real@gmail.com"
@@ -17,7 +17,6 @@ __all__ = [
     "FormatCodes",
     "Json",
     "Path",
-    "ProgressBar",
     "Regex",
     "String",
     "System",
@@ -26,7 +25,6 @@ __all__ = [
 from .code import Code
 from .color import Color
 from .console import Console
-from .console import ProgressBar
 from .data import Data
 from .env_path import EnvPath
 from .file import File

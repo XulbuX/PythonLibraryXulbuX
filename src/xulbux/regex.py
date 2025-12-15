@@ -243,3 +243,37 @@ class Regex:
     def _clean(pattern: str) -> str:
         """Internal method, to make a multiline-string regex pattern into a single-line pattern."""
         return "".join(l.strip() for l in pattern.splitlines()).strip()
+
+
+class LazyRegex:
+    """A class that lazily compiles and caches regex patterns on first access.\n
+    -----------------------------------------------------------------------------------
+    - `patterns` -⠀keyword arguments where the key is the name of the pattern and
+      the value is the regex pattern string to compile\n
+    -----------------------------------------------------------------------------------
+    Example usage:
+    ```python
+    PATTERNS = LazyRegex(
+        email=r"(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",
+        phone=r"\\+?\\d{1,3}[-.\\s]?\\(?\\d{1,4}\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}",
+    )
+
+    email_pattern = PATTERNS.email  # COMPILES AND CACHES THE EMAIL PATTERN
+    phone_pattern = PATTERNS.phone  # COMPILES AND CACHES THE PHONE PATTERN
+    ```"""
+
+    def __init__(self, **patterns: str):
+        for key, pattern in patterns.items():
+            if not isinstance(key, str):
+                raise TypeError(f"All keys in 'patterns' must be strings, got key of type {type(key)}")
+            if not isinstance(pattern, str):
+                raise TypeError(f"All values in 'patterns' must be strings, got value of type {type(pattern)}")
+
+        self._patterns = patterns
+
+    def __getattr__(self, name: str) -> _rx.Pattern:
+        if name in self._patterns:
+            setattr(self, name, compiled := _rx.compile(self._patterns[name]))
+            return compiled
+
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
