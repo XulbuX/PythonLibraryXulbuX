@@ -65,21 +65,13 @@ class Path:
         raises a `PathNotFoundError` if `raise_error` is true."""
         search_dirs: list[str] = []
 
-        if not isinstance(rel_path, str):
-            raise TypeError(f"The 'rel_path' parameter must be a string, got {type(rel_path)}")
         if search_in is not None:
             if isinstance(search_in, str):
                 search_dirs.extend([search_in])
             elif isinstance(search_in, list):
-                if not all(isinstance(item, str) for item in search_in):
-                    raise TypeError("All items in the 'search_in' list must be strings.")
                 search_dirs.extend(search_in)
             else:
                 raise TypeError(f"The 'search_in' parameter must be a string or a list of strings, got {type(search_in)}")
-        if not isinstance(raise_error, bool):
-            raise TypeError(f"The 'raise_error' parameter must be a boolean, got {type(raise_error)}")
-        if not isinstance(use_closest_match, bool):
-            raise TypeError(f"The 'use_closest_match' parameter must be a boolean, got {type(use_closest_match)}")
 
         if rel_path == "":
             if raise_error:
@@ -165,12 +157,6 @@ class Path:
         even though the `rel_path` doesn't exist there.<br>
         If `prefer_script_dir` is false, it will instead make a path
         that points to where the `rel_path` would be in the CWD."""
-        # THE 'rel_path' PARAM IS CHECKED IN 'Path.extend()'
-        # THE 'search_in' PARAM IS CHECKED IN 'Path.extend()'
-        if not isinstance(prefer_script_dir, bool):
-            raise TypeError(f"The 'prefer_script_dir' parameter must be a boolean, got {type(prefer_script_dir)}")
-        # THE 'use_closest_match' PARAM IS CHECKED IN 'Path.extend()'
-
         try:
             return str(Path.extend( \
                 rel_path=rel_path,
@@ -191,11 +177,6 @@ class Path:
         - `path` -⠀the path to the directory or file to remove
         - `only_content` -⠀if true, only the content of the directory is removed
           and the directory itself is kept"""
-        if not isinstance(path, str):
-            raise TypeError(f"The 'path' parameter must be a string, got {type(path)}")
-        if not isinstance(only_content, bool):
-            raise TypeError(f"The 'only_content' parameter must be a boolean, got {type(only_content)}")
-
         if not _os.path.exists(path):
             return None
 

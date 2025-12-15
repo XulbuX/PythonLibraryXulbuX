@@ -7,7 +7,7 @@ from .data import Data
 from .file import File
 from .path import Path
 
-from typing import Any
+from typing import Literal, Any
 import json as _json
 
 
@@ -34,13 +34,6 @@ class Json:
         ------------------------------------------------------------------------------------
         For more detailed information about the comment handling,
         see the `Data.remove_comments()` method documentation."""
-        if not isinstance(json_file, str):
-            raise TypeError(f"The 'json_file' parameter must be a string, got {type(json_file)}")
-        # THE 'comment_start' PARAM IS CHECKED IN 'Data.remove_comments()'
-        # THE 'comment_end' PARAM IS CHECKED IN 'Data.remove_comments()'
-        if not isinstance(return_original, bool):
-            raise TypeError(f"The 'return_original' parameter must be a boolean, got {type(return_original)}")
-
         if not json_file.endswith(".json"):
             json_file += ".json"
         if (file_path := Path.extend_or_make(json_file, prefer_script_dir=True)) is None:
@@ -64,7 +57,7 @@ class Json:
         json_file: str,
         data: dict,
         indent: int = 2,
-        compactness: int = 1,
+        compactness: Literal[0, 1, 2] = 1,
         force: bool = False,
     ) -> str:
         """Create a nicely formatted JSON file from a dictionary.\n
@@ -80,14 +73,6 @@ class Json:
         The method will throw a `FileExistsError` if a file with the same
         name already exists and a `SameContentFileExistsError` if a file
         with the same name and same content already exists."""
-        if not isinstance(json_file, str):
-            raise TypeError(f"The 'json_file' parameter must be a string, got {type(json_file)}")
-        # THE 'data' PARAM IS CHECKED IN 'Data.to_str()'
-        # THE 'indent' PARAM IS CHECKED IN 'Data.to_str()'
-        # THE 'compactness' PARAM IS CHECKED IN 'Data.to_str()'
-        if not isinstance(force, bool):
-            raise TypeError(f"The 'force' parameter must be a boolean, got {type(force)}")
-
         if not json_file.endswith(".json"):
             json_file += ".json"
 
@@ -145,13 +130,6 @@ class Json:
         If you don't know that the first list item is `"apples"`,
         you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
         ⇾ If the given value-path doesn't exist, it will be created."""
-        # THE 'json_file' PARAM IS CHECKED IN 'Json.read()'
-        if not isinstance(update_values, dict):
-            raise TypeError(f"The 'update_values' parameter must be a dictionary, got {type(update_values)}")
-        # THE 'comment_start' PARAM IS CHECKED IN 'Json.read()'
-        # THE 'comment_end' PARAM IS CHECKED IN 'Json.read()'
-        # THE 'path_sep' PARAM IS CHECKED IN 'Data.get_path_id()'
-
         processed_data, data = Json.read(
             json_file=json_file,
             comment_start=comment_start,

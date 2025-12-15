@@ -17,9 +17,6 @@ class String:
         """Will convert a string to the found type, including complex nested structures.\n
         -----------------------------------------------------------------------------------
         - `string` -⠀the string to convert"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-
         try:
             return _ast.literal_eval(string := string.strip())
         except (ValueError, SyntaxError):
@@ -33,11 +30,7 @@ class String:
         """Replaces all special space characters with normal spaces.\n
         ---------------------------------------------------------------
         - `tab_spaces` -⠀number of spaces to replace tab chars with"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(tab_spaces, int):
-            raise ValueError(f"The 'tab_spaces' parameter must be an integer, got {type(tab_spaces)}")
-        elif tab_spaces < 0:
+        if tab_spaces < 0:
             raise ValueError(f"The 'tab_spaces' parameter must be non-negative, got {tab_spaces!r}")
 
         return string.replace("\t", " " * tab_spaces).replace("\u2000", " ").replace("\u2001", " ").replace("\u2002", " ") \
@@ -53,11 +46,6 @@ class String:
           Can be either `"` or `'` and should match the quotes, the string will be put inside of.<br>
           So if your string will be `"string"`, `str_quotes` should be `"`.<br>
           That way, if the string includes the same quotes, they will be escaped."""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(str_quotes, (str, type(None))):
-            raise ValueError(f"The 'str_quotes' parameter must be a string or None, got {type(str_quotes)}")
-
         string = string.replace("\\", r"\\").replace("\n", r"\n").replace("\r", r"\r").replace("\t", r"\t") \
             .replace("\b", r"\b").replace("\f", r"\f").replace("\a", r"\a")
 
@@ -74,11 +62,6 @@ class String:
         -----------------------------------------------------------------------------------------------
         - `string` -⠀the string to check (or `None`, which is considered empty)
         - `spaces_are_empty` -⠀if true, strings consisting only of spaces are also considered empty"""
-        if not isinstance(string, (str, type(None))):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(spaces_are_empty, bool):
-            raise TypeError(f"The 'spaces_are_empty' parameter must be a boolean, got {type(spaces_are_empty)}")
-
         return bool(
             (string in {"", None}) or \
             (spaces_are_empty and isinstance(string, str) and not string.strip())
@@ -91,11 +74,7 @@ class String:
         ---------------------------------------------------------------------------------------------------
         - `string` -⠀the string to check
         - `char` -⠀the character to check for repetition"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(char, str):
-            raise ValueError(f"The 'char' parameter must be a string, got {type(char)}")
-        elif len(char) != 1:
+        if len(char) != 1:
             raise ValueError(f"The 'char' parameter must be a single character, got {char!r}")
 
         if len(string) == (len(char) * string.count(char)):
@@ -110,13 +89,6 @@ class String:
         - `case_string` -⠀the string to decompose
         - `seps` -⠀additional separators to split the string at
         - `lower_all` -⠀if true, all parts will be converted to lowercase"""
-        if not isinstance(case_string, str):
-            raise TypeError(f"The 'case_string' parameter must be a string, got {type(case_string)}")
-        if not isinstance(seps, str):
-            raise TypeError(f"The 'seps' parameter must be a string, got {type(seps)}")
-        if not isinstance(lower_all, bool):
-            raise TypeError(f"The 'lower_all' parameter must be a boolean, got {type(lower_all)}")
-
         return [
             (part.lower() if lower_all else part) \
             for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
@@ -129,11 +101,6 @@ class String:
         - `string` -⠀the string to convert
         - `upper` -⠀if true, it will convert to UpperCamelCase,
           otherwise to lowerCamelCase"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(upper, bool):
-            raise TypeError(f"The 'upper' parameter must be a boolean, got {type(upper)}")
-
         parts = String.decompose(string)
 
         return (
@@ -148,13 +115,6 @@ class String:
         - `string` -⠀the string to convert
         - `delimiter` -⠀the delimiter to use between parts
         - `screaming` -⠀whether to convert all parts to uppercase"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(delimiter, str):
-            raise TypeError(f"The 'delimiter' parameter must be a string, got {type(delimiter)}")
-        if not isinstance(screaming, bool):
-            raise TypeError(f"The 'screaming' parameter must be a boolean, got {type(screaming)}")
-
         return delimiter.join(
             part.upper() if screaming else part \
             for part in String.decompose(string)
@@ -166,11 +126,6 @@ class String:
         ------------------------------------------------------------------------------------
         - `string` -⠀the string to split
         - `remove_empty_lines` -⠀if true, it will remove all empty lines from the result"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(remove_empty_lines, bool):
-            raise TypeError(f"The 'remove_empty_lines' parameter must be a boolean, got {type(remove_empty_lines)}")
-
         if not remove_empty_lines:
             return string.splitlines()
         elif not (lines := string.splitlines()):
@@ -189,11 +144,7 @@ class String:
           * If `0`, it will remove all consecutive empty lines.
           * If bigger than `0`, it will only allow `max_consecutive` consecutive empty lines
             and everything above it will be cut down to `max_consecutive` empty lines."""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(max_consecutive, int):
-            raise ValueError(f"The 'max_consecutive' parameter must be an integer, got {type(max_consecutive)}")
-        elif max_consecutive < 0:
+        if max_consecutive < 0:
             raise ValueError(f"The 'max_consecutive' parameter must be non-negative, got {max_consecutive!r}")
 
         return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
@@ -204,11 +155,7 @@ class String:
         -----------------------------------------------------
         - `string` -⠀the string to split
         - `count` -⠀the number of characters per part"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(count, int):
-            raise ValueError(f"The 'count' parameter must be an integer, got {type(count)}")
-        elif count <= 0:
+        if count <= 0:
             raise ValueError(f"The 'count' parameter must be a positive integer, got {count!r}")
 
         return [string[i:i + count] for i in range(0, len(string), count)]

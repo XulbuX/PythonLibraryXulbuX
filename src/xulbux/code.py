@@ -18,11 +18,7 @@ class Code:
         --------------------------------------------------------------------------
         - `code` -⠀the code to indent
         - `indent` -⠀the amount of spaces to add at the beginning of each line"""
-        if not isinstance(code, str):
-            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
-        if not isinstance(indent, int):
-            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
-        elif indent < 0:
+        if indent < 0:
             raise ValueError(f"The 'indent' parameter must be non-negative, got {indent!r}")
 
         return "\n".join(" " * indent + line for line in code.splitlines())
@@ -32,9 +28,6 @@ class Code:
         """Will try to get the amount of spaces used for indentation.\n
         ----------------------------------------------------------------
         - `code` -⠀the code to analyze"""
-        if not isinstance(code, str):
-            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
-
         indents = [len(line) - len(line.lstrip()) for line in String.get_lines(code, remove_empty_lines=True)]
         return min(non_zero_indents) if (non_zero_indents := [i for i in indents if i > 0]) else 0
 
@@ -45,14 +38,8 @@ class Code:
         - `code` -⠀the code to modify the tab size of
         - `new_tab_size` -⠀the new amount of spaces per tab
         - `remove_empty_lines` -⠀is true, empty lines will be removed in the process"""
-        if not isinstance(code, str):
-            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
-        if not isinstance(new_tab_size, int):
-            raise TypeError(f"The 'new_tab_size' parameter must be an integer, got {type(new_tab_size)}")
-        elif new_tab_size < 0:
+        if new_tab_size < 0:
             raise ValueError(f"The 'new_tab_size' parameter must be non-negative, got {new_tab_size!r}")
-        if not isinstance(remove_empty_lines, bool):
-            raise TypeError(f"The 'remove_empty_lines' parameter must be a boolean, got {type(remove_empty_lines)}")
 
         code_lines = String.get_lines(code, remove_empty_lines=remove_empty_lines)
 
@@ -73,9 +60,6 @@ class Code:
         """Will try to get all function calls and return them as a list.\n
         -------------------------------------------------------------------
         - `code` -⠀the code to analyze"""
-        if not isinstance(code, str):
-            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
-
         nested_func_calls = []
 
         for _, func_attrs in (funcs := _rx.findall(r"(?i)" + Regex.func_call(), code)):
@@ -90,12 +74,8 @@ class Code:
         -------------------------------------------------------------
         - `code` -⠀the code to analyze
         - `funcs` -⠀a list of custom function names to check for"""
-        if not isinstance(code, str):
-            raise TypeError(f"The 'code' parameter must be a string, got {type(code)}")
-        elif len(code.strip()) < 3:
+        if len(code.strip()) < 3:
             return False
-        if not isinstance(funcs, set):
-            raise TypeError(f"The 'funcs' parameter must be a set, got {type(funcs)}")
 
         for func in funcs:
             if _rx.match(r"^[\s\n]*" + _rx.escape(func) + r"\([^\)]*\)[\s\n]*$", code):
@@ -125,22 +105,22 @@ class Code:
 
         js_score = 0
         funcs_pattern = r"(" + "|".join(_rx.escape(f) for f in funcs) + r")" + Regex.brackets("()")
-        js_indicators = [(r"\b(var|let|const)\s+[\w_$]+", 2),  # JS variable declarations
-                         (r"\$[\w_$]+\s*=", 2),  # jQuery-style variables
-                         (r"\$[\w_$]+\s*\(", 2),  # jQuery function calls
-                         (r"\bfunction\s*[\w_$]*\s*\(", 2),  # Function declarations
-                         (r"[\w_$]+\s*=\s*function\s*\(", 2),  # Function assignments
-                         (r"\b[\w_$]+\s*=>\s*[\{\(]", 2),  # Arrow functions
-                         (r"\(function\s*\(\)\s*\{", 2),  # IIFE pattern
-                         (funcs_pattern, 2),  # Custom predefined functions
-                         (r"\b(true|false|null|undefined)\b", 1),  # JS literals
-                         (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-specific operators
-                         (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # Object instantiation with new
-                         (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2),  # JS objects
-                         (r"\basync\s+function|\bawait\b", 2),  # Async/await
-                         (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1),  # Control structures with braces
-                         (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # Try-catch
-                         (r";[\s\n]*$", 0.5),  # Semicolon line endings
+        js_indicators = [(r"\b(var|let|const)\s+[\w_$]+", 2),  # JS VARIABLE DECLARATIONS
+                         (r"\$[\w_$]+\s*=", 2),  # jQuery-STYLE VARIABLES
+                         (r"\$[\w_$]+\s*\(", 2),  # jQuery FUNCTION CALLS
+                         (r"\bfunction\s*[\w_$]*\s*\(", 2),  # FUNCTION DECLARATIONS
+                         (r"[\w_$]+\s*=\s*function\s*\(", 2),  # FUNCTION ASSIGNMENTS
+                         (r"\b[\w_$]+\s*=>\s*[\{\(]", 2),  # ARROW FUNCTIONS
+                         (r"\(function\s*\(\)\s*\{", 2),  # IIFE PATTERN
+                         (funcs_pattern, 2),  # CUSTOM PREDEFINED FUNCTIONS
+                         (r"\b(true|false|null|undefined)\b", 1),  # JS LITERALS
+                         (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-SPECIFIC OPERATORS
+                         (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # OBJECT INSTANTIATION WITH NEW
+                         (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2),  # JS OBJECTS
+                         (r"\basync\s+function|\bawait\b", 2),  # ASYNC/AWAIT
+                         (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1),  # CONTROL STRUCTURES WITH BRACES
+                         (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # TRY-CATCH
+                         (r";[\s\n]*$", 0.5),  # SEMICOLON LINE ENDINGS
                          ]
 
         line_endings = [line.strip() for line in code.splitlines() if line.strip()]

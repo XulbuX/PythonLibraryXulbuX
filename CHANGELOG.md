@@ -20,6 +20,7 @@
 ## ... `v1.9.2`
 * Added a new class `LazyRegex` to the `regex` module, which is used to define regex patterns that are only compiled when they are used for the first time.
 * Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
+* Removed all the runtime type-checks that can also be checked using static type-checking tools, since you're supposed to use type checkers in modern python anyway, and to improve performance.
 
 **BREAKING CHANGES:**
 * Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.

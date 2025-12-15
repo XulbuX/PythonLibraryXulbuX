@@ -230,15 +230,6 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.to_ansi()'
-        # THE 'brightness_steps' PARAM IS CHECKED IN 'FormatCodes.to_ansi()'
-        if not isinstance(sep, str):
-            raise TypeError(f"The 'sep' parameter must be a string, got {type(sep)}")
-        if not isinstance(end, str):
-            raise TypeError(f"The 'end' parameter must be a string, got {type(end)}")
-        if not isinstance(flush, bool):
-            raise TypeError(f"The 'flush' parameter must be a boolean, got {type(flush)}")
-
         FormatCodes.__config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
 
@@ -262,11 +253,6 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `format_codes` module documentation."""
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.to_ansi()'
-        # THE 'brightness_steps' PARAM IS CHECKED IN 'FormatCodes.to_ansi()'
-        if not isinstance(reset_ansi, bool):
-            raise TypeError(f"The 'reset_ansi' parameter must be a boolean, got {type(reset_ansi)}")
-
         FormatCodes.__config_console()
         user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
 
@@ -293,17 +279,8 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.__validate_default_color()'
-        if not isinstance(brightness_steps, int):
-            raise TypeError(f"The 'brightness_steps' parameter must be an integer, got {type(brightness_steps)}")
-        elif not (0 < brightness_steps <= 100):
+        if not (0 < brightness_steps <= 100):
             raise ValueError("The 'brightness_steps' parameter must be between 1 and 100.")
-        if not isinstance(_default_start, bool):
-            raise TypeError(f"The '_default_start' parameter must be a boolean, got {type(_default_start)}")
-        if not isinstance(_validate_default, bool):
-            raise TypeError(f"The '_validate_default' parameter must be a boolean, got {type(_validate_default)}")
 
         if _validate_default:
             use_default, default_color = FormatCodes.__validate_default_color(default_color)
@@ -422,14 +399,6 @@ class FormatCodes:
         -----------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.__validate_default_color()'
-        if not isinstance(_escape_char, str):
-            raise TypeError(f"The '_escape_char' parameter must be a string, got {type(_escape_char)}")
-        elif _escape_char not in {"/", "\\"}:
-            raise ValueError("The '_escape_char' parameter must be either '/' or '\\'.")
-
         use_default, default_color = FormatCodes.__validate_default_color(default_color)
 
         def escape_format_code(match: Match) -> str:
@@ -471,9 +440,6 @@ class FormatCodes:
         """Escapes all ANSI codes in the string, so they are visible when output to the console.\n
         -------------------------------------------------------------------------------------------
         - `ansi_string` -⠀the string that contains the ANSI codes to escape"""
-        if not isinstance(ansi_string, str):
-            raise TypeError(f"The 'ansi_string' parameter must be a string, got {type(ansi_string)}")
-
         return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
 
     @staticmethod
@@ -490,14 +456,6 @@ class FormatCodes:
         - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
           where each tuple contains the position of the removed formatting code and the removed formatting code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.to_ansi()'
-        if not isinstance(get_removals, bool):
-            raise TypeError(f"The 'get_removals' parameter must be a boolean, got {type(get_removals)}")
-        if not isinstance(_ignore_linebreaks, bool):
-            raise TypeError(f"The '_ignore_linebreaks' parameter must be a boolean, got {type(_ignore_linebreaks)}")
-
         return FormatCodes.remove_ansi(
             FormatCodes.to_ansi(string, default_color=default_color),
             get_removals=get_removals,
@@ -516,13 +474,6 @@ class FormatCodes:
         - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
           where each tuple contains the position of the removed ansi code and the removed ansi code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
-        if not isinstance(ansi_string, str):
-            raise TypeError(f"The 'ansi_string' parameter must be a string, got {type(ansi_string)}")
-        if not isinstance(get_removals, bool):
-            raise TypeError(f"The 'get_removals' parameter must be a boolean, got {type(get_removals)}")
-        if not isinstance(_ignore_linebreaks, bool):
-            raise TypeError(f"The '_ignore_linebreaks' parameter must be a boolean, got {type(_ignore_linebreaks)}")
-
         if get_removals:
             removals = []
 

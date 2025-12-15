@@ -10,7 +10,7 @@ from .format_codes import FormatCodes
 from .string import String
 from .regex import Regex
 
-from typing import Optional, Any
+from typing import Optional, Literal, Any, cast
 import base64 as _base64
 import math as _math
 import re as _re
@@ -24,13 +24,10 @@ class Data:
         """Converts bytes or bytearray to a JSON-compatible format (dictionary) with explicit keys.\n
         ----------------------------------------------------------------------------------------------
         - `data` -⠀the bytes or bytearray to serialize"""
-        if not isinstance(data, (bytes, bytearray)):
-            raise TypeError(f"The 'data' parameter must be a bytes or bytearray object, got {type(data)}")
-
         key = "bytearray" if isinstance(data, bytearray) else "bytes"
 
         try:
-            return {key: data.decode("utf-8"), "encoding": "utf-8"}
+            return {key: cast(bytes | bytearray, data).decode("utf-8"), "encoding": "utf-8"}
         except UnicodeDecodeError:
             pass
 
@@ -44,9 +41,6 @@ class Data:
         --------------------------------------------------------------------------------------------------------
         If the serialized object was created with `Data.serialize_bytes()`, it will work.
         If it fails to decode the data, it will raise a `ValueError`."""
-        if not isinstance(obj, dict):
-            raise TypeError(f"The 'obj' parameter must be a dictionary, got {type(obj)}")
-
         for key in ("bytes", "bytearray"):
             if key in obj and "encoding" in obj:
                 if obj["encoding"] == "utf-8":
@@ -65,9 +59,6 @@ class Data:
         """The sum of all the characters amount including the keys in dictionaries.\n
         ------------------------------------------------------------------------------
         - `data` -⠀the data structure to count the characters from"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-
         chars_count = 0
 
         if isinstance(data, dict):
@@ -85,9 +76,6 @@ class Data:
         """Removes leading and trailing whitespaces from the data structure's items.\n
         -------------------------------------------------------------------------------
         - `data` -⠀the data structure to strip the items from"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-
         if isinstance(data, dict):
             return {k.strip(): Data.strip(v) if isinstance(v, DataStructure) else v.strip() for k, v in data.items()}
 
@@ -102,9 +90,6 @@ class Data:
         ---------------------------------------------------------------------------------
         - `data` -⠀the data structure to remove empty items from.
         - `spaces_are_empty` -⠀if true, it will count items with only spaces as empty"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-
         if isinstance(data, dict):
             return {
                 k: (v if not isinstance(v, DataStructure) else Data.remove_empty_items(v, spaces_are_empty))
@@ -128,9 +113,6 @@ class Data:
         """Removes all duplicates from the data structure.\n
         -----------------------------------------------------------
         - `data` -⠀the data structure to remove duplicates from"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-
         if isinstance(data, dict):
             return {k: Data.remove_duplicates(v) if isinstance(v, DataStructure) else v for k, v in data.items()}
 
@@ -173,7 +155,7 @@ class Data:
         - `comment_end` -⠀the string that marks the end of a comment inside `data`
         - `comment_sep` -⠀the string with which a comment will be replaced, if it is in the middle of a value\n
         ---------------------------------------------------------------------------------------------------------------
-        Examples:
+        #### Examples:
         ```python
         data = {
             "key1": [
@@ -214,16 +196,8 @@ class Data:
           * `value4` The whole value is removed, since the whole value was a comment.
         - For `key2`, the key, including its whole values will be removed.
         - For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-        if not isinstance(comment_start, str):
-            raise TypeError(f"The 'comment_start' parameter must be a string, got {type(comment_start)}")
-        elif len(comment_start) == 0:
-            raise ValueError("The 'comment_start' parameter must not be an empty string.")
-        if not isinstance(comment_end, str):
-            raise TypeError(f"The 'comment_end' parameter must be a string, got {type(comment_end)}")
-        if not isinstance(comment_sep, str):
-            raise TypeError(f"The 'comment_sep' parameter must be a string, got {type(comment_sep)}")
+        if len(comment_start) == 0:
+            raise ValueError("The 'comment_start' parameter string must not be empty.")
 
         pattern = _re.compile(Regex._clean( \
                 rf"""^(
@@ -282,18 +256,8 @@ class Data:
         ------------------------------------------------------------------------------------------------
         The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for
         the method `Data.get_path_id()`. See its documentation for more details."""
-        if not isinstance(data1, DataStructure):
-            raise TypeError(f"The 'data1' parameter must be a data structure, got {type(data1)}")
-        if not isinstance(data2, DataStructure):
-            raise TypeError(f"The 'data2' parameter must be a data structure, got {type(data2)}")
-        if not isinstance(ignore_paths, (str, list)):
-            raise TypeError(f"The 'ignore_paths' parameter must be a string or list of strings, got {type(ignore_paths)}")
-        if not isinstance(path_sep, str):
-            raise TypeError(f"The 'path_sep' parameter must be a string, got {type(path_sep)}")
-        elif len(path_sep) == 0:
-            raise ValueError("The 'path_sep' parameter must not be an empty string.")
-        # THE 'comment_start' PARAM IS CHECKED IN 'Data.remove_comments()'
-        # THE 'comment_end' PARAM IS CHECKED IN 'Data.remove_comments()'
+        if len(path_sep) == 0:
+            raise ValueError("The 'path_sep' parameter string must not be empty.")
 
         def process_ignore_paths(ignore_paths: str | list[str], ) -> list[list[str]]:
             if isinstance(ignore_paths, str):
@@ -351,7 +315,7 @@ class Data:
           instead of raising an error\n
         --------------------------------------------------------------------------------------------------
         The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
-        In this example:
+        #### In this example:
         ```python
         {
             "healthy": {
@@ -363,18 +327,8 @@ class Data:
         ... if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
         `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use the
         index of the value, so `healthy->fruit->0`."""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-        if not isinstance(value_paths, (str, list)):
-            raise TypeError(f"The 'value_paths' parameter must be a string or list of strings, got {type(value_paths)}")
-        if not isinstance(path_sep, str):
-            raise TypeError(f"The 'path_sep' parameter must be a string, got {type(path_sep)}")
-        elif len(path_sep) == 0:
-            raise ValueError("The 'path_sep' parameter must not be an empty string.")
-        # THE 'comment_start' PARAM IS CHECKED IN 'Data.remove_comments()'
-        # THE 'comment_end' PARAM IS CHECKED IN 'Data.remove_comments()'
-        if not isinstance(ignore_not_found, bool):
-            raise TypeError(f"The 'ignore_not_found' parameter must be a boolean, got {type(ignore_not_found)}")
+        if len(path_sep) == 0:
+            raise ValueError("The 'path_sep' parameter string must not be empty.")
 
         def process_path(path: str, data_obj: DataStructure) -> Optional[str]:
             keys = path.split(path_sep)
@@ -433,12 +387,6 @@ class Data:
         - `data` -⠀the list, tuple, or dictionary to retrieve the value from
         - `path_id` -⠀the path ID to the value to retrieve, created before using `Data.get_path_id()`
         - `get_key` -⠀if true and the final item is in a dict, it returns the key instead of the value"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-        if not isinstance(path_id, str):
-            raise TypeError(f"The 'path_id' parameter must be a string, got {type(path_id)}")
-        if not isinstance(get_key, bool):
-            raise TypeError(f"The 'get_key' parameter must be a boolean, got {type(get_key)}")
 
         def get_nested(data: DataStructure, path: list[int], get_key: bool) -> Any:
             parent = None
@@ -477,10 +425,6 @@ class Data:
         { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
           ```
           The path IDs should have been created using `Data.get_path_id()`."""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-        if not isinstance(update_values, dict):
-            raise TypeError(f"The 'update_values' parameter must be a dictionary, got {type(update_values)}")
 
         def update_nested(data: DataStructure, path: list[int], value: Any) -> DataStructure:
             if len(path) == 1:
@@ -515,7 +459,7 @@ class Data:
     def to_str(
         data: DataStructure,
         indent: int = 4,
-        compactness: int = 1,
+        compactness: Literal[0, 1, 2] = 1,
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
@@ -535,28 +479,10 @@ class Data:
         - `1` only expands if there's other lists, tuples or dicts inside of data or,
           if the data's content is longer than `max_width`
         - `2` keeps everything collapsed (all on one line)"""
-        if not isinstance(data, DataStructure):
-            raise TypeError(f"The 'data' parameter must be a data structure, got {type(data)}")
-        if not isinstance(indent, int):
-            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
-        elif indent < 0:
+        if indent < 0:
             raise ValueError("The 'indent' parameter must be a non-negative integer.")
-        if not isinstance(compactness, int):
-            raise TypeError(f"The 'compactness' parameter must be an integer, got {type(compactness)}")
-        elif compactness not in {0, 1, 2}:
-            raise ValueError("The 'compactness' parameter must be 0, 1, or 2.")
-        if not isinstance(max_width, int):
-            raise TypeError(f"The 'max_width' parameter must be an integer, got {type(max_width)}")
-        elif max_width <= 0:
+        if max_width <= 0:
             raise ValueError("The 'max_width' parameter must be a positive integer.")
-        if not isinstance(sep, str):
-            raise TypeError(f"The 'sep' parameter must be a string, got {type(sep)}")
-        if not isinstance(as_json, bool):
-            raise TypeError(f"The 'as_json' parameter must be a boolean, got {type(as_json)}")
-        if not isinstance(_syntax_highlighting, (dict, bool, type(None))):
-            raise TypeError(
-                f"The 'syntax_highlighting' parameter must be a dict, bool, or None, got {type(_syntax_highlighting)}"
-            )
 
         _syntax_hl = {}
 
@@ -681,7 +607,7 @@ class Data:
     def print(
         data: DataStructure,
         indent: int = 4,
-        compactness: int = 1,
+        compactness: Literal[0, 1, 2] = 1,
         max_width: int = 127,
         sep: str = ", ",
         end: str = "\n",

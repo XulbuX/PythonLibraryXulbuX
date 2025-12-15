@@ -44,21 +44,15 @@ class System:
         - `wait` -⠀the time to wait until restarting in seconds
         - `continue_program` -⠀whether to continue the current Python program after calling this function
         - `force` -⠀whether to force a restart even if other processes are still running"""
-        if not isinstance(wait, int):
-            raise TypeError(f"The 'wait' parameter must be an integer, got {type(wait)}")
-        elif wait < 0:
+        if wait < 0:
             raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
-        if not isinstance(continue_program, bool):
-            raise TypeError(f"The 'continue_program' parameter must be a boolean, got {type(continue_program)}")
-        if not isinstance(force, bool):
-            raise TypeError(f"The 'force' parameter must be a boolean, got {type(force)}")
 
         if (system := _platform.system().lower()) == "windows":
             if not force:
                 output = _subprocess.check_output("tasklist", shell=True).decode()
                 processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
-                if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CONSOLE
-                    raise RuntimeError("Processes are still running. Use the parameter `force=True` to restart anyway.")
+                if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
+                    raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
 
             if prompt:
                 _os.system(f'shutdown /r /t {wait} /c "{prompt}"')
@@ -73,8 +67,8 @@ class System:
             if not force:
                 output = _subprocess.check_output(["ps", "-A"]).decode()
                 processes = output.splitlines()[1:]  # EXCLUDE HEADER
-                if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND PS
-                    raise RuntimeError("Processes are still running. Use the parameter `force=True` to restart anyway.")
+                if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
+                    raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
 
             if prompt:
                 _subprocess.Popen(["notify-send", "System Restart", str(prompt)])
@@ -83,7 +77,7 @@ class System:
             try:
                 _subprocess.run(["sudo", "shutdown", "-r", "now"])
             except _subprocess.CalledProcessError:
-                raise PermissionError("Failed to restart: insufficient privileges. Ensure sudo permissions are granted.")
+                raise PermissionError("Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted.")
 
             if continue_program:
                 print(f"Restarting in {wait} seconds...")
@@ -112,19 +106,6 @@ class System:
         ------------------------------------------------------------------------------------------------------------
         If some libraries are missing or they could not be installed, their names will be returned as a list.
         If all libraries are installed (or were installed successfully), `None` will be returned."""
-        if not isinstance(lib_names, list):
-            raise TypeError(f"The 'lib_names' parameter must be a list, got {type(lib_names)}")
-        elif not all(isinstance(lib, str) for lib in lib_names):
-            raise TypeError("All items in the 'lib_names' list must be strings.")
-        if not isinstance(install_missing, bool):
-            raise TypeError(f"The 'install_missing' parameter must be a boolean, got {type(install_missing)}")
-        if not isinstance(missing_libs_msgs, dict):
-            raise TypeError(f"The 'missing_libs_msgs' parameter must be a dict, got {type(missing_libs_msgs)}")
-        elif not all(key in missing_libs_msgs for key in {"found_missing", "should_install"}):
-            raise ValueError("The 'missing_libs_msgs' dict must contain the keys 'found_missing' and 'should_install'.")
-        if not isinstance(confirm_install, bool):
-            raise TypeError(f"The 'confirm_install' parameter must be a boolean, got {type(confirm_install)}")
-
         missing = []
         for lib in lib_names:
             try:
@@ -174,11 +155,6 @@ class System:
         ---------------------------------------------------------------------------------
         Returns `True` if the current process already has elevated privileges and raises
         a `PermissionError` if the user denied the elevation or the elevation failed."""
-        if not isinstance(win_title, (str, type(None))):
-            raise TypeError(f"The 'win_title' parameter must be a string or None, got {type(win_title)}")
-        if not isinstance(args, list):
-            raise TypeError(f"The 'args' parameter must be a list, got {type(args)}")
-
         if System.is_elevated:
             return True
 
