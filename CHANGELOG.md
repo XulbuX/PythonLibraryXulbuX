@@ -25,6 +25,7 @@
 * Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.
 * Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
 * Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not a standard class that should be imported directly.
+* Renamed the constant `CLR` to `CLI_COLORS` and the constant `HELP` to `CLI_HELP` in the `cli.help` module.
 
 
 <span id="v1-9-1" />

@@ -547,7 +547,7 @@ class FormatCodes:
 
     @staticmethod
     def __config_console() -> None:
-        """Configure the console to be able to interpret ANSI formatting."""
+        """Configure the console to be able to interpret and render ANSI formatting."""
         global _CONSOLE_ANSI_CONFIGURED
         if not _CONSOLE_ANSI_CONFIGURED:
             _sys.stdout.flush()

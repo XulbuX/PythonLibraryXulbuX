@@ -21,8 +21,8 @@ def is_latest_version() -> Optional[bool]:
     try:
         if (latest := get_latest_version()) in {"", None}:
             return None
-        latest_v_parts = tuple(int(part) for part in (latest or "").lower().lstrip("v").split('.'))
-        installed_v_parts = tuple(int(part) for part in __version__.lower().lstrip("v").split('.'))
+        latest_v_parts = tuple(int(part) for part in (latest or "").lower().lstrip("v").split("."))
+        installed_v_parts = tuple(int(part) for part in __version__.lower().lstrip("v").split("."))
         return latest_v_parts <= installed_v_parts
     except Exception:
         return None
@@ -30,7 +30,8 @@ def is_latest_version() -> Optional[bool]:
 
 URL = "https://pypi.org/pypi/xulbux/json"
 IS_LATEST_VERSION = is_latest_version()
-CLR = {
+
+CLI_COLORS = {
     "border": "dim|br:black",
     "class": "br:cyan",
     "const": "br:blue",
@@ -43,33 +44,34 @@ CLR = {
     "punctuator": "br:black",
     "text": "white",
 }
-HELP = FormatCodes.to_ansi(
+CLI_HELP = FormatCodes.to_ansi(
     rf"""  [_|b|#7075FF]               __  __
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
   [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , <
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|#000|BG:#8085FF] v[b]{__version__} [*|dim|{CLR['notice']}]({'' if IS_LATEST_VERSION else ' (newer available)'})[*]
+  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|#000|BG:#8085FF] v[b]{__version__} [*|dim|{CLI_COLORS["notice"]}]({"" if IS_LATEST_VERSION else " (newer available)"})[*]
 
   [i|#9095FF]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
-  [b|{CLR['heading']}](Usage:)[*]
-  [{CLR['border']}](╭────────────────────────────────────────────────────╮)[*]
-  [{CLR['border']}](│) [i|{CLR['punctuator']}](# LIBRARY CONSTANTS)[*]                                [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuator']}].[{CLR['lib']}]base[{CLR['punctuator']}].[{CLR['lib']}]consts [{CLR['import']}]import [{CLR['const']}]COLOR[{CLR['punctuator']}], [{CLR['const']}]CHARS[{CLR['punctuator']}], [{CLR['const']}]ANSI[*]  [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [i|{CLR['punctuator']}](# Main Classes)[*]                                     [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux [{CLR['import']}]import [{CLR['class']}]Code[{CLR['punctuator']}], [{CLR['class']}]Color[{CLR['punctuator']}], [{CLR['class']}]Console[{CLR['punctuator']}], ...[*]       [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [i|{CLR['punctuator']}](# module specific imports)[*]                          [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [{CLR['import']}]from [{CLR['lib']}]xulbux[{CLR['punctuator']}].[{CLR['lib']}]color [{CLR['import']}]import [{CLR['func']}]rgba[{CLR['punctuator']}], [{CLR['func']}]hsla[{CLR['punctuator']}], [{CLR['func']}]hexa[*]          [{CLR['border']}](│)
-  [{CLR['border']}](╰────────────────────────────────────────────────────╯)[*]
-  [b|{CLR['heading']}](Documentation:)[*]
-  [{CLR['border']}](╭────────────────────────────────────────────────────╮)[*]
-  [{CLR['border']}](│) [{CLR['text']}]For more information see the GitHub page.          [{CLR['border']}](│)[*]
-  [{CLR['border']}](│) [{CLR['link']}](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) [{CLR['border']}](│)[*]
-  [{CLR['border']}](╰────────────────────────────────────────────────────╯)[*]
+  [b|{CLI_COLORS["heading"]}](Usage:)[*]
+  [{CLI_COLORS["border"]}](╭────────────────────────────────────────────────────╮)[*]
+  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# LIBRARY CONSTANTS)[*]                                [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]base[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]consts [{CLI_COLORS["import"]}]import [{CLI_COLORS["const"]}]COLOR[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["const"]}]CHARS[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["const"]}]ANSI[*]  [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# Main Classes)[*]                                     [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux [{CLI_COLORS["import"]}]import [{CLI_COLORS["class"]}]Code[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["class"]}]Color[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["class"]}]Console[{CLI_COLORS["punctuator"]}], ...[*]       [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# module specific imports)[*]                          [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]color [{CLI_COLORS["import"]}]import [{CLI_COLORS["func"]}]rgba[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["func"]}]hsla[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["func"]}]hexa[*]          [{CLI_COLORS["border"]}](│)
+  [{CLI_COLORS["border"]}](╰────────────────────────────────────────────────────╯)[*]
+  [b|{CLI_COLORS["heading"]}](Documentation:)[*]
+  [{CLI_COLORS["border"]}](╭────────────────────────────────────────────────────╮)[*]
+  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["text"]}]For more information see the GitHub page.          [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["link"]}](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) [{CLI_COLORS["border"]}](│)[*]
+  [{CLI_COLORS["border"]}](╰────────────────────────────────────────────────────╯)[*]
   [_]"""
 )
 
 
 def show_help() -> None:
-    print(HELP)
+    FormatCodes.__config_console()
+    print(CLI_HELP)
     Console.pause_exit(pause=True, prompt="  [dim](Press any key to exit...)\n\n")
