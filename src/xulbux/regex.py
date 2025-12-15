@@ -202,10 +202,10 @@ class Regex:
 
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
-    -----------------------------------------------------------------------------------
-    - `patterns` -⠀keyword arguments where the key is the name of the pattern and
+    --------------------------------------------------------------------------------
+    - `**patterns` -⠀keyword arguments where the key is the name of the pattern and
       the value is the regex pattern string to compile\n
-    -----------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
     #### Example usage:
     ```python
     PATTERNS = LazyRegex(
@@ -213,8 +213,8 @@ class LazyRegex:
         phone=r"\\+?\\d{1,3}[-.\\s]?\\(?\\d{1,4}\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}",
     )
 
-    email_pattern = PATTERNS.email  # COMPILES AND CACHES THE EMAIL PATTERN
-    phone_pattern = PATTERNS.phone  # COMPILES AND CACHES THE PHONE PATTERN
+    email_pattern = PATTERNS.email  # Compiles and caches the EMAIL pattern
+    phone_pattern = PATTERNS.phone  # Compiles and caches the PHONE pattern
     ```"""
 
     def __init__(self, **patterns: str):

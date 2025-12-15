@@ -213,7 +213,7 @@ def test_console_size(mock_terminal_size):
 )
 def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
     monkeypatch.setattr(sys, "argv", argv)
-    args_result = Console.get_args(find_args, allow_spaces=False)
+    args_result = Console.get_args(allow_spaces=False, **find_args)
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
     for key, expected in expected_args_dict.items():
@@ -336,7 +336,7 @@ def test_get_args_no_spaces(monkeypatch, argv, find_args, expected_args_dict):
 )
 def test_get_args_with_spaces(monkeypatch, argv, find_args, expected_args_dict):
     monkeypatch.setattr(sys, "argv", argv)
-    args_result = Console.get_args(find_args, allow_spaces=True)
+    args_result = Console.get_args(allow_spaces=True, **find_args)
     assert isinstance(args_result, Args)
     assert args_result.dict() == expected_args_dict
 
@@ -345,13 +345,13 @@ def test_get_args_flag_without_value(monkeypatch):
     """Test that flags without values have None as their value, not True."""
     # TEST SINGLE FLAG WITHOUT VALUE AT END OF ARGS
     monkeypatch.setattr(sys, "argv", ["script.py", "--verbose"])
-    args_result = Console.get_args({"verbose": {"--verbose"}})
+    args_result = Console.get_args(verbose={"--verbose"})
     assert args_result.verbose.exists is True
     assert args_result.verbose.value is None
 
     # TEST FLAG WITHOUT VALUE FOLLOWED BY ANOTHER FLAG
     monkeypatch.setattr(sys, "argv", ["script.py", "--verbose", "--debug"])
-    args_result = Console.get_args({"verbose": {"--verbose"}, "debug": {"--debug"}})
+    args_result = Console.get_args(verbose={"--verbose"}, debug={"--debug"})
     assert args_result.verbose.exists is True
     assert args_result.verbose.value is None
     assert args_result.debug.exists is True
@@ -359,49 +359,23 @@ def test_get_args_flag_without_value(monkeypatch):
 
     # TEST FLAG WITH DEFAULT VALUE BUT NO PROVIDED VALUE
     monkeypatch.setattr(sys, "argv", ["script.py", "--mode"])
-    args_result = Console.get_args({"mode": {"flags": {"--mode"}, "default": "production"}})
+    args_result = Console.get_args(mode={"flags": {"--mode"}, "default": "production"})
     assert args_result.mode.exists is True
     assert args_result.mode.value is None
 
 
-def test_get_args_invalid_alias():
-    with pytest.raises(TypeError, match="Argument alias 'invalid-alias' is invalid."):
-        Args(**{"invalid-alias": {"exists": False, "value": None}})
-
-    with pytest.raises(TypeError, match="Argument alias '123start' is invalid."):
-        Args(**{"123start": {"exists": False, "value": None}})
-
-
-def test_get_args_invalid_config():
-    with pytest.raises(TypeError, match="Invalid configuration type for alias 'bad_config'.\n"
-                       "Must be a set, dict, literal 'before' or literal 'after'."):
-        Console.get_args({"bad_config": 123})  # type: ignore[assignment]
-
-    with pytest.raises(ValueError,
-                       match="Invalid configuration for alias 'missing_flags'. Dictionary must contain a 'flags' key."):
-        Console.get_args({"missing_flags": {"default": "value"}})  # type: ignore[assignment]
-
-    with pytest.raises(ValueError,
-                       match="Invalid configuration for alias 'bad_flags'. Dictionary must contain a 'default' key.\n"
-                       "Use a simple set of strings if no default value is needed and only flags are to be specified."):
-        Console.get_args({"bad_flags": {"flags": ["--flag"]}})  # type: ignore[assignment]
-
-    with pytest.raises(ValueError, match="Invalid 'flags' for alias 'bad_flags'. Must be a set of strings."):
-        Console.get_args({"bad_flags": {"flags": "not-a-set", "default": "value"}})  # type: ignore[assignment]
-
-
 def test_get_args_duplicate_flag():
     with pytest.raises(ValueError, match="Duplicate flag '-f' found. It's assigned to both 'file1' and 'file2'."):
-        Console.get_args({"file1": {"-f", "--file1"}, "file2": {"flags": {"-f", "--file2"}, "default": "..."}})
+        Console.get_args(file1={"-f", "--file1"}, file2={"flags": {"-f", "--file2"}, "default": "..."})
 
     with pytest.raises(ValueError, match="Duplicate flag '--long' found. It's assigned to both 'arg1' and 'arg2'."):
-        Console.get_args({"arg1": {"flags": {"--long"}, "default": "..."}, "arg2": {"-a", "--long"}})
+        Console.get_args(arg1={"flags": {"--long"}, "default": "..."}, arg2={"-a", "--long"})
 
 
 def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
     """Test that values starting with dashes are not treated as flags unless explicitly defined"""
     monkeypatch.setattr(sys, "argv", ["script.py", "-v", "-42", "--input", "-3.14"])
-    result = Console.get_args({"verbose": {"-v"}, "input": {"--input"}})
+    result = Console.get_args(verbose={"-v"}, input={"--input"})
 
     assert result.verbose.exists is True
     assert result.verbose.value == "-42"
@@ -412,7 +386,7 @@ def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
 def test_get_args_dash_strings_as_values(monkeypatch):
     """Test that dash-prefixed strings are treated as values when not defined as flags"""
     monkeypatch.setattr(sys, "argv", ["script.py", "-f", "--not-a-flag", "-t", "-another-value"])
-    result = Console.get_args({"file": {"-f"}, "text": {"-t"}})
+    result = Console.get_args(file={"-f"}, text={"-t"})
 
     assert result.file.exists is True
     assert result.file.value == "--not-a-flag"
@@ -423,7 +397,7 @@ def test_get_args_dash_strings_as_values(monkeypatch):
 def test_get_args_positional_with_dashes_before(monkeypatch):
     """Test that positional 'before' arguments include dash-prefixed values"""
     monkeypatch.setattr(sys, "argv", ["script.py", "-123", "--some-file", "normal", "-v"])
-    result = Console.get_args({"before_args": "before", "verbose": {"-v"}})
+    result = Console.get_args(before_args="before", verbose={"-v"})
 
     assert result.before_args.exists is True
     assert result.before_args.values == ["-123", "--some-file", "normal"]
@@ -434,7 +408,7 @@ def test_get_args_positional_with_dashes_before(monkeypatch):
 def test_get_args_positional_with_dashes_after(monkeypatch):
     """Test that positional 'after' arguments include dash-prefixed values"""
     monkeypatch.setattr(sys, "argv", ["script.py", "-v", "value", "-123", "--output-file", "-negative"])
-    result = Console.get_args({"verbose": {"-v"}, "after_args": "after"})
+    result = Console.get_args(verbose={"-v"}, after_args="after")
 
     assert result.verbose.exists is True
     assert result.verbose.value == "value"
@@ -445,7 +419,7 @@ def test_get_args_positional_with_dashes_after(monkeypatch):
 def test_get_args_multiword_with_dashes(monkeypatch):
     """Test multiword values with dashes when allow_spaces=True"""
     monkeypatch.setattr(sys, "argv", ["script.py", "-m", "start", "-middle", "--end", "-f", "other"])
-    result = Console.get_args({"message": {"-m"}, "file": {"-f"}}, allow_spaces=True)
+    result = Console.get_args(allow_spaces=True, message={"-m"}, file={"-f"})
 
     assert result.message.exists is True
     assert result.message.value == "start -middle --end"
@@ -461,13 +435,13 @@ def test_get_args_mixed_dash_scenarios(monkeypatch):
             "after1", "-also-not-flag"
         ]
     )
-    result = Console.get_args({
-        "before": "before",
-        "verbose": {"-v"},
-        "debug": {"-d"},
-        "file": {"--file"},
-        "after": "after",
-    })
+    result = Console.get_args(
+        before="before",
+        verbose={"-v"},
+        debug={"-d"},
+        file={"--file"},
+        after="after",
+    )
 
     assert result.before.exists is True
     assert result.before.values == ["before1", "-not-flag", "before2"]

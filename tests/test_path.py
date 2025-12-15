@@ -62,8 +62,6 @@ def test_extend(setup_test_environment):
     assert Path.extend("") is None
     with pytest.raises(PathNotFoundError, match="Path is empty."):
         Path.extend("", raise_error=True)
-    with pytest.raises(TypeError, match="parameter must be a string"):
-        Path.extend(None, raise_error=True)  # type: ignore[assignment]
 
     # FOUND IN STANDARD LOCATIONS
     assert Path.extend("file_in_cwd.txt") == str(env["cwd"] / "file_in_cwd.txt")

@@ -25,6 +25,7 @@ cython_debug/
 __pypackages__/
 
 # TESTING
+.venv/
 .pytest_cache/
 
 # MISCELLANEOUS

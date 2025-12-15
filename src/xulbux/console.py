@@ -101,16 +101,14 @@ class ArgResult:
 
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
-    --------------------------------------------------------------------------------------
-    - `kwargs` -⠀a mapping of argument aliases to their corresponding data dictionaries\n
-    --------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------
+    - `**kwargs` -⠀a mapping of argument aliases to their corresponding data dictionaries\n
+    ----------------------------------------------------------------------------------------
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
     Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs: Mapping[str, str | list[str]]):
+    def __init__(self, **kwargs: ArgResultRegular | ArgResultPositional):
         for alias_name, data_dict in kwargs.items():
-            if not alias_name.isidentifier():
-                raise TypeError(f"Argument alias '{alias_name}' is invalid: It must be a valid Python variable name.")
             if "values" in data_dict:
                 setattr(
                     self, alias_name,
@@ -181,70 +179,70 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]],
         allow_spaces: bool = False,
+        **find_args: set[str] | ArgConfigWithDefault | Literal["before", "after"],
     ) -> Args:
         """Will search for the specified arguments in the command line
         arguments and return the results as a special `Args` object.\n
-        -----------------------------------------------------------------------------------------------------------
-        - `find_args` -⠀a dictionary defining the argument aliases and their flags/configuration (explained below)
-        - `allow_spaces` -⠀if true , flagged argument values can span multiple space-separated tokens until the
+        ---------------------------------------------------------------------------------------------------------
+        - `allow_spaces` -⠀if true, flagged argument values can span multiple space-separated tokens until the
           next flag is encountered, otherwise only the immediate next token is captured as the value:<br>
           This allows passing multi-word values without quotes
           (e.g. `-f hello world` instead of `-f "hello world"`).<br>
           * This setting does not affect `"before"`/`"after"` positional arguments,
             which always treat each token separately.<br>
           * When `allow_spaces=True`, positional `"after"` arguments will always be empty if any flags
-            are present, as all tokens following the last flag are consumed as that flag's value.\n
-        -----------------------------------------------------------------------------------------------------------
-        The `find_args` dictionary can have the following structures for each alias:
+            are present, as all tokens following the last flag are consumed as that flag's value.
+        - `**find_args` -⠀kwargs defining the argument aliases and their flags/configuration (explained below)\n
+        ---------------------------------------------------------------------------------------------------------
+        The `**find_args` keyword arguments can have the following structures for each alias:
         1. Simple set of flags (when no default value is needed):
            ```python
-           "alias_name": {"-f", "--flag"}
+           alias_name={"-f", "--flag"}
            ```
         2. Dictionary with `"flags"` and `"default"` value:
            ```python
-           "alias_name": {
+           alias_name={
                "flags": {"-f", "--flag"},
                "default": "some_value",
            }
            ```
         3. Positional argument collection using the literals `"before"` or `"after"`:
            ```python
-           "alias_name": "before"  # Collects non-flagged args before first flag
-           "alias_name": "after"   # Collects non-flagged args after last flag
+           alias_name="before"  # Collects non-flagged args before first flag
+           alias_name="after"   # Collects non-flagged args after last flag
            ```
-        #### Example `find_args`:
+        #### Example usage:
         ```python
-        find_args={
-            "text": "before",           # Positional args before flagged args
-            "arg1": {"-a1", "--arg1"},  # Just flags
-            "arg2": {"-a2", "--arg2"},  # Just flags
-            "arg3": {                   # With default value
+        ARGS = Console.get_args(
+            text="before",           # Positional args before flagged args
+            arg1={"-a1", "--arg1"},  # Just flags
+            arg2={"-a2", "--arg2"},  # Just flags
+            arg3={                   # With default value
                 "flags": {"-a3", "--arg3"},
                 "default": "default_val",
             },
-        }
+        )
         ```
         If the script is called via the command line:\n
         `python script.py Hello World -a1 "value1" --arg2`\n
-        ...it would return an `Args` object where:
-        - `args.text.exists` is `True`, `args.text.values` is `["Hello", "World"]`
-        - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"` (flag present with value)
-        - `args.arg2.exists` is `True`, `args.arg2.value` is `None` (flag present without value)
-        - `args.arg3.exists` is `False`, `args.arg3.value` is `"default_val"` (not present, has default value)\n
-        -----------------------------------------------------------------------------------------------------------
+        ... it would return an `Args` object where:
+        - `ARGS.text.exists` is `True`, `ARGS.text.values` is `["Hello", "World"]`
+        - `ARGS.arg1.exists` is `True`, `ARGS.arg1.value` is `"value1"` (flag present with value)
+        - `ARGS.arg2.exists` is `True`, `ARGS.arg2.value` is `None` (flag present without value)
+        - `ARGS.arg3.exists` is `False`, `ARGS.arg3.value` is `"default_val"` (not present, has default value)\n
+        ---------------------------------------------------------------------------------------------------------
         If an arg, defined with flags in `find_args`, is NOT present in the command line:
           * `exists` will be `False`
           * `value` will be the specified `default` value, or `None` if no default was specified
           * `values` will be `[]` for positional `"before"`/`"after"` arguments\n
-        -----------------------------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------------------
         For positional arguments:
         - `"before"` collects all non-flagged arguments that appear before the first flag
         - `"after"` collects all non-flagged arguments that appear after the last flag's value
-        -----------------------------------------------------------------------------------------------------------
-        Normally if `allow_spaces` is false, it will take a space as the end of an args value. If it is true,
-        it will take spaces as part of the value up until the next arg-flag is found.
+        ---------------------------------------------------------------------------------------------------------
+        Normally if `allow_spaces` is false, it will take a space as the end of an args value.
+        If it is true, it will take spaces as part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
         positional_configs, arg_lookup, results = {}, {}, {}
         before_count, after_count = 0, 0
@@ -254,8 +252,6 @@ class Console:
         for alias, config in find_args.items():
             flags, default_value = None, None
 
-            if not alias.isidentifier():
-                raise TypeError(f"Argument alias '{alias}' is invalid: It must be a valid Python variable name.")
             if isinstance(config, str):
                 # HANDLE POSITIONAL ARGUMENT COLLECTION
                 if config == "before":
@@ -277,7 +273,7 @@ class Console:
                 flags = config
                 results[alias] = {"exists": False, "value": default_value}
             elif isinstance(config, dict):
-                flags, default_value = config["flags"], config["default"]
+                flags, default_value = config.get("flags"), config.get("default")
                 results[alias] = {"exists": False, "value": default_value}
             else:
                 raise TypeError(

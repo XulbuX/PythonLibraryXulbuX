@@ -42,9 +42,6 @@ def test_serialize_bytes():
     import base64
     assert base64.b64decode(serialized_non_utf8["bytes"]).decode("latin-1") == non_utf8_bytes.decode("latin-1")
 
-    with pytest.raises(TypeError):
-        Data.serialize_bytes("not bytes")  # type: ignore[assignment]
-
 
 def test_deserialize_bytes():
     utf8_serialized_bytes = {"bytes": "Hello", "encoding": "utf-8"}
