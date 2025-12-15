@@ -72,6 +72,6 @@ CLI_HELP = FormatCodes.to_ansi(
 
 
 def show_help() -> None:
-    FormatCodes.__config_console()
+    FormatCodes._config_console()
     print(CLI_HELP)
     Console.pause_exit(pause=True, prompt="  [dim](Press any key to exit...)\n\n")

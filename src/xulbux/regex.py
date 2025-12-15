@@ -196,7 +196,7 @@ class Regex:
 
     @staticmethod
     def _clean(pattern: str) -> str:
-        """Internal method, to make a multiline-string regex pattern into a single-line pattern."""
+        """Internal method to make a multiline-string regex pattern into a single-line pattern."""
         return "".join(l.strip() for l in pattern.splitlines()).strip()
 
 

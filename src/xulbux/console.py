@@ -11,7 +11,7 @@ from .string import String
 from .color import Color, hexa
 from .regex import LazyRegex
 
-from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, cast
+from typing import Generator, Callable, Optional, Literal, Mapping, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -25,10 +25,9 @@ import shutil as _shutil
 import time as _time
 import sys as _sys
 import os as _os
-import re as _re
 import io as _io
 
-# PRECOMPILE REGULAR EXPRESSIONS
+
 _PATTERNS = LazyRegex(
     hr=r"(?i){hr}",
     hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",

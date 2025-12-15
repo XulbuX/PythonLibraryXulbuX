@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch, call
 from collections import namedtuple
 import builtins
 import pytest
-import time
 import sys
 import io
 

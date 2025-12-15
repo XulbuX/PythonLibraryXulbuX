@@ -230,7 +230,7 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        FormatCodes.__config_console()
+        FormatCodes._config_console()
         _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
 
         if flush:
@@ -253,7 +253,7 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `format_codes` module documentation."""
-        FormatCodes.__config_console()
+        FormatCodes._config_console()
         user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
 
         if reset_ansi:
@@ -497,8 +497,10 @@ class FormatCodes:
             return _PATTERNS.ansi_seq.sub("", ansi_string)
 
     @staticmethod
-    def __config_console() -> None:
-        """Configure the console to be able to interpret and render ANSI formatting."""
+    def _config_console() -> None:
+        """Internal method which configure the console to be able to interpret and render ANSI formatting.\n
+        -----------------------------------------------------------------------------------------------------
+        This method will only do something the first time it's called. Subsequent calls will do nothing."""
         global _CONSOLE_ANSI_CONFIGURED
         if not _CONSOLE_ANSI_CONFIGURED:
             _sys.stdout.flush()
