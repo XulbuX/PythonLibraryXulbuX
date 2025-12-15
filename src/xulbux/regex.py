@@ -104,7 +104,10 @@ class Regex:
         If no `func_name` is given, it will match any function call.\n
         ---------------------------------------------------------------------------------
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
-        return rf"""(?<=\b)({func_name or r"[\w_]+"})\s*{Regex.brackets("(", ")", is_group=True)}"""
+        if func_name in {"", None}:
+            func_name = r"[\w_]+"
+
+        return rf"""(?<=\b)({func_name})\s*{Regex.brackets("(", ")", is_group=True)}"""
 
     @staticmethod
     def rgba_str(fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
