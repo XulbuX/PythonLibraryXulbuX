@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This library is compatible with Python 3.14, but **certain dependencies might not yet support this version**.
+
 # **xulbux**
 
 [![](https://img.shields.io/pypi/v/xulbux?style=flat&labelColor=404560&color=7075FF)](https://pypi.org/project/xulbux) [![](https://img.shields.io/pepy/dt/xulbux?style=flat&labelColor=404560&color=7075FF)](https://clickpy.clickhouse.com/dashboard/xulbux) [![](https://img.shields.io/github/license/XulbuX/PythonLibraryXulbuX?style=flat&labelColor=405555&color=70FFEE)](https://github.com/XulbuX/PythonLibraryXulbuX/blob/main/LICENSE) [![](https://img.shields.io/github/last-commit/XulbuX/PythonLibraryXulbuX?style=flat&labelColor=554045&color=FF6065)](https://github.com/XulbuX/PythonLibraryXulbuX/commits) [![](https://img.shields.io/github/issues/XulbuX/PythonLibraryXulbuX?style=flat&labelColor=554045&color=FF6065)](https://github.com/XulbuX/PythonLibraryXulbuX/issues) [![](https://img.shields.io/github/stars/XulbuX/PythonLibraryXulbuX?label=★&style=flat&labelColor=604A40&color=FF9673)](https://github.com/XulbuX/PythonLibraryXulbuX/stargazers)
@@ -51,9 +54,9 @@ So you don't have to import the full library under an alias, you can also import
 ```python
 # LIBRARY SUB MODULES
 from xulbux.base.consts import COLOR, CHARS, ANSI
-# Main Classes
+# MODULE MAIN CLASSES
 from xulbux import Code, Color, Console, ...
-# module specific imports
+# MODULE SPECIFIC IMPORTS
 from xulbux.color import rgba, hsla, hexa
 ```
 

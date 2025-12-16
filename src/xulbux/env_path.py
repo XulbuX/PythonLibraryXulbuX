@@ -18,9 +18,6 @@ class EnvPath:
         """Get the PATH environment variable.\n
         ------------------------------------------------------------------------------
         - `as_list` -⠀if true, returns the paths as a list; otherwise, as a string"""
-        if not isinstance(as_list, bool):
-            raise TypeError(f"The 'as_list' parameter must be a boolean, got {type(as_list)}")
-
         paths = _os.environ.get("PATH", "")
         return paths.split(_os.pathsep) if as_list else paths
 
@@ -31,13 +28,6 @@ class EnvPath:
         - `path` -⠀the path to check for
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if not isinstance(path, (str, type(None))):
-            raise TypeError(f"The 'path' parameter must be a string or None, got {type(path)}")
-        if not isinstance(cwd, bool):
-            raise TypeError(f"The 'cwd' parameter must be a boolean, got {type(cwd)}")
-        if not isinstance(base_dir, bool):
-            raise TypeError(f"The 'base_dir' parameter must be a boolean, got {type(base_dir)}")
-
         return _os.path.normpath(EnvPath.__get(path, cwd, base_dir)) \
             in {_os.path.normpath(p) for p in EnvPath.paths(as_list=True)}
 
@@ -48,13 +38,6 @@ class EnvPath:
         - `path` -⠀the path to add
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if not isinstance(path, (str, type(None))):
-            raise TypeError(f"The 'path' parameter must be a string or None, got {type(path)}")
-        if not isinstance(cwd, bool):
-            raise TypeError(f"The 'cwd' parameter must be a boolean, got {type(cwd)}")
-        if not isinstance(base_dir, bool):
-            raise TypeError(f"The 'base_dir' parameter must be a boolean, got {type(base_dir)}")
-
         if not EnvPath.has_path(path := EnvPath.__get(path, cwd, base_dir)):
             EnvPath.__persistent(path)
 
@@ -65,13 +48,6 @@ class EnvPath:
         - `path` -⠀the path to remove
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if not isinstance(path, (str, type(None))):
-            raise TypeError(f"The 'path' parameter must be a string or None, got {type(path)}")
-        if not isinstance(cwd, bool):
-            raise TypeError(f"The 'cwd' parameter must be a boolean, got {type(cwd)}")
-        if not isinstance(base_dir, bool):
-            raise TypeError(f"The 'base_dir' parameter must be a boolean, got {type(base_dir)}")
-
         if EnvPath.has_path(path := EnvPath.__get(path, cwd, base_dir)):
             EnvPath.__persistent(path, remove=True)
 
@@ -88,14 +64,13 @@ class EnvPath:
             path = Path.script_dir
 
         if path is None:
-            raise ValueError("No path provided. Please provide a 'path' or set either 'cwd' or 'base_dir' to True.")
+            raise ValueError("No path provided.\nPlease provide a 'path' or set either 'cwd' or 'base_dir' to True.")
 
         return _os.path.normpath(path)
 
     @staticmethod
     def __persistent(path: str, remove: bool = False) -> None:
         """Add or remove a path from PATH persistently across sessions as well as the current session."""
-
         current_paths = list(EnvPath.paths(as_list=True))
         path = _os.path.normpath(path)
 
@@ -114,7 +89,7 @@ class EnvPath:
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)
             except Exception as e:
-                raise RuntimeError(f"Failed to update PATH in registry:\n  " + str(e).replace("\n", "  \n"))
+                raise RuntimeError("Failed to update PATH in registry:\n  " + str(e).replace("\n", "  \n"))
 
         else:  # UNIX-LIKE (LINUX/macOS)
             shell_rc_file = _os.path.expanduser(

@@ -55,17 +55,12 @@ class rgba:
             self.r, self.g, self.b, self.a = r, g, b, a
             return
 
-        if any(isinstance(x, rgba) for x in (r, g, b)):
-            raise ValueError("Color is already an rgba() color object.")
-        if not all(isinstance(x, int) and (0 <= x <= 255) for x in (r, g, b)):
+        if not all((0 <= x <= 255) for x in (r, g, b)):
             raise ValueError(
                 f"The 'r', 'g' and 'b' parameters must be integers in range [0, 255] inclusive, got {r=} {g=} {b=}"
             )
-        if a is not None:
-            if not isinstance(a, float):
-                raise TypeError(f"The 'a' parameter must be a float, got {type(a)}")
-            elif not (0.0 <= a <= 1.0):
-                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
+        if a is not None and not (0.0 <= a <= 1.0):
+            raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
 
         self.r, self.g, self.b = r, g, b
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
@@ -317,17 +312,12 @@ class hsla:
             self.h, self.s, self.l, self.a = h, s, l, a
             return
 
-        if any(isinstance(x, hsla) for x in (h, s, l)):
-            raise ValueError("Color is already a hsla() color object.")
-        if not (isinstance(h, int) and (0 <= h <= 360)):
-            raise ValueError(f"The 'h' parameter must be an integer in range [0, 360] inclusive, got {h!r}")
-        if not all(isinstance(x, int) and (0 <= x <= 100) for x in (s, l)):
-            raise ValueError(f"The 's' and 'l' parameters must be integers in range [0, 100] inclusive, got {s=} {l=}")
-        if a is not None:
-            if not isinstance(a, float):
-                raise TypeError(f"The 'a' parameter must be a float, got {type(a)}")
-            elif not (0.0 <= a <= 1.0):
-                raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
+        if not (0 <= h <= 360):
+            raise ValueError(f"The 'h' parameter must be in range [0, 360] inclusive, got {h!r}")
+        if not all((0 <= x <= 100) for x in (s, l)):
+            raise ValueError(f"The 's' and 'l' parameters must be in range [0, 100] inclusive, got {s=} {l=}")
+        if a is not None and not (0.0 <= a <= 1.0):
+            raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
 
         self.h, self.s, self.l = h, s, l
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
@@ -860,9 +850,6 @@ class Color:
         -----------------------------------------------------------------
         - `color` -⠀the color to check (can be in any supported format)
         - `allow_alpha` -⠀whether to allow alpha channel in the color"""
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'new_tab_size' parameter must be an boolean, got {type(allow_alpha)}")
-
         try:
             if isinstance(color, hsla):
                 return True
@@ -907,11 +894,6 @@ class Color:
         - `color` -⠀the color to check (can be in any supported format)
         - `allow_alpha` -⠀whether to allow alpha channel in the color
         - `get_prefix` -⠀if true, the prefix used in the color (if any) is returned along with validity"""
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'new_tab_size' parameter must be an boolean, got {type(allow_alpha)}")
-        if not isinstance(get_prefix, bool):
-            raise TypeError(f"The 'get_prefix' parameter must be an boolean, got {type(get_prefix)}")
-
         try:
             if isinstance(color, hexa):
                 return (True, "#") if get_prefix else True
@@ -938,9 +920,6 @@ class Color:
         -------------------------------------------------------------------
         - `color` -⠀the color to check (can be in any supported format)
         - `allow_alpha` -⠀whether to allow alpha channel in the color"""
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'new_tab_size' parameter must be an boolean, got {type(allow_alpha)}")
-
         return bool(
             Color.is_valid_rgba(color, allow_alpha) \
             or Color.is_valid_hsla(color, allow_alpha) \
@@ -1022,11 +1001,6 @@ class Color:
         ---------------------------------------------------------------------------------------------------------------
         - `string` -⠀the string to search for RGBA colors
         - `only_first` -⠀if true, only the first found color will be returned, otherwise a list of all found colors"""
-        if not isinstance(string, str):
-            raise TypeError(f"The 'string' parameter must be a string, got {type(string)}")
-        if not isinstance(only_first, bool):
-            raise TypeError(f"The 'only_first' parameter must be an boolean, got {type(only_first)}")
-
         if only_first:
             if not (match := _re.search(Regex.rgba_str(allow_alpha=True), string)):
                 return None
@@ -1071,12 +1045,10 @@ class Color:
         This could affect the color a little bit, but will make sure, that it won't be interpreted
         as a completely different color, when initializing it as a `hexa()` color or changing it
         back to RGBA using `Color.hex_int_to_rgba()`."""
-        if not all(isinstance(c, int) and 0 <= c <= 255 for c in (r, g, b)):
+        if not all((0 <= c <= 255) for c in (r, g, b)):
             raise ValueError(f"The 'r', 'g' and 'b' parameters must be integers in [0, 255], got {r=} {g=} {b=}")
-        if a is not None and not (isinstance(a, float) and 0 <= a <= 1):
+        if a is not None and not (0.0 <= a <= 1.0):
             raise ValueError(f"The 'a' parameter must be a float in [0.0, 1.0] or None, got {a!r}")
-        if not isinstance(preserve_original, bool):
-            raise TypeError(f"The 'preserve_original' parameter must be an boolean, got {type(preserve_original)}")
 
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
@@ -1104,11 +1076,7 @@ class Color:
         If the red channel is `1` after conversion, it will be set to `0`, because when converting
         from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.
         This is the correction, so the color doesn't even look slightly different."""
-        if not isinstance(hex_int, int):
-            raise TypeError(f"The 'hex_int' parameter must be an integer, got {type(hex_int)}")
-        if not isinstance(preserve_original, bool):
-            raise TypeError(f"The 'preserve_original' parameter must be an boolean, got {type(preserve_original)}")
-        elif not 0 <= hex_int <= 0xFFFFFFFF:
+        if not (0 <= hex_int <= 0xFFFFFFFF):
             raise ValueError(f"Expected HEX integer in range [0x000000, 0xFFFFFFFF] inclusive, got 0x{hex_int:X}")
 
         if len(hex_str := f"{hex_int:X}") <= 6:
@@ -1154,12 +1122,10 @@ class Color:
           * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
           * `"simple"` Simple arithmetic mean (less accurate)
           * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
-        if not all(isinstance(c, int) and 0 <= c <= 255 for c in (r, g, b)):
+        if not all(0 <= c <= 255 for c in (r, g, b)):
             raise ValueError(f"The 'r', 'g' and 'b' parameters must be integers in [0, 255], got {r=} {g=} {b=}")
         if output_type not in {int, float, None}:
             raise TypeError(f"The 'output_type' parameter must be either 'int', 'float' or 'None', got {output_type!r}")
-        if method not in {"wcag2", "wcag3", "simple", "bt601"}:
-            raise ValueError(f"The 'method' parameter must be one of 'wcag2', 'wcag3', 'simple' or 'bt601', got {method!r}")
 
         _r, _g, _b = r / 255.0, g / 255.0, b / 255.0
 
@@ -1190,9 +1156,7 @@ class Color:
         """Helper method to linearize sRGB component following the WCAG standard.\n
         ----------------------------------------------------------------------------
         - `c` -⠀the sRGB component value in range [0.0, 1.0] inclusive"""
-        if not isinstance(c, float):
-            raise TypeError(f"The 'c' parameter must be a float, got {type(c)}")
-        elif not 0.0 <= c <= 1.0:
+        if not (0.0 <= c <= 1.0):
             raise ValueError(f"The 'c' parameter must be in range [0.0, 1.0] inclusive, got {c!r}")
 
         if c <= 0.03928:
@@ -1206,9 +1170,6 @@ class Color:
         --------------------------------------------------------------------------------------------------
         - `text_bg_color` -⠀the background color (can be in RGBA or HEXA format)"""
         was_hexa, was_int = Color.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
-
-        if not (Color.is_valid_rgba(text_bg_color) or was_hexa):
-            raise ValueError(f"The 'text_bg_color' parameter must be a valid RGBA or HEXA color, got {text_bg_color!r}")
 
         text_bg_color = Color.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_color[0] + 0.7152 * text_bg_color[1] + 0.0722 * text_bg_color[2]
@@ -1230,16 +1191,13 @@ class Color:
           in range `-1.0` (darken by 100%) and `1.0` (lighten by 100%)"""
         was_hexa = Color.is_valid_hexa(color)
 
-        if not (Color.is_valid_rgba(color) or was_hexa):
-            raise ValueError(f"The 'color' parameter must be a valid RGBA or HEXA color, got {color!r}")
-        if not isinstance(lightness_change, float):
-            raise TypeError(f"The 'lightness_change' parameter must be a float, got {type(lightness_change)}")
-        elif not -1.0 <= lightness_change <= 1.0:
+        if not (-1.0 <= lightness_change <= 1.0):
             raise ValueError(
                 f"The 'lightness_change' parameter must be in range [-1.0, 1.0] inclusive, got {lightness_change!r}"
             )
 
         hsla_color: hsla = Color.to_hsla(color)
+
         h, s, l, a = (
             int(hsla_color[0]), int(hsla_color[1]), int(hsla_color[2]), \
             hsla_color[3] if Color.has_alpha(hsla_color) else None
@@ -1260,11 +1218,7 @@ class Color:
           in range `-1.0` (saturate by 100%) and `1.0` (desaturate by 100%)"""
         was_hexa = Color.is_valid_hexa(color)
 
-        if not (Color.is_valid_rgba(color) or was_hexa):
-            raise ValueError(f"The 'color' parameter must be a valid RGBA or HEXA color, got {color!r}")
-        if not isinstance(saturation_change, float):
-            raise TypeError(f"The 'saturation_change' parameter must be a float, got {type(saturation_change)}")
-        elif not -1.0 <= saturation_change <= 1.0:
+        if not (-1.0 <= saturation_change <= 1.0):
             raise ValueError(
                 f"The 'saturation_change' parameter must be in range [-1.0, 1.0] inclusive, got {saturation_change!r}"
             )

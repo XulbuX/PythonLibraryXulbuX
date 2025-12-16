@@ -6,11 +6,12 @@ which offer methods for logging and other actions within the console.
 from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
-from .format_codes import _COMPILED as _FC_COMPILED, FormatCodes
+from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
 from .string import String
 from .color import Color, hexa
+from .regex import LazyRegex
 
-from typing import Generator, Callable, Optional, Literal, Mapping, Pattern, TypeVar, TextIO, cast
+from typing import Generator, Callable, Optional, Literal, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -24,22 +25,21 @@ import shutil as _shutil
 import time as _time
 import sys as _sys
 import os as _os
-import re as _re
 import io as _io
 
 
-_COMPILED: dict[str, Pattern] = {  # PRECOMPILE REGULAR EXPRESSIONS
-    "hr": _re.compile(r"(?i)\{hr\}"),
-    "hr_no_nl": _re.compile(r"(?i)(?<!\n){hr}(?!\n)"),
-    "hr_r_nl": _re.compile(r"(?i)(?<!\n){hr}(?=\n)"),
-    "hr_l_nl": _re.compile(r"(?i)(?<=\n){hr}(?!\n)"),
-    "label": _re.compile(r"(?i)\{(?:label|l)\}"),
-    "bar": _re.compile(r"(?i)\{(?:bar|b)\}"),
-    "current": _re.compile(r"(?i)\{(?:current|c)\}"),
-    "total": _re.compile(r"(?i)\{(?:total|t)\}"),
-    "percentage": _re.compile(r"(?i)\{(?:percentage|percent|p)\}"),
-    "animation": _re.compile(r"(?i)\{(?:animation|a)\}"),
-}
+_PATTERNS = LazyRegex(
+    hr=r"(?i){hr}",
+    hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",
+    hr_r_nl=r"(?i)(?<!\n){hr}(?=\n)",
+    hr_l_nl=r"(?i)(?<=\n){hr}(?!\n)",
+    label=r"(?i){(?:label|l)}",
+    bar=r"(?i){(?:bar|b)}",
+    current=r"(?i){(?:current|c)}",
+    total=r"(?i){(?:total|t)}",
+    percentage=r"(?i){(?:percentage|percent|p)}",
+    animation=r"(?i){(?:animation|a)}",
+)
 
 
 class _ConsoleWidth:
@@ -85,12 +85,6 @@ class ArgResult:
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
     def __init__(self, exists: bool, value: Optional[str] = None, values: Optional[list[str]] = None):
-        if not isinstance(exists, bool):
-            raise TypeError(f"The 'exists' parameter must be a boolean, got {type(exists)}")
-        if not isinstance(value, (str, type(None))):
-            raise TypeError(f"The 'value' parameter must be a string or None, got {type(value)}")
-        if not isinstance(values, (list, type(None))):
-            raise TypeError(f"The 'values' parameter must be a list of strings or None, got {type(values)}")
         if value is not None and values is not None:
             raise ValueError("The 'value' and 'values' parameters are mutually exclusive. Only one can be set.")
 
@@ -107,24 +101,14 @@ class ArgResult:
 
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
-    --------------------------------------------------------------------------------------
-    - `kwargs` -⠀a mapping of argument aliases to their corresponding data dictionaries\n
-    --------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------
+    - `**kwargs` -⠀a mapping of argument aliases to their corresponding data dictionaries\n
+    ----------------------------------------------------------------------------------------
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.
     Each such attribute (e.g. `args.foo`) is an instance of `ArgResult`."""
 
-    def __init__(self, **kwargs: Mapping[str, str | list[str]]):
-        if not kwargs:
-            raise ValueError("At least one argument must be provided to initialize Args.")
-        if not all(isinstance(data_dict, Mapping) for data_dict in kwargs.values()):
-            raise TypeError(
-                f"All argument values must be mappings (e.g. dict), got "
-                f"{[type(v) for v in kwargs.values() if not isinstance(v, Mapping)]}"
-            )
-
+    def __init__(self, **kwargs: ArgResultRegular | ArgResultPositional):
         for alias_name, data_dict in kwargs.items():
-            if not alias_name.isidentifier():
-                raise TypeError(f"Argument alias '{alias_name}' is invalid: It must be a valid Python variable name.")
             if "values" in data_dict:
                 setattr(
                     self, alias_name,
@@ -195,93 +179,90 @@ class Console:
 
     @staticmethod
     def get_args(
-        find_args: Mapping[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]],
         allow_spaces: bool = False,
+        **find_args: set[str] | ArgConfigWithDefault | Literal["before", "after"],
     ) -> Args:
         """Will search for the specified arguments in the command line
         arguments and return the results as a special `Args` object.\n
-        -----------------------------------------------------------------------------------------------------------
-        - `find_args` -⠀a dictionary defining the argument aliases and their flags/configuration (explained below)
-        - `allow_spaces` -⠀if true , flagged argument values can span multiple space-separated tokens until the
+        ---------------------------------------------------------------------------------------------------------
+        - `allow_spaces` -⠀if true, flagged argument values can span multiple space-separated tokens until the
           next flag is encountered, otherwise only the immediate next token is captured as the value:<br>
           This allows passing multi-word values without quotes
           (e.g. `-f hello world` instead of `-f "hello world"`).<br>
           * This setting does not affect `"before"`/`"after"` positional arguments,
             which always treat each token separately.<br>
           * When `allow_spaces=True`, positional `"after"` arguments will always be empty if any flags
-            are present, as all tokens following the last flag are consumed as that flag's value.\n
-        -----------------------------------------------------------------------------------------------------------
-        The `find_args` dictionary can have the following structures for each alias:
+            are present, as all tokens following the last flag are consumed as that flag's value.
+        - `**find_args` -⠀kwargs defining the argument aliases and their flags/configuration (explained below)\n
+        ---------------------------------------------------------------------------------------------------------
+        The `**find_args` keyword arguments can have the following structures for each alias:
         1. Simple set of flags (when no default value is needed):
            ```python
-           "alias_name": {"-f", "--flag"}
+           alias_name={"-f", "--flag"}
            ```
         2. Dictionary with `"flags"` and `"default"` value:
            ```python
-           "alias_name": {
+           alias_name={
                "flags": {"-f", "--flag"},
                "default": "some_value",
            }
            ```
         3. Positional argument collection using the literals `"before"` or `"after"`:
            ```python
-           "alias_name": "before"  # Collects non-flagged args before first flag
-           "alias_name": "after"   # Collects non-flagged args after last flag
+           alias_name="before"  # COLLECTS NON-FLAGGED ARGS BEFORE FIRST FLAG
+           alias_name="after"   # COLLECTS NON-FLAGGED ARGS AFTER LAST FLAG
            ```
-        Example `find_args`:
+        #### Example usage:
         ```python
-        find_args={
-            "text": "before",           # Positional args before flagged args
-            "arg1": {"-a1", "--arg1"},  # Just flags
-            "arg2": {"-a2", "--arg2"},  # Just flags
-            "arg3": {                   # With default value
-                "flags": {"-a3", "--arg3"},
-                "default": "default_val",
-            },
-        }
+        Args(
+            # FOUND TWO POSITIONAL ARGUMENTS BEFORE THE FIRST FLAG
+            text = ArgResult(exists=True, values=["Hello", "World"]),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITH A VALUE
+            arg1 = ArgResult(exists=True, value="value1"),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITHOUT A VALUE
+            arg2 = ArgResult(exists=True, value=None),
+            # DIDN'T FIND ANY OF THE SPECIFIED FLAGS BUT HAS A DEFAULT VALUE
+            arg3 = ArgResult(exists=False, value="default_val"),
+        )
         ```
         If the script is called via the command line:\n
         `python script.py Hello World -a1 "value1" --arg2`\n
-        ...it would return an `Args` object where:
-        - `args.text.exists` is `True`, `args.text.values` is `["Hello", "World"]`
-        - `args.arg1.exists` is `True`, `args.arg1.value` is `"value1"` (flag present with value)
-        - `args.arg2.exists` is `True`, `args.arg2.value` is `None` (flag present without value)
-        - `args.arg3.exists` is `False`, `args.arg3.value` is `"default_val"` (not present, has default value)\n
-        -----------------------------------------------------------------------------------------------------------
+        ... it would return an `Args` object:
+        ```python
+        Args(
+            # FOUND TWO ARGUMENTS BEFORE THE FIRST FLAG
+            text = ArgResult(exists=True, values=["Hello", "World"]),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITH A FOLLOWING VALUE
+            arg1 = ArgResult(exists=True, value="value1"),
+            # FOUND ONE OF THE SPECIFIED FLAGS BUT NO FOLLOWING VALUE
+            arg2 = ArgResult(exists=True, value=None),
+            # DIDN'T FIND ANY OF THE SPECIFIED FLAGS AND HAS NO DEFAULT VALUE
+            arg3 = ArgResult(exists=False, value="default_val"),
+        )
+        ```
+        ---------------------------------------------------------------------------------------------------------
         If an arg, defined with flags in `find_args`, is NOT present in the command line:
           * `exists` will be `False`
           * `value` will be the specified `default` value, or `None` if no default was specified
           * `values` will be `[]` for positional `"before"`/`"after"` arguments\n
-        -----------------------------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------------------
         For positional arguments:
         - `"before"` collects all non-flagged arguments that appear before the first flag
         - `"after"` collects all non-flagged arguments that appear after the last flag's value
-        -----------------------------------------------------------------------------------------------------------
-        Normally if `allow_spaces` is false, it will take a space as the end of an args value. If it is true,
-        it will take spaces as part of the value up until the next arg-flag is found.
+        ---------------------------------------------------------------------------------------------------------
+        Normally if `allow_spaces` is false, it will take a space as the end of an args value.
+        If it is true, it will take spaces as part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
         positional_configs, arg_lookup, results = {}, {}, {}
         before_count, after_count = 0, 0
-        args = _sys.argv[1:]
-        args_len = len(args)
-
-        if not isinstance(find_args, Mapping):
-            raise TypeError(f"The 'find_args' parameter must be a mapping (e.g. dict), got {type(find_args)}")
-        if not isinstance(allow_spaces, bool):
-            raise TypeError(f"The 'allow_spaces' parameter must be a boolean, got {type(allow_spaces)}")
+        args_len = len(args := _sys.argv[1:])
 
         # PARSE 'find_args' CONFIGURATION
         for alias, config in find_args.items():
             flags, default_value = None, None
 
-            if not alias.isidentifier():
-                raise TypeError(f"Argument alias '{alias}' is invalid: It must be a valid Python variable name.")
             if isinstance(config, str):
                 # HANDLE POSITIONAL ARGUMENT COLLECTION
-                if config not in {"before", "after"}:
-                    raise ValueError(
-                        f"Invalid positional argument type '{config}' for alias '{alias}'. Must be either 'before' or 'after'."
-                    )
                 if config == "before":
                     before_count += 1
                     if before_count > 1:
@@ -290,24 +271,18 @@ class Console:
                     after_count += 1
                     if after_count > 1:
                         raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
+                else:
+                    raise ValueError(
+                        f"Invalid positional argument type '{config}' for alias '{alias}'.\n"
+                        "Must be either 'before' or 'after'."
+                    )
                 positional_configs[alias] = config
                 results[alias] = {"exists": False, "values": []}
             elif isinstance(config, set):
                 flags = config
                 results[alias] = {"exists": False, "value": default_value}
             elif isinstance(config, dict):
-                if "flags" not in config:
-                    raise ValueError(f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'flags' key.")
-                elif "default" not in config:
-                    raise ValueError(
-                        f"Invalid configuration for alias '{alias}'. Dictionary must contain a 'default' key.\n"
-                        "Use a simple set of strings if no default value is needed and only flags are to be specified."
-                    )
-                if not isinstance(config["flags"], set):
-                    raise ValueError(f"Invalid 'flags' for alias '{alias}'. Must be a set of strings.")
-                if not isinstance(config["default"], str):
-                    raise ValueError(f"Invalid 'default' value for alias '{alias}'. Must be a string.")
-                flags, default_value = config["flags"], config["default"]
+                flags, default_value = config.get("flags"), config.get("default")
                 results[alias] = {"exists": False, "value": default_value}
             else:
                 raise TypeError(
@@ -423,17 +398,6 @@ class Console:
         - `exit` -⠀whether to exit the program after printing the prompt (and pausing if `pause` is true)
         - `exit_code` -⠀the exit code to use when exiting the program
         - `reset_ansi` -⠀whether to reset the ANSI formatting after printing the prompt"""
-        if not isinstance(pause, bool):
-            raise TypeError(f"The 'pause' parameter must be a boolean, got {type(pause)}")
-        if not isinstance(exit, bool):
-            raise TypeError(f"The 'exit' parameter must be a boolean, got {type(exit)}")
-        if not isinstance(exit_code, int):
-            raise TypeError(f"The 'exit_code' parameter must be an integer, got {type(exit_code)}")
-        elif exit_code < 0:
-            raise ValueError("The 'exit_code' parameter must be a non-negative integer.")
-        if not isinstance(reset_ansi, bool):
-            raise TypeError(f"The 'reset_ansi' parameter must be a boolean, got {type(reset_ansi)}")
-
         FormatCodes.print(prompt, end="", flush=True)
         if reset_ansi:
             FormatCodes.print("[_]", end="")
@@ -479,31 +443,14 @@ class Console:
         -------------------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
-        if not isinstance(title, (str, type(None))):
-            raise TypeError(f"The 'title' parameter must be a string or None, got {type(title)}")
-        if not isinstance(format_linebreaks, bool):
-            raise TypeError(f"The 'format_linebreaks' parameter must be a boolean, got {type(format_linebreaks)}")
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
         has_title_bg = False
-        if title_bg_color is not None:
-            if (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
-                title_bg_color, has_title_bg = Color.to_hexa(cast(Rgba | Hexa, title_bg_color)), True
-            else:
-                raise ValueError(f"The 'title_bg_color' parameter must be a valid Rgba or Hexa color, got {title_bg_color!r}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(tab_size, int):
-            raise TypeError(f"The 'tab_size' parameter must be an integer, got {type(tab_size)}")
-        elif tab_size < 0:
+        if title_bg_color is not None and (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
+            title_bg_color, has_title_bg = Color.to_hexa(cast(Rgba | Hexa, title_bg_color)), True
+        if tab_size < 0:
             raise ValueError("The 'tab_size' parameter must be a non-negative integer.")
-        if not isinstance(title_px, int):
-            raise TypeError(f"The 'title_px' parameter must be an integer, got {type(title_px)}")
-        elif title_px < 0:
+        if title_px < 0:
             raise ValueError("The 'title_px' parameter must be a non-negative integer.")
-        if not isinstance(title_mx, int):
-            raise TypeError(f"The 'title_mx' parameter must be an integer, got {type(title_mx)}")
-        elif title_mx < 0:
+        if title_mx < 0:
             raise ValueError("The 'title_mx' parameter must be a non-negative integer.")
 
         title = "" if title is None else title.strip().upper()
@@ -587,9 +534,6 @@ class Console:
         """A preset for `log()`: `DEBUG` log message with the options to pause
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
-        if not isinstance(active, bool):
-            raise TypeError(f"The 'active' parameter must be a boolean, got {type(active)}")
-
         if active:
             Console.log(
                 title="DEBUG",
@@ -751,21 +695,9 @@ class Console:
         -------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not (isinstance(box_bg_color, str) or Color.is_valid_rgba(box_bg_color) or Color.is_valid_hexa(box_bg_color)):
-            raise TypeError(f"The 'box_bg_color' parameter must be a string, Rgba, or Hexa color, got {type(box_bg_color)}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(w_padding, int):
-            raise TypeError(f"The 'w_padding' parameter must be an integer, got {type(w_padding)}")
-        elif w_padding < 0:
+        if w_padding < 0:
             raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
-        if not isinstance(w_full, bool):
-            raise TypeError(f"The 'w_full' parameter must be a boolean, got {type(w_full)}")
-        if not isinstance(indent, int):
-            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
-        elif indent < 0:
+        if indent < 0:
             raise ValueError("The 'indent' parameter must be a non-negative integer.")
 
         if Color.is_valid(box_bg_color):
@@ -777,15 +709,19 @@ class Console:
         pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
 
-        lines = [
+        lines = [( \
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
-            + _FC_COMPILED["formatting"].sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
-            (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
-        ]
+            + _FC_PATTERNS.formatting.sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line)
+            + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]"
+        ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
-            f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n" + "\n".join(lines)
-            + f"\n{spaces_l}[bg:{box_bg_color}]{pady}[_]",
+            ( \
+                f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n"
+                + "\n".join(lines)
+                + ("\n" if lines else "")
+                + f"{spaces_l}[bg:{box_bg_color}]{pady}[_]"
+            ),
             default_color=default_color or "#000",
             sep="\n",
             end=end,
@@ -839,42 +775,15 @@ class Console:
         9. left horizontal rule connector
         10. horizontal rule
         11. right horizontal rule connector"""
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(border_type, str):
-            raise TypeError(f"The 'border_type' parameter must be a string, got {type(border_type)}")
-        elif border_type not in {"standard", "rounded", "strong", "double"} and _border_chars is None:
-            raise ValueError(
-                f"The 'border_type' parameter must be one of 'standard', 'rounded', 'strong', or 'double', got '{border_type!r}'"
-            )
-        if not (isinstance(border_style, str) or Color.is_valid_rgba(border_style) or Color.is_valid_hexa(border_style)):
-            raise TypeError(f"The 'border_style' parameter must be a string, Rgba, or Hexa color, got {type(border_style)}")
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(w_padding, int):
-            raise TypeError(f"The 'w_padding' parameter must be an integer, got {type(w_padding)}")
-        elif w_padding < 0:
+        if w_padding < 0:
             raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
-        if not isinstance(w_full, bool):
-            raise TypeError(f"The 'w_full' parameter must be a boolean, got {type(w_full)}")
-        if not isinstance(indent, int):
-            raise TypeError(f"The 'indent' parameter must be an integer, got {type(indent)}")
-        elif indent < 0:
+        if indent < 0:
             raise ValueError("The 'indent' parameter must be a non-negative integer.")
         if _border_chars is not None:
-            if not isinstance(_border_chars, tuple):
-                raise TypeError(f"The '_border_chars' parameter must be a tuple, got {type(_border_chars)}")
-            elif len(_border_chars) != 11:
+            if len(_border_chars) != 11:
                 raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
-            for i, char in enumerate(_border_chars):
-                if not isinstance(char, str):
-                    raise TypeError(
-                        f"All elements of '_border_chars' must be strings, but element {i} is of type {type(char)}"
-                    )
-                elif len(char) != 1:
-                    raise ValueError(
-                        f"All elements of '_border_chars' must be single characters, but element {i} is '{char}' with length {len(char)}"
-                    )
+            if not all(len(char) == 1 for char in _border_chars):
+                raise ValueError("The '_border_chars' parameter must only contain single-character strings.")
 
         if border_style is not None and Color.is_valid(border_style):
             border_style = Color.to_hexa(border_style)
@@ -899,13 +808,19 @@ class Console:
 
         h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
 
-        lines = [
-            h_rule if _COMPILED["hr"].match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
-            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
-        ]
+        lines = [( \
+            h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]"
+            + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)
+            + border_r
+        ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
-            f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
+            ( \
+                f"{start}{border_t}[_]\n"
+                + "\n".join(lines)
+                + ("\n" if lines else "")
+                + f"{border_b}[_]"
+            ),
             default_color=default_color,
             sep="\n",
             end=end,
@@ -922,7 +837,7 @@ class Console:
             lines = []
             for val in values:
                 val_str, result_parts, current_pos = str(val), [], 0
-                for match in _COMPILED["hr"].finditer(val_str):
+                for match in _PATTERNS.hr.finditer(val_str):
                     start, end = match.span()
                     should_split_before = start > 0 and val_str[start - 1] != "\n"
                     should_split_after = end < len(val_str) and val_str[end] != "\n"
@@ -952,7 +867,7 @@ class Console:
             lines = [line for val in values for line in str(val).splitlines()]
 
         unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
-        max_line_len = max(len(line) for line in unfmt_lines)
+        max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
     @staticmethod
@@ -973,13 +888,6 @@ class Console:
         ------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(default_is_yes, bool):
-            raise TypeError(f"The 'default_is_yes' parameter must be a boolean, got {type(default_is_yes)}")
-
         confirmed = input(
             FormatCodes.to_ansi(
                 f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
@@ -1013,17 +921,6 @@ class Console:
         ---------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if not isinstance(show_keybindings, bool):
-            raise TypeError(f"The 'show_keybindings' parameter must be a boolean, got {type(show_keybindings)}")
-        if not isinstance(input_prefix, str):
-            raise TypeError(f"The 'input_prefix' parameter must be a string, got {type(input_prefix)}")
-        if not isinstance(reset_ansi, bool):
-            raise TypeError(f"The 'reset_ansi' parameter must be a boolean, got {type(reset_ansi)}")
-
         kb = KeyBindings()
 
         @kb.add("c-d", eager=True)  # CTRL+D
@@ -1076,39 +973,12 @@ class Console:
         ------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        if not isinstance(start, str):
-            raise TypeError(f"The 'start' parameter must be a string, got {type(start)}")
-        # THE 'end' PARAM IS CHECKED IN 'FormatCodes.print()'
-        # THE 'default_color' PARAM IS CHECKED IN 'FormatCodes.print()'
-        if placeholder is not None and not isinstance(placeholder, str):
-            raise TypeError(f"The 'placeholder' parameter must be a string or None, got {type(placeholder)}")
-        if mask_char is not None:
-            if not isinstance(mask_char, str):
-                raise TypeError(f"The 'mask_char' parameter must be a string or None, got {type(mask_char)}")
-            elif len(mask_char) != 1:
-                raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
-        if min_len is not None:
-            if not isinstance(min_len, int):
-                raise TypeError(f"The 'min_len' parameter must be an integer or None, got {type(min_len)}")
-            elif min_len < 0:
-                raise ValueError("The 'min_len' parameter must be a non-negative integer.")
-        if max_len is not None:
-            if not isinstance(max_len, int):
-                raise TypeError(f"The 'max_len' parameter must be an integer or None, got {type(max_len)}")
-            elif max_len < 0:
-                raise ValueError("The 'max_len' parameter must be a non-negative integer.")
-        if not (allowed_chars is CHARS.ALL or isinstance(allowed_chars, str)):
-            raise TypeError(f"The 'allowed_chars' parameter must be a string, got {type(allowed_chars)}")
-        if not isinstance(allow_paste, bool):
-            raise TypeError(f"The 'allow_paste' parameter must be a boolean, got {type(allow_paste)}")
-        if validator is not None and not callable(validator):
-            raise TypeError(f"The 'validator' parameter must be a callable function or None, got {type(validator)}")
-        if default_val is not None and not isinstance(default_val, output_type):
-            raise TypeError(
-                f"The 'default_val' parameter must be of type {output_type.__name__} or None, got {type(default_val)}"
-            )
-        if not isinstance(output_type, type):
-            raise TypeError(f"The 'output_type' parameter must be a type, got {type(output_type)}")
+        if mask_char is not None and len(mask_char) != 1:
+            raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
+        if min_len is not None and min_len < 0:
+            raise ValueError("The 'min_len' parameter must be a non-negative integer.")
+        if max_len is not None and max_len < 0:
+            raise ValueError("The 'max_len' parameter must be a non-negative integer.")
 
         filtered_chars, result_text = set(), ""
         has_default = default_val is not None
@@ -1277,13 +1147,14 @@ class ProgressBar:
     -------------------------------------------------------------------------------------------------
     - `min_width` -⠀the min width of the progress bar in chars
     - `max_width` -⠀the max width of the progress bar in chars
-    - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
+    - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
       * `{label}` `{l}`
       * `{bar}` `{b}`
       * `{current}` `{c}`
       * `{total}` `{t}`
       * `{percentage}` `{percent}` `{p}`
     - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+      for the normal `bar_format`
     - `chars` -⠀a tuple of characters ordered from full to empty progress<br>
       The first character represents completely filled sections, intermediate
       characters create smooth transitions, and the last character represents
@@ -1333,17 +1204,13 @@ class ProgressBar:
         - `min_width` -⠀the min width of the progress bar in chars
         - `max_width` -⠀the max width of the progress bar in chars"""
         if min_width is not None:
-            if not isinstance(min_width, int):
-                raise TypeError(f"The 'min_width' parameter must be an integer or None, got {type(min_width)}")
-            elif min_width < 1:
+            if min_width < 1:
                 raise ValueError(f"The 'min_width' parameter must be a positive integer, got {min_width!r}")
 
             self.min_width = max(1, min_width)
 
         if max_width is not None:
-            if not isinstance(max_width, int):
-                raise TypeError(f"The 'max_width' parameter must be an integer or None, got {type(max_width)}")
-            elif max_width < 1:
+            if max_width < 1:
                 raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
 
             self.max_width = max(self.min_width, max_width)
@@ -1356,43 +1223,30 @@ class ProgressBar:
     ) -> None:
         """Set the format string used to render the progress bar.\n
         --------------------------------------------------------------------------------------------------
-        - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
+        - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
           * `{label}` `{l}`
           * `{bar}` `{b}`
           * `{current}` `{c}`
           * `{total}` `{t}`
           * `{percentage}` `{percent}` `{p}`
-        - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+        - `limited_bar_format` -⠀a simplified format strings used when the console width is too small
         - `sep` -⠀the separator string used to join multiple format strings
         --------------------------------------------------------------------------------------------------
         The bar format (also limited) can additionally be formatted with special formatting codes. For
         more detailed information about formatting codes, see the `format_codes` module documentation."""
         if bar_format is not None:
-            if not isinstance(bar_format, (list, tuple)):
-                raise TypeError(f"The 'bar_format' parameter must be a list or tuple of strings, got {type(bar_format)}")
-            elif not all(isinstance(s, str) for s in bar_format):
-                raise ValueError("All elements of the 'bar_format' parameter must be strings.")
-            elif not any(_COMPILED["bar"].search(s) for s in bar_format):
+            if not any(_PATTERNS.bar.search(s) for s in bar_format):
                 raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
 
             self.bar_format = bar_format
 
         if limited_bar_format is not None:
-            if not isinstance(limited_bar_format, (list, tuple)):
-                raise TypeError(
-                    f"The 'limited_bar_format' parameter must be a list or tuple of strings, got {type(limited_bar_format)}"
-                )
-            elif not all(isinstance(s, str) for s in limited_bar_format):
-                raise ValueError("All elements of the 'limited_bar_format' parameter must be strings.")
-            elif not any(_COMPILED["bar"].search(s) for s in limited_bar_format):
+            if not any(_PATTERNS.bar.search(s) for s in limited_bar_format):
                 raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
 
             self.limited_bar_format = limited_bar_format
 
         if sep is not None:
-            if not isinstance(sep, str):
-                raise TypeError(f"The 'sep' parameter must be a string or None, got {type(sep)}")
-
             self.sep = sep
 
     def set_chars(self, chars: tuple[str, ...]) -> None:
@@ -1415,26 +1269,19 @@ class ProgressBar:
         - `current` -⠀the current progress value (below `0` or greater than `total` hides the bar)
         - `total` -⠀the total value representing 100% progress (must be greater than `0`)
         - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder"""
-        # VALIDATE TYPES NEEDED FOR THROTTLING LOGIC
-        if not isinstance(current, int):
-            raise TypeError(f"The 'current' parameter must be an integer, got {type(current)}")
-        if not isinstance(total, int):
-            raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
-
         # THROTTLE UPDATES (UNLESS IT'S THE FIRST/FINAL UPDATE)
         current_time = _time.time()
-        if not (self._last_update_time == 0.0 or current >= total or current < 0) \
-            and (current_time - self._last_update_time) < self._min_update_interval:
+        if (
+            not (self._last_update_time == 0.0 or current >= total or current < 0) \
+            and (current_time - self._last_update_time) < self._min_update_interval
+        ):
             return
         self._last_update_time = current_time
 
-        # REMAINING TYPE VALIDATION
         if current < 0:
             raise ValueError("The 'current' parameter must be a non-negative integer.")
         if total <= 0:
             raise ValueError("The 'total' parameter must be a positive integer.")
-        if label is not None and not isinstance(label, str):
-            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
 
         try:
             if not self.active:
@@ -1464,7 +1311,7 @@ class ProgressBar:
         - `current` -⠀update the current progress value
         - `label` -⠀update the progress label\n
 
-        Example usage:
+        #### Example usage:
         ```python
         with ProgressBar().progress_context(500, "Loading...") as update_progress:
             update_progress(0)  # Show empty bar at start
@@ -1479,12 +1326,8 @@ class ProgressBar:
                 # Do some work...
                 update_progress(i, f"Finalizing ({i})")  # Update both
         ```"""
-        if not isinstance(total, int):
-            raise TypeError(f"The 'total' parameter must be an integer, got {type(total)}")
-        elif total <= 0:
+        if total <= 0:
             raise ValueError("The 'total' parameter must be a positive integer.")
-        if label is not None and not isinstance(label, str):
-            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
 
         current_label, current_progress = label, 0
 
@@ -1543,7 +1386,7 @@ class ProgressBar:
             )
 
         bar = f"{self._create_bar(current, total, max(1, bar_width))}[*]"
-        progress_text = _COMPILED["bar"].sub(FormatCodes.to_ansi(bar), formatted)
+        progress_text = _PATTERNS.bar.sub(FormatCodes.to_ansi(bar), formatted)
 
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
@@ -1561,17 +1404,17 @@ class ProgressBar:
         fmt_parts = []
 
         for s in bar_format:
-            fmt_part = _COMPILED["label"].sub(label or "", s)
-            fmt_part = _COMPILED["current"].sub(str(current), fmt_part)
-            fmt_part = _COMPILED["total"].sub(str(total), fmt_part)
-            fmt_part = _COMPILED["percentage"].sub(f"{percentage:.1f}", fmt_part)
+            fmt_part = _PATTERNS.label.sub(label or "", s)
+            fmt_part = _PATTERNS.current.sub(str(current), fmt_part)
+            fmt_part = _PATTERNS.total.sub(str(total), fmt_part)
+            fmt_part = _PATTERNS.percentage.sub(f"{percentage:.1f}", fmt_part)
             if fmt_part:
                 fmt_parts.append(fmt_part)
 
         fmt_str = self.sep.join(fmt_parts)
         fmt_str = FormatCodes.to_ansi(fmt_str)
 
-        bar_space = Console.w - len(FormatCodes.remove_ansi(_COMPILED["bar"].sub("", fmt_str)))
+        bar_space = Console.w - len(FormatCodes.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -1688,16 +1531,10 @@ class Spinner:
           * `{label}` `{l}`
           * `{animation}` `{a}`
         - `sep` -⠀the separator string used to join multiple format strings"""
-        if not isinstance(spinner_format, (list, tuple)):
-            raise TypeError(f"The 'spinner_format' parameter must be a list or tuple, got {type(spinner_format)}")
-        elif not all(isinstance(fmt, str) for fmt in spinner_format):
-            raise TypeError("All elements of the 'spinner_format' parameter must be strings.")
-        elif not any(_COMPILED["animation"].search(fmt) for fmt in spinner_format):
+        if not any(_PATTERNS.animation.search(fmt) for fmt in spinner_format):
             raise ValueError(
                 "At least one format string in 'spinner_format' must contain the '{animation}' or '{a}' placeholder."
             )
-        if sep is not None and not isinstance(sep, str):
-            raise TypeError(f"The 'sep' parameter must be a string or None, got {type(sep)}")
 
         self.spinner_format = spinner_format
         self.sep = sep or self.sep
@@ -1706,12 +1543,8 @@ class Spinner:
         """Set the frames used for the spinner animation.\n
         ---------------------------------------------------------------------
         - `frames` -⠀a tuple of strings representing the animation frames"""
-        if not isinstance(frames, tuple):
-            raise TypeError(f"The 'frames' parameter must be a tuple of strings, got {type(frames)}")
-        elif len(frames) < 2:
+        if len(frames) < 2:
             raise ValueError("The 'frames' parameter must contain at least two frames.")
-        elif not all(isinstance(frame, str) for frame in frames):
-            raise TypeError("All elements of the 'frames' parameter must be strings.")
 
         self.frames = frames
 
@@ -1719,10 +1552,8 @@ class Spinner:
         """Set the time interval between each animation frame.\n
         -------------------------------------------------------------------
         - `interval` -⠀the time in seconds between each animation frame"""
-        if not isinstance(interval, (int, float)):
-            raise TypeError(f"The 'interval' parameter must be a number, got {type(interval)}")
-        elif interval <= 0:
-            raise ValueError("The 'interval' parameter must be positive.")
+        if interval <= 0:
+            raise ValueError("The 'interval' parameter must be a positive number.")
 
         self.interval = interval
 
@@ -1732,8 +1563,6 @@ class Spinner:
         - `label` -⠀the label to display alongside the spinner"""
         if self.active:
             return
-        if label is not None and not isinstance(label, str):
-            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
 
         self.label = label or self.label
         self._start_intercepting()
@@ -1760,9 +1589,6 @@ class Spinner:
         """Update the spinner's label text.\n
         --------------------------------------
         - `new_label` -⠀the new label text"""
-        if not isinstance(label, (str, type(None))):
-            raise TypeError(f"The 'label' parameter must be a string or None, got {type(label)}")
-
         self.label = label
 
     @contextmanager
@@ -1774,7 +1600,7 @@ class Spinner:
         The returned callable accepts a single parameter:
         - `new_label` -⠀the new label text\n
 
-        Example usage:
+        #### Example usage:
         ```python
         with Spinner().context("Starting...") as update_label:
             time.sleep(2)
@@ -1805,7 +1631,7 @@ class Spinner:
                 frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
                 formatted = FormatCodes.to_ansi(self.sep.join(
                     s for s in ( \
-                        _COMPILED["animation"].sub(frame, _COMPILED["label"].sub(self.label or "", s))
+                        _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", s))
                         for s in self.spinner_format
                     ) if s
                 ))

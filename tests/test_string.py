@@ -2,6 +2,9 @@ from xulbux.string import String
 
 import pytest
 
+#
+################################################## String TESTS ##################################################
+
 
 def test_to_type():
     assert String.to_type("123") == 123

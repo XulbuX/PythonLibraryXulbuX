@@ -27,7 +27,7 @@ class Regex:
         bracket1: str = "(",
         bracket2: str = ")",
         is_group: bool = False,
-        strip_spaces: bool = True,
+        strip_spaces: bool = False,
         ignore_in_strings: bool = True,
     ) -> str:
         """Matches everything inside pairs of brackets, including other nested brackets.\n
@@ -35,22 +35,11 @@ class Regex:
         - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[` ...)
         - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]` ...)
         - `is_group` -⠀whether to create a capturing group for the content inside the brackets
-        - `strip_spaces` -⠀whether to ignore spaces around the content inside the brackets
+        - `strip_spaces` -⠀whether to strip spaces from the bracket content or not
         - `ignore_in_strings` -⠀whether to ignore closing brackets that are inside
           strings/quotes (e.g. `'…)…'` or `"…)…"`)\n
         ---------------------------------------------------------------------------------------
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
-        if not isinstance(bracket1, str):
-            raise TypeError(f"The 'bracket1' parameter must be a string, got {type(bracket1)}")
-        if not isinstance(bracket2, str):
-            raise TypeError(f"The 'bracket2' parameter must be a string, got {type(bracket2)}")
-        if not isinstance(is_group, bool):
-            raise TypeError(f"The 'is_group' parameter must be a boolean, got {type(is_group)}")
-        if not isinstance(strip_spaces, bool):
-            raise TypeError(f"The 'strip_spaces' parameter must be a boolean, got {type(strip_spaces)}")
-        if not isinstance(ignore_in_strings, bool):
-            raise TypeError(f"The 'ignore_in_strings' parameter must be a boolean, got {type(ignore_in_strings)}")
-
         g = "" if is_group else "?:"
         b1 = _rx.escape(bracket1) if len(bracket1) == 1 else bracket1
         b2 = _rx.escape(bracket2) if len(bracket2) == 1 else bracket2
@@ -58,36 +47,33 @@ class Regex:
         s2 = "" if strip_spaces else r"\s*"
 
         if ignore_in_strings:
-            return Regex._clean(
+            return Regex._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
-                [^{b1}{b2}"']
-                |"(?:\\.|[^"\\])*"
-                |'(?:\\.|[^'\\])*'
-                |{b1}(?:
                     [^{b1}{b2}"']
                     |"(?:\\.|[^"\\])*"
                     |'(?:\\.|[^'\\])*'
-                    |(?R)
-                )*{b2}
-            )*{s2}){s1}{b2}"""
+                    |{b1}(?:
+                        [^{b1}{b2}"']
+                        |"(?:\\.|[^"\\])*"
+                        |'(?:\\.|[^'\\])*'
+                        |(?R)
+                    )*{b2}
+                )*{s2}){s1}{b2}"""
             )
         else:
-            return Regex._clean(
+            return Regex._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
-                [^{b1}{b2}]
-                |{b1}(?:
                     [^{b1}{b2}]
-                    |(?R)
-                )*{b2}
-            )*{s2}){s1}{b2}"""
+                    |{b1}(?:
+                        [^{b1}{b2}]
+                        |(?R)
+                    )*{b2}
+                )*{s2}){s1}{b2}"""
             )
 
     @staticmethod
     def outside_strings(pattern: str = r".*") -> str:
         """Matches the `pattern` only when it is not found inside a string (`'...'` or `"..."`)."""
-        if not isinstance(pattern, str):
-            raise TypeError(f"The 'pattern' parameter must be a string, got {type(pattern)}")
-
         return rf"""(?<!["'])(?:{pattern})(?!["'])"""
 
     @staticmethod
@@ -101,20 +87,13 @@ class Regex:
           For example if `disallowed_pattern` is `>` and `ignore_pattern` is `->`,
           the `->`-arrows will be allowed, even though they have `>` in them.
         - `is_group` -⠀whether to create a capturing group for the matched content"""
-        if not isinstance(disallowed_pattern, str):
-            raise TypeError(f"The 'disallowed_pattern' parameter must be a string, got {type(disallowed_pattern)}")
-        if not isinstance(ignore_pattern, str):
-            raise TypeError(f"The 'ignore_pattern' parameter must be a string, got {type(ignore_pattern)}")
-        if not isinstance(is_group, bool):
-            raise TypeError(f"The 'is_group' parameter must be a boolean, got {type(is_group)}")
-
         g = "" if is_group else "?:"
 
-        return Regex._clean(
+        return Regex._clean( \
             rf"""({g}
-            (?:(?!{ignore_pattern}).)*
-            (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
-        )"""
+                (?:(?!{ignore_pattern}).)*
+                (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
+            )"""
         )
 
     @staticmethod
@@ -125,10 +104,8 @@ class Regex:
         If no `func_name` is given, it will match any function call.\n
         ---------------------------------------------------------------------------------
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
-        if func_name is None:
+        if func_name in {"", None}:
             func_name = r"[\w_]+"
-        elif not isinstance(func_name, str):
-            raise TypeError(f"The 'func_name' parameter must be a string or None, got {type(func_name)}")
 
         return rf"""(?<=\b)({func_name})\s*{Regex.brackets("(", ")", is_group=True)}"""
 
@@ -153,28 +130,26 @@ class Regex:
         - `g` 0-255 (int: green)
         - `b` 0-255 (int: blue)
         - `a` 0.0-1.0 (float: opacity)"""
-        if fix_sep in {"", None}:
-            fix_sep = r"[^0-9A-Z]"
-        elif isinstance(fix_sep, str):
-            fix_sep = _re.escape(fix_sep)
-        else:
-            raise TypeError(f"The 'fix_sep' parameter must be a string or None, got {type(fix_sep)}")
-
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'allow_alpha' parameter must be a boolean, got {type(allow_alpha)}")
+        fix_sep = _re.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
 
         rgb_part = rf"""((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
-        return Regex._clean(rf"""(?ix)(?:rgb|rgba)?\s*(?:
-            \(?\s*{rgb_part}
-                (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?
-        )""" if allow_alpha else \
-        rf"""(?ix)(?:rgb|rgba)?\s*(?:
-            \(?\s*{rgb_part}\s*\)?
-        )""")
+        if allow_alpha:
+            return Regex._clean( \
+                rf"""(?ix)(?:rgb|rgba)?\s*(?:
+                    \(?\s*{rgb_part}
+                        (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
+                    \s*\)?
+                )"""
+            )
+        else:
+            return Regex._clean( \
+                rf"""(?ix)(?:rgb|rgba)?\s*(?:
+                    \(?\s*{rgb_part}\s*\)?
+                )"""
+            )
 
     @staticmethod
     def hsla_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
@@ -197,28 +172,26 @@ class Regex:
         - `s` 0-100 (int: saturation)
         - `l` 0-100 (int: lightness)
         - `a` 0.0-1.0 (float: opacity)"""
-        if fix_sep in {"", None}:
-            fix_sep = r"[^0-9A-Z]"
-        elif isinstance(fix_sep, str):
-            fix_sep = _re.escape(fix_sep)
-        else:
-            raise TypeError(f"The 'fix_sep' parameter must be a string or None, got {type(fix_sep)}")
-
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'allow_alpha' parameter must be a boolean, got {type(allow_alpha)}")
+        fix_sep = _re.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
 
         hsl_part = rf"""((?:0*(?:360|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])))(?:\s*°)?
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
-        return Regex._clean(rf"""(?ix)(?:hsl|hsla)?\s*(?:
-            \(?\s*{hsl_part}
-                (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?
-        )""" if allow_alpha else \
-        rf"""(?ix)(?:hsl|hsla)?\s*(?:
-            \(?\s*{hsl_part}\s*\)?
-        )""")
+        if allow_alpha:
+            return Regex._clean( \
+                rf"""(?ix)(?:hsl|hsla)?\s*(?:
+                    \(?\s*{hsl_part}
+                        (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
+                    \s*\)?
+                )"""
+            )
+        else:
+            return Regex._clean( \
+                rf"""(?ix)(?:hsl|hsla)?\s*(?:
+                    \(?\s*{hsl_part}\s*\)?
+                )"""
+            )
 
     @staticmethod
     def hexa_str(allow_alpha: bool = True) -> str:
@@ -233,13 +206,38 @@ class Regex:
         - `RRGGBBAA` (if `allow_alpha=True`)\n
         #### Valid ranges:
         every channel from 0-9 and A-F (case insensitive)"""
-        if not isinstance(allow_alpha, bool):
-            raise TypeError(f"The 'allow_alpha' parameter must be a boolean, got {type(allow_alpha)}")
-
         return r"(?i)(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})" \
             if allow_alpha else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
 
     @staticmethod
     def _clean(pattern: str) -> str:
-        """Internal method, to make a multiline-string regex pattern into a single-line pattern."""
+        """Internal method to make a multiline-string regex pattern into a single-line pattern."""
         return "".join(l.strip() for l in pattern.splitlines()).strip()
+
+
+class LazyRegex:
+    """A class that lazily compiles and caches regex patterns on first access.\n
+    --------------------------------------------------------------------------------
+    - `**patterns` -⠀keyword arguments where the key is the name of the pattern and
+      the value is the regex pattern string to compile\n
+    --------------------------------------------------------------------------------
+    #### Example usage:
+    ```python
+    PATTERNS = LazyRegex(
+        email=r"(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",
+        phone=r"\\+?\\d{1,3}[-.\\s]?\\(?\\d{1,4}\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}",
+    )
+
+    email_pattern = PATTERNS.email  # Compiles and caches the EMAIL pattern
+    phone_pattern = PATTERNS.phone  # Compiles and caches the PHONE pattern
+    ```"""
+
+    def __init__(self, **patterns: str):
+        self._patterns = patterns
+
+    def __getattr__(self, name: str) -> _rx.Pattern:
+        if name in self._patterns:
+            setattr(self, name, compiled := _rx.compile(self._patterns[name]))
+            return compiled
+
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")

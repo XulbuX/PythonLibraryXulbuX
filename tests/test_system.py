@@ -4,6 +4,9 @@ from unittest.mock import patch
 import pytest
 import os
 
+#
+################################################## System TESTS ##################################################
+
 
 def test_system_class_exists():
     """Test that System class exists and has expected methods"""

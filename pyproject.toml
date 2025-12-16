@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.9.1"
+version = "1.9.2"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
-description = "A Python library which includes lots of helpful classes, types, and functions aiming to make common programming tasks simpler."
+description = "A Python library to simplify common programming tasks."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICEN[CS]E.*"]
@@ -26,6 +26,7 @@ optional-dependencies = { dev = [
 ] }
 classifiers = [
   "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.11",
@@ -109,7 +110,7 @@ xulbux-help = "xulbux.cli.help:show_help"
 
 [tool.black]
 line-length = 127
-target-version = ['py310', 'py311', 'py312', 'py313']
+target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -165,4 +166,5 @@ testpaths = [
   "tests/test_regex.py",
   "tests/test_string.py",
   "tests/test_system.py",
+  "tests/test_version_consistency.py",
 ]

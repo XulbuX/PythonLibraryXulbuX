@@ -4,6 +4,9 @@ from xulbux.file import File
 import pytest
 import os
 
+#
+################################################## File TESTS ##################################################
+
 
 @pytest.mark.parametrize(
     "input_file, new_extension, camel_case, full_extension, expected_output", [

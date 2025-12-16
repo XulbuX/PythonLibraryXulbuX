@@ -3,7 +3,7 @@
     <div style="
       font-size: 2em;
       font-weight: bold;
-      background: #88889845;
+      background: #86878A45;
       border-radius: 0.2em;
       text-align: center;
       justify-content: center;
@@ -13,6 +13,28 @@
 
 
 # <br><b>Changelog</b><br>
+
+
+<span id="v1-9-2" />
+
+## 16.12.2025 `v1.9.2`
+* Added a new class `LazyRegex` to the `regex` module, which is used to define regex patterns that are only compiled when they are used for the first time.
+* Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
+* Removed all the runtime type-checks that can also be checked using static type-checking tools, since you're supposed to use type checkers in modern python anyway, and to improve performance.
+* Renamed the internal class method `FormatCodes.__config_console()` to `FormatCodes._config_console()` to make it callable, but still indicate that it's internal.
+* Fixed a small bug where `Console.log_box_…()` would crash, when calling it without providing any `*values` (*content for inside the box*).
+
+**BREAKING CHANGES:**
+* The arguments when calling `Console.get_args()` are no longer specified in a single dictionary, but now each argument is passed as a separate keyword argument.<br>
+  You can still use a dictionary just fine by simply unpacking it with `**`, like this:
+  ```python
+  Console.get_args(**{"arg": {"-a", "--arg"}})
+  ```
+* Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.
+* Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
+* Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not an important main class that should be imported directly.
+* Renamed the constant `CLR` to `CLI_COLORS` and the constant `HELP` to `CLI_HELP` in the `cli.help` module.
+* Changed the default value of the `strip_spaces` param in `Regex.brackets()` from `True` to `False`, since this is more intuitive behavior.
 
 
 <span id="v1-9-1" />
@@ -810,7 +832,7 @@ from XulbuX import rgb, hsl, hexa
     <div style="
       font-size: 2em;
       font-weight: bold;
-      background: #88889845;
+      background: #86878A45;
       border-radius: 0.2em;
       text-align: center;
       justify-content: center;
