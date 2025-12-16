@@ -28,6 +28,7 @@
 * Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
 * Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not a standard class that should be imported directly.
 * Renamed the constant `CLR` to `CLI_COLORS` and the constant `HELP` to `CLI_HELP` in the `cli.help` module.
+* Changed the default value of the `strip_spaces` param in `Regex.brackets()` from `True` to `False`, since this is more intuitive behavior.
 
 
 <span id="v1-9-1" />

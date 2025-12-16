@@ -27,7 +27,7 @@ class Regex:
         bracket1: str = "(",
         bracket2: str = ")",
         is_group: bool = False,
-        strip_spaces: bool = True,
+        strip_spaces: bool = False,
         ignore_in_strings: bool = True,
     ) -> str:
         """Matches everything inside pairs of brackets, including other nested brackets.\n
