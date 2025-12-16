@@ -200,7 +200,7 @@ class Data:
             raise ValueError("The 'comment_start' parameter string must not be empty.")
 
         pattern = _re.compile(Regex._clean( \
-                rf"""^(
+            rf"""^(
                 (?:(?!{_re.escape(comment_start)}).)*
             )
             {_re.escape(comment_start)}
@@ -566,19 +566,15 @@ class Data:
             complex_types = (list, tuple, dict, set, frozenset) + ((bytes, bytearray) if as_json else ())
             complex_items = sum(1 for item in seq if isinstance(item, complex_types))
 
-            return (
-                complex_items > 1 or (complex_items == 1 and len(seq) > 1) or Data.chars_count(seq) +
-                (len(seq) * len(sep)) > max_width
-            )
+            return complex_items > 1 \
+                or (complex_items == 1 and len(seq) > 1) \
+                or Data.chars_count(seq) + (len(seq) * len(sep)) > max_width
 
         def format_dict(d: dict, current_indent: int) -> str:
             if compactness == 2 or not d or not should_expand(list(d.values())):
-                return punct["{"] \
-                    + sep.join(
-                        f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}"
-                        for k, v in d.items()
-                    ) \
-                    + punct["}"]
+                return punct["{"] + sep.join(
+                    f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items()
+                ) + punct["}"]
 
             items = []
             for k, val in d.items():

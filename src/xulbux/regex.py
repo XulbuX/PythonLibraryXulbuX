@@ -47,28 +47,28 @@ class Regex:
         s2 = "" if strip_spaces else r"\s*"
 
         if ignore_in_strings:
-            return Regex._clean(
+            return Regex._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
-                [^{b1}{b2}"']
-                |"(?:\\.|[^"\\])*"
-                |'(?:\\.|[^'\\])*'
-                |{b1}(?:
                     [^{b1}{b2}"']
                     |"(?:\\.|[^"\\])*"
                     |'(?:\\.|[^'\\])*'
-                    |(?R)
-                )*{b2}
-            )*{s2}){s1}{b2}"""
+                    |{b1}(?:
+                        [^{b1}{b2}"']
+                        |"(?:\\.|[^"\\])*"
+                        |'(?:\\.|[^'\\])*'
+                        |(?R)
+                    )*{b2}
+                )*{s2}){s1}{b2}"""
             )
         else:
-            return Regex._clean(
+            return Regex._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
-                [^{b1}{b2}]
-                |{b1}(?:
                     [^{b1}{b2}]
-                    |(?R)
-                )*{b2}
-            )*{s2}){s1}{b2}"""
+                    |{b1}(?:
+                        [^{b1}{b2}]
+                        |(?R)
+                    )*{b2}
+                )*{s2}){s1}{b2}"""
             )
 
     @staticmethod
@@ -89,11 +89,11 @@ class Regex:
         - `is_group` -⠀whether to create a capturing group for the matched content"""
         g = "" if is_group else "?:"
 
-        return Regex._clean(
+        return Regex._clean( \
             rf"""({g}
-            (?:(?!{ignore_pattern}).)*
-            (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
-        )"""
+                (?:(?!{ignore_pattern}).)*
+                (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
+            )"""
         )
 
     @staticmethod
@@ -136,14 +136,20 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
-        return Regex._clean(rf"""(?ix)(?:rgb|rgba)?\s*(?:
-            \(?\s*{rgb_part}
-                (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?
-        )""" if allow_alpha else \
-        rf"""(?ix)(?:rgb|rgba)?\s*(?:
-            \(?\s*{rgb_part}\s*\)?
-        )""")
+        if allow_alpha:
+            return Regex._clean( \
+                rf"""(?ix)(?:rgb|rgba)?\s*(?:
+                    \(?\s*{rgb_part}
+                        (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
+                    \s*\)?
+                )"""
+            )
+        else:
+            return Regex._clean( \
+                rf"""(?ix)(?:rgb|rgba)?\s*(?:
+                    \(?\s*{rgb_part}\s*\)?
+                )"""
+            )
 
     @staticmethod
     def hsla_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
@@ -172,14 +178,20 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
-        return Regex._clean(rf"""(?ix)(?:hsl|hsla)?\s*(?:
-            \(?\s*{hsl_part}
-                (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
-            \s*\)?
-        )""" if allow_alpha else \
-        rf"""(?ix)(?:hsl|hsla)?\s*(?:
-            \(?\s*{hsl_part}\s*\)?
-        )""")
+        if allow_alpha:
+            return Regex._clean( \
+                rf"""(?ix)(?:hsl|hsla)?\s*(?:
+                    \(?\s*{hsl_part}
+                        (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
+                    \s*\)?
+                )"""
+            )
+        else:
+            return Regex._clean( \
+                rf"""(?ix)(?:hsl|hsla)?\s*(?:
+                    \(?\s*{hsl_part}\s*\)?
+                )"""
+            )
 
     @staticmethod
     def hexa_str(allow_alpha: bool = True) -> str:

@@ -89,7 +89,7 @@ class EnvPath:
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)
             except Exception as e:
-                raise RuntimeError(f"Failed to update PATH in registry:\n  " + str(e).replace("\n", "  \n"))
+                raise RuntimeError("Failed to update PATH in registry:\n  " + str(e).replace("\n", "  \n"))
 
         else:  # UNIX-LIKE (LINUX/macOS)
             shell_rc_file = _os.path.expanduser(

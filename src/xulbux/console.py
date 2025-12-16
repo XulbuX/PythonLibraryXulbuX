@@ -11,7 +11,7 @@ from .string import String
 from .color import Color, hexa
 from .regex import LazyRegex
 
-from typing import Generator, Callable, Optional, Literal, Mapping, TypeVar, TextIO, cast
+from typing import Generator, Callable, Optional, Literal, TypeVar, TextIO, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style

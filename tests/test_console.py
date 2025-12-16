@@ -1233,9 +1233,11 @@ def test_spinner_context_manager():
 
 def test_spinner_context_manager_exception():
     spinner = Spinner()
-    with patch.object(spinner, "start"), patch.object(spinner, "stop") as mock_stop, \
-        patch.object(spinner, "_emergency_cleanup") as mock_cleanup:
-
+    with ( \
+        patch.object(spinner, "start"),
+        patch.object(spinner, "stop") as mock_stop,
+        patch.object(spinner, "_emergency_cleanup") as mock_cleanup
+    ):
         with pytest.raises(ValueError):
             with spinner.context("Test"):
                 raise ValueError("Oops")

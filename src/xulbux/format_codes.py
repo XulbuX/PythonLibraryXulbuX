@@ -367,8 +367,10 @@ class FormatCodes:
             else:
                 ansi_resets = []
 
-            if not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1) and \
-                not all(f.startswith(f"{ANSI.CHAR}{ANSI.START}") for f in ansi_formats):  # FORMATTING WAS INVALID
+            if (
+                not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1) and \
+                not all(f.startswith(f"{ANSI.CHAR}{ANSI.START}") for f in ansi_formats)  # FORMATTING WAS INVALID
+            ):
                 return match.group(0)
             elif formats_escaped:  # FORMATTING WAS VALID BUT ESCAPED
                 return f"[{_formats}]({auto_reset_txt})" if auto_reset_txt else f"[{_formats}]"
