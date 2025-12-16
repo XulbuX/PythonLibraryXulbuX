@@ -24,9 +24,10 @@
 * Renamed the internal class method `FormatCodes.__config_console()` to `FormatCodes._config_console()` to make it callable, but still indicate that it's internal.
 
 **BREAKING CHANGES:**
+* The arguments when calling `Console.get_args()` are no longer specified in a single dictionary, but now each argument is passed as a separate keyword argument.
 * Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.
 * Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
-* Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not a standard class that should be imported directly.
+* Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not an important main class that should be imported directly.
 * Renamed the constant `CLR` to `CLI_COLORS` and the constant `HELP` to `CLI_HELP` in the `cli.help` module.
 * Changed the default value of the `strip_spaces` param in `Regex.brackets()` from `True` to `False`, since this is more intuitive behavior.
 

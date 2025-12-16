@@ -209,28 +209,37 @@ class Console:
            ```
         3. Positional argument collection using the literals `"before"` or `"after"`:
            ```python
-           alias_name="before"  # Collects non-flagged args before first flag
-           alias_name="after"   # Collects non-flagged args after last flag
+           alias_name="before"  # COLLECTS NON-FLAGGED ARGS BEFORE FIRST FLAG
+           alias_name="after"   # COLLECTS NON-FLAGGED ARGS AFTER LAST FLAG
            ```
         #### Example usage:
         ```python
-        ARGS = Console.get_args(
-            text="before",           # Positional args before flagged args
-            arg1={"-a1", "--arg1"},  # Just flags
-            arg2={"-a2", "--arg2"},  # Just flags
-            arg3={                   # With default value
-                "flags": {"-a3", "--arg3"},
-                "default": "default_val",
-            },
+        Args(
+            # FOUND TWO POSITIONAL ARGUMENTS BEFORE THE FIRST FLAG
+            text = ArgResult(exists=True, values=["Hello", "World"]),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITH A VALUE
+            arg1 = ArgResult(exists=True, value="value1"),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITHOUT A VALUE
+            arg2 = ArgResult(exists=True, value=None),
+            # DIDN'T FIND ANY OF THE SPECIFIED FLAGS BUT HAS A DEFAULT VALUE
+            arg3 = ArgResult(exists=False, value="default_val"),
         )
         ```
         If the script is called via the command line:\n
         `python script.py Hello World -a1 "value1" --arg2`\n
-        ... it would return an `Args` object where:
-        - `ARGS.text.exists` is `True`, `ARGS.text.values` is `["Hello", "World"]`
-        - `ARGS.arg1.exists` is `True`, `ARGS.arg1.value` is `"value1"` (flag present with value)
-        - `ARGS.arg2.exists` is `True`, `ARGS.arg2.value` is `None` (flag present without value)
-        - `ARGS.arg3.exists` is `False`, `ARGS.arg3.value` is `"default_val"` (not present, has default value)\n
+        ... it would return an `Args` object:
+        ```python
+        Args(
+            # FOUND TWO ARGUMENTS BEFORE THE FIRST FLAG
+            text = ArgResult(exists=True, values=["Hello", "World"]),
+            # FOUND ONE OF THE SPECIFIED FLAGS WITH A FOLLOWING VALUE
+            arg1 = ArgResult(exists=True, value="value1"),
+            # FOUND ONE OF THE SPECIFIED FLAGS BUT NO FOLLOWING VALUE
+            arg2 = ArgResult(exists=True, value=None),
+            # DIDN'T FIND ANY OF THE SPECIFIED FLAGS AND HAS NO DEFAULT VALUE
+            arg3 = ArgResult(exists=False, value="default_val"),
+        )
+        ```
         ---------------------------------------------------------------------------------------------------------
         If an arg, defined with flags in `find_args`, is NOT present in the command line:
           * `exists` will be `False`
@@ -1128,13 +1137,14 @@ class ProgressBar:
     -------------------------------------------------------------------------------------------------
     - `min_width` -⠀the min width of the progress bar in chars
     - `max_width` -⠀the max width of the progress bar in chars
-    - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
+    - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
       * `{label}` `{l}`
       * `{bar}` `{b}`
       * `{current}` `{c}`
       * `{total}` `{t}`
       * `{percentage}` `{percent}` `{p}`
     - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+      for the normal `bar_format`
     - `chars` -⠀a tuple of characters ordered from full to empty progress<br>
       The first character represents completely filled sections, intermediate
       characters create smooth transitions, and the last character represents
@@ -1203,13 +1213,13 @@ class ProgressBar:
     ) -> None:
         """Set the format string used to render the progress bar.\n
         --------------------------------------------------------------------------------------------------
-        - `bar_format` -⠀the format string used to render the progress bar, containing placeholders:
+        - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
           * `{label}` `{l}`
           * `{bar}` `{b}`
           * `{current}` `{c}`
           * `{total}` `{t}`
           * `{percentage}` `{percent}` `{p}`
-        - `limited_bar_format` -⠀a simplified format string used when the console width is too small
+        - `limited_bar_format` -⠀a simplified format strings used when the console width is too small
         - `sep` -⠀the separator string used to join multiple format strings
         --------------------------------------------------------------------------------------------------
         The bar format (also limited) can additionally be formatted with special formatting codes. For

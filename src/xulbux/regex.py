@@ -35,7 +35,7 @@ class Regex:
         - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[` ...)
         - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]` ...)
         - `is_group` -⠀whether to create a capturing group for the content inside the brackets
-        - `strip_spaces` -⠀whether to ignore spaces around the content inside the brackets
+        - `strip_spaces` -⠀whether to strip spaces from the bracket content or not
         - `ignore_in_strings` -⠀whether to ignore closing brackets that are inside
           strings/quotes (e.g. `'…)…'` or `"…)…"`)\n
         ---------------------------------------------------------------------------------------
