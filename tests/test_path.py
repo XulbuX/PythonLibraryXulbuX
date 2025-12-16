@@ -45,6 +45,9 @@ def setup_test_environment(tmp_path, monkeypatch):
     }
 
 
+################################################## Path TESTS ##################################################
+
+
 def test_path_properties(setup_test_environment):
     assert Path.cwd == str(setup_test_environment["cwd"])
     assert Path.script_dir == str(setup_test_environment["script_dir"])

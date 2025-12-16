@@ -1,4 +1,6 @@
-from xulbux.console import ProgressBar, Console, ArgResult, Args
+from xulbux.console import Spinner, ProgressBar
+from xulbux.console import ArgResult, Args
+from xulbux.console import Console
 from xulbux import console
 
 from unittest.mock import MagicMock, patch, call
@@ -37,7 +39,7 @@ def mock_prompt_toolkit(monkeypatch):
     return mock
 
 
-################################################## CONSOLE TESTS ##################################################
+################################################## Console TESTS ##################################################
 
 
 def test_console_user():
@@ -928,7 +930,7 @@ def test_input_custom_style_object(mock_prompt_session, mock_formatcodes_print):
     assert hasattr(style, "style_rules") or hasattr(style, "_style")
 
 
-################################################## PROGRESSBAR TESTS ##################################################
+################################################## ProgressBar TESTS ##################################################
 
 
 def test_progressbar_init():
@@ -1117,3 +1119,126 @@ def test_progressbar_redraw_progress_bar():
     pb._current_progress_str = "\x1b[2K\rLoading |████████████| 50%"
     pb._redraw_display()
     mock_stdout.flush.assert_called_once()
+
+
+################################################## Spinner TESTS ##################################################
+
+
+def test_spinner_init_defaults():
+    spinner = Spinner()
+    assert spinner.label is None
+    assert spinner.interval == 0.2
+    assert spinner.active is False
+    assert spinner.sep == " "
+    assert len(spinner.frames) > 0
+
+
+def test_spinner_init_custom():
+    spinner = Spinner(label="Loading", interval=0.5, sep="-")
+    assert spinner.label == "Loading"
+    assert spinner.interval == 0.5
+    assert spinner.sep == "-"
+
+
+def test_spinner_set_format_valid():
+    spinner = Spinner()
+    spinner.set_format(["{l}", "{a}"])
+    assert spinner.spinner_format == ["{l}", "{a}"]
+
+
+def test_spinner_set_format_invalid():
+    spinner = Spinner()
+    with pytest.raises(ValueError):
+        spinner.set_format(["{l}"])  # MISSING {a}
+
+
+def test_spinner_set_frames_valid():
+    spinner = Spinner()
+    spinner.set_frames(("a", "b"))
+    assert spinner.frames == ("a", "b")
+
+
+def test_spinner_set_frames_invalid():
+    spinner = Spinner()
+    with pytest.raises(ValueError):
+        spinner.set_frames(("a", ))  # LESS THAN 2 FRAMES
+
+
+def test_spinner_set_interval_valid():
+    spinner = Spinner()
+    spinner.set_interval(1.0)
+    assert spinner.interval == 1.0
+
+
+def test_spinner_set_interval_invalid():
+    spinner = Spinner()
+    with pytest.raises(ValueError):
+        spinner.set_interval(0)
+    with pytest.raises(ValueError):
+        spinner.set_interval(-1)
+
+
+@patch("xulbux.console._threading.Thread")
+@patch("xulbux.console._threading.Event")
+@patch("sys.stdout", new_callable=MagicMock)
+def test_spinner_start(mock_stdout, mock_event, mock_thread):
+    spinner = Spinner()
+    spinner.start("Test")
+
+    assert spinner.active is True
+    assert spinner.label == "Test"
+    mock_event.assert_called_once()
+    mock_thread.assert_called_once()
+
+    # TEST CALLING START AGAIN DOESN'T DO ANYTHING
+    spinner.start("Test2")
+    assert mock_event.call_count == 1
+
+
+@patch("xulbux.console._threading.Thread")
+@patch("xulbux.console._threading.Event")
+def test_spinner_stop(mock_event, mock_thread):
+    spinner = Spinner()
+    # MANUALLY SET ACTIVE TO SIMULATE RUNNING
+    spinner.active = True
+    mock_stop_event = MagicMock()
+    spinner._stop_event = mock_stop_event
+    mock_animation_thread = MagicMock()
+    spinner._animation_thread = mock_animation_thread
+
+    spinner.stop()
+
+    assert spinner.active is False
+    mock_stop_event.set.assert_called_once()
+    mock_animation_thread.join.assert_called_once()
+
+
+def test_spinner_update_label():
+    spinner = Spinner()
+    spinner.update_label("New Label")
+    assert spinner.label == "New Label"
+
+
+def test_spinner_context_manager():
+    spinner = Spinner()
+    with patch.object(spinner, "start") as mock_start, patch.object(spinner, "stop") as mock_stop:
+
+        with spinner.context("Test") as update:
+            mock_start.assert_called_with("Test")
+            update("New Label")
+            assert spinner.label == "New Label"
+
+        mock_stop.assert_called_once()
+
+
+def test_spinner_context_manager_exception():
+    spinner = Spinner()
+    with patch.object(spinner, "start"), patch.object(spinner, "stop") as mock_stop, \
+        patch.object(spinner, "_emergency_cleanup") as mock_cleanup:
+
+        with pytest.raises(ValueError):
+            with spinner.context("Test"):
+                raise ValueError("Oops")
+
+        mock_cleanup.assert_called_once()
+        mock_stop.assert_called_once()

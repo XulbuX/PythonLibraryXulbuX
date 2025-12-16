@@ -1,7 +1,11 @@
-from xulbux.regex import Regex
+from xulbux.regex import LazyRegex, Regex
 
 import regex as rx
+import pytest
 import re
+
+#
+################################################## Regex TESTS ##################################################
 
 
 def test_regex_quotes_pattern():
@@ -460,3 +464,31 @@ def test_regex_brackets_deeply_nested():
     assert len(matches) >= 1
     assert "deepest" in matches[0]
     assert "Level2" in matches[0]
+
+
+################################################## LazyRegex TESTS ##################################################
+
+
+def test_lazy_regex_init():
+    patterns = LazyRegex(test=r"\d+")
+    assert patterns._patterns == {"test": r"\d+"}
+
+
+def test_lazy_regex_getattr_valid():
+    patterns = LazyRegex(test=r"\d+")
+    regex = patterns.test
+    assert regex.pattern == r"\d+"
+    assert "test" in patterns.__dict__  # CHECK CACHING
+
+
+def test_lazy_regex_getattr_invalid():
+    patterns = LazyRegex(test=r"\d+")
+    with pytest.raises(AttributeError):
+        _ = patterns.invalid
+
+
+def test_lazy_regex_caching():
+    patterns = LazyRegex(test=r"\d+")
+    regex1 = patterns.test
+    regex2 = patterns.test
+    assert regex1 is regex2

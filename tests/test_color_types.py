@@ -22,6 +22,9 @@ def assert_hexa_equal(actual: hexa, expected: str):
     assert str(actual) == expected
 
 
+################################################## rgba TESTS ##################################################
+
+
 def test_rgba_return_values():
     assert_rgba_equal(rgba(255, 0, 0, 0.5), (255, 0, 0, 0.5))
     assert_hsla_equal(rgba(255, 0, 0, 0.5).to_hsla(), (0, 100, 50, 0.5))
@@ -46,6 +49,41 @@ def test_rgba_return_values():
     assert rgba(255, 0, 0, 0.5).is_opaque() is False
     assert_rgba_equal(rgba(255, 0, 0, 0.5).with_alpha(0.75), (255, 0, 0, 0.75))
     assert_rgba_equal(rgba(255, 0, 0, 0.5).complementary(), (0, 255, 255, 0.5))
+
+
+def test_rgba_construction():
+    assert rgba(100, 150, 200).values() == (100, 150, 200, None)
+    assert rgba(100, 150, 200, 0.5).values() == (100, 150, 200, 0.5)
+    assert rgba(0, 0, 0).values() == (0, 0, 0, None)
+    assert rgba(255, 255, 255).values() == (255, 255, 255, None)
+    try:
+        rgba(300, 150, 200)
+        assert False, "Should raise ValueError for invalid RGB values"
+    except ValueError:
+        pass
+    try:
+        rgba(100, 150, 200, 2.0)
+        assert False, "Should raise ValueError for invalid alpha value"
+    except ValueError:
+        pass
+
+
+def test_rgba_dunder_methods():
+    assert len(rgba(100, 150, 200)) == 3
+    assert len(rgba(100, 150, 200, 0.5)) == 4
+    color = rgba(100, 150, 200, 0.5)
+    assert color[0] == 100
+    assert color[1] == 150
+    assert color[2] == 200
+    assert color[3] == 0.5
+    assert rgba(100, 150, 200) == rgba(100, 150, 200)
+    assert rgba(100, 150, 200) != rgba(200, 100, 150)
+    assert str(rgba(100, 150, 200)) == "(100, 150, 200)"
+    assert str(rgba(100, 150, 200, 0.5)) == "(100, 150, 200, 0.5)"
+    assert repr(rgba(100, 150, 200)).startswith("rgba(")
+
+
+################################################## hsla TESTS ##################################################
 
 
 def test_hsla_return_values():
@@ -74,6 +112,41 @@ def test_hsla_return_values():
     assert_hsla_equal(hsla(0, 100, 50, 0.5).complementary(), (180, 100, 50, 0.5))
 
 
+def test_hsla_construction():
+    assert hsla(210, 50, 60).values() == (210, 50, 60, None)
+    assert hsla(210, 50, 60, 0.5).values() == (210, 50, 60, 0.5)
+    assert hsla(0, 0, 0).values() == (0, 0, 0, None)
+    assert hsla(360, 100, 100).values() == (360, 100, 100, None)
+    try:
+        hsla(361, 50, 60)
+        assert False, "Should raise ValueError for invalid hue value"
+    except ValueError:
+        pass
+    try:
+        hsla(210, 101, 60)
+        assert False, "Should raise ValueError for invalid saturation value"
+    except ValueError:
+        pass
+
+
+def test_hsla_dunder_methods():
+    assert len(hsla(210, 50, 60)) == 3
+    assert len(hsla(210, 50, 60, 0.5)) == 4
+    color = hsla(210, 50, 60, 0.5)
+    assert color[0] == 210
+    assert color[1] == 50
+    assert color[2] == 60
+    assert color[3] == 0.5
+    assert hsla(210, 50, 60) == hsla(210, 50, 60)
+    assert hsla(210, 50, 60) != hsla(210, 60, 50)
+    assert str(hsla(210, 50, 60)) == "(210°, 50%, 60%)"
+    assert str(hsla(210, 50, 60, 0.5)) == "(210°, 50%, 60%, 0.5)"
+    assert repr(hsla(210, 50, 60)).startswith("hsla(")
+
+
+################################################## hexa TESTS ##################################################
+
+
 def test_hexa_return_values():
     assert_hexa_equal(hexa("#F008"), "#FF000088")
     assert_rgba_equal(hexa("#FF00007F").to_rgba(), (255, 0, 0, 0.5))
@@ -100,40 +173,6 @@ def test_hexa_return_values():
     assert_hexa_equal(hexa("#FF00007F").complementary(), "#00FFFF7F")
 
 
-def test_rgba_construction():
-    assert rgba(100, 150, 200).values() == (100, 150, 200, None)
-    assert rgba(100, 150, 200, 0.5).values() == (100, 150, 200, 0.5)
-    assert rgba(0, 0, 0).values() == (0, 0, 0, None)
-    assert rgba(255, 255, 255).values() == (255, 255, 255, None)
-    try:
-        rgba(300, 150, 200)
-        assert False, "Should raise ValueError for invalid RGB values"
-    except ValueError:
-        pass
-    try:
-        rgba(100, 150, 200, 2.0)
-        assert False, "Should raise ValueError for invalid alpha value"
-    except ValueError:
-        pass
-
-
-def test_hsla_construction():
-    assert hsla(210, 50, 60).values() == (210, 50, 60, None)
-    assert hsla(210, 50, 60, 0.5).values() == (210, 50, 60, 0.5)
-    assert hsla(0, 0, 0).values() == (0, 0, 0, None)
-    assert hsla(360, 100, 100).values() == (360, 100, 100, None)
-    try:
-        hsla(361, 50, 60)
-        assert False, "Should raise ValueError for invalid hue value"
-    except ValueError:
-        pass
-    try:
-        hsla(210, 101, 60)
-        assert False, "Should raise ValueError for invalid saturation value"
-    except ValueError:
-        pass
-
-
 def test_hexa_construction():
     assert hexa("#F00").values() == (255, 0, 0, None)
     assert hexa("#F008").values(True) == (255, 0, 0, 0.53)
@@ -151,36 +190,6 @@ def test_hexa_construction():
         assert False, "Should raise ValueError for invalid length"
     except ValueError:
         pass
-
-
-def test_rgba_dunder_methods():
-    assert len(rgba(100, 150, 200)) == 3
-    assert len(rgba(100, 150, 200, 0.5)) == 4
-    color = rgba(100, 150, 200, 0.5)
-    assert color[0] == 100
-    assert color[1] == 150
-    assert color[2] == 200
-    assert color[3] == 0.5
-    assert rgba(100, 150, 200) == rgba(100, 150, 200)
-    assert rgba(100, 150, 200) != rgba(200, 100, 150)
-    assert str(rgba(100, 150, 200)) == "(100, 150, 200)"
-    assert str(rgba(100, 150, 200, 0.5)) == "(100, 150, 200, 0.5)"
-    assert repr(rgba(100, 150, 200)).startswith("rgba(")
-
-
-def test_hsla_dunder_methods():
-    assert len(hsla(210, 50, 60)) == 3
-    assert len(hsla(210, 50, 60, 0.5)) == 4
-    color = hsla(210, 50, 60, 0.5)
-    assert color[0] == 210
-    assert color[1] == 50
-    assert color[2] == 60
-    assert color[3] == 0.5
-    assert hsla(210, 50, 60) == hsla(210, 50, 60)
-    assert hsla(210, 50, 60) != hsla(210, 60, 50)
-    assert str(hsla(210, 50, 60)) == "(210°, 50%, 60%)"
-    assert str(hsla(210, 50, 60, 0.5)) == "(210°, 50%, 60%, 0.5)"
-    assert repr(hsla(210, 50, 60)).startswith("hsla(")
 
 
 def test_hexa_dunder_methods():

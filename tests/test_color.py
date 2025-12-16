@@ -1,5 +1,8 @@
 from xulbux.color import Color, rgba, hsla, hexa
 
+#
+################################################## Color TESTS ##################################################
+
 
 def test_rgba_to_hex_int_and_back():
     blue = Color.rgba_to_hex_int(0, 0, 255)

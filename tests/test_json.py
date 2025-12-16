@@ -80,6 +80,9 @@ UPDATE_DATA_END = {
     "user": {"name": "Test User", "admin": True},
 }
 
+#
+################################################## Json TESTS ##################################################
+
 
 def test_read_simple(tmp_path):
     file_path = create_test_json(tmp_path, "simple.json", SIMPLE_DATA)

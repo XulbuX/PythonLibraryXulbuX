@@ -1,5 +1,8 @@
 from xulbux.env_path import EnvPath
 
+#
+################################################## EnvPath TESTS ##################################################
+
 
 def test_get_paths():
     paths = EnvPath.paths()
