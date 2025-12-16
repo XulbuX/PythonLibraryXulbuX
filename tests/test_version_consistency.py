@@ -2,6 +2,7 @@ from typing import Optional
 from pathlib import Path
 import subprocess
 import pytest
+import os
 import re
 
 # DEFINE PATHS RELATIVE TO THIS TEST FILE tests/test_version.py
@@ -11,9 +12,18 @@ INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 
 
 def get_current_branch() -> Optional[str]:
+    # CHECK GITHUB ACTIONS ENVIRONMENT VARIABLES FIRST
+    # GITHUB_HEAD_REF IS SET FOR PULL REQUESTS (SOURCE BRANCH)
+    if branch := os.environ.get("GITHUB_HEAD_REF"):
+        return branch
+    # GITHUB_REF_NAME IS SET FOR PUSHES (BRANCH NAME)
+    if branch := os.environ.get("GITHUB_REF_NAME"):
+        return branch
+
+    # FALLBACK TO GIT COMMAND FOR LOCAL DEV
     try:
         result = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True, check=True)
-        return result.stdout.strip()
+        return result.stdout.strip() or None
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
 
