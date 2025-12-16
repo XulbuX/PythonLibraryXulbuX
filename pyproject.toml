@@ -166,4 +166,5 @@ testpaths = [
   "tests/test_regex.py",
   "tests/test_string.py",
   "tests/test_system.py",
+  "tests/test_version_consistency.py",
 ]

@@ -17,7 +17,7 @@
 
 <span id="v1-9-2" />
 
-## ... `v1.9.2`
+## 16.12.2025 `v1.9.2`
 * Added a new class `LazyRegex` to the `regex` module, which is used to define regex patterns that are only compiled when they are used for the first time.
 * Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
 * Removed all the runtime type-checks that can also be checked using static type-checking tools, since you're supposed to use type checkers in modern python anyway, and to improve performance.
