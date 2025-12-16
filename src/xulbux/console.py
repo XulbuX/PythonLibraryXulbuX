@@ -716,8 +716,12 @@ class Console:
         ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
-            f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n" + "\n".join(lines)
-            + f"\n{spaces_l}[bg:{box_bg_color}]{pady}[_]",
+            ( \
+                f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n"
+                + "\n".join(lines)
+                + ("\n" if lines else "")
+                + f"{spaces_l}[bg:{box_bg_color}]{pady}[_]"
+            ),
             default_color=default_color or "#000",
             sep="\n",
             end=end,
@@ -814,7 +818,7 @@ class Console:
             ( \
                 f"{start}{border_t}[_]\n"
                 + "\n".join(lines)
-                + ("\n" if len(lines) > 0 else "")
+                + ("\n" if lines else "")
                 + f"{border_b}[_]"
             ),
             default_color=default_color,
