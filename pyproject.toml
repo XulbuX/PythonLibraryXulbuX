@@ -26,6 +26,7 @@ optional-dependencies = { dev = [
 ] }
 classifiers = [
   "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.11",
@@ -109,7 +110,7 @@ xulbux-help = "xulbux.cli.help:show_help"
 
 [tool.black]
 line-length = 127
-target-version = ['py310', 'py311', 'py312', 'py313']
+target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
