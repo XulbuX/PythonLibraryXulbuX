@@ -51,9 +51,9 @@ So you don't have to import the full library under an alias, you can also import
 ```python
 # LIBRARY SUB MODULES
 from xulbux.base.consts import COLOR, CHARS, ANSI
-# Main Classes
+# MODULE MAIN CLASSES
 from xulbux import Code, Color, Console, ...
-# module specific imports
+# MODULE SPECIFIC IMPORTS
 from xulbux.color import rgba, hsla, hexa
 ```
 

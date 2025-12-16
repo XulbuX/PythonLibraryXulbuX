@@ -5,7 +5,7 @@ __email__ = "xulbux.real@gmail.com"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2024 XulbuX"
 __url__ = "https://github.com/XulbuX/PythonLibraryXulbuX"
-__description__ = "A Python library which includes lots of helpful classes, types, and functions aiming to make common programming tasks simpler."
+__description__ = "A Python library to simplify common programming tasks."
 
 __all__ = [
     "Code",
