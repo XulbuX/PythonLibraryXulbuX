@@ -455,7 +455,7 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------------
         - `string` -⠀the string that contains the formatting codes to remove
         - `default_color` -⠀the default text color to use if no other text color was applied
-        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
+        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned,
           where each tuple contains the position of the removed formatting code and the removed formatting code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
         return FormatCodes.remove_ansi(
@@ -473,7 +473,7 @@ class FormatCodes:
         """Removes all ANSI codes from the string with optional tracking of removed codes.\n
         ---------------------------------------------------------------------------------------------------
         - `ansi_string` -⠀the string that contains the ANSI codes to remove
-        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned, 
+        - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned,
           where each tuple contains the position of the removed ansi code and the removed ansi code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
         if get_removals:

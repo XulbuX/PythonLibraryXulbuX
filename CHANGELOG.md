@@ -22,6 +22,7 @@
 * Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
 * Removed all the runtime type-checks that can also be checked using static type-checking tools, since you're supposed to use type checkers in modern python anyway, and to improve performance.
 * Renamed the internal class method `FormatCodes.__config_console()` to `FormatCodes._config_console()` to make it callable, but still indicate that it's internal.
+* Fixed a small bug where `Console.log_box_…()` would sometimes raise an exception due to an issue in the internal method `__prepare_log_box()`.
 
 **BREAKING CHANGES:**
 * The arguments when calling `Console.get_args()` are no longer specified in a single dictionary, but now each argument is passed as a separate keyword argument.<br>

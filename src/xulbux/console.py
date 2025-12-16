@@ -709,11 +709,11 @@ class Console:
         pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
         pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
 
-        lines = [
+        lines = [( \
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
-            + _FC_PATTERNS.formatting.sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line) +
-            (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]" for line, unfmt in zip(lines, unfmt_lines)
-        ]
+            + _FC_PATTERNS.formatting.sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line)
+            + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]"
+        ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
             f"{start}{spaces_l}[bg:{box_bg_color}]{pady}[*]\n" + "\n".join(lines)
@@ -804,13 +804,19 @@ class Console:
 
         h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
 
-        lines = [
-            h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]" + " " *
-            ((w_padding + max_line_len - len(unfmt)) + pad_w_full) + border_r for line, unfmt in zip(lines, unfmt_lines)
-        ]
+        lines = [( \
+            h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]"
+            + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)
+            + border_r
+        ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
-            f"{start}{border_t}[_]\n" + "\n".join(lines) + f"\n{border_b}[_]",
+            ( \
+                f"{start}{border_t}[_]\n"
+                + "\n".join(lines)
+                + ("\n" if len(lines) > 0 else "")
+                + f"{border_b}[_]"
+            ),
             default_color=default_color,
             sep="\n",
             end=end,
@@ -857,7 +863,7 @@ class Console:
             lines = [line for val in values for line in str(val).splitlines()]
 
         unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
-        max_line_len = max(len(line) for line in unfmt_lines)
+        max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
     @staticmethod
@@ -1261,8 +1267,10 @@ class ProgressBar:
         - `label` -⠀an optional label which is inserted at the `{label}` or `{l}` placeholder"""
         # THROTTLE UPDATES (UNLESS IT'S THE FIRST/FINAL UPDATE)
         current_time = _time.time()
-        if not (self._last_update_time == 0.0 or current >= total or current < 0) \
-            and (current_time - self._last_update_time) < self._min_update_interval:
+        if (
+            not (self._last_update_time == 0.0 or current >= total or current < 0) \
+            and (current_time - self._last_update_time) < self._min_update_interval
+        ):
             return
         self._last_update_time = current_time
 
