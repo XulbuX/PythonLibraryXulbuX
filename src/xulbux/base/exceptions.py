@@ -3,16 +3,17 @@ This module contains all custom exception classes used throughout the library.
 """
 
 try:
-    from mypy_extensions import mypyc_attr
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
 except ImportError:
 
+    def __mypyc_attr_decorator(cls):
+        return cls
+
     def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        def decorator(cls):
-            return cls
-
-        return decorator
+        return __mypyc_attr_decorator
 
 
+#
 ################################################## FILE ##################################################
 
 

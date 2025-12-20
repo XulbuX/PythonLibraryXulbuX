@@ -77,16 +77,20 @@ def test_restart_unsupported_system(mock_subprocess, mock_platform):
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows-specific test")
-def test_elevate_windows_already_elevated():
-    """Test elevate on Windows when already elevated"""
-    with patch.object(System, "is_elevated", True):
-        result = System.elevate()
-        assert result is True
+@patch("xulbux.system._ctypes")
+def test_elevate_windows_already_elevated(mock_ctypes):
+    """Test elevate on WINDOWS when already elevated"""
+    # SETUP THE MOCK TO RETURN 1 (True) FOR IsUserAnAdmin
+    mock_ctypes.windll.shell32.IsUserAnAdmin.return_value = 1
+
+    result = System.elevate()
+    assert result is True
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX-specific test")
-def test_elevate_posix_already_elevated():
+@patch("xulbux.system._os.geteuid")
+def test_elevate_posix_already_elevated(mock_geteuid):
     """Test elevate on POSIX when already elevated"""
-    with patch.object(System, "is_elevated", True):
-        result = System.elevate()
-        assert result is True
+    mock_geteuid.return_value = 0
+    result = System.elevate()
+    assert result is True

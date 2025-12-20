@@ -22,6 +22,8 @@
 * Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
 * Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.
 * The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
+* Unnest all the nested methods in the whole library for compatibility with `mypyc`.
+* Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
 
 
 <span id="v1-9-2" />

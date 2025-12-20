@@ -8,7 +8,7 @@ from .base.types import MissingLibsMsgs
 from .format_codes import FormatCodes
 from .console import Console
 
-from typing import ClassVar, Optional, cast
+from typing import Optional
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
@@ -16,10 +16,23 @@ import time as _time
 import sys as _sys
 import os as _os
 
+try:
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
+except ImportError:
 
-class _IsElevated:
+    def __mypyc_attr_decorator(cls):
+        return cls
 
-    def __get__(self, obj, owner=None):
+    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
+        return __mypyc_attr_decorator
+
+
+@mypyc_attr(native_class=False)
+class __SystemMeta(type):
+
+    @property
+    def is_elevated(cls) -> bool:
+        """Is `True` if the current process has elevated privileges and `False` otherwise."""
         try:
             if _os.name == "nt":
                 return getattr(_ctypes, "windll").shell32.IsUserAnAdmin() != 0
@@ -30,11 +43,8 @@ class _IsElevated:
         return False
 
 
-class System:
+class System(metaclass=__SystemMeta):
     """This class provides methods to interact with the underlying operating system."""
-
-    is_elevated: ClassVar[bool] = cast(bool, _IsElevated())
-    """Is `True` if the current process has elevated privileges and `False` otherwise."""
 
     @classmethod
     def restart(cls, prompt: object = "", wait: int = 0, continue_program: bool = False, force: bool = False) -> None:

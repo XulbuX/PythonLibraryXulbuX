@@ -27,6 +27,16 @@ import sys as _sys
 import os as _os
 import io as _io
 
+try:
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
+except ImportError:
+
+    def __mypyc_attr_decorator(cls):
+        return cls
+
+    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
+        return __mypyc_attr_decorator
+
 
 T = TypeVar("T")
 
@@ -42,40 +52,6 @@ _PATTERNS = LazyRegex(
     percentage=r"(?i){(?:percentage|percent|p)}",
     animation=r"(?i){(?:animation|a)}",
 )
-
-
-class _ConsoleWidth:
-
-    def __get__(self, obj, owner=None):
-        try:
-            return _os.get_terminal_size().columns
-        except OSError:
-            return 80
-
-
-class _ConsoleHeight:
-
-    def __get__(self, obj, owner=None):
-        try:
-            return _os.get_terminal_size().lines
-        except OSError:
-            return 24
-
-
-class _ConsoleSize:
-
-    def __get__(self, obj, owner=None):
-        try:
-            size = _os.get_terminal_size()
-            return (size.columns, size.lines)
-        except OSError:
-            return (80, 24)
-
-
-class _ConsoleUser:
-
-    def __get__(self, obj, owner=None):
-        return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
 class _InputValidator(Validator):
@@ -185,17 +161,42 @@ class Args:
             yield (key, val)
 
 
-class Console:
-    """This class provides methods for logging and other actions within the console."""
+@mypyc_attr(native_class=False)
+class __ConsoleMeta(type):
 
-    w: ClassVar[int] = cast(int, _ConsoleWidth())
-    """The width of the console in characters."""
-    h: ClassVar[int] = cast(int, _ConsoleHeight())
-    """The height of the console in lines."""
-    size: ClassVar[tuple[int, int]] = cast(tuple[int, int], _ConsoleSize())
-    """A tuple with the width and height of the console in characters and lines."""
-    user: ClassVar[str] = cast(str, _ConsoleUser())
-    """The name of the current user."""
+    @property
+    def w(cls) -> int:
+        """The width of the console in characters."""
+        try:
+            return _os.get_terminal_size().columns
+        except OSError:
+            return 80
+
+    @property
+    def h(cls) -> int:
+        """The height of the console in lines."""
+        try:
+            return _os.get_terminal_size().lines
+        except OSError:
+            return 24
+
+    @property
+    def size(cls) -> tuple[int, int]:
+        """A tuple with the width and height of the console in characters and lines."""
+        try:
+            size = _os.get_terminal_size()
+            return (size.columns, size.lines)
+        except OSError:
+            return (80, 24)
+
+    @property
+    def user(cls) -> str:
+        """The name of the current user."""
+        return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
+
+class Console(metaclass=__ConsoleMeta):
+    """This class provides methods for logging and other actions within the console."""
 
     @classmethod
     def get_args(

@@ -86,6 +86,42 @@ class Json:
 
         return file_path
 
+    @staticmethod
+    def __create_nested_path(data_obj: dict, path_keys: list[str], value: Any) -> dict:
+        """Creates nested dictionaries/lists based on the given path keys
+        and sets the specified value at the end of the path."""
+        last_idx, current = len(path_keys) - 1, data_obj
+
+        for i, key in enumerate(path_keys):
+            if i == last_idx:
+                if isinstance(current, dict):
+                    current[key] = value
+                elif isinstance(current, list) and key.isdigit():
+                    idx = int(key)
+                    while len(current) <= idx:
+                        current.append(None)
+                    current[idx] = value
+                else:
+                    raise TypeError(f"Cannot set key '{key}' on {type(current)}")
+
+            else:
+                next_key = path_keys[i + 1]
+                if isinstance(current, dict):
+                    if key not in current:
+                        current[key] = [] if next_key.isdigit() else {}
+                    current = current[key]
+                elif isinstance(current, list) and key.isdigit():
+                    idx = int(key)
+                    while len(current) <= idx:
+                        current.append(None)
+                    if current[idx] is None:
+                        current[idx] = [] if next_key.isdigit() else {}
+                    current = current[idx]
+                else:
+                    raise TypeError(f"Cannot navigate through {type(current)}")
+
+        return data_obj
+
     @classmethod
     def update(
         cls,
@@ -140,48 +176,15 @@ class Json:
             return_original=True,
         )
 
-        def create_nested_path(data_obj: dict, path_keys: list[str], value: Any) -> dict:
-            last_idx, current = len(path_keys) - 1, data_obj
-
-            for i, key in enumerate(path_keys):
-                if i == last_idx:
-                    if isinstance(current, dict):
-                        current[key] = value
-                    elif isinstance(current, list) and key.isdigit():
-                        idx = int(key)
-                        while len(current) <= idx:
-                            current.append(None)
-                        current[idx] = value
-                    else:
-                        raise TypeError(f"Cannot set key '{key}' on {type(current)}")
-
-                else:
-                    next_key = path_keys[i + 1]
-                    if isinstance(current, dict):
-                        if key not in current:
-                            current[key] = [] if next_key.isdigit() else {}
-                        current = current[key]
-                    elif isinstance(current, list) and key.isdigit():
-                        idx = int(key)
-                        while len(current) <= idx:
-                            current.append(None)
-                        if current[idx] is None:
-                            current[idx] = [] if next_key.isdigit() else {}
-                        current = current[idx]
-                    else:
-                        raise TypeError(f"Cannot navigate through {type(current)}")
-
-            return data_obj
-
         update: dict[str, Any] = {}
         for val_path, new_val in update_values.items():
             try:
                 if (path_id := Data.get_path_id(data=processed_data, value_paths=val_path, path_sep=path_sep)) is not None:
                     update[cast(str, path_id)] = new_val
                 else:
-                    data = create_nested_path(data, val_path.split(path_sep), new_val)
+                    data = cls.__create_nested_path(data, val_path.split(path_sep), new_val)
             except Exception:
-                data = create_nested_path(data, val_path.split(path_sep), new_val)
+                data = cls.__create_nested_path(data, val_path.split(path_sep), new_val)
 
         if update and "update" in locals():
             data = Data.set_value_by_path_id(data, update)

@@ -96,7 +96,7 @@ class rgba:
 
     def to_hsla(self) -> "hsla":
         """Returns the color as `hsla()` color object."""
-        h, s, l = self._rgb_to_hsl(self.r, self.g, self.b)
+        h, s, l = self.__rgb_to_hsl(self.r, self.g, self.b)
         return hsla(h, s, l, self.a, _validate=False)
 
     def to_hexa(self) -> "hexa":
@@ -248,7 +248,8 @@ class rgba:
         """Returns the complementary color (180 degrees on the color wheel)."""
         return self.to_hsla().complementary().to_rgba()
 
-    def _rgb_to_hsl(self, r: int, g: int, b: int) -> tuple:
+    @staticmethod
+    def __rgb_to_hsl(r: int, g: int, b: int) -> tuple:
         """Internal method to convert RGB to HSL color space."""
         _r, _g, _b = r / 255.0, g / 255.0, b / 255.0
         max_c, min_c = max(_r, _g, _b), min(_r, _g, _b)
@@ -354,12 +355,12 @@ class hsla:
 
     def to_rgba(self) -> "rgba":
         """Returns the color as `rgba()` color object."""
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
+        r, g, b = self.__hsl_to_rgb(self.h, self.s, self.l)
         return rgba(r, g, b, self.a, _validate=False)
 
     def to_hexa(self) -> "hexa":
         """Returns the color as `hexa()` color object."""
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
+        r, g, b = self.__hsl_to_rgb(self.h, self.s, self.l)
         return hexa("", r, g, b, self.a)
 
     def has_alpha(self) -> bool:
@@ -435,7 +436,7 @@ class hsla:
           * `"simple"` Simple arithmetic mean (less accurate)
           * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
         # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
+        r, g, b = self.__hsl_to_rgb(self.h, self.s, self.l)
         l = int(Color.luminance(r, g, b, output_type=None, method=method))
         self.h, self.s, self.l, _ = rgba(l, l, l, _validate=False).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a, _validate=False)
@@ -490,32 +491,33 @@ class hsla:
         """Returns the complementary color (180 degrees on the color wheel)."""
         return hsla((self.h + 180) % 360, self.s, self.l, self.a, _validate=False)
 
-    def _hsl_to_rgb(self, h: int, s: int, l: int) -> tuple:
+    @staticmethod
+    def __hue_to_rgb(p: float, q: float, t: float) -> float:
+        if t < 0:
+            t += 1
+        if t > 1:
+            t -= 1
+        if t < 1 / 6:
+            return p + (q - p) * 6 * t
+        if t < 1 / 2:
+            return q
+        if t < 2 / 3:
+            return p + (q - p) * (2 / 3 - t) * 6
+        return p
+
+    @classmethod
+    def __hsl_to_rgb(cls, h: int, s: int, l: int) -> tuple:
         """Internal method to convert HSL to RGB color space."""
         _h, _s, _l = h / 360, s / 100, l / 100
 
         if _s == 0:
             r = g = b = int(_l * 255)
         else:
-
-            def hue_to_rgb(p, q, t):
-                if t < 0:
-                    t += 1
-                if t > 1:
-                    t -= 1
-                if t < 1 / 6:
-                    return p + (q - p) * 6 * t
-                if t < 1 / 2:
-                    return q
-                if t < 2 / 3:
-                    return p + (q - p) * (2 / 3 - t) * 6
-                return p
-
             q = _l * (1 + _s) if _l < 0.5 else _l + _s - _l * _s
             p = 2 * _l - q
-            r = int(round(hue_to_rgb(p, q, _h + 1 / 3) * 255))
-            g = int(round(hue_to_rgb(p, q, _h) * 255))
-            b = int(round(hue_to_rgb(p, q, _h - 1 / 3) * 255))
+            r = int(round(cls.__hue_to_rgb(p, q, _h + 1 / 3) * 255))
+            g = int(round(cls.__hue_to_rgb(p, q, _h) * 255))
+            b = int(round(cls.__hue_to_rgb(p, q, _h - 1 / 3) * 255))
 
         return r, g, b
 
