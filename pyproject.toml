@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.9.2"
+version = "1.9.3"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A Python library to simplify common programming tasks."
