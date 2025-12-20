@@ -660,8 +660,8 @@ class Data:
             end=end,
         )
 
-    @classmethod
-    def __sep_path_id(cls, path_id: str) -> list[int]:
+    @staticmethod
+    def __sep_path_id(path_id: str) -> list[int]:
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 

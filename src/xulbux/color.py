@@ -934,7 +934,7 @@ class Color:
         )
 
     @classmethod
-    def _parse_rgba(cls, color: AnyRgba) -> rgba:
+    def __parse_rgba(cls, color: AnyRgba) -> rgba:
         """Internal method to parse a color to an RGBA object."""
         if isinstance(color, rgba):
             return color
@@ -951,7 +951,7 @@ class Color:
         raise ValueError(f"Could not parse RGBA color: {color!r}")
 
     @classmethod
-    def _parse_hsla(cls, color: AnyHsla) -> hsla:
+    def __parse_hsla(cls, color: AnyHsla) -> hsla:
         """Internal method to parse a color to an HSLA object."""
         if isinstance(color, hsla):
             return color
@@ -1007,11 +1007,11 @@ class Color:
         if isinstance(color, (hsla, hexa)):
             return color.to_rgba()
         elif cls.is_valid_hsla(color):
-            return cls._parse_hsla(color).to_rgba()
+            return cls.__parse_hsla(color).to_rgba()
         elif cls.is_valid_hexa(color):
             return hexa(cast(str | int, color)).to_rgba()
         elif cls.is_valid_rgba(color):
-            return cls._parse_rgba(color)
+            return cls.__parse_rgba(color)
         raise ValueError(f"Could not convert color {color!r} to RGBA.")
 
     @classmethod
@@ -1022,11 +1022,11 @@ class Color:
         if isinstance(color, (rgba, hexa)):
             return color.to_hsla()
         elif cls.is_valid_rgba(color):
-            return cls._parse_rgba(color).to_hsla()
+            return cls.__parse_rgba(color).to_hsla()
         elif cls.is_valid_hexa(color):
             return hexa(cast(str | int, color)).to_hsla()
         elif cls.is_valid_hsla(color):
-            return cls._parse_hsla(color)
+            return cls.__parse_hsla(color)
         raise ValueError(f"Could not convert color {color!r} to HSLA.")
 
     @classmethod
@@ -1037,9 +1037,9 @@ class Color:
         if isinstance(color, (rgba, hsla)):
             return color.to_hexa()
         elif cls.is_valid_rgba(color):
-            return cls._parse_rgba(color).to_hexa()
+            return cls.__parse_rgba(color).to_hexa()
         elif cls.is_valid_hsla(color):
-            return cls._parse_hsla(color).to_hexa()
+            return cls.__parse_hsla(color).to_hexa()
         elif cls.is_valid_hexa(color):
             return color if isinstance(color, hexa) else hexa(cast(str | int, color))
         raise ValueError(f"Could not convert color {color!r} to HEXA")
@@ -1183,11 +1183,9 @@ class Color:
         else:
             raise ValueError(f"Could not convert HEX integer 0x{hex_int:X} to RGBA color.")
 
-    @classmethod
-    def _linearize_srgb(cls, c: float) -> float:
-        """Helper method to linearize sRGB component following the WCAG standard.\n
-        ----------------------------------------------------------------------------
-        - `c` -⠀the sRGB component value in range [0.0, 1.0] inclusive"""
+    @staticmethod
+    def __linearize_srgb(c: float) -> float:
+        """Helper method to linearize sRGB component following the WCAG standard."""
         if not (0.0 <= c <= 1.0):
             raise ValueError(f"The 'c' parameter must be in range [0.0, 1.0] inclusive, got {c!r}")
 
@@ -1229,14 +1227,14 @@ class Color:
         elif method == "bt601":
             luminance = 0.299 * _r + 0.587 * _g + 0.114 * _b
         elif method == "wcag3":
-            _r = cls._linearize_srgb(_r)
-            _g = cls._linearize_srgb(_g)
-            _b = cls._linearize_srgb(_b)
+            _r = cls.__linearize_srgb(_r)
+            _g = cls.__linearize_srgb(_g)
+            _b = cls.__linearize_srgb(_b)
             luminance = 0.2126729 * _r + 0.7151522 * _g + 0.0721750 * _b
         else:
-            _r = cls._linearize_srgb(_r)
-            _g = cls._linearize_srgb(_g)
-            _b = cls._linearize_srgb(_b)
+            _r = cls.__linearize_srgb(_r)
+            _g = cls.__linearize_srgb(_g)
+            _b = cls.__linearize_srgb(_b)
             luminance = 0.2126 * _r + 0.7152 * _g + 0.0722 * _b
 
         if output_type == int:

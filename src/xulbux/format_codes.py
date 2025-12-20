@@ -523,12 +523,12 @@ class FormatCodes:
                     pass
             _CONSOLE_ANSI_CONFIGURED = True
 
-    @classmethod
-    def __formats_to_keys(cls, formats: str) -> list[str]:
+    @staticmethod
+    def __formats_to_keys(formats: str) -> list[str]:
         return [k.strip() for k in formats.split("|") if k.strip()]
 
-    @classmethod
-    def __validate_default_color(cls, default_color: Optional[Rgba | Hexa]) -> tuple[bool, Optional[rgba]]:
+    @staticmethod
+    def __validate_default_color(default_color: Optional[Rgba | Hexa]) -> tuple[bool, Optional[rgba]]:
         """Validate and convert `default_color` to rgba format."""
         if default_color is None:
             return False, None
@@ -538,9 +538,8 @@ class FormatCodes:
             return True, Color.to_rgba(default_color)
         raise TypeError("The 'default_color' parameter must be either a valid RGBA or HEXA color, or None.")
 
-    @classmethod
+    @staticmethod
     def __get_default_ansi(
-        cls,
         default_color: rgba,
         format_key: Optional[str] = None,
         brightness_steps: Optional[int] = None,
@@ -606,8 +605,8 @@ class FormatCodes:
             pass
         return _format_key
 
-    @classmethod
-    def __normalize_key(cls, format_key: str) -> str:
+    @staticmethod
+    def __normalize_key(format_key: str) -> str:
         """Normalizes the given format key."""
         k_parts = format_key.replace(" ", "").lower().split(":")
         prefix_str = "".join(
@@ -615,7 +614,6 @@ class FormatCodes:
             if any(k_part in prefix_values for k_part in k_parts)
         )
         return prefix_str + ":".join(
-            part for part in k_parts if part not in {val
-                                                     for values in _PREFIX.values()
-                                                     for val in values}
+            part for part in k_parts \
+            if part not in {val for values in _PREFIX.values() for val in values}
         )

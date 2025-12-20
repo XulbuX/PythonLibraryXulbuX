@@ -513,32 +513,36 @@ class Console(metaclass=__ConsoleMeta):
                 end=end,
             )
 
+    @staticmethod
+    def __find_string_part(pos: int, cumulative_pos: list[int]) -> int:
+        """Finds the index of the string part that contains the given position."""
+        left, right = 0, len(cumulative_pos) - 1
+        while left < right:
+            mid = (left + right) // 2
+            if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
+                return mid
+            elif pos < cumulative_pos[mid]:
+                right = mid
+            else:
+                left = mid + 1
+        return left
+
     @classmethod
     def __add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
         """Adds back the removed parts into the split string parts at their original positions."""
-        lengths, cumulative_pos = [len(s) for s in split_string], [0]
-        for length in lengths:
+        cumulative_pos = [0]
+        for length in (len(s) for s in split_string):
             cumulative_pos.append(cumulative_pos[-1] + length)
+
         result, offset_adjusts = split_string.copy(), [0] * len(split_string)
         last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
-
-        def find_string_part(pos: int) -> int:
-            left, right = 0, len(cumulative_pos) - 1
-            while left < right:
-                mid = (left + right) // 2
-                if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
-                    return mid
-                elif pos < cumulative_pos[mid]:
-                    right = mid
-                else:
-                    left = mid + 1
-            return left
 
         for pos, removal in removals:
             if pos >= total_length:
                 result[last_idx] = result[last_idx] + removal
                 continue
-            i = find_string_part(pos)
+
+            i = cls.__find_string_part(pos, cumulative_pos)
             adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
             parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
             result[i] = "".join(parts)
@@ -863,9 +867,8 @@ class Console(metaclass=__ConsoleMeta):
             end=end,
         )
 
-    @classmethod
+    @staticmethod
     def __prepare_log_box(
-        cls,
         values: list[object] | tuple[object, ...],
         default_color: Optional[Rgba | Hexa] = None,
         has_rules: bool = False,

@@ -51,8 +51,8 @@ class EnvPath:
         if cls.has_path(path := cls.__get(path, cwd, base_dir)):
             cls.__persistent(path, remove=True)
 
-    @classmethod
-    def __get(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
+    @staticmethod
+    def __get(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
         """Get and/or normalize the given path, CWD or base directory.\n
         ------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
