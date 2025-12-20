@@ -83,8 +83,7 @@ class EnvPath:
 
         if _sys.platform == "win32":  # WINDOWS
             try:
-                import winreg as _winreg
-
+                _winreg = __import__("winreg")
                 key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Environment", 0, _winreg.KEY_ALL_ACCESS)
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)

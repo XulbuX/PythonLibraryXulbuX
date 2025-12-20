@@ -22,7 +22,7 @@ class _IsElevated:
     def __get__(self, obj, owner=None):
         try:
             if _os.name == "nt":
-                return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[attr-defined]
+                return getattr(_ctypes, "windll").shell32.IsUserAnAdmin() != 0
             elif _os.name == "posix":
                 return _os.geteuid() == 0  # type: ignore[attr-defined]
         except Exception:
@@ -167,7 +167,7 @@ class System:
             else:
                 args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-            result = _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1)
+            result = getattr(_ctypes, "windll").shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1)
             if result <= 32:
                 raise PermissionError("Failed to launch elevated process.")
             else:

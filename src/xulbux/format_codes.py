@@ -514,7 +514,7 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # ENABLE VT100 MODE ON WINDOWS TO BE ABLE TO USE ANSI CODES
-                    kernel32 = _ctypes.windll.kernel32
+                    kernel32 = getattr(_ctypes, "windll").kernel32
                     h = kernel32.GetStdHandle(-11)
                     mode = _ctypes.c_ulong()
                     kernel32.GetConsoleMode(h, _ctypes.byref(mode))
