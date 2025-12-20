@@ -1,5 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = [
+  "setuptools>=80.0.0",
+  "wheel>=0.45.0",
+  "mypy>=1.19.0",
+  # TYPES FOR MyPy
+  "types-regex",
+  "types-keyboard",
+  "prompt_toolkit>=3.0.41",
+]
 build-backend = "setuptools.build_meta"
 
 [project]

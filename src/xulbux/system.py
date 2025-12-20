@@ -8,7 +8,7 @@ from .base.types import MissingLibsMsgs
 from .format_codes import FormatCodes
 from .console import Console
 
-from typing import Optional, cast
+from typing import ClassVar, Optional, cast
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
@@ -33,11 +33,11 @@ class _IsElevated:
 class System:
     """This class provides methods to interact with the underlying operating system."""
 
-    is_elevated: bool = cast(bool, _IsElevated())
+    is_elevated: ClassVar[bool] = cast(bool, _IsElevated())
     """Is `True` if the current process has elevated privileges and `False` otherwise."""
 
-    @staticmethod
-    def restart(prompt: object = "", wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
+    @classmethod
+    def restart(cls, prompt: object = "", wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
         """Restarts the system with some advanced options\n
         --------------------------------------------------------------------------------------------------
         - `prompt` -⠀the message to be displayed in the systems restart notification
@@ -86,8 +86,9 @@ class System:
         else:
             raise NotImplementedError(f"Restart not implemented for '{system}' systems.")
 
-    @staticmethod
+    @classmethod
     def check_libs(
+        cls,
         lib_names: list[str],
         install_missing: bool = False,
         missing_libs_msgs: MissingLibsMsgs = {
@@ -142,8 +143,8 @@ class System:
         except _subprocess.CalledProcessError:
             return missing
 
-    @staticmethod
-    def elevate(win_title: Optional[str] = None, args: list = []) -> bool:
+    @classmethod
+    def elevate(cls, win_title: Optional[str] = None, args: Optional[list] = None) -> bool:
         """Attempts to start a new process with elevated privileges.\n
         ---------------------------------------------------------------------------------
         - `win_title` -⠀the window title of the elevated process (only on Windows)
@@ -155,14 +156,16 @@ class System:
         ---------------------------------------------------------------------------------
         Returns `True` if the current process already has elevated privileges and raises
         a `PermissionError` if the user denied the elevation or the elevation failed."""
-        if System.is_elevated:
+        if cls.is_elevated:
             return True
+
+        args_list = args or []
 
         if _os.name == "nt":  # WINDOWS
             if win_title:
-                args_str = f'-c "import ctypes; ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args)}"'
+                args_str = f'-c "import ctypes; ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}"'
             else:
-                args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args)}'
+                args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
             result = _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1)
             if result <= 32:
@@ -174,7 +177,7 @@ class System:
             cmd = ["pkexec"]
             if win_title:
                 cmd.extend(["--description", win_title])
-            cmd.extend([_sys.executable] + _sys.argv[1:] + ([] if args is None else args))
+            cmd.extend([_sys.executable] + _sys.argv[1:] + args_list)
 
             proc = _subprocess.Popen(cmd)
             proc.wait()

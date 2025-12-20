@@ -13,46 +13,46 @@ import os as _os
 class EnvPath:
     """This class includes methods to work with the PATH environment variable."""
 
-    @staticmethod
-    def paths(as_list: bool = False) -> str | list:
+    @classmethod
+    def paths(cls, as_list: bool = False) -> str | list:
         """Get the PATH environment variable.\n
         ------------------------------------------------------------------------------
         - `as_list` -⠀if true, returns the paths as a list; otherwise, as a string"""
         paths = _os.environ.get("PATH", "")
         return paths.split(_os.pathsep) if as_list else paths
 
-    @staticmethod
-    def has_path(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> bool:
+    @classmethod
+    def has_path(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> bool:
         """Check if a path is present in the PATH environment variable.\n
         ------------------------------------------------------------------------
         - `path` -⠀the path to check for
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        return _os.path.normpath(EnvPath.__get(path, cwd, base_dir)) \
-            in {_os.path.normpath(p) for p in EnvPath.paths(as_list=True)}
+        return _os.path.normpath(cls.__get(path, cwd, base_dir)) \
+            in {_os.path.normpath(p) for p in cls.paths(as_list=True)}
 
-    @staticmethod
-    def add_path(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> None:
+    @classmethod
+    def add_path(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> None:
         """Add a path to the PATH environment variable.\n
         ------------------------------------------------------------------------
         - `path` -⠀the path to add
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if not EnvPath.has_path(path := EnvPath.__get(path, cwd, base_dir)):
-            EnvPath.__persistent(path)
+        if not cls.has_path(path := cls.__get(path, cwd, base_dir)):
+            cls.__persistent(path)
 
-    @staticmethod
-    def remove_path(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> None:
+    @classmethod
+    def remove_path(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> None:
         """Remove a path from the PATH environment variable.\n
         ------------------------------------------------------------------------
         - `path` -⠀the path to remove
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if EnvPath.has_path(path := EnvPath.__get(path, cwd, base_dir)):
-            EnvPath.__persistent(path, remove=True)
+        if cls.has_path(path := cls.__get(path, cwd, base_dir)):
+            cls.__persistent(path, remove=True)
 
-    @staticmethod
-    def __get(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
+    @classmethod
+    def __get(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
         """Get and/or normalize the given path, CWD or base directory.\n
         ------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
@@ -68,10 +68,10 @@ class EnvPath:
 
         return _os.path.normpath(path)
 
-    @staticmethod
-    def __persistent(path: str, remove: bool = False) -> None:
+    @classmethod
+    def __persistent(cls, path: str, remove: bool = False) -> None:
         """Add or remove a path from PATH persistently across sessions as well as the current session."""
-        current_paths = list(EnvPath.paths(as_list=True))
+        current_paths = list(cls.paths(as_list=True))
         path = _os.path.normpath(path)
 
         if remove:

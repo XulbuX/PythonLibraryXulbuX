@@ -4,85 +4,87 @@ This module contains constant values used throughout the library.
 
 from .types import FormattableString, AllTextChars
 
+from typing import Final
+
 
 class COLOR:
     """Hexadecimal color presets."""
 
-    WHITE = "#F1F2FF"
-    LIGHT_GRAY = "#B6B7C0"
-    GRAY = "#7B7C8D"
-    DARK_GRAY = "#67686C"
-    BLACK = "#202125"
-    RED = "#FF606A"
-    CORAL = "#FF7069"
-    ORANGE = "#FF876A"
-    TANGERINE = "#FF9962"
-    GOLD = "#FFAF60"
-    YELLOW = "#FFD260"
-    LIME = "#C9F16E"
-    GREEN = "#7EE787"
-    NEON_GREEN = "#4CFF85"
-    TEAL = "#50EAAF"
-    CYAN = "#3EDEE6"
-    ICE = "#77DBEF"
-    LIGHT_BLUE = "#60AAFF"
-    BLUE = "#8085FF"
-    LAVENDER = "#9B7DFF"
-    PURPLE = "#AD68FF"
-    MAGENTA = "#C860FF"
-    PINK = "#F162EF"
-    ROSE = "#FF609F"
+    WHITE: Final = "#F1F2FF"
+    LIGHT_GRAY: Final = "#B6B7C0"
+    GRAY: Final = "#7B7C8D"
+    DARK_GRAY: Final = "#67686C"
+    BLACK: Final = "#202125"
+    RED: Final = "#FF606A"
+    CORAL: Final = "#FF7069"
+    ORANGE: Final = "#FF876A"
+    TANGERINE: Final = "#FF9962"
+    GOLD: Final = "#FFAF60"
+    YELLOW: Final = "#FFD260"
+    LIME: Final = "#C9F16E"
+    GREEN: Final = "#7EE787"
+    NEON_GREEN: Final = "#4CFF85"
+    TEAL: Final = "#50EAAF"
+    CYAN: Final = "#3EDEE6"
+    ICE: Final = "#77DBEF"
+    LIGHT_BLUE: Final = "#60AAFF"
+    BLUE: Final = "#8085FF"
+    LAVENDER: Final = "#9B7DFF"
+    PURPLE: Final = "#AD68FF"
+    MAGENTA: Final = "#C860FF"
+    PINK: Final = "#F162EF"
+    ROSE: Final = "#FF609F"
 
 
 class CHARS:
     """Character set constants for text validation and filtering."""
 
-    ALL = AllTextChars()
+    ALL: Final = AllTextChars()
     """Sentinel value indicating all characters are allowed."""
 
-    DIGITS = "0123456789"
+    DIGITS: Final = "0123456789"
     """Numeric digits: `0`-`9`"""
-    FLOAT_DIGITS = "." + DIGITS
+    FLOAT_DIGITS: Final = "." + DIGITS
     """Numeric digits with decimal point: `0`-`9` and `.`"""
-    HEX_DIGITS = "#" + DIGITS + "abcdefABCDEF"
+    HEX_DIGITS: Final = "#" + DIGITS + "abcdefABCDEF"
     """Hexadecimal digits: `0`-`9`, `a`-`f`, `A`-`F`, and `#`"""
 
-    LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
+    LOWERCASE: Final = "abcdefghijklmnopqrstuvwxyz"
     """Lowercase ASCII letters: `a`-`z`"""
-    LOWERCASE_EXTENDED = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
+    LOWERCASE_EXTENDED: Final = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
     """Lowercase ASCII letters with diacritic marks."""
-    UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    UPPERCASE: Final = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     """Uppercase ASCII letters: `A`-`Z`"""
-    UPPERCASE_EXTENDED = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
+    UPPERCASE_EXTENDED: Final = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
     """Uppercase ASCII letters with diacritic marks."""
 
-    LETTERS = LOWERCASE + UPPERCASE
+    LETTERS: Final = LOWERCASE + UPPERCASE
     """All ASCII letters: `a`-`z` and `A`-`Z`"""
-    LETTERS_EXTENDED = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
+    LETTERS_EXTENDED: Final = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
     """All ASCII letters with diacritic marks."""
 
-    SPECIAL_ASCII = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    SPECIAL_ASCII: Final = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
     """Standard ASCII special characters and symbols."""
-    SPECIAL_ASCII_EXTENDED = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    SPECIAL_ASCII_EXTENDED: Final = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
     """Standard and extended ASCII special characters."""
-    STANDARD_ASCII = DIGITS + LETTERS + SPECIAL_ASCII
+    STANDARD_ASCII: Final = DIGITS + LETTERS + SPECIAL_ASCII
     """All standard ASCII characters (letters, digits, and symbols)."""
-    FULL_ASCII = DIGITS + LETTERS_EXTENDED + SPECIAL_ASCII_EXTENDED
+    FULL_ASCII: Final = DIGITS + LETTERS_EXTENDED + SPECIAL_ASCII_EXTENDED
     """Complete ASCII character set including extended characters."""
 
 
 class ANSI:
     """Constants and utilities for ANSI escape code sequences."""
 
-    ESCAPED_CHAR = "\\x1b"
+    ESCAPED_CHAR: Final = "\\x1b"
     """Printable ANSI escape character."""
-    CHAR = "\x1b"
+    CHAR: Final = "\x1b"
     """ANSI escape character."""
-    START = "["
+    START: Final = "["
     """Start of an ANSI escape sequence."""
-    SEP = ";"
+    SEP: Final = ";"
     """Separator between ANSI escape sequence parts."""
-    END = "m"
+    END: Final = "m"
     """End of an ANSI escape sequence."""
 
     @classmethod
@@ -90,12 +92,12 @@ class ANSI:
         """Generates an ANSI escape sequence with the specified number of placeholders."""
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
 
-    SEQ_COLOR: FormattableString = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    SEQ_COLOR: Final[FormattableString] = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
     """ANSI escape sequence with three placeholders for setting the RGB text color."""
-    SEQ_BG_COLOR: FormattableString = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
+    SEQ_BG_COLOR: Final[FormattableString] = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
     """ANSI escape sequence with three placeholders for setting the RGB background color."""
 
-    COLOR_MAP: tuple[str, ...] = (
+    COLOR_MAP: Final[tuple[str, ...]] = (
         ########### DEFAULT CONSOLE COLOR NAMES ############
         "black",
         "red",
@@ -108,7 +110,7 @@ class ANSI:
     )
     """The standard terminal color names."""
 
-    CODES_MAP: dict[str | tuple[str, ...], int] = {
+    CODES_MAP: Final[dict[str | tuple[str, ...], int]] = {
         ################# SPECIFIC RESETS ##################
         "_": 0,
         ("_bold", "_b"): 22,

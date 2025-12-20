@@ -11,12 +11,12 @@ from .string import String
 from .color import Color, hexa
 from .regex import LazyRegex
 
-from typing import Generator, Callable, Optional, Literal, TypeVar, TextIO, cast
+from typing import Generator, Callable, ClassVar, Optional, Literal, TypeVar, TextIO, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
-from contextlib import contextmanager
 from prompt_toolkit.keys import Keys
+from contextlib import contextmanager
 import prompt_toolkit as _pt
 import threading as _threading
 import keyboard as _keyboard
@@ -27,6 +27,8 @@ import sys as _sys
 import os as _os
 import io as _io
 
+
+T = TypeVar("T")
 
 _PATTERNS = LazyRegex(
     hr=r"(?i){hr}",
@@ -76,6 +78,28 @@ class _ConsoleUser:
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
+class _InputValidator(Validator):
+
+    def __init__(
+        self,
+        get_text: Callable[[], str],
+        mask_char: Optional[str],
+        min_len: Optional[int],
+        validator: Optional[Callable[[str], Optional[str]]],
+    ):
+        self.get_text = get_text
+        self.mask_char = mask_char
+        self.min_len = min_len
+        self.validator = validator
+
+    def validate(self, document) -> None:
+        text_to_validate = self.get_text() if self.mask_char else document.text
+        if self.min_len and len(text_to_validate) < self.min_len:
+            raise ValidationError(message="", cursor_position=len(document.text))
+        if self.validator and self.validator(text_to_validate) not in {"", None}:
+            raise ValidationError(message="", cursor_position=len(document.text))
+
+
 class ArgResult:
     """Represents the result of a parsed command-line argument, containing the following attributes:
     - `exists` -⠀if the argument was found or not
@@ -95,7 +119,7 @@ class ArgResult:
         self.values: list[str] = cast(list[str], values)
         """The list of values for positional arguments (only for `"before"`/`"after"` arguments)."""
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.exists
 
 
@@ -110,15 +134,11 @@ class Args:
     def __init__(self, **kwargs: ArgResultRegular | ArgResultPositional):
         for alias_name, data_dict in kwargs.items():
             if "values" in data_dict:
-                setattr(
-                    self, alias_name,
-                    ArgResult(exists=cast(bool, data_dict["exists"]), values=cast(list[str], data_dict["values"]))
-                )
+                data_dict = cast(ArgResultPositional, data_dict)
+                setattr(self, alias_name, ArgResult(exists=data_dict["exists"], values=data_dict["values"]))
             else:
-                setattr(
-                    self, alias_name,
-                    ArgResult(exists=cast(bool, data_dict["exists"]), value=cast(Optional[str], data_dict["value"]))
-                )
+                data_dict = cast(ArgResultRegular, data_dict)
+                setattr(self, alias_name, ArgResult(exists=data_dict["exists"], value=data_dict["value"]))
 
     def __len__(self):
         return len(vars(self))
@@ -168,17 +188,18 @@ class Args:
 class Console:
     """This class provides methods for logging and other actions within the console."""
 
-    w: int = cast(int, _ConsoleWidth())
+    w: ClassVar[int] = cast(int, _ConsoleWidth())
     """The width of the console in characters."""
-    h: int = cast(int, _ConsoleHeight())
+    h: ClassVar[int] = cast(int, _ConsoleHeight())
     """The height of the console in lines."""
-    size: tuple[int, int] = cast(tuple[int, int], _ConsoleSize())
+    size: ClassVar[tuple[int, int]] = cast(tuple[int, int], _ConsoleSize())
     """A tuple with the width and height of the console in characters and lines."""
-    user: str = cast(str, _ConsoleUser())
+    user: ClassVar[str] = cast(str, _ConsoleUser())
     """The name of the current user."""
 
-    @staticmethod
+    @classmethod
     def get_args(
+        cls,
         allow_spaces: bool = False,
         **find_args: set[str] | ArgConfigWithDefault | Literal["before", "after"],
     ) -> Args:
@@ -253,13 +274,17 @@ class Console:
         Normally if `allow_spaces` is false, it will take a space as the end of an args value.
         If it is true, it will take spaces as part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
-        positional_configs, arg_lookup, results = {}, {}, {}
+        results_positional: dict[str, ArgResultPositional] = {}
+        results_regular: dict[str, ArgResultRegular] = {}
+        positional_configs: dict[str, str] = {}
+        arg_lookup: dict[str, str] = {}
         before_count, after_count = 0, 0
         args_len = len(args := _sys.argv[1:])
 
         # PARSE 'find_args' CONFIGURATION
         for alias, config in find_args.items():
-            flags, default_value = None, None
+            flags: Optional[set[str]] = None
+            default_value: Optional[str] = None
 
             if isinstance(config, str):
                 # HANDLE POSITIONAL ARGUMENT COLLECTION
@@ -277,13 +302,13 @@ class Console:
                         "Must be either 'before' or 'after'."
                     )
                 positional_configs[alias] = config
-                results[alias] = {"exists": False, "values": []}
+                results_positional[alias] = {"exists": False, "values": []}
             elif isinstance(config, set):
                 flags = config
-                results[alias] = {"exists": False, "value": default_value}
+                results_regular[alias] = {"exists": False, "value": default_value}
             elif isinstance(config, dict):
                 flags, default_value = config.get("flags"), config.get("default")
-                results[alias] = {"exists": False, "value": default_value}
+                results_regular[alias] = {"exists": False, "value": default_value}
             else:
                 raise TypeError(
                     f"Invalid configuration type for alias '{alias}'.\n"
@@ -300,16 +325,15 @@ class Console:
                     arg_lookup[flag] = alias
 
         # FIND POSITIONS OF FIRST AND LAST FLAGS FOR POSITIONAL ARGUMENT COLLECTION
-        first_flag_pos = None
-        last_flag_with_value_pos = None
+        first_flag_pos: Optional[int] = None
+        last_flag_with_value_pos: Optional[int] = None
 
         for i, arg in enumerate(args):
             if arg in arg_lookup:
                 if first_flag_pos is None:
                     first_flag_pos = i
                 # CHECK IF THIS FLAG HAS A VALUE FOLLOWING IT
-                flag_has_value = (i + 1 < args_len and args[i + 1] not in arg_lookup)
-                if flag_has_value:
+                if i + 1 < args_len and args[i + 1] not in arg_lookup:
                     if not allow_spaces:
                         last_flag_with_value_pos = i + 1
                     else:
@@ -322,26 +346,25 @@ class Console:
         # COLLECT "before" POSITIONAL ARGUMENTS
         for alias, pos_type in positional_configs.items():
             if pos_type == "before":
-                before_args = []
-                end_pos = first_flag_pos if first_flag_pos is not None else args_len
+                before_args: list[str] = []
+                end_pos: int = first_flag_pos if first_flag_pos is not None else args_len
                 for i in range(end_pos):
                     if args[i] not in arg_lookup:
                         before_args.append(args[i])
                 if before_args:
-                    results[alias]["values"] = before_args
-                    results[alias]["exists"] = len(before_args) > 0
+                    results_positional[alias]["values"] = before_args
+                    results_positional[alias]["exists"] = len(before_args) > 0
 
         # PROCESS FLAGGED ARGUMENTS
         i = 0
         while i < args_len:
             arg = args[i]
-            alias = arg_lookup.get(arg)
-            if alias:
-                results[alias]["exists"] = True
-                value_found_after_flag = False
+            if (opt_alias := arg_lookup.get(arg)) is not None:
+                results_regular[opt_alias]["exists"] = True
+                value_found_after_flag: bool = False
                 if i + 1 < args_len and args[i + 1] not in arg_lookup:
                     if not allow_spaces:
-                        results[alias]["value"] = args[i + 1]
+                        results_regular[opt_alias]["value"] = args[i + 1]
                         i += 1
                         value_found_after_flag = True
                     else:
@@ -351,18 +374,18 @@ class Console:
                             value_parts.append(args[j])
                             j += 1
                         if value_parts:
-                            results[alias]["value"] = " ".join(value_parts)
+                            results_regular[opt_alias]["value"] = " ".join(value_parts)
                             i = j - 1
                             value_found_after_flag = True
                 if not value_found_after_flag:
-                    results[alias]["value"] = None
+                    results_regular[opt_alias]["value"] = None
             i += 1
 
         # COLLECT "after" POSITIONAL ARGUMENTS
         for alias, pos_type in positional_configs.items():
             if pos_type == "after":
-                after_args = []
-                start_pos = (last_flag_with_value_pos + 1) if last_flag_with_value_pos is not None else 0
+                after_args: list[str] = []
+                start_pos: int = (last_flag_with_value_pos + 1) if last_flag_with_value_pos is not None else 0
                 # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
                 if last_flag_with_value_pos is None and first_flag_pos is not None:
                     # FIND THE LAST FLAG POSITION
@@ -378,13 +401,14 @@ class Console:
                         after_args.append(args[i])
 
                 if after_args:
-                    results[alias]["values"] = after_args
-                    results[alias]["exists"] = len(after_args) > 0
+                    results_positional[alias]["values"] = after_args
+                    results_positional[alias]["exists"] = len(after_args) > 0
 
-        return Args(**results)
+        return Args(**results_positional, **results_regular)
 
-    @staticmethod
+    @classmethod
     def pause_exit(
+        cls,
         prompt: object = "",
         pause: bool = True,
         exit: bool = False,
@@ -406,8 +430,8 @@ class Console:
         if exit:
             _sys.exit(exit_code)
 
-    @staticmethod
-    def cls() -> None:
+    @classmethod
+    def cls(cls) -> None:
         """Will clear the console in addition to completely resetting the ANSI formats."""
         if _shutil.which("cls"):
             _os.system("cls")
@@ -415,8 +439,9 @@ class Console:
             _os.system("clear")
         print("\033[0m", end="", flush=True)
 
-    @staticmethod
+    @classmethod
     def log(
+        cls,
         title: Optional[str] = None,
         prompt: object = "",
         format_linebreaks: bool = True,
@@ -443,7 +468,7 @@ class Console:
         -------------------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
-        has_title_bg = False
+        has_title_bg: bool = False
         if title_bg_color is not None and (Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color)):
             title_bg_color, has_title_bg = Color.to_hexa(cast(Rgba | Hexa, title_bg_color)), True
         if tab_size < 0:
@@ -460,15 +485,17 @@ class Console:
         tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
 
         if format_linebreaks:
-            clean_prompt, removals = FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True)
-            prompt_lst = (
-                String.split_count(l, Console.w - (title_len + len(tab) + 2 * len(mx))) for l in str(clean_prompt).splitlines()
+            clean_prompt, removals = cast(
+                tuple[str, tuple[tuple[int, str], ...]],
+                FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True),
             )
-            prompt_lst = (
-                item for lst in prompt_lst for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
-            )
+            prompt_lst: list[str] = [
+                item for lst in
+                (String.split_count(l, cls.w - (title_len + len(tab) + 2 * len(mx))) for l in str(clean_prompt).splitlines())
+                for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
+            ]
             prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(
-                Console.__add_back_removed_parts(list(prompt_lst), cast(tuple[tuple[int, str], ...], removals))
+                cls.__add_back_removed_parts(prompt_lst, cast(tuple[tuple[int, str], ...], removals))
             )
 
         if title == "":
@@ -485,8 +512,8 @@ class Console:
                 end=end,
             )
 
-    @staticmethod
-    def __add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
+    @classmethod
+    def __add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
         """Adds back the removed parts into the split string parts at their original positions."""
         lengths, cumulative_pos = [len(s) for s in split_string], [0]
         for length in lengths:
@@ -518,8 +545,9 @@ class Console:
 
         return result
 
-    @staticmethod
+    @classmethod
     def debug(
+        cls,
         prompt: object = "Point in program reached.",
         active: bool = True,
         format_linebreaks: bool = True,
@@ -535,7 +563,7 @@ class Console:
         at the message and exit the program after the message was printed.
         If `active` is false, no debug message will be printed."""
         if active:
-            Console.log(
+            cls.log(
                 title="DEBUG",
                 prompt=prompt,
                 format_linebreaks=format_linebreaks,
@@ -544,10 +572,11 @@ class Console:
                 title_bg_color=COLOR.YELLOW,
                 default_color=default_color,
             )
-            Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+            cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def info(
+        cls,
         prompt: object = "Program running.",
         format_linebreaks: bool = True,
         start: str = "",
@@ -560,7 +589,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `INFO` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log(
+        cls.log(
             title="INFO",
             prompt=prompt,
             format_linebreaks=format_linebreaks,
@@ -569,10 +598,11 @@ class Console:
             title_bg_color=COLOR.BLUE,
             default_color=default_color,
         )
-        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def done(
+        cls,
         prompt: object = "Program finished.",
         format_linebreaks: bool = True,
         start: str = "",
@@ -585,7 +615,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `DONE` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log(
+        cls.log(
             title="DONE",
             prompt=prompt,
             format_linebreaks=format_linebreaks,
@@ -594,10 +624,11 @@ class Console:
             title_bg_color=COLOR.TEAL,
             default_color=default_color,
         )
-        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def warn(
+        cls,
         prompt: object = "Important message.",
         format_linebreaks: bool = True,
         start: str = "",
@@ -610,7 +641,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `WARN` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log(
+        cls.log(
             title="WARN",
             prompt=prompt,
             format_linebreaks=format_linebreaks,
@@ -619,10 +650,11 @@ class Console:
             title_bg_color=COLOR.ORANGE,
             default_color=default_color,
         )
-        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def fail(
+        cls,
         prompt: object = "Program error.",
         format_linebreaks: bool = True,
         start: str = "",
@@ -635,7 +667,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `FAIL` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log(
+        cls.log(
             title="FAIL",
             prompt=prompt,
             format_linebreaks=format_linebreaks,
@@ -644,10 +676,11 @@ class Console:
             title_bg_color=COLOR.RED,
             default_color=default_color,
         )
-        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def exit(
+        cls,
         prompt: object = "Program ended.",
         format_linebreaks: bool = True,
         start: str = "",
@@ -660,7 +693,7 @@ class Console:
     ) -> None:
         """A preset for `log()`: `EXIT` log message with the options to pause
         at the message and exit the program after the message was printed."""
-        Console.log(
+        cls.log(
             title="EXIT",
             prompt=prompt,
             format_linebreaks=format_linebreaks,
@@ -669,10 +702,11 @@ class Console:
             title_bg_color=COLOR.MAGENTA,
             default_color=default_color,
         )
-        Console.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @staticmethod
+    @classmethod
     def log_box_filled(
+        cls,
         *values: object,
         start: str = "",
         end: str = "\n",
@@ -703,16 +737,17 @@ class Console:
         if Color.is_valid(box_bg_color):
             box_bg_color = Color.to_hexa(box_bg_color)
 
-        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color)
+        lines, unfmt_lines, max_line_len = cls.__prepare_log_box(values, default_color)
 
         spaces_l = " " * indent
-        pady = " " * (Console.w if w_full else max_line_len + (2 * w_padding))
-        pad_w_full = (Console.w - (max_line_len + (2 * w_padding))) if w_full else 0
+        pady = " " * (cls.w if w_full else max_line_len + (2 * w_padding))
+        pad_w_full = (cls.w - (max_line_len + (2 * w_padding))) if w_full else 0
 
         lines = [( \
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
-            + _FC_PATTERNS.formatting.sub(lambda m: f"{m.group(0)}[bg:{box_bg_color}]", line)
-            + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)) + "[*]"
+            + _FC_PATTERNS.formatting.sub(lambda m: f"{cast(str, m.group(0))}[bg:{box_bg_color}]", line)
+            + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full))
+            + "[*]"
         ) for line, unfmt in zip(lines, unfmt_lines)]
 
         FormatCodes.print(
@@ -727,8 +762,9 @@ class Console:
             end=end,
         )
 
-    @staticmethod
+    @classmethod
     def log_box_bordered(
+        cls,
         *values: object,
         start: str = "",
         end: str = "\n",
@@ -796,17 +832,17 @@ class Console:
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
 
-        lines, unfmt_lines, max_line_len = Console.__prepare_log_box(values, default_color, has_rules=True)
+        lines, unfmt_lines, max_line_len = cls.__prepare_log_box(values, default_color, has_rules=True)
 
         spaces_l = " " * indent
-        pad_w_full = (Console.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+        pad_w_full = (cls.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
 
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
-        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (Console.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
-        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (Console.w - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (cls.w - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
+        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (cls.w - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
 
-        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (Console.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
+        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (cls.w - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
 
         lines = [( \
             h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]"
@@ -826,8 +862,9 @@ class Console:
             end=end,
         )
 
-    @staticmethod
+    @classmethod
     def __prepare_log_box(
+        cls,
         values: list[object] | tuple[object, ...],
         default_color: Optional[Rgba | Hexa] = None,
         has_rules: bool = False,
@@ -870,8 +907,9 @@ class Console:
         max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
-    @staticmethod
+    @classmethod
     def confirm(
+        cls,
         prompt: object = "Do you want to continue?",
         start: str = "",
         end: str = "",
@@ -888,7 +926,7 @@ class Console:
         ------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
-        confirmed = input(
+        confirmed = cls.input(
             FormatCodes.to_ansi(
                 f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
                 default_color=default_color,
@@ -899,8 +937,9 @@ class Console:
             FormatCodes.print(end, end="")
         return confirmed
 
-    @staticmethod
+    @classmethod
     def multiline_input(
+        cls,
         prompt: object = "",
         start: str = "",
         end: str = "\n",
@@ -935,10 +974,30 @@ class Console:
 
         return input_string
 
-    T = TypeVar("T")
-
-    @staticmethod
+    @overload
+    @classmethod
     def input(
+        cls,
+        prompt: object = "",
+        start: str = "",
+        end: str = "",
+        default_color: Optional[Rgba | Hexa] = None,
+        placeholder: Optional[str] = None,
+        mask_char: Optional[str] = None,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
+        allow_paste: bool = True,
+        validator: Optional[Callable[[str], Optional[str]]] = None,
+        default_val: Optional[str] = None,
+        output_type: type[str] = str,
+    ) -> str:
+        ...
+
+    @overload
+    @classmethod
+    def input(
+        cls,
         prompt: object = "",
         start: str = "",
         end: str = "",
@@ -951,8 +1010,27 @@ class Console:
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Optional[T] = None,
-        output_type: type[T] = str,
+        output_type: type[T] = ...,
     ) -> T:
+        ...
+
+    @classmethod
+    def input(
+        cls,
+        prompt: object = "",
+        start: str = "",
+        end: str = "",
+        default_color: Optional[Rgba | Hexa] = None,
+        placeholder: Optional[str] = None,
+        mask_char: Optional[str] = None,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
+        allow_paste: bool = True,
+        validator: Optional[Callable[[str], Optional[str]]] = None,
+        default_val: Any = None,
+        output_type: type[Any] = str,
+    ) -> Any:
         """Acts like a standard Python `input()` a bunch of cool extra features.\n
         ------------------------------------------------------------------------------------
         - `prompt` -⠀the input prompt
@@ -980,18 +1058,9 @@ class Console:
         if max_len is not None and max_len < 0:
             raise ValueError("The 'max_len' parameter must be a non-negative integer.")
 
-        filtered_chars, result_text = set(), ""
-        has_default = default_val is not None
-        tried_pasting = False
-
-        class InputValidator(Validator):
-
-            def validate(self, document) -> None:
-                text_to_validate = result_text if mask_char else document.text
-                if min_len and len(text_to_validate) < min_len:
-                    raise ValidationError(message="", cursor_position=len(document.text))
-                if validator and validator(text_to_validate) not in {"", None}:
-                    raise ValidationError(message="", cursor_position=len(document.text))
+        filtered_chars: set[str] = set()
+        tried_pasting: bool = False
+        result_text: str = ""
 
         def bottom_toolbar() -> _pt.formatted_text.ANSI:
             nonlocal tried_pasting
@@ -1001,7 +1070,8 @@ class Console:
                 else:
                     app = _pt.application.get_app()
                     text_to_check = app.current_buffer.text
-                toolbar_msgs = []
+
+                toolbar_msgs: list[str] = []
                 if max_len and len(text_to_check) > max_len:
                     toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
                 if validator and text_to_check and (validation_error_msg := validator(text_to_check)) not in {"", None}:
@@ -1017,14 +1087,18 @@ class Console:
                     tried_pasting = False
                 if max_len and len(text_to_check) == max_len:
                     toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
+
                 return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
+
             except Exception:
                 return _pt.formatted_text.ANSI("")
 
         def process_insert_text(text: str) -> tuple[str, set[str]]:
-            removed_chars = set()
+            removed_chars: set[str] = set()
+
             if not text:
                 return "", removed_chars
+
             processed_text = "".join(c for c in text if ord(c) >= 32)
             if allowed_chars is not CHARS.ALL:
                 filtered_text = ""
@@ -1034,12 +1108,14 @@ class Console:
                     else:
                         removed_chars.add(char)
                 processed_text = filtered_text
+
             if max_len:
                 if (remaining_space := max_len - len(result_text)) > 0:
                     if len(processed_text) > remaining_space:
                         processed_text = processed_text[:remaining_space]
                 else:
                     processed_text = ""
+
             return processed_text, removed_chars
 
         def insert_text_event(event: KeyPressEvent) -> None:
@@ -1047,15 +1123,18 @@ class Console:
             try:
                 if not (insert_text := event.data):
                     return
+
                 buffer = event.app.current_buffer
                 cursor_pos = buffer.cursor_position
                 insert_text, filtered_chars = process_insert_text(insert_text)
+
                 if insert_text:
                     result_text = result_text[:cursor_pos] + insert_text + result_text[cursor_pos:]
                     if mask_char:
                         buffer.insert_text(mask_char[0] * len(insert_text))
                     else:
                         buffer.insert_text(insert_text)
+
             except Exception:
                 pass
 
@@ -1065,6 +1144,7 @@ class Console:
                 buffer = event.app.current_buffer
                 cursor_pos = buffer.cursor_position
                 has_selection = buffer.selection_state is not None
+
                 if has_selection:
                     start, end = buffer.document.selection_range()
                     result_text = result_text[:start] + result_text[end:]
@@ -1079,6 +1159,7 @@ class Console:
                         if cursor_pos < len(result_text):
                             result_text = result_text[:cursor_pos] + result_text[cursor_pos + 1:]
                             buffer.delete(1)
+
             except Exception:
                 pass
 
@@ -1112,9 +1193,14 @@ class Console:
             insert_text_event(event)
 
         custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
-        session = _pt.PromptSession(
+        session: _pt.PromptSession = _pt.PromptSession(
             message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
-            validator=InputValidator(),
+            validator=_InputValidator(
+                get_text=lambda: result_text,
+                mask_char=mask_char,
+                min_len=min_len,
+                validator=validator,
+            ),
             validate_while_typing=True,
             key_bindings=kb,
             bottom_toolbar=bottom_toolbar,
@@ -1127,17 +1213,17 @@ class Console:
         FormatCodes.print(end, end="")
 
         if result_text in {"", None}:
-            if has_default:
+            if default_val is not None:
                 return default_val
             result_text = ""
 
         if output_type == str:
-            return result_text  # type: ignore[return-value]
+            return result_text
         else:
             try:
                 return output_type(result_text)  # type: ignore[call-arg]
             except (ValueError, TypeError):
-                if has_default:
+                if default_val is not None:
                     return default_val
                 raise
 

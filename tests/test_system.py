@@ -36,8 +36,8 @@ def test_check_libs_nonexistent_module():
 
 
 @patch("xulbux.system._subprocess.check_call")
-@patch("builtins.input", return_value="n")  # Decline installation
-def test_check_libs_decline_install(mock_input, mock_subprocess):
+@patch("xulbux.console.Console.confirm", return_value=False)  # DECLINE INSTALLATION
+def test_check_libs_decline_install(mock_confirm, mock_subprocess):
     """Test check_libs when user declines installation"""
     result = System.check_libs(["nonexistent_module_12345"], install_missing=True)
     assert isinstance(result, list)

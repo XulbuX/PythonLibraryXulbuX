@@ -3,7 +3,7 @@ This module provides the `Data` class, which offers
 methods to work with nested data structures.
 """
 
-from .base.types import DataStructure, IndexIterable
+from .base.types import DataStructureTypes, IndexIterableTypes, DataStructure, IndexIterable
 from .base.consts import COLOR
 
 from .format_codes import FormatCodes
@@ -19,8 +19,8 @@ import re as _re
 class Data:
     """This class includes methods to work with nested data structures (dictionaries and lists)."""
 
-    @staticmethod
-    def serialize_bytes(data: bytes | bytearray) -> dict[str, str]:
+    @classmethod
+    def serialize_bytes(cls, data: bytes | bytearray) -> dict[str, str]:
         """Converts bytes or bytearray to a JSON-compatible format (dictionary) with explicit keys.\n
         ----------------------------------------------------------------------------------------------
         - `data` -⠀the bytes or bytearray to serialize"""
@@ -33,8 +33,8 @@ class Data:
 
         return {key: _base64.b64encode(data).decode("utf-8"), "encoding": "base64"}
 
-    @staticmethod
-    def deserialize_bytes(obj: dict[str, str]) -> bytes | bytearray:
+    @classmethod
+    def deserialize_bytes(cls, obj: dict[str, str]) -> bytes | bytearray:
         """Tries to converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type.\n
         --------------------------------------------------------------------------------------------------------
         - `obj` -⠀the dictionary to deserialize\n
@@ -54,8 +54,8 @@ class Data:
 
         raise ValueError(f"Invalid serialized data:\n  {obj}")
 
-    @staticmethod
-    def chars_count(data: DataStructure) -> int:
+    @classmethod
+    def chars_count(cls, data: DataStructure) -> int:
         """The sum of all the characters amount including the keys in dictionaries.\n
         ------------------------------------------------------------------------------
         - `data` -⠀the data structure to count the characters from"""
@@ -63,44 +63,44 @@ class Data:
 
         if isinstance(data, dict):
             for k, v in data.items():
-                chars_count += len(str(k)) + (Data.chars_count(v) if isinstance(v, DataStructure) else len(str(v)))
+                chars_count += len(str(k)) + (cls.chars_count(v) if isinstance(v, DataStructureTypes) else len(str(v)))
 
-        elif isinstance(data, IndexIterable):
+        elif isinstance(data, IndexIterableTypes):
             for item in data:
-                chars_count += Data.chars_count(item) if isinstance(item, DataStructure) else len(str(item))
+                chars_count += cls.chars_count(item) if isinstance(item, DataStructureTypes) else len(str(item))
 
         return chars_count
 
-    @staticmethod
-    def strip(data: DataStructure) -> DataStructure:
+    @classmethod
+    def strip(cls, data: DataStructure) -> DataStructure:
         """Removes leading and trailing whitespaces from the data structure's items.\n
         -------------------------------------------------------------------------------
         - `data` -⠀the data structure to strip the items from"""
         if isinstance(data, dict):
-            return {k.strip(): Data.strip(v) if isinstance(v, DataStructure) else v.strip() for k, v in data.items()}
+            return {k.strip(): cls.strip(v) if isinstance(v, DataStructureTypes) else v.strip() for k, v in data.items()}
 
-        if isinstance(data, IndexIterable):
-            return type(data)(Data.strip(item) if isinstance(item, DataStructure) else item.strip() for item in data)
+        if isinstance(data, IndexIterableTypes):
+            return type(data)(cls.strip(item) if isinstance(item, DataStructureTypes) else item.strip() for item in data)
 
         raise TypeError(f"Unsupported data structure type: {type(data)}")
 
-    @staticmethod
-    def remove_empty_items(data: DataStructure, spaces_are_empty: bool = False) -> DataStructure:
+    @classmethod
+    def remove_empty_items(cls, data: DataStructure, spaces_are_empty: bool = False) -> DataStructure:
         """Removes empty items from the data structure.\n
         ---------------------------------------------------------------------------------
         - `data` -⠀the data structure to remove empty items from.
         - `spaces_are_empty` -⠀if true, it will count items with only spaces as empty"""
         if isinstance(data, dict):
             return {
-                k: (v if not isinstance(v, DataStructure) else Data.remove_empty_items(v, spaces_are_empty))
+                k: (v if not isinstance(v, DataStructureTypes) else cls.remove_empty_items(v, spaces_are_empty))
                 for k, v in data.items() if not String.is_empty(v, spaces_are_empty)
             }
 
-        if isinstance(data, IndexIterable):
+        if isinstance(data, IndexIterableTypes):
             return type(data)(
                 item for item in
                 (
-                    (item if not isinstance(item, DataStructure) else Data.remove_empty_items(item, spaces_are_empty)) \
+                    (item if not isinstance(item, DataStructureTypes) else cls.remove_empty_items(item, spaces_are_empty)) \
                     for item in data if not (isinstance(item, (str, type(None))) and String.is_empty(item, spaces_are_empty))
                 )
                 if item not in ([], (), {}, set(), frozenset())
@@ -108,19 +108,19 @@ class Data:
 
         raise TypeError(f"Unsupported data structure type: {type(data)}")
 
-    @staticmethod
-    def remove_duplicates(data: DataStructure) -> DataStructure:
+    @classmethod
+    def remove_duplicates(cls, data: DataStructure) -> DataStructure:
         """Removes all duplicates from the data structure.\n
         -----------------------------------------------------------
         - `data` -⠀the data structure to remove duplicates from"""
         if isinstance(data, dict):
-            return {k: Data.remove_duplicates(v) if isinstance(v, DataStructure) else v for k, v in data.items()}
+            return {k: cls.remove_duplicates(v) if isinstance(v, DataStructureTypes) else v for k, v in data.items()}
 
         if isinstance(data, (list, tuple)):
-            result = []
+            result: list[Any] = []
             for item in data:
-                processed_item = Data.remove_duplicates(item) if isinstance(item, DataStructure) else item
-                is_duplicate = False
+                processed_item = cls.remove_duplicates(item) if isinstance(item, DataStructureTypes) else item
+                is_duplicate: bool = False
 
                 for existing_item in result:
                     if processed_item == existing_item:
@@ -135,14 +135,15 @@ class Data:
         if isinstance(data, (set, frozenset)):
             processed_elements = set()
             for item in data:
-                processed_item = Data.remove_duplicates(item) if isinstance(item, DataStructure) else item
+                processed_item = cls.remove_duplicates(item) if isinstance(item, DataStructureTypes) else item
                 processed_elements.add(processed_item)
             return type(data)(processed_elements)
 
         raise TypeError(f"Unsupported data structure type: {type(data)}")
 
-    @staticmethod
+    @classmethod
     def remove_comments(
+        cls,
         data: DataStructure,
         comment_start: str = ">>",
         comment_end: str = "<<",
@@ -224,7 +225,7 @@ class Data:
                     k: v
                     for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
                 }
-            if isinstance(item, IndexIterable):
+            if isinstance(item, IndexIterableTypes):
                 processed = (v for v in map(process_item, item) if v is not None)
                 return type(item)(processed)
             if isinstance(item, str):
@@ -233,8 +234,9 @@ class Data:
 
         return process_item(data)
 
-    @staticmethod
+    @classmethod
     def is_equal(
+        cls,
         data1: DataStructure,
         data2: DataStructure,
         ignore_paths: str | list[str] = "",
@@ -289,14 +291,15 @@ class Data:
                 return d1 == d2
             return d1 == d2
 
-        processed_data1 = Data.remove_comments(data1, comment_start, comment_end)
-        processed_data2 = Data.remove_comments(data2, comment_start, comment_end)
+        processed_data1 = cls.remove_comments(data1, comment_start, comment_end)
+        processed_data2 = cls.remove_comments(data2, comment_start, comment_end)
         processed_ignore_paths = process_ignore_paths(ignore_paths)
 
         return compare(processed_data1, processed_data2, processed_ignore_paths)
 
-    @staticmethod
+    @classmethod
     def get_path_id(
+        cls,
         data: DataStructure,
         value_paths: str | list[str],
         path_sep: str = "->",
@@ -349,7 +352,7 @@ class Data:
                             return None
                         raise KeyError(f"Key '{key}' not found in dict.")
 
-                elif isinstance(data_obj, IndexIterable):
+                elif isinstance(data_obj, IndexIterableTypes):
                     try:
                         idx = int(key)
                         data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
@@ -372,15 +375,15 @@ class Data:
                 return None
             return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
 
-        data = Data.remove_comments(data, comment_start, comment_end)
+        data = cls.remove_comments(data, comment_start, comment_end)
         if isinstance(value_paths, str):
             return process_path(value_paths, data)
 
         results = [process_path(path, data) for path in value_paths]
         return results if len(results) > 1 else results[0] if results else None
 
-    @staticmethod
-    def get_value_by_path_id(data: DataStructure, path_id: str, get_key: bool = False) -> Any:
+    @classmethod
+    def get_value_by_path_id(cls, data: DataStructure, path_id: str, get_key: bool = False) -> Any:
         """Retrieves the value from `data` using the provided `path_id`, as long as the data structure
         hasn't changed since creating the path ID.\n
         --------------------------------------------------------------------------------------------------
@@ -389,7 +392,7 @@ class Data:
         - `get_key` -⠀if true and the final item is in a dict, it returns the key instead of the value"""
 
         def get_nested(data: DataStructure, path: list[int], get_key: bool) -> Any:
-            parent = None
+            parent: Optional[DataStructure] = None
             for i, idx in enumerate(path):
                 if isinstance(data, dict):
                     keys = list(data.keys())
@@ -398,7 +401,7 @@ class Data:
                     parent = data
                     data = data[keys[idx]]
 
-                elif isinstance(data, IndexIterable):
+                elif isinstance(data, IndexIterableTypes):
                     if i == len(path) - 1 and get_key:
                         if parent is None or not isinstance(parent, dict):
                             raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i+1]}'")
@@ -411,10 +414,10 @@ class Data:
 
             return data
 
-        return get_nested(data, Data.__sep_path_id(path_id), get_key)
+        return get_nested(data, cls.__sep_path_id(path_id), get_key)
 
-    @staticmethod
-    def set_value_by_path_id(data: DataStructure, update_values: dict[str, Any]) -> DataStructure:
+    @classmethod
+    def set_value_by_path_id(cls, data: DataStructure, update_values: dict[str, Any]) -> DataStructure:
         """Updates the value/s from `update_values` in the `data`, as long as the data structure
         hasn't changed since creating the path ID to that value.\n
         -----------------------------------------------------------------------------------------
@@ -431,7 +434,7 @@ class Data:
                 if isinstance(data, dict):
                     keys, data = list(data.keys()), dict(data)
                     data[keys[path[0]]] = value
-                elif isinstance(data, IndexIterable):
+                elif isinstance(data, IndexIterableTypes):
                     was_t, data = type(data), list(data)
                     data[path[0]] = value
                     data = was_t(data)
@@ -439,7 +442,7 @@ class Data:
                 if isinstance(data, dict):
                     keys, data = list(data.keys()), dict(data)
                     data[keys[path[0]]] = update_nested(data[keys[path[0]]], path[1:], value)
-                elif isinstance(data, IndexIterable):
+                elif isinstance(data, IndexIterableTypes):
                     was_t, data = type(data), list(data)
                     data[path[0]] = update_nested(data[path[0]], path[1:], value)
                     data = was_t(data)
@@ -450,13 +453,14 @@ class Data:
             raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}")
 
         for path_id, new_val in valid_entries:
-            path = Data.__sep_path_id(path_id)
+            path = cls.__sep_path_id(path_id)
             data = update_nested(data, path, new_val)
 
         return data
 
-    @staticmethod
+    @classmethod
     def to_str(
+        cls,
         data: DataStructure,
         indent: int = 4,
         compactness: Literal[0, 1, 2] = 1,
@@ -484,7 +488,7 @@ class Data:
         if max_width <= 0:
             raise ValueError("The 'max_width' parameter must be a positive integer.")
 
-        _syntax_hl = {}
+        _syntax_hl: dict[str, tuple[str, str]] = {}
 
         if do_syntax_hl := _syntax_highlighting not in {None, False}:
             if _syntax_highlighting is True:
@@ -506,8 +510,8 @@ class Data:
 
             sep = f"{_syntax_hl['punctuation'][0]}{sep}{_syntax_hl['punctuation'][1]}"
 
-        punct_map = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
-        punct = {
+        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{c: c for c in "'\":)[]{}"}}
+        punct: dict[str, str] = {
             k: ((f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v[1])
                 if isinstance(v, (list, tuple)) else
                 (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v))
@@ -519,10 +523,10 @@ class Data:
                 return format_dict(value, current_indent + indent)
             elif current_indent is not None and hasattr(value, "__dict__"):
                 return format_dict(value.__dict__, current_indent + indent)
-            elif current_indent is not None and isinstance(value, IndexIterable):
+            elif current_indent is not None and isinstance(value, IndexIterableTypes):
                 return format_sequence(value, current_indent + indent)
             elif current_indent is not None and isinstance(value, (bytes, bytearray)):
-                obj_dict = Data.serialize_bytes(value)
+                obj_dict = cls.serialize_bytes(value)
                 return (
                     format_dict(obj_dict, current_indent + indent) if as_json else (
                         f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
@@ -563,12 +567,14 @@ class Data:
             if compactness == 2:
                 return False
 
-            complex_types = (list, tuple, dict, set, frozenset) + ((bytes, bytearray) if as_json else ())
+            complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
+            if as_json: complex_types += (bytes, bytearray)
+
             complex_items = sum(1 for item in seq if isinstance(item, complex_types))
 
             return complex_items > 1 \
                 or (complex_items == 1 and len(seq) > 1) \
-                or Data.chars_count(seq) + (len(seq) * len(sep)) > max_width
+                or cls.chars_count(seq) + (len(seq) * len(sep)) > max_width
 
         def format_dict(d: dict, current_indent: int) -> str:
             if compactness == 2 or not d or not should_expand(list(d.values())):
@@ -599,8 +605,9 @@ class Data:
 
         return _re.sub(r"\s+(?=\n)", "", format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0))
 
-    @staticmethod
+    @classmethod
     def print(
+        cls,
         data: DataStructure,
         indent: int = 4,
         compactness: Literal[0, 1, 2] = 1,
@@ -641,7 +648,7 @@ class Data:
         ---------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see `format_codes` module documentation."""
         FormatCodes.print(
-            Data.to_str(
+            cls.to_str(
                 data=data,
                 indent=indent,
                 compactness=compactness,
@@ -653,15 +660,15 @@ class Data:
             end=end,
         )
 
-    @staticmethod
-    def __sep_path_id(path_id: str) -> list[int]:
+    @classmethod
+    def __sep_path_id(cls, path_id: str) -> list[int]:
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 
             if (id_part_len.isdigit() and path_id_parts.isdigit()):
-                id_part_len = int(id_part_len)
+                id_part_len_int = int(id_part_len)
 
-                if id_part_len > 0 and (len(path_id_parts) % id_part_len == 0):
-                    return [int(path_id_parts[i:i + id_part_len]) for i in range(0, len(path_id_parts), id_part_len)]
+                if id_part_len_int > 0 and (len(path_id_parts) % id_part_len_int == 0):
+                    return [int(path_id_parts[i:i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
 
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")

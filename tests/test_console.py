@@ -667,26 +667,30 @@ def test_log_box_bordered(mock_formatcodes_print):
     assert "Content line" in args[0]
 
 
-def test_confirm_yes(mock_builtin_input):
-    mock_builtin_input.return_value = "y"
+@patch("xulbux.console.Console.input")
+def test_confirm_yes(mock_input):
+    mock_input.return_value = "y"
     result = Console.confirm("Continue?")
     assert result is True
 
 
-def test_confirm_no(mock_builtin_input):
-    mock_builtin_input.return_value = "n"
+@patch("xulbux.console.Console.input")
+def test_confirm_no(mock_input):
+    mock_input.return_value = "n"
     result = Console.confirm("Continue?")
     assert result is False
 
 
-def test_confirm_default_yes(mock_builtin_input):
-    mock_builtin_input.return_value = ""
+@patch("xulbux.console.Console.input")
+def test_confirm_default_yes(mock_input):
+    mock_input.return_value = ""
     result = Console.confirm("Continue?", default_is_yes=True)
     assert result is True
 
 
-def test_confirm_default_no(mock_builtin_input):
-    mock_builtin_input.return_value = ""
+@patch("xulbux.console.Console.input")
+def test_confirm_default_no(mock_input):
+    mock_input.return_value = ""
     result = Console.confirm("Continue?", default_is_yes=False)
     assert result is False
 

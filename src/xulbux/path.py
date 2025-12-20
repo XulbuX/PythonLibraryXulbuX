@@ -4,7 +4,7 @@ This module provides the `Path` class, which includes methods to work with file 
 
 from .base.exceptions import PathNotFoundError
 
-from typing import Optional, cast
+from typing import ClassVar, Optional, cast
 import tempfile as _tempfile
 import difflib as _difflib
 import shutil as _shutil
@@ -37,13 +37,14 @@ class _ScriptDir:
 class Path:
     """This class provides methods to work with file and directory paths."""
 
-    cwd: str = cast(str, _Cwd())
+    cwd: ClassVar[str] = cast(str, _Cwd())
     """The path to the current working directory."""
-    script_dir: str = cast(str, _ScriptDir())
+    script_dir: ClassVar[str] = cast(str, _ScriptDir())
     """The path to the directory of the current script."""
 
-    @staticmethod
+    @classmethod
     def extend(
+        cls,
         rel_path: str,
         search_in: Optional[str | list[str]] = None,
         raise_error: bool = False,
@@ -89,15 +90,14 @@ class Path:
                 return None
 
         def find_path(start: str, parts: list[str]) -> Optional[str]:
-            current = start
+            current: str = start
 
             for part in parts:
                 if _os.path.isfile(current):
                     return current
-                closest_match = get_closest_match(current, part) if use_closest_match else part
-                current = _os.path.join(current, closest_match) if closest_match else None
-                if current is None:
+                if (closest_match := get_closest_match(current, part) if use_closest_match else part) is None:
                     return None
+                current = _os.path.join(current, closest_match)
 
             return current if _os.path.exists(current) and current != start else None
 
@@ -119,7 +119,7 @@ class Path:
             search_dirs.extend([(drive + _os.sep) if drive else _os.sep])
         else:
             rel_path = rel_path.lstrip(_os.sep)
-            search_dirs.extend([_os.getcwd(), Path.script_dir, _os.path.expanduser("~"), _tempfile.gettempdir()])
+            search_dirs.extend([_os.getcwd(), cls.script_dir, _os.path.expanduser("~"), _tempfile.gettempdir()])
 
         for search_dir in search_dirs:
             if _os.path.exists(full_path := _os.path.join(search_dir, rel_path)):
@@ -132,8 +132,9 @@ class Path:
         else:
             return None
 
-    @staticmethod
+    @classmethod
     def extend_or_make(
+        cls,
         rel_path: str,
         search_in: Optional[str | list[str]] = None,
         prefer_script_dir: bool = True,
@@ -158,7 +159,7 @@ class Path:
         If `prefer_script_dir` is false, it will instead make a path
         that points to where the `rel_path` would be in the CWD."""
         try:
-            return str(Path.extend( \
+            return str(cls.extend( \
                 rel_path=rel_path,
                 search_in=search_in,
                 raise_error=True,
@@ -166,12 +167,12 @@ class Path:
             ))
         except PathNotFoundError:
             return _os.path.join(
-                Path.script_dir if prefer_script_dir else _os.getcwd(),
+                cls.script_dir if prefer_script_dir else _os.getcwd(),
                 _os.path.normpath(rel_path),
             )
 
-    @staticmethod
-    def remove(path: str, only_content: bool = False) -> None:
+    @classmethod
+    def remove(cls, path: str, only_content: bool = False) -> None:
         """Removes the directory or the directory's content at the specified path.\n
         -----------------------------------------------------------------------------
         - `path` -⠀the path to the directory or file to remove

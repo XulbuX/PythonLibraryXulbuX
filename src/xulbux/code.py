@@ -12,8 +12,8 @@ import regex as _rx
 class Code:
     """This class includes methods to work with code strings."""
 
-    @staticmethod
-    def add_indent(code: str, indent: int) -> str:
+    @classmethod
+    def add_indent(cls, code: str, indent: int) -> str:
         """Adds `indent` spaces at the beginning of each line.\n
         --------------------------------------------------------------------------
         - `code` -⠀the code to indent
@@ -23,16 +23,16 @@ class Code:
 
         return "\n".join(" " * indent + line for line in code.splitlines())
 
-    @staticmethod
-    def get_tab_spaces(code: str) -> int:
+    @classmethod
+    def get_tab_spaces(cls, code: str) -> int:
         """Will try to get the amount of spaces used for indentation.\n
         ----------------------------------------------------------------
         - `code` -⠀the code to analyze"""
         indents = [len(line) - len(line.lstrip()) for line in String.get_lines(code, remove_empty_lines=True)]
         return min(non_zero_indents) if (non_zero_indents := [i for i in indents if i > 0]) else 0
 
-    @staticmethod
-    def change_tab_size(code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
+    @classmethod
+    def change_tab_size(cls, code: str, new_tab_size: int, remove_empty_lines: bool = False) -> str:
         """Replaces all tabs with `new_tab_size` spaces.\n
         --------------------------------------------------------------------------------
         - `code` -⠀the code to modify the tab size of
@@ -43,7 +43,7 @@ class Code:
 
         code_lines = String.get_lines(code, remove_empty_lines=remove_empty_lines)
 
-        if ((tab_spaces := Code.get_tab_spaces(code)) == new_tab_size) or tab_spaces == 0:
+        if ((tab_spaces := cls.get_tab_spaces(code)) == new_tab_size) or tab_spaces == 0:
             if remove_empty_lines:
                 return "\n".join(code_lines)
             return code
@@ -55,8 +55,8 @@ class Code:
 
         return "\n".join(result)
 
-    @staticmethod
-    def get_func_calls(code: str) -> list:
+    @classmethod
+    def get_func_calls(cls, code: str) -> list:
         """Will try to get all function calls and return them as a list.\n
         -------------------------------------------------------------------
         - `code` -⠀the code to analyze"""
@@ -68,8 +68,8 @@ class Code:
 
         return list(Data.remove_duplicates(funcs + nested_func_calls))
 
-    @staticmethod
-    def is_js(code: str, funcs: set[str] = {"__", "$t", "$lang"}) -> bool:
+    @classmethod
+    def is_js(cls, code: str, funcs: set[str] = {"__", "$t", "$lang"}) -> bool:
         """Will check if the code is very likely to be JavaScript.\n
         -------------------------------------------------------------
         - `code` -⠀the code to analyze
@@ -103,25 +103,26 @@ class Code:
             if _rx.match(pattern, code):
                 return True
 
-        js_score = 0
+        js_score = 0.0
         funcs_pattern = r"(" + "|".join(_rx.escape(f) for f in funcs) + r")" + Regex.brackets("()")
-        js_indicators = [(r"\b(var|let|const)\s+[\w_$]+", 2),  # JS VARIABLE DECLARATIONS
-                         (r"\$[\w_$]+\s*=", 2),  # jQuery-STYLE VARIABLES
-                         (r"\$[\w_$]+\s*\(", 2),  # jQuery FUNCTION CALLS
-                         (r"\bfunction\s*[\w_$]*\s*\(", 2),  # FUNCTION DECLARATIONS
-                         (r"[\w_$]+\s*=\s*function\s*\(", 2),  # FUNCTION ASSIGNMENTS
-                         (r"\b[\w_$]+\s*=>\s*[\{\(]", 2),  # ARROW FUNCTIONS
-                         (r"\(function\s*\(\)\s*\{", 2),  # IIFE PATTERN
-                         (funcs_pattern, 2),  # CUSTOM PREDEFINED FUNCTIONS
-                         (r"\b(true|false|null|undefined)\b", 1),  # JS LITERALS
-                         (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-SPECIFIC OPERATORS
-                         (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # OBJECT INSTANTIATION WITH NEW
-                         (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2),  # JS OBJECTS
-                         (r"\basync\s+function|\bawait\b", 2),  # ASYNC/AWAIT
-                         (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1),  # CONTROL STRUCTURES WITH BRACES
-                         (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # TRY-CATCH
-                         (r";[\s\n]*$", 0.5),  # SEMICOLON LINE ENDINGS
-                         ]
+        js_indicators: list[tuple[str, float]] = [
+            (r"\b(var|let|const)\s+[\w_$]+", 2.0),  # JS VARIABLE DECLARATIONS
+            (r"\$[\w_$]+\s*=", 2.0),  # jQuery-STYLE VARIABLES
+            (r"\$[\w_$]+\s*\(", 2.0),  # jQuery FUNCTION CALLS
+            (r"\bfunction\s*[\w_$]*\s*\(", 2.0),  # FUNCTION DECLARATIONS
+            (r"[\w_$]+\s*=\s*function\s*\(", 2.0),  # FUNCTION ASSIGNMENTS
+            (r"\b[\w_$]+\s*=>\s*[\{\(]", 2.0),  # ARROW FUNCTIONS
+            (r"\(function\s*\(\)\s*\{", 2.0),  # IIFE PATTERN
+            (funcs_pattern, 2.0),  # CUSTOM PREDEFINED FUNCTIONS
+            (r"\b(true|false|null|undefined)\b", 1.0),  # JS LITERALS
+            (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-SPECIFIC OPERATORS
+            (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # OBJECT INSTANTIATION WITH NEW
+            (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2.0),  # JS OBJECTS
+            (r"\basync\s+function|\bawait\b", 2.0),  # ASYNC/AWAIT
+            (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1.0),  # CONTROL STRUCTURES WITH BRACES
+            (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # TRY-CATCH
+            (r";[\s\n]*$", 0.5),  # SEMICOLON LINE ENDINGS
+        ]
 
         line_endings = [line.strip() for line in code.splitlines() if line.strip()]
         if (semicolon_endings := sum(1 for line in line_endings if line.endswith(";"))) >= 1:
@@ -130,9 +131,7 @@ class Code:
             js_score += 1
 
         for pattern, score in js_indicators:
-            regex = _rx.compile(pattern, _rx.IGNORECASE)
-            matches = regex.findall(code)
-            if matches:
+            if (matches := _rx.compile(pattern, _rx.IGNORECASE).findall(code)):
                 js_score += len(matches) * score
 
-        return js_score >= 2
+        return js_score >= 2.0

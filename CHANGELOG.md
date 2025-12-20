@@ -15,6 +15,15 @@
 # <br><b>Changelog</b><br>
 
 
+<span id="v1-9-3" />
+
+## ... `v1.9.3` Big Update 🚀
+* Refactored the whole library's typing to be way more strict and accurate, using `mypy` as type checker.
+* Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
+* Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.
+* The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
+
+
 <span id="v1-9-2" />
 
 ## 16.12.2025 `v1.9.2`
