@@ -18,15 +18,15 @@
 <span id="v1-9-3" />
 
 ## ... `v1.9.3` Big Update 🚀
-* Refactored the whole library's typing to be way more strict and accurate, using `mypy` as type checker.
 * Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
-* Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.
-* The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
-* Unnest all the nested methods in the whole library for compatibility with `mypyc`.
-* Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
 * Changed the default syntax colors for `Data.to_str()` and therefore also `Data.print()` to console default colors.
 * Made internal, global constants, which's values never change, into `Final` constants for better type checking.
 * The names of all internal classes and methods are all noi longer prefixed with a double underscore (`__`), but a single underscore (`_`) instead.
+* Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.
+* Adjusted the whole library's type hints to be way more strict and accurate, using `mypy` as static type checker.
+* Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
+* Unnest all the nested methods in the whole library for compatibility with `mypyc`.
+* The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
 
 **BREAKING CHANGES:**
 * Renamed `Data.to_str()` to `Data.render()`, since that describes its functionality better (*especially with the syntax highlighting option*).
