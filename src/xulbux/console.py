@@ -3,7 +3,7 @@ This module provides the `Console`, `ProgressBar`, and `Spinner` classes
 which offer methods for logging and other actions within the console.
 """
 
-from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, Rgba, Hexa
+from .base.types import ArgConfigWithDefault, ArgResultRegular, ArgResultPositional, ProgressUpdater, AllTextChars, Rgba, Hexa
 from .base.consts import COLOR, CHARS, ANSI
 
 from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
@@ -886,7 +886,7 @@ class Console(metaclass=_ConsoleMeta):
         mask_char: Optional[str] = None,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
-        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
+        allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Optional[str] = None,
@@ -906,7 +906,7 @@ class Console(metaclass=_ConsoleMeta):
         mask_char: Optional[str] = None,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
-        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
+        allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Optional[T] = None,
@@ -925,7 +925,7 @@ class Console(metaclass=_ConsoleMeta):
         mask_char: Optional[str] = None,
         min_len: Optional[int] = None,
         max_len: Optional[int] = None,
-        allowed_chars: str = CHARS.ALL,  # type: ignore[assignment]
+        allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
         validator: Optional[Callable[[str], Optional[str]]] = None,
         default_val: Any = None,
@@ -1114,7 +1114,7 @@ class _ConsoleInputHelper:
         mask_char: Optional[str],
         min_len: Optional[int],
         max_len: Optional[int],
-        allowed_chars: str,
+        allowed_chars: str | AllTextChars,
         allow_paste: bool,
         validator: Optional[Callable[[str], Optional[str]]],
     ) -> None:
@@ -1175,7 +1175,7 @@ class _ConsoleInputHelper:
         if self.allowed_chars is not CHARS.ALL:
             filtered_text = ""
             for char in processed_text:
-                if char in self.allowed_chars:
+                if char in cast(str, self.allowed_chars):
                     filtered_text += char
                 else:
                     removed_chars.add(char)
