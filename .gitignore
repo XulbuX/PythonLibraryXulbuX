@@ -1,33 +1,15 @@
-# IDE & EDITOR SETTINGS
-.vscode/
-.python-version
-
-# CREDENTIALS & CONFIGURATION
-.env
-.npmrc
-.pypirc
-
 # COMPILED FILES & CACHES
 __pycache__/
+__pypackages__/
+.mypy_cache/
+.pytest_cache/
 *.py[cod]
 *$py.class
 
 # BUILD ARTIFACTS
+*.egg-info/
 build/
 dist/
-target/
-wheels/
-*.egg-info/
-.Python
-.pybuilder/
-.pytype/
-cython_debug/
-__pypackages__/
 
 # TESTING
 .venv/
-.pytest_cache/
-
-# MISCELLANEOUS
-.DS_Store
-Thumbs.db

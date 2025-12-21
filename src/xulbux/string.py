@@ -46,13 +46,13 @@ class String:
           Can be either `"` or `'` and should match the quotes, the string will be put inside of.<br>
           So if your string will be `"string"`, `str_quotes` should be `"`.<br>
           That way, if the string includes the same quotes, they will be escaped."""
-        string = string.replace("\\", r"\\").replace("\n", r"\n").replace("\r", r"\r").replace("\t", r"\t") \
-            .replace("\b", r"\b").replace("\f", r"\f").replace("\a", r"\a")
+        string = string.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") \
+            .replace("\b", "\\b").replace("\f", "\\f").replace("\a", "\\a")
 
         if str_quotes == '"':
-            return string.replace("\\'", "'").replace('"', r"\"")
+            return string.replace("\\'", "'").replace('"', '\\"')
         elif str_quotes == "'":
-            return string.replace('\\"', '"').replace("'", r"\'")
+            return string.replace('\\"', '"').replace("'", "\\'")
         else:
             return string
 

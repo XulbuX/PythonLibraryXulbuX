@@ -144,6 +144,7 @@ class Path(metaclass=_PathMeta):
                 raise_error=True,
                 use_closest_match=use_closest_match,
             ))
+
         except PathNotFoundError:
             return _os.path.join(
                 cls.script_dir if prefer_script_dir else _os.getcwd(),
