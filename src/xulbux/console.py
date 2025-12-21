@@ -22,6 +22,7 @@ import threading as _threading
 import keyboard as _keyboard
 import getpass as _getpass
 import shutil as _shutil
+import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
@@ -689,9 +690,10 @@ class Console(metaclass=_ConsoleMeta):
         pady = " " * (cls.w if w_full else max_line_len + (2 * w_padding))
         pad_w_full = (cls.w - (max_line_len + (2 * w_padding))) if w_full else 0
 
+        replacer = _ConsoleLogBoxBgReplacer(box_bg_color)
         lines = [( \
             f"{spaces_l}[bg:{box_bg_color}]{' ' * w_padding}"
-            + _FC_PATTERNS.formatting.sub(lambda m: f"{cast(str, m.group(0))}[bg:{box_bg_color}]", line)
+            + _FC_PATTERNS.formatting.sub(replacer, line)
             + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full))
             + "[*]"
         ) for line, unfmt in zip(lines, unfmt_lines)]
@@ -862,10 +864,7 @@ class Console(metaclass=_ConsoleMeta):
         The input prompt can be formatted with special formatting codes. For more detailed
         information about formatting codes, see the `format_codes` module documentation."""
         kb = KeyBindings()
-
-        @kb.add("c-d", eager=True)  # CTRL+D
-        def _(event):
-            event.app.exit(result=event.app.current_buffer.document.text)
+        kb.add("c-d", eager=True)(cls._multiline_input_submit)
 
         FormatCodes.print(start + str(prompt), default_color=default_color)
         if show_keybindings:
@@ -959,152 +958,34 @@ class Console(metaclass=_ConsoleMeta):
         if max_len is not None and max_len < 0:
             raise ValueError("The 'max_len' parameter must be a non-negative integer.")
 
-        filtered_chars: set[str] = set()
-        tried_pasting: bool = False
-        result_text: str = ""
-
-        def bottom_toolbar() -> _pt.formatted_text.ANSI:
-            nonlocal tried_pasting
-            try:
-                if mask_char:
-                    text_to_check = result_text
-                else:
-                    app = _pt.application.get_app()
-                    text_to_check = app.current_buffer.text
-
-                toolbar_msgs: list[str] = []
-                if max_len and len(text_to_check) > max_len:
-                    toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
-                if validator and text_to_check and (validation_error_msg := validator(text_to_check)) not in {"", None}:
-                    toolbar_msgs.append(f"[b|#000|bg:br:red] {validation_error_msg} [_bg]")
-                if filtered_chars:
-                    plural = "" if len(char_list := "".join(sorted(filtered_chars))) == 1 else "s"
-                    toolbar_msgs.append(f"[b|#000|bg:yellow]( Char{plural} '{char_list}' not allowed )")
-                    filtered_chars.clear()
-                if min_len and len(text_to_check) < min_len:
-                    toolbar_msgs.append(f"[b|#000|bg:yellow]( Need {min_len - len(text_to_check)} more chars )")
-                if tried_pasting:
-                    toolbar_msgs.append("[b|#000|bg:br:yellow]( Pasting disabled )")
-                    tried_pasting = False
-                if max_len and len(text_to_check) == max_len:
-                    toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
-
-                return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
-
-            except Exception:
-                return _pt.formatted_text.ANSI("")
-
-        def process_insert_text(text: str) -> tuple[str, set[str]]:
-            removed_chars: set[str] = set()
-
-            if not text:
-                return "", removed_chars
-
-            processed_text = "".join(c for c in text if ord(c) >= 32)
-            if allowed_chars is not CHARS.ALL:
-                filtered_text = ""
-                for char in processed_text:
-                    if char in allowed_chars:
-                        filtered_text += char
-                    else:
-                        removed_chars.add(char)
-                processed_text = filtered_text
-
-            if max_len:
-                if (remaining_space := max_len - len(result_text)) > 0:
-                    if len(processed_text) > remaining_space:
-                        processed_text = processed_text[:remaining_space]
-                else:
-                    processed_text = ""
-
-            return processed_text, removed_chars
-
-        def insert_text_event(event: KeyPressEvent) -> None:
-            nonlocal result_text, filtered_chars
-            try:
-                if not (insert_text := event.data):
-                    return
-
-                buffer = event.app.current_buffer
-                cursor_pos = buffer.cursor_position
-                insert_text, filtered_chars = process_insert_text(insert_text)
-
-                if insert_text:
-                    result_text = result_text[:cursor_pos] + insert_text + result_text[cursor_pos:]
-                    if mask_char:
-                        buffer.insert_text(mask_char[0] * len(insert_text))
-                    else:
-                        buffer.insert_text(insert_text)
-
-            except Exception:
-                pass
-
-        def remove_text_event(event: KeyPressEvent, is_backspace: bool = False) -> None:
-            nonlocal result_text
-            try:
-                buffer = event.app.current_buffer
-                cursor_pos = buffer.cursor_position
-                has_selection = buffer.selection_state is not None
-
-                if has_selection:
-                    start, end = buffer.document.selection_range()
-                    result_text = result_text[:start] + result_text[end:]
-                    buffer.cursor_position = start
-                    buffer.delete(end - start)
-                else:
-                    if is_backspace:
-                        if cursor_pos > 0:
-                            result_text = result_text[:cursor_pos - 1] + result_text[cursor_pos:]
-                            buffer.delete_before_cursor(1)
-                    else:
-                        if cursor_pos < len(result_text):
-                            result_text = result_text[:cursor_pos] + result_text[cursor_pos + 1:]
-                            buffer.delete(1)
-
-            except Exception:
-                pass
+        helper = _ConsoleInputHelper(
+            mask_char=mask_char,
+            min_len=min_len,
+            max_len=max_len,
+            allowed_chars=allowed_chars,
+            allow_paste=allow_paste,
+            validator=validator,
+        )
 
         kb = KeyBindings()
-
-        @kb.add(Keys.Delete)
-        def _(event: KeyPressEvent) -> None:
-            remove_text_event(event)
-
-        @kb.add(Keys.Backspace)
-        def _(event: KeyPressEvent) -> None:
-            remove_text_event(event, is_backspace=True)
-
-        @kb.add(Keys.ControlA)
-        def _(event: KeyPressEvent) -> None:
-            buffer = event.app.current_buffer
-            buffer.cursor_position = 0
-            buffer.start_selection()
-            buffer.cursor_position = len(buffer.text)
-
-        @kb.add(Keys.BracketedPaste)
-        def _(event: KeyPressEvent) -> None:
-            if allow_paste:
-                insert_text_event(event)
-            else:
-                nonlocal tried_pasting
-                tried_pasting = True
-
-        @kb.add(Keys.Any)
-        def _(event: KeyPressEvent) -> None:
-            insert_text_event(event)
+        kb.add(Keys.Delete)(helper.handle_delete)
+        kb.add(Keys.Backspace)(helper.handle_backspace)
+        kb.add(Keys.ControlA)(helper.handle_control_a)
+        kb.add(Keys.BracketedPaste)(helper.handle_paste)
+        kb.add(Keys.Any)(helper.handle_any)
 
         custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
         session: _pt.PromptSession = _pt.PromptSession(
             message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
-            validator=_InputValidator(
-                get_text=lambda: result_text,
+            validator=_ConsoleInputValidator(
+                get_text=helper.get_text,
                 mask_char=mask_char,
                 min_len=min_len,
                 validator=validator,
             ),
             validate_while_typing=True,
             key_bindings=kb,
-            bottom_toolbar=bottom_toolbar,
+            bottom_toolbar=helper.bottom_toolbar,
             placeholder=_pt.formatted_text.ANSI(FormatCodes.to_ansi(f"[i|br:black]{placeholder}[_i|_c]"))
             if placeholder else "",
             style=custom_style,
@@ -1113,6 +994,7 @@ class Console(metaclass=_ConsoleMeta):
         session.prompt()
         FormatCodes.print(end, end="")
 
+        result_text = helper.get_text()
         if result_text in {"", None}:
             if default_val is not None:
                 return default_val
@@ -1209,8 +1091,175 @@ class Console(metaclass=_ConsoleMeta):
         max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
         return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
+    @staticmethod
+    def _multiline_input_submit(event: KeyPressEvent) -> None:
+        event.app.exit(result=event.app.current_buffer.document.text)
 
-class _InputValidator(Validator):
+
+class _ConsoleLogBoxBgReplacer:
+    """Internal, callable class to replace matched text with background-colored text for log boxes."""
+
+    def __init__(self, box_bg_color: str | Rgba | Hexa) -> None:
+        self.box_bg_color = box_bg_color
+
+    def __call__(self, m: _rx.Match[str]) -> str:
+        return f"{cast(str, m.group(0))}[bg:{self.box_bg_color}]"
+
+
+class _ConsoleInputHelper:
+    """Helper class to manage input processing and events."""
+
+    def __init__(
+        self,
+        mask_char: Optional[str],
+        min_len: Optional[int],
+        max_len: Optional[int],
+        allowed_chars: str,
+        allow_paste: bool,
+        validator: Optional[Callable[[str], Optional[str]]],
+    ) -> None:
+        self.mask_char = mask_char
+        self.min_len = min_len
+        self.max_len = max_len
+        self.allowed_chars = allowed_chars
+        self.allow_paste = allow_paste
+        self.validator = validator
+
+        self.result_text: str = ""
+        self.filtered_chars: set[str] = set()
+        self.tried_pasting: bool = False
+
+    def get_text(self) -> str:
+        """Returns the current result text."""
+        return self.result_text
+
+    def bottom_toolbar(self) -> _pt.formatted_text.ANSI:
+        """Generates the bottom toolbar text based on the current input state."""
+        try:
+            if self.mask_char:
+                text_to_check = self.result_text
+            else:
+                app = _pt.application.get_app()
+                text_to_check = app.current_buffer.text
+
+            toolbar_msgs: list[str] = []
+            if self.max_len and len(text_to_check) > self.max_len:
+                toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
+            if self.validator and text_to_check and (validation_error_msg := self.validator(text_to_check)) not in {"", None}:
+                toolbar_msgs.append(f"[b|#000|bg:br:red] {validation_error_msg} [_bg]")
+            if self.filtered_chars:
+                plural = "" if len(char_list := "".join(sorted(self.filtered_chars))) == 1 else "s"
+                toolbar_msgs.append(f"[b|#000|bg:yellow]( Char{plural} '{char_list}' not allowed )")
+                self.filtered_chars.clear()
+            if self.min_len and len(text_to_check) < self.min_len:
+                toolbar_msgs.append(f"[b|#000|bg:yellow]( Need {self.min_len - len(text_to_check)} more chars )")
+            if self.tried_pasting:
+                toolbar_msgs.append("[b|#000|bg:br:yellow]( Pasting disabled )")
+                self.tried_pasting = False
+            if self.max_len and len(text_to_check) == self.max_len:
+                toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
+
+            return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
+
+        except Exception:
+            return _pt.formatted_text.ANSI("")
+
+    def process_insert_text(self, text: str) -> tuple[str, set[str]]:
+        """Processes the inserted text according to the allowed characters and max length."""
+        removed_chars: set[str] = set()
+
+        if not text:
+            return "", removed_chars
+
+        processed_text = "".join(c for c in text if ord(c) >= 32)
+        if self.allowed_chars is not CHARS.ALL:
+            filtered_text = ""
+            for char in processed_text:
+                if char in self.allowed_chars:
+                    filtered_text += char
+                else:
+                    removed_chars.add(char)
+            processed_text = filtered_text
+
+        if self.max_len:
+            if (remaining_space := self.max_len - len(self.result_text)) > 0:
+                if len(processed_text) > remaining_space:
+                    processed_text = processed_text[:remaining_space]
+            else:
+                processed_text = ""
+
+        return processed_text, removed_chars
+
+    def insert_text_event(self, event: KeyPressEvent) -> None:
+        """Handles text insertion events (typing/pasting)."""
+        try:
+            if not (insert_text := event.data):
+                return
+
+            buffer = event.app.current_buffer
+            cursor_pos = buffer.cursor_position
+            insert_text, filtered_chars = self.process_insert_text(insert_text)
+            self.filtered_chars.update(filtered_chars)
+
+            if insert_text:
+                self.result_text = self.result_text[:cursor_pos] + insert_text + self.result_text[cursor_pos:]
+                if self.mask_char:
+                    buffer.insert_text(self.mask_char[0] * len(insert_text))
+                else:
+                    buffer.insert_text(insert_text)
+
+        except Exception:
+            pass
+
+    def remove_text_event(self, event: KeyPressEvent, is_backspace: bool = False) -> None:
+        """Handles text removal events (backspace/delete)."""
+        try:
+            buffer = event.app.current_buffer
+            cursor_pos = buffer.cursor_position
+            has_selection = buffer.selection_state is not None
+
+            if has_selection:
+                start, end = buffer.document.selection_range()
+                self.result_text = self.result_text[:start] + self.result_text[end:]
+                buffer.cursor_position = start
+                buffer.delete(end - start)
+            else:
+                if is_backspace:
+                    if cursor_pos > 0:
+                        self.result_text = self.result_text[:cursor_pos - 1] + self.result_text[cursor_pos:]
+                        buffer.delete_before_cursor(1)
+                else:
+                    if cursor_pos < len(self.result_text):
+                        self.result_text = self.result_text[:cursor_pos] + self.result_text[cursor_pos + 1:]
+                        buffer.delete(1)
+
+        except Exception:
+            pass
+
+    def handle_delete(self, event: KeyPressEvent) -> None:
+        self.remove_text_event(event)
+
+    def handle_backspace(self, event: KeyPressEvent) -> None:
+        self.remove_text_event(event, is_backspace=True)
+
+    @staticmethod
+    def handle_control_a(event: KeyPressEvent) -> None:
+        buffer = event.app.current_buffer
+        buffer.cursor_position = 0
+        buffer.start_selection()
+        buffer.cursor_position = len(buffer.text)
+
+    def handle_paste(self, event: KeyPressEvent) -> None:
+        if self.allow_paste:
+            self.insert_text_event(event)
+        else:
+            self.tried_pasting = True
+
+    def handle_any(self, event: KeyPressEvent) -> None:
+        self.insert_text_event(event)
+
+
+class _ConsoleInputValidator(Validator):
 
     def __init__(
         self,
@@ -1419,44 +1468,8 @@ class ProgressBar:
         if total <= 0:
             raise ValueError("The 'total' parameter must be a positive integer.")
 
-        current_label, current_progress = label, 0
-
         try:
-
-            def update_progress(*args, **kwargs) -> None:  # TYPE HINTS DEFINED IN 'ProgressUpdater' PROTOCOL
-                """Update the progress bar's current value and/or label.\n
-                -----------------------------------------------------------
-                `current` -⠀the current progress value
-                `label` -⠀the progress label
-                `type_checking` -⠀whether to check the parameters' types:
-                  Is false per default to save performance, but can be set
-                  to true for debugging purposes."""
-                nonlocal current_progress, current_label
-                current, label = None, None
-
-                if (num_args := len(args)) == 1:
-                    current = args[0]
-                elif num_args == 2:
-                    current, label = args[0], args[1]
-                else:
-                    raise TypeError(f"update_progress() takes 1 or 2 positional arguments, got {len(args)}")
-
-                if current is not None and "current" in kwargs:
-                    current = kwargs["current"]
-                if label is None and "label" in kwargs:
-                    label = kwargs["label"]
-
-                if current is None and label is None:
-                    raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
-
-                if current is not None:
-                    current_progress = current
-                if label is not None:
-                    current_label = label
-
-                self.show_progress(current=current_progress, total=total, label=current_label)
-
-            yield update_progress
+            yield _ProgressContextHelper(self, total, label)
         except Exception:
             self._emergency_cleanup()
             raise
@@ -1564,6 +1577,46 @@ class ProgressBar:
         if self._current_progress_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_progress_str}")
             self._original_stdout.flush()
+
+
+class _ProgressContextHelper:
+    """Internal, callable helper class to update the progress bar's current value and/or label.\n
+    ----------------------------------------------------------------------------------------------
+    - `current` -⠀the current progress value
+    - `label` -⠀the progress label
+    - `type_checking` -⠀whether to check the parameters' types:
+      Is false per default to save performance, but can be set to true for debugging purposes."""
+
+    def __init__(self, progress_bar: ProgressBar, total: int, label: Optional[str]):
+        self.progress_bar = progress_bar
+        self.total = total
+        self.current_label = label
+        self.current_progress = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> None:
+        current, label = None, None
+
+        if (num_args := len(args)) == 1:
+            current = args[0]
+        elif num_args == 2:
+            current, label = args[0], args[1]
+        else:
+            raise TypeError(f"update_progress() takes 1 or 2 positional arguments, got {len(args)}")
+
+        if current is not None and "current" in kwargs:
+            current = kwargs["current"]
+        if label is None and "label" in kwargs:
+            label = kwargs["label"]
+
+        if current is None and label is None:
+            raise TypeError("Either the keyword argument 'current' or 'label' must be provided.")
+
+        if current is not None:
+            self.current_progress = current
+        if label is not None:
+            self.current_label = label
+
+        self.progress_bar.show_progress(current=self.current_progress, total=self.total, label=self.current_label)
 
 
 class Spinner:

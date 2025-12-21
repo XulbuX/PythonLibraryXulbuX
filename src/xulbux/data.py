@@ -618,7 +618,7 @@ class _DataRenderHelper:
 
     def __init__(
         self,
-        cls: type["Data"],
+        cls: type[Data],
         data: DataStructure,
         indent: int,
         compactness: Literal[0, 1, 2],

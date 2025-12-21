@@ -3,8 +3,6 @@ This module contains all custom type definitions used throughout the library.
 """
 
 from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any, overload
-import regex as _rx
-import re as _re
 
 # PREVENT CIRCULAR IMPORTS
 if TYPE_CHECKING:
@@ -27,11 +25,6 @@ FormattableString = Annotated[str, "String made to be formatted with the `.forma
 
 #
 ################################################## TypeAlias ##################################################
-
-Pattern: TypeAlias = _re.Pattern[str] | _rx.Pattern[str]
-"""Matches compiled regex patterns from both the `re` and `regex` libraries."""
-Match: TypeAlias = _re.Match[str] | _rx.Match[str]
-"""Matches regex match objects from both the `re` and `regex` libraries."""
 
 DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
 """Union of supported data structures used in the `data` module."""

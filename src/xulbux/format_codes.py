@@ -154,7 +154,7 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from .base.types import Match, Rgba, Hexa
+from .base.types import Rgba, Hexa
 from .base.consts import ANSI
 
 from .string import String
@@ -517,7 +517,7 @@ class _EscapeFormatCodeHelper:
 
     def __init__(
         self,
-        cls: type["FormatCodes"],
+        cls: type[FormatCodes],
         use_default: bool,
         default_color: Optional[rgba],
         escape_char: Literal["/", "\\"],
@@ -527,7 +527,7 @@ class _EscapeFormatCodeHelper:
         self.default_color = default_color
         self.escape_char: Literal["/", "\\"] = escape_char
 
-    def __call__(self, match: Match) -> str:
+    def __call__(self, match: _rx.Match[str]) -> str:
         formats, auto_reset_txt = match.group(1), match.group(3)
 
         # CHECK IF ALREADY ESCAPED OR CONTAINS NO FORMATTING
@@ -565,7 +565,7 @@ class _RemAnsiSeqHelper:
     def __init__(self, removals: list[tuple[int, str]]):
         self.removals = removals
 
-    def __call__(self, match: Match) -> str:
+    def __call__(self, match: _rx.Match[str]) -> str:
         start_pos = match.start() - sum(len(removed) for _, removed in self.removals)
         if self.removals and self.removals[-1][0] == start_pos:
             start_pos = self.removals[-1][0]
@@ -578,7 +578,7 @@ class _ReplaceKeysHelper:
 
     def __init__(
         self,
-        cls: type["FormatCodes"],
+        cls: type[FormatCodes],
         use_default: bool,
         default_color: Optional[rgba],
         brightness_steps: int,
@@ -588,7 +588,7 @@ class _ReplaceKeysHelper:
         self.default_color = default_color
         self.brightness_steps = brightness_steps
 
-    def __call__(self, match: Match) -> str:
+    def __call__(self, match: _rx.Match[str]) -> str:
         _formats = formats = match.group(1)
         auto_reset_escaped = match.group(2)
         auto_reset_txt = match.group(3)

@@ -29,8 +29,9 @@
 * The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
 
 **BREAKING CHANGES:**
-* Removed the `_` prefix from the param `_syntax_highlighting` in `Data.to_str()`, since it's no longer just for internal use.
 * Renamed `Data.to_str()` to `Data.render()`, since that describes its functionality better (*especially with the syntax highlighting option*).
+* Removed the general `Pattern` and `Match` type aliases from the `base.types` module (*they are pointless since you should always use a specific type and not "type1 OR typeB"*).
+* Removed the `_` prefix from the param `_syntax_highlighting` in `Data.render()`, since it's no longer just for internal use.
 
 
 <span id="v1-9-2" />
