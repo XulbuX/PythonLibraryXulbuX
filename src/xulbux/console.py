@@ -11,7 +11,7 @@ from .string import String
 from .color import Color, hexa
 from .regex import LazyRegex
 
-from typing import Generator, Callable, ClassVar, Optional, Literal, TypeVar, TextIO, Any, overload, cast
+from typing import Generator, Callable, Optional, Literal, TypeVar, TextIO, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
@@ -52,28 +52,6 @@ _PATTERNS = LazyRegex(
     percentage=r"(?i){(?:percentage|percent|p)}",
     animation=r"(?i){(?:animation|a)}",
 )
-
-
-class _InputValidator(Validator):
-
-    def __init__(
-        self,
-        get_text: Callable[[], str],
-        mask_char: Optional[str],
-        min_len: Optional[int],
-        validator: Optional[Callable[[str], Optional[str]]],
-    ):
-        self.get_text = get_text
-        self.mask_char = mask_char
-        self.min_len = min_len
-        self.validator = validator
-
-    def validate(self, document) -> None:
-        text_to_validate = self.get_text() if self.mask_char else document.text
-        if self.min_len and len(text_to_validate) < self.min_len:
-            raise ValidationError(message="", cursor_position=len(document.text))
-        if self.validator and self.validator(text_to_validate) not in {"", None}:
-            raise ValidationError(message="", cursor_position=len(document.text))
 
 
 class ArgResult:
@@ -162,7 +140,7 @@ class Args:
 
 
 @mypyc_attr(native_class=False)
-class __ConsoleMeta(type):
+class _ConsoleMeta(type):
 
     @property
     def w(cls) -> int:
@@ -195,7 +173,7 @@ class __ConsoleMeta(type):
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
-class Console(metaclass=__ConsoleMeta):
+class Console(metaclass=_ConsoleMeta):
     """This class provides methods for logging and other actions within the console."""
 
     @classmethod
@@ -496,7 +474,7 @@ class Console(metaclass=__ConsoleMeta):
                 for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             ]
             prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(
-                cls.__add_back_removed_parts(prompt_lst, cast(tuple[tuple[int, str], ...], removals))
+                cls._add_back_removed_parts(prompt_lst, cast(tuple[tuple[int, str], ...], removals))
             )
 
         if title == "":
@@ -512,43 +490,6 @@ class Console(metaclass=__ConsoleMeta):
                 default_color=default_color,
                 end=end,
             )
-
-    @staticmethod
-    def __find_string_part(pos: int, cumulative_pos: list[int]) -> int:
-        """Finds the index of the string part that contains the given position."""
-        left, right = 0, len(cumulative_pos) - 1
-        while left < right:
-            mid = (left + right) // 2
-            if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
-                return mid
-            elif pos < cumulative_pos[mid]:
-                right = mid
-            else:
-                left = mid + 1
-        return left
-
-    @classmethod
-    def __add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
-        """Adds back the removed parts into the split string parts at their original positions."""
-        cumulative_pos = [0]
-        for length in (len(s) for s in split_string):
-            cumulative_pos.append(cumulative_pos[-1] + length)
-
-        result, offset_adjusts = split_string.copy(), [0] * len(split_string)
-        last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
-
-        for pos, removal in removals:
-            if pos >= total_length:
-                result[last_idx] = result[last_idx] + removal
-                continue
-
-            i = cls.__find_string_part(pos, cumulative_pos)
-            adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
-            parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
-            result[i] = "".join(parts)
-            offset_adjusts[i] += len(removal)
-
-        return result
 
     @classmethod
     def debug(
@@ -742,7 +683,7 @@ class Console(metaclass=__ConsoleMeta):
         if Color.is_valid(box_bg_color):
             box_bg_color = Color.to_hexa(box_bg_color)
 
-        lines, unfmt_lines, max_line_len = cls.__prepare_log_box(values, default_color)
+        lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color)
 
         spaces_l = " " * indent
         pady = " " * (cls.w if w_full else max_line_len + (2 * w_padding))
@@ -837,7 +778,7 @@ class Console(metaclass=__ConsoleMeta):
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
 
-        lines, unfmt_lines, max_line_len = cls.__prepare_log_box(values, default_color, has_rules=True)
+        lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color, has_rules=True)
 
         spaces_l = " " * indent
         pad_w_full = (cls.w - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
@@ -866,50 +807,6 @@ class Console(metaclass=__ConsoleMeta):
             sep="\n",
             end=end,
         )
-
-    @staticmethod
-    def __prepare_log_box(
-        values: list[object] | tuple[object, ...],
-        default_color: Optional[Rgba | Hexa] = None,
-        has_rules: bool = False,
-    ) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
-        """Prepares the log box content and returns it along with the max line length."""
-        if has_rules:
-            lines = []
-            for val in values:
-                val_str, result_parts, current_pos = str(val), [], 0
-                for match in _PATTERNS.hr.finditer(val_str):
-                    start, end = match.span()
-                    should_split_before = start > 0 and val_str[start - 1] != "\n"
-                    should_split_after = end < len(val_str) and val_str[end] != "\n"
-
-                    if should_split_before:
-                        if start > current_pos:
-                            result_parts.append(val_str[current_pos:start])
-                        if should_split_after:
-                            result_parts.append(match.group())
-                            current_pos = end
-                        else:
-                            current_pos = start
-                    else:
-                        if should_split_after:
-                            result_parts.append(val_str[current_pos:end])
-                            current_pos = end
-
-                if current_pos < len(val_str):
-                    result_parts.append(val_str[current_pos:])
-
-                if not result_parts:
-                    result_parts.append(val_str)
-
-                for part in result_parts:
-                    lines.extend(part.splitlines())
-        else:
-            lines = [line for val in values for line in str(val).splitlines()]
-
-        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
-        max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
-        return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
 
     @classmethod
     def confirm(
@@ -1230,6 +1127,109 @@ class Console(metaclass=__ConsoleMeta):
                 if default_val is not None:
                     return default_val
                 raise
+
+    @classmethod
+    def _add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...]) -> list[str]:
+        """Adds back the removed parts into the split string parts at their original positions."""
+        cumulative_pos = [0]
+        for length in (len(s) for s in split_string):
+            cumulative_pos.append(cumulative_pos[-1] + length)
+
+        result, offset_adjusts = split_string.copy(), [0] * len(split_string)
+        last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
+
+        for pos, removal in removals:
+            if pos >= total_length:
+                result[last_idx] = result[last_idx] + removal
+                continue
+
+            i = cls._find_string_part(pos, cumulative_pos)
+            adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
+            parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
+            result[i] = "".join(parts)
+            offset_adjusts[i] += len(removal)
+
+        return result
+
+    @staticmethod
+    def _find_string_part(pos: int, cumulative_pos: list[int]) -> int:
+        """Finds the index of the string part that contains the given position."""
+        left, right = 0, len(cumulative_pos) - 1
+        while left < right:
+            mid = (left + right) // 2
+            if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
+                return mid
+            elif pos < cumulative_pos[mid]:
+                right = mid
+            else:
+                left = mid + 1
+        return left
+
+    @staticmethod
+    def _prepare_log_box(
+        values: list[object] | tuple[object, ...],
+        default_color: Optional[Rgba | Hexa] = None,
+        has_rules: bool = False,
+    ) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
+        """Prepares the log box content and returns it along with the max line length."""
+        if has_rules:
+            lines = []
+            for val in values:
+                val_str, result_parts, current_pos = str(val), [], 0
+                for match in _PATTERNS.hr.finditer(val_str):
+                    start, end = match.span()
+                    should_split_before = start > 0 and val_str[start - 1] != "\n"
+                    should_split_after = end < len(val_str) and val_str[end] != "\n"
+
+                    if should_split_before:
+                        if start > current_pos:
+                            result_parts.append(val_str[current_pos:start])
+                        if should_split_after:
+                            result_parts.append(match.group())
+                            current_pos = end
+                        else:
+                            current_pos = start
+                    else:
+                        if should_split_after:
+                            result_parts.append(val_str[current_pos:end])
+                            current_pos = end
+
+                if current_pos < len(val_str):
+                    result_parts.append(val_str[current_pos:])
+
+                if not result_parts:
+                    result_parts.append(val_str)
+
+                for part in result_parts:
+                    lines.extend(part.splitlines())
+        else:
+            lines = [line for val in values for line in str(val).splitlines()]
+
+        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
+        max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
+        return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
+
+
+class _InputValidator(Validator):
+
+    def __init__(
+        self,
+        get_text: Callable[[], str],
+        mask_char: Optional[str],
+        min_len: Optional[int],
+        validator: Optional[Callable[[str], Optional[str]]],
+    ):
+        self.get_text = get_text
+        self.mask_char = mask_char
+        self.min_len = min_len
+        self.validator = validator
+
+    def validate(self, document) -> None:
+        text_to_validate = self.get_text() if self.mask_char else document.text
+        if self.min_len and len(text_to_validate) < self.min_len:
+            raise ValidationError(message="", cursor_position=len(document.text))
+        if self.validator and self.validator(text_to_validate) not in {"", None}:
+            raise ValidationError(message="", cursor_position=len(document.text))
 
 
 class ProgressBar:

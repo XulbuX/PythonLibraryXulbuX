@@ -4,16 +4,25 @@ methods to work with nested data structures.
 """
 
 from .base.types import DataStructureTypes, IndexIterableTypes, DataStructure, IndexIterable
-from .base.consts import COLOR
 
 from .format_codes import FormatCodes
 from .string import String
 from .regex import Regex
 
-from typing import Optional, Literal, Any, cast
+from typing import Optional, Literal, Final, Any, cast
 import base64 as _base64
 import math as _math
 import re as _re
+
+
+_DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
+    "str": (f"[br:blue]", "[_c]"),
+    "number": (f"[br:magenta]", "[_c]"),
+    "literal": (f"[magenta]", "[_c]"),
+    "type": (f"[i|green]", "[_i|_c]"),
+    "punctuation": (f"[br:black]", "[_c]"),
+}
+"""Default syntax highlighting styles for data structure rendering."""
 
 
 class Data:
@@ -200,39 +209,12 @@ class Data:
         if len(comment_start) == 0:
             raise ValueError("The 'comment_start' parameter string must not be empty.")
 
-        pattern = _re.compile(Regex._clean( \
-            rf"""^(
-                (?:(?!{_re.escape(comment_start)}).)*
-            )
-            {_re.escape(comment_start)}
-            (?:(?:(?!{_re.escape(comment_end)}).)*)
-            (?:{_re.escape(comment_end)})?
-            (.*?)$"""
-        )) if len(comment_end) > 0 else None
-
-        def process_string(s: str) -> Optional[str]:
-            if pattern:
-                if (match := pattern.match(s)):
-                    start, end = match.group(1).strip(), match.group(2).strip()
-                    return f"{start}{comment_sep if start and end else ''}{end}" or None
-                return s.strip() or None
-            else:
-                return None if s.lstrip().startswith(comment_start) else s.strip() or None
-
-        def process_item(item: Any) -> Any:
-            if isinstance(item, dict):
-                return {
-                    k: v
-                    for k, v in ((process_item(key), process_item(value)) for key, value in item.items()) if k is not None
-                }
-            if isinstance(item, IndexIterableTypes):
-                processed = (v for v in map(process_item, item) if v is not None)
-                return type(item)(processed)
-            if isinstance(item, str):
-                return process_string(item)
-            return item
-
-        return process_item(data)
+        return _DataRemoveCommentsHelper(
+            data=data,
+            comment_start=comment_start,
+            comment_end=comment_end,
+            comment_sep=comment_sep,
+        )()
 
     @classmethod
     def is_equal(
@@ -261,41 +243,14 @@ class Data:
         if len(path_sep) == 0:
             raise ValueError("The 'path_sep' parameter string must not be empty.")
 
-        def process_ignore_paths(ignore_paths: str | list[str], ) -> list[list[str]]:
-            if isinstance(ignore_paths, str):
-                ignore_paths = [ignore_paths]
-            return [str(path).split(path_sep) for path in ignore_paths if path]
+        if isinstance(ignore_paths, str):
+            ignore_paths = [ignore_paths]
 
-        def compare(
-            d1: DataStructure,
-            d2: DataStructure,
-            ignore_paths: list[list[str]],
-            current_path: list[str] = [],
-        ) -> bool:
-            if any(current_path == path[:len(current_path)] for path in ignore_paths):
-                return True
-            if type(d1) is not type(d2):
-                return False
-            if isinstance(d1, dict) and isinstance(d2, dict):
-                if set(d1.keys()) != set(d2.keys()):
-                    return False
-                return all(compare(d1[key], d2[key], ignore_paths, current_path + [key]) for key in d1)
-            if isinstance(d1, (list, tuple)):
-                if len(d1) != len(d2):
-                    return False
-                return all(
-                    compare(item1, item2, ignore_paths, current_path + [str(i)])
-                    for i, (item1, item2) in enumerate(zip(d1, d2))
-                )
-            if isinstance(d1, (set, frozenset)):
-                return d1 == d2
-            return d1 == d2
-
-        processed_data1 = cls.remove_comments(data1, comment_start, comment_end)
-        processed_data2 = cls.remove_comments(data2, comment_start, comment_end)
-        processed_ignore_paths = process_ignore_paths(ignore_paths)
-
-        return compare(processed_data1, processed_data2, processed_ignore_paths)
+        return cls._compare_nested(
+            d1=cls.remove_comments(data1, comment_start, comment_end),
+            d2=cls.remove_comments(data2, comment_start, comment_end),
+            ignore_paths=[str(path).split(path_sep) for path in ignore_paths if path],
+        )
 
     @classmethod
     def get_path_id(
@@ -333,53 +288,11 @@ class Data:
         if len(path_sep) == 0:
             raise ValueError("The 'path_sep' parameter string must not be empty.")
 
-        def process_path(path: str, data_obj: DataStructure) -> Optional[str]:
-            keys = path.split(path_sep)
-            path_ids, max_id_length = [], 0
-
-            for key in keys:
-                if isinstance(data_obj, dict):
-                    if key.isdigit():
-                        if ignore_not_found:
-                            return None
-                        raise TypeError(f"Key '{key}' is invalid for a dict type.")
-
-                    try:
-                        idx = list(data_obj.keys()).index(key)
-                        data_obj = data_obj[key]
-                    except (ValueError, KeyError):
-                        if ignore_not_found:
-                            return None
-                        raise KeyError(f"Key '{key}' not found in dict.")
-
-                elif isinstance(data_obj, IndexIterableTypes):
-                    try:
-                        idx = int(key)
-                        data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
-                    except ValueError:
-                        try:
-                            idx = list(data_obj).index(key)
-                            data_obj = list(data_obj)[idx]
-                        except ValueError:
-                            if ignore_not_found:
-                                return None
-                            raise ValueError(f"Value '{key}' not found in '{type(data_obj).__name__}'")
-
-                else:
-                    break
-
-                path_ids.append(str(idx))
-                max_id_length = max(max_id_length, len(str(idx)))
-
-            if not path_ids:
-                return None
-            return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
-
         data = cls.remove_comments(data, comment_start, comment_end)
         if isinstance(value_paths, str):
-            return process_path(value_paths, data)
+            return cls._get_path_id(value_paths, path_sep, data, ignore_not_found)
 
-        results = [process_path(path, data) for path in value_paths]
+        results = [cls._get_path_id(path, path_sep, data, ignore_not_found) for path in value_paths]
         return results if len(results) > 1 else results[0] if results else None
 
     @classmethod
@@ -390,31 +303,29 @@ class Data:
         - `data` -⠀the list, tuple, or dictionary to retrieve the value from
         - `path_id` -⠀the path ID to the value to retrieve, created before using `Data.get_path_id()`
         - `get_key` -⠀if true and the final item is in a dict, it returns the key instead of the value"""
+        parent: Optional[DataStructure] = None
+        path = cls._sep_path_id(path_id)
 
-        def get_nested(data: DataStructure, path: list[int], get_key: bool) -> Any:
-            parent: Optional[DataStructure] = None
-            for i, idx in enumerate(path):
-                if isinstance(data, dict):
-                    keys = list(data.keys())
-                    if i == len(path) - 1 and get_key:
-                        return keys[idx]
-                    parent = data
-                    data = data[keys[idx]]
+        for i, path_idx in enumerate(path):
+            if isinstance(data, dict):
+                keys = list(data.keys())
+                if i == len(path) - 1 and get_key:
+                    return keys[path_idx]
+                parent = data
+                data = data[keys[path_idx]]
 
-                elif isinstance(data, IndexIterableTypes):
-                    if i == len(path) - 1 and get_key:
-                        if parent is None or not isinstance(parent, dict):
-                            raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i+1]}'")
-                        return next(key for key, value in parent.items() if value is data)
-                    parent = data
-                    data = list(data)[idx]  # CONVERT TO LIST FOR INDEXING
+            elif isinstance(data, IndexIterableTypes):
+                if i == len(path) - 1 and get_key:
+                    if parent is None or not isinstance(parent, dict):
+                        raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i+1]}'")
+                    return next(key for key, value in parent.items() if value is data)
+                parent = data
+                data = list(data)[path_idx]  # CONVERT TO LIST FOR INDEXING
 
-                else:
-                    raise TypeError(f"Unsupported type '{type(data)}' at path '{path[:i+1]}'")
+            else:
+                raise TypeError(f"Unsupported type '{type(data)}' at path '{path[:i+1]}'")
 
-            return data
-
-        return get_nested(data, cls.__sep_path_id(path_id), get_key)
+        return data
 
     @classmethod
     def set_value_by_path_id(cls, data: DataStructure, update_values: dict[str, Any]) -> DataStructure:
@@ -429,37 +340,18 @@ class Data:
           ```
           The path IDs should have been created using `Data.get_path_id()`."""
 
-        def update_nested(data: DataStructure, path: list[int], value: Any) -> DataStructure:
-            if len(path) == 1:
-                if isinstance(data, dict):
-                    keys, data = list(data.keys()), dict(data)
-                    data[keys[path[0]]] = value
-                elif isinstance(data, IndexIterableTypes):
-                    was_t, data = type(data), list(data)
-                    data[path[0]] = value
-                    data = was_t(data)
-            else:
-                if isinstance(data, dict):
-                    keys, data = list(data.keys()), dict(data)
-                    data[keys[path[0]]] = update_nested(data[keys[path[0]]], path[1:], value)
-                elif isinstance(data, IndexIterableTypes):
-                    was_t, data = type(data), list(data)
-                    data[path[0]] = update_nested(data[path[0]], path[1:], value)
-                    data = was_t(data)
-            return data
-
         valid_entries = [(path_id, new_val) for path_id, new_val in update_values.items()]
         if not valid_entries:
             raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}")
 
         for path_id, new_val in valid_entries:
-            path = cls.__sep_path_id(path_id)
-            data = update_nested(data, path, new_val)
+            path = cls._sep_path_id(path_id)
+            data = cls._set_nested_val(data, path, new_val)
 
         return data
 
     @classmethod
-    def to_str(
+    def render(
         cls,
         data: DataStructure,
         indent: int = 4,
@@ -467,143 +359,52 @@ class Data:
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
-        _syntax_highlighting: dict[str, str] | bool = False,
+        syntax_highlighting: dict[str, str] | bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
-        -------------------------------------------------------------------------------------------------
+        ---------------------------------------------------------------------------------------------------------------
         - `data` -⠀the data structure to format
         - `indent` -⠀the amount of spaces to use for indentation
-        - `compactness` -⠀the level of compactness for the output (explained below)
+        - `compactness` -⠀the level of compactness for the output (explained below – section 1)
         - `max_width` -⠀the maximum width of a line before expanding (only used if `compactness` is `1`)
         - `sep` -⠀the separator between items in the data structure
-        - `as_json` -⠀if true, the output will be in valid JSON format\n
-        -------------------------------------------------------------------------------------------------
+        - `as_json` -⠀if true, the output will be in valid JSON format
+        - `syntax_highlighting` -⠀a dictionary defining the syntax highlighting styles (explained below – section 2)\n
+        ---------------------------------------------------------------------------------------------------------------
         There are three different levels of `compactness`:
         - `0` expands everything possible
         - `1` only expands if there's other lists, tuples or dicts inside of data or,
           if the data's content is longer than `max_width`
-        - `2` keeps everything collapsed (all on one line)"""
+        - `2` keeps everything collapsed (all on one line)\n
+        ---------------------------------------------------------------------------------------------------------------
+        The `syntax_highlighting` parameter is a dictionary with 5 keys for each part of the data.<br>
+        The key's values are the formatting codes to apply to this data part.<br>
+        The formatting can be changed by simply adding the key with the new value inside the
+        `syntax_highlighting` dictionary.\n
+        The keys with their default values are:
+        - `str: "br:blue"`
+        - `number: "br:magenta"`
+        - `literal: "magenta"`
+        - `type: "i|green"`
+        - `punctuation: "br:black"`\n
+        For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
+        ---------------------------------------------------------------------------------------------------------------
+        For more detailed information about formatting codes, see the `format_codes` module documentation."""
         if indent < 0:
             raise ValueError("The 'indent' parameter must be a non-negative integer.")
         if max_width <= 0:
             raise ValueError("The 'max_width' parameter must be a positive integer.")
 
-        _syntax_hl: dict[str, tuple[str, str]] = {}
-
-        if do_syntax_hl := _syntax_highlighting not in {None, False}:
-            if _syntax_highlighting is True:
-                _syntax_highlighting = {}
-            elif not isinstance(_syntax_highlighting, dict):
-                raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(_syntax_highlighting)}")
-
-            _syntax_hl = {
-                "str": (f"[{COLOR.BLUE}]", "[_c]"),
-                "number": (f"[{COLOR.MAGENTA}]", "[_c]"),
-                "literal": (f"[{COLOR.CYAN}]", "[_c]"),
-                "type": (f"[i|{COLOR.LIGHT_BLUE}]", "[_i|_c]"),
-                "punctuation": (f"[{COLOR.DARK_GRAY}]", "[_c]"),
-            }
-            _syntax_hl.update({
-                k: (f"[{v}]", "[_]") if k in _syntax_hl and v not in {"", None} else ("", "")
-                for k, v in _syntax_highlighting.items()
-            })
-
-            sep = f"{_syntax_hl['punctuation'][0]}{sep}{_syntax_hl['punctuation'][1]}"
-
-        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{c: c for c in "'\":)[]{}"}}
-        punct: dict[str, str] = {
-            k: ((f"{_syntax_hl['punctuation'][0]}{v[0]}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v[1])
-                if isinstance(v, (list, tuple)) else
-                (f"{_syntax_hl['punctuation'][0]}{v}{_syntax_hl['punctuation'][1]}" if do_syntax_hl else v))
-            for k, v in punct_map.items()
-        }
-
-        def format_value(value: Any, current_indent: Optional[int] = None) -> str:
-            if current_indent is not None and isinstance(value, dict):
-                return format_dict(value, current_indent + indent)
-            elif current_indent is not None and hasattr(value, "__dict__"):
-                return format_dict(value.__dict__, current_indent + indent)
-            elif current_indent is not None and isinstance(value, IndexIterableTypes):
-                return format_sequence(value, current_indent + indent)
-            elif current_indent is not None and isinstance(value, (bytes, bytearray)):
-                obj_dict = cls.serialize_bytes(value)
-                return (
-                    format_dict(obj_dict, current_indent + indent) if as_json else (
-                        f"{_syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{_syntax_hl['type'][1]}"
-                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent) if do_syntax_hl else
-                        (k := next(iter(obj_dict)))
-                        + format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + indent)
-                    )
-                )
-            elif isinstance(value, bool):
-                val = str(value).lower() if as_json else str(value)
-                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if do_syntax_hl else val
-            elif isinstance(value, (int, float)):
-                val = "null" if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
-                return f"{_syntax_hl['number'][0]}{val}{_syntax_hl['number'][1]}" if do_syntax_hl else val
-            elif current_indent is not None and isinstance(value, complex):
-                return (
-                    format_value(str(value).strip("()")) if as_json else (
-                        f"{_syntax_hl['type'][0]}complex{_syntax_hl['type'][1]}"
-                        + format_sequence((value.real, value.imag), current_indent + indent)
-                        if do_syntax_hl else f"complex{format_sequence((value.real, value.imag), current_indent + indent)}"
-                    )
-                )
-            elif value is None:
-                val = "null" if as_json else "None"
-                return f"{_syntax_hl['literal'][0]}{val}{_syntax_hl['literal'][1]}" if do_syntax_hl else val
-            else:
-                return ((
-                    punct['"'] + _syntax_hl["str"][0] + String.escape(str(value), '"') + _syntax_hl["str"][1]
-                    + punct['"'] if do_syntax_hl else punct['"'] + String.escape(str(value), '"') + punct['"']
-                ) if as_json else (
-                    punct["'"] + _syntax_hl["str"][0] + String.escape(str(value), "'") + _syntax_hl["str"][1]
-                    + punct["'"] if do_syntax_hl else punct["'"] + String.escape(str(value), "'") + punct["'"]
-                ))
-
-        def should_expand(seq: IndexIterable) -> bool:
-            if compactness == 0:
-                return True
-            if compactness == 2:
-                return False
-
-            complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
-            if as_json: complex_types += (bytes, bytearray)
-
-            complex_items = sum(1 for item in seq if isinstance(item, complex_types))
-
-            return complex_items > 1 \
-                or (complex_items == 1 and len(seq) > 1) \
-                or cls.chars_count(seq) + (len(seq) * len(sep)) > max_width
-
-        def format_dict(d: dict, current_indent: int) -> str:
-            if compactness == 2 or not d or not should_expand(list(d.values())):
-                return punct["{"] + sep.join(
-                    f"{format_value(k)}{punct[':']} {format_value(v, current_indent)}" for k, v in d.items()
-                ) + punct["}"]
-
-            items = []
-            for k, val in d.items():
-                formatted_value = format_value(val, current_indent)
-                items.append(f"{' ' * (current_indent + indent)}{format_value(k)}{punct[':']} {formatted_value}")
-
-            return punct["{"] + "\n" + f"{sep}\n".join(items) + f"\n{' ' * current_indent}" + punct["}"]
-
-        def format_sequence(seq, current_indent: int) -> str:
-            if as_json:
-                seq = list(seq)
-
-            brackets = (punct["["], punct["]"]) if isinstance(seq, list) else (punct["("], punct[")"])
-
-            if compactness == 2 or not seq or not should_expand(seq):
-                return f"{brackets[0]}{sep.join(format_value(item, current_indent) for item in seq)}{brackets[1]}"
-
-            items = [format_value(item, current_indent) for item in seq]
-            formatted_items = f"{sep}\n".join(f'{" " * (current_indent + indent)}{item}' for item in items)
-
-            return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"
-
-        return _re.sub(r"\s+(?=\n)", "", format_dict(data, 0) if isinstance(data, dict) else format_sequence(data, 0))
+        return _DataRenderHelper(
+            cls,
+            data=data,
+            indent=indent,
+            compactness=compactness,
+            max_width=max_width,
+            sep=sep,
+            as_json=as_json,
+            syntax_highlighting=syntax_highlighting,
+        )()
 
     @classmethod
     def print(
@@ -639,29 +440,57 @@ class Data:
         The formatting can be changed by simply adding the key with the new value inside the
         `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        - `str: COLOR.BLUE`
-        - `number: COLOR.MAGENTA`
-        - `literal: COLOR.CYAN`
-        - `type: "i|" + COLOR.LIGHT_BLUE`
-        - `punctuation: COLOR.DARK_GRAY`\n
+        - `str: "br:blue"`
+        - `number: "br:magenta"`
+        - `literal: "magenta"`
+        - `type: "i|green"`
+        - `punctuation: "br:black"`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ---------------------------------------------------------------------------------------------------------------
-        For more detailed information about formatting codes, see `format_codes` module documentation."""
+        For more detailed information about formatting codes, see the `format_codes` module documentation."""
         FormatCodes.print(
-            cls.to_str(
+            cls.render(
                 data=data,
                 indent=indent,
                 compactness=compactness,
                 max_width=max_width,
                 sep=sep,
                 as_json=as_json,
-                _syntax_highlighting=syntax_highlighting,
+                syntax_highlighting=syntax_highlighting,
             ),
             end=end,
         )
 
+    @classmethod
+    def _compare_nested(
+        cls,
+        d1: DataStructure,
+        d2: DataStructure,
+        ignore_paths: list[list[str]],
+        current_path: list[str] = [],
+    ) -> bool:
+        if any(current_path == path[:len(current_path)] for path in ignore_paths):
+            return True
+        if type(d1) is not type(d2):
+            return False
+        if isinstance(d1, dict) and isinstance(d2, dict):
+            if set(d1.keys()) != set(d2.keys()):
+                return False
+            return all(cls._compare_nested(d1[key], d2[key], ignore_paths, current_path + [key]) for key in d1)
+        if isinstance(d1, (list, tuple)):
+            if len(d1) != len(d2):
+                return False
+            return all(
+                cls._compare_nested(item1, item2, ignore_paths, current_path + [str(i)])
+                for i, (item1, item2) in enumerate(zip(d1, d2))
+            )
+        if isinstance(d1, (set, frozenset)):
+            return d1 == d2
+        return d1 == d2
+
     @staticmethod
-    def __sep_path_id(path_id: str) -> list[int]:
+    def _sep_path_id(path_id: str) -> list[int]:
+        """Internal method to separate a path ID into its ID parts."""
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 
@@ -672,3 +501,253 @@ class Data:
                     return [int(path_id_parts[i:i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
 
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")
+
+    @staticmethod
+    def _get_path_id(path: str, path_sep: str, data_obj: DataStructure, ignore_not_found: bool) -> Optional[str]:
+        """Internal method to process a single data-path and generate its path ID."""
+        keys = path.split(path_sep)
+        path_ids, max_id_length = [], 0
+
+        for key in keys:
+            if isinstance(data_obj, dict):
+                if key.isdigit():
+                    if ignore_not_found:
+                        return None
+                    raise TypeError(f"Key '{key}' is invalid for a dict type.")
+
+                try:
+                    idx = list(data_obj.keys()).index(key)
+                    data_obj = data_obj[key]
+                except (ValueError, KeyError):
+                    if ignore_not_found:
+                        return None
+                    raise KeyError(f"Key '{key}' not found in dict.")
+
+            elif isinstance(data_obj, IndexIterableTypes):
+                try:
+                    idx = int(key)
+                    data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
+                except ValueError:
+                    try:
+                        idx = list(data_obj).index(key)
+                        data_obj = list(data_obj)[idx]
+                    except ValueError:
+                        if ignore_not_found:
+                            return None
+                        raise ValueError(f"Value '{key}' not found in '{type(data_obj).__name__}'")
+
+            else:
+                break
+
+            path_ids.append(str(idx))
+            max_id_length = max(max_id_length, len(str(idx)))
+
+        if not path_ids: return None
+        return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
+
+    @classmethod
+    def _set_nested_val(cls, data: DataStructure, path: list[int], value: Any) -> DataStructure:
+        if len(path) == 1:
+            if isinstance(data, dict):
+                keys, data = list(data.keys()), dict(data)
+                data[keys[path[0]]] = value
+            elif isinstance(data, IndexIterableTypes):
+                was_t, data = type(data), list(data)
+                data[path[0]] = value
+                data = was_t(data)
+
+        else:
+            if isinstance(data, dict):
+                keys, data = list(data.keys()), dict(data)
+                data[keys[path[0]]] = cls._set_nested_val(data[keys[path[0]]], path[1:], value)
+            elif isinstance(data, IndexIterableTypes):
+                was_t, data = type(data), list(data)
+                data[path[0]] = cls._set_nested_val(data[path[0]], path[1:], value)
+                data = was_t(data)
+
+        return data
+
+
+class _DataRemoveCommentsHelper:
+    """Internal, callable helper class to remove all comments from nested data structures."""
+
+    def __init__(self, data: DataStructure, comment_start: str, comment_end: str, comment_sep: str):
+        self.data = data
+        self.comment_start = comment_start
+        self.comment_end = comment_end
+        self.comment_sep = comment_sep
+
+        self.pattern = _re.compile(Regex._clean( \
+            rf"""^(
+                (?:(?!{_re.escape(comment_start)}).)*
+            )
+            {_re.escape(comment_start)}
+            (?:(?:(?!{_re.escape(comment_end)}).)*)
+            (?:{_re.escape(comment_end)})?
+            (.*?)$"""
+        )) if len(comment_end) > 0 else None
+
+    def __call__(self) -> DataStructure:
+        return self._rem_nested_comments(self.data)
+
+    def _rem_nested_comments(self, item: Any) -> Any:
+        if isinstance(item, dict):
+            return {
+                k: v
+                for k, v in ((self._rem_nested_comments(key), self._rem_nested_comments(value)) for key, value in item.items())
+                if k is not None
+            }
+        if isinstance(item, IndexIterableTypes):
+            processed = (v for v in map(self._rem_nested_comments, item) if v is not None)
+            return type(item)(processed)
+        if isinstance(item, str):
+            return self._remove_str_comment(item)
+        return item
+
+    def _remove_str_comment(self, s: str) -> Optional[str]:
+        if self.pattern:
+            if (match := self.pattern.match(s)):
+                start, end = match.group(1).strip(), match.group(2).strip()
+                return f"{start}{self.comment_sep if start and end else ''}{end}" or None
+            return s.strip() or None
+        else:
+            return None if s.lstrip().startswith(self.comment_start) else s.strip() or None
+
+
+class _DataRenderHelper:
+    """Internal, callable helper class to format data structures as strings."""
+
+    def __init__(
+        self,
+        cls: type["Data"],
+        data: DataStructure,
+        indent: int,
+        compactness: Literal[0, 1, 2],
+        max_width: int,
+        sep: str,
+        as_json: bool,
+        syntax_highlighting: dict[str, str] | bool,
+    ):
+        self.cls = cls
+        self.data = data
+        self.indent = indent
+        self.compactness = compactness
+        self.max_width = max_width
+        self.as_json = as_json
+
+        self.syntax_hl: dict[str, tuple[str, str]] = _DEFAULT_SYNTAX_HL.copy()
+        self.do_syntax_hl = syntax_highlighting not in {None, False}
+
+        if self.do_syntax_hl:
+            if syntax_highlighting is True:
+                syntax_highlighting = {}
+            elif not isinstance(syntax_highlighting, dict):
+                raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(syntax_highlighting)}")
+
+            self.syntax_hl.update({
+                k: (f"[{v}]", "[_]") if k in self.syntax_hl and v not in {"", None} else ("", "")
+                for k, v in syntax_highlighting.items()
+            })
+
+            sep = f"{self.syntax_hl['punctuation'][0]}{sep}{self.syntax_hl['punctuation'][1]}"
+
+        self.sep = sep
+
+        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{c: c for c in "'\":)[]{}"}}
+        self.punct: dict[str, str] = {
+            k: ((f"{self.syntax_hl['punctuation'][0]}{v[0]}{self.syntax_hl['punctuation'][1]}" if self.do_syntax_hl else v[1])
+                if isinstance(v, (list, tuple)) else
+                (f"{self.syntax_hl['punctuation'][0]}{v}{self.syntax_hl['punctuation'][1]}" if self.do_syntax_hl else v))
+            for k, v in punct_map.items()
+        }
+
+    def __call__(self) -> str:
+        return _re.sub(
+            r"\s+(?=\n)", "",
+            self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0)
+        )
+
+    def format_value(self, value: Any, current_indent: Optional[int] = None) -> str:
+        if current_indent is not None and isinstance(value, dict):
+            return self.format_dict(value, current_indent + self.indent)
+        elif current_indent is not None and hasattr(value, "__dict__"):
+            return self.format_dict(value.__dict__, current_indent + self.indent)
+        elif current_indent is not None and isinstance(value, IndexIterableTypes):
+            return self.format_sequence(value, current_indent + self.indent)
+        elif current_indent is not None and isinstance(value, (bytes, bytearray)):
+            obj_dict = self.cls.serialize_bytes(value)
+            return (
+                self.format_dict(obj_dict, current_indent + self.indent) if self.as_json else (
+                    f"{self.syntax_hl['type'][0]}{(k := next(iter(obj_dict)))}{self.syntax_hl['type'][1]}"
+                    + self.format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + self.indent)
+                    if self.do_syntax_hl else (k := next(iter(obj_dict)))
+                    + self.format_sequence((obj_dict[k], obj_dict["encoding"]), current_indent + self.indent)
+                )
+            )
+        elif isinstance(value, bool):
+            val = str(value).lower() if self.as_json else str(value)
+            return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+        elif isinstance(value, (int, float)):
+            val = "null" if self.as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
+            return f"{self.syntax_hl['number'][0]}{val}{self.syntax_hl['number'][1]}" if self.do_syntax_hl else val
+        elif current_indent is not None and isinstance(value, complex):
+            return (
+                self.format_value(str(value).strip("()")) if self.as_json else (
+                    f"{self.syntax_hl['type'][0]}complex{self.syntax_hl['type'][1]}"
+                    + self.format_sequence((value.real, value.imag), current_indent + self.indent) if self.do_syntax_hl else
+                    f"complex{self.format_sequence((value.real, value.imag), current_indent + self.indent)}"
+                )
+            )
+        elif value is None:
+            val = "null" if self.as_json else "None"
+            return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+        else:
+            return ((
+                self.punct['"'] + self.syntax_hl["str"][0] + String.escape(str(value), '"') + self.syntax_hl["str"][1]
+                + self.punct['"'] if self.do_syntax_hl else self.punct['"'] + String.escape(str(value), '"') + self.punct['"']
+            ) if self.as_json else (
+                self.punct["'"] + self.syntax_hl["str"][0] + String.escape(str(value), "'") + self.syntax_hl["str"][1]
+                + self.punct["'"] if self.do_syntax_hl else self.punct["'"] + String.escape(str(value), "'") + self.punct["'"]
+            ))
+
+    def should_expand(self, seq: IndexIterable) -> bool:
+        if self.compactness == 0:
+            return True
+        if self.compactness == 2:
+            return False
+
+        complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
+        if self.as_json: complex_types += (bytes, bytearray)
+
+        complex_items = sum(1 for item in seq if isinstance(item, complex_types))
+
+        return complex_items > 1 \
+            or (complex_items == 1 and len(seq) > 1) \
+            or self.cls.chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
+
+    def format_dict(self, d: dict, current_indent: int) -> str:
+        if self.compactness == 2 or not d or not self.should_expand(list(d.values())):
+            return self.punct["{"] + self.sep.join(
+                f"{self.format_value(k)}{self.punct[':']} {self.format_value(v, current_indent)}" for k, v in d.items()
+            ) + self.punct["}"]
+
+        items = []
+        for k, val in d.items():
+            formatted_value = self.format_value(val, current_indent)
+            items.append(f"{' ' * (current_indent + self.indent)}{self.format_value(k)}{self.punct[':']} {formatted_value}")
+
+        return self.punct["{"] + "\n" + f"{self.sep}\n".join(items) + f"\n{' ' * current_indent}" + self.punct["}"]
+
+    def format_sequence(self, seq, current_indent: int) -> str:
+        if self.as_json:
+            seq = list(seq)
+
+        brackets = (self.punct["["], self.punct["]"]) if isinstance(seq, list) else (self.punct["("], self.punct[")"])
+
+        if self.compactness == 2 or not seq or not self.should_expand(seq):
+            return f"{brackets[0]}{self.sep.join(self.format_value(item, current_indent) for item in seq)}{brackets[1]}"
+
+        items = [self.format_value(item, current_indent) for item in seq]
+        formatted_items = f"{self.sep}\n".join(f'{" " * (current_indent + self.indent)}{item}' for item in items)
+
+        return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"

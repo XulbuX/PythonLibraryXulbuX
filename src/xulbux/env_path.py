@@ -28,7 +28,7 @@ class EnvPath:
         - `path` -⠀the path to check for
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        return _os.path.normpath(cls.__get(path, cwd, base_dir)) \
+        return _os.path.normpath(cls._get(path, cwd, base_dir)) \
             in {_os.path.normpath(p) for p in cls.paths(as_list=True)}
 
     @classmethod
@@ -38,8 +38,8 @@ class EnvPath:
         - `path` -⠀the path to add
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if not cls.has_path(path := cls.__get(path, cwd, base_dir)):
-            cls.__persistent(path)
+        if not cls.has_path(path := cls._get(path, cwd, base_dir)):
+            cls._persistent(path)
 
     @classmethod
     def remove_path(cls, path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> None:
@@ -48,11 +48,11 @@ class EnvPath:
         - `path` -⠀the path to remove
         - `cwd` -⠀if true, uses the current working directory as the path
         - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        if cls.has_path(path := cls.__get(path, cwd, base_dir)):
-            cls.__persistent(path, remove=True)
+        if cls.has_path(path := cls._get(path, cwd, base_dir)):
+            cls._persistent(path, remove=True)
 
     @staticmethod
-    def __get(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
+    def _get(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
         """Get and/or normalize the given path, CWD or base directory.\n
         ------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
@@ -69,7 +69,7 @@ class EnvPath:
         return _os.path.normpath(path)
 
     @classmethod
-    def __persistent(cls, path: str, remove: bool = False) -> None:
+    def _persistent(cls, path: str, remove: bool = False) -> None:
         """Add or remove a path from PATH persistently across sessions as well as the current session."""
         current_paths = list(cls.paths(as_list=True))
         path = _os.path.normpath(path)

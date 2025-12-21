@@ -28,7 +28,7 @@ except ImportError:
 
 
 @mypyc_attr(native_class=False)
-class __SystemMeta(type):
+class _SystemMeta(type):
 
     @property
     def is_elevated(cls) -> bool:
@@ -43,7 +43,7 @@ class __SystemMeta(type):
         return False
 
 
-class System(metaclass=__SystemMeta):
+class System(metaclass=_SystemMeta):
     """This class provides methods to interact with the underlying operating system."""
 
     @classmethod

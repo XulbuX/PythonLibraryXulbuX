@@ -23,7 +23,7 @@ except ImportError:
 
 
 @mypyc_attr(native_class=False)
-class __PathMeta(type):
+class _PathMeta(type):
 
     @property
     def cwd(cls) -> str:
@@ -46,44 +46,8 @@ class __PathMeta(type):
         return base_path
 
 
-class Path(metaclass=__PathMeta):
+class Path(metaclass=_PathMeta):
     """This class provides methods to work with file and directory paths."""
-
-    @staticmethod
-    def __get_closest_match(dir: str, part: str) -> Optional[str]:
-        """Get the closest matching file or folder name in the given directory for the given part."""
-        try:
-            matches = _difflib.get_close_matches(part, _os.listdir(dir), n=1, cutoff=0.6)
-            return matches[0] if matches else None
-        except Exception:
-            return None
-
-    @classmethod
-    def __find_path(cls, start: str, parts: list[str], use_closest_match: bool) -> Optional[str]:
-        """Find a path by traversing the given parts from the start directory,
-        optionally using closest matches for each part."""
-        current: str = start
-
-        for part in parts:
-            if _os.path.isfile(current):
-                return current
-            if (closest_match := cls.__get_closest_match(current, part) if use_closest_match else part) is None:
-                return None
-            current = _os.path.join(current, closest_match)
-
-        return current if _os.path.exists(current) and current != start else None
-
-    @staticmethod
-    def __expand_env_path(p: str) -> str:
-        """Expand environment variables in the given path string."""
-        if "%" not in p:
-            return p
-
-        for i in range(1, len(parts := p.split("%")), 2):
-            if parts[i].upper() in _os.environ:
-                parts[i] = _os.environ[parts[i].upper()]
-
-        return "".join(parts)
 
     @classmethod
     def extend(
@@ -125,7 +89,7 @@ class Path(metaclass=__PathMeta):
         elif _os.path.isabs(rel_path):
             return rel_path
 
-        rel_path = _os.path.normpath(cls.__expand_env_path(rel_path))
+        rel_path = _os.path.normpath(cls._expand_env_path(rel_path))
 
         if _os.path.isabs(rel_path):
             drive, rel_path = _os.path.splitdrive(rel_path)
@@ -139,7 +103,7 @@ class Path(metaclass=__PathMeta):
             if _os.path.exists(full_path := _os.path.join(search_dir, rel_path)):
                 return full_path
             if (match :=
-                    cls.__find_path(search_dir, rel_path.split(_os.sep), use_closest_match) if use_closest_match else None):
+                    cls._find_path(search_dir, rel_path.split(_os.sep), use_closest_match) if use_closest_match else None):
                 return match
 
         if raise_error:
@@ -212,3 +176,39 @@ class Path(metaclass=__PathMeta):
                         _shutil.rmtree(file_path)
                 except Exception as e:
                     raise Exception(f"Failed to delete {file_path}. Reason: {e}")
+
+    @staticmethod
+    def _expand_env_path(p: str) -> str:
+        """Expand environment variables in the given path string."""
+        if "%" not in p:
+            return p
+
+        for i in range(1, len(parts := p.split("%")), 2):
+            if parts[i].upper() in _os.environ:
+                parts[i] = _os.environ[parts[i].upper()]
+
+        return "".join(parts)
+
+    @classmethod
+    def _find_path(cls, start: str, parts: list[str], use_closest_match: bool) -> Optional[str]:
+        """Find a path by traversing the given parts from the start directory,
+        optionally using closest matches for each part."""
+        current: str = start
+
+        for part in parts:
+            if _os.path.isfile(current):
+                return current
+            if (closest_match := cls._get_closest_match(current, part) if use_closest_match else part) is None:
+                return None
+            current = _os.path.join(current, closest_match)
+
+        return current if _os.path.exists(current) and current != start else None
+
+    @staticmethod
+    def _get_closest_match(dir: str, part: str) -> Optional[str]:
+        """Get the closest matching file or folder name in the given directory for the given part."""
+        try:
+            matches = _difflib.get_close_matches(part, _os.listdir(dir), n=1, cutoff=0.6)
+            return matches[0] if matches else None
+        except Exception:
+            return None

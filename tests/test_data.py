@@ -206,8 +206,8 @@ def test_set_value_by_path_id():
         ({"data": b"hello"}, 4, 1, 80, ", ", False, "{'data': bytes('hello', 'utf-8')}"),
     ]
 )
-def test_to_str(data, indent, compactness, max_width, sep, as_json, expected_str):
-    result = Data.to_str(data, indent, compactness, max_width, sep, as_json, _syntax_highlighting=False)
+def test_render(data, indent, compactness, max_width, sep, as_json, expected_str):
+    result = Data.render(data, indent, compactness, max_width, sep, as_json, syntax_highlighting=False)
     normalized_result = "\n".join(line.rstrip() for line in result.splitlines())
     normalized_expected = "\n".join(line.rstrip() for line in expected_str.splitlines())
     assert normalized_result == normalized_expected

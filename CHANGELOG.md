@@ -24,6 +24,13 @@
 * The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
 * Unnest all the nested methods in the whole library for compatibility with `mypyc`.
 * Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
+* Changed the default syntax colors for `Data.to_str()` and therefore also `Data.print()` to console default colors.
+* Made internal, global constants, which's values never change, into `Final` constants for better type checking.
+* The names of all internal classes and methods are all noi longer prefixed with a double underscore (`__`), but a single underscore (`_`) instead.
+
+**BREAKING CHANGES:**
+* Renamed `Data.to_str()` to `Data.render()`, since that describes its functionality better (*especially with the syntax highlighting option*).
+* Removed the `_` prefix from the param `_syntax_highlighting` in `Data.render()`, since it's no longer just for internal use.
 
 
 <span id="v1-9-2" />
