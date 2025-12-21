@@ -461,8 +461,8 @@ class Data:
     @classmethod
     def _compare_nested(
         cls,
-        data1: DataStructure,
-        data2: DataStructure,
+        data1: Any,
+        data2: Any,
         ignore_paths: list[list[str]],
         current_path: list[str] = [],
     ) -> bool:
@@ -500,7 +500,7 @@ class Data:
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")
 
     @staticmethod
-    def _get_path_id(path: str, path_sep: str, data_obj: DataStructure, ignore_not_found: bool) -> Optional[str]:
+    def _get_path_id(path: str, path_sep: str, data_obj: Any, ignore_not_found: bool) -> Optional[str]:
         """Internal method to process a single data-path and generate its path ID."""
         keys = path.split(path_sep)
         path_ids, max_id_length = [], 0
@@ -543,7 +543,7 @@ class Data:
         return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
 
     @classmethod
-    def _set_nested_val(cls, data: DataStructure, id_path: list[int], value: Any) -> DataStructure:
+    def _set_nested_val(cls, data: Any, id_path: list[int], value: Any) -> Any:
         """Internal method to set a value in a nested data structure based on the provided ID path."""
         if len(id_path) == 1:
             if isinstance(data, dict):

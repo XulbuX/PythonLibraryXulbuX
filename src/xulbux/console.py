@@ -59,20 +59,25 @@ class ArgResult:
     """Represents the result of a parsed command-line argument, containing the following attributes:
     - `exists` -⠀if the argument was found or not
     - `value` -⠀the value given with the found argument as a string (only for regular flagged arguments)
-    - `values` -⠀the list of values for positional arguments (only for `"before"`/`"after"` arguments)\n
+    - `values` -⠀the list of values for positional arguments (only for `"before"`/`"after"` arguments)
+    - `is_positional` -⠀whether the argument is a positional argument or not\n
     --------------------------------------------------------------------------------------------------------
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, exists: bool, value: Optional[str] = None, values: Optional[list[str]] = None):
-        if value is not None and values is not None:
+    def __init__(self, exists: bool, value: Optional[str] = None, values: list[str] = [], is_positional: bool = False):
+        if value is not None and len(values) > 0:
             raise ValueError("The 'value' and 'values' parameters are mutually exclusive. Only one can be set.")
+        if is_positional and value is not None:
+            raise ValueError("Positional arguments cannot have a single 'value'. Use 'values' for positional arguments.")
 
         self.exists: bool = exists
         """Whether the argument was found or not."""
         self.value: Optional[str] = value
-        """The value given with the found argument as a string (only for regular flagged arguments)."""
-        self.values: list[str] = cast(list[str], values)
-        """The list of values for positional arguments (only for `"before"`/`"after"` arguments)."""
+        """The flagged argument value or `None` if no value was provided."""
+        self.values: list[str] = values
+        """The list of positional argument values."""
+        self.is_positional: bool = is_positional
+        """Whether the argument is a positional argument or not."""
 
     def __bool__(self) -> bool:
         return self.exists
@@ -90,10 +95,18 @@ class Args:
         for alias_name, data_dict in kwargs.items():
             if "values" in data_dict:
                 data_dict = cast(ArgResultPositional, data_dict)
-                setattr(self, alias_name, ArgResult(exists=data_dict["exists"], values=data_dict["values"]))
+                setattr(
+                    self,
+                    alias_name,
+                    ArgResult(exists=data_dict["exists"], values=data_dict["values"], is_positional=True),
+                )
             else:
                 data_dict = cast(ArgResultRegular, data_dict)
-                setattr(self, alias_name, ArgResult(exists=data_dict["exists"], value=data_dict["value"]))
+                setattr(
+                    self,
+                    alias_name,
+                    ArgResult(exists=data_dict["exists"], value=data_dict["value"], is_positional=False),
+                )
 
     def __len__(self):
         return len(vars(self))
@@ -111,7 +124,7 @@ class Args:
 
     def __iter__(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
         for key, val in vars(self).items():
-            if val.values is not None:
+            if val.is_positional:
                 yield (key, ArgResultPositional(exists=val.exists, values=val.values))
             else:
                 yield (key, ArgResultRegular(exists=val.exists, value=val.value))
@@ -120,22 +133,22 @@ class Args:
         """Returns the arguments as a dictionary."""
         result: dict[str, ArgResultRegular | ArgResultPositional] = {}
         for key, val in vars(self).items():
-            if val.values is not None:
-                result[key] = ArgResultPositional(exists=val.exists, values=val.values)
+            if val.is_positional:
+                result[key] = {"exists": val.exists, "values": val.values}
             else:
-                result[key] = ArgResultRegular(exists=val.exists, value=val.value)
+                result[key] = {"exists": val.exists, "value": val.value}
         return result
 
     def keys(self):
-        """Returns the argument aliases as `dict_keys([...])`."""
+        """Returns the argument aliases as `dict_keys([…])`."""
         return vars(self).keys()
 
     def values(self):
-        """Returns the argument results as `dict_values([...])`."""
+        """Returns the argument results as `dict_values([…])`."""
         return vars(self).values()
 
     def items(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
-        """Yields tuples of `(alias, _ArgResultRegular | _ArgResultPositional)`."""
+        """Yields tuples of `(alias, ArgResultRegular | ArgResultPositional)`."""
         for key, val in self.__iter__():
             yield (key, val)
 
@@ -199,19 +212,21 @@ class Console(metaclass=_ConsoleMeta):
         The `**find_args` keyword arguments can have the following structures for each alias:
         1. Simple set of flags (when no default value is needed):
            ```python
-           alias_name={"-f", "--flag"}
+            alias_name={"-f", "--flag"}
            ```
         2. Dictionary with `"flags"` and `"default"` value:
            ```python
-           alias_name={
-               "flags": {"-f", "--flag"},
-               "default": "some_value",
-           }
+            alias_name={
+                "flags": {"-f", "--flag"},
+                "default": "some_value",
+            }
            ```
         3. Positional argument collection using the literals `"before"` or `"after"`:
            ```python
-           alias_name="before"  # COLLECTS NON-FLAGGED ARGS BEFORE FIRST FLAG
-           alias_name="after"   # COLLECTS NON-FLAGGED ARGS AFTER LAST FLAG
+            # COLLECT ALL NON-FLAGGED ARGUMENTS THAT APPEAR BEFORE THE FIRST FLAG
+            alias_name="before"
+            # COLLECT ALL NON-FLAGGED ARGUMENTS THAT APPEAR AFTER THE LAST FLAG'S VALUE
+            alias_name="after"
            ```
         #### Example usage:
         ```python
@@ -243,13 +258,9 @@ class Console(metaclass=_ConsoleMeta):
         ```
         ---------------------------------------------------------------------------------------------------------
         If an arg, defined with flags in `find_args`, is NOT present in the command line:
-          * `exists` will be `False`
-          * `value` will be the specified `default` value, or `None` if no default was specified
-          * `values` will be `[]` for positional `"before"`/`"after"` arguments\n
-        ---------------------------------------------------------------------------------------------------------
-        For positional arguments:
-        - `"before"` collects all non-flagged arguments that appear before the first flag
-        - `"after"` collects all non-flagged arguments that appear after the last flag's value
+        - `exists` will be `False`
+        - `value` will be the specified `"default"` value, or `None` if no default was specified
+        - `values` will be an empty list `[]` for positional `"before"`/`"after"` arguments\n
         ---------------------------------------------------------------------------------------------------------
         Normally if `allow_spaces` is false, it will take a space as the end of an args value.
         If it is true, it will take spaces as part of the value up until the next arg-flag is found.

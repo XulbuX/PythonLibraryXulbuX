@@ -350,20 +350,24 @@ def test_get_args_flag_without_value(monkeypatch):
     args_result = Console.get_args(verbose={"--verbose"})
     assert args_result.verbose.exists is True
     assert args_result.verbose.value is None
+    assert args_result.verbose.is_positional is False
 
     # TEST FLAG WITHOUT VALUE FOLLOWED BY ANOTHER FLAG
     monkeypatch.setattr(sys, "argv", ["script.py", "--verbose", "--debug"])
     args_result = Console.get_args(verbose={"--verbose"}, debug={"--debug"})
     assert args_result.verbose.exists is True
     assert args_result.verbose.value is None
+    assert args_result.verbose.is_positional is False
     assert args_result.debug.exists is True
     assert args_result.debug.value is None
+    assert args_result.debug.is_positional is False
 
     # TEST FLAG WITH DEFAULT VALUE BUT NO PROVIDED VALUE
     monkeypatch.setattr(sys, "argv", ["script.py", "--mode"])
     args_result = Console.get_args(mode={"flags": {"--mode"}, "default": "production"})
     assert args_result.mode.exists is True
     assert args_result.mode.value is None
+    assert args_result.mode.is_positional is False
 
 
 def test_get_args_duplicate_flag():
@@ -381,8 +385,13 @@ def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
 
     assert result.verbose.exists is True
     assert result.verbose.value == "-42"
+    assert result.verbose.values == []
+    assert result.verbose.is_positional is False
+
     assert result.input.exists is True
     assert result.input.value == "-3.14"
+    assert result.input.values == []
+    assert result.input.is_positional is False
 
 
 def test_get_args_dash_strings_as_values(monkeypatch):
@@ -392,8 +401,13 @@ def test_get_args_dash_strings_as_values(monkeypatch):
 
     assert result.file.exists is True
     assert result.file.value == "--not-a-flag"
+    assert result.file.values == []
+    assert result.file.is_positional is False
+
     assert result.text.exists is True
     assert result.text.value == "-another-value"
+    assert result.text.values == []
+    assert result.text.is_positional is False
 
 
 def test_get_args_positional_with_dashes_before(monkeypatch):
@@ -402,9 +416,14 @@ def test_get_args_positional_with_dashes_before(monkeypatch):
     result = Console.get_args(before_args="before", verbose={"-v"})
 
     assert result.before_args.exists is True
+    assert result.before_args.value is None
     assert result.before_args.values == ["-123", "--some-file", "normal"]
+    assert result.before_args.is_positional is True
+
     assert result.verbose.exists is True
     assert result.verbose.value is None
+    assert result.verbose.values == []
+    assert result.verbose.is_positional is False
 
 
 def test_get_args_positional_with_dashes_after(monkeypatch):
@@ -414,8 +433,13 @@ def test_get_args_positional_with_dashes_after(monkeypatch):
 
     assert result.verbose.exists is True
     assert result.verbose.value == "value"
+    assert result.verbose.values == []
+    assert result.verbose.is_positional is False
+
     assert result.after_args.exists is True
+    assert result.after_args.value is None
     assert result.after_args.values == ["-123", "--output-file", "-negative"]
+    assert result.after_args.is_positional is True
 
 
 def test_get_args_multiword_with_dashes(monkeypatch):
@@ -425,8 +449,13 @@ def test_get_args_multiword_with_dashes(monkeypatch):
 
     assert result.message.exists is True
     assert result.message.value == "start -middle --end"
+    assert result.message.values == []
+    assert result.message.is_positional is False
+
     assert result.file.exists is True
     assert result.file.value == "other"
+    assert result.file.values == []
+    assert result.file.is_positional is False
 
 
 def test_get_args_mixed_dash_scenarios(monkeypatch):
@@ -446,19 +475,29 @@ def test_get_args_mixed_dash_scenarios(monkeypatch):
     )
 
     assert result.before.exists is True
+    assert result.before.value is None
     assert result.before.values == ["before1", "-not-flag", "before2"]
+    assert result.before.is_positional is True
 
     assert result.verbose.exists is True
     assert result.verbose.value == "--verbose-mode"
+    assert result.verbose.values == []
+    assert result.verbose.is_positional is False
 
     assert result.debug.exists is True
     assert result.debug.value == "-42"
+    assert result.debug.values == []
+    assert result.debug.is_positional is False
 
     assert result.file.exists is True
     assert result.file.value == "--my-file.txt"
+    assert result.file.values == []
+    assert result.file.is_positional is False
 
     assert result.after.exists is True
+    assert result.after.value is None
     assert result.after.values == ["after1", "-also-not-flag"]
+    assert result.after.is_positional is True
 
 
 def test_multiline_input(mock_prompt_toolkit, mock_formatcodes_print):
