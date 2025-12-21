@@ -247,8 +247,8 @@ class Data:
             ignore_paths = [ignore_paths]
 
         return cls._compare_nested(
-            d1=cls.remove_comments(data1, comment_start, comment_end),
-            d2=cls.remove_comments(data2, comment_start, comment_end),
+            data1=cls.remove_comments(data1, comment_start, comment_end),
+            data2=cls.remove_comments(data2, comment_start, comment_end),
             ignore_paths=[str(path).split(path_sep) for path in ignore_paths if path],
         )
 
@@ -339,14 +339,11 @@ class Data:
         { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
           ```
           The path IDs should have been created using `Data.get_path_id()`."""
-
-        valid_entries = [(path_id, new_val) for path_id, new_val in update_values.items()]
-        if not valid_entries:
+        if not (valid_update_values := [(path_id, new_val) for path_id, new_val in update_values.items()]):
             raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}")
 
-        for path_id, new_val in valid_entries:
-            path = cls._sep_path_id(path_id)
-            data = cls._set_nested_val(data, path, new_val)
+        for path_id, new_val in valid_update_values:
+            data = cls._set_nested_val(data, id_path=cls._sep_path_id(path_id), value=new_val)
 
         return data
 
@@ -464,33 +461,33 @@ class Data:
     @classmethod
     def _compare_nested(
         cls,
-        d1: DataStructure,
-        d2: DataStructure,
+        data1: DataStructure,
+        data2: DataStructure,
         ignore_paths: list[list[str]],
         current_path: list[str] = [],
     ) -> bool:
         if any(current_path == path[:len(current_path)] for path in ignore_paths):
             return True
-        if type(d1) is not type(d2):
+        if type(data1) is not type(data2):
             return False
-        if isinstance(d1, dict) and isinstance(d2, dict):
-            if set(d1.keys()) != set(d2.keys()):
+        if isinstance(data1, dict) and isinstance(data2, dict):
+            if set(data1.keys()) != set(data2.keys()):
                 return False
-            return all(cls._compare_nested(d1[key], d2[key], ignore_paths, current_path + [key]) for key in d1)
-        if isinstance(d1, (list, tuple)):
-            if len(d1) != len(d2):
+            return all(cls._compare_nested(data1[key], data2[key], ignore_paths, current_path + [key]) for key in data1)
+        if isinstance(data1, (list, tuple)):
+            if len(data1) != len(data2):
                 return False
             return all(
                 cls._compare_nested(item1, item2, ignore_paths, current_path + [str(i)])
-                for i, (item1, item2) in enumerate(zip(d1, d2))
+                for i, (item1, item2) in enumerate(zip(data1, data2))
             )
-        if isinstance(d1, (set, frozenset)):
-            return d1 == d2
-        return d1 == d2
+        if isinstance(data1, (set, frozenset)):
+            return data1 == data2
+        return data1 == data2
 
     @staticmethod
     def _sep_path_id(path_id: str) -> list[int]:
-        """Internal method to separate a path ID into its ID parts."""
+        """Internal method to separate a path-ID string into its ID parts as a list of integers."""
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 
@@ -546,23 +543,24 @@ class Data:
         return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
 
     @classmethod
-    def _set_nested_val(cls, data: DataStructure, path: list[int], value: Any) -> DataStructure:
-        if len(path) == 1:
+    def _set_nested_val(cls, data: DataStructure, id_path: list[int], value: Any) -> DataStructure:
+        """Internal method to set a value in a nested data structure based on the provided ID path."""
+        if len(id_path) == 1:
             if isinstance(data, dict):
                 keys, data = list(data.keys()), dict(data)
-                data[keys[path[0]]] = value
+                data[keys[id_path[0]]] = value
             elif isinstance(data, IndexIterableTypes):
                 was_t, data = type(data), list(data)
-                data[path[0]] = value
+                data[id_path[0]] = value
                 data = was_t(data)
 
         else:
             if isinstance(data, dict):
                 keys, data = list(data.keys()), dict(data)
-                data[keys[path[0]]] = cls._set_nested_val(data[keys[path[0]]], path[1:], value)
+                data[keys[id_path[0]]] = cls._set_nested_val(data[keys[id_path[0]]], id_path[1:], value)
             elif isinstance(data, IndexIterableTypes):
                 was_t, data = type(data), list(data)
-                data[path[0]] = cls._set_nested_val(data[path[0]], path[1:], value)
+                data[id_path[0]] = cls._set_nested_val(data[id_path[0]], id_path[1:], value)
                 data = was_t(data)
 
         return data
@@ -588,30 +586,31 @@ class _DataRemoveCommentsHelper:
         )) if len(comment_end) > 0 else None
 
     def __call__(self) -> DataStructure:
-        return self._rem_nested_comments(self.data)
+        return self.rem_nested_comments(self.data)
 
-    def _rem_nested_comments(self, item: Any) -> Any:
+    def rem_nested_comments(self, item: Any) -> Any:
         if isinstance(item, dict):
             return {
-                k: v
-                for k, v in ((self._rem_nested_comments(key), self._rem_nested_comments(value)) for key, value in item.items())
-                if k is not None
+                key: val
+                for key, val in ( \
+                    (self.rem_nested_comments(k), self.rem_nested_comments(v)) for k, v in item.items()
+                ) if key is not None
             }
-        if isinstance(item, IndexIterableTypes):
-            processed = (v for v in map(self._rem_nested_comments, item) if v is not None)
-            return type(item)(processed)
-        if isinstance(item, str):
-            return self._remove_str_comment(item)
-        return item
 
-    def _remove_str_comment(self, s: str) -> Optional[str]:
-        if self.pattern:
-            if (match := self.pattern.match(s)):
-                start, end = match.group(1).strip(), match.group(2).strip()
-                return f"{start}{self.comment_sep if start and end else ''}{end}" or None
-            return s.strip() or None
-        else:
-            return None if s.lstrip().startswith(self.comment_start) else s.strip() or None
+        if isinstance(item, IndexIterableTypes):
+            processed = (v for v in map(self.rem_nested_comments, item) if v is not None)
+            return type(item)(processed)
+
+        if isinstance(item, str):
+            if self.pattern:
+                if (match := self.pattern.match(item)):
+                    start, end = match.group(1).strip(), match.group(2).strip()
+                    return f"{start}{self.comment_sep if start and end else ''}{end}" or None
+                return item.strip() or None
+            else:
+                return None if item.lstrip().startswith(self.comment_start) else item.strip() or None
+
+        return item
 
 
 class _DataRenderHelper:

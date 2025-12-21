@@ -157,8 +157,8 @@ class Json:
 
     @staticmethod
     def _create_nested_path(data_obj: dict, path_keys: list[str], value: Any) -> dict:
-        """Creates nested dictionaries/lists based on the given path keys
-        and sets the specified value at the end of the path."""
+        """Internal method that creates nested dictionaries/lists based on the
+        given path keys and sets the specified value at the end of the path."""
         last_idx, current = len(path_keys) - 1, data_obj
 
         for i, key in enumerate(path_keys):

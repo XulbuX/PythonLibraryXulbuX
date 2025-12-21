@@ -53,9 +53,9 @@ class EnvPath:
 
     @staticmethod
     def _get(path: Optional[str] = None, cwd: bool = False, base_dir: bool = False) -> str:
-        """Get and/or normalize the given path, CWD or base directory.\n
-        ------------------------------------------------------------------------------------
-        Raise an error if no path is provided and neither `cwd` or `base_dir` is `True`."""
+        """Internal method to get the normalized `path`, CWD path or script directory path.\n
+        --------------------------------------------------------------------------------------
+        Raise an error if no path is provided and neither `cwd` or `base_dir` is true."""
         if cwd:
             if base_dir:
                 raise ValueError("Both 'cwd' and 'base_dir' cannot be True at the same time.")
@@ -70,7 +70,8 @@ class EnvPath:
 
     @classmethod
     def _persistent(cls, path: str, remove: bool = False) -> None:
-        """Add or remove a path from PATH persistently across sessions as well as the current session."""
+        """Internal method to add or remove a path from the PATH environment variable,
+        persistently, across sessions, as well as the current session."""
         current_paths = list(cls.paths(as_list=True))
         path = _os.path.normpath(path)
 

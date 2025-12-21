@@ -179,37 +179,39 @@ class Path(metaclass=_PathMeta):
                     raise Exception(f"Failed to delete {file_path}. Reason: {e}")
 
     @staticmethod
-    def _expand_env_path(p: str) -> str:
-        """Expand environment variables in the given path string."""
-        if "%" not in p:
-            return p
+    def _expand_env_path(path_str: str) -> str:
+        """Internal method that expands all environment variables in the given path string."""
+        if "%" not in path_str:
+            return path_str
 
-        for i in range(1, len(parts := p.split("%")), 2):
+        for i in range(1, len(parts := path_str.split("%")), 2):
             if parts[i].upper() in _os.environ:
                 parts[i] = _os.environ[parts[i].upper()]
 
         return "".join(parts)
 
     @classmethod
-    def _find_path(cls, start: str, parts: list[str], use_closest_match: bool) -> Optional[str]:
-        """Find a path by traversing the given parts from the start directory,
-        optionally using closest matches for each part."""
-        current: str = start
+    def _find_path(cls, start_dir: str, path_parts: list[str], use_closest_match: bool) -> Optional[str]:
+        """Internal method to find a path by traversing the given parts from
+        the start directory, optionally using closest matches for each part."""
+        current_dir: str = start_dir
 
-        for part in parts:
-            if _os.path.isfile(current):
-                return current
-            if (closest_match := cls._get_closest_match(current, part) if use_closest_match else part) is None:
+        for part in path_parts:
+            if _os.path.isfile(current_dir):
+                return current_dir
+            if (closest_match := cls._get_closest_match(current_dir, part) if use_closest_match else part) is None:
                 return None
-            current = _os.path.join(current, closest_match)
+            current_dir = _os.path.join(current_dir, closest_match)
 
-        return current if _os.path.exists(current) and current != start else None
+        return current_dir if _os.path.exists(current_dir) and current_dir != start_dir else None
 
     @staticmethod
-    def _get_closest_match(dir: str, part: str) -> Optional[str]:
-        """Get the closest matching file or folder name in the given directory for the given part."""
+    def _get_closest_match(dir: str, path_part: str) -> Optional[str]:
+        """Internal method to get the closest matching file or folder name
+        in the given directory for the given path part."""
         try:
-            matches = _difflib.get_close_matches(part, _os.listdir(dir), n=1, cutoff=0.6)
-            return matches[0] if matches else None
+            return matches[0] if (
+                matches := _difflib.get_close_matches(path_part, _os.listdir(dir), n=1, cutoff=0.6)
+            ) else None
         except Exception:
             return None
