@@ -8,17 +8,8 @@ from .file import File
 from .path import Path
 
 from typing import Literal, Any, cast
+from mypy_extensions import mypyc_attr
 import json as _json
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 @mypyc_attr(native_class=False)

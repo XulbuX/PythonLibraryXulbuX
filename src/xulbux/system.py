@@ -9,22 +9,13 @@ from .format_codes import FormatCodes
 from .console import Console
 
 from typing import Optional
+from mypy_extensions import mypyc_attr
 import subprocess as _subprocess
 import platform as _platform
 import ctypes as _ctypes
 import time as _time
 import sys as _sys
 import os as _os
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 @mypyc_attr(native_class=False)

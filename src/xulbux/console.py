@@ -16,6 +16,7 @@ from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
 from prompt_toolkit.keys import Keys
+from mypy_extensions import mypyc_attr
 from contextlib import contextmanager
 from io import StringIO
 import prompt_toolkit as _pt
@@ -27,16 +28,6 @@ import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 T = TypeVar("T")

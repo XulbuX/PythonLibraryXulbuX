@@ -2,7 +2,7 @@
 This module contains all custom type definitions used throughout the library.
 """
 
-from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any, overload
+from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any
 
 # PREVENT CIRCULAR IMPORTS
 if TYPE_CHECKING:

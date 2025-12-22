@@ -5,21 +5,12 @@ This module provides the `Path` class, which includes methods to work with file 
 from .base.exceptions import PathNotFoundError
 
 from typing import Optional
+from mypy_extensions import mypyc_attr
 import tempfile as _tempfile
 import difflib as _difflib
 import shutil as _shutil
 import sys as _sys
 import os as _os
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 @mypyc_attr(native_class=False)

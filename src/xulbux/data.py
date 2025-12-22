@@ -10,19 +10,10 @@ from .string import String
 from .regex import Regex
 
 from typing import Optional, Literal, Final, Any, cast
+from mypy_extensions import mypyc_attr
 import base64 as _base64
 import math as _math
 import re as _re
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {

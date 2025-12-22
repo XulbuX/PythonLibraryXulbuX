@@ -162,20 +162,11 @@ from .regex import LazyRegex, Regex
 from .color import Color, rgba, hexa
 
 from typing import Optional, Literal, Final, cast
+from mypy_extensions import mypyc_attr
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import os as _os
-
-try:
-    from mypy_extensions import mypyc_attr  # type: ignore[import]
-except ImportError:
-
-    def __mypyc_attr_decorator(cls):
-        return cls
-
-    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
-        return __mypyc_attr_decorator
 
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
