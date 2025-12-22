@@ -26,7 +26,7 @@ import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
-import io as _io
+import io
 
 try:
     from mypy_extensions import mypyc_attr  # type: ignore[import]
@@ -1844,7 +1844,7 @@ class Spinner:
 
 
 @mypyc_attr(native_class=False)
-class _InterceptedOutput(_io.StringIO):
+class _InterceptedOutput(io.StringIO):
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
     def __init__(self, progress_bar: ProgressBar | Spinner):
