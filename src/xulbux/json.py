@@ -8,12 +8,11 @@ from .file import File
 from .path import Path
 
 from typing import Literal, Any, cast
+from mypy_extensions import mypyc_attr
 import json as _json
 
-import mypy_extensions
 
-
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class Json:
     """This class provides methods to read, create and update JSON files,
     with support for comments inside the JSON data."""
@@ -153,7 +152,7 @@ class Json:
             except Exception:
                 data = cls._create_nested_path(data, val_path.split(path_sep), new_val)
 
-        if update and "update" in locals():
+        if update:
             data = Data.set_value_by_path_id(data, update)
 
         cls.create(json_file=json_file, data=dict(data), force=True)

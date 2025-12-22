@@ -16,6 +16,7 @@ from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
 from prompt_toolkit.keys import Keys
+from mypy_extensions import mypyc_attr
 from contextlib import contextmanager
 from io import StringIO
 import prompt_toolkit as _pt
@@ -27,8 +28,6 @@ import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
-
-import mypy_extensions
 
 
 T = TypeVar("T")
@@ -75,7 +74,7 @@ class ArgResult:
         return self.exists
 
 
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
     ----------------------------------------------------------------------------------------
@@ -146,7 +145,7 @@ class Args:
             yield (key, val)
 
 
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class _ConsoleMeta(type):
 
     @property
@@ -1285,7 +1284,7 @@ class _ConsoleInputValidator(Validator):
             raise ValidationError(message="", cursor_position=len(document.text))
 
 
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------
@@ -1624,7 +1623,7 @@ class _ProgressContextHelper:
         self.progress_bar.show_progress(current=self.current_progress, total=self.total, label=self.current_label)
 
 
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class Spinner:
     """A console spinner for indeterminate processes with customizable appearance.
     This class intercepts stdout to allow printing while the animation is active.\n
@@ -1837,7 +1836,7 @@ class Spinner:
             self._original_stdout.flush()
 
 
-@mypy_extensions.mypyc_attr(native_class=False)
+@mypyc_attr(native_class=False)
 class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 

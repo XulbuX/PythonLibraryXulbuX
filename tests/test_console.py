@@ -1070,41 +1070,57 @@ def test_progressbar_hide_progress():
     assert pb._original_stdout is None
 
 
-class MockProgressBar(ProgressBar):
-
-    def __init__(self):
-        super().__init__()
-        self.show_calls = 0
-        self.hide_calls = 0
-        self.cleanup_calls = 0
-
-    def show_progress(self, *args, **kwargs):
-        self.show_calls += 1
-
-    def hide_progress(self):
-        self.hide_calls += 1
-
-    def _emergency_cleanup(self):
-        self.cleanup_calls += 1
-
-
 def test_progressbar_progress_context():
-    pb = MockProgressBar()
+    pb = ProgressBar()
+    show_calls = []
+    hide_calls = []
+
+    original_show = pb.show_progress
+    original_hide = pb.hide_progress
+
+    def tracked_show(*args, **kwargs):
+        show_calls.append((args, kwargs))
+        return original_show(*args, **kwargs)
+
+    def tracked_hide():
+        hide_calls.append(True)
+        return original_hide()
+
+    pb.show_progress = tracked_show
+    pb.hide_progress = tracked_hide
+
     with pb.progress_context(100, "Testing") as update_progress:
         update_progress(25)
         update_progress(50)
-    assert pb.show_calls == 2
-    assert pb.hide_calls == 1
+    assert len(show_calls) == 2
+    assert len(hide_calls) == 1
 
 
 def test_progressbar_progress_context_exception():
-    pb = MockProgressBar()
+    pb = ProgressBar()
+    cleanup_calls = []
+    hide_calls = []
+
+    original_cleanup = pb._emergency_cleanup
+    original_hide = pb.hide_progress
+
+    def tracked_cleanup():
+        cleanup_calls.append(True)
+        return original_cleanup()
+
+    def tracked_hide():
+        hide_calls.append(True)
+        return original_hide()
+
+    pb._emergency_cleanup = tracked_cleanup
+    pb.hide_progress = tracked_hide
+
     with pytest.raises(ValueError):
         with pb.progress_context(100, "Testing") as update_progress:
             update_progress(25)
             raise ValueError("Test exception")
-    assert pb.cleanup_calls == 1
-    assert pb.hide_calls == 1
+    assert len(cleanup_calls) == 1
+    assert len(hide_calls) == 1
 
 
 def test_progressbar_create_bar():
@@ -1293,39 +1309,55 @@ def test_spinner_update_label():
     assert spinner.label == "New Label"
 
 
-class MockSpinner(Spinner):
-
-    def __init__(self):
-        super().__init__()
-        self.start_calls = []
-        self.stop_calls = 0
-        self.cleanup_calls = 0
-
-    def start(self, label=None):
-        self.start_calls.append(label)
-
-    def stop(self):
-        self.stop_calls += 1
-
-    def _emergency_cleanup(self):
-        self.cleanup_calls += 1
-
-
 def test_spinner_context_manager():
-    spinner = MockSpinner()
+    spinner = Spinner()
+    start_calls = []
+    stop_calls = []
+
+    original_start = spinner.start
+    original_stop = spinner.stop
+
+    def tracked_start(label=None):
+        start_calls.append(label)
+        return original_start(label)
+
+    def tracked_stop():
+        stop_calls.append(True)
+        return original_stop()
+
+    spinner.start = tracked_start
+    spinner.stop = tracked_stop
+
     with spinner.context("Test") as update:
-        assert spinner.start_calls == ["Test"]
+        assert start_calls == ["Test"]
         update("New Label")
         assert spinner.label == "New Label"
 
-    assert spinner.stop_calls == 1
+    assert len(stop_calls) == 1
 
 
 def test_spinner_context_manager_exception():
-    spinner = MockSpinner()
+    spinner = Spinner()
+    cleanup_calls = []
+    stop_calls = []
+
+    original_cleanup = spinner._emergency_cleanup
+    original_stop = spinner.stop
+
+    def tracked_cleanup():
+        cleanup_calls.append(True)
+        return original_cleanup()
+
+    def tracked_stop():
+        stop_calls.append(True)
+        return original_stop()
+
+    spinner._emergency_cleanup = tracked_cleanup
+    spinner.stop = tracked_stop
+
     with pytest.raises(ValueError):
         with spinner.context("Test"):
             raise ValueError("Oops")
 
-    assert spinner.cleanup_calls == 1
-    assert spinner.stop_calls == 1
+    assert len(cleanup_calls) == 1
+    assert len(stop_calls) == 1
