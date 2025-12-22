@@ -17,6 +17,7 @@ from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.styles import Style
 from prompt_toolkit.keys import Keys
 from contextlib import contextmanager
+from io import StringIO
 import prompt_toolkit as _pt
 import threading as _threading
 import keyboard as _keyboard
@@ -26,7 +27,6 @@ import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
-import io
 
 try:
     from mypy_extensions import mypyc_attr  # type: ignore[import]
@@ -1844,14 +1844,15 @@ class Spinner:
 
 
 @mypyc_attr(native_class=False)
-class _InterceptedOutput(io.StringIO):
+class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
     def __init__(self, progress_bar: ProgressBar | Spinner):
-        super().__init__()
+        self.string_io = StringIO()
         self.progress_bar = progress_bar
 
     def write(self, content: str) -> int:
+        self.string_io.write(content)
         try:
             if content and content != "\r":
                 self.progress_bar._buffer.append(content)
@@ -1861,6 +1862,7 @@ class _InterceptedOutput(io.StringIO):
             raise
 
     def flush(self) -> None:
+        self.string_io.flush()
         try:
             if self.progress_bar.active and self.progress_bar._buffer:
                 self.progress_bar._flush_buffer()
@@ -1868,3 +1870,6 @@ class _InterceptedOutput(io.StringIO):
         except Exception:
             self.progress_bar._emergency_cleanup()
             raise
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.string_io, name)
