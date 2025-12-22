@@ -50,7 +50,7 @@ def test_check_libs_decline_install(mock_confirm, mock_subprocess):
 @patch("xulbux.system._os.system")
 def test_restart_windows_simple(mock_os_system, mock_subprocess, mock_platform):
     """Test simple restart on Windows"""
-    mock_platform.return_value.lower.return_value = "windows"
+    mock_platform.return_value = "Windows"
     mock_subprocess.return_value = b"minimal\nprocess\nlist\n"
     System.restart()
     mock_os_system.assert_called_once_with("shutdown /r /t 0")
@@ -60,7 +60,7 @@ def test_restart_windows_simple(mock_os_system, mock_subprocess, mock_platform):
 @patch("xulbux.system._subprocess.check_output")
 def test_restart_too_many_processes(mock_subprocess, mock_platform):
     """Test restart fails when too many processes running"""
-    mock_platform.return_value.lower.return_value = "windows"
+    mock_platform.return_value = "Windows"
     mock_subprocess.return_value = b"many\nprocess\nlines\nhere\nmore\nprocesses\neven\nmore\n"
     with pytest.raises(RuntimeError, match="Processes are still running"):
         System.restart()
@@ -70,7 +70,7 @@ def test_restart_too_many_processes(mock_subprocess, mock_platform):
 @patch("xulbux.system._subprocess.check_output")
 def test_restart_unsupported_system(mock_subprocess, mock_platform):
     """Test restart on unsupported system"""
-    mock_platform.return_value.lower.return_value = "unknown"
+    mock_platform.return_value = "Unknown"
     mock_subprocess.return_value = b"some output"
     with pytest.raises(NotImplementedError, match="Restart not implemented for 'unknown' systems."):
         System.restart()

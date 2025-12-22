@@ -305,27 +305,28 @@ class Data:
         - `get_key` -⠀if true and the final item is in a dict, it returns the key instead of the value"""
         parent: Optional[DataStructure] = None
         path = cls._sep_path_id(path_id)
+        current_data: Any = data
 
         for i, path_idx in enumerate(path):
-            if isinstance(data, dict):
-                keys = list(data.keys())
+            if isinstance(current_data, dict):
+                keys = list(current_data.keys())
                 if i == len(path) - 1 and get_key:
                     return keys[path_idx]
-                parent = data
-                data = data[keys[path_idx]]
+                parent = current_data
+                current_data = current_data[keys[path_idx]]
 
-            elif isinstance(data, IndexIterableTypes):
+            elif isinstance(current_data, IndexIterableTypes):
                 if i == len(path) - 1 and get_key:
                     if parent is None or not isinstance(parent, dict):
                         raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i+1]}'")
-                    return next(key for key, value in parent.items() if value is data)
-                parent = data
-                data = list(data)[path_idx]  # CONVERT TO LIST FOR INDEXING
+                    return next(key for key, value in parent.items() if value is current_data)
+                parent = current_data
+                current_data = list(current_data)[path_idx]  # CONVERT TO LIST FOR INDEXING
 
             else:
-                raise TypeError(f"Unsupported type '{type(data)}' at path '{path[:i+1]}'")
+                raise TypeError(f"Unsupported type '{type(current_data)}' at path '{path[:i+1]}'")
 
-        return data
+        return current_data
 
     @classmethod
     def set_value_by_path_id(cls, data: DataStructure, update_values: dict[str, Any]) -> DataStructure:
@@ -468,21 +469,33 @@ class Data:
     ) -> bool:
         if any(current_path == path[:len(current_path)] for path in ignore_paths):
             return True
+
         if type(data1) is not type(data2):
             return False
+
         if isinstance(data1, dict) and isinstance(data2, dict):
             if set(data1.keys()) != set(data2.keys()):
                 return False
-            return all(cls._compare_nested(data1[key], data2[key], ignore_paths, current_path + [key]) for key in data1)
-        if isinstance(data1, (list, tuple)):
+            return all(cls._compare_nested( \
+                data1=data1[key],
+                data2=data2[key],
+                ignore_paths=ignore_paths,
+                current_path=current_path + [key],
+            ) for key in data1)
+
+        elif isinstance(data1, (list, tuple)):
             if len(data1) != len(data2):
                 return False
-            return all(
-                cls._compare_nested(item1, item2, ignore_paths, current_path + [str(i)])
-                for i, (item1, item2) in enumerate(zip(data1, data2))
-            )
-        if isinstance(data1, (set, frozenset)):
+            return all(cls._compare_nested( \
+                data1=item1,
+                data2=item2,
+                ignore_paths=ignore_paths,
+                current_path=current_path + [str(i)],
+            ) for i, (item1, item2) in enumerate(zip(data1, data2)))
+
+        elif isinstance(data1, (set, frozenset)):
             return data1 == data2
+
         return data1 == data2
 
     @staticmethod
@@ -500,38 +513,39 @@ class Data:
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")
 
     @staticmethod
-    def _get_path_id(path: str, path_sep: str, data_obj: Any, ignore_not_found: bool) -> Optional[str]:
+    def _get_path_id(path: str, path_sep: str, data_obj: DataStructure, ignore_not_found: bool) -> Optional[str]:
         """Internal method to process a single data-path and generate its path ID."""
         keys = path.split(path_sep)
         path_ids, max_id_length = [], 0
+        current_data: Any = data_obj
 
         for key in keys:
-            if isinstance(data_obj, dict):
+            if isinstance(current_data, dict):
                 if key.isdigit():
                     if ignore_not_found:
                         return None
                     raise TypeError(f"Key '{key}' is invalid for a dict type.")
 
                 try:
-                    idx = list(data_obj.keys()).index(key)
-                    data_obj = data_obj[key]
+                    idx = list(current_data.keys()).index(key)
+                    current_data = current_data[key]
                 except (ValueError, KeyError):
                     if ignore_not_found:
                         return None
                     raise KeyError(f"Key '{key}' not found in dict.")
 
-            elif isinstance(data_obj, IndexIterableTypes):
+            elif isinstance(current_data, IndexIterableTypes):
                 try:
                     idx = int(key)
-                    data_obj = list(data_obj)[idx]  # CONVERT TO LIST FOR INDEXING
+                    current_data = list(current_data)[idx]  # CONVERT TO LIST FOR INDEXING
                 except ValueError:
                     try:
-                        idx = list(data_obj).index(key)
-                        data_obj = list(data_obj)[idx]
+                        idx = list(current_data).index(key)
+                        current_data = list(current_data)[idx]
                     except ValueError:
                         if ignore_not_found:
                             return None
-                        raise ValueError(f"Value '{key}' not found in '{type(data_obj).__name__}'")
+                        raise ValueError(f"Value '{key}' not found in '{type(current_data).__name__}'")
 
             else:
                 break
@@ -544,27 +558,31 @@ class Data:
         return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
 
     @classmethod
-    def _set_nested_val(cls, data: Any, id_path: list[int], value: Any) -> Any:
+    def _set_nested_val(cls, data: DataStructure, id_path: list[int], value: Any) -> Any:
         """Internal method to set a value in a nested data structure based on the provided ID path."""
+        current_data: Any = data
+
         if len(id_path) == 1:
-            if isinstance(data, dict):
-                keys, data = list(data.keys()), dict(data)
-                data[keys[id_path[0]]] = value
-            elif isinstance(data, IndexIterableTypes):
-                was_t, data = type(data), list(data)
-                data[id_path[0]] = value
-                data = was_t(data)
+            if isinstance(current_data, dict):
+                keys, data_dict = list(current_data.keys()), dict(current_data)
+                data_dict[keys[id_path[0]]] = value
+                return data_dict
+            elif isinstance(current_data, IndexIterableTypes):
+                was_t, data_list = type(current_data), list(current_data)
+                data_list[id_path[0]] = value
+                return was_t(data_list)
 
         else:
-            if isinstance(data, dict):
-                keys, data = list(data.keys()), dict(data)
-                data[keys[id_path[0]]] = cls._set_nested_val(data[keys[id_path[0]]], id_path[1:], value)
-            elif isinstance(data, IndexIterableTypes):
-                was_t, data = type(data), list(data)
-                data[id_path[0]] = cls._set_nested_val(data[id_path[0]], id_path[1:], value)
-                data = was_t(data)
+            if isinstance(current_data, dict):
+                keys, data_dict = list(current_data.keys()), dict(current_data)
+                data_dict[keys[id_path[0]]] = cls._set_nested_val(data_dict[keys[id_path[0]]], id_path[1:], value)
+                return data_dict
+            elif isinstance(current_data, IndexIterableTypes):
+                was_t, data_list = type(current_data), list(current_data)
+                data_list[id_path[0]] = cls._set_nested_val(data_list[id_path[0]], id_path[1:], value)
+                return was_t(data_list)
 
-        return data
+        return current_data
 
 
 class _DataRemoveCommentsHelper:

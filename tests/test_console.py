@@ -21,6 +21,10 @@ def mock_terminal_size(monkeypatch):
 @pytest.fixture
 def mock_formatcodes_print(monkeypatch):
     mock = MagicMock()
+    # PATCH IN THE ORIGINAL MODULE WHERE IT IS DEFINED
+    import xulbux.format_codes
+    monkeypatch.setattr(xulbux.format_codes.FormatCodes, "print", mock)
+    # ALSO PATCH IN CONSOLE MODULE JUST IN CASE
     monkeypatch.setattr(console.FormatCodes, "print", mock)
     return mock
 
@@ -587,7 +591,7 @@ def test_cls(monkeypatch):
     monkeypatch.setattr(console._os, "system", mock_os_system)
     monkeypatch.setattr(builtins, "print", mock_print)
 
-    mock_shutil.side_effect = lambda cmd: cmd == "cls"
+    mock_shutil.side_effect = lambda cmd: "/bin/cls" if cmd == "cls" else None
     Console.cls()
     mock_os_system.assert_called_with("cls")
     mock_print.assert_called_with("\033[0m", end="", flush=True)
@@ -595,7 +599,7 @@ def test_cls(monkeypatch):
     mock_os_system.reset_mock()
     mock_print.reset_mock()
 
-    mock_shutil.side_effect = lambda cmd: cmd == "clear"
+    mock_shutil.side_effect = lambda cmd: "/bin/clear" if cmd == "clear" else None
     Console.cls()
     mock_os_system.assert_called_with("clear")
     mock_print.assert_called_with("\033[0m", end="", flush=True)
@@ -1044,10 +1048,15 @@ def test_progressbar_show_progress_invalid_total():
 @patch("sys.stdout", new_callable=io.StringIO)
 def test_progressbar_show_progress(mock_stdout):
     pb = ProgressBar()
-    with patch.object(pb, "_original_stdout", mock_stdout):
-        pb._original_stdout = mock_stdout
+    # MANUALLY SET AND RESTORE _original_stdout TO AVOID PATCHING ISSUES WITH COMPILED CLASSES
+    original = pb._original_stdout
+    pb._original_stdout = mock_stdout
+    try:
         pb.active = True
         pb._draw_progress_bar(50, 100, "Loading")
+    finally:
+        pb._original_stdout = original
+
     output = mock_stdout.getvalue()
     assert len(output) > 0
 
@@ -1061,26 +1070,41 @@ def test_progressbar_hide_progress():
     assert pb._original_stdout is None
 
 
+class MockProgressBar(ProgressBar):
+
+    def __init__(self):
+        super().__init__()
+        self.show_calls = 0
+        self.hide_calls = 0
+        self.cleanup_calls = 0
+
+    def show_progress(self, *args, **kwargs):
+        self.show_calls += 1
+
+    def hide_progress(self):
+        self.hide_calls += 1
+
+    def _emergency_cleanup(self):
+        self.cleanup_calls += 1
+
+
 def test_progressbar_progress_context():
-    pb = ProgressBar()
-    with patch.object(pb, "show_progress") as mock_show, patch.object(pb, "hide_progress") as mock_hide:
-        with pb.progress_context(100, "Testing") as update_progress:
-            update_progress(25)
-            update_progress(50)
-        assert mock_show.call_count == 2
-        mock_hide.assert_called_once()
+    pb = MockProgressBar()
+    with pb.progress_context(100, "Testing") as update_progress:
+        update_progress(25)
+        update_progress(50)
+    assert pb.show_calls == 2
+    assert pb.hide_calls == 1
 
 
 def test_progressbar_progress_context_exception():
-    pb = ProgressBar()
-    with (patch.object(pb, "show_progress") as _, patch.object(pb, "hide_progress") as
-          mock_hide, patch.object(pb, "_emergency_cleanup") as mock_cleanup):
-        with pytest.raises(ValueError):
-            with pb.progress_context(100, "Testing") as update_progress:
-                update_progress(25)
-                raise ValueError("Test exception")
-        mock_cleanup.assert_called_once()
-        mock_hide.assert_called_once()
+    pb = MockProgressBar()
+    with pytest.raises(ValueError):
+        with pb.progress_context(100, "Testing") as update_progress:
+            update_progress(25)
+            raise ValueError("Test exception")
+    assert pb.cleanup_calls == 1
+    assert pb.hide_calls == 1
 
 
 def test_progressbar_create_bar():
@@ -1148,6 +1172,7 @@ def test_progressbar_start_stop_intercepting():
 def test_progressbar_clear_progress_line():
     pb = ProgressBar()
     mock_stdout = MagicMock()
+    mock_stdout.write.return_value = 0
     pb._original_stdout = mock_stdout
     pb._last_line_len = 20
     pb._clear_progress_line()
@@ -1158,6 +1183,7 @@ def test_progressbar_clear_progress_line():
 def test_progressbar_redraw_progress_bar():
     pb = ProgressBar()
     mock_stdout = MagicMock()
+    mock_stdout.write.return_value = 0
     pb._original_stdout = mock_stdout
     pb._current_progress_str = "\x1b[2K\rLoading |████████████| 50%"
     pb._redraw_display()
@@ -1225,6 +1251,7 @@ def test_spinner_set_interval_invalid():
 @patch("xulbux.console._threading.Event")
 @patch("sys.stdout", new_callable=MagicMock)
 def test_spinner_start(mock_stdout, mock_event, mock_thread):
+    mock_thread.return_value.start.return_value = None
     spinner = Spinner()
     spinner.start("Test")
 
@@ -1245,8 +1272,10 @@ def test_spinner_stop(mock_event, mock_thread):
     # MANUALLY SET ACTIVE TO SIMULATE RUNNING
     spinner.active = True
     mock_stop_event = MagicMock()
+    mock_stop_event.set.return_value = None
     spinner._stop_event = mock_stop_event
     mock_animation_thread = MagicMock()
+    mock_animation_thread.join.return_value = None
     spinner._animation_thread = mock_animation_thread
 
     spinner.stop()
@@ -1262,28 +1291,39 @@ def test_spinner_update_label():
     assert spinner.label == "New Label"
 
 
+class MockSpinner(Spinner):
+
+    def __init__(self):
+        super().__init__()
+        self.start_calls = []
+        self.stop_calls = 0
+        self.cleanup_calls = 0
+
+    def start(self, label=None):
+        self.start_calls.append(label)
+
+    def stop(self):
+        self.stop_calls += 1
+
+    def _emergency_cleanup(self):
+        self.cleanup_calls += 1
+
+
 def test_spinner_context_manager():
-    spinner = Spinner()
-    with patch.object(spinner, "start") as mock_start, patch.object(spinner, "stop") as mock_stop:
+    spinner = MockSpinner()
+    with spinner.context("Test") as update:
+        assert spinner.start_calls == ["Test"]
+        update("New Label")
+        assert spinner.label == "New Label"
 
-        with spinner.context("Test") as update:
-            mock_start.assert_called_with("Test")
-            update("New Label")
-            assert spinner.label == "New Label"
-
-        mock_stop.assert_called_once()
+    assert spinner.stop_calls == 1
 
 
 def test_spinner_context_manager_exception():
-    spinner = Spinner()
-    with ( \
-        patch.object(spinner, "start"),
-        patch.object(spinner, "stop") as mock_stop,
-        patch.object(spinner, "_emergency_cleanup") as mock_cleanup
-    ):
-        with pytest.raises(ValueError):
-            with spinner.context("Test"):
-                raise ValueError("Oops")
+    spinner = MockSpinner()
+    with pytest.raises(ValueError):
+        with spinner.context("Test"):
+            raise ValueError("Oops")
 
-        mock_cleanup.assert_called_once()
-        mock_stop.assert_called_once()
+    assert spinner.cleanup_calls == 1
+    assert spinner.stop_calls == 1

@@ -1064,7 +1064,7 @@ class Console(metaclass=_ConsoleMeta):
         values: list[object] | tuple[object, ...],
         default_color: Optional[Rgba | Hexa] = None,
         has_rules: bool = False,
-    ) -> tuple[list[str], list[tuple[str, tuple[tuple[int, str], ...]]], int]:
+    ) -> tuple[list[str], list[str], int]:
         """Prepares the log box content and returns it along with the max line length."""
         if has_rules:
             lines = []
@@ -1099,9 +1099,9 @@ class Console(metaclass=_ConsoleMeta):
         else:
             lines = [line for val in values for line in str(val).splitlines()]
 
-        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
+        unfmt_lines = [cast(str, FormatCodes.remove(line, default_color)) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
-        return lines, cast(list[tuple[str, tuple[tuple[int, str], ...]]], unfmt_lines), max_line_len
+        return lines, unfmt_lines, max_line_len
 
     @staticmethod
     def _multiline_input_submit(event: KeyPressEvent) -> None:
@@ -1848,8 +1848,8 @@ class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
     def __init__(self, progress_bar: ProgressBar | Spinner):
-        self.string_io = StringIO()
         self.progress_bar = progress_bar
+        self.string_io = StringIO()
 
     def write(self, content: str) -> int:
         self.string_io.write(content)
