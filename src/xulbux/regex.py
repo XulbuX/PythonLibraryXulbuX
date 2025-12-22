@@ -226,7 +226,7 @@ class Regex:
         return "".join(l.strip() for l in pattern.splitlines()).strip()
 
 
-@mypyc_attr(allow_arbitrary_attrs=True)
+@mypyc_attr(native_class=False)
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
     --------------------------------------------------------------------------------
