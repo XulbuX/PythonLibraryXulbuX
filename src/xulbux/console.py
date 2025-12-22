@@ -83,6 +83,7 @@ class ArgResult:
         return self.exists
 
 
+@mypyc_attr(allow_arbitrary_attrs=True)
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
     ----------------------------------------------------------------------------------------

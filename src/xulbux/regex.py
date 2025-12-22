@@ -7,6 +7,16 @@ from typing import Optional
 import regex as _rx
 import re as _re
 
+try:
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
+except ImportError:
+
+    def __mypyc_attr_decorator(cls):
+        return cls
+
+    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
+        return __mypyc_attr_decorator
+
 
 class Regex:
     """This class provides methods to dynamically generate complex regex patterns for common use cases."""
@@ -216,6 +226,7 @@ class Regex:
         return "".join(l.strip() for l in pattern.splitlines()).strip()
 
 
+@mypyc_attr(allow_arbitrary_attrs=True)
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
     --------------------------------------------------------------------------------
