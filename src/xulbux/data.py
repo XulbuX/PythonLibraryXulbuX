@@ -14,6 +14,16 @@ import base64 as _base64
 import math as _math
 import re as _re
 
+try:
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
+except ImportError:
+
+    def __mypyc_attr_decorator(cls):
+        return cls
+
+    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
+        return __mypyc_attr_decorator
+
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
     "str": ("[br:blue]", "[_c]"),
@@ -25,6 +35,7 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
 """Default syntax highlighting styles for data structure rendering."""
 
 
+@mypyc_attr(native_class=False)
 class Data:
     """This class includes methods to work with nested data structures (dictionaries and lists)."""
 

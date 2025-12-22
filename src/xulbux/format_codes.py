@@ -167,6 +167,16 @@ import regex as _rx
 import sys as _sys
 import os as _os
 
+try:
+    from mypy_extensions import mypyc_attr  # type: ignore[import]
+except ImportError:
+
+    def __mypyc_attr_decorator(cls):
+        return cls
+
+    def mypyc_attr(*args, **kwargs):  # type: ignore[misc]
+        return __mypyc_attr_decorator
+
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
 """Whether the console was already configured to be able to interpret and render ANSI formatting."""
@@ -210,6 +220,7 @@ _PATTERNS = LazyRegex(
 )
 
 
+@mypyc_attr(native_class=False)
 class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
     which are then converted to ANSI codes for pretty console output."""

@@ -1173,6 +1173,7 @@ def test_progressbar_clear_progress_line():
     pb = ProgressBar()
     mock_stdout = MagicMock()
     mock_stdout.write.return_value = 0
+    mock_stdout.flush.return_value = None
     pb._original_stdout = mock_stdout
     pb._last_line_len = 20
     pb._clear_progress_line()
@@ -1184,6 +1185,7 @@ def test_progressbar_redraw_progress_bar():
     pb = ProgressBar()
     mock_stdout = MagicMock()
     mock_stdout.write.return_value = 0
+    mock_stdout.flush.return_value = None
     pb._original_stdout = mock_stdout
     pb._current_progress_str = "\x1b[2K\rLoading |████████████| 50%"
     pb._redraw_display()
