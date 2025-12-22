@@ -8,11 +8,12 @@ from .file import File
 from .path import Path
 
 from typing import Literal, Any, cast
-from mypy_extensions import mypyc_attr
 import json as _json
 
+import mypy_extensions
 
-@mypyc_attr(native_class=False)
+
+@mypy_extensions.mypyc_attr(native_class=False)
 class Json:
     """This class provides methods to read, create and update JSON files,
     with support for comments inside the JSON data."""

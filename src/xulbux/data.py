@@ -10,10 +10,11 @@ from .string import String
 from .regex import Regex
 
 from typing import Optional, Literal, Final, Any, cast
-from mypy_extensions import mypyc_attr
 import base64 as _base64
 import math as _math
 import re as _re
+
+import mypy_extensions
 
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
@@ -26,7 +27,7 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
 """Default syntax highlighting styles for data structure rendering."""
 
 
-@mypyc_attr(native_class=False)
+@mypy_extensions.mypyc_attr(native_class=False)
 class Data:
     """This class includes methods to work with nested data structures (dictionaries and lists)."""
 

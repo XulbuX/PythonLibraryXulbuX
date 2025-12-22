@@ -162,11 +162,12 @@ from .regex import LazyRegex, Regex
 from .color import Color, rgba, hexa
 
 from typing import Optional, Literal, Final, cast
-from mypy_extensions import mypyc_attr
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import os as _os
+
+import mypy_extensions
 
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
@@ -211,7 +212,7 @@ _PATTERNS = LazyRegex(
 )
 
 
-@mypyc_attr(native_class=False)
+@mypy_extensions.mypyc_attr(native_class=False)
 class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
     which are then converted to ANSI codes for pretty console output."""
