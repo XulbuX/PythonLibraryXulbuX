@@ -147,7 +147,7 @@ ensure_newline_before_comments = true
 max-complexity = 12
 max-line-length = 127
 select = ["E", "F", "W", "C90"]
-extend-ignore = ["E203", "E266", "W503"]
+extend-ignore = ["E203", "E266", "E502", "W503"]
 per-file-ignores = ["__init__.py:F403,F405"]
 
 [tool.setuptools]

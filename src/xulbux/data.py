@@ -16,11 +16,11 @@ import re as _re
 
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
-    "str": (f"[br:blue]", "[_c]"),
-    "number": (f"[br:magenta]", "[_c]"),
-    "literal": (f"[magenta]", "[_c]"),
-    "type": (f"[i|green]", "[_i|_c]"),
-    "punctuation": (f"[br:black]", "[_c]"),
+    "str": ("[br:blue]", "[_c]"),
+    "number": ("[br:magenta]", "[_c]"),
+    "literal": ("[magenta]", "[_c]"),
+    "type": ("[i|green]", "[_i|_c]"),
+    "punctuation": ("[br:black]", "[_c]"),
 }
 """Default syntax highlighting styles for data structure rendering."""
 
@@ -539,7 +539,8 @@ class Data:
             path_ids.append(str(idx))
             max_id_length = max(max_id_length, len(str(idx)))
 
-        if not path_ids: return None
+        if not path_ids:
+            return None
         return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
 
     @classmethod
@@ -716,7 +717,8 @@ class _DataRenderHelper:
             return False
 
         complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
-        if self.as_json: complex_types += (bytes, bytearray)
+        if self.as_json:
+            complex_types += (bytes, bytearray)
 
         complex_items = sum(1 for item in seq if isinstance(item, complex_types))
 

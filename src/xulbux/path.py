@@ -102,8 +102,10 @@ class Path(metaclass=_PathMeta):
         for search_dir in search_dirs:
             if _os.path.exists(full_path := _os.path.join(search_dir, rel_path)):
                 return full_path
-            if (match :=
-                    cls._find_path(search_dir, rel_path.split(_os.sep), use_closest_match) if use_closest_match else None):
+            if (match := (
+                cls._find_path(search_dir, rel_path.split(_os.sep), use_closest_match) \
+                if use_closest_match else None
+            )):
                 return match
 
         if raise_error:
