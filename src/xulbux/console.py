@@ -1843,6 +1843,7 @@ class Spinner:
             self._original_stdout.flush()
 
 
+@mypyc_attr(native_class=False)
 class _InterceptedOutput(_io.StringIO):
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
