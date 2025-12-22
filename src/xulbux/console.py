@@ -74,7 +74,6 @@ class ArgResult:
         return self.exists
 
 
-@mypyc_attr(native_class=False)
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
     ----------------------------------------------------------------------------------------
@@ -1284,7 +1283,6 @@ class _ConsoleInputValidator(Validator):
             raise ValidationError(message="", cursor_position=len(document.text))
 
 
-@mypyc_attr(native_class=False)
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------
@@ -1623,7 +1621,6 @@ class _ProgressContextHelper:
         self.progress_bar.show_progress(current=self.current_progress, total=self.total, label=self.current_label)
 
 
-@mypyc_attr(native_class=False)
 class Spinner:
     """A console spinner for indeterminate processes with customizable appearance.
     This class intercepts stdout to allow printing while the animation is active.\n
@@ -1836,7 +1833,6 @@ class Spinner:
             self._original_stdout.flush()
 
 
-@mypyc_attr(native_class=False)
 class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 

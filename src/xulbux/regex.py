@@ -4,7 +4,6 @@ to dynamically generate complex regex patterns for common use cases.
 """
 
 from typing import Optional
-from mypy_extensions import mypyc_attr
 import regex as _rx
 import re as _re
 
@@ -217,7 +216,6 @@ class Regex:
         return "".join(l.strip() for l in pattern.splitlines()).strip()
 
 
-@mypyc_attr(native_class=False)
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
     --------------------------------------------------------------------------------
