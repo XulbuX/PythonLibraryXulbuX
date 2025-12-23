@@ -4,6 +4,7 @@ to dynamically generate complex regex patterns for common use cases.
 """
 
 from typing import Optional
+from mypy_extensions import mypyc_attr
 import regex as _rx
 import re as _re
 
