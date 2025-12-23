@@ -3,7 +3,7 @@ from xulbux.console import ArgResult, Args
 from xulbux.console import Console
 from xulbux import console
 
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from collections import namedtuple
 import builtins
 import pytest
@@ -1111,8 +1111,13 @@ def test_progressbar_emergency_cleanup():
 
 def test_progressbar_get_formatted_info_and_bar_width(mock_terminal_size):
     pb = ProgressBar()
-    formatted, bar_width = pb._get_formatted_info_and_bar_width(["{l}", "|{b}|", "{c}/{t}", "({p}%)"], 50, 100, 50.0,
-                                                                "Loading")
+    formatted, bar_width = pb._get_formatted_info_and_bar_width(
+        ["{l}", "|{b}|", "{c}/{t}", "({p}%)"],
+        50,
+        100,
+        50.0,
+        "Loading",
+    )
     assert "Loading" in formatted
     assert "50" in formatted
     assert "100" in formatted

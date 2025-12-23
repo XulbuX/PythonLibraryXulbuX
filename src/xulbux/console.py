@@ -257,137 +257,7 @@ class Console(metaclass=_ConsoleMeta):
         Normally if `allow_spaces` is false, it will take a space as the end of an args value.
         If it is true, it will take spaces as part of the value up until the next arg-flag is found.
         (Multiple spaces will become one space in the value.)"""
-        results_positional: dict[str, ArgResultPositional] = {}
-        results_regular: dict[str, ArgResultRegular] = {}
-        positional_configs: dict[str, str] = {}
-        arg_lookup: dict[str, str] = {}
-        before_count, after_count = 0, 0
-        args_len = len(args := _sys.argv[1:])
-
-        # PARSE 'find_args' CONFIGURATION
-        for alias, config in find_args.items():
-            flags: Optional[set[str]] = None
-            default_value: Optional[str] = None
-
-            if isinstance(config, str):
-                # HANDLE POSITIONAL ARGUMENT COLLECTION
-                if config == "before":
-                    before_count += 1
-                    if before_count > 1:
-                        raise ValueError("Only one alias can have the value 'before' for positional argument collection.")
-                elif config == "after":
-                    after_count += 1
-                    if after_count > 1:
-                        raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
-                else:
-                    raise ValueError(
-                        f"Invalid positional argument type '{config}' for alias '{alias}'.\n"
-                        "Must be either 'before' or 'after'."
-                    )
-                positional_configs[alias] = config
-                results_positional[alias] = {"exists": False, "values": []}
-            elif isinstance(config, set):
-                flags = config
-                results_regular[alias] = {"exists": False, "value": default_value}
-            elif isinstance(config, dict):
-                flags, default_value = config.get("flags"), config.get("default")
-                results_regular[alias] = {"exists": False, "value": default_value}
-            else:
-                raise TypeError(
-                    f"Invalid configuration type for alias '{alias}'.\n"
-                    "Must be a set, dict, literal 'before' or literal 'after'."
-                )
-
-            # BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGUMENTS
-            if flags is not None:
-                for flag in flags:
-                    if flag in arg_lookup:
-                        raise ValueError(
-                            f"Duplicate flag '{flag}' found. It's assigned to both '{arg_lookup[flag]}' and '{alias}'."
-                        )
-                    arg_lookup[flag] = alias
-
-        # FIND POSITIONS OF FIRST AND LAST FLAGS FOR POSITIONAL ARGUMENT COLLECTION
-        first_flag_pos: Optional[int] = None
-        last_flag_with_value_pos: Optional[int] = None
-
-        for i, arg in enumerate(args):
-            if arg in arg_lookup:
-                if first_flag_pos is None:
-                    first_flag_pos = i
-                # CHECK IF THIS FLAG HAS A VALUE FOLLOWING IT
-                if i + 1 < args_len and args[i + 1] not in arg_lookup:
-                    if not allow_spaces:
-                        last_flag_with_value_pos = i + 1
-                    else:
-                        # FIND THE END OF THE MULTI-WORD VALUE
-                        j = i + 1
-                        while j < args_len and args[j] not in arg_lookup:
-                            j += 1
-                        last_flag_with_value_pos = j - 1
-
-        # COLLECT "before" POSITIONAL ARGUMENTS
-        for alias, pos_type in positional_configs.items():
-            if pos_type == "before":
-                before_args: list[str] = []
-                end_pos: int = first_flag_pos if first_flag_pos is not None else args_len
-                for i in range(end_pos):
-                    if args[i] not in arg_lookup:
-                        before_args.append(args[i])
-                if before_args:
-                    results_positional[alias]["values"] = before_args
-                    results_positional[alias]["exists"] = len(before_args) > 0
-
-        # PROCESS FLAGGED ARGUMENTS
-        i = 0
-        while i < args_len:
-            arg = args[i]
-            if (opt_alias := arg_lookup.get(arg)) is not None:
-                results_regular[opt_alias]["exists"] = True
-                value_found_after_flag: bool = False
-                if i + 1 < args_len and args[i + 1] not in arg_lookup:
-                    if not allow_spaces:
-                        results_regular[opt_alias]["value"] = args[i + 1]
-                        i += 1
-                        value_found_after_flag = True
-                    else:
-                        value_parts = []
-                        j = i + 1
-                        while j < args_len and args[j] not in arg_lookup:
-                            value_parts.append(args[j])
-                            j += 1
-                        if value_parts:
-                            results_regular[opt_alias]["value"] = " ".join(value_parts)
-                            i = j - 1
-                            value_found_after_flag = True
-                if not value_found_after_flag:
-                    results_regular[opt_alias]["value"] = None
-            i += 1
-
-        # COLLECT "after" POSITIONAL ARGUMENTS
-        for alias, pos_type in positional_configs.items():
-            if pos_type == "after":
-                after_args: list[str] = []
-                start_pos: int = (last_flag_with_value_pos + 1) if last_flag_with_value_pos is not None else 0
-                # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
-                if last_flag_with_value_pos is None and first_flag_pos is not None:
-                    # FIND THE LAST FLAG POSITION
-                    last_flag_pos = None
-                    for i, arg in enumerate(args):
-                        if arg in arg_lookup:
-                            last_flag_pos = i
-                    if last_flag_pos is not None:
-                        start_pos = last_flag_pos + 1
-
-                for i in range(start_pos, args_len):
-                    if args[i] not in arg_lookup:
-                        after_args.append(args[i])
-
-                if after_args:
-                    results_positional[alias]["values"] = after_args
-                    results_positional[alias]["exists"] = len(after_args) > 0
-
-        return Args(**results_positional, **results_regular)
+        return _ConsoleArgsParseHelper(allow_spaces=allow_spaces, find_args=find_args)()
 
     @classmethod
     def pause_exit(
@@ -1097,6 +967,174 @@ class Console(metaclass=_ConsoleMeta):
     @staticmethod
     def _multiline_input_submit(event: KeyPressEvent) -> None:
         event.app.exit(result=event.app.current_buffer.document.text)
+
+
+class _ConsoleArgsParseHelper:
+    """Internal, callable helper class to parse command-line arguments."""
+
+    def __init__(
+        self,
+        allow_spaces: bool,
+        find_args: dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]],
+    ):
+        self.allow_spaces = allow_spaces
+        self.find_args = find_args
+
+        self.results_positional: dict[str, ArgResultPositional] = {}
+        self.results_regular: dict[str, ArgResultRegular] = {}
+        self.positional_configs: dict[str, str] = {}
+        self.arg_lookup: dict[str, str] = {}
+
+        self.args = _sys.argv[1:]
+        self.args_len = len(self.args)
+        self.first_flag_pos: Optional[int] = None
+        self.last_flag_with_value_pos: Optional[int] = None
+
+    def __call__(self) -> Args:
+        self.parse_configuration()
+        self.find_flag_positions()
+        self.process_positional_args()
+        self.process_flagged_args()
+        return Args(**self.results_positional, **self.results_regular)
+
+    def parse_configuration(self) -> None:
+        """Parse the `find_args` configuration and build lookup structures."""
+        before_count, after_count = 0, 0
+
+        for alias, config in self.find_args.items():
+            flags: Optional[set[str]] = None
+            default_value: Optional[str] = None
+
+            if isinstance(config, str):
+                # HANDLE POSITIONAL ARGUMENT COLLECTION
+                if config == "before":
+                    before_count += 1
+                    if before_count > 1:
+                        raise ValueError("Only one alias can have the value 'before' for positional argument collection.")
+                elif config == "after":
+                    after_count += 1
+                    if after_count > 1:
+                        raise ValueError("Only one alias can have the value 'after' for positional argument collection.")
+                else:
+                    raise ValueError(
+                        f"Invalid positional argument type '{config}' for alias '{alias}'.\n"
+                        "Must be either 'before' or 'after'."
+                    )
+                self.positional_configs[alias] = config
+                self.results_positional[alias] = {"exists": False, "values": []}
+            elif isinstance(config, set):
+                flags = config
+                self.results_regular[alias] = {"exists": False, "value": default_value}
+            elif isinstance(config, dict):
+                flags, default_value = config.get("flags"), config.get("default")
+                self.results_regular[alias] = {"exists": False, "value": default_value}
+            else:
+                raise TypeError(
+                    f"Invalid configuration type for alias '{alias}'.\n"
+                    "Must be a set, dict, literal 'before' or literal 'after'."
+                )
+
+            # BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGUMENTS
+            if flags is not None:
+                for flag in flags:
+                    if flag in self.arg_lookup:
+                        raise ValueError(
+                            f"Duplicate flag '{flag}' found. It's assigned to both '{self.arg_lookup[flag]}' and '{alias}'."
+                        )
+                    self.arg_lookup[flag] = alias
+
+    def find_flag_positions(self) -> None:
+        """Find positions of first and last flags for positional argument collection."""
+        for i, arg in enumerate(self.args):
+            if arg in self.arg_lookup:
+                if self.first_flag_pos is None:
+                    self.first_flag_pos = i
+
+                # CHECK IF THIS FLAG HAS A VALUE FOLLOWING IT
+                if i + 1 < self.args_len and self.args[i + 1] not in self.arg_lookup:
+                    if not self.allow_spaces:
+                        self.last_flag_with_value_pos = i + 1
+
+                    else:
+                        # FIND THE END OF THE MULTI-WORD VALUE
+                        j = i + 1
+                        while j < self.args_len and self.args[j] not in self.arg_lookup:
+                            j += 1
+
+                        self.last_flag_with_value_pos = j - 1
+
+    def process_positional_args(self) -> None:
+        """Collect positional `"before"/"after"` arguments."""
+        for alias, pos_type in self.positional_configs.items():
+            if pos_type == "before":
+                before_args: list[str] = []
+                end_pos: int = self.first_flag_pos if self.first_flag_pos is not None else self.args_len
+
+                for i in range(end_pos):
+                    if self.args[i] not in self.arg_lookup:
+                        before_args.append(self.args[i])
+
+                if before_args:
+                    self.results_positional[alias]["values"] = before_args
+                    self.results_positional[alias]["exists"] = len(before_args) > 0
+
+            if pos_type == "after":
+                after_args: list[str] = []
+                start_pos: int = (self.last_flag_with_value_pos + 1) if self.last_flag_with_value_pos is not None else 0
+
+                # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
+                if self.last_flag_with_value_pos is None and self.first_flag_pos is not None:
+                    # FIND THE LAST FLAG POSITION
+                    last_flag_pos: Optional[int] = None
+                    for i, arg in enumerate(self.args):
+                        if arg in self.arg_lookup:
+                            last_flag_pos = i
+
+                    if last_flag_pos is not None:
+                        start_pos = last_flag_pos + 1
+
+                for i in range(start_pos, self.args_len):
+                    if self.args[i] not in self.arg_lookup:
+                        after_args.append(self.args[i])
+
+                if after_args:
+                    self.results_positional[alias]["values"] = after_args
+                    self.results_positional[alias]["exists"] = len(after_args) > 0
+
+    def process_flagged_args(self) -> None:
+        """Process normal flagged arguments."""
+        i = 0
+
+        while i < self.args_len:
+            arg = self.args[i]
+
+            if (opt_alias := self.arg_lookup.get(arg)) is not None:
+                self.results_regular[opt_alias]["exists"] = True
+                value_found_after_flag: bool = False
+
+                if i + 1 < self.args_len and self.args[i + 1] not in self.arg_lookup:
+                    if not self.allow_spaces:
+                        self.results_regular[opt_alias]["value"] = self.args[i + 1]
+                        i += 1
+                        value_found_after_flag = True
+
+                    else:
+                        value_parts = []
+
+                        j = i + 1
+                        while j < self.args_len and self.args[j] not in self.arg_lookup:
+                            value_parts.append(self.args[j])
+                            j += 1
+
+                        if value_parts:
+                            self.results_regular[opt_alias]["value"] = " ".join(value_parts)
+                            i = j - 1
+                            value_found_after_flag = True
+
+                if not value_found_after_flag:
+                    self.results_regular[opt_alias]["value"] = None
+
+            i += 1
 
 
 class _ConsoleLogBoxBgReplacer:
