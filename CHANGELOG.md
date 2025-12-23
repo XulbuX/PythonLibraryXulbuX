@@ -29,7 +29,9 @@
 * Adjusted the whole library's type hints to be way more strict and accurate, using `mypy` as static type checker.
 * Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
 * Unnest all the nested methods in the whole library for compatibility with `mypyc`.
-* The library is now compiled using `mypyc` when installing, which makes it run significantly faster.
+* The library is now compiled using `mypyc` when installing, which makes it run significantly faster. Benchmarking results:
+  - Simple methods like data and color operations had a speed improvement of around 50%.
+  - Complex methods like console logging had a speed improvement of up to 230%!
 
 **BREAKING CHANGES:**
 * Renamed `Data.to_str()` to `Data.render()`, since that describes its functionality better (*especially with the syntax highlighting option*).

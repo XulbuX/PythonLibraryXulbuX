@@ -19,7 +19,7 @@ maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
 license = "MIT"
-license-files = ["LICEN[CS]E.*"]
+license-files = ["LICENSE"]
 requires-python = ">=3.10.0"
 dependencies = [
   "keyboard>=0.13.5",
