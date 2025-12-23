@@ -21,6 +21,7 @@
 * Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
 * Changed the default syntax colors for `Data.to_str()` and therefore also `Data.print()` to console default colors.
 * Added a new attribute `is_positional` to `ArgResult`, which indicates whether the argument is a positional argument or not.
+* Added the option to add format specifiers to the `{current}`, `{total}` and `{percentage}` placeholders in the `bar_format` and `limited_bar_format` of `ProgressBar`.
 * Made internal, global constants, which's values never change, into `Final` constants for better type checking.
 * The names of all internal classes and methods are all noi longer prefixed with a double underscore (`__`), but a single underscore (`_`) instead.
 * Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.

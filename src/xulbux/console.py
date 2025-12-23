@@ -39,9 +39,9 @@ _PATTERNS = LazyRegex(
     hr_l_nl=r"(?i)(?<=\n){hr}(?!\n)",
     label=r"(?i){(?:label|l)}",
     bar=r"(?i){(?:bar|b)}",
-    current=r"(?i){(?:current|c)}",
-    total=r"(?i){(?:total|t)}",
-    percentage=r"(?i){(?:percentage|percent|p)}",
+    current=r"(?i){(?:current|c)(?::(.))?}",
+    total=r"(?i){(?:total|t)(?::(.))?}",
+    percentage=r"(?i){(?:percentage|percent|p)(?::\.([0-9])+f)?}",
     animation=r"(?i){(?:animation|a)}",
 )
 
@@ -1286,15 +1286,16 @@ class _ConsoleInputValidator(Validator):
 
 class ProgressBar:
     """A console progress bar with smooth transitions and customizable appearance.\n
-    -------------------------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------------------------
     - `min_width` -⠀the min width of the progress bar in chars
     - `max_width` -⠀the max width of the progress bar in chars
     - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
       * `{label}` `{l}`
       * `{bar}` `{b}`
-      * `{current}` `{c}`
-      * `{total}` `{t}`
-      * `{percentage}` `{percent}` `{p}`
+      * `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g. `{c:,}`)
+      * `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g. `{t:,}`)
+      * `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round
+        to specified number of decimal places, e.g. `{p:.1f}`)
     - `limited_bar_format` -⠀a simplified format string used when the console width is too small
       for the normal `bar_format`
     - `chars` -⠀a tuple of characters ordered from full to empty progress<br>
@@ -1309,8 +1310,8 @@ class ProgressBar:
         self,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: list[str] | tuple[str, ...] = ["{l}", "|{b}|", "[b]({c})/{t}", "[dim](([i]({p}%)))"],
-        limited_bar_format: list[str] | tuple[str, ...] = ["|{b}|"],
+        bar_format: list[str] | tuple[str, ...] = ["{l}", "▕{b}▏", "[b]({c:,})/{t:,}", "[dim](([i]({p}%)))"],
+        limited_bar_format: list[str] | tuple[str, ...] = ["▕{b}▏"],
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ):
@@ -1368,9 +1369,10 @@ class ProgressBar:
         - `bar_format` -⠀the format strings used to render the progress bar, containing placeholders:
           * `{label}` `{l}`
           * `{bar}` `{b}`
-          * `{current}` `{c}`
-          * `{total}` `{t}`
-          * `{percentage}` `{percent}` `{p}`
+          * `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g. `{c:,}`)
+          * `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g. `{t:,}`)
+          * `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round
+            to specified number of decimal places, e.g. `{p:.1f}`)
         - `limited_bar_format` -⠀a simplified format strings used when the console width is too small
         - `sep` -⠀the separator string used to join multiple format strings
         --------------------------------------------------------------------------------------------------
@@ -1511,9 +1513,9 @@ class ProgressBar:
 
         for s in bar_format:
             fmt_part = _PATTERNS.label.sub(label or "", s)
-            fmt_part = _PATTERNS.current.sub(str(current), fmt_part)
-            fmt_part = _PATTERNS.total.sub(str(total), fmt_part)
-            fmt_part = _PATTERNS.percentage.sub(f"{percentage:.1f}", fmt_part)
+            fmt_part = _PATTERNS.current.sub(_ProgressBarCurrentReplacer(current), fmt_part)
+            fmt_part = _PATTERNS.total.sub(_ProgressBarTotalReplacer(total), fmt_part)
+            fmt_part = _PATTERNS.percentage.sub(_ProgressBarPercentageReplacer(percentage), fmt_part)
             if fmt_part:
                 fmt_parts.append(fmt_part)
 
@@ -1620,6 +1622,40 @@ class _ProgressContextHelper:
             self.current_label = label
 
         self.progress_bar.show_progress(current=self.current_progress, total=self.total, label=self.current_label)
+
+
+class _ProgressBarCurrentReplacer:
+    """Internal, callable class to replace `{current}` placeholder with formatted number."""
+
+    def __init__(self, current: int) -> None:
+        self.current = current
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        if (sep := match.group(1)):
+            return f"{self.current:,}".replace(",", sep)
+        return str(self.current)
+
+
+class _ProgressBarTotalReplacer:
+    """Internal, callable class to replace `{total}` placeholder with formatted number."""
+
+    def __init__(self, total: int) -> None:
+        self.total = total
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        if (sep := match.group(1)):
+            return f"{self.total:,}".replace(",", sep)
+        return str(self.total)
+
+
+class _ProgressBarPercentageReplacer:
+    """Internal, callable class to replace `{percentage}` placeholder with formatted float."""
+
+    def __init__(self, percentage: float) -> None:
+        self.percentage = percentage
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        return f"{self.percentage:.{match.group(1) if match.group(1) else '1'}f}"
 
 
 class Spinner:
