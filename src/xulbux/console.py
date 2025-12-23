@@ -74,6 +74,7 @@ class ArgResult:
         return self.exists
 
 
+@mypyc_attr(native_class=False)
 class Args:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
     ----------------------------------------------------------------------------------------
@@ -1833,6 +1834,7 @@ class Spinner:
             self._original_stdout.flush()
 
 
+@mypyc_attr(native_class=False)
 class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
