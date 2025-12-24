@@ -170,8 +170,10 @@ class Args:
     def __repr__(self) -> str:
         if not self:
             return "Args()"
-        arg_results_reprs = (f"{key} = {'\n  '.join(repr(val).splitlines())}" for key, val in self.__iter__())
-        return f"Args(\n  {',\n  '.join(arg_results_reprs)}\n)"
+        return "Args(\n  " + ",\n  ".join(
+            f"{key} = " + "\n  ".join(repr(val).splitlines()) \
+            for key, val in self.__iter__()
+        ) + "\n)"
 
     def __str__(self) -> str:
         return self.__repr__()
