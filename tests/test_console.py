@@ -537,7 +537,7 @@ def test_get_args_mixed_dash_scenarios(monkeypatch):
     assert result.verbose.dict() == {"exists": True, "value": "VVV"}
 
     assert result.debug.exists is True
-    assert result.debug.value == None
+    assert result.debug.value is None
     assert result.debug.values == []
     assert result.debug.is_positional is False
     assert result.debug.dict() == {"exists": True, "value": None}
