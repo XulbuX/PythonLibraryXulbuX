@@ -1,6 +1,7 @@
 from xulbux.system import System
 
 from unittest.mock import patch
+import platform
 import pytest
 import os
 
@@ -8,18 +9,15 @@ import os
 ################################################## System TESTS ##################################################
 
 
-def test_system_class_exists():
-    """Test that System class exists and has expected methods"""
-    assert hasattr(System, "is_elevated")
-    assert hasattr(System, "restart")
-    assert hasattr(System, "check_libs")
-    assert hasattr(System, "elevate")
-
-
-def test_system_is_elevated_property():
-    """Test is_elevated property returns a boolean"""
+def test_system_is_elevated():
     result = System.is_elevated
     assert isinstance(result, bool)
+
+
+def test_system_is_win():
+    result = System.is_win
+    assert isinstance(result, bool)
+    assert result == (platform.system() == "Windows")
 
 
 def test_check_libs_existing_modules():

@@ -87,21 +87,21 @@ the formatting code:
   Examples:
   - `[bright:black]` `[BR:black]`
   - `[bright:red]` `[BR:red]`
-  - ...
+  - …
 - Background console colors:
   Use the prefix `background:` `BG:` to set the background to a standard console color. (Not all consoles support bright
   standard colors.)
   Examples:
   - `[background:black]` `[BG:black]`
   - `[background:red]` `[BG:red]`
-  - ...
+  - …
 - Bright background console colors:
   Combine the prefixes `background:` / `BG:` and `bright:` / `BR:` to set the background to a bright console color.
   (The order of the prefixes doesn't matter.)
   Examples:
   - `[background:bright:black]` `[BG:BR:black]`
   - `[background:bright:red]` `[BG:BR:red]`
-  - ...
+  - …
 - Text styles:
   Use the built-in text formatting to change the style of the text. There are long and short forms for each formatting code.
   (Not all consoles support all text styles.)
@@ -145,16 +145,16 @@ Unlike the standard console colors, the default color can be changed by using th
 - `[l]` will lighten the `default_color` text by `brightness_steps`%
 - `[ll]` will lighten the `default_color` text by `2 × brightness_steps`%
 - `[lll]` will lighten the `default_color` text by `3 × brightness_steps`%
-- ... etc. Same thing for darkening:
+- … etc. Same thing for darkening:
 - `[d]` will darken the `default_color` text by `brightness_steps`%
 - `[dd]` will darken the `default_color` text by `2 × brightness_steps`%
 - `[ddd]` will darken the `default_color` text by `3 × brightness_steps`%
-- ... etc.
+- … etc.
 Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from .base.types import Rgba, Hexa
+from .base.types import FormattableString, Rgba, Hexa
 from .base.consts import ANSI
 
 from .string import String
@@ -171,8 +171,8 @@ import os as _os
 _CONSOLE_ANSI_CONFIGURED: bool = False
 """Whether the console was already configured to be able to interpret and render ANSI formatting."""
 
-_ANSI_SEQ_1: Final[str] = ANSI.seq(1)
-"""A formattable ANSI sequence with a single placeholder."""
+_ANSI_SEQ_1: Final[FormattableString] = ANSI.seq(1)
+"""ANSI escape sequence with a single placeholder."""
 _DEFAULT_COLOR_MODS: Final[dict[str, str]] = {
     "lighten": "+l",
     "darken": "-d",
@@ -338,7 +338,7 @@ class FormatCodes:
         """Escapes all ANSI codes in the string, so they are visible when output to the console.\n
         -------------------------------------------------------------------------------------------
         - `ansi_string` -⠀the string that contains the ANSI codes to escape"""
-        return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
+        return ansi_string.replace(ANSI.CHAR, ANSI.CHAR_ESCAPED)
 
     @classmethod
     def remove(

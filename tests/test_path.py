@@ -48,9 +48,24 @@ def setup_test_environment(tmp_path, monkeypatch):
 ################################################## Path TESTS ##################################################
 
 
-def test_path_properties(setup_test_environment):
-    assert Path.cwd == str(setup_test_environment["cwd"])
-    assert Path.script_dir == str(setup_test_environment["script_dir"])
+def test_path_cwd(setup_test_environment):
+    cwd_output = Path.cwd
+    assert isinstance(cwd_output, str)
+    assert cwd_output == str(setup_test_environment["cwd"])
+
+
+def test_path_script_dir(setup_test_environment):
+    script_dir_output = Path.script_dir
+    assert isinstance(script_dir_output, str)
+    assert script_dir_output == str(setup_test_environment["script_dir"])
+
+
+def test_path_home():
+    home = Path.home
+    assert isinstance(home, str)
+    assert len(home) > 0
+    assert os.path.exists(home)
+    assert os.path.isdir(home)
 
 
 def test_extend(setup_test_environment):

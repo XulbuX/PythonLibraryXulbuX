@@ -34,8 +34,8 @@ class Regex:
     ) -> str:
         """Matches everything inside pairs of brackets, including other nested brackets.\n
         ---------------------------------------------------------------------------------------
-        - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[` ...)
-        - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]` ...)
+        - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[`, …)
+        - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]`, …)
         - `is_group` -⠀whether to create a capturing group for the content inside the brackets
         - `strip_spaces` -⠀whether to strip spaces from the bracket content or not
         - `ignore_in_strings` -⠀whether to ignore closing brackets that are inside
@@ -75,7 +75,7 @@ class Regex:
 
     @classmethod
     def outside_strings(cls, pattern: str = r".*") -> str:
-        """Matches the `pattern` only when it is not found inside a string (`'...'` or `"..."`)."""
+        """Matches the `pattern` only when it is not found inside a string (`'…'` or `"…"`)."""
         return rf"""(?<!["'])(?:{pattern})(?!["'])"""
 
     @classmethod
@@ -115,7 +115,7 @@ class Regex:
     def rgba_str(cls, fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
         """Matches an RGBA color inside a string.\n
         ----------------------------------------------------------------------------------
-        - `fix_sep` -⠀the fixed separator between the RGBA values (e.g. `,`, `;` ...)<br>
+        - `fix_sep` -⠀the fixed separator between the RGBA values (e.g. `,`, `;` …)<br>
           If set to nothing or `None`, any char that is not a letter or number
           can be used to separate the RGBA values, including just a space.
         - `allow_alpha` -⠀whether to include the alpha channel in the match\n
@@ -157,7 +157,7 @@ class Regex:
     def hsla_str(cls, fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
         """Matches a HSLA color inside a string.\n
         ----------------------------------------------------------------------------------
-        - `fix_sep` -⠀the fixed separator between the HSLA values (e.g. `,`, `;` ...)<br>
+        - `fix_sep` -⠀the fixed separator between the HSLA values (e.g. `,`, `;` …)<br>
           If set to nothing or `None`, any char that is not a letter or number
           can be used to separate the HSLA values, including just a space.
         - `allow_alpha` -⠀whether to include the alpha channel in the match\n

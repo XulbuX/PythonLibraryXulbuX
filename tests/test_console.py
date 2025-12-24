@@ -1,3 +1,4 @@
+from xulbux.base.types import ArgResultPositional, ArgResultRegular
 from xulbux.console import Spinner, ProgressBar
 from xulbux.console import ArgResult, Args
 from xulbux.console import Console
@@ -70,6 +71,16 @@ def test_console_size(mock_terminal_size):
     assert len(size_output) == 2
     assert size_output[0] == 80
     assert size_output[1] == 24
+
+
+def test_console_is_tty():
+    result = Console.is_tty
+    assert isinstance(result, bool)
+
+
+def test_console_supports_color():
+    result = Console.supports_color
+    assert isinstance(result, bool)
 
 
 @pytest.mark.parametrize(
@@ -391,11 +402,18 @@ def test_get_args_dash_values_not_treated_as_flags(monkeypatch):
     assert result.verbose.value == "-42"
     assert result.verbose.values == []
     assert result.verbose.is_positional is False
+    assert result.verbose.dict() == {"exists": True, "value": "-42"}
 
     assert result.input.exists is True
     assert result.input.value == "-3.14"
     assert result.input.values == []
     assert result.input.is_positional is False
+    assert result.input.dict() == {"exists": True, "value": "-3.14"}
+
+    assert result.dict() == {
+        "verbose": result.verbose.dict(),
+        "input": result.input.dict(),
+    }
 
 
 def test_get_args_dash_strings_as_values(monkeypatch):
@@ -407,11 +425,18 @@ def test_get_args_dash_strings_as_values(monkeypatch):
     assert result.file.value == "--not-a-flag"
     assert result.file.values == []
     assert result.file.is_positional is False
+    assert result.file.dict() == {"exists": True, "value": "--not-a-flag"}
 
     assert result.text.exists is True
     assert result.text.value == "-another-value"
     assert result.text.values == []
     assert result.text.is_positional is False
+    assert result.text.dict() == {"exists": True, "value": "-another-value"}
+
+    assert result.dict() == {
+        "file": result.file.dict(),
+        "text": result.text.dict(),
+    }
 
 
 def test_get_args_positional_with_dashes_before(monkeypatch):
@@ -423,11 +448,18 @@ def test_get_args_positional_with_dashes_before(monkeypatch):
     assert result.before_args.value is None
     assert result.before_args.values == ["-123", "--some-file", "normal"]
     assert result.before_args.is_positional is True
+    assert result.before_args.dict() == {"exists": True, "values": ["-123", "--some-file", "normal"]}
 
     assert result.verbose.exists is True
     assert result.verbose.value is None
     assert result.verbose.values == []
     assert result.verbose.is_positional is False
+    assert result.verbose.dict() == {"exists": True, "value": None}
+
+    assert result.dict() == {
+        "before_args": result.before_args.dict(),
+        "verbose": result.verbose.dict(),
+    }
 
 
 def test_get_args_positional_with_dashes_after(monkeypatch):
@@ -439,11 +471,18 @@ def test_get_args_positional_with_dashes_after(monkeypatch):
     assert result.verbose.value == "value"
     assert result.verbose.values == []
     assert result.verbose.is_positional is False
+    assert result.verbose.dict() == {"exists": True, "value": "value"}
 
     assert result.after_args.exists is True
     assert result.after_args.value is None
     assert result.after_args.values == ["-123", "--output-file", "-negative"]
     assert result.after_args.is_positional is True
+    assert result.after_args.dict() == {"exists": True, "values": ["-123", "--output-file", "-negative"]}
+
+    assert result.dict() == {
+        "verbose": result.verbose.dict(),
+        "after_args": result.after_args.dict(),
+    }
 
 
 def test_get_args_multiword_with_dashes(monkeypatch):
@@ -455,19 +494,26 @@ def test_get_args_multiword_with_dashes(monkeypatch):
     assert result.message.value == "start -middle --end"
     assert result.message.values == []
     assert result.message.is_positional is False
+    assert result.message.dict() == {"exists": True, "value": "start -middle --end"}
 
     assert result.file.exists is True
     assert result.file.value == "other"
     assert result.file.values == []
     assert result.file.is_positional is False
+    assert result.file.dict() == {"exists": True, "value": "other"}
+
+    assert result.dict() == {
+        "message": result.message.dict(),
+        "file": result.file.dict(),
+    }
 
 
 def test_get_args_mixed_dash_scenarios(monkeypatch):
     """Test complex scenario mixing defined flags with dash-prefixed values"""
     monkeypatch.setattr(
         sys, "argv", [
-            "script.py", "before1", "-not-flag", "before2", "-v", "--verbose-mode", "-d", "-42", "--file", "--my-file.txt",
-            "after1", "-also-not-flag"
+            "script.py", "before1", "-not-flag", "before2", "-v", "VVV", "-d", "--file", "my-file.txt", "after1",
+            "-also-not-flag"
         ]
     )
     result = Console.get_args(
@@ -482,26 +528,59 @@ def test_get_args_mixed_dash_scenarios(monkeypatch):
     assert result.before.value is None
     assert result.before.values == ["before1", "-not-flag", "before2"]
     assert result.before.is_positional is True
+    assert result.before.dict() == {"exists": True, "values": ["before1", "-not-flag", "before2"]}
 
     assert result.verbose.exists is True
-    assert result.verbose.value == "--verbose-mode"
+    assert result.verbose.value == "VVV"
     assert result.verbose.values == []
     assert result.verbose.is_positional is False
+    assert result.verbose.dict() == {"exists": True, "value": "VVV"}
 
     assert result.debug.exists is True
-    assert result.debug.value == "-42"
+    assert result.debug.value == None
     assert result.debug.values == []
     assert result.debug.is_positional is False
+    assert result.debug.dict() == {"exists": True, "value": None}
 
     assert result.file.exists is True
-    assert result.file.value == "--my-file.txt"
+    assert result.file.value == "my-file.txt"
     assert result.file.values == []
     assert result.file.is_positional is False
+    assert result.file.dict() == {"exists": True, "value": "my-file.txt"}
 
     assert result.after.exists is True
     assert result.after.value is None
     assert result.after.values == ["after1", "-also-not-flag"]
     assert result.after.is_positional is True
+    assert result.after.dict() == {"exists": True, "values": ["after1", "-also-not-flag"]}
+
+    assert result.dict() == {
+        "before": result.before.dict(),
+        "verbose": result.verbose.dict(),
+        "debug": result.debug.dict(),
+        "file": result.file.dict(),
+        "after": result.after.dict(),
+    }
+
+
+def test_args_dunder_methods():
+    args = Args(
+        before=ArgResultPositional(exists=True, values=["arg1", "arg2"]),
+        debug=ArgResultRegular(exists=True, value=None),
+        file=ArgResultRegular(exists=True, value="test.txt"),
+        after=ArgResultPositional(exists=False, values=["arg3", "arg4"]),
+    )
+
+    assert len(args) == 4
+
+    assert ("before" in args) is True
+    assert ("missing" in args) is False
+
+    assert bool(args) is True
+    assert bool(Args()) is False
+
+    assert (args == args) is True
+    assert (args != Args()) is True
 
 
 def test_multiline_input(mock_prompt_toolkit, capsys):

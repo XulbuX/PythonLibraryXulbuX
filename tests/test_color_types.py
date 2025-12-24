@@ -78,9 +78,10 @@ def test_rgba_dunder_methods():
     assert color[3] == 0.5
     assert rgba(100, 150, 200) == rgba(100, 150, 200)
     assert rgba(100, 150, 200) != rgba(200, 100, 150)
-    assert str(rgba(100, 150, 200)) == "(100, 150, 200)"
-    assert str(rgba(100, 150, 200, 0.5)) == "(100, 150, 200, 0.5)"
-    assert repr(rgba(100, 150, 200)).startswith("rgba(")
+    assert str(rgba(100, 150, 200)) == "rgba(100, 150, 200)"
+    assert str(rgba(100, 150, 200, 0.5)) == "rgba(100, 150, 200, 0.5)"
+    assert repr(rgba(100, 150, 200)) == "rgba(100, 150, 200)"
+    assert repr(rgba(100, 150, 200, 0.5)) == "rgba(100, 150, 200, 0.5)"
 
 
 ################################################## hsla TESTS ##################################################
@@ -139,9 +140,10 @@ def test_hsla_dunder_methods():
     assert color[3] == 0.5
     assert hsla(210, 50, 60) == hsla(210, 50, 60)
     assert hsla(210, 50, 60) != hsla(210, 60, 50)
-    assert str(hsla(210, 50, 60)) == "(210°, 50%, 60%)"
-    assert str(hsla(210, 50, 60, 0.5)) == "(210°, 50%, 60%, 0.5)"
-    assert repr(hsla(210, 50, 60)).startswith("hsla(")
+    assert str(hsla(210, 50, 60)) == "hsla(210°, 50%, 60%)"
+    assert str(hsla(210, 50, 60, 0.5)) == "hsla(210°, 50%, 60%, 0.5)"
+    assert repr(hsla(210, 50, 60)) == "hsla(210°, 50%, 60%)"
+    assert repr(hsla(210, 50, 60, 0.5)) == "hsla(210°, 50%, 60%, 0.5)"
 
 
 ################################################## hexa TESTS ##################################################
@@ -204,4 +206,5 @@ def test_hexa_dunder_methods():
     assert hexa("#F00") != hexa("#0F0")
     assert str(hexa("#F00")) == "#FF0000"
     assert str(hexa("#F008")) == "#FF000088"
-    assert repr(hexa("#F00")).startswith("hexa(")
+    assert repr(hexa("#F00")) == "hexa(#FF0000)"
+    assert repr(hexa("#F008")) == "hexa(#FF000088)"

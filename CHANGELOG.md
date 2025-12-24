@@ -18,13 +18,22 @@
 <span id="v1-9-3" />
 
 ## ... `v1.9.3` Big Update 🚀
+
 * Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
-* Changed the default syntax colors for `Data.to_str()` and therefore also `Data.print()` to console default colors.
+* Changed the default syntax highlighting for `Data.to_str()` and therefore also `Data.print()` to use console default colors.
+* Added the missing but needed dunder methods to the `Args` and `ArgResult` classes and the `rgba`, `hsla` and `hexa` color objects for better usability and type checking.
+* Added three new methods to `Args`:
+  - `get()` returns the argument result for a given alias, or a default value if not found
+  - `existing()` yields only the existing arguments as tuples of `(alias, ArgResult)`
+  - `missing()` yields only the missing arguments as tuples of `(alias, ArgResult)`
 * Added a new attribute `is_positional` to `ArgResult`, which indicates whether the argument is a positional argument or not.
+* The `ArgResult` class now also has a `dict()` method, which returns the argument result as a dictionary.
+* Added new properties `is_tty` and `supports_color` to the `Console` class, `home` to the `Path` class and `is_win` to the `System` class.
 * Added the option to add format specifiers to the `{current}`, `{total}` and `{percentage}` placeholders in the `bar_format` and `limited_bar_format` of `ProgressBar`.
 * Finally fixed the `C901 'Console.get_args' is too complex (39)` linting error by refactoring the method into its own helper class.
+* Changed the string- and repr-representations of the `rgba` and `hsla` color objects and newly implemented it for the `Args` and `ArgResult` classes.
 * Made internal, global constants, which's values never change, into `Final` constants for better type checking.
-* The names of all internal classes and methods are all noi longer prefixed with a double underscore (`__`), but a single underscore (`_`) instead.
+* The names of all internal classes and methods are all no longer prefixed with a double underscore (`__`), but a single underscore (`_`) instead.
 * Changed all methods defined as `@staticmethod` to `@classmethod` where applicable, to improve inheritance capabilities.
 * Adjusted the whole library's type hints to be way more strict and accurate, using `mypy` as static type checker.
 * Change the class-property definitions to be defined via `metaclass` and using `@property` decorators, to make them compatible with `mypyc`.
@@ -35,6 +44,7 @@
 
 **BREAKING CHANGES:**
 * Renamed `Data.to_str()` to `Data.render()`, since that describes its functionality better (*especially with the syntax highlighting option*).
+* Renamed the constant `ANSI.ESCAPED_CHAR` to `ANSI.CHAR_ESCAPED` for better consistency with the other constant names.
 * Removed the general `Pattern` and `Match` type aliases from the `base.types` module (*they are pointless since you should always use a specific type and not "type1 OR typeB"*).
 * Removed the `_` prefix from the param `_syntax_highlighting` in `Data.render()`, since it's no longer just for internal use.
 
@@ -42,6 +52,7 @@
 <span id="v1-9-2" />
 
 ## 16.12.2025 `v1.9.2`
+
 * Added a new class `LazyRegex` to the `regex` module, which is used to define regex patterns that are only compiled when they are used for the first time.
 * Removed unnecessary character escaping in the precompiled regex patterns in the `console` module.
 * Removed all the runtime type-checks that can also be checked using static type-checking tools, since you're supposed to use type checkers in modern python anyway, and to improve performance.
@@ -64,6 +75,7 @@
 <span id="v1-9-1" />
 
 ## 26.11.2025 `v1.9.1`
+
 * Unified the module and class docstring styles throughout the whole library.
 * Moved the Protocol `ProgressUpdater` from the `console` module to the `types` module.
 * Added throttling to the `ProgressBar` update methods to impact the actual process' performance as little as possible.
@@ -79,6 +91,7 @@
 <span id="v1-9-0" />
 
 ## 21.11.2025 `v1.9.0` Big Update 🚀
+
 * Standardized the docstrings for all public methods in the whole library to use the same style and structure.
 * Replaced left over single quotes with double quotes for consistency.
 * Fixed a bug inside `Data.remove_empty_items()`, where types other than strings where passed to `String.is_empty()`, which caused an exception.
@@ -218,7 +231,7 @@
 ## 17.06.2025 `v1.7.2`
 
 * The `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error.
-* It wasn't actually possible to use default console-colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()` so that option was completely removed again.
+* It wasn't actually possible to use default console-colors (*e.g.* `"red"`, `"green"`, …) for the color params in `Console.log()` so that option was completely removed again.
 * Upgraded the speed of `FormatCodes.to_ansi()` by adding the internal ability to skip the `default_color` validation.
 * Fixed type hints for the whole library.
 * Fixed a small bug in `Console.pause_exit()`, where the key, pressed to unpause wasn't suppressed, so it was written into the next console input after unpausing.
@@ -232,7 +245,7 @@
 * Added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color.
 * The module `xx_format_codes` now treats the `[*]` to-default-color-reset as a normal full-reset, when no `default_color` is set, instead of just counting it as an invalid format code.
 * Fixed bug where entering a color as HEX integer in the color params of the methods `Console.log()`, `Console.log_box_filled()` and `Console.log_box_bordered()` would not work, because it was not properly converted to a format code.
-* You can now use default console colors (*e.g.* `"red"`, `"green"`, ...) for the color params in `Console.log()`.
+* You can now use default console colors (*e.g.* `"red"`, `"green"`, …) for the color params in `Console.log()`.
 * The methods `Console.log_box_filled()` and `Console.log_box_bordered()` no longer right-strip spaces, so you can make multiple log boxes the same width, by adding spaces to the end of the text.
 
 **BREAKING CHANGES:**
@@ -798,7 +811,7 @@ from XulbuX import rgb, hsl, hexa
   <thead>
     <tr>
       <th>Features</th>
-      <th>class, type, function, ...</th>
+      <th>class, type, function, …</th>
     </tr>
   </thead>
   <tbody>

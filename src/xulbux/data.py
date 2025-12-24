@@ -282,7 +282,7 @@ class Data:
             }
         }
         ```
-        ... if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
+        … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
         `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use the
         index of the value, so `healthy->fruit->0`."""
         if len(path_sep) == 0:
@@ -337,7 +337,7 @@ class Data:
         - `update_values` -⠀a dictionary where keys are path IDs and values are the new values
           to insert, for example:
           ```python
-        { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
+        { "1>012": "new value", "1>31": ["new value 1", "new value 2"], … }
           ```
           The path IDs should have been created using `Data.get_path_id()`."""
         if not (valid_update_values := [(path_id, new_val) for path_id, new_val in update_values.items()]):
@@ -367,7 +367,8 @@ class Data:
         - `max_width` -⠀the maximum width of a line before expanding (only used if `compactness` is `1`)
         - `sep` -⠀the separator between items in the data structure
         - `as_json` -⠀if true, the output will be in valid JSON format
-        - `syntax_highlighting` -⠀a dictionary defining the syntax highlighting styles (explained below – section 2)\n
+        - `syntax_highlighting` -⠀a dictionary defining the syntax highlighting styles (explained below – section 2)
+          or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting\n
         ---------------------------------------------------------------------------------------------------------------
         There are three different levels of `compactness`:
         - `0` expands everything possible
@@ -375,17 +376,16 @@ class Data:
           if the data's content is longer than `max_width`
         - `2` keeps everything collapsed (all on one line)\n
         ---------------------------------------------------------------------------------------------------------------
-        The `syntax_highlighting` parameter is a dictionary with 5 keys for each part of the data.<br>
+        The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
         The key's values are the formatting codes to apply to this data part.<br>
-        The formatting can be changed by simply adding the key with the new value inside the
-        `syntax_highlighting` dictionary.\n
+        The formatting can be changed by simply adding the key with the new value
+        inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
         - `str: "br:blue"`
         - `number: "br:magenta"`
         - `literal: "magenta"`
         - `type: "i|green"`
         - `punctuation: "br:black"`\n
-        For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ---------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see the `format_codes` module documentation."""
         if indent < 0:

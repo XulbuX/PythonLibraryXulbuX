@@ -66,6 +66,7 @@ class rgba:
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
     def __len__(self) -> int:
+        """The number of components in the color (3 or 4)."""
         return 3 if self.a is None else 4
 
     def __iter__(self) -> Iterator:
@@ -74,17 +75,21 @@ class rgba:
     def __getitem__(self, index: int) -> int | float:
         return ((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))[index]
 
+    def __eq__(self, other: object) -> bool:
+        """Check if two `rgba` objects are the same color."""
+        if not isinstance(other, rgba):
+            return False
+        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two `rgba` objects are different colors."""
+        return not self.__eq__(other)
+
     def __repr__(self) -> str:
         return f"rgba({self.r}, {self.g}, {self.b}{'' if self.a is None else f', {self.a}'})"
 
     def __str__(self) -> str:
-        return f"({self.r}, {self.g}, {self.b}{'' if self.a is None else f', {self.a}'})"
-
-    def __eq__(self, other: "rgba") -> bool:  # type: ignore[override]
-        if not isinstance(other, rgba):
-            return False
-        else:
-            return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+        return self.__repr__()
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `"r"`, `"g"`, `"b"` and optionally `"a"`."""
@@ -325,6 +330,7 @@ class hsla:
         self.a = None if a is None else (1.0 if a > 1.0 else float(a))
 
     def __len__(self) -> int:
+        """The number of components in the color (3 or 4)."""
         return 3 if self.a is None else 4
 
     def __iter__(self) -> Iterator:
@@ -333,17 +339,21 @@ class hsla:
     def __getitem__(self, index: int) -> int | float:
         return ((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))[index]
 
-    def __repr__(self) -> str:
-        return f'hsla({self.h}°, {self.s}%, {self.l}%{"" if self.a is None else f", {self.a}"})'
-
-    def __str__(self) -> str:
-        return f'({self.h}°, {self.s}%, {self.l}%{"" if self.a is None else f", {self.a}"})'
-
-    def __eq__(self, other: "hsla") -> bool:  # type: ignore[override]
+    def __eq__(self, other: object) -> bool:
+        """Check if two `hsla` objects are the same color."""
         if not isinstance(other, hsla):
             return False
-        else:
-            return (self.h, self.s, self.l, self.a) == (other.h, other.s, other.l, other.a)
+        return (self.h, self.s, self.l, self.a) == (other.h, other.s, other.l, other.a)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two `hsla` objects are different colors."""
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
+        return f"hsla({self.h}°, {self.s}%, {self.l}%{'' if self.a is None else f', {self.a}'})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with keys `"h"`, `"s"`, `"l"` and optionally `"a"`."""
@@ -617,6 +627,7 @@ class hexa:
             raise TypeError(f"The 'color' parameter must be a string or integer, got {type(color)}")
 
     def __len__(self) -> int:
+        """The number of components in the color (3 or 4)."""
         return 3 if self.a is None else 4
 
     def __iter__(self) -> Iterator:
@@ -627,18 +638,21 @@ class hexa:
         return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") \
                 + (() if self.a is None else (f"{int(self.a * 255):02X}", )))[index]
 
-    def __repr__(self) -> str:
-        return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"})'
-
-    def __str__(self) -> str:
-        return f'#{self.r:02X}{self.g:02X}{self.b:02X}{"" if self.a is None else f"{int(self.a * 255):02X}"}'
-
-    def __eq__(self, other: "hexa") -> bool:  # type: ignore[override]
-        """Returns whether the other color is equal to this one."""
+    def __eq__(self, other: object) -> bool:
+        """Check if two `hexa` objects are the same color."""
         if not isinstance(other, hexa):
             return False
-        else:
-            return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two `hexa` objects are different colors."""
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
+        return f"hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{'' if self.a is None else f'{int(self.a * 255):02X}'})"
+
+    def __str__(self) -> str:
+        return f"#{self.r:02X}{self.g:02X}{self.b:02X}{'' if self.a is None else f'{int(self.a * 255):02X}'}"
 
     def dict(self) -> dict:
         """Returns the color components as a dictionary with hex string values for keys `"r"`, `"g"`, `"b"` and optionally `"a"`."""

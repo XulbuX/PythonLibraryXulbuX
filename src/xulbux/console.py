@@ -23,6 +23,7 @@ import prompt_toolkit as _pt
 import threading as _threading
 import keyboard as _keyboard
 import getpass as _getpass
+import ctypes as _ctypes
 import shutil as _shutil
 import regex as _rx
 import time as _time
@@ -49,9 +50,9 @@ _PATTERNS = LazyRegex(
 class ArgResult:
     """Represents the result of a parsed command-line argument, containing the following attributes:
     - `exists` -⠀if the argument was found or not
-    - `value` -⠀the value given with the found argument as a string (only for regular flagged arguments)
-    - `values` -⠀the list of values for positional arguments (only for `"before"`/`"after"` arguments)
-    - `is_positional` -⠀whether the argument is a positional argument or not\n
+    - `value` -⠀the flagged argument value or `None` if no value was provided
+    - `values` -⠀the list of values for positional `"before"`/`"after"` arguments
+    - `is_positional` -⠀whether the argument is a positional `"before"`/`"after"` argument or not\n
     --------------------------------------------------------------------------------------------------------
     When the `ArgResult` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
@@ -66,12 +67,44 @@ class ArgResult:
         self.value: Optional[str] = value
         """The flagged argument value or `None` if no value was provided."""
         self.values: list[str] = values
-        """The list of positional argument values."""
+        """The list of positional `"before"`/`"after"` argument values."""
         self.is_positional: bool = is_positional
         """Whether the argument is a positional argument or not."""
 
     def __bool__(self) -> bool:
+        """Whether the argument was found or not (i.e. the `exists` attribute)."""
         return self.exists
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two `ArgResult` objects are equal by comparing their attributes."""
+        if not isinstance(other, ArgResult):
+            return False
+        return (
+            self.exists == other.exists \
+            and self.value == other.value
+            and self.values == other.values
+            and self.is_positional == other.is_positional
+        )
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two `ArgResult` objects are not equal by comparing their attributes."""
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
+        if self.is_positional:
+            return f"ArgResult(\n  exists = {self.exists},\n  values = {self.values},\n  is_positional = {self.is_positional}\n)"
+        else:
+            return f"ArgResult(\n  exists = {self.exists},\n  value  = {self.value},\n  is_positional = {self.is_positional}\n)"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def dict(self) -> ArgResultRegular | ArgResultPositional:
+        """Returns the argument result as a dictionary."""
+        if self.is_positional:
+            return ArgResultPositional(exists=self.exists, values=self.values)
+        else:
+            return ArgResultRegular(exists=self.exists, value=self.value)
 
 
 @mypyc_attr(native_class=False)
@@ -101,10 +134,16 @@ class Args:
                 )
 
     def __len__(self):
+        """The number of arguments stored in the `Args` object."""
         return len(vars(self))
 
     def __contains__(self, key):
-        return hasattr(self, key)
+        """Checks if an argument with the given alias exists in the `Args` object."""
+        return key in vars(self)
+
+    def __bool__(self) -> bool:
+        """Whether the `Args` object contains any arguments."""
+        return len(self) > 0
 
     def __getattr__(self, name: str) -> ArgResult:
         raise AttributeError(f"'{type(self).__name__}' object has no attribute {name}")
@@ -114,22 +153,42 @@ class Args:
             return list(self.__iter__())[key]
         return getattr(self, key)
 
-    def __iter__(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
-        for key, val in vars(self).items():
-            if val.is_positional:
-                yield (key, ArgResultPositional(exists=val.exists, values=val.values))
-            else:
-                yield (key, ArgResultRegular(exists=val.exists, value=val.value))
+    def __iter__(self) -> Generator[tuple[str, ArgResult], None, None]:
+        for key, val in cast(dict[str, ArgResult], vars(self)).items():
+            yield (key, val)
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two `Args` objects are equal by comparing their stored arguments."""
+        if not isinstance(other, Args):
+            return False
+        return vars(self) == vars(other)
+
+    def __ne__(self, other: object) -> bool:
+        """Check if two `Args` objects are not equal by comparing their stored arguments."""
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
+        if not self:
+            return "Args()"
+        arg_results_reprs = (f"{key} = {'\n  '.join(repr(val).splitlines())}" for key, val in self.__iter__())
+        return f"Args(\n  {',\n  '.join(arg_results_reprs)}\n)"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
     def dict(self) -> dict[str, ArgResultRegular | ArgResultPositional]:
         """Returns the arguments as a dictionary."""
         result: dict[str, ArgResultRegular | ArgResultPositional] = {}
         for key, val in vars(self).items():
             if val.is_positional:
-                result[key] = {"exists": val.exists, "values": val.values}
+                result[key] = ArgResultPositional(exists=val.exists, values=val.values)
             else:
-                result[key] = {"exists": val.exists, "value": val.value}
+                result[key] = ArgResultRegular(exists=val.exists, value=val.value)
         return result
+
+    def get(self, key: str, default: Any = None) -> ArgResult | Any:
+        """Returns the argument result for the given alias, or `default` if not found."""
+        return getattr(self, key, default)
 
     def keys(self):
         """Returns the argument aliases as `dict_keys([…])`."""
@@ -139,10 +198,22 @@ class Args:
         """Returns the argument results as `dict_values([…])`."""
         return vars(self).values()
 
-    def items(self) -> Generator[tuple[str, ArgResultRegular | ArgResultPositional], None, None]:
-        """Yields tuples of `(alias, ArgResultRegular | ArgResultPositional)`."""
+    def items(self) -> Generator[tuple[str, ArgResult], None, None]:
+        """Yields tuples of `(alias, ArgResult)`."""
         for key, val in self.__iter__():
             yield (key, val)
+
+    def existing(self) -> Generator[tuple[str, ArgResult], None, None]:
+        """Yields tuples of `(alias, ArgResult)` for existing arguments only."""
+        for key, val in self.__iter__():
+            if val.exists:
+                yield (key, val)
+
+    def missing(self) -> Generator[tuple[str, ArgResult], None, None]:
+        """Yields tuples of `(alias, ArgResult)` for missing arguments only."""
+        for key, val in self.__iter__():
+            if not val.exists:
+                yield (key, val)
 
 
 @mypyc_attr(native_class=False)
@@ -177,6 +248,29 @@ class _ConsoleMeta(type):
     def user(cls) -> str:
         """The name of the current user."""
         return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
+    @property
+    def is_tty(cls) -> bool:
+        """Whether the current output is a terminal/console or not."""
+        return _sys.stdout.isatty()
+
+    @property
+    def supports_color(cls) -> bool:
+        """Whether the terminal supports ANSI color codes or not."""
+        if not cls.is_tty:
+            return False
+        if _os.name == "nt":
+            # CHECK IF VT100 MODE IS ENABLED ON WINDOWS
+            try:
+                kernel32 = getattr(_ctypes, "windll").kernel32
+                h = kernel32.GetStdHandle(-11)
+                mode = _ctypes.c_ulong()
+                if kernel32.GetConsoleMode(h, _ctypes.byref(mode)):
+                    return (mode.value & 0x0004) != 0
+            except Exception:
+                pass
+            return False
+        return _os.getenv("TERM", "").lower() not in {"", "dumb"}
 
 
 class Console(metaclass=_ConsoleMeta):
@@ -235,7 +329,7 @@ class Console(metaclass=_ConsoleMeta):
         ```
         If the script is called via the command line:\n
         `python script.py Hello World -a1 "value1" --arg2`\n
-        ... it would return an `Args` object:
+        … it would return an `Args` object:
         ```python
         Args(
             # FOUND TWO ARGUMENTS BEFORE THE FIRST FLAG
@@ -252,7 +346,7 @@ class Console(metaclass=_ConsoleMeta):
         If an arg, defined with flags in `find_args`, is NOT present in the command line:
         - `exists` will be `False`
         - `value` will be the specified `"default"` value, or `None` if no default was specified
-        - `values` will be an empty list `[]` for positional `"before"`/`"after"` arguments\n
+        - `values` will be an empty list `[]`\n
         ---------------------------------------------------------------------------------------------------------
         Normally if `allow_spaces` is false, it will take a space as the end of an args value.
         If it is true, it will take spaces as part of the value up until the next arg-flag is found.
@@ -995,6 +1089,7 @@ class _ConsoleArgsParseHelper:
         self.find_flag_positions()
         self.process_positional_args()
         self.process_flagged_args()
+
         return Args(**self.results_positional, **self.results_regular)
 
     def parse_configuration(self) -> None:

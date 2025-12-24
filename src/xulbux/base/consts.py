@@ -76,7 +76,7 @@ class CHARS:
 class ANSI:
     """Constants and utilities for ANSI escape code sequences."""
 
-    ESCAPED_CHAR: Final = "\\x1b"
+    CHAR_ESCAPED: Final = r"\x1b"
     """Printable ANSI escape character."""
     CHAR: Final = "\x1b"
     """ANSI escape character."""

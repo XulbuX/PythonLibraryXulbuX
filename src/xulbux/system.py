@@ -23,7 +23,7 @@ class _SystemMeta(type):
 
     @property
     def is_elevated(cls) -> bool:
-        """Is `True` if the current process has elevated privileges and `False` otherwise."""
+        """Whether the current process has elevated privileges or not."""
         try:
             if _os.name == "nt":
                 return getattr(_ctypes, "windll").shell32.IsUserAnAdmin() != 0
@@ -32,6 +32,11 @@ class _SystemMeta(type):
         except Exception:
             pass
         return False
+
+    @property
+    def is_win(cls) -> bool:
+        """Whether the current operating system is Windows or not."""
+        return _platform.system() == "Windows"
 
 
 class System(metaclass=_SystemMeta):

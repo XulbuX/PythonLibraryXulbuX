@@ -119,7 +119,7 @@ class Json:
             }
         }
         ```
-        ... the `update_values` dictionary could look like this:
+        … the `update_values` dictionary could look like this:
         ```python
         {
             # CHANGE FIRST LIST-VALUE UNDER 'fruits' TO "strawberries"

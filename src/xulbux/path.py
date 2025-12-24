@@ -22,6 +22,11 @@ class _PathMeta(type):
         return _os.getcwd()
 
     @property
+    def home(cls) -> str:
+        """The path to the user's home directory."""
+        return _os.path.expanduser("~")
+
+    @property
     def script_dir(cls) -> str:
         """The path to the directory of the current script."""
         if getattr(_sys, "frozen", False):
