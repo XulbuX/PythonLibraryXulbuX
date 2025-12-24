@@ -1164,39 +1164,50 @@ class _ConsoleArgsParseHelper:
         """Collect positional `"before"/"after"` arguments."""
         for alias, pos_type in self.positional_configs.items():
             if pos_type == "before":
-                before_args: list[str] = []
-                end_pos: int = self.first_flag_pos if self.first_flag_pos is not None else self.args_len
+                self._collect_before_arg(alias)
+            elif pos_type == "after":
+                self._collect_after_arg(alias)
+            else:
+                raise ValueError(
+                    f"Invalid positional argument type '{pos_type}' for alias '{alias}'.\n"
+                    "Must be either 'before' or 'after'."
+                )
 
-                for i in range(end_pos):
-                    if self.args[i] not in self.arg_lookup:
-                        before_args.append(self.args[i])
+    def _collect_before_arg(self, alias: str) -> None:
+        """Collect positional `"before"` arguments."""
+        before_args: list[str] = []
+        end_pos: int = self.first_flag_pos if self.first_flag_pos is not None else self.args_len
 
-                if before_args:
-                    self.results_positional[alias]["values"] = before_args
-                    self.results_positional[alias]["exists"] = len(before_args) > 0
+        for i in range(end_pos):
+            if self.args[i] not in self.arg_lookup:
+                before_args.append(self.args[i])
 
-            if pos_type == "after":
-                after_args: list[str] = []
-                start_pos: int = (self.last_flag_with_value_pos + 1) if self.last_flag_with_value_pos is not None else 0
+        if before_args:
+            self.results_positional[alias]["values"] = before_args
+            self.results_positional[alias]["exists"] = len(before_args) > 0
 
-                # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
-                if self.last_flag_with_value_pos is None and self.first_flag_pos is not None:
-                    # FIND THE LAST FLAG POSITION
-                    last_flag_pos: Optional[int] = None
-                    for i, arg in enumerate(self.args):
-                        if arg in self.arg_lookup:
-                            last_flag_pos = i
+    def _collect_after_arg(self, alias: str) -> None:
+        after_args: list[str] = []
+        start_pos: int = (self.last_flag_with_value_pos + 1) if self.last_flag_with_value_pos is not None else 0
 
-                    if last_flag_pos is not None:
-                        start_pos = last_flag_pos + 1
+        # IF NO FLAGS WERE FOUND WITH VALUES, START AFTER THE LAST FLAG
+        if self.last_flag_with_value_pos is None and self.first_flag_pos is not None:
+            # FIND THE LAST FLAG POSITION
+            last_flag_pos: Optional[int] = None
+            for i, arg in enumerate(self.args):
+                if arg in self.arg_lookup:
+                    last_flag_pos = i
 
-                for i in range(start_pos, self.args_len):
-                    if self.args[i] not in self.arg_lookup:
-                        after_args.append(self.args[i])
+            if last_flag_pos is not None:
+                start_pos = last_flag_pos + 1
 
-                if after_args:
-                    self.results_positional[alias]["values"] = after_args
-                    self.results_positional[alias]["exists"] = len(after_args) > 0
+        for i in range(start_pos, self.args_len):
+            if self.args[i] not in self.arg_lookup:
+                after_args.append(self.args[i])
+
+        if after_args:
+            self.results_positional[alias]["values"] = after_args
+            self.results_positional[alias]["exists"] = len(after_args) > 0
 
     def process_flagged_args(self) -> None:
         """Process normal flagged arguments."""
