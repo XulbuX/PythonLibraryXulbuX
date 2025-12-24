@@ -53,44 +53,7 @@ class System(metaclass=_SystemMeta):
         if wait < 0:
             raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
 
-        if (system := _platform.system().lower()) == "windows":
-            if not force:
-                output = _subprocess.check_output("tasklist", shell=True).decode()
-                processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
-                if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
-                    raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
-
-            if prompt:
-                _os.system(f'shutdown /r /t {wait} /c "{prompt}"')
-            else:
-                _os.system("shutdown /r /t 0")
-
-            if continue_program:
-                print(f"Restarting in {wait} seconds...")
-                _time.sleep(wait)
-
-        elif system in {"linux", "darwin"}:
-            if not force:
-                output = _subprocess.check_output(["ps", "-A"]).decode()
-                processes = output.splitlines()[1:]  # EXCLUDE HEADER
-                if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
-                    raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
-
-            if prompt:
-                _subprocess.Popen(["notify-send", "System Restart", str(prompt)])
-                _time.sleep(wait)
-
-            try:
-                _subprocess.run(["sudo", "shutdown", "-r", "now"])
-            except _subprocess.CalledProcessError:
-                raise PermissionError("Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted.")
-
-            if continue_program:
-                print(f"Restarting in {wait} seconds...")
-                _time.sleep(wait)
-
-        else:
-            raise NotImplementedError(f"Restart not implemented for '{system}' systems.")
+        _SystemRestartHelper(prompt, wait, continue_program, force)()
 
     @classmethod
     def check_libs(
@@ -113,41 +76,7 @@ class System(metaclass=_SystemMeta):
         ------------------------------------------------------------------------------------------------------------
         If some libraries are missing or they could not be installed, their names will be returned as a list.
         If all libraries are installed (or were installed successfully), `None` will be returned."""
-        missing = []
-        for lib in lib_names:
-            try:
-                __import__(lib)
-            except ImportError:
-                missing.append(lib)
-
-        if not missing:
-            return None
-        elif not install_missing:
-            return missing
-
-        if confirm_install:
-            FormatCodes.print(f"[b]({missing_libs_msgs['found_missing']})")
-            for lib in missing:
-                FormatCodes.print(f" [dim](•) [i]{lib}[_i]")
-            print()
-            if not Console.confirm(missing_libs_msgs["should_install"], end="\n"):
-                return missing
-
-        try:
-            for lib in missing:
-                try:
-                    _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
-                    missing.remove(lib)
-                except _subprocess.CalledProcessError:
-                    pass
-
-            if len(missing) == 0:
-                return None
-            else:
-                return missing
-
-        except _subprocess.CalledProcessError:
-            return missing
+        return _SystemCheckLibsHelper(lib_names, install_missing, missing_libs_msgs, confirm_install)()
 
     @classmethod
     def elevate(cls, win_title: Optional[str] = None, args: Optional[list] = None) -> bool:
@@ -190,3 +119,126 @@ class System(metaclass=_SystemMeta):
             if proc.returncode != 0:
                 raise PermissionError("Process elevation was denied.")
             _sys.exit(0)
+
+
+class _SystemRestartHelper:
+    """Internal, callable helper class to handle system restart with platform-specific logic."""
+
+    def __init__(self, prompt: object, wait: int, continue_program: bool, force: bool):
+        self.prompt = prompt
+        self.wait = wait
+        self.continue_program = continue_program
+        self.force = force
+
+    def __call__(self) -> None:
+        if (system := _platform.system().lower()) == "windows":
+            self.restart_windows()
+        elif system in {"linux", "darwin"}:
+            self.restart_posix()
+        else:
+            raise NotImplementedError(f"Restart not implemented for '{system}' systems.")
+
+    def check_running_processes(self, command: str | list[str], skip_lines: int = 0) -> None:
+        """Check if processes are running and raise error if force is False."""
+        if self.force:
+            return
+
+        if isinstance(command, str):
+            output = _subprocess.check_output(command, shell=True).decode()
+        else:
+            output = _subprocess.check_output(command).decode()
+
+        processes = [line for line in output.splitlines()[skip_lines:] if line.strip()]
+        if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
+            raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
+
+    def restart_windows(self) -> None:
+        """Handle Windows system restart."""
+        self.check_running_processes("tasklist", skip_lines=3)
+
+        if self.prompt:
+            _os.system(f'shutdown /r /t {self.wait} /c "{self.prompt}"')
+        else:
+            _os.system("shutdown /r /t 0")
+
+        if self.continue_program:
+            self.wait_for_restart()
+
+    def restart_posix(self) -> None:
+        """Handle Linux/macOS system restart."""
+        self.check_running_processes(["ps", "-A"], skip_lines=1)
+
+        if self.prompt:
+            _subprocess.Popen(["notify-send", "System Restart", str(self.prompt)])
+            _time.sleep(self.wait)
+
+        try:
+            _subprocess.run(["sudo", "shutdown", "-r", "now"])
+        except _subprocess.CalledProcessError:
+            raise PermissionError("Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted.")
+
+        if self.continue_program:
+            self.wait_for_restart()
+
+    def wait_for_restart(self) -> None:
+        """Wait and print message before restart."""
+        print(f"Restarting in {self.wait} seconds...")
+        _time.sleep(self.wait)
+
+
+class _SystemCheckLibsHelper:
+    """Internal, callable helper class to check and install missing Python libraries."""
+
+    def __init__(
+        self,
+        lib_names: list[str],
+        install_missing: bool,
+        missing_libs_msgs: MissingLibsMsgs,
+        confirm_install: bool,
+    ):
+        self.lib_names = lib_names
+        self.install_missing = install_missing
+        self.missing_libs_msgs = missing_libs_msgs
+        self.confirm_install = confirm_install
+
+    def __call__(self) -> Optional[list[str]]:
+        missing = self.find_missing_libs()
+
+        if not missing:
+            return None
+        elif not self.install_missing:
+            return missing
+
+        if self.confirm_install and not self.confirm_installation(missing):
+            return missing
+
+        return self.install_libs(missing)
+
+    def find_missing_libs(self) -> list[str]:
+        """Find which libraries are missing."""
+        missing = []
+        for lib in self.lib_names:
+            try:
+                __import__(lib)
+            except ImportError:
+                missing.append(lib)
+        return missing
+
+    def confirm_installation(self, missing: list[str]) -> bool:
+        """Ask user for confirmation before installing libraries."""
+        FormatCodes.print(f"[b]({self.missing_libs_msgs['found_missing']})")
+        for lib in missing:
+            FormatCodes.print(f" [dim](•) [i]{lib}[_i]")
+        print()
+        return Console.confirm(self.missing_libs_msgs["should_install"], end="\n")
+
+    def install_libs(self, missing: list[str]) -> Optional[list[str]]:
+        """Install missing libraries using pip."""
+        for lib in missing[:]:
+            try:
+                _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
+                missing.remove(lib)
+            except _subprocess.CalledProcessError:
+                pass
+
+        return None if len(missing) == 0 else missing

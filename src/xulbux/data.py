@@ -290,9 +290,9 @@ class Data:
 
         data = cls.remove_comments(data, comment_start, comment_end)
         if isinstance(value_paths, str):
-            return cls._get_path_id(value_paths, path_sep, data, ignore_not_found)
+            return _DataGetPathIdHelper(value_paths, path_sep, data, ignore_not_found)()
 
-        results = [cls._get_path_id(path, path_sep, data, ignore_not_found) for path in value_paths]
+        results = [_DataGetPathIdHelper(path, path_sep, data, ignore_not_found)() for path in value_paths]
         return results if len(results) > 1 else results[0] if results else None
 
     @classmethod
@@ -512,51 +512,6 @@ class Data:
 
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")
 
-    @staticmethod
-    def _get_path_id(path: str, path_sep: str, data_obj: DataStructure, ignore_not_found: bool) -> Optional[str]:
-        """Internal method to process a single data-path and generate its path ID."""
-        keys = path.split(path_sep)
-        path_ids, max_id_length = [], 0
-        current_data: Any = data_obj
-
-        for key in keys:
-            if isinstance(current_data, dict):
-                if key.isdigit():
-                    if ignore_not_found:
-                        return None
-                    raise TypeError(f"Key '{key}' is invalid for a dict type.")
-
-                try:
-                    idx = list(current_data.keys()).index(key)
-                    current_data = current_data[key]
-                except (ValueError, KeyError):
-                    if ignore_not_found:
-                        return None
-                    raise KeyError(f"Key '{key}' not found in dict.")
-
-            elif isinstance(current_data, IndexIterableTypes):
-                try:
-                    idx = int(key)
-                    current_data = list(current_data)[idx]  # CONVERT TO LIST FOR INDEXING
-                except ValueError:
-                    try:
-                        idx = list(current_data).index(key)
-                        current_data = list(current_data)[idx]
-                    except ValueError:
-                        if ignore_not_found:
-                            return None
-                        raise ValueError(f"Value '{key}' not found in '{type(current_data).__name__}'")
-
-            else:
-                break
-
-            path_ids.append(str(idx))
-            max_id_length = max(max_id_length, len(str(idx)))
-
-        if not path_ids:
-            return None
-        return f"{max_id_length}>{''.join(id.zfill(max_id_length) for id in path_ids)}"
-
     @classmethod
     def _set_nested_val(cls, data: DataStructure, id_path: list[int], value: Any) -> Any:
         """Internal method to set a value in a nested data structure based on the provided ID path."""
@@ -605,19 +560,19 @@ class _DataRemoveCommentsHelper:
         )) if len(comment_end) > 0 else None
 
     def __call__(self) -> DataStructure:
-        return self.rem_nested_comments(self.data)
+        return self.remove_nested_comments(self.data)
 
-    def rem_nested_comments(self, item: Any) -> Any:
+    def remove_nested_comments(self, item: Any) -> Any:
         if isinstance(item, dict):
             return {
                 key: val
                 for key, val in ( \
-                    (self.rem_nested_comments(k), self.rem_nested_comments(v)) for k, v in item.items()
+                    (self.remove_nested_comments(k), self.remove_nested_comments(v)) for k, v in item.items()
                 ) if key is not None
             }
 
         if isinstance(item, IndexIterableTypes):
-            processed = (v for v in map(self.rem_nested_comments, item) if v is not None)
+            processed = (v for v in map(self.remove_nested_comments, item) if v is not None)
             return type(item)(processed)
 
         if isinstance(item, str):
@@ -630,6 +585,77 @@ class _DataRemoveCommentsHelper:
                 return None if item.lstrip().startswith(self.comment_start) else item.strip() or None
 
         return item
+
+
+class _DataGetPathIdHelper:
+    """Internal, callable helper class to process a data path and generate its unique path ID."""
+
+    def __init__(self, path: str, path_sep: str, data_obj: DataStructure, ignore_not_found: bool):
+        self.keys = path.split(path_sep)
+        self.data_obj = data_obj
+        self.ignore_not_found = ignore_not_found
+
+        self.path_ids: list[str] = []
+        self.max_id_length = 0
+        self.current_data: Any = data_obj
+
+    def __call__(self) -> Optional[str]:
+        for key in self.keys:
+            if not self.process_key(key):
+                break
+
+        if not self.path_ids:
+            return None
+        return f"{self.max_id_length}>{''.join(id.zfill(self.max_id_length) for id in self.path_ids)}"
+
+    def process_key(self, key: str) -> bool:
+        """Process a single key and update `path_ids`. Returns `False` if processing should stop."""
+        idx: Optional[int] = None
+
+        if isinstance(self.current_data, dict):
+            if (idx := self.process_dict_key(key)) is None:
+                return False
+        elif isinstance(self.current_data, IndexIterableTypes):
+            if (idx := self.process_iterable_key(key)) is None:
+                return False
+        else:
+            return False
+
+        self.path_ids.append(str(idx))
+        self.max_id_length = max(self.max_id_length, len(str(idx)))
+        return True
+
+    def process_dict_key(self, key: str) -> Optional[int]:
+        """Process a key for dictionary data. Returns the index or `None` if not found."""
+        if key.isdigit():
+            if self.ignore_not_found:
+                return None
+            raise TypeError(f"Key '{key}' is invalid for a dict type.")
+
+        try:
+            idx = list(self.current_data.keys()).index(key)
+            self.current_data = self.current_data[key]
+            return idx
+        except (ValueError, KeyError):
+            if self.ignore_not_found:
+                return None
+            raise KeyError(f"Key '{key}' not found in dict.")
+
+    def process_iterable_key(self, key: str) -> Optional[int]:
+        """Process a key for iterable data. Returns the index or `None` if not found."""
+        try:
+            idx = int(key)
+            self.current_data = list(self.current_data)[idx]
+            return idx
+        except ValueError:
+            try:
+                idx = list(self.current_data).index(key)
+                self.current_data = list(self.current_data)[idx]
+                return idx
+            except ValueError:
+                if self.ignore_not_found:
+                    return None
+                raise ValueError(f"Value '{key}' not found in '{type(self.current_data).__name__}'")
 
 
 class _DataRenderHelper:
