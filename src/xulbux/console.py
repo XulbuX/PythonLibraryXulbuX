@@ -440,7 +440,10 @@ class Console(metaclass=_ConsoleMeta):
             )
             prompt_lst: list[str] = [
                 item for lst in
-                (String.split_count(l, cls.w - (title_len + len(tab) + 2 * len(mx))) for l in str(clean_prompt).splitlines())
+                (
+                    String.split_count(line, cls.w - (title_len + len(tab) + 2 * len(mx))) \
+                    for line in str(clean_prompt).splitlines()
+                )
                 for item in ([""] if lst == [] else (lst if isinstance(lst, list) else [lst]))
             ]
             prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(

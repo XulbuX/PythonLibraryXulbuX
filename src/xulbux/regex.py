@@ -214,7 +214,7 @@ class Regex:
     @classmethod
     def _clean(cls, pattern: str) -> str:
         """Internal method to make a multiline-string regex pattern into a single-line pattern."""
-        return "".join(l.strip() for l in pattern.splitlines()).strip()
+        return "".join(line.strip() for line in pattern.splitlines()).strip()
 
 
 @mypyc_attr(native_class=False)

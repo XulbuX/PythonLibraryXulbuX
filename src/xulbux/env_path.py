@@ -76,7 +76,10 @@ class EnvPath:
         path = _os.path.normpath(path)
 
         if remove:
-            current_paths = [p for p in current_paths if _os.path.normpath(p) != _os.path.normpath(path)]
+            current_paths = [
+                path for path in current_paths \
+                if _os.path.normpath(path) != _os.path.normpath(path)
+            ]
         else:
             current_paths.append(path)
 
@@ -97,16 +100,16 @@ class EnvPath:
                 else "~/.zshrc"
             )
 
-            with open(shell_rc_file, "r+") as f:
-                content = f.read()
-                f.seek(0)
+            with open(shell_rc_file, "r+") as file:
+                content = file.read()
+                file.seek(0)
 
                 if remove:
-                    new_content = [l for l in content.splitlines() if not l.endswith(f':{path}"')]
-                    f.write("\n".join(new_content))
+                    new_content = [line for line in content.splitlines() if not line.endswith(f':{path}"')]
+                    file.write("\n".join(new_content))
                 else:
-                    f.write(f'{content.rstrip()}\n# Added by XulbuX\nexport PATH="{new_path}"\n')
+                    file.write(f'{content.rstrip()}\n# Added by XulbuX\nexport PATH="{new_path}"\n')
 
-                f.truncate()
+                file.truncate()
 
             _os.system(f"source {shell_rc_file}")
