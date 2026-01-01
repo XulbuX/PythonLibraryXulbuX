@@ -17,7 +17,9 @@
 
 <span id="v1-9-3" />
 
-## ... `v1.9.3` Big Update 🚀
+## 01.01.2026 `v1.9.3` Big Update 🚀
+
+**𝓗𝓪𝓹𝓹𝔂 𝟚𝟘𝟚𝟞 🎉**
 
 * Added a new method `Color.str_to_hsla()` to parse HSLA colors from strings.
 * Changed the default syntax highlighting for `Data.to_str()` and therefore also `Data.print()` to use console default colors.
@@ -127,7 +129,9 @@
 
 <span id="v1-8-4" />
 
-## 11.11.2025 `v1.8.4` 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉
+## 11.11.2025 `v1.8.4`
+
+**𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉**
 
 * Adjusted `Regex.hsla_str()` to not include optional degree (`°`) and percent (`%`) symbols in the captured groups.
 * Fixed that `Regex.hexa_str()` couldn't match HEXA colors anywhere inside a string, but only if the whole string was just the HEXA color.
@@ -195,7 +199,7 @@
 
 <span id="v1-8-0" />
 
-## 28.08.2025 `v1.8.0` **⚠️This release is broken!**
+## 28.08.2025 `v1.8.0` **⚠️ This release is broken!**
 
 * New options for the param `find_args` from the method `Console.get_args()`:<br>
   Previously you could only input a dictionary with items like `"alias_name": ["-f", "--flag"]` that specify an arg's alias and the flags that correspond to it.<br>
@@ -369,7 +373,7 @@
 
 <span id="v1-6-3" />
 
-## 22.01.2025 `v1.6.3` **⚠️This release is broken!**
+## 22.01.2025 `v1.6.3` **⚠️ This release is broken!**
 
 * Fixed a small bug in `xx_format_codes`:<br>
   Inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset.<br>
