@@ -35,7 +35,7 @@ def test_to_ansi():
 
 def test_escape_ansi():
     ansi_string = f"{bold}Hello {orange}World!{reset}"
-    escaped_string = ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
+    escaped_string = ansi_string.replace(ANSI.CHAR, ANSI.CHAR_ESCAPED)
     assert FormatCodes.escape_ansi(ansi_string) == escaped_string
 
 

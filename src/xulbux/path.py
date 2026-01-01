@@ -4,7 +4,8 @@ This module provides the `Path` class, which includes methods to work with file 
 
 from .base.exceptions import PathNotFoundError
 
-from typing import Optional, cast
+from typing import Optional
+from mypy_extensions import mypyc_attr
 import tempfile as _tempfile
 import difflib as _difflib
 import shutil as _shutil
@@ -12,15 +13,22 @@ import sys as _sys
 import os as _os
 
 
-class _Cwd:
+@mypyc_attr(native_class=False)
+class _PathMeta(type):
 
-    def __get__(self, obj, owner=None):
+    @property
+    def cwd(cls) -> str:
+        """The path to the current working directory."""
         return _os.getcwd()
 
+    @property
+    def home(cls) -> str:
+        """The path to the user's home directory."""
+        return _os.path.expanduser("~")
 
-class _ScriptDir:
-
-    def __get__(self, obj, owner=None):
+    @property
+    def script_dir(cls) -> str:
+        """The path to the directory of the current script."""
         if getattr(_sys, "frozen", False):
             base_path = _os.path.dirname(_sys.executable)
         else:
@@ -34,16 +42,12 @@ class _ScriptDir:
         return base_path
 
 
-class Path:
+class Path(metaclass=_PathMeta):
     """This class provides methods to work with file and directory paths."""
 
-    cwd: str = cast(str, _Cwd())
-    """The path to the current working directory."""
-    script_dir: str = cast(str, _ScriptDir())
-    """The path to the directory of the current script."""
-
-    @staticmethod
+    @classmethod
     def extend(
+        cls,
         rel_path: str,
         search_in: Optional[str | list[str]] = None,
         raise_error: bool = False,
@@ -81,37 +85,7 @@ class Path:
         elif _os.path.isabs(rel_path):
             return rel_path
 
-        def get_closest_match(dir: str, part: str) -> Optional[str]:
-            try:
-                matches = _difflib.get_close_matches(part, _os.listdir(dir), n=1, cutoff=0.6)
-                return matches[0] if matches else None
-            except Exception:
-                return None
-
-        def find_path(start: str, parts: list[str]) -> Optional[str]:
-            current = start
-
-            for part in parts:
-                if _os.path.isfile(current):
-                    return current
-                closest_match = get_closest_match(current, part) if use_closest_match else part
-                current = _os.path.join(current, closest_match) if closest_match else None
-                if current is None:
-                    return None
-
-            return current if _os.path.exists(current) and current != start else None
-
-        def expand_env_path(p: str) -> str:
-            if "%" not in p:
-                return p
-
-            for i in range(1, len(parts := p.split("%")), 2):
-                if parts[i].upper() in _os.environ:
-                    parts[i] = _os.environ[parts[i].upper()]
-
-            return "".join(parts)
-
-        rel_path = _os.path.normpath(expand_env_path(rel_path))
+        rel_path = _os.path.normpath(cls._expand_env_path(rel_path))
 
         if _os.path.isabs(rel_path):
             drive, rel_path = _os.path.splitdrive(rel_path)
@@ -119,12 +93,15 @@ class Path:
             search_dirs.extend([(drive + _os.sep) if drive else _os.sep])
         else:
             rel_path = rel_path.lstrip(_os.sep)
-            search_dirs.extend([_os.getcwd(), Path.script_dir, _os.path.expanduser("~"), _tempfile.gettempdir()])
+            search_dirs.extend([_os.getcwd(), cls.script_dir, _os.path.expanduser("~"), _tempfile.gettempdir()])
 
         for search_dir in search_dirs:
             if _os.path.exists(full_path := _os.path.join(search_dir, rel_path)):
                 return full_path
-            if (match := find_path(search_dir, rel_path.split(_os.sep)) if use_closest_match else None):
+            if (match := (
+                cls._find_path(search_dir, rel_path.split(_os.sep), use_closest_match) \
+                if use_closest_match else None
+            )):
                 return match
 
         if raise_error:
@@ -132,8 +109,9 @@ class Path:
         else:
             return None
 
-    @staticmethod
+    @classmethod
     def extend_or_make(
+        cls,
         rel_path: str,
         search_in: Optional[str | list[str]] = None,
         prefer_script_dir: bool = True,
@@ -158,20 +136,21 @@ class Path:
         If `prefer_script_dir` is false, it will instead make a path
         that points to where the `rel_path` would be in the CWD."""
         try:
-            return str(Path.extend( \
+            return str(cls.extend( \
                 rel_path=rel_path,
                 search_in=search_in,
                 raise_error=True,
                 use_closest_match=use_closest_match,
             ))
+
         except PathNotFoundError:
             return _os.path.join(
-                Path.script_dir if prefer_script_dir else _os.getcwd(),
+                cls.script_dir if prefer_script_dir else _os.getcwd(),
                 _os.path.normpath(rel_path),
             )
 
-    @staticmethod
-    def remove(path: str, only_content: bool = False) -> None:
+    @classmethod
+    def remove(cls, path: str, only_content: bool = False) -> None:
         """Removes the directory or the directory's content at the specified path.\n
         -----------------------------------------------------------------------------
         - `path` -⠀the path to the directory or file to remove
@@ -196,3 +175,41 @@ class Path:
                         _shutil.rmtree(file_path)
                 except Exception as e:
                     raise Exception(f"Failed to delete {file_path}. Reason: {e}")
+
+    @staticmethod
+    def _expand_env_path(path_str: str) -> str:
+        """Internal method that expands all environment variables in the given path string."""
+        if "%" not in path_str:
+            return path_str
+
+        for i in range(1, len(parts := path_str.split("%")), 2):
+            if parts[i].upper() in _os.environ:
+                parts[i] = _os.environ[parts[i].upper()]
+
+        return "".join(parts)
+
+    @classmethod
+    def _find_path(cls, start_dir: str, path_parts: list[str], use_closest_match: bool) -> Optional[str]:
+        """Internal method to find a path by traversing the given parts from
+        the start directory, optionally using closest matches for each part."""
+        current_dir: str = start_dir
+
+        for part in path_parts:
+            if _os.path.isfile(current_dir):
+                return current_dir
+            if (closest_match := cls._get_closest_match(current_dir, part) if use_closest_match else part) is None:
+                return None
+            current_dir = _os.path.join(current_dir, closest_match)
+
+        return current_dir if _os.path.exists(current_dir) and current_dir != start_dir else None
+
+    @staticmethod
+    def _get_closest_match(dir: str, path_part: str) -> Optional[str]:
+        """Internal method to get the closest matching file or folder name
+        in the given directory for the given path part."""
+        try:
+            return matches[0] if (
+                matches := _difflib.get_close_matches(path_part, _os.listdir(dir), n=1, cutoff=0.6)
+            ) else None
+        except Exception:
+            return None

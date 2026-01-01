@@ -2,9 +2,7 @@
 This module contains all custom type definitions used throughout the library.
 """
 
-from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any, overload
-import regex as _rx
-import re as _re
+from typing import TYPE_CHECKING, Annotated, TypeAlias, TypedDict, Optional, Protocol, Union, Any
 
 # PREVENT CIRCULAR IMPORTS
 if TYPE_CHECKING:
@@ -28,15 +26,15 @@ FormattableString = Annotated[str, "String made to be formatted with the `.forma
 #
 ################################################## TypeAlias ##################################################
 
-Pattern: TypeAlias = _re.Pattern[str] | _rx.Pattern[str]
-"""Matches compiled regex patterns from both the `re` and `regex` libraries."""
-Match: TypeAlias = _re.Match[str] | _rx.Match[str]
-"""Matches regex match objects from both the `re` and `regex` libraries."""
-
 DataStructure: TypeAlias = Union[list, tuple, set, frozenset, dict]
 """Union of supported data structures used in the `data` module."""
+DataStructureTypes = (list, tuple, set, frozenset, dict)
+"""Tuple of supported data structures used in the `data` module."""
+
 IndexIterable: TypeAlias = Union[list, tuple, set, frozenset]
 """Union of all iterable types that support indexing operations."""
+IndexIterableTypes = (list, tuple, set, frozenset)
+"""Tuple of all iterable types that support indexing operations."""
 
 Rgba: TypeAlias = Union[
     tuple[Int_0_255, Int_0_255, Int_0_255],
@@ -110,17 +108,6 @@ class MissingLibsMsgs(TypedDict):
 class ProgressUpdater(Protocol):
     """Protocol for a progress updater function used in console progress bars."""
 
-    @overload
-    def __call__(self, current: int) -> None:
-        """Update the current progress value."""
-        ...
-
-    @overload
-    def __call__(self, current: int, label: str) -> None:
-        """Update both current progress value and label."""
-        ...
-
-    @overload
-    def __call__(self, *, label: str) -> None:
-        """Update the progress label only (keyword-only)."""
+    def __call__(self, current: Optional[int] = None, label: Optional[str] = None) -> None:
+        """Update the current progress value and/or label."""
         ...

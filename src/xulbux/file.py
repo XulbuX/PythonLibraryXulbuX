@@ -12,8 +12,9 @@ import os as _os
 class File:
     """This class includes methods to work with files and file paths."""
 
-    @staticmethod
+    @classmethod
     def rename_extension(
+        cls,
         file_path: str,
         new_extension: str,
         full_extension: bool = False,
@@ -46,8 +47,8 @@ class File:
 
         return _os.path.join(directory, f"{filename}{new_extension}")
 
-    @staticmethod
-    def create(file_path: str, content: str = "", force: bool = False) -> str:
+    @classmethod
+    def create(cls, file_path: str, content: str = "", force: bool = False) -> str:
         """Create a file with ot without content.\n
         ------------------------------------------------------------------
         - `file_path` -⠀the path where the file should be created

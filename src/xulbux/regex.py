@@ -4,6 +4,7 @@ to dynamically generate complex regex patterns for common use cases.
 """
 
 from typing import Optional
+from mypy_extensions import mypyc_attr
 import regex as _rx
 import re as _re
 
@@ -11,8 +12,8 @@ import re as _re
 class Regex:
     """This class provides methods to dynamically generate complex regex patterns for common use cases."""
 
-    @staticmethod
-    def quotes() -> str:
+    @classmethod
+    def quotes(cls) -> str:
         """Matches pairs of quotes. (strings)\n
         --------------------------------------------------------------------------------
         Will create two named groups:
@@ -22,8 +23,9 @@ class Regex:
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
         return r"""(?P<quote>["'])(?P<string>(?:\\.|(?!\g<quote>).)*?)\g<quote>"""
 
-    @staticmethod
+    @classmethod
     def brackets(
+        cls,
         bracket1: str = "(",
         bracket2: str = ")",
         is_group: bool = False,
@@ -32,8 +34,8 @@ class Regex:
     ) -> str:
         """Matches everything inside pairs of brackets, including other nested brackets.\n
         ---------------------------------------------------------------------------------------
-        - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[` ...)
-        - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]` ...)
+        - `bracket1` -⠀the opening bracket (e.g. `(`, `{`, `[`, …)
+        - `bracket2` -⠀the closing bracket (e.g. `)`, `}`, `]`, …)
         - `is_group` -⠀whether to create a capturing group for the content inside the brackets
         - `strip_spaces` -⠀whether to strip spaces from the bracket content or not
         - `ignore_in_strings` -⠀whether to ignore closing brackets that are inside
@@ -47,7 +49,7 @@ class Regex:
         s2 = "" if strip_spaces else r"\s*"
 
         if ignore_in_strings:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
                     [^{b1}{b2}"']
                     |"(?:\\.|[^"\\])*"
@@ -61,7 +63,7 @@ class Regex:
                 )*{s2}){s1}{b2}"""
             )
         else:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""{b1}{s1}({g}{s2}(?:
                     [^{b1}{b2}]
                     |{b1}(?:
@@ -71,13 +73,13 @@ class Regex:
                 )*{s2}){s1}{b2}"""
             )
 
-    @staticmethod
-    def outside_strings(pattern: str = r".*") -> str:
-        """Matches the `pattern` only when it is not found inside a string (`'...'` or `"..."`)."""
+    @classmethod
+    def outside_strings(cls, pattern: str = r".*") -> str:
+        """Matches the `pattern` only when it is not found inside a string (`'…'` or `"…"`)."""
         return rf"""(?<!["'])(?:{pattern})(?!["'])"""
 
-    @staticmethod
-    def all_except(disallowed_pattern: str, ignore_pattern: str = "", is_group: bool = False) -> str:
+    @classmethod
+    def all_except(cls, disallowed_pattern: str, ignore_pattern: str = "", is_group: bool = False) -> str:
         """Matches everything up to the `disallowed_pattern`, unless the
         `disallowed_pattern` is found inside a string/quotes (`'…'` or `"…"`).\n
         -------------------------------------------------------------------------------------
@@ -89,15 +91,15 @@ class Regex:
         - `is_group` -⠀whether to create a capturing group for the matched content"""
         g = "" if is_group else "?:"
 
-        return Regex._clean( \
+        return cls._clean( \
             rf"""({g}
                 (?:(?!{ignore_pattern}).)*
-                (?:(?!{Regex.outside_strings(disallowed_pattern)}).)*
+                (?:(?!{cls.outside_strings(disallowed_pattern)}).)*
             )"""
         )
 
-    @staticmethod
-    def func_call(func_name: Optional[str] = None) -> str:
+    @classmethod
+    def func_call(cls, func_name: Optional[str] = None) -> str:
         """Match a function call, and get back two groups:
         1. function name
         2. the function's arguments\n
@@ -107,13 +109,13 @@ class Regex:
         if func_name in {"", None}:
             func_name = r"[\w_]+"
 
-        return rf"""(?<=\b)({func_name})\s*{Regex.brackets("(", ")", is_group=True)}"""
+        return rf"""(?<=\b)({func_name})\s*{cls.brackets("(", ")", is_group=True)}"""
 
-    @staticmethod
-    def rgba_str(fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
+    @classmethod
+    def rgba_str(cls, fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
         """Matches an RGBA color inside a string.\n
         ----------------------------------------------------------------------------------
-        - `fix_sep` -⠀the fixed separator between the RGBA values (e.g. `,`, `;` ...)<br>
+        - `fix_sep` -⠀the fixed separator between the RGBA values (e.g. `,`, `;` …)<br>
           If set to nothing or `None`, any char that is not a letter or number
           can be used to separate the RGBA values, including just a space.
         - `allow_alpha` -⠀whether to include the alpha channel in the match\n
@@ -137,7 +139,7 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
         if allow_alpha:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""(?ix)(?:rgb|rgba)?\s*(?:
                     \(?\s*{rgb_part}
                         (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
@@ -145,17 +147,17 @@ class Regex:
                 )"""
             )
         else:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""(?ix)(?:rgb|rgba)?\s*(?:
                     \(?\s*{rgb_part}\s*\)?
                 )"""
             )
 
-    @staticmethod
-    def hsla_str(fix_sep: str = ",", allow_alpha: bool = True) -> str:
+    @classmethod
+    def hsla_str(cls, fix_sep: Optional[str] = ",", allow_alpha: bool = True) -> str:
         """Matches a HSLA color inside a string.\n
         ----------------------------------------------------------------------------------
-        - `fix_sep` -⠀the fixed separator between the HSLA values (e.g. `,`, `;` ...)<br>
+        - `fix_sep` -⠀the fixed separator between the HSLA values (e.g. `,`, `;` …)<br>
           If set to nothing or `None`, any char that is not a letter or number
           can be used to separate the HSLA values, including just a space.
         - `allow_alpha` -⠀whether to include the alpha channel in the match\n
@@ -179,7 +181,7 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
         if allow_alpha:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""(?ix)(?:hsl|hsla)?\s*(?:
                     \(?\s*{hsl_part}
                         (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
@@ -187,14 +189,14 @@ class Regex:
                 )"""
             )
         else:
-            return Regex._clean( \
+            return cls._clean( \
                 rf"""(?ix)(?:hsl|hsla)?\s*(?:
                     \(?\s*{hsl_part}\s*\)?
                 )"""
             )
 
-    @staticmethod
-    def hexa_str(allow_alpha: bool = True) -> str:
+    @classmethod
+    def hexa_str(cls, allow_alpha: bool = True) -> str:
         """Matches a HEXA color inside a string.\n
         ----------------------------------------------------------------------
         - `allow_alpha` -⠀whether to include the alpha channel in the match\n
@@ -209,12 +211,13 @@ class Regex:
         return r"(?i)(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})" \
             if allow_alpha else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
 
-    @staticmethod
-    def _clean(pattern: str) -> str:
+    @classmethod
+    def _clean(cls, pattern: str) -> str:
         """Internal method to make a multiline-string regex pattern into a single-line pattern."""
-        return "".join(l.strip() for l in pattern.splitlines()).strip()
+        return "".join(line.strip() for line in pattern.splitlines()).strip()
 
 
+@mypyc_attr(native_class=False)
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
     --------------------------------------------------------------------------------

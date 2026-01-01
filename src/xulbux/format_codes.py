@@ -87,21 +87,21 @@ the formatting code:
   Examples:
   - `[bright:black]` `[BR:black]`
   - `[bright:red]` `[BR:red]`
-  - ...
+  - …
 - Background console colors:
   Use the prefix `background:` `BG:` to set the background to a standard console color. (Not all consoles support bright
   standard colors.)
   Examples:
   - `[background:black]` `[BG:black]`
   - `[background:red]` `[BG:red]`
-  - ...
+  - …
 - Bright background console colors:
   Combine the prefixes `background:` / `BG:` and `bright:` / `BR:` to set the background to a bright console color.
   (The order of the prefixes doesn't matter.)
   Examples:
   - `[background:bright:black]` `[BG:BR:black]`
   - `[background:bright:red]` `[BG:BR:red]`
-  - ...
+  - …
 - Text styles:
   Use the built-in text formatting to change the style of the text. There are long and short forms for each formatting code.
   (Not all consoles support all text styles.)
@@ -145,23 +145,23 @@ Unlike the standard console colors, the default color can be changed by using th
 - `[l]` will lighten the `default_color` text by `brightness_steps`%
 - `[ll]` will lighten the `default_color` text by `2 × brightness_steps`%
 - `[lll]` will lighten the `default_color` text by `3 × brightness_steps`%
-- ... etc. Same thing for darkening:
+- … etc. Same thing for darkening:
 - `[d]` will darken the `default_color` text by `brightness_steps`%
 - `[dd]` will darken the `default_color` text by `2 × brightness_steps`%
 - `[ddd]` will darken the `default_color` text by `3 × brightness_steps`%
-- ... etc.
+- … etc.
 Per default, you can also use `+` and `-` to get lighter and darker `default_color` versions.
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from .base.types import Match, Rgba, Hexa
+from .base.types import FormattableString, Rgba, Hexa
 from .base.consts import ANSI
 
 from .string import String
 from .regex import LazyRegex, Regex
-from .color import Color, rgba
+from .color import Color, rgba, hexa
 
-from typing import Optional, Literal, cast
+from typing import Optional, Literal, Final, cast
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
@@ -169,22 +169,26 @@ import os as _os
 
 
 _CONSOLE_ANSI_CONFIGURED: bool = False
+"""Whether the console was already configured to be able to interpret and render ANSI formatting."""
 
-_ANSI_SEQ_1: str = ANSI.seq(1)
-_DEFAULT_COLOR_MODS: dict[str, str] = {
+_ANSI_SEQ_1: Final[FormattableString] = ANSI.seq(1)
+"""ANSI escape sequence with a single placeholder."""
+_DEFAULT_COLOR_MODS: Final[dict[str, str]] = {
     "lighten": "+l",
     "darken": "-d",
 }
-_PREFIX: dict[str, set[str]] = {
+"""Formatting codes for lightening and darkening the `default_color`."""
+_PREFIX: Final[dict[str, set[str]]] = {
     "BG": {"background", "bg"},
     "BR": {"bright", "br"},
 }
-_PREFIX_RX: dict[str, str] = {
+"""Formatting code prefixes for setting background- and bright-colors."""
+_PREFIX_RX: Final[dict[str, str]] = {
     "BG": rf"(?:{'|'.join(_PREFIX['BG'])})\s*:",
     "BR": rf"(?:{'|'.join(_PREFIX['BR'])})\s*:",
 }
+"""Regex patterns for matching background- and bright-color prefixes."""
 
-# PRECOMPILE REGULAR EXPRESSIONS
 _PATTERNS = LazyRegex(
     star_reset=r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]",
     star_reset_inside=r"([^|]*?)\s*\*\s*([^|]*)",
@@ -210,8 +214,9 @@ class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
     which are then converted to ANSI codes for pretty console output."""
 
-    @staticmethod
+    @classmethod
     def print(
+        cls,
         *values: object,
         default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
@@ -230,14 +235,15 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        FormatCodes._config_console()
-        _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
+        cls._config_console()
+        _sys.stdout.write(cls.to_ansi(sep.join(map(str, values)) + end, default_color, brightness_steps))
 
         if flush:
             _sys.stdout.flush()
 
-    @staticmethod
+    @classmethod
     def input(
+        cls,
         prompt: object = "",
         default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
@@ -253,15 +259,16 @@ class FormatCodes:
         --------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes, see the
         `format_codes` module documentation."""
-        FormatCodes._config_console()
-        user_input = input(FormatCodes.to_ansi(str(prompt), default_color, brightness_steps))
+        cls._config_console()
+        user_input = input(cls.to_ansi(str(prompt), default_color, brightness_steps))
 
         if reset_ansi:
             _sys.stdout.write(f"{ANSI.CHAR}[0m")
         return user_input
 
-    @staticmethod
+    @classmethod
     def to_ansi(
+        cls,
         string: str,
         default_color: Optional[Rgba | Hexa] = None,
         brightness_steps: int = 20,
@@ -283,7 +290,7 @@ class FormatCodes:
             raise ValueError("The 'brightness_steps' parameter must be between 1 and 100.")
 
         if _validate_default:
-            use_default, default_color = FormatCodes.__validate_default_color(default_color)
+            use_default, default_color = cls._validate_default_color(default_color)
         else:
             use_default = default_color is not None
             default_color = cast(Optional[rgba], default_color)
@@ -293,101 +300,19 @@ class FormatCodes:
         else:
             string = _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
-        def is_valid_color(color: str) -> bool:
-            return bool((color in ANSI.COLOR_MAP) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
+        string = "\n".join(
+            _PATTERNS.formatting.sub(_ReplaceKeysHelper(cls, use_default, default_color, brightness_steps), line)
+            for line in string.split("\n")
+        )
 
-        def replace_keys(match: Match) -> str:
-            _formats = formats = match.group(1)
-            auto_reset_escaped = match.group(2)
-            auto_reset_txt = match.group(3)
+        return (
+            ((cls._get_default_ansi(default_color) or "") if _default_start else "") \
+            + string
+        ) if default_color is not None else string
 
-            if formats_escaped := bool(_PATTERNS.escape_char_cond.match(match.group(0))):
-                _formats = formats = _PATTERNS.escape_char.sub(r"\1", formats)  # REMOVE / OR \\
-
-            if auto_reset_txt and auto_reset_txt.count("[") > 0 and auto_reset_txt.count("]") > 0:
-                auto_reset_txt = FormatCodes.to_ansi(
-                    auto_reset_txt,
-                    default_color,
-                    brightness_steps,
-                    _default_start=False,
-                    _validate_default=False,
-                )
-
-            if not formats:
-                return match.group(0)
-
-            if formats.count("[") > 0 and formats.count("]") > 0:
-                formats = FormatCodes.to_ansi(
-                    formats,
-                    default_color,
-                    brightness_steps,
-                    _default_start=False,
-                    _validate_default=False,
-                )
-
-            format_keys = FormatCodes.__formats_to_keys(formats)
-            ansi_formats = [
-                r if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)) != k else f"[{k}]"
-                for k in format_keys
-            ]
-
-            if auto_reset_txt and not auto_reset_escaped:
-                reset_keys = []
-                default_color_resets = ("_bg", "default") if use_default else ("_bg", "_c")
-
-                for k in format_keys:
-                    k_lower = k.lower()
-                    k_set = set(k_lower.split(":"))
-
-                    if _PREFIX["BG"] & k_set and len(k_set) <= 3:
-                        if k_set & _PREFIX["BR"]:
-                            for i in range(len(k)):
-                                if is_valid_color(k[i:]):
-                                    reset_keys.extend(default_color_resets)
-                                    break
-                        else:
-                            for i in range(len(k)):
-                                if is_valid_color(k[i:]):
-                                    reset_keys.append("_bg")
-                                    break
-
-                    elif is_valid_color(k) or any(
-                            k_lower.startswith(pref_colon := f"{prefix}:") and is_valid_color(k[len(pref_colon):])
-                            for prefix in _PREFIX["BR"]):
-                        reset_keys.append(default_color_resets[1])
-
-                    else:
-                        reset_keys.append(f"_{k}")
-
-                ansi_resets = [
-                    r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)
-                                              ).startswith(f"{ANSI.CHAR}{ANSI.START}")
-                ]
-
-            else:
-                ansi_resets = []
-
-            if (
-                not (len(ansi_formats) == 1 and ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1) and \
-                not all(f.startswith(f"{ANSI.CHAR}{ANSI.START}") for f in ansi_formats)  # FORMATTING WAS INVALID
-            ):
-                return match.group(0)
-            elif formats_escaped:  # FORMATTING WAS VALID BUT ESCAPED
-                return f"[{_formats}]({auto_reset_txt})" if auto_reset_txt else f"[{_formats}]"
-            else:
-                return (
-                    "".join(ansi_formats) + (
-                        f"({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, _default_start=False, _validate_default=False)})"
-                        if auto_reset_escaped and auto_reset_txt else auto_reset_txt if auto_reset_txt else ""
-                    ) + ("" if auto_reset_escaped else "".join(ansi_resets))
-                )
-
-        string = "\n".join(_PATTERNS.formatting.sub(replace_keys, line) for line in string.split("\n"))
-        return (((FormatCodes.__get_default_ansi(default_color) or "") if _default_start else "")
-                + string) if default_color is not None else string
-
-    @staticmethod
+    @classmethod
     def escape(
+        cls,
         string: str,
         default_color: Optional[Rgba | Hexa] = None,
         _escape_char: Literal["/", "\\"] = "/",
@@ -401,51 +326,23 @@ class FormatCodes:
         -----------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
-        use_default, default_color = FormatCodes.__validate_default_color(default_color)
+        use_default, default_color = cls._validate_default_color(default_color)
 
-        def escape_format_code(match: Match) -> str:
-            """Escape formatting code if it contains valid format keys."""
-            formats, auto_reset_txt = match.group(1), match.group(3)
+        return "\n".join(
+            _PATTERNS.formatting.sub(_EscapeFormatCodeHelper(cls, use_default, default_color, _escape_char), line)
+            for line in string.split("\n")
+        )
 
-            # CHECK IF ALREADY ESCAPED OR CONTAINS NO FORMATTING
-            if not formats or _PATTERNS.escape_char_cond.match(match.group(0)):
-                return match.group(0)
-
-            # TEMPORARILY REPLACE `*` FOR VALIDATION
-            _formats = formats
-            if use_default:
-                _formats = _PATTERNS.star_reset_inside.sub(r"\1_|default\2", formats)
-            else:
-                _formats = _PATTERNS.star_reset_inside.sub(r"\1_\2", formats)
-
-            if all((FormatCodes.__get_replacement(k, default_color) != k) for k in FormatCodes.__formats_to_keys(_formats)):
-                # ESCAPE THE FORMATTING CODE
-                escaped = f"[{_escape_char}{formats}]"
-                if auto_reset_txt:
-                    # RECURSIVELY ESCAPE FORMATTING IN AUTO-RESET TEXT
-                    escaped_auto_reset = FormatCodes.escape(auto_reset_txt, default_color, _escape_char)
-                    escaped += f"({escaped_auto_reset})"
-                return escaped
-            else:
-                # KEEP INVALID FORMATTING CODES AS-IS
-                result = f"[{formats}]"
-                if auto_reset_txt:
-                    # STILL RECURSIVELY PROCESS AUTO-RESET TEXT
-                    escaped_auto_reset = FormatCodes.escape(auto_reset_txt, default_color, _escape_char)
-                    result += f"({escaped_auto_reset})"
-                return result
-
-        return "\n".join(_PATTERNS.formatting.sub(escape_format_code, l) for l in string.split("\n"))
-
-    @staticmethod
-    def escape_ansi(ansi_string: str) -> str:
+    @classmethod
+    def escape_ansi(cls, ansi_string: str) -> str:
         """Escapes all ANSI codes in the string, so they are visible when output to the console.\n
         -------------------------------------------------------------------------------------------
         - `ansi_string` -⠀the string that contains the ANSI codes to escape"""
-        return ansi_string.replace(ANSI.CHAR, ANSI.ESCAPED_CHAR)
+        return ansi_string.replace(ANSI.CHAR, ANSI.CHAR_ESCAPED)
 
-    @staticmethod
+    @classmethod
     def remove(
+        cls,
         string: str,
         default_color: Optional[Rgba | Hexa] = None,
         get_removals: bool = False,
@@ -458,14 +355,15 @@ class FormatCodes:
         - `get_removals` -⠀if true, additionally to the cleaned string, a list of tuples will be returned,
           where each tuple contains the position of the removed formatting code and the removed formatting code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
-        return FormatCodes.remove_ansi(
-            FormatCodes.to_ansi(string, default_color=default_color),
+        return cls.remove_ansi(
+            cls.to_ansi(string, default_color=default_color),
             get_removals=get_removals,
             _ignore_linebreaks=_ignore_linebreaks,
         )
 
-    @staticmethod
+    @classmethod
     def remove_ansi(
+        cls,
         ansi_string: str,
         get_removals: bool = False,
         _ignore_linebreaks: bool = False,
@@ -477,17 +375,10 @@ class FormatCodes:
           where each tuple contains the position of the removed ansi code and the removed ansi code
         - `_ignore_linebreaks` -⠀whether to ignore line breaks for the removal positions"""
         if get_removals:
-            removals = []
-
-            def replacement(match: Match) -> str:
-                start_pos = match.start() - sum(len(removed) for _, removed in removals)
-                if removals and removals[-1][0] == start_pos:
-                    start_pos = removals[-1][0]
-                removals.append((start_pos, match.group()))
-                return ""
+            removals: list[tuple[int, str]] = []
 
             clean_string = _PATTERNS.ansi_seq.sub(
-                replacement,
+                _RemAnsiSeqHelper(removals),
                 ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string  # REMOVE LINEBREAKS FOR POSITIONS
             )
             if _ignore_linebreaks:
@@ -498,8 +389,8 @@ class FormatCodes:
         else:
             return _PATTERNS.ansi_seq.sub("", ansi_string)
 
-    @staticmethod
-    def _config_console() -> None:
+    @classmethod
+    def _config_console(cls) -> None:
         """Internal method which configure the console to be able to interpret and render ANSI formatting.\n
         -----------------------------------------------------------------------------------------------------
         This method will only do something the first time it's called. Subsequent calls will do nothing."""
@@ -509,7 +400,7 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # ENABLE VT100 MODE ON WINDOWS TO BE ABLE TO USE ANSI CODES
-                    kernel32 = _ctypes.windll.kernel32
+                    kernel32 = getattr(_ctypes, "windll").kernel32
                     h = kernel32.GetStdHandle(-11)
                     mode = _ctypes.c_ulong()
                     kernel32.GetConsoleMode(h, _ctypes.byref(mode))
@@ -519,61 +410,29 @@ class FormatCodes:
             _CONSOLE_ANSI_CONFIGURED = True
 
     @staticmethod
-    def __formats_to_keys(formats: str) -> list[str]:
-        return [k.strip() for k in formats.split("|") if k.strip()]
-
-    @staticmethod
-    def __validate_default_color(default_color: Optional[Rgba | Hexa]) -> tuple[bool, Optional[rgba]]:
-        """Validate and convert `default_color` to rgba format."""
+    def _validate_default_color(default_color: Optional[Rgba | Hexa]) -> tuple[bool, Optional[rgba]]:
+        """Internal method to validate and convert `default_color` to a `rgba` color object."""
         if default_color is None:
             return False, None
-        if Color.is_valid_rgba(default_color, False):
-            return True, cast(rgba, default_color)
-        elif Color.is_valid_hexa(default_color, False):
-            return True, Color.to_rgba(default_color)
+        if Color.is_valid_hexa(default_color, False):
+            return True, hexa(cast(str | int, default_color)).to_rgba()
+        elif Color.is_valid_rgba(default_color, False):
+            return True, Color._parse_rgba(default_color)
         raise TypeError("The 'default_color' parameter must be either a valid RGBA or HEXA color, or None.")
 
     @staticmethod
-    def __get_default_ansi(
-        default_color: rgba,
-        format_key: Optional[str] = None,
-        brightness_steps: Optional[int] = None,
-        _modifiers: tuple[str, str] = (_DEFAULT_COLOR_MODS["lighten"], _DEFAULT_COLOR_MODS["darken"]),
-    ) -> Optional[str]:
-        """Get the `default_color` and lighter/darker versions of it as ANSI code."""
-        if not isinstance(default_color, rgba):
-            return None
-        _default_color: tuple[int, int, int] = tuple(default_color)[:3]
-        if brightness_steps is None or (format_key and _PATTERNS.bg_opt_default.search(format_key)):
-            return (ANSI.SEQ_BG_COLOR if format_key and _PATTERNS.bg_default.search(format_key) else ANSI.SEQ_COLOR).format(
-                *_default_color
-            )
-        if format_key is None or not (match := _PATTERNS.modifier.match(format_key)):
-            return None
-        is_bg, modifiers = match.groups()
-        adjust = 0
-        for mod in _modifiers[0] + _modifiers[1]:
-            adjust = String.single_char_repeats(modifiers, mod)
-            if adjust and adjust > 0:
-                modifiers = mod
-                break
-        new_rgb = _default_color
-        if adjust == 0:
-            return None
-        elif modifiers in _modifiers[0]:
-            new_rgb = tuple(Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust))
-        elif modifiers in _modifiers[1]:
-            new_rgb = tuple(Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust))
-        return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_COLOR).format(*new_rgb[:3])
+    def _formats_to_keys(formats: str) -> list[str]:
+        """Internal method to convert a string of multiple format keys
+        to a list of individual, stripped format keys."""
+        return [k.strip() for k in formats.split("|") if k.strip()]
 
-    @staticmethod
-    def __get_replacement(format_key: str, default_color: Optional[rgba], brightness_steps: int = 20) -> str:
-        """Gives you the corresponding ANSI code for the given format key.
+    @classmethod
+    def _get_replacement(cls, format_key: str, default_color: Optional[rgba], brightness_steps: int = 20) -> str:
+        """Internal method that gives you the corresponding ANSI code for the given format key.
         If `default_color` is not `None`, the text color will be `default_color` if all formats
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
-        _format_key, format_key = format_key, FormatCodes.__normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
-        if default_color and (new_default_color := FormatCodes.__get_default_ansi(default_color, format_key,
-                                                                                  brightness_steps)):
+        _format_key, format_key = format_key, cls._normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
+        if default_color and (new_default_color := cls._get_default_ansi(default_color, format_key, brightness_steps)):
             return new_default_color
         for map_key in ANSI.CODES_MAP:
             if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
@@ -602,15 +461,262 @@ class FormatCodes:
         return _format_key
 
     @staticmethod
-    def __normalize_key(format_key: str) -> str:
-        """Normalizes the given format key."""
+    def _get_default_ansi(
+        default_color: rgba,
+        format_key: Optional[str] = None,
+        brightness_steps: Optional[int] = None,
+        _modifiers: tuple[str, str] = (_DEFAULT_COLOR_MODS["lighten"], _DEFAULT_COLOR_MODS["darken"]),
+    ) -> Optional[str]:
+        """Internal method to get the `default_color` and lighter/darker versions of it as ANSI code."""
+        if not isinstance(default_color, rgba):
+            return None
+        _default_color: tuple[int, int, int] = tuple(default_color)[:3]
+        if brightness_steps is None or (format_key and _PATTERNS.bg_opt_default.search(format_key)):
+            return (ANSI.SEQ_BG_COLOR if format_key and _PATTERNS.bg_default.search(format_key) else ANSI.SEQ_COLOR).format(
+                *_default_color
+            )
+        if format_key is None or not (match := _PATTERNS.modifier.match(format_key)):
+            return None
+        is_bg, modifiers = match.groups()
+        adjust = 0
+        for mod in _modifiers[0] + _modifiers[1]:
+            adjust = String.single_char_repeats(modifiers, mod)
+            if adjust and adjust > 0:
+                modifiers = mod
+                break
+        new_rgb = _default_color
+        if adjust == 0:
+            return None
+        elif modifiers in _modifiers[0]:
+            new_rgb = tuple(Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust))
+        elif modifiers in _modifiers[1]:
+            new_rgb = tuple(Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust))
+        return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_COLOR).format(*new_rgb[:3])
+
+    @staticmethod
+    def _normalize_key(format_key: str) -> str:
+        """Internal method to normalize the given format key."""
         k_parts = format_key.replace(" ", "").lower().split(":")
         prefix_str = "".join(
             f"{prefix_key.lower()}:" for prefix_key, prefix_values in _PREFIX.items()
             if any(k_part in prefix_values for k_part in k_parts)
         )
         return prefix_str + ":".join(
-            part for part in k_parts if part not in {val
-                                                     for values in _PREFIX.values()
-                                                     for val in values}
+            part for part in k_parts \
+            if part not in {val for values in _PREFIX.values() for val in values}
         )
+
+
+class _EscapeFormatCodeHelper:
+    """Internal, callable helper class to escape formatting codes."""
+
+    def __init__(
+        self,
+        cls: type[FormatCodes],
+        use_default: bool,
+        default_color: Optional[rgba],
+        escape_char: Literal["/", "\\"],
+    ):
+        self.cls = cls
+        self.use_default = use_default
+        self.default_color = default_color
+        self.escape_char: Literal["/", "\\"] = escape_char
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        formats, auto_reset_txt = match.group(1), match.group(3)
+
+        # CHECK IF ALREADY ESCAPED OR CONTAINS NO FORMATTING
+        if not formats or _PATTERNS.escape_char_cond.match(match.group(0)):
+            return match.group(0)
+
+        # TEMPORARILY REPLACE `*` FOR VALIDATION
+        _formats = formats
+        if self.use_default:
+            _formats = _PATTERNS.star_reset_inside.sub(r"\1_|default\2", formats)
+        else:
+            _formats = _PATTERNS.star_reset_inside.sub(r"\1_\2", formats)
+
+        if all((self.cls._get_replacement(k, self.default_color) != k) for k in self.cls._formats_to_keys(_formats)):
+            # ESCAPE THE FORMATTING CODE
+            escaped = f"[{self.escape_char}{formats}]"
+            if auto_reset_txt:
+                # RECURSIVELY ESCAPE FORMATTING IN AUTO-RESET TEXT
+                escaped_auto_reset = self.cls.escape(auto_reset_txt, self.default_color, self.escape_char)
+                escaped += f"({escaped_auto_reset})"
+            return escaped
+        else:
+            # KEEP INVALID FORMATTING CODES AS-IS
+            result = f"[{formats}]"
+            if auto_reset_txt:
+                # STILL RECURSIVELY PROCESS AUTO-RESET TEXT
+                escaped_auto_reset = self.cls.escape(auto_reset_txt, self.default_color, self.escape_char)
+                result += f"({escaped_auto_reset})"
+            return result
+
+
+class _RemAnsiSeqHelper:
+    """Internal, callable helper class to remove ANSI sequences and track their removal positions."""
+
+    def __init__(self, removals: list[tuple[int, str]]):
+        self.removals = removals
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        start_pos = match.start() - sum(len(removed) for _, removed in self.removals)
+        if self.removals and self.removals[-1][0] == start_pos:
+            start_pos = self.removals[-1][0]
+        self.removals.append((start_pos, match.group()))
+        return ""
+
+
+class _ReplaceKeysHelper:
+    """Internal, callable helper class to replace formatting keys with their respective ANSI codes."""
+
+    def __init__(
+        self,
+        cls: type[FormatCodes],
+        use_default: bool,
+        default_color: Optional[rgba],
+        brightness_steps: int,
+    ):
+        self.cls = cls
+        self.use_default = use_default
+        self.default_color = default_color
+        self.brightness_steps = brightness_steps
+
+        # INSTANCE VARIABLES FOR CURRENT PROCESSING STATE
+        self.formats: str = ""
+        self.original_formats: str = ""
+        self.formats_escaped: bool = False
+        self.auto_reset_escaped: bool = False
+        self.auto_reset_txt: Optional[str] = None
+        self.format_keys: list[str] = []
+        self.ansi_formats: list[str] = []
+        self.ansi_resets: list[str] = []
+
+    def __call__(self, match: _rx.Match[str]) -> str:
+        self.original_formats = self.formats = match.group(1)
+        self.auto_reset_escaped = bool(match.group(2))
+        self.auto_reset_txt = match.group(3)
+
+        # CHECK IF THERE'S ESCAPED FORMAT CODES
+        self.formats_escaped = bool(_PATTERNS.escape_char_cond.match(match.group(0)))
+        if self.formats_escaped:
+            self.original_formats = self.formats = _PATTERNS.escape_char.sub(r"\1", self.formats)
+
+        self.process_formats_and_auto_reset()
+
+        if not self.formats:
+            return match.group(0)
+
+        self.convert_to_ansi()
+        return self.build_output(match)
+
+    def process_formats_and_auto_reset(self) -> None:
+        """Process nested formatting in both formats and auto-reset text."""
+        # PROCESS AUTO-RESET TEXT IF IT CONTAINS NESTED FORMATTING
+        if self.auto_reset_txt and self.auto_reset_txt.count("[") > 0 and self.auto_reset_txt.count("]") > 0:
+            self.auto_reset_txt = self.cls.to_ansi(
+                self.auto_reset_txt,
+                self.default_color,
+                self.brightness_steps,
+                _default_start=False,
+                _validate_default=False,
+            )
+
+        # PROCESS NESTED FORMATTING IN FORMATS
+        if self.formats and self.formats.count("[") > 0 and self.formats.count("]") > 0:
+            self.formats = self.cls.to_ansi(
+                self.formats,
+                self.default_color,
+                self.brightness_steps,
+                _default_start=False,
+                _validate_default=False,
+            )
+
+    def convert_to_ansi(self) -> None:
+        """Convert format keys to ANSI codes and generate resets if needed."""
+        self.format_keys = self.cls._formats_to_keys(self.formats)
+        self.ansi_formats = [
+            r if (r := self.cls._get_replacement(k, self.default_color, self.brightness_steps)) != k else f"[{k}]"
+            for k in self.format_keys
+        ]
+
+        # GENERATE RESET CODES IF AUTO-RESET IS ACTIVE
+        if self.auto_reset_txt and not self.auto_reset_escaped:
+            self.gen_reset_codes()
+        else:
+            self.ansi_resets = []
+
+    def gen_reset_codes(self) -> None:
+        """Generate appropriate ANSI reset codes for each format key."""
+        default_color_resets = ("_bg", "default") if self.use_default else ("_bg", "_c")
+        reset_keys: list[str] = []
+
+        for k in self.format_keys:
+            k_lower = k.lower()
+            k_set = set(k_lower.split(":"))
+
+            # BACKGROUND COLOR FORMAT
+            if _PREFIX["BG"] & k_set and len(k_set) <= 3:
+                if k_set & _PREFIX["BR"]:
+                    # BRIGHT BACKGROUND COLOR - RESET BOTH BG AND COLOR
+                    for i in range(len(k)):
+                        if self.is_valid_color(k[i:]):
+                            reset_keys.extend(default_color_resets)
+                            break
+                else:
+                    # REGULAR BACKGROUND COLOR - RESET ONLY BG
+                    for i in range(len(k)):
+                        if self.is_valid_color(k[i:]):
+                            reset_keys.append("_bg")
+                            break
+
+            # TEXT COLOR FORMAT
+            elif self.is_valid_color(k) or any(
+                k_lower.startswith(pref_colon := f"{prefix}:") and self.is_valid_color(k[len(pref_colon):]) \
+                for prefix in _PREFIX["BR"]
+            ):
+                reset_keys.append(default_color_resets[1])
+
+            # TEXT STYLE FORMAT
+            else:
+                reset_keys.append(f"_{k}")
+
+        # CONVERT RESET KEYS TO ANSI CODES
+        self.ansi_resets = [
+            r for k in reset_keys if ( \
+                r := self.cls._get_replacement(k, self.default_color, self.brightness_steps)
+            ).startswith(f"{ANSI.CHAR}{ANSI.START}")
+        ]
+
+    def build_output(self, match: _rx.Match[str]) -> str:
+        """Build the final output string based on processed formats and resets."""
+        # CHECK IF ALL FORMATS WERE VALID
+        has_single_valid_ansi = len(self.ansi_formats) == 1 and self.ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1
+        all_formats_valid = all(f.startswith(f"{ANSI.CHAR}{ANSI.START}") for f in self.ansi_formats)
+
+        if not has_single_valid_ansi and not all_formats_valid:
+            return match.group(0)
+
+        # HANDLE ESCAPED FORMATTING
+        if self.formats_escaped:
+            return f"[{self.original_formats}]({self.auto_reset_txt})" if self.auto_reset_txt else f"[{self.original_formats}]"
+
+        # BUILD NORMAL OUTPUT WITH FORMATS AND RESETS
+        output = "".join(self.ansi_formats)
+
+        # ADD AUTO-RESET TEXT
+        if self.auto_reset_escaped and self.auto_reset_txt:
+            output += f"({self.cls.to_ansi(self.auto_reset_txt, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False)})"
+        elif self.auto_reset_txt:
+            output += self.auto_reset_txt
+
+        # ADD RESET CODES IF NOT ESCAPED
+        if not self.auto_reset_escaped:
+            output += "".join(self.ansi_resets)
+
+        return output
+
+    def is_valid_color(self, color: str) -> bool:
+        """Check whether the given color string is a valid formatting-key color."""
+        return bool((color in ANSI.COLOR_MAP) or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))

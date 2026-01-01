@@ -12,8 +12,8 @@ import re as _re
 class String:
     """This class provides various utility methods for string manipulation and conversion."""
 
-    @staticmethod
-    def to_type(string: str) -> Any:
+    @classmethod
+    def to_type(cls, string: str) -> Any:
         """Will convert a string to the found type, including complex nested structures.\n
         -----------------------------------------------------------------------------------
         - `string` -⠀the string to convert"""
@@ -25,8 +25,8 @@ class String:
             except _json.JSONDecodeError:
                 return string
 
-    @staticmethod
-    def normalize_spaces(string: str, tab_spaces: int = 4) -> str:
+    @classmethod
+    def normalize_spaces(cls, string: str, tab_spaces: int = 4) -> str:
         """Replaces all special space characters with normal spaces.\n
         ---------------------------------------------------------------
         - `tab_spaces` -⠀number of spaces to replace tab chars with"""
@@ -37,27 +37,27 @@ class String:
             .replace("\u2003", " ").replace("\u2004", " ").replace("\u2005", " ").replace("\u2006", " ") \
             .replace("\u2007", " ").replace("\u2008", " ").replace("\u2009", " ").replace("\u200A", " ")
 
-    @staticmethod
-    def escape(string: str, str_quotes: Optional[Literal["'", '"']] = None) -> str:
-        """Escapes Python's special characters (e.g. `\\n`, `\\t`, ...) and quotes inside the string.\n
+    @classmethod
+    def escape(cls, string: str, str_quotes: Optional[Literal["'", '"']] = None) -> str:
+        """Escapes Python's special characters (e.g. `\\n`, `\\t`, …) and quotes inside the string.\n
         --------------------------------------------------------------------------------------------------------
         - `string` -⠀the string to escape
         - `str_quotes` -⠀the type of quotes the string will be put inside of (or None to not escape quotes)<br>
           Can be either `"` or `'` and should match the quotes, the string will be put inside of.<br>
           So if your string will be `"string"`, `str_quotes` should be `"`.<br>
           That way, if the string includes the same quotes, they will be escaped."""
-        string = string.replace("\\", r"\\").replace("\n", r"\n").replace("\r", r"\r").replace("\t", r"\t") \
-            .replace("\b", r"\b").replace("\f", r"\f").replace("\a", r"\a")
+        string = string.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") \
+            .replace("\b", "\\b").replace("\f", "\\f").replace("\a", "\\a")
 
         if str_quotes == '"':
-            return string.replace("\\'", "'").replace('"', r"\"")
+            return string.replace("\\'", "'").replace('"', '\\"')
         elif str_quotes == "'":
-            return string.replace('\\"', '"').replace("'", r"\'")
+            return string.replace('\\"', '"').replace("'", "\\'")
         else:
             return string
 
-    @staticmethod
-    def is_empty(string: Optional[str], spaces_are_empty: bool = False) -> bool:
+    @classmethod
+    def is_empty(cls, string: Optional[str], spaces_are_empty: bool = False) -> bool:
         """Returns `True` if the string is considered empty and `False` otherwise.\n
         -----------------------------------------------------------------------------------------------
         - `string` -⠀the string to check (or `None`, which is considered empty)
@@ -67,8 +67,8 @@ class String:
             (spaces_are_empty and isinstance(string, str) and not string.strip())
         )
 
-    @staticmethod
-    def single_char_repeats(string: str, char: str) -> int | bool:
+    @classmethod
+    def single_char_repeats(cls, string: str, char: str) -> int | bool:
         """- If the string consists of only the same `char`, it returns the number of times it is present.
         - If the string doesn't consist of only the same character, it returns `False`.\n
         ---------------------------------------------------------------------------------------------------
@@ -82,8 +82,8 @@ class String:
         else:
             return False
 
-    @staticmethod
-    def decompose(case_string: str, seps: str = "-_", lower_all: bool = True) -> list[str]:
+    @classmethod
+    def decompose(cls, case_string: str, seps: str = "-_", lower_all: bool = True) -> list[str]:
         """Will decompose the string (any type of casing, also mixed) into parts.\n
         ----------------------------------------------------------------------------
         - `case_string` -⠀the string to decompose
@@ -94,22 +94,22 @@ class String:
             for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
         ]
 
-    @staticmethod
-    def to_camel_case(string: str, upper: bool = True) -> str:
+    @classmethod
+    def to_camel_case(cls, string: str, upper: bool = True) -> str:
         """Will convert the string of any type of casing to CamelCase.\n
         -----------------------------------------------------------------
         - `string` -⠀the string to convert
         - `upper` -⠀if true, it will convert to UpperCamelCase,
           otherwise to lowerCamelCase"""
-        parts = String.decompose(string)
+        parts = cls.decompose(string)
 
         return (
             ("" if upper else parts[0].lower()) + \
             "".join(part.capitalize() for part in (parts if upper else parts[1:]))
         )
 
-    @staticmethod
-    def to_delimited_case(string: str, delimiter: str = "_", screaming: bool = False) -> str:
+    @classmethod
+    def to_delimited_case(cls, string: str, delimiter: str = "_", screaming: bool = False) -> str:
         """Will convert the string of any type of casing to delimited case.\n
         -----------------------------------------------------------------------
         - `string` -⠀the string to convert
@@ -117,11 +117,11 @@ class String:
         - `screaming` -⠀whether to convert all parts to uppercase"""
         return delimiter.join(
             part.upper() if screaming else part \
-            for part in String.decompose(string)
+            for part in cls.decompose(string)
         )
 
-    @staticmethod
-    def get_lines(string: str, remove_empty_lines: bool = False) -> list[str]:
+    @classmethod
+    def get_lines(cls, string: str, remove_empty_lines: bool = False) -> list[str]:
         """Will split the string into lines.\n
         ------------------------------------------------------------------------------------
         - `string` -⠀the string to split
@@ -135,8 +135,8 @@ class String:
         else:
             return non_empty_lines
 
-    @staticmethod
-    def remove_consecutive_empty_lines(string: str, max_consecutive: int = 0) -> str:
+    @classmethod
+    def remove_consecutive_empty_lines(cls, string: str, max_consecutive: int = 0) -> str:
         """Will remove consecutive empty lines from the string.\n
         -------------------------------------------------------------------------------------
         - `string` -⠀the string to process
@@ -149,8 +149,8 @@ class String:
 
         return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
 
-    @staticmethod
-    def split_count(string: str, count: int) -> list[str]:
+    @classmethod
+    def split_count(cls, string: str, count: int) -> list[str]:
         """Will split the string every `count` characters.\n
         -----------------------------------------------------
         - `string` -⠀the string to split

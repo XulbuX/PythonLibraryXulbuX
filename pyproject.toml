@@ -1,19 +1,29 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = [
+  "setuptools>=80.0.0",
+  "wheel>=0.45.0",
+  "mypy>=1.19.0",
+  "mypy-extensions>=1.1.0",
+  # TYPES FOR MyPy
+  "types-regex",
+  "types-keyboard",
+  "prompt_toolkit>=3.0.41",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.9.2"
+version = "1.9.3"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
 license = "MIT"
-license-files = ["LICEN[CS]E.*"]
+license-files = ["LICENSE"]
 requires-python = ">=3.10.0"
 dependencies = [
   "keyboard>=0.13.5",
+  "mypy-extensions>=1.1.0",
   "prompt_toolkit>=3.0.41",
   "regex>=2023.10.3",
 ]
@@ -139,7 +149,7 @@ ensure_newline_before_comments = true
 max-complexity = 12
 max-line-length = 127
 select = ["E", "F", "W", "C90"]
-extend-ignore = ["E203", "E266", "W503"]
+extend-ignore = ["E203", "E266", "E502", "W503"]
 per-file-ignores = ["__init__.py:F403,F405"]
 
 [tool.setuptools]
