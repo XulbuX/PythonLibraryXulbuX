@@ -1,6 +1,9 @@
-# THIS WORKFLOW WILL BUILD THE LIBRARY FOR DIFFERENT OSes AND PUBLISH THE BUILDS TO PYPI
+# THIS WORKFLOW WILL BUILD WHEELS FOR ALL MAJOR PLATFORMS AND UPLOAD THEM TO PYPI
 
-name: Build and Publish to PyPI
+# git tag v1.0.0
+# git push origin v1.0.0
+
+name: Build and Publish
 permissions:
   contents: read
 
