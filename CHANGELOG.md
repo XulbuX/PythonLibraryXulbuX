@@ -481,6 +481,8 @@
 
 ## 11.11.2024 `v1.5.6`
 
+**Again 𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉**
+
 * Moved the whole library to its own repository: **[PythonLibraryXulbuX](https://github.com/XulbuX/PythonLibraryXulbuX)**
 * Updated all connections and links correspondingly.
 
@@ -488,6 +490,8 @@
 <span id="v1-5-5" />
 
 ## 11.11.2024 `v1.5.5`
+
+**𝓢𝓲𝓷𝓰𝓵𝓮𝓼 𝓓𝓪𝔂 🥇😉**
 
 * Added methods to get the width and height of the console (*in characters and lines*):<br>
   - <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
