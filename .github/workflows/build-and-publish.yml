@@ -1,4 +1,8 @@
+# THIS WORKFLOW WILL BUILD THE LIBRARY FOR DIFFERENT OSes AND PUBLISH THE BUILDS TO PYPI
+
 name: Build and Publish to PyPI
+permissions:
+  contents: read
 
 on:
   push:
