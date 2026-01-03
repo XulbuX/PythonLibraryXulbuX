@@ -1,5 +1,5 @@
-> [!IMPORTANT]
-> This library is compatible with Python 3.14, but **certain dependencies might not yet support this version**.
+> [!IMPORTANT]<br>
+> This library is compatible with Python 3.14, but **some dependencies may not yet support this version**.
 
 # **xulbux**
 
