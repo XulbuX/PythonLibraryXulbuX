@@ -229,8 +229,8 @@ class Data:
           * `value4` The whole value is removed, since the whole value was a comment.
         - For `key2`, the key, including its whole values will be removed.
         - For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
-        if len(comment_start) == 0:
-            raise ValueError("The 'comment_start' parameter string must not be empty.")
+        if not comment_start:
+            raise ValueError("The 'comment_start' parameter must be a non-empty string.")
 
         return cast(
             DataObj,
@@ -268,8 +268,8 @@ class Data:
         ------------------------------------------------------------------------------------------------
         The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for
         the method `Data.get_path_id()`. See its documentation for more details."""
-        if len(path_sep) == 0:
-            raise ValueError("The 'path_sep' parameter string must not be empty.")
+        if not path_sep:
+            raise ValueError("The 'path_sep' parameter must be a non-empty string.")
 
         if isinstance(ignore_paths, str):
             ignore_paths = [ignore_paths]
@@ -360,8 +360,8 @@ class Data:
         … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
         `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use the
         index of the value, so `healthy->fruit->0`."""
-        if len(path_sep) == 0:
-            raise ValueError("The 'path_sep' parameter string must not be empty.")
+        if not path_sep:
+            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}")
 
         data = cls.remove_comments(data, comment_start=comment_start, comment_end=comment_end)
         if isinstance(value_paths, str):
@@ -471,9 +471,9 @@ class Data:
         ---------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see the `format_codes` module documentation."""
         if indent < 0:
-            raise ValueError("The 'indent' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
         if max_width <= 0:
-            raise ValueError("The 'max_width' parameter must be a positive integer.")
+            raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
 
         return _DataRenderHelper(
             cls,
@@ -783,7 +783,7 @@ class _DataRenderHelper:
             if syntax_highlighting is True:
                 syntax_highlighting = {}
             elif not isinstance(syntax_highlighting, dict):
-                raise TypeError(f"Expected 'syntax_highlighting' to be a dict or bool. Got: {type(syntax_highlighting)}")
+                raise TypeError(f"The 'syntax_highlighting' parameter must be a dict or bool, got {type(syntax_highlighting)}")
 
             self.syntax_hl.update({
                 key: (f"[{val}]", "[_]") if key in self.syntax_hl and val not in {"", None} else ("", "")

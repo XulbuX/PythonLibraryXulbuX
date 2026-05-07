@@ -15,6 +15,14 @@
 # <br><b>Changelog</b><br>
 
 
+<span id="v1-9-8" />
+
+## … `v1.9.8`
+
+* Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
+* Added a new param `allow_space_value` to `Console.get_args()` and made `flag_value_sep` optional, which allows you to specify whether flags should be able to receive their values with a space in between (*e.g.* `--flag value` instead of just `--flag=value`).
+
+
 <span id="v1-9-7" />
 
 ## 26.04.2026 `v1.9.7`

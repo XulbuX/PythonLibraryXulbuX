@@ -122,12 +122,12 @@ def test_read_empty_json(tmp_path: Path):
         data = Json.read(str(file_path))
         assert data == {}
     except ValueError as e:
-        assert "empty or contains only comments" in str(e)
+        assert "contains no data" in str(e)
 
 
 def test_read_comment_only_json(tmp_path: Path):
     file_path = create_test_json_string(tmp_path, "comment_only.json", '{\n">>": "comment"\n}')
-    with pytest.raises(ValueError, match="empty or contains only comments"):
+    with pytest.raises(ValueError, match="contains no data"):
         Json.read(str(file_path))
 
 

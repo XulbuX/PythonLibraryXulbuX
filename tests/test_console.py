@@ -247,6 +247,57 @@ def test_console_supports_color():
                 "after": {"exists": True, "is_pos": True, "values": ["--also-no-flag"], "flag": None},
             },
         ),
+
+        # --- SPACE-SEPARATED FLAG VALUES (allow_space_value=True default) ---
+        # SIMPLE SPACE-SEPARATED VALUE
+        (
+            ["script.py", "--flag", "myValue"],
+            {"flag": {"--flag"}},
+            {"flag": {"exists": True, "is_pos": False, "values": ["myValue"], "flag": "--flag"}},
+        ),
+        # SHORT FLAG WITH SPACE-SEPARATED VALUE
+        (
+            ["script.py", "-f", "file.txt"],
+            {"file": {"-f", "--file"}},
+            {"file": {"exists": True, "is_pos": False, "values": ["file.txt"], "flag": "-f"}},
+        ),
+        # KNOWN FLAG FOLLOWING A FLAG IS NOT CONSUMED AS VALUE
+        (
+            ["script.py", "--msg", "--flag"],
+            {"message": {"--msg"}, "flag": {"--flag"}},
+            {
+                "message": {"exists": True, "is_pos": False, "values": [], "flag": "--msg"},
+                "flag": {"exists": True, "is_pos": False, "values": [], "flag": "--flag"},
+            },
+        ),
+        # MULTIPLE FLAGS WITH SPACE-SEPARATED VALUES
+        (
+            ["script.py", "--msg", "hello", "-n", "42"],
+            {"message": {"--msg"}, "number": {"-n"}},
+            {
+                "message": {"exists": True, "is_pos": False, "values": ["hello"], "flag": "--msg"},
+                "number": {"exists": True, "is_pos": False, "values": ["42"], "flag": "-n"},
+            },
+        ),
+        # SPACE-SEPARATED VALUE CONSUMED BY FLAG, REMAINING TOKEN IS "after" POSITIONAL
+        (
+            ["script.py", "--flag", "val", "after1"],
+            {"flag": {"--flag"}, "after": "after"},
+            {
+                "flag": {"exists": True, "is_pos": False, "values": ["val"], "flag": "--flag"},
+                "after": {"exists": True, "is_pos": True, "values": ["after1"], "flag": None},
+            },
+        ),
+        # SPACE-SEPARATED VALUE WITH BOTH "before" AND "after" POSITIONALS
+        (
+            ["script.py", "pre", "--flag", "val", "post"],
+            {"before": "before", "flag": {"--flag"}, "after": "after"},
+            {
+                "before": {"exists": True, "is_pos": True, "values": ["pre"], "flag": None},
+                "flag": {"exists": True, "is_pos": False, "values": ["val"], "flag": "--flag"},
+                "after": {"exists": True, "is_pos": True, "values": ["post"], "flag": None},
+            },
+        ),
     ]
 )
 def test_get_args(
@@ -274,7 +325,7 @@ def test_get_args_invalid_params():
     with pytest.raises(ValueError, match="The 'flags'-key set must contain at least one flag to search for."):
         Console.get_args({"arg": {"flags": set(), "default": "..."}})
 
-    with pytest.raises(ValueError, match="The 'flag_value_sep' parameter must be a non-empty string."):
+    with pytest.raises(ValueError, match=r"non-empty string or None, got"):
         Console.get_args({"arg": {"-a"}}, flag_value_sep="")
 
 
@@ -299,20 +350,63 @@ def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
     }
 
 
+def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
+    """Test that flag_value_sep=None disables separator syntax and only space-separated values work."""
+    # SEPARATOR SYNTAX SHOULD NOT BE RECOGNIZED – '--flag=val' IS TREATED AS A STANDALONE UNKNOWN TOKEN
+    monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "space_val", "--other=ignored"])
+    result = Console.get_args(
+        {"flag": {"--flag"}, "other": {"--other"}, "after": "after"},
+        flag_value_sep=None,
+    )
+
+    # '--flag' consumes 'space_val' via space-separated syntax
+    assert result.flag.exists is True
+    assert result.flag.values == ["space_val"]
+    assert result.flag.flag == "--flag"
+
+    # '--other=ignored' is not recognized as a flag (no separator processing) – goes to "after"
+    assert result.other.exists is False
+    assert result.other.values == []
+
+    assert result.after.exists is True
+    assert result.after.values == ["--other=ignored"]
+
+
+def test_get_args_allow_space_value_false(monkeypatch: pytest.MonkeyPatch):
+    """Test that allow_space_value=False does not consume the next token as a flag value."""
+    monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "val", "after1"])
+    result = Console.get_args(
+        {"flag": {"--flag"}, "after": "after"},
+        allow_space_value=False,
+    )
+
+    # 'val' must NOT be consumed by --flag
+    assert result.flag.exists is True
+    assert result.flag.values == []
+    assert result.flag.flag == "--flag"
+
+    # both 'val' and 'after1' are unclaimed and collected as "after" positionals
+    assert result.after.exists is True
+    assert result.after.values == ["val", "after1"]
+
+
 def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
     """Test complex scenario mixing defined flags with dash-prefixed values"""
     monkeypatch.setattr(
         sys, "argv", \
         ["script.py", "before string", "-42", "-d=256", "--file=my-file.txt", "-vv", "after string", "--also-no-flag"]
     )
-    result = Console.get_args({
-        "before": "before",
-        "data": {"-d", "--data"},
-        "file": {"-f", "--file"},
-        "verbose": {"-v", "-vv", "-vvv"},
-        "help": {"-h", "--help"},
-        "after": "after",
-    })
+    result = Console.get_args(
+        {
+            "before": "before",
+            "data": {"-d", "--data"},
+            "file": {"-f", "--file"},
+            "verbose": {"-v", "-vv", "-vvv"},
+            "help": {"-h", "--help"},
+            "after": "after",
+        },
+        allow_space_value=False,
+    )
 
     assert result.before.exists is True
     assert result.before.is_pos is True

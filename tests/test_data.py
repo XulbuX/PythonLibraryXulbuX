@@ -157,7 +157,7 @@ def test_get_path_id():
     }
 
 
-def test_get_value_by_path_id():
+def test_get_value_by_path_id() -> None:
     data: dict[str, Any] = {"a": [1, {"b": "c"}], "d": ("e", "f")}
     path_id_1 = str(Data.get_path_id(data, "a->1->b"))
     path_id_2 = str(Data.get_path_id(data, "d->1"))
@@ -175,10 +175,11 @@ def test_get_value_by_path_id():
         Data.get_value_by_path_id({"a": [1]}, "1>01")
 
 
-def test_set_value_by_path_id():
+def test_set_value_by_path_id() -> None:
     data: dict[str, Any] = {"a": [1, {"b": "c"}], "d": ("e", "f")}
     path_id_c = Data.get_path_id(data, "a->1->b")
     path_id_f = Data.get_path_id(data, "d->1")
+    assert path_id_c is not None and path_id_f is not None
 
     updated_data = Data.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})  # type: ignore[assignment]
     expected_data: dict[str, Any] = {"a": [1, {"b": "NEW_C"}], "d": ("e", "NEW_F")}

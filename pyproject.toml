@@ -5,14 +5,16 @@ requires = [
   "mypy>=1.19.0",
   "mypy-extensions>=1.1.0",
   # TYPES FOR MyPy
+  "types-setuptools",
   "types-regex",
+  "types-toml",
   "prompt_toolkit>=3.0.41",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "xulbux"
-version = "1.9.7"
+version = "1.9.8"
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
 authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]

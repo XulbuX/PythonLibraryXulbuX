@@ -1,5 +1,5 @@
 __package_name__ = "xulbux"
-__version__ = "1.9.7"
+__version__ = "1.9.8"
 __description__ = "A Python library to simplify common programming tasks."
 __status__ = "Production/Stable"
 

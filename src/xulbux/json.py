@@ -79,7 +79,7 @@ class Json:
             raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {fmt_error}") from e
 
         if not (processed_data := dict(Data.remove_comments(data, comment_start=comment_start, comment_end=comment_end))):
-            raise ValueError(f"The JSON file {file_path!r} is empty or contains only comments.")
+            raise ValueError(f"The JSON file {file_path!r} contains no data")
 
         return (processed_data, data) if return_original else processed_data
 

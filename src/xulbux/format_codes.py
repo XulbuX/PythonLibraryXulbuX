@@ -298,7 +298,7 @@ class FormatCodes:
         For exact information about how to use special formatting codes,
         see the `format_codes` module documentation."""
         if not (0 < brightness_steps <= 100):
-            raise ValueError("The 'brightness_steps' parameter must be between 1 and 100.")
+            raise ValueError(f"The 'brightness_steps' parameter must be in range [1, 100] inclusive, got {brightness_steps!r}")
 
         if _validate_default:
             use_default, default_color = cls._validate_default_color(default_color)
@@ -518,7 +518,7 @@ class FormatCodes:
             return True, hexa(cast(str | int, default_color)).to_rgba()
         elif Color.is_valid_rgba(default_color, allow_alpha=False):
             return True, Color._parse_rgba(cast(Rgba, default_color))
-        raise TypeError("The 'default_color' parameter must be either a valid RGBA or HEXA color, or None.")
+        raise ValueError(f"The 'default_color' parameter must be either a valid RGBA or HEXA color, or None, got {default_color!r}")
 
     @staticmethod
     def _formats_to_keys(formats: str, /) -> list[str]:

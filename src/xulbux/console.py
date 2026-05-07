@@ -272,13 +272,23 @@ class Console(metaclass=_ConsoleMeta):
     """This class provides methods for logging and other actions within the console."""
 
     @classmethod
-    def get_args(cls, arg_parse_configs: ArgParseConfigs, /, *, flag_value_sep: str = "=") -> ParsedArgs:
+    def get_args(
+        cls,
+        arg_parse_configs: ArgParseConfigs,
+        /,
+        *,
+        flag_value_sep: Optional[str] = "=",
+        allow_space_value: bool = True,
+    ) -> ParsedArgs:
         """Will search for the specified args in the command-line arguments
         and return the results as a special `ParsedArgs` object.\n
         -------------------------------------------------------------------------------------------------
         - `arg_parse_configs` - a dictionary where each key is an alias name for the argument
           and the key's value is the parsing configuration for that argument
-        - `flag_value_sep` - the character/s used to separate flags from their values\n
+        - `flag_value_sep` - the character/s used to separate flags from their values;
+          pass `None` to disable separator-based syntax (e.g. `--flag=value`) entirely
+        - `allow_space_value` - whether to allow space-separated flag values (e.g. `--flag value`)
+          in addition to the separator-based syntax; enabled by default\n
         -------------------------------------------------------------------------------------------------
         The `arg_parse_configs` dictionary can have the following structures for each item:
         1.  Simple set of flags (when no default value is needed):
@@ -328,12 +338,16 @@ class Console(metaclass=_ConsoleMeta):
         )
         ```
         -------------------------------------------------------------------------------------------------
-        NOTE: Flags can ONLY receive values when the separator is present
-        (e.g. `--flag=value` or `--flag = value`)."""
-        if not flag_value_sep:
-            raise ValueError("The 'flag_value_sep' parameter must be a non-empty string.")
-
-        return _ConsoleArgsParseHelper(arg_parse_configs, flag_value_sep)()
+        NOTE: When `allow_space_value` is `True`, a value that directly follows a flag
+        (e.g. `--flag value`) is consumed as that flag's value and is not available
+        as a positional `"after"` argument."""
+        if flag_value_sep is not None and not flag_value_sep:
+            raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
+        return _ConsoleArgsParseHelper(
+            arg_parse_configs,
+            flag_value_sep=flag_value_sep,
+            allow_space_value=allow_space_value,
+        )()
 
     @classmethod
     def pause_exit(
@@ -402,11 +416,11 @@ class Console(metaclass=_ConsoleMeta):
         The log message can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
         if tab_size < 0:
-            raise ValueError("The 'tab_size' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
         if title_px < 0:
-            raise ValueError("The 'title_px' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'title_px' parameter must be a non-negative integer, got {title_px!r}")
         if title_mx < 0:
-            raise ValueError("The 'title_mx' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'title_mx' parameter must be a non-negative integer, got {title_mx!r}")
 
         title_fg: str = "_c"
         title = "" if title is None else title.strip().upper()
@@ -418,7 +432,7 @@ class Console(metaclass=_ConsoleMeta):
                 title_bg_color = Color.to_hexa(title_bg_color)
                 title_fg = str(Color.text_color_for_on_bg(title_bg_color))
             else:
-                raise ValueError("The 'title_bg_color' parameter must be a valid console color, RGBA value, or HEXA value.")
+                raise ValueError(f"The 'title_bg_color' parameter must be a valid console color, RGBA value, or HEXA value, got {title_bg_color!r}")
 
         px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
         tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
@@ -644,9 +658,9 @@ class Console(metaclass=_ConsoleMeta):
         The box content can be formatted with special formatting codes. For more detailed
         information about formatting codes, see `format_codes` module documentation."""
         if w_padding < 0:
-            raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
         if indent < 0:
-            raise ValueError("The 'indent' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
         if box_bg_color is not None:
             if str(box_bg_color).replace(" ", "").lower() in ANSI.COLOR_VARIANTS_MAP:
@@ -654,7 +668,7 @@ class Console(metaclass=_ConsoleMeta):
             elif Color.is_valid_rgba(box_bg_color) or Color.is_valid_hexa(box_bg_color):
                 box_bg_color = Color.to_hexa(box_bg_color)
             else:
-                raise ValueError("The 'box_bg_color' parameter must be a valid console color, RGBA value, or HEXA value.")
+                raise ValueError(f"The 'box_bg_color' parameter must be a valid console color, RGBA value, or HEXA value, got {box_bg_color!r}")
 
         lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color)
 
@@ -734,14 +748,14 @@ class Console(metaclass=_ConsoleMeta):
         10. horizontal rule
         11. right horizontal rule connector"""
         if w_padding < 0:
-            raise ValueError("The 'w_padding' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
         if indent < 0:
-            raise ValueError("The 'indent' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
         if _border_chars is not None:
             if len(_border_chars) != 11:
                 raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
             if not all(len(char) == 1 for char in _border_chars):
-                raise ValueError("The '_border_chars' parameter must only contain single-character strings.")
+                raise ValueError(f"The '_border_chars' parameter must only contain single-character strings, got {_border_chars!r}")
 
         if Color.is_valid(border_style):
             border_style = Color.to_hexa(border_style)
@@ -938,9 +952,9 @@ class Console(metaclass=_ConsoleMeta):
         if mask_char is not None and len(mask_char) != 1:
             raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
         if min_len is not None and min_len < 0:
-            raise ValueError("The 'min_len' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'min_len' parameter must be a non-negative integer, got {min_len!r}")
         if max_len is not None and max_len < 0:
-            raise ValueError("The 'max_len' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'max_len' parameter must be a non-negative integer, got {max_len!r}")
 
         helper = _ConsoleInputHelper(
             mask_char=mask_char,
@@ -1109,9 +1123,17 @@ class Console(metaclass=_ConsoleMeta):
 class _ConsoleArgsParseHelper:
     """Internal, callable helper class to parse command-line arguments."""
 
-    def __init__(self, arg_parse_configs: ArgParseConfigs, /, flag_value_sep: str):
+    def __init__(
+        self,
+        arg_parse_configs: ArgParseConfigs,
+        /,
+        *,
+        flag_value_sep: Optional[str],
+        allow_space_value: bool = True,
+    ):
         self.arg_parse_configs = arg_parse_configs
         self.flag_value_sep = flag_value_sep
+        self.allow_space_value = allow_space_value
 
         self.parsed_args: dict[str, ParsedArgData] = {}
         self.positional_configs: dict[str, str] = {}
@@ -1200,7 +1222,7 @@ class _ConsoleArgsParseHelper:
             arg = self.args[i]
 
             # CHECK FOR FLAG WITH INLINE SEPARATOR ('--flag=value')
-            if self.flag_value_sep in arg:
+            if self.flag_value_sep and self.flag_value_sep in arg:
                 if arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup:
                     if self.first_flag_pos is None:
                         self.first_flag_pos = i
@@ -1215,12 +1237,19 @@ class _ConsoleArgsParseHelper:
                 self.last_flag_pos = i
 
                 # CHECK FOR SEPARATOR IN NEXT TOKENS ('--flag', '=', 'value')
-                if i + 1 < self.args_len and self.args[i + 1] == self.flag_value_sep:
+                if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         i += 3  # SKIP FLAG, SEPARATOR, AND VALUE
                         continue
                     else:
                         i += 2  # SKIP FLAG AND SEPARATOR
+                        continue
+
+                # CHECK FOR SPACE-SEPARATED VALUE ('--flag value')
+                if self.allow_space_value and i + 1 < self.args_len:
+                    next_arg = self.args[i + 1]
+                    if self._is_flag_value(next_arg):
+                        i += 2  # SKIP FLAG AND ITS SPACE-SEPARATED VALUE
                         continue
 
             i += 1
@@ -1259,19 +1288,23 @@ class _ConsoleArgsParseHelper:
         # SKIP THE VALUE AFTER THE LAST FLAG IF IT HAS A SEPARATOR
         if self.last_flag_pos is not None:
             # CHECK IF LAST FLAG HAS INLINE VALUE ('--flag=value')
-            if self.flag_value_sep in self.args[self.last_flag_pos]:
+            if self.flag_value_sep and self.flag_value_sep in self.args[self.last_flag_pos]:
                 start_pos = self.last_flag_pos + 1  # VALUE IS INLINE, START AFTER THIS POSITION
             # CHECK IF NEXT TOKEN IS SEPARATOR ('--flag', '=', 'value')
-            elif start_pos < self.args_len and self.args[start_pos].strip() == self.flag_value_sep:
+            elif self.flag_value_sep and start_pos < self.args_len and self.args[start_pos].strip() == self.flag_value_sep:
                 if start_pos + 1 < self.args_len:
                     start_pos += 2  # SKIP SEPARATOR AND VALUE
                 else:
                     start_pos += 1  # SKIP SEPARATOR ONLY
+            # CHECK IF NEXT TOKEN IS SPACE-SEPARATED VALUE ('--flag value')
+            elif self.allow_space_value and start_pos < self.args_len and self._is_flag_value(self.args[start_pos]):
+                start_pos += 1  # SKIP SPACE-SEPARATED VALUE
             # NO SEPARATOR = FLAG HAS NO VALUE = START COLLECTING FROM NEXT POSITION
 
         for i in range(start_pos, self.args_len):
+            arg = self.args[i]
             # DON'T INCLUDE FLAGS OR SEPARATORS
-            if (arg := self.args[i]) == self.flag_value_sep:
+            if self.flag_value_sep and arg == self.flag_value_sep:
                 continue
             elif self._is_positional_arg(arg):
                 after_args.append(arg)
@@ -1282,11 +1315,22 @@ class _ConsoleArgsParseHelper:
 
     def _is_positional_arg(self, arg: str, /, *, allow_separator: bool = True) -> bool:
         """Check if an argument is positional (not a flag or separator)."""
-        if self.flag_value_sep in arg and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup:
+        if self.flag_value_sep and self.flag_value_sep in arg and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup:
             return True
-        if arg not in self.arg_lookup and (allow_separator or arg != self.flag_value_sep):
+        if arg not in self.arg_lookup and (allow_separator or not self.flag_value_sep or arg != self.flag_value_sep):
             return True
         return False
+
+    def _is_flag_value(self, arg: str, /) -> bool:
+        """Check if an argument can be treated as a space-separated flag value
+        (i.e. it is not a known flag, not the separator, and not a `flag=value` token)."""
+        if arg in self.arg_lookup:
+            return False
+        if self.flag_value_sep and arg.strip() == self.flag_value_sep:
+            return False
+        if self.flag_value_sep and self.flag_value_sep in arg and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup:
+            return False
+        return True
 
     def process_flagged_args(self) -> None:
         """Process flagged arguments."""
@@ -1296,7 +1340,7 @@ class _ConsoleArgsParseHelper:
             arg = self.args[i]
 
             # CASE 1: FLAG WITH INLINE SEPARATOR ('--flag=value')
-            if self.flag_value_sep in arg:
+            if self.flag_value_sep and self.flag_value_sep in arg:
                 parts = arg.split(self.flag_value_sep, 1)
 
                 if (potential_flag := (parts := arg.split(self.flag_value_sep, 1))[0].strip()) in self.arg_lookup:
@@ -1317,12 +1361,18 @@ class _ConsoleArgsParseHelper:
                 self.parsed_args[alias].flag = arg
 
                 # CHECK FOR SEPARATOR IN NEXT TOKENS ('--flag', '=', 'value')
-                if i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
+                if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
                             self.parsed_args[alias].values = [val]
                             i += 3
                             continue
+                    i += 2
+                    continue
+
+                # CHECK FOR SPACE-SEPARATED VALUE ('--flag value')
+                if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
+                    self.parsed_args[alias].values = [next_arg]
                     i += 2
                     continue
                 # NO SEPARATOR = JUST A FLAG WITHOUT VALUE
@@ -1615,13 +1665,13 @@ class ProgressBar:
         more detailed information about formatting codes, see the `format_codes` module documentation."""
         if bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in bar_format):
-                raise ValueError("The 'bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError(f"The 'bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {bar_format!r}")
 
             self.bar_format = bar_format
 
         if limited_bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in limited_bar_format):
-                raise ValueError("The 'limited_bar_format' parameter value must contain the '{bar}' or '{b}' placeholder.")
+                raise ValueError(f"The 'limited_bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {limited_bar_format!r}")
 
             self.limited_bar_format = limited_bar_format
 
@@ -1636,9 +1686,9 @@ class ProgressBar:
           characters create smooth transitions, and the last character represents
           empty sections. If None, uses default Unicode block characters."""
         if len(chars) < 2:
-            raise ValueError("The 'chars' parameter must contain at least two characters (full and empty).")
+            raise ValueError(f"The 'chars' parameter must contain at least two characters (full and empty), got {chars!r}")
         elif not all(len(char) == 1 for char in chars):
-            raise ValueError("All elements of 'chars' must be single-character strings.")
+            raise ValueError(f"All elements of 'chars' must be single-character strings, got {chars!r}")
 
         self.chars = chars
 
@@ -1658,9 +1708,9 @@ class ProgressBar:
         self._last_update_time = current_time
 
         if current < 0:
-            raise ValueError("The 'current' parameter must be a non-negative integer.")
+            raise ValueError(f"The 'current' parameter must be a non-negative integer, got {current!r}")
         if total <= 0:
-            raise ValueError("The 'total' parameter must be a positive integer.")
+            raise ValueError(f"The 'total' parameter must be a positive integer, got {total!r}")
 
         try:
             if not self.active:
@@ -1706,7 +1756,7 @@ class ProgressBar:
                 update_progress(i, f"Finalizing ({i})")  # Update both
         ```"""
         if total <= 0:
-            raise ValueError("The 'total' parameter must be a positive integer.")
+            raise ValueError(f"The 'total' parameter must be a positive integer, got {total!r}")
 
         try:
             yield _ProgressContextHelper(self, total, label)
@@ -1952,7 +2002,7 @@ class Throbber:
         - `sep` -⠀the separator string used to join multiple format strings"""
         if not any(_PATTERNS.animation.search(fmt) for fmt in throbber_format):
             raise ValueError(
-                "At least one format string in 'throbber_format' must contain the '{animation}' or '{a}' placeholder."
+                f"At least one format string in 'throbber_format' must contain the '{{animation}}' or '{{a}}' placeholder, got {throbber_format!r}"
             )
 
         self.throbber_format = throbber_format
@@ -1963,7 +2013,7 @@ class Throbber:
         ---------------------------------------------------------------------
         - `frames` -⠀a tuple of strings representing the animation frames"""
         if len(frames) < 2:
-            raise ValueError("The 'frames' parameter must contain at least two frames.")
+            raise ValueError(f"The 'frames' parameter must contain at least two frames, got {frames!r}")
 
         self.frames = frames
 
@@ -1972,7 +2022,7 @@ class Throbber:
         -------------------------------------------------------------------
         - `interval` -⠀the time in seconds between each animation frame"""
         if interval <= 0:
-            raise ValueError("The 'interval' parameter must be a positive number.")
+            raise ValueError(f"The 'interval' parameter must be a positive number, got {interval!r}")
 
         self.interval = interval
 

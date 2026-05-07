@@ -84,8 +84,8 @@ def test_show_help_does_not_require_elevated_privileges(monkeypatch: pytest.Monk
 
 
 def test_show_help_no_privileges_needed_when_properly_implemented(monkeypatch: pytest.MonkeyPatch):
-    """With the cross-platform _read_single_key implementation, show_help() must complete
-    without errors — no elevated privileges required."""
+    """With the cross-platform _read_single_key implementation, show_help()
+    must complete without errors – no elevated privileges required."""
     monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     # Must not raise at all
