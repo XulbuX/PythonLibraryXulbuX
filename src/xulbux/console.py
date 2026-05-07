@@ -97,6 +97,18 @@ class ParsedArgData:
         """Returns the argument result as a dictionary."""
         return ArgData(exists=self.exists, is_pos=self.is_pos, values=self.values, flag=self.flag)
 
+    @overload
+    def get(self, index: int, /) -> Optional[str]:
+        ...
+
+    @overload
+    def get(self, index: int, /, default: None) -> Optional[str]:
+        ...
+
+    @overload
+    def get(self, index: int, /, default: str) -> str:
+        ...
+
     def get(self, index: int, /, default: Optional[str] = None) -> Optional[str]:
         """Safely access a value from the `values` list by index.\n
         -------------------------------------------------------------------
