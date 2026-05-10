@@ -56,13 +56,13 @@ def test_console_user():
 
 
 def test_console_width(mock_terminal_size: MagicMock):
-    width_output = Console.w
+    width_output = Console.width
     assert isinstance(width_output, int)
     assert width_output == 80
 
 
 def test_console_height(mock_terminal_size: MagicMock):
-    height_output = Console.h
+    height_output = Console.height
     assert isinstance(height_output, int)
     assert height_output == 24
 
@@ -1065,11 +1065,11 @@ def test_progressbar_create_bar():
 
     bar = pb._create_bar(100, 100, 10)
     assert len(bar) == 10
-    assert all(c == pb.chars[0] for c in bar)
+    assert all(char == pb.chars[0] for char in bar)
 
     bar = pb._create_bar(0, 100, 10)
     assert len(bar) == 10
-    assert all(c == pb.chars[-1] for c in bar)
+    assert all(char == pb.chars[-1] for char in bar)
 
 
 def test_progressbar_intercepted_output():

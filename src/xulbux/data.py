@@ -34,7 +34,7 @@ class Data:
     def serialize_bytes(cls, data: bytes | bytearray, /) -> dict[str, str]:
         """Converts bytes or bytearray to a JSON-compatible format (dictionary) with explicit keys.\n
         ----------------------------------------------------------------------------------------------
-        - `data` -⠀the bytes or bytearray to serialize"""
+        *   `data` – The bytes or bytearray to serialize."""
         key = "bytearray" if isinstance(data, bytearray) else "bytes"
 
         try:
@@ -48,9 +48,9 @@ class Data:
     def deserialize_bytes(cls, obj: dict[str, str], /) -> bytes | bytearray:
         """Tries to converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type.\n
         --------------------------------------------------------------------------------------------------------
-        - `obj` -⠀the dictionary to deserialize\n
+        *   `obj` – The dictionary to deserialize.
         --------------------------------------------------------------------------------------------------------
-        If the serialized object was created with `Data.serialize_bytes()`, it will work.
+        If the serialized object was created with `Data.serialize_bytes()`, it will work.<br>
         If it fails to decode the data, it will raise a `ValueError`."""
         for key in ("bytes", "bytearray"):
             if key in obj and "encoding" in obj:
@@ -69,7 +69,7 @@ class Data:
     def chars_count(cls, data: DataObjType, /) -> int:
         """The sum of all the characters amount including the keys in dictionaries.\n
         ------------------------------------------------------------------------------
-        - `data` -⠀the data structure to count the characters from"""
+        *   `data` – The data structure to count the characters from."""
         chars_count = 0
 
         if isinstance(data, dict):
@@ -93,7 +93,7 @@ class Data:
     def strip(cls, data: DataObj, /) -> DataObj:
         """Removes leading and trailing whitespaces from the data structure's items.\n
         -------------------------------------------------------------------------------
-        - `data` -⠀the data structure to strip the items from"""
+        *   `data` – The data structure to strip the items from."""
         if isinstance(data, dict):
             return type(data)({key.strip(): (
                 cls.strip(cast(DataObjType, val)) \
@@ -112,9 +112,9 @@ class Data:
     @classmethod
     def remove_empty_items(cls, data: DataObj, /, *, spaces_are_empty: bool = False) -> DataObj:
         """Removes empty items from the data structure.\n
-        ---------------------------------------------------------------------------------
-        - `data` -⠀the data structure to remove empty items from.
-        - `spaces_are_empty` -⠀if true, it will count items with only spaces as empty"""
+        ------------------------------------------------------------------------------------
+        *   `data` – The data structure to remove empty items from.
+        *   `spaces_are_empty` – If true, it will count items with only spaces as empty."""
         if isinstance(data, dict):
             return type(data)({
                 key: (
@@ -140,8 +140,8 @@ class Data:
     @classmethod
     def remove_duplicates(cls, data: DataObj, /) -> DataObj:
         """Removes all duplicates from the data structure.\n
-        -----------------------------------------------------------
-        - `data` -⠀the data structure to remove duplicates from"""
+        --------------------------------------------------------------
+        *   `data` – The data structure to remove duplicates from."""
         if isinstance(data, dict):
             return type(data)({
                 key: cls.remove_duplicates(cast(DataObjType, val)) if isinstance(val, DataObjTT) else val
@@ -182,12 +182,12 @@ class Data:
         comment_sep: str = "",
     ) -> DataObj:
         """Remove comments from a list, tuple or dictionary.\n
-        ---------------------------------------------------------------------------------------------------------------
-        - `data` -⠀list, tuple or dictionary, where the comments should get removed from
-        - `comment_start` -⠀the string that marks the start of a comment inside `data`
-        - `comment_end` -⠀the string that marks the end of a comment inside `data`
-        - `comment_sep` -⠀the string with which a comment will be replaced, if it is in the middle of a value\n
-        ---------------------------------------------------------------------------------------------------------------
+        -----------------------------------------------------------------------------------------------------------------
+        *   `data` – List, tuple or dictionary, where the comments should get removed from.
+        *   `comment_start` – The string that marks the start of a comment inside `data`.
+        *   `comment_end` – The string that marks the end of a comment inside `data`.
+        *   `comment_sep` – The string with which a comment will be replaced, if it is in the middle of a value.
+        -----------------------------------------------------------------------------------------------------------------
         #### Examples:
         ```python
         data = {
@@ -211,8 +211,8 @@ class Data:
             comment_end="<<",
             comment_sep="__",
         )
-        ```\n
-        ---------------------------------------------------------------------------------------------------------------
+        ```
+        -----------------------------------------------------------------------------------------------------------------
         For this example, `processed_data` will be:
         ```python
         {
@@ -223,14 +223,15 @@ class Data:
             ],
             "key3": None,
         }
-        ```\n
-        - For `key1`, all the comments will just be removed, except at `value3` and `value4`:
-          * `value3` The comment is removed and the parts left and right are joined through `comment_sep`.
-          * `value4` The whole value is removed, since the whole value was a comment.
-        - For `key2`, the key, including its whole values will be removed.
-        - For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
+        ```
+        *   For `key1`, all the comments will just be removed, except at `value3` and `value4`:
+            -   `value3` The comment is removed and the parts left and right are joined through `comment_sep`.
+            -   `value4` The whole value is removed, since the whole value was a comment.
+        *   For `key2`, the key, including its whole values will be removed.
+        *   For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
+
         if not comment_start:
-            raise ValueError("The 'comment_start' parameter must be a non-empty string.")
+            raise ValueError(f"The 'comment_start' parameter must be a non-empty string, got {comment_start!r}")
 
         return cast(
             DataObj,
@@ -256,20 +257,21 @@ class Data:
     ) -> bool:
         """Compares two structures and returns `True` if they are equal and `False` otherwise.\n
         ⇾ Will not detect, if a key-name has changed, only if removed or added.\n
-        ------------------------------------------------------------------------------------------------
-        - `data1` -⠀the first data structure to compare
-        - `data2` -⠀the second data structure to compare
-        - `ignore_paths` -⠀a path or list of paths to key/s and item/s to ignore during comparison:<br>
-          Comments are not ignored when comparing. `comment_start` and `comment_end` are only used
-          to correctly recognize the keys in the `ignore_paths`.
-        - `path_sep` -⠀the separator between the keys/indexes in the `ignore_paths`
-        - `comment_start` -⠀the string that marks the start of a comment inside `data1` and `data2`
-        - `comment_end` -⠀the string that marks the end of a comment inside `data1` and `data2`\n
-        ------------------------------------------------------------------------------------------------
-        The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for
+        ---------------------------------------------------------------------------------------------------
+        *   `data1` – The first data structure to compare.
+        *   `data2` – The second data structure to compare.
+        *   `ignore_paths` – A path or list of paths to key/s and item/s to ignore during comparison:<br>
+            Comments are not ignored when comparing. `comment_start` and `comment_end` are only used<br>
+            to correctly recognize the keys in the `ignore_paths`.
+        *   `path_sep` – The separator between the keys/indexes in the `ignore_paths`.
+        *   `comment_start` – The string that marks the start of a comment inside `data1` and `data2`.
+        *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.
+        ---------------------------------------------------------------------------------------------------
+        The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
         the method `Data.get_path_id()`. See its documentation for more details."""
+
         if not path_sep:
-            raise ValueError("The 'path_sep' parameter must be a non-empty string.")
+            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}")
 
         if isinstance(ignore_paths, str):
             ignore_paths = [ignore_paths]
@@ -338,15 +340,15 @@ class Data:
         ignore_not_found: bool = False,
     ) -> Optional[str | list[Optional[str]]]:
         """Generates a unique ID based on the path to a specific value within a nested data structure.\n
-        --------------------------------------------------------------------------------------------------
-        -`data` -⠀the list, tuple, or dictionary, which the id should be generated for
-        - `value_paths` -⠀a path or list of paths to the value/s to generate the id for (explained below)
-        - `path_sep` -⠀the separator between the keys/indexes in the `value_paths`
-        - `comment_start` -⠀the string that marks the start of a comment inside `data`
-        - `comment_end` -⠀the string that marks the end of a comment inside `data`
-        - `ignore_not_found` -⠀if true, the function will return `None` if the value is not found
-          instead of raising an error\n
-        --------------------------------------------------------------------------------------------------
+        -----------------------------------------------------------------------------------------------------
+        *   `data` – The list, tuple, or dictionary, which the id should be generated for.
+        *   `value_paths` – A path or list of paths to the value/s to generate the id for (explained below).
+        *   `path_sep` – The separator between the keys/indexes in the `value_paths`.
+        *   `comment_start` – The string that marks the start of a comment inside `data`.
+        *   `comment_end` – The string that marks the end of a comment inside `data`.
+        *   `ignore_not_found` – If true, the function will return `None` if the value is not found<br>
+            instead of raising an error.
+        -----------------------------------------------------------------------------------------------------
         The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
         #### In this example:
         ```python
@@ -357,13 +359,15 @@ class Data:
             }
         }
         ```
-        … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be
-        `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use the
-        index of the value, so `healthy->fruit->0`."""
+        … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be<br>
+        `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use<br>
+        the index of the value, so `healthy->fruit->0`."""
+
         if not path_sep:
             raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}")
 
         data = cls.remove_comments(data, comment_start=comment_start, comment_end=comment_end)
+
         if isinstance(value_paths, str):
             return _DataGetPathIdHelper(value_paths, path_sep=path_sep, data_obj=data, ignore_not_found=ignore_not_found)()
 
@@ -371,16 +375,18 @@ class Data:
             _DataGetPathIdHelper(path, path_sep=path_sep, data_obj=data, ignore_not_found=ignore_not_found)()
             for path in value_paths
         ]
+
         return results if len(results) > 1 else results[0] if results else None
 
     @classmethod
     def get_value_by_path_id(cls, data: DataObjType, path_id: str, /, *, get_key: bool = False) -> Any:
-        """Retrieves the value from `data` using the provided `path_id`, as long as the data structure
-        hasn't changed since creating the path ID.\n
-        --------------------------------------------------------------------------------------------------
-        - `data` -⠀the list, tuple, or dictionary to retrieve the value from
-        - `path_id` -⠀the path ID to the value to retrieve, created before using `Data.get_path_id()`
-        - `get_key` -⠀if true and the final item is in a dict, it returns the key instead of the value"""
+        """Retrieves the value from `data` using the provided `path_id`,<br>
+        as long as the data structure hasn't changed since creating the path ID.\n
+        -----------------------------------------------------------------------------------------------------
+        *   `data` – The list, tuple, or dictionary to retrieve the value from.
+        *   `path_id` – The path ID to the value to retrieve, created before using `Data.get_path_id()`.
+        *   `get_key` – If true and the final item is in a dict, it returns the key instead of the value."""
+
         parent: Optional[DataObjType] = None
         path = cls._sep_path_id(path_id)
         current_data: Any = data
@@ -410,16 +416,17 @@ class Data:
 
     @classmethod
     def set_value_by_path_id(cls, data: DataObj, update_values: dict[str, Any], /) -> DataObj:
-        """Updates the value/s from `update_values` in the `data`, as long as the data structure
-        hasn't changed since creating the path ID to that value.\n
-        -----------------------------------------------------------------------------------------
-        - `data` -⠀the list, tuple, or dictionary to update the value/s in
-        - `update_values` -⠀a dictionary where keys are path IDs and values are the new values
-          to insert, for example:
-          ```python
-        { "1>012": "new value", "1>31": ["new value 1", "new value 2"], … }
-          ```
-          The path IDs should have been created using `Data.get_path_id()`."""
+        """Updates the value/s from `update_values` in the `data`, as long as the<br>
+        data structure hasn't changed since creating the path ID to that value.\n
+        ------------------------------------------------------------------------------
+        *   `data` – The list, tuple, or dictionary to update the value/s in.
+        *   `update_values` – A dictionary where keys are path IDs<br>
+            and values are the new values to insert, for example:
+            ```python
+            { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
+            ```
+            The path IDs should have been created using `Data.get_path_id()`."""
+
         if not (valid_update_values := [(path_id, new_val) for path_id, new_val in update_values.items()]):
             raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}")
 
@@ -442,34 +449,35 @@ class Data:
         syntax_highlighting: dict[str, str] | bool = False,
     ) -> str:
         """Get nicely formatted data structure-strings.\n
-        ---------------------------------------------------------------------------------------------------------------
-        - `data` -⠀the data structure to format
-        - `indent` -⠀the amount of spaces to use for indentation
-        - `compactness` -⠀the level of compactness for the output (explained below – section 1)
-        - `max_width` -⠀the maximum width of a line before expanding (only used if `compactness` is `1`)
-        - `sep` -⠀the separator between items in the data structure
-        - `as_json` -⠀if true, the output will be in valid JSON format
-        - `syntax_highlighting` -⠀a dictionary defining the syntax highlighting styles (explained below – section 2)
-          or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting\n
-        ---------------------------------------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------------------------------------
+        *   `data` – The data structure to format.
+        *   `indent` – The amount of spaces to use for indentation.
+        *   `compactness` – The level of compactness for the output (explained below – section 1).
+        *   `max_width` – The maximum width of a line before expanding (only used if `compactness` is `1`).
+        *   `sep` – The separator between items in the data structure.
+        *   `as_json` – if true, the output will be in valid JSON format.
+        *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles (explained below – section 2)<br>
+            or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting.
+        -------------------------------------------------------------------------------------------------------------------
         There are three different levels of `compactness`:
-        - `0` expands everything possible
-        - `1` only expands if there's other lists, tuples or dicts inside of data or,
-          if the data's content is longer than `max_width`
-        - `2` keeps everything collapsed (all on one line)\n
-        ---------------------------------------------------------------------------------------------------------------
+        *   `0` expands everything possible.
+        *   `1` only expands if there's other lists, tuples or dicts inside of data,<br>
+            or if the data's content is longer than `max_width`.
+        *   `2` keeps everything collapsed (all on one line).
+        -------------------------------------------------------------------------------------------------------------------
         The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
         The key's values are the formatting codes to apply to this data part.<br>
-        The formatting can be changed by simply adding the key with the new value
+        The formatting can be changed by simply adding the key with the new value<br>
         inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        - `str: "br:blue"`
-        - `number: "br:magenta"`
-        - `literal: "magenta"`
-        - `type: "i|green"`
-        - `punctuation: "br:black"`\n
-        ---------------------------------------------------------------------------------------------------------------
+        *   `str: "br:blue"`
+        *   `number: "br:magenta"`
+        *   `literal: "magenta"`
+        *   `type: "i|green"`
+        *   `punctuation: "br:black"
+        -------------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see the `format_codes` module documentation."""
+
         if indent < 0:
             raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
         if max_width <= 0:
@@ -501,35 +509,36 @@ class Data:
         syntax_highlighting: dict[str, str] | bool = {},
     ) -> None:
         """Print nicely formatted data structures.\n
-        ---------------------------------------------------------------------------------------------------------------
-        - `data` -⠀the data structure to format and print
-        - `indent` -⠀the amount of spaces to use for indentation
-        - `compactness` -⠀the level of compactness for the output (explained below – section 1)
-        - `max_width` -⠀the maximum width of a line before expanding (only used if `compactness` is `1`)
-        - `sep` -⠀the separator between items in the data structure
-        - `end` -⠀the string appended after the last value, default a newline `\\n`
-        - `as_json` -⠀if true, the output will be in valid JSON format
-        - `syntax_highlighting` -⠀a dictionary defining the syntax highlighting styles (explained below – section 2)\n
-        ---------------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------------------
+        *   `data` – The data structure to format and print.
+        *   `indent` – The amount of spaces to use for indentation.
+        *   `compactness` – The level of compactness for the output (explained below – section 1).
+        *   `max_width` – The maximum width of a line before expanding (only used if `compactness` is `1`).
+        *   `sep` – The separator between items in the data structure.
+        *   `end` – The string appended after the last value, default a newline `\\n`.
+        *   `as_json` – If true, the output will be in valid JSON format.
+        *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles (explained below – section 2).
+        ----------------------------------------------------------------------------------------------------------------
         There are three different levels of `compactness`:
-        - `0` expands everything possible
-        - `1` only expands if there's other lists, tuples or dicts inside of data or,
-          if the data's content is longer than `max_width`
-        - `2` keeps everything collapsed (all on one line)\n
-        ---------------------------------------------------------------------------------------------------------------
+        *   `0` expands everything possible.
+        *   `1` only expands if there's other lists, tuples or dicts inside of data,<br>
+            or if the data's content is longer than `max_width`.
+        *   `2` keeps everything collapsed (all on one line).
+        ----------------------------------------------------------------------------------------------------------------
         The `syntax_highlighting` parameter is a dictionary with 5 keys for each part of the data.<br>
         The key's values are the formatting codes to apply to this data part.<br>
-        The formatting can be changed by simply adding the key with the new value inside the
-        `syntax_highlighting` dictionary.\n
+        The formatting can be changed by simply adding the key with the new value<br>
+        inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        - `str: "br:blue"`
-        - `number: "br:magenta"`
-        - `literal: "magenta"`
-        - `type: "i|green"`
-        - `punctuation: "br:black"`\n
+        *   `str: "br:blue"`
+        *   `number: "br:magenta"`
+        *   `literal: "magenta"`
+        *   `type: "i|green"`
+        *   `punctuation: "br:black"`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
-        ---------------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see the `format_codes` module documentation."""
+
         FormatCodes.print(
             cls.render(
                 data,
@@ -552,6 +561,8 @@ class Data:
         ignore_paths: list[list[str]],
         current_path: list[str] = [],
     ) -> bool:
+        """Internal method to recursively compare two nested data structures while ignoring specified paths."""
+
         if any(current_path == path[:len(current_path)] for path in ignore_paths):
             return True
 
@@ -588,6 +599,7 @@ class Data:
     @staticmethod
     def _sep_path_id(path_id: str, /) -> list[int]:
         """Internal method to separate a path-ID string into its ID parts as a list of integers."""
+
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 
@@ -602,6 +614,7 @@ class Data:
     @classmethod
     def _set_nested_val(cls, data: DataObjType, id_path: list[int], value: Any, /) -> Any:
         """Internal method to set a value in a nested data structure based on the provided ID path."""
+
         current_data: Any = data
 
         if len(id_path) == 1:
@@ -656,12 +669,14 @@ class _DataRemoveCommentsHelper:
         return self.remove_nested_comments(self.data)
 
     def remove_nested_comments(self, item: Any, /) -> Any:
+        """Recursively removes comments from the given item, which can be a dictionary, list, tuple, or string."""
+
         if isinstance(item, dict):
             dict_item = cast(dict[Any, Any], item)
             return {
                 key: val
                 for key, val in [
-                    (self.remove_nested_comments(k), self.remove_nested_comments(v)) for k, v in dict_item.items() \
+                    (self.remove_nested_comments(key), self.remove_nested_comments(val)) for key, val in dict_item.items() \
                 ] if key is not None
             }
 
@@ -705,6 +720,7 @@ class _DataGetPathIdHelper:
 
     def process_key(self, key: str, /) -> bool:
         """Process a single key and update `path_ids`. Returns `False` if processing should stop."""
+
         idx: Optional[int] = None
 
         if isinstance(self.current_data, dict):
@@ -722,6 +738,7 @@ class _DataGetPathIdHelper:
 
     def process_dict_key(self, key: str, /) -> Optional[int]:
         """Process a key for dictionary data. Returns the index or `None` if not found."""
+
         if key.isdigit():
             if self.ignore_not_found:
                 return None
@@ -738,6 +755,7 @@ class _DataGetPathIdHelper:
 
     def process_iterable_key(self, key: str, /) -> Optional[int]:
         """Process a key for iterable data. Returns the index or `None` if not found."""
+
         try:
             idx = int(key)
             self.current_data = list(self.current_data)[idx]
@@ -782,19 +800,20 @@ class _DataRenderHelper:
         if self.do_syntax_hl:
             if syntax_highlighting is True:
                 syntax_highlighting = {}
-            elif not isinstance(syntax_highlighting, dict):
+
+            elif isinstance(syntax_highlighting, dict):
+                self.syntax_hl.update({
+                    key: (f"[{val}]", "[_]") if key in self.syntax_hl and val not in {"", None} else ("", "")
+                    for key, val in syntax_highlighting.items()
+                })
+                sep = f"{self.syntax_hl['punctuation'][0]}{sep}{self.syntax_hl['punctuation'][1]}"
+
+            else:
                 raise TypeError(f"The 'syntax_highlighting' parameter must be a dict or bool, got {type(syntax_highlighting)}")
-
-            self.syntax_hl.update({
-                key: (f"[{val}]", "[_]") if key in self.syntax_hl and val not in {"", None} else ("", "")
-                for key, val in syntax_highlighting.items()
-            })
-
-            sep = f"{self.syntax_hl['punctuation'][0]}{sep}{self.syntax_hl['punctuation'][1]}"
 
         self.sep = sep
 
-        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{c: c for c in "'\":)[]{}"}}
+        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
         self.punct: dict[str, str] = {
             key: (
                 (
@@ -818,12 +837,17 @@ class _DataRenderHelper:
         )
 
     def format_value(self, value: Any, /, current_indent: Optional[int] = None) -> str:
+        """Formats a single value based on its type and the current indentation level."""
+
         if current_indent is not None and isinstance(value, dict):
             return self.format_dict(cast(dict[Any, Any], value), current_indent + self.indent)
+
         elif current_indent is not None and hasattr(value, "__dict__"):
             return self.format_dict(value.__dict__, current_indent + self.indent)
+
         elif current_indent is not None and isinstance(value, IndexIterableTT):
             return self.format_sequence(cast(IndexIterable, value), current_indent + self.indent)
+
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
             obj_dict = self.cls.serialize_bytes(value)
             return (
@@ -834,12 +858,15 @@ class _DataRenderHelper:
                     + self.format_sequence((obj_dict[key], obj_dict["encoding"]), current_indent + self.indent)
                 )
             )
+
         elif isinstance(value, bool):
             val = str(value).lower() if self.as_json else str(value)
             return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+
         elif isinstance(value, (int, float)):
             val = "null" if self.as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
             return f"{self.syntax_hl['number'][0]}{val}{self.syntax_hl['number'][1]}" if self.do_syntax_hl else val
+
         elif current_indent is not None and isinstance(value, complex):
             return (
                 self.format_value(str(value).strip("()")) if self.as_json else (
@@ -848,9 +875,11 @@ class _DataRenderHelper:
                     f"complex{self.format_sequence((value.real, value.imag), current_indent + self.indent)}"
                 )
             )
+
         elif value is None:
             val = "null" if self.as_json else "None"
             return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+
         else:
             return ((
                 self.punct['"'] + self.syntax_hl["str"][0] + String.escape(str(value), '"') + self.syntax_hl["str"][1]
@@ -861,6 +890,8 @@ class _DataRenderHelper:
             ))
 
     def should_expand(self, seq: IndexIterable, /) -> bool:
+        """Determines whether a sequence should be expanded based on its content and the current compactness settings."""
+
         if self.compactness == 0:
             return True
         if self.compactness == 2:
@@ -877,6 +908,8 @@ class _DataRenderHelper:
             or self.cls.chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
 
     def format_dict(self, data_dict: dict[Any, Any], current_indent: int, /) -> str:
+        """Formats a dictionary as a string, applying indentation and compactness rules."""
+
         if self.compactness == 2 or not data_dict or not self.should_expand(list(data_dict.values())):
             return self.punct["{"] + self.sep.join(
                 f"{self.format_value(key)}{self.punct[':']} {self.format_value(val, current_indent)}"
@@ -891,6 +924,8 @@ class _DataRenderHelper:
         return self.punct["{"] + "\n" + f"{self.sep}\n".join(items) + f"\n{' ' * current_indent}" + self.punct["}"]
 
     def format_sequence(self, seq: IndexIterable, current_indent: int, /) -> str:
+        """Formats a list or tuple as a string, applying indentation and compactness rules."""
+
         if self.as_json:
             seq = list(seq)
 

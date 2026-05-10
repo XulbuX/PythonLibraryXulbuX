@@ -33,42 +33,52 @@ class EnvPath:
     @classmethod
     def paths(cls, *, as_list: bool = False) -> Path | list[Path]:
         """Get the PATH environment variable.\n
-        ------------------------------------------------------------------------------------------------
-        - `as_list` -⠀if true, returns the paths as a list of `Path`s; otherwise, as a single `Path`"""
+        ---------------------------------------------------------------------------------------------------
+        *   `as_list` – If true, returns the paths as a list of `Path`s; otherwise, as a single `Path`."""
+
         paths_str = _os.environ.get("PATH", "")
+
         if as_list:
             return [Path(path) for path in paths_str.split(_os.pathsep) if path]
+
         return Path(paths_str)
 
     @classmethod
     def has_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> bool:
         """Check if a path is present in the PATH environment variable.\n
-        ------------------------------------------------------------------------
-        - `path` -⠀the path to check for
-        - `cwd` -⠀if true, uses the current working directory as the path
-        - `base_dir` -⠀if true, uses the script's base directory as the path"""
-        check_path = cls._get(path, cwd=cwd, base_dir=base_dir).resolve()
-        return check_path in {path.resolve() for path in cls.paths(as_list=True)}
+        ---------------------------------------------------------------------------
+        *   `path` – The path to check for.
+        *   `cwd` – If true, uses the current working directory as the path.
+        *   `base_dir` – If true, uses the script's base directory as the path."""
+
+        return bool(
+            cls._get(path, cwd=cwd, base_dir=base_dir).resolve() \
+            in {path.resolve() for path in cls.paths(as_list=True)}
+        )
 
     @classmethod
     def add_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
         """Add a path to the PATH environment variable.\n
-        ------------------------------------------------------------------------
-        - `path` -⠀the path to add
-        - `cwd` -⠀if true, uses the current working directory as the path
-        - `base_dir` -⠀if true, uses the script's base directory as the path"""
+        ---------------------------------------------------------------------------
+        *   `path` – The path to add.
+        *   `cwd` – If true, uses the current working directory as the path.
+        *   `base_dir` – If true, uses the script's base directory as the path."""
+
         path_obj = cls._get(path, cwd=cwd, base_dir=base_dir)
+
         if not cls.has_path(path_obj):
             cls._persistent(path_obj)
 
     @classmethod
     def remove_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
         """Remove a path from the PATH environment variable.\n
-        ------------------------------------------------------------------------
-        - `path` -⠀the path to remove
-        - `cwd` -⠀if true, uses the current working directory as the path
-        - `base_dir` -⠀if true, uses the script's base directory as the path"""
+        ---------------------------------------------------------------------------
+        *   `path` – The path to remove.
+        *   `cwd` – If true, uses the current working directory as the path.
+        *   `base_dir` – If true, uses the script's base directory as the path."""
+
         path_obj = cls._get(path, cwd=cwd, base_dir=base_dir)
+
         if cls.has_path(path_obj):
             cls._persistent(path_obj, remove=True)
 
@@ -77,6 +87,7 @@ class EnvPath:
         """Internal method to get the normalized `path`, CWD path or script directory path.\n
         --------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is true."""
+
         if cwd:
             if base_dir:
                 raise ValueError("Both 'cwd' and 'base_dir' cannot be True at the same time.")
@@ -91,8 +102,9 @@ class EnvPath:
 
     @classmethod
     def _persistent(cls, path: Path, /, *, remove: bool = False) -> None:
-        """Internal method to add or remove a path from the PATH environment variable,
+        """Internal method to add or remove a path from the PATH environment variable,<br>
         persistently, across sessions, as well as the current session."""
+
         current_paths = cls.paths(as_list=True)
         path_resolved = path.resolve()
 
@@ -114,8 +126,9 @@ class EnvPath:
                 key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Environment", 0, _winreg.KEY_ALL_ACCESS)
                 _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
                 _winreg.CloseKey(key)
-            except Exception as e:
-                raise RuntimeError("Failed to update PATH in registry:\n  " + str(e).replace("\n", "  \n"))
+
+            except Exception as exc:
+                raise RuntimeError("Failed to update PATH in registry:\n  " + str(exc).replace("\n", "  \n"))
 
         else:  # UNIX-LIKE (LINUX/macOS)
             home_path = Path.home()

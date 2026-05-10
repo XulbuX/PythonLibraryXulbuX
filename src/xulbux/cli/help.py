@@ -10,23 +10,27 @@ import json as _json
 
 def get_latest_version() -> Optional[str]:
     """Fetches the latest version of the library from PyPI."""
+
     with _request.urlopen(URL) as response:
         if response.status == 200:
-            data = _json.load(response)
-            return data["info"]["version"]
+            return _json.load(response)["info"]["version"]
         else:
             raise HTTPError(URL, response.status, "Failed to fetch latest version info", response.headers, None)
 
 
 def is_latest_version() -> Optional[bool]:
-    """Checks if the currently installed version of the
+    """Checks if the currently installed version of the<br>
     library is the latest one available on PyPI."""
+
     try:
         if (latest := get_latest_version()) in {"", None}:
             return None
+
         latest_v_parts = tuple(int(part) for part in (latest or "").lower().lstrip("v").split("."))
         installed_v_parts = tuple(int(part) for part in __version__.lower().lstrip("v").split("."))
+
         return latest_v_parts <= installed_v_parts
+
     except Exception:
         return None
 
@@ -82,7 +86,9 @@ CLI_HELP = FormatCodes.to_ansi(
 
 
 def show_help() -> None:
-    """CLI command function for `xulbux-lib` command, which shows some information about the library."""
-    FormatCodes._config_console()
+    """CLI command function for `xulbux-lib` command,<br>
+    which shows some information about the library."""
+
+    FormatCodes._config_terminal()
     print(CLI_HELP)
     Console.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)

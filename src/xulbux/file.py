@@ -23,13 +23,14 @@ class File:
         camel_case_filename: bool = False,
     ) -> Path:
         """Rename the extension of a file.\n
-        ----------------------------------------------------------------------------
-        - `file_path` -⠀the path to the file whose extension should be changed
-        - `new_extension` -⠀the new extension for the file (with or without dot)
-        - `full_extension` -⠀whether to replace the full extension (e.g. `.tar.gz`)
-          or just the last part of it (e.g. `.gz`)
-        - `camel_case_filename` -⠀whether to convert the filename to CamelCase
-          in addition to changing the files extension"""
+        ----------------------------------------------------------------------------------
+        *   `file_path` – The path to the file whose extension should be changed.
+        *   `new_extension` – The new extension for the file (with or without dot).
+        *   `full_extension` – Whether to replace the full extension (e.g. `.tar.gz`)<br>
+            or just the last part of it (e.g. `.gz`).
+        *   `camel_case_filename` – Whether to convert the filename to CamelCase<br>
+            in addition to changing the files extension."""
+
         path = Path(file_path)
         filename_with_ext = path.name
 
@@ -52,15 +53,16 @@ class File:
     @classmethod
     def create(cls, file_path: Path | str, content: str = "", /, *, force: bool = False) -> Path:
         """Create a file with ot without content.\n
-        ------------------------------------------------------------------
-        - `file_path` -⠀the path where the file should be created
-        - `content` -⠀the content to write into the file
-        - `force` -⠀if true, will overwrite existing files
-          without throwing an error (errors explained below)\n
-        ------------------------------------------------------------------
-        The method will throw a `FileExistsError` if a file with the same
-        name already exists and a `SameContentFileExistsError` if a file
+        ----------------------------------------------------------------------
+        *   `file_path` – The path where the file should be created.
+        *   `content` – The content to write into the file.
+        *   `force` – If true, will overwrite existing files without<br>
+            throwing an error (errors explained below).
+        ----------------------------------------------------------------------
+        The method will throw a `FileExistsError` if a file with the same<br>
+        name already exists and a `SameContentFileExistsError` if a file<br>
         with the same name and same content already exists."""
+
         path = Path(file_path)
 
         if path.exists() and not force:

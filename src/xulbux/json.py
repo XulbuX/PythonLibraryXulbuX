@@ -14,7 +14,7 @@ import json as _json
 
 
 class Json:
-    """This class provides methods to read, create and update JSON files,
+    """This class provides methods to read, create and update JSON files,<br>
     with support for comments inside the JSON data."""
 
     @overload
@@ -54,17 +54,18 @@ class Json:
         return_original: bool = False,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """Read JSON files, ignoring comments.\n
-        ------------------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to read
-        - `comment_start` -⠀the string that indicates the start of a comment
-        - `comment_end` -⠀the string that indicates the end of a comment
-        - `return_original` -⠀if true, the original JSON data is returned additionally:<br>
-          ```python
-        (processed_json, original_json)
-          ```\n
-        ------------------------------------------------------------------------------------
-        For more detailed information about the comment handling,
+        --------------------------------------------------------------------------------------
+        *   `json_file` – The path (relative or absolute) to the JSON file to read.
+        *   `comment_start` – The string that indicates the start of a comment.
+        *   `comment_end` – The string that indicates the end of a comment.
+        *   `return_original` – If true, the original JSON data is returned additionally:<br>
+            ```python
+            (processed_json, original_json)
+            ```
+        --------------------------------------------------------------------------------------
+        For more detailed information about the comment handling,<br>
         see the `Data.remove_comments()` method documentation."""
+
         if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
             json_path = json_path.with_suffix(".json")
         file_path = FileSys.extend_or_make_path(json_path, prefer_script_dir=True)
@@ -74,9 +75,9 @@ class Json:
 
         try:
             data = _json.loads(content)
-        except _json.JSONDecodeError as e:
-            fmt_error = "\n  ".join(str(e).splitlines())
-            raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {fmt_error}") from e
+        except _json.JSONDecodeError as exc:
+            fmt_error = "\n  ".join(str(exc).splitlines())
+            raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {fmt_error}") from exc
 
         if not (processed_data := dict(Data.remove_comments(data, comment_start=comment_start, comment_end=comment_end))):
             raise ValueError(f"The JSON file {file_path!r} contains no data")
@@ -95,18 +96,19 @@ class Json:
         force: bool = False,
     ) -> Path:
         """Create a nicely formatted JSON file from a dictionary.\n
-        ---------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to create
-        - `data` -⠀the dictionary data to write to the JSON file
-        - `indent` -⠀the amount of spaces to use for indentation
-        - `compactness` -⠀can be `0`, `1` or `2` and indicates how compact
-          the data should be formatted (see `Data.render()` for more info)
-        - `force` -⠀if true, will overwrite existing files
-          without throwing an error (errors explained below)\n
-        ---------------------------------------------------------------------------
-        The method will throw a `FileExistsError` if a file with the same
-        name already exists and a `SameContentFileExistsError` if a file
+        ------------------------------------------------------------------------------
+        *   `json_file` – The path (relative or absolute) to the JSON file to create.
+        *   `data` – The dictionary data to write to the JSON file.
+        *   `indent` – The amount of spaces to use for indentation.
+        *   `compactness` – Can be `0`, `1` or `2` and indicates how compact<br>
+            the data should be formatted (see `Data.render()` for more info).
+        *   `force` – If true, will overwrite existing files<br>
+            without throwing an error (errors explained below).
+        ------------------------------------------------------------------------------
+        The method will throw a `FileExistsError` if a file with the same<br>
+        name already exists and a `SameContentFileExistsError` if a file<br>
         with the same name and same content already exists."""
+
         if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
             json_path = json_path.with_suffix(".json")
 
@@ -130,20 +132,20 @@ class Json:
         comment_end: str = "<<",
         path_sep: str = "->",
     ) -> None:
-        """Update single/multiple values inside JSON files,
+        """Update single/multiple values inside JSON files,<br>
         without needing to know the rest of the data.\n
         -----------------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to update
-        - `update_values` -⠀a dictionary with the paths to the values to update
-          and the new values to set (see explanation below – section 2)
-        - `comment_start` -⠀the string that indicates the start of a comment
-        - `comment_end` -⠀the string that indicates the end of a comment
-        - `path_sep` -⠀the separator used inside the value-paths in `update_values`\n
+        *   `json_file` – The path (relative or absolute) to the JSON file to update.
+        *   `update_values` – A dictionary with the paths to the values to update<br>
+            and the new values to set (see explanation below – section 2).
+        *   `comment_start` – The string that indicates the start of a comment.
+        *   `comment_end` – The string that indicates the end of a comment.
+        *   `path_sep` – The separator used inside the value-paths in `update_values`.
         -----------------------------------------------------------------------------------
-        For more detailed information about the comment handling,
+        For more detailed information about the comment handling,<br>
         see the `Data.remove_comments()` method documentation.\n
         -----------------------------------------------------------------------------------
-        The `update_values` is a dictionary, where the keys are the paths
+        The `update_values` is a dictionary, where the keys are the paths<br>
         to the data to update, and the values are the new values to set.\n
         For example for this JSON data:
         ```python
@@ -163,11 +165,12 @@ class Json:
             "healthy->vegetables": [1, 2, 3]
         }
         ```
-        In this example, if you want to change the value of `"apples"`,
-        you can use `healthy->fruits->apples` as the value-path.<br>
-        If you don't know that the first list item is `"apples"`,
+        In this example, if you want to change the value of `"apples"`,<br>
+        you can use `healthy->fruits->apples` as the value-path.\n
+        If you don't know that the first list item is `"apples"`,<br>
         you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
         ⇾ If the given value-path doesn't exist, it will be created."""
+
         processed_data, data = cls.read(
             json_file,
             comment_start=comment_start,
@@ -192,19 +195,22 @@ class Json:
 
     @staticmethod
     def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: Any, /) -> dict[str, Any]:
-        """Internal method that creates nested dictionaries/lists based on the
+        """Internal method that creates nested dictionaries/lists based on the<br>
         given path keys and sets the specified value at the end of the path."""
+
         last_idx, current = len(path_keys) - 1, data_obj
 
         for i, key in enumerate(path_keys):
             if i == last_idx:
                 if isinstance(current, dict):
                     current[key] = value
+
                 elif isinstance(current, list) and key.isdigit():
                     idx = int(key)
                     while len(cast(list[Any], current)) <= idx:
                         cast(list[Any], current).append(None)
                     current[idx] = value
+
                 else:
                     raise TypeError(f"Cannot set key '{key}' on {type(cast(Any, current))}")
 
@@ -214,6 +220,7 @@ class Json:
                     if key not in current:
                         current[key] = [] if next_key.isdigit() else {}
                     current = cast(dict[str, Any], current)[key]  # type: ignore[unnecessary-cast]
+
                 elif isinstance(current, list) and key.isdigit():
                     idx = int(key)
                     while len(cast(list[Any], current)) <= idx:
@@ -221,6 +228,7 @@ class Json:
                     if current[idx] is None:
                         current[idx] = [] if next_key.isdigit() else {}
                     current = cast(list[Any], current)[idx]
+
                 else:
                     raise TypeError(f"Cannot navigate through {type(cast(Any, current))}")
 

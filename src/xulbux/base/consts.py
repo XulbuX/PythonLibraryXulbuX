@@ -90,6 +90,7 @@ class ANSI:
     @classmethod
     def seq(cls, placeholders: int = 1, /) -> FormattableString:
         """Generates an ANSI escape sequence with the specified number of placeholders."""
+
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
 
     SEQ_COLOR: Final[FormattableString] = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
@@ -123,14 +124,6 @@ class ANSI:
         "br:magenta",
         "br:cyan",
         "br:white",
-        "bright:black",
-        "bright:red",
-        "bright:green",
-        "bright:yellow",
-        "bright:blue",
-        "bright:magenta",
-        "bright:cyan",
-        "bright:white",
     }
     """All color variants that can be used in formatting."""
 

@@ -61,8 +61,8 @@ def generate_stubs_for_package():
 
         print(f"\nStub generation complete. ({generated_count} generated, {skipped_count} copied)\n")
 
-    except Exception as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
+    except Exception as exc:
+        fmt_error = "\n  ".join(str(exc).splitlines())
         print(f"[WARNING] Could not generate stubs:\n  {fmt_error}\n")
 
 

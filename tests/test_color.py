@@ -26,8 +26,8 @@ def test_is_valid_rgba():
     assert Color.is_valid_rgba((255, 0, 0, 0.5)) is True
     assert Color.is_valid_rgba("rgb(255, 0, 0)") is True
     assert Color.is_valid_rgba("rgba(255, 0, 0, .5)") is True
-    assert Color.is_valid_rgba({"r": 255, "g": 0, "b": 0}) is True
-    assert Color.is_valid_rgba({"r": 255, "g": 0, "b": 0, "a": 0.5}) is True
+    assert Color.is_valid_rgba({"red": 255, "green": 0, "blue": 0}) is True
+    assert Color.is_valid_rgba({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}) is True
     assert Color.is_valid_rgba(rgba(255, 0, 0)) is True
     assert Color.is_valid_rgba((300, 0, 0)) is False
     assert Color.is_valid_rgba((255, 0)) is False
@@ -42,8 +42,8 @@ def test_is_valid_hsla():
     assert Color.is_valid_hsla((0, 100, 50, 0.5)) is True
     assert Color.is_valid_hsla("hsl(0, 100%, 50%)") is True
     assert Color.is_valid_hsla("hsla(0, 100%, 50%, .5)") is True
-    assert Color.is_valid_hsla({"h": 0, "s": 100, "l": 50}) is True
-    assert Color.is_valid_hsla({"h": 0, "s": 100, "l": 50, "a": 0.5}) is True
+    assert Color.is_valid_hsla({"hue": 0, "sat": 100, "light": 50}) is True
+    assert Color.is_valid_hsla({"hue": 0, "sat": 100, "light": 50, "alpha": 0.5}) is True
     assert Color.is_valid_hsla(hsla(0, 100, 50)) is True
     assert Color.is_valid_hsla((370, 100, 50)) is False
     assert Color.is_valid_hsla((0, 101, 50)) is False
@@ -164,7 +164,7 @@ def test_adjust_saturation():
     color = rgba(128, 80, 80)
     saturated = Color.adjust_saturation(color, 0.25)
     assert isinstance(saturated, rgba)
-    assert saturated.to_hsla().s > color.to_hsla().s
+    assert saturated.to_hsla().sat > color.to_hsla().sat
     assert saturated == rgba(155, 54, 54)
 
     desaturated = Color.adjust_saturation(hexa("#FF0000"), -1.0)

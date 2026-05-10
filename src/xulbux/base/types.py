@@ -40,24 +40,24 @@ IndexIterableTT = (list, tuple, set, frozenset)
 
 class _RgbaObj(Protocol):
     """Protocol for rgba-like color objects (structurally matches `rgba`)."""
-    r: int
-    g: int
-    b: int
-    a: Optional[float]
+    red: int
+    green: int
+    blue: int
+    alpha: Optional[float]
 
 class _HslaObj(Protocol):
     """Protocol for hsla-like color objects (structurally matches `hsla`)."""
-    h: int
-    s: int
-    l: int
-    a: Optional[float]
+    hue: int
+    sat: int
+    light: int
+    alpha: Optional[float]
 
 class _HexaObj(Protocol):
     """Protocol for hexa-like color objects (structurally matches `hexa`)."""
-    r: int
-    g: int
-    b: int
-    a: Optional[float]
+    red: int
+    green: int
+    blue: int
+    alpha: Optional[float]
 
 Rgba: TypeAlias = Union[
     tuple[Int_0_255, Int_0_255, Int_0_255],
@@ -118,24 +118,24 @@ class ArgData(TypedDict):
 
 class RgbaDict(TypedDict):
     """Dictionary schema for RGBA color components."""
-    r: Int_0_255
-    g: Int_0_255
-    b: Int_0_255
-    a: Optional[Float_0_1]
+    red: Int_0_255
+    green: Int_0_255
+    blue: Int_0_255
+    alpha: Optional[Float_0_1]
 
 class HslaDict(TypedDict):
     """Dictionary schema for HSLA color components."""
-    h: Int_0_360
-    s: Int_0_100
-    l: Int_0_100
-    a: Optional[Float_0_1]
+    hue: Int_0_360
+    sat: Int_0_100
+    light: Int_0_100
+    alpha: Optional[Float_0_1]
 
 class HexaDict(TypedDict):
     """Dictionary schema for HEXA color components."""
-    r: str
-    g: str
-    b: str
-    a: Optional[str]
+    red: str
+    green: str
+    blue: str
+    alpha: Optional[str]
 
 class MissingLibsMsgs(TypedDict):
     """Configuration schema for custom messages in `System.check_libs()` when checking library dependencies."""
@@ -146,7 +146,7 @@ class MissingLibsMsgs(TypedDict):
 ################################################## Protocol ##################################################
 
 class ProgressUpdater(Protocol):
-    """Protocol for a progress updater function used in console progress bars."""
+    """Protocol for a progress updater function used in terminal progress bars."""
 
     def __call__(self, current: Optional[int] = None, label: Optional[str] = None) -> None:
         """Update the current progress value and/or label."""

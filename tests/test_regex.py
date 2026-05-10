@@ -169,7 +169,7 @@ def test_regex_brackets_as_group():
 
 def test_regex_brackets_ignore_in_strings():
     """Test brackets pattern with ignore_in_strings option"""
-    text = 'func(param = "f(x)")'
+    text = 'fn(param = "f(x)")'
     pattern = Regex.brackets(ignore_in_strings=True)
     matches = rx.findall(pattern, text)
     assert len(matches) == 1

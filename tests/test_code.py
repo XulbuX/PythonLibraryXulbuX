@@ -77,7 +77,7 @@ function test() {
     assert Code.is_js(js_sample) is True
     js_sample = "__('translation_key')"
     assert Code.is_js(js_sample) is True
-    js_sample = "const func = () => { return 42; }"
+    js_sample = "const fn = () => { return 42; }"
     assert Code.is_js(js_sample) is True
     js_sample = "customFunc()"
     assert Code.is_js(js_sample, funcs={"customFunc"}) is True

@@ -18,61 +18,62 @@ import re as _re
 class rgba:
     """An RGB/RGBA color object that includes a bunch of methods to manipulate the color.\n
     ----------------------------------------------------------------------------------------
-    - `r` -⠀the red channel in range [0, 255] inclusive
-    - `g` -⠀the green channel in range [0, 255] inclusive
-    - `b` -⠀the blue channel in range [0, 255] inclusive
-    - `a` -⠀the alpha channel in range [0.0, 1.0] inclusive
-      or `None` if the color has no alpha channel\n
+    *   `red` – The red channel in range [0, 255] inclusive.
+    *   `green` – The green channel in range [0, 255] inclusive.
+    *   `blue` – The blue channel in range [0, 255] inclusive.
+    *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive<br>
+        or `None` if the color has no alpha channel.
     ----------------------------------------------------------------------------------------
     Includes methods:
-    - `to_hsla()` to convert to HSL color
-    - `to_hexa()` to convert to HEX color
-    - `has_alpha()` to check if the color has an alpha channel
-    - `lighten(amount)` to create a lighter version of the color
-    - `darken(amount)` to create a darker version of the color
-    - `saturate(amount)` to increase color saturation
-    - `desaturate(amount)` to decrease color saturation
-    - `rotate(degrees)` to rotate the hue by degrees
-    - `invert()` to get the inverse color
-    - `grayscale()` to convert to grayscale
-    - `blend(other, ratio)` to blend with another color
-    - `is_dark()` to check if the color is considered dark
-    - `is_light()` to check if the color is considered light
-    - `is_grayscale()` to check if the color is grayscale
-    - `is_opaque()` to check if the color has no transparency
-    - `with_alpha(alpha)` to create a new color with different alpha
-    - `complementary()` to get the complementary color"""
+    *   `to_hsla()` to convert to HSL color
+    *   `to_hexa()` to convert to HEX color
+    *   `has_alpha()` to check if the color has an alpha channel
+    *   `lighten(amount)` to create a lighter version of the color
+    *   `darken(amount)` to create a darker version of the color
+    *   `saturate(amount)` to increase color saturation
+    *   `desaturate(amount)` to decrease color saturation
+    *   `rotate(degrees)` to rotate the hue by degrees
+    *   `invert()` to get the inverse color
+    *   `grayscale()` to convert to grayscale
+    *   `blend(other, ratio)` to blend with another color
+    *   `is_dark()` to check if the color is considered dark
+    *   `is_light()` to check if the color is considered light
+    *   `is_grayscale()` to check if the color is grayscale
+    *   `is_opaque()` to check if the color has no transparency
+    *   `with_alpha(alpha)` to create a new color with different alpha
+    *   `complementary()` to get the complementary color"""
 
-    def __init__(self, r: int, g: int, b: int, a: Optional[float] = None, /, *, _validate: bool = True):
-        self.r: int
+    def __init__(self, red: int, green: int, blue: int, alpha: Optional[float] = None, /, *, _validate: bool = True):
+        self.red: int
         """The red channel in range [0, 255] inclusive."""
-        self.g: int
+        self.green: int
         """The green channel in range [0, 255] inclusive."""
-        self.b: int
+        self.blue: int
         """The blue channel in range [0, 255] inclusive."""
-        self.a: Optional[float]
+        self.alpha: Optional[float]
         """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
         if not _validate:
-            self.r, self.g, self.b, self.a = r, g, b, a
+            self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
             return
 
-        if not all((0 <= x <= 255) for x in (r, g, b)):
+        if not all((0 <= ch <= 255) for ch in (red, green, blue)):
             raise ValueError(
-                f"The 'r', 'g' and 'b' parameters must be integers in range [0, 255] inclusive, got {r=} {g=} {b=}"
+                f"The 'red', 'green' and 'blue' parameters must be integers in range [0, 255] inclusive, got {red=!r} {green=!r} {blue=!r}"
             )
-        if a is not None and not (0.0 <= a <= 1.0):
-            raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
-        self.r, self.g, self.b = r, g, b
-        self.a = None if a is None else (1.0 if a > 1.0 else float(a))
+        self.red, self.green, self.blue = red, green, blue
+        self.alpha = None if alpha is None else (1.0 if alpha > 1.0 else float(alpha))
 
     def __len__(self) -> int:
         """The number of components in the color (3 or 4)."""
-        return 3 if self.a is None else 4
+
+        return 3 if self.alpha is None else 4
 
     def __iter__(self) -> Iterator[int | Optional[float]]:
-        return iter((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))
+        return iter((self.red, self.green, self.blue) + (() if self.alpha is None else (self.alpha, )))
 
     @overload
     def __getitem__(self, index: Literal[0, 1, 2], /) -> int:
@@ -87,244 +88,269 @@ class rgba:
         ...
 
     def __getitem__(self, index: int, /) -> int | Optional[float]:
-        return ((self.r, self.g, self.b) + (() if self.a is None else (self.a, )))[index]
+        return ((self.red, self.green, self.blue) + (() if self.alpha is None else (self.alpha, )))[index]
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `rgba` objects are the same color."""
+
         if not isinstance(other, rgba):
             return False
-        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+        return (self.red, self.green, self.blue, self.alpha) == (other.red, other.green, other.blue, other.alpha)
 
     def __ne__(self, other: object, /) -> bool:
         """Check if two `rgba` objects are different colors."""
+
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        return f"rgba({self.r}, {self.g}, {self.b}{'' if self.a is None else f', {self.a}'})"
+        return f"rgba({self.red}, {self.green}, {self.blue}{'' if self.alpha is None else f', {self.alpha}'})"
 
     def __str__(self) -> str:
         return self.__repr__()
 
     def dict(self) -> RgbaDict:
-        """Returns the color components as a dictionary with keys `"r"`, `"g"`, `"b"` and optionally `"a"`."""
-        return {"r": self.r, "g": self.g, "b": self.b, "a": self.a}
+        """Returns the color components as a dictionary with keys `"red"`, `"green"`, `"blue"` and optionally `"alpha"`."""
+
+        return RgbaDict(red=self.red, green=self.green, blue=self.blue, alpha=self.alpha)
 
     def values(self) -> tuple[int, int, int, Optional[float]]:
-        """Returns the color components as separate values `r, g, b, a`."""
-        return self.r, self.g, self.b, self.a
+        """Returns the color components as separate values `red, green, blue, alpha`."""
+
+        return self.red, self.green, self.blue, self.alpha
 
     def to_hsla(self) -> hsla:
         """Returns the color as `hsla()` color object."""
-        h, s, l = self._rgb_to_hsl(self.r, self.g, self.b)
-        return hsla(h, s, l, self.a, _validate=False)
+
+        hue, sat, light = self._rgb_to_hsl(self.red, self.green, self.blue)
+        return hsla(hue, sat, light, self.alpha, _validate=False)
 
     def to_hexa(self) -> hexa:
         """Returns the color as `hexa()` color object."""
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def has_alpha(self) -> bool:
         """Returns `True` if the color has an alpha channel and `False` otherwise."""
-        return self.a is not None
+
+        return self.alpha is not None
 
     def lighten(self, amount: float, /) -> rgba:
         """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_hsla().lighten(amount).to_rgba().values()
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+        self.red, self.green, self.blue, self.alpha = self.to_hsla().lighten(amount).to_rgba().values()
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def darken(self, amount: float, /) -> rgba:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_hsla().darken(amount).to_rgba().values()
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+        self.red, self.green, self.blue, self.alpha = self.to_hsla().darken(amount).to_rgba().values()
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def saturate(self, amount: float, /) -> rgba:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_hsla().saturate(amount).to_rgba().values()
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+        self.red, self.green, self.blue, self.alpha = self.to_hsla().saturate(amount).to_rgba().values()
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def desaturate(self, amount: float, /) -> rgba:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_hsla().desaturate(amount).to_rgba().values()
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+        self.red, self.green, self.blue, self.alpha = self.to_hsla().desaturate(amount).to_rgba().values()
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def rotate(self, degrees: int, /) -> rgba:
         """Rotates the colors hue by the specified number of degrees."""
-        self.r, self.g, self.b, self.a = self.to_hsla().rotate(degrees).to_rgba().values()
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+
+        self.red, self.green, self.blue, self.alpha = self.to_hsla().rotate(degrees).to_rgba().values()
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def invert(self, *, invert_alpha: bool = False) -> rgba:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
-        self.r, self.g, self.b = 255 - self.r, 255 - self.g, 255 - self.b
-        if invert_alpha and self.a is not None:
-            self.a = 1 - self.a
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+
+        self.red, self.green, self.blue = 255 - self.red, 255 - self.green, 255 - self.blue
+        if invert_alpha and self.alpha is not None:
+            self.alpha = 1 - self.alpha
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> rgba:
         """Converts the color to grayscale using the luminance formula.\n
-        ---------------------------------------------------------------------------
-        - `method` -⠀the luminance calculation method to use:
-          * `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
-          * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
-          * `"simple"` Simple arithmetic mean (less accurate)
-          * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        -------------------------------------------------------------------------------
+        *   `method` – The luminance calculation method to use:
+            -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+            -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
+            -   `"simple"` simple arithmetic mean (less accurate)
+            -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+
         # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
-        self.r = self.g = self.b = int(Color.luminance(self.r, self.g, self.b, method=method))
-        return rgba(self.r, self.g, self.b, self.a, _validate=False)
+        self.red = self.green = self.blue = int(Color.luminance(self.red, self.green, self.blue, method=method))
+        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
     def blend(self, other: Rgba, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> rgba:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
         ----------------------------------------------------------------------------------------------------------
-        - `other` -⠀the other RGBA color to blend with
-        - `ratio` -⠀the blend ratio between the two colors:
-          * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
-          * if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
-          * if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
-        - `additive_alpha` -⠀whether to blend the alpha channels additively or not"""
+        *   `other` – The other RGBA color to blend with.
+        *   `ratio` – The blend ratio between the two colors:
+            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+        *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
+
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
         other_rgba = Color.to_rgba(other)
-
         ratio *= 2
-        self.r = int(max(0, min(255, int((self.r * (2 - ratio)) + (other_rgba.r * ratio) + 0.5))))
-        self.g = int(max(0, min(255, int((self.g * (2 - ratio)) + (other_rgba.g * ratio) + 0.5))))
-        self.b = int(max(0, min(255, int((self.b * (2 - ratio)) + (other_rgba.b * ratio) + 0.5))))
-        none_alpha = self.a is None and (len(other_rgba) <= 3 or other_rgba[3] is None)
+
+        self.red = int(max(0, min(255, int((self.red * (2 - ratio)) + (other_rgba.red * ratio) + 0.5))))
+        self.green = int(max(0, min(255, int((self.green * (2 - ratio)) + (other_rgba.green * ratio) + 0.5))))
+        self.blue = int(max(0, min(255, int((self.blue * (2 - ratio)) + (other_rgba.blue * ratio) + 0.5))))
+        none_alpha = self.alpha is None and (len(other_rgba) <= 3 or other_rgba[3] is None)
 
         if not none_alpha:
-            self_a: float = 1.0 if self.a is None else self.a
+            self_a: float = 1.0 if self.alpha is None else self.alpha
             other_a: float = cast(float, 1.0 if other_rgba[3] is None else other_rgba[3]) if len(other_rgba) > 3 else 1.0
 
             if additive_alpha:
-                self.a = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
+                self.alpha = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
             else:
-                self.a = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
+                self.alpha = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
 
         else:
-            self.a = None
+            self.alpha = None
 
-        return rgba(self.r, self.g, self.b, None if none_alpha else self.a, _validate=False)
+        return rgba(self.red, self.green, self.blue, None if none_alpha else self.alpha, _validate=False)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
+
         return self.to_hsla().is_dark()
 
     def is_light(self) -> bool:
         """Returns `True` if the color is considered light (`lightness >= 50%`)."""
+
         return not self.is_dark()
 
     def is_grayscale(self) -> bool:
         """Returns `True` if the color is grayscale."""
-        return self.r == self.g == self.b
+
+        return self.red == self.green == self.blue
 
     def is_opaque(self) -> bool:
         """Returns `True` if the color has no transparency."""
-        return self.a == 1 or self.a is None
+
+        return self.alpha == 1 or self.alpha is None
 
     def with_alpha(self, alpha: float, /) -> rgba:
         """Returns a new color with the specified alpha value."""
+
         if not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
-        return rgba(self.r, self.g, self.b, alpha, _validate=False)
+        return rgba(self.red, self.green, self.blue, alpha, _validate=False)
 
     def complementary(self) -> rgba:
         """Returns the complementary color (180 degrees on the color wheel)."""
+
         return self.to_hsla().complementary().to_rgba()
 
     @staticmethod
-    def _rgb_to_hsl(r: int, g: int, b: int) -> tuple[int, int, int]:
+    def _rgb_to_hsl(red: int, green: int, blue: int) -> tuple[int, int, int]:
         """Internal method to convert RGB to HSL color space."""
-        _r, _g, _b = r / 255.0, g / 255.0, b / 255.0
-        max_c, min_c = max(_r, _g, _b), min(_r, _g, _b)
-        l = (max_c + min_c) / 2
+
+        _red, _green, _blue = red / 255.0, green / 255.0, blue / 255.0
+        max_c, min_c = max(_red, _green, _blue), min(_red, _green, _blue)
+        light = (max_c + min_c) / 2
 
         if max_c == min_c:
-            h = s = 0.0
+            hue = sat = 0.0
+
         else:
             delta = max_c - min_c
-            s = delta / (1 - abs(2 * l - 1))
+            sat = delta / (1 - abs(2 * light - 1))
 
-            if max_c == _r:
-                h = ((_g - _b) / delta) % 6
-            elif max_c == _g:
-                h = ((_b - _r) / delta) + 2
+            if max_c == _red:
+                hue = ((_green - _blue) / delta) % 6
+            elif max_c == _green:
+                hue = ((_blue - _red) / delta) + 2
             else:
-                h = ((_r - _g) / delta) + 4
-            h /= 6
+                hue = ((_red - _green) / delta) + 4
 
-        return int(round(h * 360)), int(round(s * 100)), int(round(l * 100))
+            hue /= 6
+
+        return int(round(hue * 360)), int(round(sat * 100)), int(round(light * 100))
 
 
 class hsla:
     """A HSL/HSLA color object that includes a bunch of methods to manipulate the color.\n
     ---------------------------------------------------------------------------------------
-    - `h` -⠀the hue channel in range [0, 360] inclusive
-    - `s` -⠀the saturation channel in range [0, 100] inclusive
-    - `l` -⠀the lightness channel in range [0, 100] inclusive
-    - `a` -⠀the alpha channel in range [0.0, 1.0] inclusive
-      or `None` if the color has no alpha channel\n
+    *   `hue` – The hue channel in range [0, 360] inclusive.
+    *   `sat` – The saturation channel in range [0, 100] inclusive.
+    *   `light` – The lightness channel in range [0, 100] inclusive.
+    *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive<br>
+        or `None` if the color has no alpha channel.
     ---------------------------------------------------------------------------------------
     Includes methods:
-    - `to_rgba()` to convert to RGB color
-    - `to_hexa()` to convert to HEX color
-    - `has_alpha()` to check if the color has an alpha channel
-    - `lighten(amount)` to create a lighter version of the color
-    - `darken(amount)` to create a darker version of the color
-    - `saturate(amount)` to increase color saturation
-    - `desaturate(amount)` to decrease color saturation
-    - `rotate(degrees)` to rotate the hue by degrees
-    - `invert()` to get the inverse color
-    - `grayscale()` to convert to grayscale
-    - `blend(other, ratio)` to blend with another color
-    - `is_dark()` to check if the color is considered dark
-    - `is_light()` to check if the color is considered light
-    - `is_grayscale()` to check if the color is grayscale
-    - `is_opaque()` to check if the color has no transparency
-    - `with_alpha(alpha)` to create a new color with different alpha
-    - `complementary()` to get the complementary color"""
+    *   `to_rgba()` to convert to RGB color
+    *   `to_hexa()` to convert to HEX color
+    *   `has_alpha()` to check if the color has an alpha channel
+    *   `lighten(amount)` to create a lighter version of the color
+    *   `darken(amount)` to create a darker version of the color
+    *   `saturate(amount)` to increase color saturation
+    *   `desaturate(amount)` to decrease color saturation
+    *   `rotate(degrees)` to rotate the hue by degrees
+    *   `invert()` to get the inverse color
+    *   `grayscale()` to convert to grayscale
+    *   `blend(other, ratio)` to blend with another color
+    *   `is_dark()` to check if the color is considered dark
+    *   `is_light()` to check if the color is considered light
+    *   `is_grayscale()` to check if the color is grayscale
+    *   `is_opaque()` to check if the color has no transparency
+    *   `with_alpha(alpha)` to create a new color with different alpha
+    *   `complementary()` to get the complementary color"""
 
-    def __init__(self, h: int, s: int, l: int, a: Optional[float] = None, /, *, _validate: bool = True):
-        self.h: int
+    def __init__(self, hue: int, sat: int, light: int, alpha: Optional[float] = None, /, *, _validate: bool = True):
+        self.hue: int
         """The hue channel in range [0, 360] inclusive."""
-        self.s: int
+        self.sat: int
         """The saturation channel in range [0, 100] inclusive."""
-        self.l: int
+        self.light: int
         """The lightness channel in range [0, 100] inclusive."""
-        self.a: Optional[float]
+        self.alpha: Optional[float]
         """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
         if not _validate:
-            self.h, self.s, self.l, self.a = h, s, l, a
+            self.hue, self.sat, self.light, self.alpha = hue, sat, light, alpha
             return
 
-        if not (0 <= h <= 360):
-            raise ValueError(f"The 'h' parameter must be in range [0, 360] inclusive, got {h!r}")
-        if not all((0 <= x <= 100) for x in (s, l)):
-            raise ValueError(f"The 's' and 'l' parameters must be in range [0, 100] inclusive, got {s=} {l=}")
-        if a is not None and not (0.0 <= a <= 1.0):
-            raise ValueError(f"The 'a' parameter must be in range [0.0, 1.0] inclusive, got {a!r}")
+        if not (0 <= hue <= 360):
+            raise ValueError(f"The 'hue' parameter must be in range [0, 360] inclusive, got {hue!r}")
+        if not all((0 <= ch <= 100) for ch in (sat, light)):
+            raise ValueError(f"The 'sat' and 'light' parameters must be in range [0, 100] inclusive, got {sat=!r} {light=!r}")
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
-        self.h, self.s, self.l = h, s, l
-        self.a = None if a is None else (1.0 if a > 1.0 else float(a))
+        self.hue, self.sat, self.light = hue, sat, light
+        self.alpha = None if alpha is None else (1.0 if alpha > 1.0 else float(alpha))
 
     def __len__(self) -> int:
         """The number of components in the color (3 or 4)."""
-        return 3 if self.a is None else 4
+
+        return 3 if self.alpha is None else 4
 
     def __iter__(self) -> Iterator[int | Optional[float]]:
-        return iter((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))
+        return iter((self.hue, self.sat, self.light) + (() if self.alpha is None else (self.alpha, )))
 
     @overload
     def __getitem__(self, index: Literal[0, 1, 2], /) -> int:
@@ -339,236 +365,258 @@ class hsla:
         ...
 
     def __getitem__(self, index: int, /) -> int | Optional[float]:
-        return ((self.h, self.s, self.l) + (() if self.a is None else (self.a, )))[index]
+        return ((self.hue, self.sat, self.light) + (() if self.alpha is None else (self.alpha, )))[index]
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `hsla` objects are the same color."""
+
         if not isinstance(other, hsla):
             return False
-        return (self.h, self.s, self.l, self.a) == (other.h, other.s, other.l, other.a)
+        return (self.hue, self.sat, self.light, self.alpha) == (other.hue, other.sat, other.light, other.alpha)
 
     def __ne__(self, other: object, /) -> bool:
         """Check if two `hsla` objects are different colors."""
+
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        return f"hsla({self.h}°, {self.s}%, {self.l}%{'' if self.a is None else f', {self.a}'})"
+        return f"hsla({self.hue}°, {self.sat}%, {self.light}%{'' if self.alpha is None else f', {self.alpha}'})"
 
     def __str__(self) -> str:
         return self.__repr__()
 
     def dict(self) -> HslaDict:
-        """Returns the color components as a dictionary with keys `"h"`, `"s"`, `"l"` and optionally `"a"`."""
-        return {"h": self.h, "s": self.s, "l": self.l, "a": self.a}
+        """Returns the color components as a dictionary with keys `"hue"`, `"sat"`, `"light"` and optionally `"alpha"`."""
+
+        return HslaDict(hue=self.hue, sat=self.sat, light=self.light, alpha=self.alpha)
 
     def values(self) -> tuple[int, int, int, Optional[float]]:
-        """Returns the color components as separate values `h, s, l, a`."""
-        return self.h, self.s, self.l, self.a
+        """Returns the color components as separate values `hue, sat, light, alpha`."""
+
+        return self.hue, self.sat, self.light, self.alpha
 
     def to_rgba(self) -> rgba:
         """Returns the color as `rgba()` color object."""
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
-        return rgba(r, g, b, self.a, _validate=False)
+
+        red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
+        return rgba(red, green, blue, self.alpha, _validate=False)
 
     def to_hexa(self) -> hexa:
         """Returns the color as `hexa()` color object."""
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
-        return hexa(_r=r, _g=g, _b=b, _a=self.a)
+
+        red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=self.alpha)
 
     def has_alpha(self) -> bool:
         """Returns `True` if the color has an alpha channel and `False` otherwise."""
-        return self.a is not None
+
+        return self.alpha is not None
 
     def lighten(self, amount: float, /) -> hsla:
         """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.l = int(min(100, self.l + (100 - self.l) * amount))
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        self.light = int(min(100, self.light + (100 - self.light) * amount))
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def darken(self, amount: float, /) -> hsla:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.l = int(max(0, self.l * (1 - amount)))
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        self.light = int(max(0, self.light * (1 - amount)))
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def saturate(self, amount: float, /) -> hsla:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.s = int(min(100, self.s + (100 - self.s) * amount))
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        self.sat = int(min(100, self.sat + (100 - self.sat) * amount))
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def desaturate(self, amount: float, /) -> hsla:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.s = int(max(0, self.s * (1 - amount)))
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        self.sat = int(max(0, self.sat * (1 - amount)))
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def rotate(self, degrees: int, /) -> hsla:
         """Rotates the colors hue by the specified number of degrees."""
-        self.h = (self.h + degrees) % 360
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+
+        self.hue = (self.hue + degrees) % 360
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def invert(self, *, invert_alpha: bool = False) -> hsla:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
-        self.h = (self.h + 180) % 360
-        self.l = 100 - self.l
-        if invert_alpha and self.a is not None:
-            self.a = 1 - self.a
 
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        self.hue = (self.hue + 180) % 360
+        self.light = 100 - self.light
+        if invert_alpha and self.alpha is not None:
+            self.alpha = 1 - self.alpha
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hsla:
         """Converts the color to grayscale using the luminance formula.\n
-        ---------------------------------------------------------------------------
-        - `method` -⠀the luminance calculation method to use:
-          * `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
-          * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
-          * `"simple"` Simple arithmetic mean (less accurate)
-          * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        -------------------------------------------------------------------------------
+        *   `method` – the luminance calculation method to use:
+            -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+            -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
+            -   `"simple"` simple arithmetic mean (less accurate)
+            -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+
         # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
-        r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
-        l = int(Color.luminance(r, g, b, output_type=None, method=method))
-        self.h, self.s, self.l, _ = rgba(l, l, l, _validate=False).to_hsla().values()
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
+        light = int(Color.luminance(red, green, blue, output_type=None, method=method))
+
+        self.hue, self.sat, self.light, _ = rgba(light, light, light, _validate=False).to_hsla().values()
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def blend(self, other: Hsla, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hsla:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
         ----------------------------------------------------------------------------------------------------------
-        - `other` -⠀the other HSLA color to blend with
-        - `ratio` -⠀the blend ratio between the two colors:
-          * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
-          * if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
-          * if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
-        - `additive_alpha` -⠀whether to blend the alpha channels additively or not"""
+        *   `other` – The other HSLA color to blend with.
+        *   `ratio` – The blend ratio between the two colors:
+            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+        *   `additive_alpha` – whether to blend the alpha channels additively or not."""
+
         if not Color.is_valid_hsla(other):
             raise TypeError(f"The 'other' parameter must be a valid HSLA color, got {type(other)}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
-        self.h, self.s, self.l, self.a = self.to_rgba().blend(
-            Color.to_rgba(other),
-            ratio,
-            additive_alpha=additive_alpha,
+        self.hue, self.sat, self.light, self.alpha = self.to_rgba().blend(
+            Color.to_rgba(other), ratio, additive_alpha=additive_alpha
         ).to_hsla().values()
-        return hsla(self.h, self.s, self.l, self.a, _validate=False)
+        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
-        return self.l < 50
+
+        return self.light < 50
 
     def is_light(self) -> bool:
         """Returns `True` if the color is considered light (`lightness >= 50%`)."""
+
         return not self.is_dark()
 
     def is_grayscale(self) -> bool:
         """Returns `True` if the color is considered grayscale."""
-        return self.s == 0
+
+        return self.sat == 0
 
     def is_opaque(self) -> bool:
         """Returns `True` if the color has no transparency."""
-        return self.a == 1 or self.a is None
+
+        return self.alpha == 1 or self.alpha is None
 
     def with_alpha(self, alpha: float, /) -> hsla:
         """Returns a new color with the specified alpha value."""
+
         if not isinstance(alpha, float):
             raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
         elif not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
-        return hsla(self.h, self.s, self.l, alpha, _validate=False)
+        return hsla(self.hue, self.sat, self.light, alpha, _validate=False)
 
     def complementary(self) -> hsla:
         """Returns the complementary color (180 degrees on the color wheel)."""
-        return hsla((self.h + 180) % 360, self.s, self.l, self.a, _validate=False)
+
+        return hsla((self.hue + 180) % 360, self.sat, self.light, self.alpha, _validate=False)
 
     @classmethod
-    def _hsl_to_rgb(cls, h: int, s: int, l: int) -> tuple[int, int, int]:
+    def _hsl_to_rgb(cls, hue: int, sat: int, light: int) -> tuple[int, int, int]:
         """Internal method to convert HSL to RGB color space."""
-        _h, _s, _l = h / 360, s / 100, l / 100
 
-        if _s == 0:
-            r = g = b = int(_l * 255)
+        _hue, _sat, _light = hue / 360, sat / 100, light / 100
+
+        if _sat == 0:
+            red = green = blue = int(_light * 255)
+
         else:
-            q = _l * (1 + _s) if _l < 0.5 else _l + _s - _l * _s
-            p = 2 * _l - q
-            r = int(round(cls._hue_to_rgb(p, q, _h + 1 / 3) * 255))
-            g = int(round(cls._hue_to_rgb(p, q, _h) * 255))
-            b = int(round(cls._hue_to_rgb(p, q, _h - 1 / 3) * 255))
+            chroma_max = _light * (1 + _sat) if _light < 0.5 else _light + _sat - _light * _sat
+            chroma_min = 2 * _light - chroma_max
 
-        return r, g, b
+            red = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue + 1 / 3) * 255))
+            green = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue) * 255))
+            blue = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue - 1 / 3) * 255))
+
+        return red, green, blue
 
     @staticmethod
-    def _hue_to_rgb(p: float, q: float, t: float) -> float:
-        if t < 0:
-            t += 1
-        if t > 1:
-            t -= 1
-        if t < 1 / 6:
-            return p + (q - p) * 6 * t
-        if t < 1 / 2:
-            return q
-        if t < 2 / 3:
-            return p + (q - p) * (2 / 3 - t) * 6
-        return p
+    def _hue_to_rgb(chroma_min: float, chroma_max: float, hue_pos: float) -> float:
+        if hue_pos < 0:
+            hue_pos += 1
+        if hue_pos > 1:
+            hue_pos -= 1
+        if hue_pos < 1 / 6:
+            return chroma_min + (chroma_max - chroma_min) * 6 * hue_pos
+        if hue_pos < 1 / 2:
+            return chroma_max
+        if hue_pos < 2 / 3:
+            return chroma_min + (chroma_max - chroma_min) * (2 / 3 - hue_pos) * 6
+        return chroma_min
 
 
 class hexa:
     """A HEXA color object that includes a bunch of methods to manipulate the color.\n
-    --------------------------------------------------------------------------------------------
-    - `color` -⠀the HEXA color string (prefix optional) or HEX integer, that can be in formats:
-      * `RGB` short format without alpha (only for strings)
-      * `RGBA` short format with alpha (only for strings)
-      * `RRGGBB` long format without alpha (for strings and HEX integers)
-      * `RRGGBBAA` long format with alpha (for strings and HEX integers)
-    --------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------
+    *   `color` – The HEXA color string (prefix optional) or HEX integer, that can be in formats:
+        -   `RGB` short format without alpha (only for strings)
+        -   `RGBA` short format with alpha (only for strings)
+        -   `RRGGBB` long format without alpha (for strings and HEX integers)
+        -   `RRGGBBAA` long format with alpha (for strings and HEX integers)
+    ----------------------------------------------------------------------------------------------
     Includes methods:
-    - `to_rgba()` to convert to RGB color
-    - `to_hsla()` to convert to HSL color
-    - `has_alpha()` to check if the color has an alpha channel
-    - `lighten(amount)` to create a lighter version of the color
-    - `darken(amount)` to create a darker version of the color
-    - `saturate(amount)` to increase color saturation
-    - `desaturate(amount)` to decrease color saturation
-    - `rotate(degrees)` to rotate the hue by degrees
-    - `invert()` to get the inverse color
-    - `grayscale()` to convert to grayscale
-    - `blend(other, ratio)` to blend with another color
-    - `is_dark()` to check if the color is considered dark
-    - `is_light()` to check if the color is considered light
-    - `is_grayscale()` to check if the color is grayscale
-    - `is_opaque()` to check if the color has no transparency
-    - `with_alpha(alpha)` to create a new color with different alpha
-    - `complementary()` to get the complementary color"""
+    *   `to_rgba()` to convert to RGB color
+    *   `to_hsla()` to convert to HSL color
+    *   `has_alpha()` to check if the color has an alpha channel
+    *   `lighten(amount)` to create a lighter version of the color
+    *   `darken(amount)` to create a darker version of the color
+    *   `saturate(amount)` to increase color saturation
+    *   `desaturate(amount)` to decrease color saturation
+    *   `rotate(degrees)` to rotate the hue by degrees
+    *   `invert()` to get the inverse color
+    *   `grayscale()` to convert to grayscale
+    *   `blend(other, ratio)` to blend with another color
+    *   `is_dark()` to check if the color is considered dark
+    *   `is_light()` to check if the color is considered light
+    *   `is_grayscale()` to check if the color is grayscale
+    *   `is_opaque()` to check if the color has no transparency
+    *   `with_alpha(alpha)` to create a new color with different alpha
+    *   `complementary()` to get the complementary color"""
 
     def __init__(
         self,
         color: Optional[str | int] = None,
         /,
         *,
-        _r: Optional[int] = None,
-        _g: Optional[int] = None,
-        _b: Optional[int] = None,
-        _a: Optional[float] = None,
+        _red: Optional[int] = None,
+        _green: Optional[int] = None,
+        _blue: Optional[int] = None,
+        _alpha: Optional[float] = None,
     ) -> None:
-        self.r: int
+        self.red: int
         """The red channel in range [0, 255] inclusive."""
-        self.g: int
+        self.green: int
         """The green channel in range [0, 255] inclusive."""
-        self.b: int
+        self.blue: int
         """The blue channel in range [0, 255] inclusive."""
-        self.a: Optional[float]
+        self.alpha: Optional[float]
         """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
-        if all(x is not None for x in (_r, _g, _b)):
-            self.r, self.g, self.b, self.a = cast(int, _r), cast(int, _g), cast(int, _b), _a
+        if all(ch is not None for ch in (_red, _green, _blue)):
+            self.red, self.green, self.blue, self.alpha = cast(int, _red), cast(int, _green), cast(int, _blue), _alpha
             return
 
         if isinstance(color, hexa):
@@ -581,28 +629,28 @@ class hexa:
                 color = color[2:].upper()
 
             if len(color) == 3:  # RGB
-                self.r, self.g, self.b, self.a = (
+                self.red, self.green, self.blue, self.alpha = (
                     int(color[0] * 2, 16),
                     int(color[1] * 2, 16),
                     int(color[2] * 2, 16),
                     None,
                 )
             elif len(color) == 4:  # RGBA
-                self.r, self.g, self.b, self.a = (
+                self.red, self.green, self.blue, self.alpha = (
                     int(color[0] * 2, 16),
                     int(color[1] * 2, 16),
                     int(color[2] * 2, 16),
                     int(color[3] * 2, 16) / 255.0,
                 )
             elif len(color) == 6:  # RRGGBB
-                self.r, self.g, self.b, self.a = (
+                self.red, self.green, self.blue, self.alpha = (
                     int(color[0:2], 16),
                     int(color[2:4], 16),
                     int(color[4:6], 16),
                     None,
                 )
             elif len(color) == 8:  # RRGGBBAA
-                self.r, self.g, self.b, self.a = (
+                self.red, self.green, self.blue, self.alpha = (
                     int(color[0:2], 16),
                     int(color[2:4], 16),
                     int(color[4:6], 16),
@@ -612,170 +660,195 @@ class hexa:
                 raise ValueError(f"Invalid HEXA color string '{color}'. Must be in formats RGB, RGBA, RRGGBB or RRGGBBAA.")
 
         elif isinstance(color, int):
-            self.r, self.g, self.b, self.a = Color.hex_int_to_rgba(color).values()
+            self.red, self.green, self.blue, self.alpha = Color.hex_int_to_rgba(color).values()
 
     def __len__(self) -> int:
         """The number of components in the color (3 or 4)."""
-        return 3 if self.a is None else 4
+
+        return 3 if self.alpha is None else 4
 
     def __iter__(self) -> Iterator[str]:
-        return iter((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}")
-                    + (() if self.a is None else (f"{int(self.a * 255):02X}", )))
+        return iter((f"{self.red:02X}", f"{self.green:02X}", f"{self.blue:02X}")
+                    + (() if self.alpha is None else (f"{int(self.alpha * 255):02X}", )))
 
     def __getitem__(self, index: int, /) -> str:
-        return ((f"{self.r:02X}", f"{self.g:02X}", f"{self.b:02X}") \
-                + (() if self.a is None else (f"{int(self.a * 255):02X}", )))[index]
+        return ((f"{self.red:02X}", f"{self.green:02X}", f"{self.blue:02X}") \
+                + (() if self.alpha is None else (f"{int(self.alpha * 255):02X}", )))[index]
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `hexa` objects are the same color."""
+
         if not isinstance(other, hexa):
             return False
-        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+        return (self.red, self.green, self.blue, self.alpha) == (other.red, other.green, other.blue, other.alpha)
 
     def __ne__(self, other: object, /) -> bool:
         """Check if two `hexa` objects are different colors."""
+
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        return f"hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{'' if self.a is None else f'{int(self.a * 255):02X}'})"
+        return f"hexa(#{self.red:02X}{self.green:02X}{self.blue:02X}{'' if self.alpha is None else f'{int(self.alpha * 255):02X}'})"
 
     def __str__(self) -> str:
-        return f"#{self.r:02X}{self.g:02X}{self.b:02X}{'' if self.a is None else f'{int(self.a * 255):02X}'}"
+        return f"#{self.red:02X}{self.green:02X}{self.blue:02X}{'' if self.alpha is None else f'{int(self.alpha * 255):02X}'}"
 
     def dict(self) -> HexaDict:
-        """Returns the color components as a dictionary with hex string values for keys `"r"`, `"g"`, `"b"` and optionally `"a"`."""
-        return {
-            "r": f"{self.r:02X}", "g": f"{self.g:02X}", "b": f"{self.b:02X}", "a":
-            None if self.a is None else f"{int(self.a * 255):02X}"
-        }
+        """Returns the color components as a dictionary with hex string values for keys `"red"`, `"green"`, `"blue"` and optionally `"alpha"`."""
+
+        return HexaDict(
+            red=f"{self.red:02X}",
+            green=f"{self.green:02X}",
+            blue=f"{self.blue:02X}",
+            alpha=(f"{int(self.alpha * 255):02X}" if self.alpha is not None else None),
+        )
 
     def values(self, *, round_alpha: bool = True) -> tuple[int, int, int, Optional[float]]:
-        """Returns the color components as separate values `r, g, b, a`."""
-        return self.r, self.g, self.b, None if self.a is None else (round(self.a, 2) if round_alpha else self.a)
+        """Returns the color components as separate values `red, green, blue, alpha`."""
+
+        return self.red, self.green, self.blue, None if self.alpha is None else (
+            round(self.alpha, 2) if round_alpha else self.alpha
+        )
 
     def to_rgba(self, *, round_alpha: bool = True) -> rgba:
         """Returns the color as `rgba()` color object."""
+
         return rgba(
-            self.r,
-            self.g,
-            self.b,
-            None if self.a is None else (round(self.a, 2) if round_alpha else self.a),
+            self.red,
+            self.green,
+            self.blue,
+            None if self.alpha is None else (round(self.alpha, 2) if round_alpha else self.alpha),
             _validate=False,
         )
 
     def to_hsla(self, *, round_alpha: bool = True) -> hsla:
         """Returns the color as `hsla()` color object."""
+
         return self.to_rgba(round_alpha=round_alpha).to_hsla()
 
     def has_alpha(self) -> bool:
         """Returns `True` if the color has an alpha channel and `False` otherwise."""
-        return self.a is not None
+
+        return self.alpha is not None
 
     def lighten(self, amount: float, /) -> hexa:
         """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).lighten(amount).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).lighten(amount).values()
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def darken(self, amount: float, /) -> hexa:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).darken(amount).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).darken(amount).values()
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def saturate(self, amount: float, /) -> hexa:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).saturate(amount).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).saturate(amount).values()
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def desaturate(self, amount: float, /) -> hexa:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
+
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).desaturate(amount).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).desaturate(amount).values()
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def rotate(self, degrees: int, /) -> hexa:
         """Rotates the colors hue by the specified number of degrees."""
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).rotate(degrees).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).rotate(degrees).values()
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def invert(self, *, invert_alpha: bool = False) -> hexa:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).invert().values()
-        if invert_alpha and self.a is not None:
-            self.a = 1 - self.a
 
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).invert().values()
+        if invert_alpha and self.alpha is not None:
+            self.alpha = 1 - self.alpha
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hexa:
         """Converts the color to grayscale using the luminance formula.\n
-        ---------------------------------------------------------------------------
-        - `method` -⠀the luminance calculation method to use:
-          * `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
-          * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
-          * `"simple"` Simple arithmetic mean (less accurate)
-          * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+        -------------------------------------------------------------------------------
+        *   `method` – The luminance calculation method to use:
+            -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+            -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
+            -   `"simple"` simple arithmetic mean (less accurate)
+            -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
+
         # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
-        self.r = self.g = self.b = int(Color.luminance(self.r, self.g, self.b, method=method))
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        self.red = self.green = self.blue = int(Color.luminance(self.red, self.green, self.blue, method=method))
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def blend(self, other: Hexa, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hexa:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
         ----------------------------------------------------------------------------------------------------------
-        - `other` -⠀the other HEXA color to blend with
-        - `ratio` -⠀the blend ratio between the two colors:
-          * if `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture)
-          * if `ratio` is `0.5` it means 50% of both colors (1:1 mixture)
-          * if `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture)
-        - `additive_alpha` -⠀whether to blend the alpha channels additively or not"""
+        *   `other` – The other HEXA color to blend with.
+        *   `ratio` – The blend ratio between the two colors:
+            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+        *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
+
         if not Color.is_valid_hexa(other):
             raise TypeError(f"The 'other' parameter must be a valid HEXA color, got {type(other)}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
-        self.r, self.g, self.b, self.a = self.to_rgba(round_alpha=False).blend(
+        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).blend(
             Color.to_rgba(other),
             ratio,
             additive_alpha=additive_alpha,
         ).values()
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=self.a)
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
+
         return self.to_hsla(round_alpha=False).is_dark()
 
     def is_light(self) -> bool:
         """Returns `True` if the color is considered light (`lightness >= 50%`)."""
+
         return not self.is_dark()
 
     def is_grayscale(self) -> bool:
         """Returns `True` if the color is grayscale (`saturation == 0`)."""
+
         return self.to_hsla(round_alpha=False).is_grayscale()
 
     def is_opaque(self) -> bool:
         """Returns `True` if the color has no transparency (`alpha == 1.0`)."""
-        return self.a == 1 or self.a is None
+
+        return self.alpha == 1 or self.alpha is None
 
     def with_alpha(self, alpha: float, /) -> hexa:
         """Returns a new color with the specified alpha value."""
+
         if not isinstance(alpha, float):
             raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
         elif not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
-        return hexa(_r=self.r, _g=self.g, _b=self.b, _a=alpha)
+        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=alpha)
 
     def complementary(self) -> hexa:
         """Returns the complementary color (180 degrees on the color wheel)."""
+
         return self.to_hsla(round_alpha=False).complementary().to_hexa()
 
 
@@ -785,9 +858,9 @@ class Color:
     @classmethod
     def is_valid_rgba(cls, color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
         """Check if the given color is a valid RGBA color.\n
-        -----------------------------------------------------------------
-        - `color` -⠀the color to check (can be in any supported format)
-        - `allow_alpha` -⠀whether to allow alpha channel in the color"""
+        --------------------------------------------------------------------
+        *   `color` – The color to check (can be in any supported format).
+        *   `allow_alpha` – Whether to allow alpha channel in the color."""
         try:
             if isinstance(color, rgba):
                 return True
@@ -814,15 +887,15 @@ class Color:
 
                 if (allow_alpha \
                     and len(dict_color) == 4
-                    and all(isinstance(dict_color.get(ch), int) for ch in ("r", "g", "b"))
-                    and isinstance(dict_color.get("a", "no alpha"), (float, type(None)))
+                    and all(isinstance(dict_color.get(ch), int) for ch in ("red", "green", "blue"))
+                    and isinstance(dict_color.get("alpha", "no alpha"), (float, type(None)))
                 ):
                     return (
-                        0 <= dict_color["r"] <= 255 and 0 <= dict_color["g"] <= 255 and 0 <= dict_color["b"] <= 255
-                        and (dict_color["a"] is None or 0 <= dict_color["a"] <= 1)
+                        0 <= dict_color["red"] <= 255 and 0 <= dict_color["green"] <= 255 and 0 <= dict_color["blue"] <= 255
+                        and (dict_color["alpha"] is None or 0 <= dict_color["alpha"] <= 1)
                     )
-                elif len(dict_color) == 3 and all(isinstance(dict_color.get(ch), int) for ch in ("r", "g", "b")):
-                    return 0 <= dict_color["r"] <= 255 and 0 <= dict_color["g"] <= 255 and 0 <= dict_color["b"] <= 255
+                elif len(dict_color) == 3 and all(isinstance(dict_color.get(ch), int) for ch in ("red", "green", "blue")):
+                    return 0 <= dict_color["red"] <= 255 and 0 <= dict_color["green"] <= 255 and 0 <= dict_color["blue"] <= 255
                 else:
                     return False
 
@@ -836,9 +909,10 @@ class Color:
     @classmethod
     def is_valid_hsla(cls, color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
         """Check if the given color is a valid HSLA color.\n
-        -----------------------------------------------------------------
-        - `color` -⠀the color to check (can be in any supported format)
-        - `allow_alpha` -⠀whether to allow alpha channel in the color"""
+        --------------------------------------------------------------------
+        *   `color` – The color to check (can be in any supported format).
+        *   `allow_alpha` – Whether to allow alpha channel in the color."""
+
         try:
             if isinstance(color, hsla):
                 return True
@@ -865,15 +939,15 @@ class Color:
 
                 if (allow_alpha \
                     and len(dict_color) == 4
-                    and all(isinstance(dict_color.get(ch), int) for ch in ("h", "s", "l"))
-                    and isinstance(dict_color.get("a", "no alpha"), (float, type(None)))
+                    and all(isinstance(dict_color.get(ch), int) for ch in ("hue", "sat", "light"))
+                    and isinstance(dict_color.get("alpha", "no alpha"), (float, type(None)))
                 ):
                     return (
-                        0 <= dict_color["h"] <= 360 and 0 <= dict_color["s"] <= 100 and 0 <= dict_color["l"] <= 100
-                        and (dict_color["a"] is None or 0 <= dict_color["a"] <= 1)
+                        0 <= dict_color["hue"] <= 360 and 0 <= dict_color["sat"] <= 100 and 0 <= dict_color["light"] <= 100
+                        and (dict_color["alpha"] is None or 0 <= dict_color["alpha"] <= 1)
                     )
-                elif len(dict_color) == 3 and all(isinstance(dict_color.get(ch), int) for ch in ("h", "s", "l")):
-                    return 0 <= dict_color["h"] <= 360 and 0 <= dict_color["s"] <= 100 and 0 <= dict_color["l"] <= 100
+                elif len(dict_color) == 3 and all(isinstance(dict_color.get(ch), int) for ch in ("hue", "sat", "light")):
+                    return 0 <= dict_color["hue"] <= 360 and 0 <= dict_color["sat"] <= 100 and 0 <= dict_color["light"] <= 100
                 else:
                     return False
 
@@ -930,10 +1004,11 @@ class Color:
         get_prefix: bool = False,
     ) -> bool | tuple[bool, Optional[Literal["#", "0x"]]]:
         """Check if the given color is a valid HEXA color.\n
-        ---------------------------------------------------------------------------------------------------
-        - `color` -⠀the color to check (can be in any supported format)
-        - `allow_alpha` -⠀whether to allow alpha channel in the color
-        - `get_prefix` -⠀if true, the prefix used in the color (if any) is returned along with validity"""
+        ------------------------------------------------------------------------------------------------------
+        *   `color` – The color to check (can be in any supported format).
+        *   `allow_alpha` – Whether to allow alpha channel in the color.
+        *   `get_prefix` – If true, the prefix used in the color (if any) is returned along with validity."""
+
         try:
             if isinstance(color, hexa):
                 return (True, "#") if get_prefix else True
@@ -958,9 +1033,10 @@ class Color:
     @classmethod
     def is_valid(cls, color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True) -> bool:
         """Check if the given color is a valid RGBA, HSLA or HEXA color.\n
-        -------------------------------------------------------------------
-        - `color` -⠀the color to check (can be in any supported format)
-        - `allow_alpha` -⠀whether to allow alpha channel in the color"""
+        --------------------------------------------------------------------
+        *   `color` – The color to check (can be in any supported format).
+        *   `allow_alpha` – Whether to allow alpha channel in the color."""
+
         return bool(
             cls.is_valid_rgba(color, allow_alpha=allow_alpha) \
             or cls.is_valid_hsla(color, allow_alpha=allow_alpha) \
@@ -970,8 +1046,9 @@ class Color:
     @classmethod
     def has_alpha(cls, color: Rgba | Hsla | Hexa, /) -> bool:
         """Check if the given color has an alpha channel.\n
-        ---------------------------------------------------------------------------
-        - `color` -⠀the color to check (can be in any supported format)"""
+        ----------------------------------------------------------------------
+        *   `color` – The color to check (can be in any supported format)."""
+
         if isinstance(color, (rgba, hsla, hexa)):
             return color.has_alpha()
 
@@ -1002,8 +1079,9 @@ class Color:
     @classmethod
     def to_rgba(cls, color: Rgba | Hsla | Hexa, /) -> rgba:
         """Will try to convert any color type to a color of type RGBA.\n
-        ---------------------------------------------------------------------
-        - `color` -⠀the color to convert (can be in any supported format)"""
+        ------------------------------------------------------------------------
+        *   `color` – The color to convert (can be in any supported format)."""
+
         if isinstance(color, (hsla, hexa)):
             return color.to_rgba()
         elif cls.is_valid_hsla(color):
@@ -1017,8 +1095,9 @@ class Color:
     @classmethod
     def to_hsla(cls, color: Rgba | Hsla | Hexa, /) -> hsla:
         """Will try to convert any color type to a color of type HSLA.\n
-        ---------------------------------------------------------------------
-        - `color` -⠀the color to convert (can be in any supported format)"""
+        ------------------------------------------------------------------------
+        *   `color` – The color to convert (can be in any supported format)."""
+
         if isinstance(color, (rgba, hexa)):
             return color.to_hsla()
         elif cls.is_valid_rgba(color):
@@ -1032,8 +1111,9 @@ class Color:
     @classmethod
     def to_hexa(cls, color: Rgba | Hsla | Hexa, /) -> hexa:
         """Will try to convert any color type to a color of type HEXA.\n
-        ---------------------------------------------------------------------
-        - `color` -⠀the color to convert (can be in any supported format)"""
+        ------------------------------------------------------------------------
+        *   `color` – The color to convert (can be in any supported format)."""
+
         if isinstance(color, (rgba, hsla)):
             return color.to_hexa()
         elif cls.is_valid_rgba(color):
@@ -1062,12 +1142,14 @@ class Color:
     @classmethod
     def str_to_rgba(cls, string: str, /, *, only_first: bool = False) -> Optional[rgba | list[rgba]]:
         """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.\n
-        ---------------------------------------------------------------------------------------------------------------
-        - `string` -⠀the string to search for RGBA colors
-        - `only_first` -⠀if true, only the first found color will be returned, otherwise a list of all found colors"""
+        ------------------------------------------------------------------------------------------------------------------
+        *   `string` – The string to search for RGBA colors.
+        *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
+
         if only_first:
             if not (match := _re.search(Regex.rgba_str(allow_alpha=True), string)):
                 return None
+
             groups = match.groups()
             return rgba(
                 int(groups[0]),
@@ -1080,6 +1162,7 @@ class Color:
         else:
             if not (matches := _re.findall(Regex.rgba_str(allow_alpha=True), string)):
                 return None
+
             return [
                 rgba(
                     int(match[0]),
@@ -1108,73 +1191,79 @@ class Color:
     @classmethod
     def str_to_hsla(cls, string: str, /, *, only_first: bool = False) -> Optional[hsla | list[hsla]]:
         """Will try to recognize HSLA colors inside a string and output the found ones as HSLA objects.\n
-        ---------------------------------------------------------------------------------------------------------------
-        - `string` -⠀the string to search for HSLA colors
-        - `only_first` -⠀if true, only the first found color will be returned, otherwise a list of all found colors"""
+        ------------------------------------------------------------------------------------------------------------------
+        *   `string` – The string to search for HSLA colors.
+        *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
+
         if only_first:
             if not (match := _re.search(Regex.hsla_str(allow_alpha=True), string)):
                 return None
-            m = match.groups()
+
+            groups = match.groups()
             return hsla(
-                int(m[0]),
-                int(m[1]),
-                int(m[2]),
-                ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
+                int(groups[0]),
+                int(groups[1]),
+                int(groups[2]),
+                ((int(groups[3]) if "." not in groups[3] else float(groups[3])) if groups[3] else None),
                 _validate=False,
             )
 
         else:
             if not (matches := _re.findall(Regex.hsla_str(allow_alpha=True), string)):
                 return None
+
             return [
                 hsla(
-                    int(m[0]),
-                    int(m[1]),
-                    int(m[2]),
-                    ((int(m[3]) if "." not in m[3] else float(m[3])) if m[3] else None),
+                    int(match[0]),
+                    int(match[1]),
+                    int(match[2]),
+                    ((int(match[3]) if "." not in match[3] else float(match[3])) if match[3] else None),
                     _validate=False,
-                ) for m in matches
+                ) for match in matches
             ]
 
     @classmethod
     def rgba_to_hex_int(
         cls,
-        r: int,
-        g: int,
-        b: int,
-        a: Optional[float] = None,
+        red: int,
+        green: int,
+        blue: int,
+        alpha: Optional[float] = None,
         /,
         *,
         preserve_original: bool = False,
     ) -> int:
         """Convert RGBA channels to a HEXA integer (alpha is optional).\n
-        --------------------------------------------------------------------------------------------
-        - `r`, `g`, `b` -⠀the red, green and blue channels (`0` – `255`)
-        - `a` -⠀the alpha channel (`0.0` – `1.0`) or `None` if not set
-        - `preserve_original` -⠀whether to preserve the original color exactly (explained below)\n
-        --------------------------------------------------------------------------------------------
-        To preserve leading zeros, the function will add a `1` at the beginning, if the HEX integer
-        would start with a `0`.
-        This could affect the color a little bit, but will make sure, that it won't be interpreted
-        as a completely different color, when initializing it as a `hexa()` color or changing it
+        -----------------------------------------------------------------------------------------------
+        *   `red`, `green`, `blue` – The red, green, and blue channels in range [0, 255] inclusive.
+        *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive or `None` if not set.
+        *   `preserve_original` – Whether to preserve the original color exactly (explained below).
+        -----------------------------------------------------------------------------------------------
+        To preserve leading zeros, the function will add a `1` at the beginning,<br>
+        if the HEX integer would start with a `0`.\n
+        This could affect the color a little bit, but will make sure, that it won't be interpreted<br>
+        as a completely different color, when initializing it as a `hexa()` color or changing it<br>
         back to RGBA using `Color.hex_int_to_rgba()`."""
-        if not all((0 <= c <= 255) for c in (r, g, b)):
-            raise ValueError(f"The 'r', 'g' and 'b' parameters must be integers in [0, 255], got {r=} {g=} {b=}")
-        if a is not None and not (0.0 <= a <= 1.0):
-            raise ValueError(f"The 'a' parameter must be a float in [0.0, 1.0] or None, got {a!r}")
 
-        r = max(0, min(255, int(r)))
-        g = max(0, min(255, int(g)))
-        b = max(0, min(255, int(b)))
+        if not all((0 <= ch <= 255) for ch in (red, green, blue)):
+            raise ValueError(
+                f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
+            )
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be a float in [0.0, 1.0] or None, got {alpha!r}")
 
-        if a is None:
-            hex_int = (r << 16) | (g << 8) | b
+        red = max(0, min(255, int(red)))
+        green = max(0, min(255, int(green)))
+        blue = max(0, min(255, int(blue)))
+
+        if alpha is None:
+            hex_int = (red << 16) | (green << 8) | blue
             if not preserve_original and (hex_int & 0xF00000) == 0:
                 hex_int |= 0x010000
         else:
-            a = max(0, min(255, int(a * 255)))
-            hex_int = (r << 24) | (g << 16) | (b << 8) | a
-            if not preserve_original and r == 0:
+            alpha = max(0, min(255, int(alpha * 255)))
+            hex_int = (red << 24) | (green << 16) | (blue << 8) | alpha
+            if not preserve_original and red == 0:
                 hex_int |= 0x01000000
 
         return hex_int
@@ -1182,20 +1271,21 @@ class Color:
     @classmethod
     def hex_int_to_rgba(cls, hex_int: int, /, *, preserve_original: bool = False) -> rgba:
         """Convert a HEX integer to RGBA channels.\n
-        -------------------------------------------------------------------------------------------
-        - `hex_int` -⠀the HEX integer to convert
-        - `preserve_original` -⠀whether to preserve the original color exactly (explained below)\n
-        -------------------------------------------------------------------------------------------
-        If the red channel is `1` after conversion, it will be set to `0`, because when converting
-        from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.
+        -----------------------------------------------------------------------------------------------
+        *   `hex_int` – The HEX integer to convert.
+        *   `preserve_original` – Whether to preserve the original color exactly (explained below).
+        -----------------------------------------------------------------------------------------------
+        If the red channel is `1` after conversion, it will be set to `0`, because when converting<br>
+        from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.\n
         This is the correction, so the color doesn't even look slightly different."""
+
         if not (0 <= hex_int <= 0xFFFFFFFF):
             raise ValueError(f"Expected HEX integer in range [0x000000, 0xFFFFFFFF] inclusive, got 0x{hex_int:X}")
 
         if len(hex_str := f"{hex_int:X}") <= 6:
             hex_str = hex_str.zfill(6)
             return rgba(
-                r if (r := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
+                red if (red := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
                 int(hex_str[2:4], 16),
                 int(hex_str[4:6], 16),
                 None,
@@ -1205,7 +1295,7 @@ class Color:
         elif len(hex_str) <= 8:
             hex_str = hex_str.zfill(8)
             return rgba(
-                r if (r := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
+                red if (red := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
                 int(hex_str[2:4], 16),
                 int(hex_str[4:6], 16),
                 int(hex_str[6:8], 16) / 255.0,
@@ -1219,9 +1309,9 @@ class Color:
     @classmethod
     def luminance(
         cls,
-        r: int,
-        g: int,
-        b: int,
+        red: int,
+        green: int,
+        blue: int,
         /,
         *,
         output_type: type[int],
@@ -1233,9 +1323,9 @@ class Color:
     @classmethod
     def luminance(
         cls,
-        r: int,
-        g: int,
-        b: int,
+        red: int,
+        green: int,
+        blue: int,
         /,
         *,
         output_type: type[float],
@@ -1247,9 +1337,9 @@ class Color:
     @classmethod
     def luminance(
         cls,
-        r: int,
-        g: int,
-        b: int,
+        red: int,
+        green: int,
+        blue: int,
         /,
         *,
         output_type: None = None,
@@ -1261,9 +1351,9 @@ class Color:
     @classmethod
     def luminance(
         cls,
-        r: int,
-        g: int,
-        b: int,
+        red: int,
+        green: int,
+        blue: int,
         /,
         *,
         output_type: Optional[type[int | float]] = None,
@@ -1274,45 +1364,48 @@ class Color:
     @classmethod
     def luminance(
         cls,
-        r: int,
-        g: int,
-        b: int,
+        red: int,
+        green: int,
+        blue: int,
         /,
         *,
         output_type: Optional[type[int | float]] = None,
         method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
     ) -> int | float:
         """Calculates the relative luminance of a color according to various standards.\n
-        ----------------------------------------------------------------------------------
-        - `r`, `g`, `b` -⠀the red, green and blue channels in range [0, 255] inclusive
-        - `output_type` -⠀the range of the returned luminance value:
-          * `int` returns integer in range [0, 100] inclusive
-          * `float` returns float in range [0.0, 1.0] inclusive
-          * `None` returns integer in range [0, 255] inclusive
-        - `method` -⠀the luminance calculation method to use:
-          * `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
-          * `"wcag3"` Draft WCAG 3.0 standard with improved coefficients
-          * `"simple"` Simple arithmetic mean (less accurate)
-          * `"bt601"` ITU-R BT.601 standard (older TV standard)"""
-        if not all(0 <= c <= 255 for c in (r, g, b)):
-            raise ValueError(f"The 'r', 'g' and 'b' parameters must be integers in [0, 255], got {r=} {g=} {b=}")
+        -------------------------------------------------------------------------------------------
+        *   `red`, `green`, `blue` – The red, green and blue channels in range [0, 255] inclusive.
+        *   `output_type` – The range of the returned luminance value:
+            -   `int` returns integer in range [0, 100] inclusive.
+            -   `float` returns float in range [0.0, 1.0] inclusive.
+            -   `None` returns integer in range [0, 255] inclusive.
+        *   `method` – The luminance calculation method to use:
+            -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
+            -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
+            -   `"simple"` simple arithmetic mean (less accurate)
+            -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        _r, _g, _b = r / 255.0, g / 255.0, b / 255.0
+        if not all(0 <= ch <= 255 for ch in (red, green, blue)):
+            raise ValueError(
+                f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
+            )
+
+        _red, _green, _blue = red / 255.0, green / 255.0, blue / 255.0
 
         if method == "simple":
-            luminance = (_r + _g + _b) / 3
+            luminance = (_red + _green + _blue) / 3
         elif method == "bt601":
-            luminance = 0.299 * _r + 0.587 * _g + 0.114 * _b
+            luminance = 0.299 * _red + 0.587 * _green + 0.114 * _blue
         elif method == "wcag3":
-            _r = cls._linearize_srgb(_r)
-            _g = cls._linearize_srgb(_g)
-            _b = cls._linearize_srgb(_b)
-            luminance = 0.2126729 * _r + 0.7151522 * _g + 0.0721750 * _b
+            _red = cls._linearize_srgb(_red)
+            _green = cls._linearize_srgb(_green)
+            _blue = cls._linearize_srgb(_blue)
+            luminance = 0.2126729 * _red + 0.7151522 * _green + 0.0721750 * _blue
         else:
-            _r = cls._linearize_srgb(_r)
-            _g = cls._linearize_srgb(_g)
-            _b = cls._linearize_srgb(_b)
-            luminance = 0.2126 * _r + 0.7152 * _g + 0.0722 * _b
+            _red = cls._linearize_srgb(_red)
+            _green = cls._linearize_srgb(_green)
+            _blue = cls._linearize_srgb(_blue)
+            luminance = 0.2126 * _red + 0.7152 * _green + 0.0722 * _blue
 
         if output_type == int:
             return round(luminance * 100)
@@ -1345,105 +1438,105 @@ class Color:
     def text_color_for_on_bg(cls, text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
         """Returns either black or white text color for optimal contrast on the given background color.\n
         --------------------------------------------------------------------------------------------------
-        - `text_bg_color` -⠀the background color (can be in RGBA or HEXA format)"""
+        *   `text_bg_color` – The background color (can be in RGBA or HEXA format)."""
+
         was_hexa, was_int = cls.is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
 
         text_bg_rgba = cls.to_rgba(text_bg_color)
         brightness = 0.2126 * text_bg_rgba[0] + 0.7152 * text_bg_rgba[1] + 0.0722 * text_bg_rgba[2]
 
         return (
-            (0xFFFFFF if was_int else hexa(_r=255, _g=255, _b=255)) if was_hexa \
+            (0xFFFFFF if was_int else hexa(_red=255, _green=255, _blue=255)) if was_hexa \
             else rgba(255, 255, 255, _validate=False)
         ) if brightness < 128 else (
-            (0x000 if was_int else hexa(_r=0, _g=0, _b=0)) if was_hexa \
+            (0x000 if was_int else hexa(_red=0, _green=0, _blue=0)) if was_hexa \
             else rgba(0, 0, 0, _validate=False)
         )
 
     @overload
     @classmethod
-    def adjust_lightness(cls, color: rgba, lightness_change: float, /) -> rgba:
+    def adjust_lightness(cls, color: rgba, light_change: float, /) -> rgba:
         ...
 
     @overload
     @classmethod
-    def adjust_lightness(cls, color: hexa, lightness_change: float, /) -> hexa:
+    def adjust_lightness(cls, color: hexa, light_change: float, /) -> hexa:
         ...
 
     @overload
     @classmethod
-    def adjust_lightness(cls, color: Rgba | Hexa, lightness_change: float, /) -> rgba | hexa:
+    def adjust_lightness(cls, color: Rgba | Hexa, light_change: float, /) -> rgba | hexa:
         ...
 
     @classmethod
-    def adjust_lightness(cls, color: Rgba | Hexa, lightness_change: float, /) -> rgba | hexa:
+    def adjust_lightness(cls, color: Rgba | Hexa, light_change: float, /) -> rgba | hexa:
         """In- or decrease the lightness of the input color.\n
-        ------------------------------------------------------------------
-        - `color` -⠀the color to adjust (can be in RGBA or HEXA format)
-        - `lightness_change` -⠀the amount to change the lightness by,
-          in range `-1.0` (darken by 100%) and `1.0` (lighten by 100%)"""
-        if not (-1.0 <= lightness_change <= 1.0):
-            raise ValueError(
-                f"The 'lightness_change' parameter must be in range [-1.0, 1.0] inclusive, got {lightness_change!r}"
-            )
+        ---------------------------------------------------------------------
+        *   `color` – The color to adjust (can be in RGBA or HEXA format).
+        *   `light_change` – The amount to change the lightness by,<br>
+            in range `-1.0` (darken by 100%) and `1.0` (lighten by 100%)."""
+
+        if not (-1.0 <= light_change <= 1.0):
+            raise ValueError(f"The 'light_change' parameter must be in range [-1.0, 1.0] inclusive, got {light_change!r}")
 
         was_hexa = cls.is_valid_hexa(color)
         hsla_color = cls.to_hsla(color)
 
-        h, s, l, a = (
+        hue, sat, light, alpha = (
             int(hsla_color[0]), int(hsla_color[1]), int(hsla_color[2]), \
             hsla_color[3] if hsla_color.has_alpha() else None
         )
-        l = int(max(0, min(100, l + lightness_change * 100)))
+        light = int(max(0, min(100, light + light_change * 100)))
 
         return (
-            hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa \
-            else hsla(h, s, l, a, _validate=False).to_rgba()
+            hsla(hue, sat, light, alpha, _validate=False).to_hexa() if was_hexa \
+            else hsla(hue, sat, light, alpha, _validate=False).to_rgba()
         )
 
     @overload
     @classmethod
-    def adjust_saturation(cls, color: rgba, saturation_change: float, /) -> rgba:
+    def adjust_saturation(cls, color: rgba, sat_change: float, /) -> rgba:
         ...
 
     @overload
     @classmethod
-    def adjust_saturation(cls, color: hexa, saturation_change: float, /) -> hexa:
+    def adjust_saturation(cls, color: hexa, sat_change: float, /) -> hexa:
         ...
 
     @overload
     @classmethod
-    def adjust_saturation(cls, color: Rgba | Hexa, saturation_change: float, /) -> rgba | hexa:
+    def adjust_saturation(cls, color: Rgba | Hexa, sat_change: float, /) -> rgba | hexa:
         ...
 
     @classmethod
-    def adjust_saturation(cls, color: Rgba | Hexa, saturation_change: float, /) -> rgba | hexa:
+    def adjust_saturation(cls, color: Rgba | Hexa, sat_change: float, /) -> rgba | hexa:
         """In- or decrease the saturation of the input color.\n
-        -----------------------------------------------------------------------
-        - `color` -⠀the color to adjust (can be in RGBA or HEXA format)
-        - `saturation_change` -⠀the amount to change the saturation by,
-          in range `-1.0` (saturate by 100%) and `1.0` (desaturate by 100%)"""
-        if not (-1.0 <= saturation_change <= 1.0):
-            raise ValueError(
-                f"The 'saturation_change' parameter must be in range [-1.0, 1.0] inclusive, got {saturation_change!r}"
-            )
+        --------------------------------------------------------------------------
+        *   `color` – The color to adjust (can be in RGBA or HEXA format).
+        *   `sat_change` – The amount to change the saturation by,<br>
+            in range `-1.0` (saturate by 100%) and `1.0` (desaturate by 100%)."""
+
+        if not (-1.0 <= sat_change <= 1.0):
+            raise ValueError(f"The 'sat_change' parameter must be in range [-1.0, 1.0] inclusive, got {sat_change!r}")
 
         was_hexa = cls.is_valid_hexa(color)
         hsla_color = cls.to_hsla(color)
 
-        h, s, l, a = (
+        hue, sat, light, alpha = (
             int(hsla_color[0]), int(hsla_color[1]), int(hsla_color[2]), \
             hsla_color[3] if hsla_color.has_alpha() else None
         )
-        s = int(max(0, min(100, s + saturation_change * 100)))
+        sat = int(max(0, min(100, sat + sat_change * 100)))
 
         return (
-            hsla(h, s, l, a, _validate=False).to_hexa() if was_hexa \
-            else hsla(h, s, l, a, _validate=False).to_rgba()
+            hsla(hue, sat, light, alpha, _validate=False).to_hexa() if was_hexa \
+            else hsla(hue, sat, light, alpha, _validate=False).to_rgba()
         )
 
     @classmethod
     def _parse_rgba(cls, color: Rgba, /) -> rgba:
         """Internal method to parse a color to an RGBA object."""
+
         if isinstance(color, rgba):
             return color
 
@@ -1451,7 +1544,11 @@ class Color:
             array_color = cast(list[Any] | tuple[Any, ...], color)
             if len(array_color) == 4:
                 return rgba(
-                    int(array_color[0]), int(array_color[1]), int(array_color[2]), float(array_color[3]), _validate=False
+                    int(array_color[0]),
+                    int(array_color[1]),
+                    int(array_color[2]),
+                    float(array_color[3]),
+                    _validate=False,
                 )
             elif len(array_color) == 3:
                 return rgba(int(array_color[0]), int(array_color[1]), int(array_color[2]), None, _validate=False)
@@ -1459,7 +1556,13 @@ class Color:
 
         elif isinstance(color, dict):
             dict_color = cast(dict[str, Any], color)
-            return rgba(int(dict_color["r"]), int(dict_color["g"]), int(dict_color["b"]), dict_color.get("a"), _validate=False)
+            return rgba(
+                int(dict_color["red"]),
+                int(dict_color["green"]),
+                int(dict_color["blue"]),
+                dict_color.get("alpha"),
+                _validate=False,
+            )
 
         elif isinstance(color, str):
             if parsed := cls.str_to_rgba(color, only_first=True):
@@ -1470,6 +1573,7 @@ class Color:
     @classmethod
     def _parse_hsla(cls, color: Hsla, /) -> hsla:
         """Internal method to parse a color to an HSLA object."""
+
         if isinstance(color, hsla):
             return color
 
@@ -1477,7 +1581,11 @@ class Color:
             array_color = cast(list[Any] | tuple[Any, ...], color)
             if len(color) == 4:
                 return hsla(
-                    int(array_color[0]), int(array_color[1]), int(array_color[2]), float(array_color[3]), _validate=False
+                    int(array_color[0]),
+                    int(array_color[1]),
+                    int(array_color[2]),
+                    float(array_color[3]),
+                    _validate=False,
                 )
             elif len(color) == 3:
                 return hsla(int(array_color[0]), int(array_color[1]), int(array_color[2]), None, _validate=False)
@@ -1485,7 +1593,13 @@ class Color:
 
         elif isinstance(color, dict):
             dict_color = cast(dict[str, Any], color)
-            return hsla(int(dict_color["h"]), int(dict_color["s"]), int(dict_color["l"]), dict_color.get("a"), _validate=False)
+            return hsla(
+                int(dict_color["hue"]),
+                int(dict_color["sat"]),
+                int(dict_color["light"]),
+                dict_color.get("alpha"),
+                _validate=False,
+            )
 
         elif isinstance(color, str):
             if parsed := cls.str_to_hsla(color, only_first=True):
@@ -1494,12 +1608,13 @@ class Color:
         raise ValueError(f"Could not parse HSLA color: {color!r}")
 
     @staticmethod
-    def _linearize_srgb(c: float, /) -> float:
+    def _linearize_srgb(component: float, /) -> float:
         """Helper method to linearize sRGB component following the WCAG standard."""
-        if not (0.0 <= c <= 1.0):
-            raise ValueError(f"The 'c' parameter must be in range [0.0, 1.0] inclusive, got {c!r}")
 
-        if c <= 0.03928:
-            return c / 12.92
+        if not (0.0 <= component <= 1.0):
+            raise ValueError(f"The 'component' parameter must be in range [0.0, 1.0] inclusive, got {component!r}")
+
+        if component <= 0.03928:
+            return component / 12.92
         else:
-            return ((c + 0.055) / 1.055)**2.4
+            return ((component + 0.055) / 1.055)**2.4

@@ -3,7 +3,7 @@
 [![](https://img.shields.io/pypi/v/xulbux?style=flat&labelColor=404560&color=7075FF)](https://pypi.org/project/xulbux) [![](https://img.shields.io/pepy/dt/xulbux?style=flat&labelColor=404560&color=7075FF)](https://clickpy.clickhouse.com/dashboard/xulbux) [![](https://img.shields.io/github/license/xulbux/python-lib-xulbux?style=flat&labelColor=405555&color=70FFEE)](https://github.com/xulbux/python-lib-xulbux/blob/main/LICENSE) [![](https://img.shields.io/github/last-commit/xulbux/python-lib-xulbux?style=flat&labelColor=554045&color=FF6065)](https://github.com/xulbux/python-lib-xulbux/commits) [![](https://img.shields.io/github/issues/xulbux/python-lib-xulbux?style=flat&labelColor=554045&color=FF6065)](https://github.com/xulbux/python-lib-xulbux/issues) [![](https://img.shields.io/github/stars/xulbux/python-lib-xulbux?label=★&style=flat&labelColor=604A40&color=FF9673)](https://github.com/xulbux/python-lib-xulbux/stargazers)
 
 **`xulbux`** is a library that contains many useful classes, types, and functions,
-ranging from console logging and working with colors to file management and system operations.
+ranging from terminal logging and working with colors to file management and system operations.
 The library is designed to simplify common programming tasks and improve code readability through its collection of tools.
 
 For precise information about the library, see the library's [**documentation**](https://github.com/xulbux/python-lib-xulbux/wiki).<br>
@@ -17,15 +17,15 @@ For the libraries latest changes and updates, see the [**change log**](https://g
 
 ## Installation
 
-Run the following commands in a console with administrator privileges, so the actions take effect for all users.
+Run the following commands in a terminal with administrator privileges, so the actions take effect for all users.
 
 Install the library and all its dependencies with the command:
-```console
+```shell
 pip install xulbux
 ```
 
 Upgrade the library and all its dependencies to their latest available version with the command:
-```console
+```shell
 pip install --upgrade xulbux
 ```
 
@@ -33,12 +33,12 @@ pip install --upgrade xulbux
 
 ## CLI Commands
 
-When the library is installed, the following commands are available in the console:
+When the library is installed, the following commands are available in the terminal:
 
-| Command           | Description                                                      |
-| :---------------- | :--------------------------------------------------------------- |
-| `xulbux-lib`      | Show some information about the library.                         |
-| `xulbux-lib fc`   | Parse and render a string's format codes as ANSI console output. |
+| Command           | Description                                                       |
+| :---------------- | :---------------------------------------------------------------- |
+| `xulbux-lib`      | Show some information about the library.                          |
+| `xulbux-lib fc`   | Parse and render a string's format codes as ANSI terminal output. |
 
 <br>
 
@@ -131,7 +131,7 @@ from xulbux.color import rgba, hsla, hexa
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
       <td><code>FormatCodes</code> class, which includes methods to print and work with strings that contain<br>
-        special formatting codes, which are then converted to ANSI codes for pretty console output.</td>
+        special formatting codes, which are then converted to ANSI codes for pretty terminal output.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>

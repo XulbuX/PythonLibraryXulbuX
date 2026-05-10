@@ -21,6 +21,13 @@
 
 * Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
 * Added a new param `allow_space_value` to `Console.get_args()` and made `flag_value_sep` optional, which allows you to specify whether flags should be able to receive their values with a space in between (*e.g.* `--flag value` instead of just `--flag=value`).
+* Reformat all docstrings of the whole library.
+
+**BREAKING CHANGES:**
+* Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
+* Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
+* Renamed the `Console.w` and `Console.h` properties to `Console.width` and `Console.height`, to follow the no-single-letter-names convention.
+* Removed the `background:` and `bright:` prefixes from the library, so now you can just use the `bg:` and `br:` ones, for consistency.
 
 
 <span id="v1-9-7" />

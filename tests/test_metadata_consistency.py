@@ -23,7 +23,13 @@ def get_current_branch() -> Optional[str]:
 
     # FALLBACK TO GIT COMMAND FOR LOCAL DEV
     try:
-        result = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         return result.stdout.strip() or None
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
