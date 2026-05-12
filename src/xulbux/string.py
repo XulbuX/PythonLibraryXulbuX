@@ -30,14 +30,28 @@ class String:
     def normalize_spaces(cls, string: str, /, tab_spaces: int = 4) -> str:
         """Replaces all special space characters with normal spaces.\n
         ------------------------------------------------------------------
+        *   `string` – The string to normalize.
         *   `tab_spaces` – Number of spaces to replace tab chars with."""
 
         if tab_spaces < 0:
             raise ValueError(f"The 'tab_spaces' parameter must be non-negative, got {tab_spaces!r}")
 
-        return string.replace("\t", " " * tab_spaces).replace("\u2000", " ").replace("\u2001", " ").replace("\u2002", " ") \
-            .replace("\u2003", " ").replace("\u2004", " ").replace("\u2005", " ").replace("\u2006", " ") \
-            .replace("\u2007", " ").replace("\u2008", " ").replace("\u2009", " ").replace("\u200A", " ")
+        table: dict[str, str | int | None] = {
+            "\t": " " * tab_spaces,
+            "\u2000": " ",
+            "\u2001": " ",
+            "\u2002": " ",
+            "\u2003": " ",
+            "\u2004": " ",
+            "\u2005": " ",
+            "\u2006": " ",
+            "\u2007": " ",
+            "\u2008": " ",
+            "\u2009": " ",
+            "\u200A": " ",
+        }
+
+        return string.translate(str.maketrans(table))
 
     @classmethod
     def escape(cls, string: str, /, str_quotes: Optional[Literal["'", '"']] = None) -> str:

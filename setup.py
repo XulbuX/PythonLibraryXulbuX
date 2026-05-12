@@ -73,8 +73,13 @@ def delete_project_stub_files():
 
 ext_modules = []
 
+# ONLY COMPILE AND GENERATE STUBS WHEN ACTUALLY BUILDING, NOT DURING METADATA-ONLY
+# PHASES (egg_info, dist_info) THAT PIP INVOKES AS PART OF PEP 517 PREPARATION.
+_BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
+_is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
+
 # OPTIONALLY USE MYPYC COMPILATION
-if os.environ.get("XULBUX_USE_MYPYC", "1") == "1":
+if os.environ.get("XULBUX_USE_MYPYC", "1") == "1" and _is_building:
     try:
         from mypyc.build import mypycify
 
@@ -97,4 +102,5 @@ setup(
     ext_modules=ext_modules,
 )
 
-delete_project_stub_files()
+if _is_building:
+    delete_project_stub_files()

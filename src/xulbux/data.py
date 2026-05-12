@@ -149,18 +149,20 @@ class Data:
             })
 
         elif isinstance(data, (list, tuple)):
-            result: list[Any] = []
-            for item in data:
-                processed_item = cls.remove_duplicates(cast(DataObjType, item)) if isinstance(item, DataObjTT) else item
-                is_duplicate: bool = False
+            processed: list[Any] = [
+                cls.remove_duplicates(cast(DataObjType, item)) if isinstance(item, DataObjTT) else item \
+                for item in data
+            ]
 
-                for existing_item in result:
-                    if processed_item == existing_item:
-                        is_duplicate = True
-                        break
+            try:
+                result: list[Any] = list(dict.fromkeys(processed))
 
-                if not is_duplicate:
-                    result.append(processed_item)
+            except TypeError:
+                # UNHASHABLE ITEMS (LISTS, DICTS, SETS) – FALL BACK TO O(n²) EQUALITY CHECK
+                result = []
+                for item in processed:
+                    if item not in result:
+                        result.append(item)
 
             return cast(DataObj, type(data)(result))
 

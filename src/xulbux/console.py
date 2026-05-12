@@ -19,6 +19,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.styles import Style
 from prompt_toolkit.keys import Keys
 from contextlib import contextmanager
+from itertools import chain
 from io import StringIO
 import prompt_toolkit as _pt
 import subprocess as _subprocess
@@ -433,7 +434,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         title_bg_color: Optional[str | Rgba | Hexa] = None,
@@ -478,33 +478,40 @@ class Console(metaclass=_ConsoleMeta):
                 raise ValueError(
                     f"The 'title_bg_color' parameter must be a valid terminal color, RGBA value, or HEXA value, got {title_bg_color!r}"
                 )
-
-        px, mx = (" " * title_px) if has_title_bg else "", " " * title_mx
-        tab = " " * (tab_size - 1 - ((len(mx) + (title_len := len(title) + 2 * len(px))) % tab_size))
-
-        if format_linebreaks:
-            clean_prompt, removals = *FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True),
-            prompt_lst: list[str] = [
-                item for lst in [
-                    String.split_count(line, cls.width - (title_len + len(tab) + 2 * len(mx))) \
-                    for line in str(clean_prompt).splitlines()
-                ] for item in ([""] if lst == [] else lst)
-            ]
-            prompt = f"\n{mx}{' ' * title_len}{mx}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
-
-        if title == "":
-            FormatCodes.print(
-                f"{start}  {f'[{default_color}]' if default_color else ''}{prompt}[_]",
-                default_color=default_color,
-                end=end,
-            )
         else:
-            FormatCodes.print(
-                f"{start}{mx}[b|{title_fg}{f'|bg:{title_bg_color}' if has_title_bg else ''}]{px}{title}{px}[_]{mx}"
-                f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]",
-                default_color=default_color,
-                end=end,
-            )
+            title_px = 0  # REMOVE PADDING IF TITLE HAS NO BG COLOR
+
+        # PADDING = SPACE INSIDE TITLE BG COLOR
+        # MARGIN = SPACE OUTSIDE TITLE BG COLOR
+        px, mx = " " * title_px, " " * title_mx
+
+        # TITLE LENGTH INCLUDING PADDING AND MARGIN
+        title_len: int = len(title) + (title_px * 2) + (title_mx * 2)
+
+        # CALCULATE DISTANCE TO NEXT TAB STOP
+        tab: str = " " * (-title_len % tab_size)
+
+        # POSITION WHERE PROMPT NEEDS TO WRAP TO NEXT LINE
+        wrap_len: int = cls.width - (title_len + len(tab))
+
+        # REMOVE ALL FORMAT CODES AS THEY WON'T AFFECT THE VISIBLE LENGTH OF THE PROMPT
+        clean_prompt, removals = (*FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True), )
+
+        # SPLIT PROMPT INTO LINES AND THEN SPLIT EACH LINE INTO CHUNKS THAT FIT WITHIN THE WRAP LENGTH
+        prompt_lst: list[str] = list(chain.from_iterable(cls._process_lines(clean_prompt, wrap_len)))
+
+        # ADD BACK REMOVED FORMAT CODES TO THEIR ORIGINAL POSITIONS IN THE PROMPT
+        prompt = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
+
+        out: str = (
+            # LOG WITHOUT A TITLE
+            f"{start}{mx}{f'[{default_color}]' if default_color else ''}{prompt}[_]" if title == "" else
+            # LOG WITH A TITLE
+            f"{start}{mx}[b|{title_fg}{f'|bg:{title_bg_color}' if has_title_bg else ''}]{px}{title}{px}[_]{mx}"
+            f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]"
+        )
+
+        FormatCodes.print(out, default_color=default_color, end=end)
 
     @classmethod
     def debug(
@@ -513,7 +520,6 @@ class Console(metaclass=_ConsoleMeta):
         /,
         *,
         active: bool = True,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -530,7 +536,6 @@ class Console(metaclass=_ConsoleMeta):
             cls.log(
                 "DEBUG",
                 prompt,
-                format_linebreaks=format_linebreaks,
                 start=start,
                 end=end,
                 title_bg_color="br:yellow",
@@ -544,7 +549,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "Program running.",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -559,7 +563,6 @@ class Console(metaclass=_ConsoleMeta):
         cls.log(
             "INFO",
             prompt,
-            format_linebreaks=format_linebreaks,
             start=start,
             end=end,
             title_bg_color="br:blue",
@@ -573,7 +576,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "Program finished.",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -588,7 +590,6 @@ class Console(metaclass=_ConsoleMeta):
         cls.log(
             "DONE",
             prompt,
-            format_linebreaks=format_linebreaks,
             start=start,
             end=end,
             title_bg_color="br:green",
@@ -602,7 +603,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "Important message.",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -617,7 +617,6 @@ class Console(metaclass=_ConsoleMeta):
         cls.log(
             "WARN",
             prompt,
-            format_linebreaks=format_linebreaks,
             start=start,
             end=end,
             title_bg_color="br:yellow",
@@ -631,7 +630,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "Program error.",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -646,7 +644,6 @@ class Console(metaclass=_ConsoleMeta):
         cls.log(
             "FAIL",
             prompt,
-            format_linebreaks=format_linebreaks,
             start=start,
             end=end,
             title_bg_color="br:red",
@@ -660,7 +657,6 @@ class Console(metaclass=_ConsoleMeta):
         prompt: object = "Program ended.",
         /,
         *,
-        format_linebreaks: bool = True,
         start: str = "",
         end: str = "\n",
         default_color: Optional[Rgba | Hexa] = None,
@@ -675,7 +671,6 @@ class Console(metaclass=_ConsoleMeta):
         cls.log(
             "EXIT",
             prompt,
-            format_linebreaks=format_linebreaks,
             start=start,
             end=end,
             title_bg_color="br:magenta",
@@ -1093,6 +1088,14 @@ class Console(metaclass=_ConsoleMeta):
                 _sys.stdin.read(1)
             finally:
                 _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
+        """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
+
+        for line in clean_prompt.splitlines():
+            lst = String.split_count(line, wrap_len)
+            yield ("", ) if not lst else lst
 
     @classmethod
     def _add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:

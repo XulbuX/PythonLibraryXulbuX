@@ -168,6 +168,7 @@ from .regex import LazyRegex, Regex
 from .color import Color, rgba, hexa
 
 from typing import Optional, Literal, Final, overload, cast
+from itertools import chain as _chain
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
@@ -189,6 +190,8 @@ _PREFIX: Final[dict[str, set[str]]] = {
     "br": {"br"},
 }
 """Formatting code prefixes for setting background- and bright-colors."""
+_PREFIX_VALUES: Final[frozenset[str]] = frozenset(_chain.from_iterable(_PREFIX.values()))
+"""Flat frozenset of all prefix values, precomputed for fast membership tests."""
 _PREFIX_RX: Final[dict[str, str]] = {
     "bg": rf"(?:{'|'.join(_PREFIX['bg'])})\s*:",
     "br": rf"(?:{'|'.join(_PREFIX['br'])})\s*:",
@@ -640,7 +643,7 @@ class FormatCodes:
 
         return prefix_str + ":".join(
             part for part in k_parts \
-            if part not in {val for values in _PREFIX.values() for val in values}
+            if part not in _PREFIX_VALUES
         )
 
 
