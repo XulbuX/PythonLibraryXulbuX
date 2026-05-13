@@ -344,40 +344,20 @@ class FormatCodes:
 
         # FAST PATH: NO FORMATTING CODES POSSIBLE WITHOUT '['
         if "[" not in string:
-            if _validate_default:
-                _, default_color = cls._validate_default_color(default_color)
-            if _default_start and default_color is not None:
-                prefix = cls._get_default_ansi(cast(rgba, default_color))
-                if prefix:
-                    return prefix + string
-            return string
+            return cls._no_bracket_fast_path(
+                string,
+                default_color,
+                _default_start=_default_start,
+                _validate_default=_validate_default,
+            )
 
         # END-TO-END CACHE LOOKUP (PUBLIC ENTRY PATH ONLY)
-        cache_key: Optional[tuple[str, Optional[tuple[int, int, int]], int]] = None
-        if (
-            _default_start \
-            and _validate_default
-            and len(string) <= _TO_ANSI_CACHE_MAX_LEN
-        ):
-            dc_key: Optional[tuple[int, int, int]]
-
-            if default_color is None:
-                dc_key = None
-            elif isinstance(default_color, tuple) and len(default_color) >= 3:
-                try:
-                    dc_key = (int(default_color[0]), int(default_color[1]), int(default_color[2]))
-                except (TypeError, ValueError):
-                    dc_key = None
-            elif isinstance(default_color, str):
-                dc_key = None  # HEX STRINGS HANDLED THROUGH _validate_default_color; SKIP CACHE
-            else:
-                dc_key = None
-
-            if dc_key is not None or default_color is None:
-                cache_key = (string, dc_key, brightness_steps)
-                cached = _TO_ANSI_CACHE.get(cache_key)
-                if cached is not None:
-                    return cached
+        cache_key = (
+            cls._build_cache_key(string, default_color, brightness_steps) \
+            if _default_start and _validate_default else None
+        )
+        if cache_key is not None and (cached := _TO_ANSI_CACHE.get(cache_key)) is not None:
+            return cached
 
         if _validate_default:
             use_default, default_color = cls._validate_default_color(default_color)
@@ -385,11 +365,7 @@ class FormatCodes:
             use_default = default_color is not None
             default_color = cast(Optional[rgba], default_color)
 
-        if "*" in string:
-            if use_default:
-                string = _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-            else:
-                string = _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
+        string = cls._apply_star_reset(string, use_default)
 
         string = "\n".join(
             _PATTERNS.formatting.sub(
@@ -408,9 +384,7 @@ class FormatCodes:
         ) if default_color is not None else string
 
         if cache_key is not None:
-            if len(_TO_ANSI_CACHE) >= _TO_ANSI_CACHE_MAX:
-                _TO_ANSI_CACHE.clear()
-            _TO_ANSI_CACHE[cache_key] = result
+            cls._store_in_cache(cache_key, result)
 
         return result
 
@@ -601,6 +575,64 @@ class FormatCodes:
                     pass
             _TERMINAL_ANSI_CONFIGURED = True  # type: ignore[assignment]
 
+    @classmethod
+    def _no_bracket_fast_path(
+        cls,
+        string: str,
+        default_color: Optional[Rgba | Hexa],
+        *,
+        _default_start: bool,
+        _validate_default: bool,
+    ) -> str:
+        """Handle fast path when the string contains no `[` bracket."""
+
+        if _validate_default:
+            _, default_color = cls._validate_default_color(default_color)
+
+        if _default_start and default_color is not None:
+            prefix = cls._get_default_ansi(cast(rgba, default_color))
+            if prefix:
+                return prefix + string
+
+        return string
+
+    @classmethod
+    def _build_cache_key(
+        cls,
+        string: str,
+        default_color: Optional[Rgba | Hexa],
+        brightness_steps: int,
+    ) -> Optional[tuple[str, Optional[tuple[int, int, int]], int]]:
+        """Build a cache key for `to_ansi`, returning None if caching should be skipped."""
+
+        if len(string) > _TO_ANSI_CACHE_MAX_LEN:
+            return None
+
+        if default_color is None:
+            return (string, None, brightness_steps)
+
+        if isinstance(default_color, tuple) and len(default_color) >= 3:
+            try:
+                dc_key = (int(default_color[0]), int(default_color[1]), int(default_color[2]))
+                return (string, dc_key, brightness_steps)
+            except (TypeError, ValueError):
+                return None
+
+        return None  # HEX STRINGS AND OTHER TYPES SKIP CACHE
+
+    @staticmethod
+    def _store_in_cache(
+        cache_key: tuple[str, Optional[tuple[int, int, int]], int],
+        result: str,
+        /,
+    ) -> None:
+        """Store a `to_ansi` result in the end-to-end cache, evicting all entries if at capacity."""
+
+        if len(_TO_ANSI_CACHE) >= _TO_ANSI_CACHE_MAX:
+            _TO_ANSI_CACHE.clear()
+
+        _TO_ANSI_CACHE[cache_key] = result
+
     @staticmethod
     def _validate_default_color(default_color: Optional[Rgba | Hexa], /) -> tuple[bool, Optional[rgba]]:
         """Internal method to validate and convert `default_color` to a `rgba` color object."""
@@ -614,6 +646,17 @@ class FormatCodes:
         raise ValueError(
             f"The 'default_color' parameter must be either a valid RGBA or HEXA color, or None, got {default_color!r}"
         )
+
+    @staticmethod
+    def _apply_star_reset(string: str, use_default: bool, /) -> str:
+        """Replace `[*]` star-reset tokens with the appropriate reset sequences."""
+
+        if "*" not in string:
+            return string
+        if use_default:
+            return _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+
+        return _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
     @staticmethod
     def _formats_to_keys(formats: str, /) -> list[str]:
