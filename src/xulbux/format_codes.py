@@ -220,6 +220,41 @@ _PATTERNS = LazyRegex(
 )
 
 
+def _build_ansi_flat() -> dict[str, str]:
+    """Build flat mapping from every individual format key (including all aliases)
+    to its fully-formed ANSI escape sequence string (precomputed once)."""
+
+    flat: dict[str, str] = {}
+
+    for map_key, code in ANSI.CODES_MAP.items():
+        ansi_str = _ANSI_SEQ_1.format(code)
+        if isinstance(map_key, tuple):
+            for k in map_key:
+                flat[k] = ansi_str
+        else:
+            flat[map_key] = ansi_str
+
+    return flat
+
+
+_ANSI_FLAT: Final[dict[str, str]] = _build_ansi_flat()
+"""Precomputed direct-lookup table from format key to ANSI escape sequence."""
+
+_NORMALIZE_KEY_CACHE: dict[str, str] = {}
+"""Cache for `FormatCodes._normalize_key` results."""
+_NORMALIZE_KEY_CACHE_MAX: Final[int] = 4096
+
+_REPLACEMENT_CACHE: dict[str, str] = {}
+"""Cache for `FormatCodes._get_replacement` results when no `default_color` is set."""
+_REPLACEMENT_CACHE_MAX: Final[int] = 4096
+
+_TO_ANSI_CACHE: dict[tuple[str, Optional[tuple[int, int, int]], int], str] = {}
+"""Cache for full `FormatCodes.to_ansi` results on the public entry path."""
+_TO_ANSI_CACHE_MAX: Final[int] = 1024
+_TO_ANSI_CACHE_MAX_LEN: Final[int] = 8192
+"""Strings longer than this are not cached end-to-end."""
+
+
 class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
     which are then converted to ANSI codes for pretty terminal output."""
@@ -307,16 +342,54 @@ class FormatCodes:
         if not (0 < brightness_steps <= 100):
             raise ValueError(f"The 'brightness_steps' parameter must be in range [1, 100] inclusive, got {brightness_steps!r}")
 
+        # FAST PATH: NO FORMATTING CODES POSSIBLE WITHOUT '['
+        if "[" not in string:
+            if _validate_default:
+                _, default_color = cls._validate_default_color(default_color)
+            if _default_start and default_color is not None:
+                prefix = cls._get_default_ansi(cast(rgba, default_color))
+                if prefix:
+                    return prefix + string
+            return string
+
+        # END-TO-END CACHE LOOKUP (PUBLIC ENTRY PATH ONLY)
+        cache_key: Optional[tuple[str, Optional[tuple[int, int, int]], int]] = None
+        if (
+            _default_start \
+            and _validate_default
+            and len(string) <= _TO_ANSI_CACHE_MAX_LEN
+        ):
+            dc_key: Optional[tuple[int, int, int]]
+
+            if default_color is None:
+                dc_key = None
+            elif isinstance(default_color, tuple) and len(default_color) >= 3:
+                try:
+                    dc_key = (int(default_color[0]), int(default_color[1]), int(default_color[2]))
+                except (TypeError, ValueError):
+                    dc_key = None
+            elif isinstance(default_color, str):
+                dc_key = None  # HEX STRINGS HANDLED THROUGH _validate_default_color; SKIP CACHE
+            else:
+                dc_key = None
+
+            if dc_key is not None or default_color is None:
+                cache_key = (string, dc_key, brightness_steps)
+                cached = _TO_ANSI_CACHE.get(cache_key)
+                if cached is not None:
+                    return cached
+
         if _validate_default:
             use_default, default_color = cls._validate_default_color(default_color)
         else:
             use_default = default_color is not None
             default_color = cast(Optional[rgba], default_color)
 
-        if use_default:
-            string = _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-        else:
-            string = _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
+        if "*" in string:
+            if use_default:
+                string = _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+            else:
+                string = _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
 
         string = "\n".join(
             _PATTERNS.formatting.sub(
@@ -329,10 +402,17 @@ class FormatCodes:
             ) for line in string.split("\n")
         )
 
-        return (
+        result = (
             ((cls._get_default_ansi(default_color) or "") if _default_start else "") \
             + string
         ) if default_color is not None else string
+
+        if cache_key is not None:
+            if len(_TO_ANSI_CACHE) >= _TO_ANSI_CACHE_MAX:
+                _TO_ANSI_CACHE.clear()
+            _TO_ANSI_CACHE[cache_key] = result
+
+        return result
 
     @classmethod
     def escape(
@@ -548,34 +628,41 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
 
-        _format_key, format_key = format_key, cls._normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
+        # FAST PATH WHEN NO DEFAULT COLOR: USE CACHED RESULTS
+        if default_color is None:
+            cached = _REPLACEMENT_CACHE.get(format_key)
+            if cached is not None:
+                return cached
 
-        if default_color and (new_default_color := cls._get_default_ansi(default_color, format_key, brightness_steps)):
+        _format_key = format_key
+        format_key = cls._normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
+
+        # DIRECT LOOKUP IN PRECOMPUTED FLAT TABLE (NO O(N) SCAN OVER CODES_MAP)
+        flat_hit = _ANSI_FLAT.get(format_key)
+
+        if default_color is not None and ( \
+            new_default_color := cls._get_default_ansi(default_color, format_key, brightness_steps)
+        ):
             return new_default_color
 
-        for map_key in ANSI.CODES_MAP:
-            if (isinstance(map_key, tuple) and format_key in map_key) or format_key == map_key:
-                return _ANSI_SEQ_1.format(
-                    next((
-                        val for key, val in ANSI.CODES_MAP.items() \
-                        if format_key == key or (isinstance(key, tuple) and format_key in key)
-                    ), None)
-                )
+        if flat_hit is not None:
+            return flat_hit
 
         rgb_match = _PATTERNS.rgb.match(format_key)
         hex_match = _PATTERNS.hex.match(format_key)
 
+        result = _format_key
         try:
             if rgb_match:
                 is_bg = rgb_match.group(1)
                 red, green, blue = map(int, rgb_match.groups()[1:])
                 if Color.is_valid_rgba((red, green, blue)):
-                    return ANSI.SEQ_BG_COLOR.format(red, green, blue) if is_bg else ANSI.SEQ_COLOR.format(red, green, blue)
+                    result = ANSI.SEQ_BG_COLOR.format(red, green, blue) if is_bg else ANSI.SEQ_COLOR.format(red, green, blue)
 
             elif hex_match:
                 is_bg = hex_match.group(1)
                 rgb = Color.to_rgba(hex_match.group(2))
-                return (
+                result = (
                     ANSI.SEQ_BG_COLOR.format(rgb[0], rgb[1], rgb[2])
                     if is_bg else ANSI.SEQ_COLOR.format(rgb[0], rgb[1], rgb[2])
                 )
@@ -583,7 +670,12 @@ class FormatCodes:
         except Exception:
             pass
 
-        return _format_key
+        if default_color is None:
+            if len(_REPLACEMENT_CACHE) >= _REPLACEMENT_CACHE_MAX:
+                _REPLACEMENT_CACHE.clear()
+            _REPLACEMENT_CACHE[_format_key] = result
+
+        return result
 
     @staticmethod
     def _get_default_ansi(
@@ -634,6 +726,10 @@ class FormatCodes:
     def _normalize_key(format_key: str, /) -> str:
         """Internal method to normalize the given format key."""
 
+        cached = _NORMALIZE_KEY_CACHE.get(format_key)
+        if cached is not None:
+            return cached
+
         k_parts = format_key.replace(" ", "").lower().split(":")
 
         prefix_str = "".join(
@@ -641,10 +737,16 @@ class FormatCodes:
             if any(k_part in prefix_values for k_part in k_parts)
         )
 
-        return prefix_str + ":".join(
+        result = prefix_str + ":".join(
             part for part in k_parts \
             if part not in _PREFIX_VALUES
         )
+
+        if len(_NORMALIZE_KEY_CACHE) >= _NORMALIZE_KEY_CACHE_MAX:
+            _NORMALIZE_KEY_CACHE.clear()
+        _NORMALIZE_KEY_CACHE[format_key] = result
+
+        return result
 
 
 class _EscapeFormatCodeHelper:
