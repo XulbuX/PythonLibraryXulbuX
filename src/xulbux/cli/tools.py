@@ -6,8 +6,8 @@ def render_format_codes():
     """CLI command function for `xulbux-lib fc` command, which allows you to parse<br>
     and render a given string's format codes as ANSI terminal output."""
 
-    args = Console.get_args({"input": "before"})
-    vals = args.input.values[1:]  # EXCLUDE THE COMMAND ITSELF
+    args = Console.get_args({"input": "before"}, skip=1)
+    vals = args.input.values
 
     if not vals:
         FormatCodes.print(

@@ -137,6 +137,11 @@ class ParsedArgs:
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.<br>
     Each such attribute (e.g. `args.foo`) is an instance of `ParsedArgData`."""
 
+    RESERVED_ALIASES: frozenset[str] = frozenset({
+        "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "values"
+    })
+    """Alias names that are reserved and cannot be used as argument aliases."""
+
     def __init__(self, **parsed_args: ParsedArgData):
         for alias_name, parsed_arg_data in parsed_args.items():
             setattr(self, alias_name, parsed_arg_data)
@@ -231,6 +236,24 @@ class ParsedArgs:
             if not val.exists:
                 yield (key, val)
 
+    @property
+    def is_empty(self) -> bool:
+        """Whether no argument was found and none have any values (not even defaults)."""
+
+        return all(not val.exists and not val.values for val in cast(dict[str, ParsedArgData], vars(self)).values())
+
+    @property
+    def any_exist(self) -> bool:
+        """Whether at least one argument was explicitly found."""
+
+        return any(val.exists for val in cast(dict[str, ParsedArgData], vars(self)).values())
+
+    @property
+    def all_exist(self) -> bool:
+        """Whether all arguments were explicitly found."""
+
+        return all(val.exists for val in cast(dict[str, ParsedArgData], vars(self)).values())
+
 
 @mypyc_attr(native_class=False)
 class _ConsoleMeta(type):
@@ -317,6 +340,7 @@ class Console(metaclass=_ConsoleMeta):
         arg_parse_configs: ArgParseConfigs,
         /,
         *,
+        skip: int = 0,
         flag_value_sep: Optional[str] = "=",
         allow_space_value: bool = True,
     ) -> ParsedArgs:
@@ -325,6 +349,8 @@ class Console(metaclass=_ConsoleMeta):
         ---------------------------------------------------------------------------------------------------------
         *   `arg_parse_configs` – A dictionary where each key is an alias name for the argument<br>
             and the key's value is the parsing configuration for that argument.
+        *   `skip` – The number of leading command-line arguments to skip before parsing;<br>
+            useful when the first N args are a command/subcommand and not relevant to the caller.
         *   `flag_value_sep` – The character/s used to separate flags from their values;<br>
             pass `None` to disable separator-based syntax (e.g. `--flag=value`) entirely.
         *   `allow_space_value` – Whether to allow space-separated flag values (e.g. `--flag value`)<br>
@@ -381,11 +407,14 @@ class Console(metaclass=_ConsoleMeta):
         NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g. `--flag value`)<br>
         is consumed as that flag's value and is not available as a positional `"after"` argument."""
 
+        if skip < 0:
+            raise ValueError(f"The 'skip' parameter must be a non-negative integer, got {skip!r}")
         if flag_value_sep is not None and not flag_value_sep:
             raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
 
         return _ConsoleArgsParseHelper(
             arg_parse_configs,
+            skip=skip,
             flag_value_sep=flag_value_sep,
             allow_space_value=allow_space_value,
         )()
@@ -1205,6 +1234,7 @@ class _ConsoleArgsParseHelper:
         arg_parse_configs: ArgParseConfigs,
         /,
         *,
+        skip: int = 0,
         flag_value_sep: Optional[str],
         allow_space_value: bool = True,
     ):
@@ -1216,7 +1246,7 @@ class _ConsoleArgsParseHelper:
         self.positional_configs: dict[str, str] = {}
         self.arg_lookup: dict[str, str] = {}
 
-        self.args = _sys.argv[1:]
+        self.args = _sys.argv[1 + skip:]
         self.args_len = len(self.args)
         self.pos_before_configured = False
         self.pos_after_configured = False
@@ -1238,6 +1268,12 @@ class _ConsoleArgsParseHelper:
             if not alias.isidentifier():
                 raise ValueError(f"Invalid argument alias '{alias}'.\n"
                                  "Aliases must be valid Python identifiers.")
+            if alias in ParsedArgs.RESERVED_ALIASES:
+                raise ValueError(
+                    f"Invalid argument alias '{alias}'.\n"
+                    f"The following names are reserved and cannot be used as aliases:\n"
+                    f"{', '.join(sorted(ParsedArgs.RESERVED_ALIASES))}"
+                )
 
             # PARSE ARG CONFIG & BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGS
             if (flags := self._parse_arg_config(alias, config)) is not None:

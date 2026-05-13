@@ -21,8 +21,14 @@
 
 * Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
 * Added a new param `allow_space_value` to `Console.get_args()` and made `flag_value_sep` optional, which allows you to specify whether flags should be able to receive their values with a space in between (*e.g.* `--flag value` instead of just `--flag=value`).
+* Added a new `skip` param to `Console.get_args()`, which skips the first N command-line arguments before parsing; useful when the leading argv entries are a command/subcommand and not relevant to the caller.
+* Added three new read-only properties to `ParsedArgs`:
+  - `is_empty` is true if no argument was found **and** none have any values (*not even defaults*).
+  - `any_exist` is true if at least one argument was explicitly found.
+  - `all_exist` is true if every argument was explicitly found.
+* Added `ParsedArgs.RESERVED_ALIASES` – a `frozenset` of names that cannot be used as argument aliases. Passing a reserved name now raises a clear `ValueError`.
 * Reformat all docstrings of the whole library.
-* Improved the performance of `Console.log()` by restructuring the way it processes the output and its formatting
+* Improved the performance of `Console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
 * Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
 * Improved the performance of `Data.remove_duplicates()` for lists and tuples: hashable items now deduplicate in O(n) using `dict.fromkeys()`, with an O(n²) equality-check fallback only for unhashable items (*lists, dicts, sets*).
 

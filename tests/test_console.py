@@ -328,6 +328,13 @@ def test_get_args_invalid_params():
     with pytest.raises(ValueError, match=r"non-empty string or None, got"):
         Console.get_args({"arg": {"-a"}}, flag_value_sep="")
 
+    with pytest.raises(ValueError, match="non-negative integer"):
+        Console.get_args({"arg": {"-a"}}, skip=-1)
+
+    for reserved in ParsedArgs.RESERVED_ALIASES:
+        with pytest.raises(ValueError, match=f"Invalid argument alias '{reserved}'"):
+            Console.get_args({reserved: {"-a"}})
+
 
 def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
     """Test custom flag-value separator handling"""
@@ -446,6 +453,122 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
         "help": result.help.dict(),
         "after": result.after.dict(),
     }
+
+
+def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
+    """Test that skip=N drops the first N argv entries before any parsing."""
+    # WITH skip=1: argv[1] ('fc') IS SKIPPED, PARSING STARTS AT argv[2]
+    monkeypatch.setattr(sys, "argv", ["script.py", "fc", "hello", "world"])
+    result = Console.get_args({"input": "before"}, skip=1)
+    assert result.input.exists is True
+    assert result.input.values == ["hello", "world"]
+
+    # WITH skip=2: argv[1] AND argv[2] ARE SKIPPED, PARSING STARTS AT argv[3]
+    monkeypatch.setattr(sys, "argv", ["script.py", "sub", "cmd", "--flag=val"])
+    result = Console.get_args({"flag": {"--flag"}}, skip=2)
+    assert result.flag.exists is True
+    assert result.flag.values == ["val"]
+
+    # WITH skip EXCEEDING ARGV LENGTH: NO ARGS ARE PARSED
+    monkeypatch.setattr(sys, "argv", ["script.py", "only"])
+    result = Console.get_args({"flag": {"--flag"}}, skip=5)
+    assert result.flag.exists is False
+
+    # WITH skip=0 (DEFAULT): BEHAVIOUR IS UNCHANGED
+    monkeypatch.setattr(sys, "argv", ["script.py", "--flag=val"])
+    result = Console.get_args({"flag": {"--flag"}}, skip=0)
+    assert result.flag.exists is True
+    assert result.flag.values == ["val"]
+
+
+def test_parsed_args_is_empty():
+    # ALL MISSING, NO VALUES: is_empty IS True
+    args = ParsedArgs(
+        a=ParsedArgData(exists=False, values=[], is_pos=False),
+        b=ParsedArgData(exists=False, values=[], is_pos=True),
+    )
+    assert args.is_empty is True
+
+    # ONE HAS A DEFAULT VALUE: is_empty IS False
+    args_with_default = ParsedArgs(
+        a=ParsedArgData(exists=False, values=["default"], is_pos=False),
+        b=ParsedArgData(exists=False, values=[], is_pos=False),
+    )
+    assert args_with_default.is_empty is False
+
+    # ONE EXISTS: is_empty IS False
+    args_with_existing = ParsedArgs(
+        a=ParsedArgData(exists=True, values=["val"], is_pos=False),
+        b=ParsedArgData(exists=False, values=[], is_pos=False),
+    )
+    assert args_with_existing.is_empty is False
+
+    # EMPTY ParsedArgs: is_empty IS True
+    assert ParsedArgs().is_empty is True
+
+
+def test_parsed_args_any_exist():
+    # NONE EXIST
+    args_none = ParsedArgs(
+        a=ParsedArgData(exists=False, values=[], is_pos=False),
+        b=ParsedArgData(exists=False, values=["default"], is_pos=False),
+    )
+    assert args_none.any_exist is False
+
+    # ONE EXISTS
+    args_one = ParsedArgs(
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
+        b=ParsedArgData(exists=False, values=[], is_pos=False),
+    )
+    assert args_one.any_exist is True
+
+    # ALL EXIST
+    args_all = ParsedArgs(
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
+        b=ParsedArgData(exists=True, values=[], is_pos=False),
+    )
+    assert args_all.any_exist is True
+
+    # EMPTY ParsedArgs: any_exist IS False
+    assert ParsedArgs().any_exist is False
+
+
+def test_parsed_args_all_exist():
+    # ALL EXIST
+    args_all = ParsedArgs(
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
+        b=ParsedArgData(exists=True, values=[], is_pos=False),
+    )
+    assert args_all.all_exist is True
+
+    # ONE MISSING
+    args_partial = ParsedArgs(
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
+        b=ParsedArgData(exists=False, values=[], is_pos=False),
+    )
+    assert args_partial.all_exist is False
+
+    # NONE EXIST
+    args_none = ParsedArgs(
+        a=ParsedArgData(exists=False, values=[], is_pos=False),
+    )
+    assert args_none.all_exist is False
+
+    # EMPTY ParsedArgs: all_exist IS True (vacuously)
+    assert ParsedArgs().all_exist is True
+
+
+def test_parsed_args_properties_not_in_iter():
+    """Properties is_empty, any_exist, all_exist must not appear when iterating."""
+    args = ParsedArgs(
+        flag=ParsedArgData(exists=True, values=[], is_pos=False),
+    )
+    keys = [k for k, _ in args]
+    assert "is_empty" not in keys
+    assert "any_exist" not in keys
+    assert "all_exist" not in keys
+    assert len(args) == 1
+
 
 
 def test_args_dunder_methods():
