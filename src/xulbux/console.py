@@ -1697,8 +1697,8 @@ class ProgressBar:
         *,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: list[str] | tuple[str, ...] = ["{l}", "▕{b}▏", "[b]({c:,})/{t:,}", "[dim](([i]({p}%)))"],
-        limited_bar_format: list[str] | tuple[str, ...] = ["▕{b}▏"],
+        bar_format: list[str] | tuple[str, ...] = ["{l}", "[bg:black]({b})", "[b]({c:,})/{t:,}", "[dim](([i]({p}%)))"],
+        limited_bar_format: list[str] | tuple[str, ...] = ["[bg:black]({b})"],
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ):
