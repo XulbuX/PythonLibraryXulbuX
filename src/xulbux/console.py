@@ -12,7 +12,7 @@ from .string import String
 from .color import Color
 from .regex import LazyRegex
 
-from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Any, overload, cast
+from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.document import Document
@@ -54,19 +54,19 @@ class ParsedArgData:
     ------------------------------------------------------------------------------------------------------------
     *   `exists` – Whether the argument was found in the command-line arguments or not.
     *   `is_pos` – Whether the argument is a positional `"before"`/`"after"` argument or not.
-    *   `values` – The list of values associated with the argument.
+    *   `values` – The tuple of values associated with the argument.
     *   `flag` – The specific flag that was found (e.g. `-v`, `-vv`, `-vvv`), or `None` for positional args.
     ------------------------------------------------------------------------------------------------------------
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
     def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: Optional[str] = None):
-        self.exists: bool = exists
+        self.exists: Final[bool] = exists
         """Whether the argument was found or not."""
-        self.is_pos: bool = is_pos
+        self.is_pos: Final[bool] = is_pos
         """Whether the argument is a positional argument or not."""
-        self.values: list[str] = values
-        """The list of values associated with the argument."""
-        self.flag: Optional[str] = flag
+        self.values: Final[tuple[str, ...]] = tuple(values)
+        """The tuple of values associated with the argument."""
+        self.flag: Final[Optional[str]] = flag
         """The specific flag that was found (e.g. `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
     def __bool__(self) -> bool:
@@ -96,6 +96,12 @@ class ParsedArgData:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def _update(self, **kwargs: Any) -> None:
+        """Internal method to update the attributes of the `ParsedArgData` instance."""
+
+        for k, v in kwargs.items():
+            object.__setattr__(self, k, v)
 
     def dict(self) -> ArgData:
         """Returns the argument result as a dictionary."""
@@ -131,20 +137,36 @@ class ParsedArgData:
 class ParsedArgs:
     """Container for parsed command-line arguments, allowing attribute-style access.\n
     -------------------------------------------------------------------------------------
+    *   `unknown_flags` – A list of all found flags that were not defined in the config.
     *   `**parsed_args` – A mapping of argument aliases to their corresponding data<br>
         saved in an `ParsedArgData` object.
     -------------------------------------------------------------------------------------
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.<br>
     Each such attribute (e.g. `args.foo`) is an instance of `ParsedArgData`."""
 
+    # KEEP THESE ATTRS OUT OF __dict__ SO THAT vars(self) ONLY CONTAINS THE ParsedArgData INSTANCES
+    __slots__ = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
+
     RESERVED_ALIASES: frozenset[str] = frozenset({
-        "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "values"
+        "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "unknown_flags", "values"
     })
     """Alias names that are reserved and cannot be used as argument aliases."""
 
-    def __init__(self, **parsed_args: ParsedArgData):
+    def __init__(self, unknown_flags: Optional[list[str]] = None, **parsed_args: ParsedArgData):
         for alias_name, parsed_arg_data in parsed_args.items():
             setattr(self, alias_name, parsed_arg_data)
+
+        _parsed_args = cast(dict[str, ParsedArgData], vars(self)).values()
+
+        self.is_empty: Final[bool] = all(not arg.exists and not arg.values for arg in _parsed_args)
+        """Whether no argument was found and none have any values (not even defaults)."""
+        self.any_exist: Final[bool] = any(arg.exists for arg in _parsed_args)
+        """Whether at least one argument was explicitly found."""
+        self.all_exist: Final[bool] = all(arg.exists for arg in _parsed_args)
+        """Whether all arguments were explicitly found."""
+        self.unknown_flags: Final[frozenset[str]] = frozenset() if unknown_flags is None else frozenset(unknown_flags)
+        """Unknown flags found in the command-line arguments<br>
+        (args that look like flags but are not defined in the config)."""
 
     def __len__(self):
         """The number of arguments stored in the `ParsedArgs` object."""
@@ -157,9 +179,9 @@ class ParsedArgs:
         return key in vars(self)
 
     def __bool__(self) -> bool:
-        """Whether the `ParsedArgs` object contains any arguments."""
+        """Whether the `ParsedArgs` object contains any arguments or unknown flags."""
 
-        return len(self) > 0
+        return len(self) > 0 or bool(self.unknown_flags)
 
     def __getattr__(self, name: str, /) -> ParsedArgData:
         raise AttributeError(f"'{type(self).__name__}' object has no attribute {name}")
@@ -178,7 +200,7 @@ class ParsedArgs:
 
         if not isinstance(other, ParsedArgs):
             return False
-        return vars(self) == vars(other)
+        return vars(self) == vars(other) and self.unknown_flags == other.unknown_flags
 
     def __ne__(self, other: object, /) -> bool:
         """Check if two `ParsedArgs` objects are not equal by comparing their stored arguments."""
@@ -186,12 +208,17 @@ class ParsedArgs:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        if not self:
-            return "ParsedArgs()"
-        return "ParsedArgs(\n  " + ",\n  ".join(
+        items: list[str] = [
             f"{key} = " + "\n  ".join(repr(val).splitlines()) \
             for key, val in self.__iter__()
-        ) + "\n)"
+        ]
+
+        if self.unknown_flags:
+            items.append(f"unknown_flags = {self.unknown_flags!r}")
+        elif not items:
+            return "ParsedArgs()"
+
+        return "ParsedArgs(\n  " + ",\n  ".join(items) + "\n)"
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -235,24 +262,6 @@ class ParsedArgs:
         for key, val in self.__iter__():
             if not val.exists:
                 yield (key, val)
-
-    @property
-    def is_empty(self) -> bool:
-        """Whether no argument was found and none have any values (not even defaults)."""
-
-        return all(not val.exists and not val.values for val in cast(dict[str, ParsedArgData], vars(self)).values())
-
-    @property
-    def any_exist(self) -> bool:
-        """Whether at least one argument was explicitly found."""
-
-        return any(val.exists for val in cast(dict[str, ParsedArgData], vars(self)).values())
-
-    @property
-    def all_exist(self) -> bool:
-        """Whether all arguments were explicitly found."""
-
-        return all(val.exists for val in cast(dict[str, ParsedArgData], vars(self)).values())
 
 
 @mypyc_attr(native_class=False)
@@ -1245,6 +1254,7 @@ class _ConsoleArgsParseHelper:
         self.parsed_args: dict[str, ParsedArgData] = {}
         self.positional_configs: dict[str, str] = {}
         self.arg_lookup: dict[str, str] = {}
+        self.unknown_flags: list[str] = []
 
         self.args = _sys.argv[1 + skip:]
         self.args_len = len(self.args)
@@ -1259,7 +1269,7 @@ class _ConsoleArgsParseHelper:
         self.process_flagged_args()
         self.process_positional_args()
 
-        return ParsedArgs(**self.parsed_args)
+        return ParsedArgs(self.unknown_flags, **self.parsed_args)
 
     def parse_arg_configs(self) -> None:
         """Parse the `arg_parse_configs` configuration and build lookup structures."""
@@ -1268,7 +1278,7 @@ class _ConsoleArgsParseHelper:
             if not alias.isidentifier():
                 raise ValueError(f"Invalid argument alias '{alias}'.\n"
                                  "Aliases must be valid Python identifiers.")
-            if alias in ParsedArgs.RESERVED_ALIASES:
+            elif alias in ParsedArgs.RESERVED_ALIASES:
                 raise ValueError(
                     f"Invalid argument alias '{alias}'.\n"
                     f"The following names are reserved and cannot be used as aliases:\n"
@@ -1401,8 +1411,7 @@ class _ConsoleArgsParseHelper:
                 before_args.append(arg)
 
         if before_args:
-            self.parsed_args[alias].values = before_args
-            self.parsed_args[alias].exists = len(before_args) > 0
+            self.parsed_args[alias]._update(values=tuple(before_args), exists=True)
 
     def _collect_after_arg(self, alias: str, /) -> None:
         """Collect positional `"after"` arguments."""
@@ -1435,8 +1444,19 @@ class _ConsoleArgsParseHelper:
                 after_args.append(arg)
 
         if after_args:
-            self.parsed_args[alias].values = after_args
-            self.parsed_args[alias].exists = len(after_args) > 0
+            self.parsed_args[alias]._update(values=tuple(after_args), exists=True)
+
+    @staticmethod
+    def _looks_like_flag(arg: str, /) -> bool:
+        """Returns `True` if the arg resembles a flag (starts with `--` or `-<letter>`).<br>
+        Arguments that look like negative numbers (e.g. `-42`, `-.5`) are not flags."""
+
+        if arg.startswith("--"):
+            return True
+        if len(arg) >= 2 and arg[0] == "-" and not arg[1].isdigit() and arg[1] != ".":
+            return True
+
+        return False
 
     def _is_positional_arg(self, arg: str, /, *, allow_separator: bool = True) -> bool:
         """Check if an argument is positional (not a flag or separator)."""
@@ -1444,14 +1464,20 @@ class _ConsoleArgsParseHelper:
         if (self.flag_value_sep \
                 and self.flag_value_sep in arg
                 and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup):
+            if self._looks_like_flag(arg.split(self.flag_value_sep, 1)[0].strip()):
+                return False
             return True
+
         if arg not in self.arg_lookup and (allow_separator or not self.flag_value_sep or arg != self.flag_value_sep):
+            if self._looks_like_flag(arg):
+                return False
             return True
+
         return False
 
     def _is_flag_value(self, arg: str, /) -> bool:
         """Check if an argument can be treated as a space-separated flag value<br>
-        (i.e. it is not a known flag, not the separator, and not a `flag=value` token)."""
+        (i.e. it is not a known flag, not the separator, not a `flag=value` token, and does not look like a flag itself)."""
 
         if arg in self.arg_lookup:
             return False
@@ -1461,6 +1487,9 @@ class _ConsoleArgsParseHelper:
                 and self.flag_value_sep in arg
                 and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup):
             return False
+        if self._looks_like_flag(arg):
+            return False
+
         return True
 
     def process_flagged_args(self) -> None:
@@ -1474,29 +1503,34 @@ class _ConsoleArgsParseHelper:
             # CASE 1: FLAG WITH INLINE SEPARATOR ('--flag=value')
             if self.flag_value_sep and self.flag_value_sep in arg:
                 parts = arg.split(self.flag_value_sep, 1)
+                potential_flag = parts[0].strip()
 
-                if (potential_flag := (parts := arg.split(self.flag_value_sep, 1))[0].strip()) in self.arg_lookup:
+                if potential_flag in self.arg_lookup:
                     alias = self.arg_lookup[potential_flag]
-                    self.parsed_args[alias].exists = True
-                    self.parsed_args[alias].flag = potential_flag
+                    self.parsed_args[alias]._update(exists=True, flag=potential_flag)
 
                     if len(parts) > 1 and (val := parts[1].strip()):
-                        self.parsed_args[alias].values = [val]
+                        self.parsed_args[alias]._update(values=(val, ))
 
                     i += 1
                     continue
 
-            # CASE 2: STANDALONE FLAG
+                elif self._looks_like_flag(potential_flag):
+                    # UNKNOWN FLAG WITH INLINE SEPARATOR (e.g. '--unknown=value')
+                    self.unknown_flags.append(arg)
+                    i += 1
+                    continue
+
+            # CASE 2: STANDALONE KNOWN FLAG
             if arg in self.arg_lookup:
                 alias = self.arg_lookup[arg]
-                self.parsed_args[alias].exists = True
-                self.parsed_args[alias].flag = arg
+                self.parsed_args[alias]._update(exists=True, flag=arg)
 
                 # CHECK FOR SEPARATOR IN NEXT TOKENS ('--flag', '=', 'value')
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
-                            self.parsed_args[alias].values = [val]
+                            self.parsed_args[alias]._update(values=(val, ))
                             i += 3
                             continue
                     i += 2
@@ -1504,10 +1538,14 @@ class _ConsoleArgsParseHelper:
 
                 # CHECK FOR SPACE-SEPARATED VALUE ('--flag value')
                 if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
-                    self.parsed_args[alias].values = [next_arg]
+                    self.parsed_args[alias]._update(values=(next_arg, ))
                     i += 2
                     continue
                 # NO SEPARATOR = JUST A FLAG WITHOUT VALUE
+
+            elif self._looks_like_flag(arg):
+                # CASE 3: UNKNOWN STANDALONE FLAG (e.g. '--unknown', '-u')
+                self.unknown_flags.append(arg)
 
             i += 1
 

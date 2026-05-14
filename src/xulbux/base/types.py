@@ -113,7 +113,7 @@ class ArgData(TypedDict):
     """Schema for the resulting data of parsing a single command-line argument."""
     exists: bool
     is_pos: bool
-    values: list[str]
+    values: tuple[str, ...]
     flag: Optional[str]
 
 class RgbaDict(TypedDict):
