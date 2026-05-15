@@ -1,5 +1,5 @@
 from .. import __version__
-from ..format_codes import FormatCodes
+from ..depr_format_codes import deprFormatCodes
 from ..console import Console
 
 from urllib.error import HTTPError
@@ -52,7 +52,7 @@ CLI_COLORS = {
     "punctuator": "br:black",
     "text": "white",
 }
-CLI_HELP = FormatCodes.to_ansi(
+CLI_HELP = deprFormatCodes.to_ansi(
     rf"""[_]
   [b|#7075FF]               __  __
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
@@ -89,6 +89,6 @@ def show_help() -> None:
     """CLI command function for `xulbux-lib` command,<br>
     which shows some information about the library."""
 
-    FormatCodes._config_terminal()
+    deprFormatCodes._config_terminal()
     print(CLI_HELP)
     Console.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)

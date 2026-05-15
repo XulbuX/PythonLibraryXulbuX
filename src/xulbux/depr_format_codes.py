@@ -1,5 +1,14 @@
 """
-This module provides the `FormatCodes` class, which includes methods to print and work with strings that
+**DEPRECATED MODULE** – use the operator-based API in `xulbux.format_codes` (`F`, `FormatCodes`, `Term`) instead.
+
+This module is kept temporarily so existing internal callers and downstream code
+that relies on the string-based bracket-syntax (`"[b](Hello)"`) keep working
+until they are migrated to the new operator API. It will be removed in a
+future release.
+
+--------------------------------------------------------------------------------------------------------------------
+
+This module provides the `deprFormatCodes` class, which includes methods to print and work with strings that
 contain special formatting codes, which are then converted to ANSI codes for pretty terminal output.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -251,21 +260,21 @@ _ANSI_FLAT: Final[dict[str, str]] = _build_ansi_flat()
 """Precomputed direct-lookup table from format key to ANSI escape sequence."""
 
 _NORMALIZE_KEY_CACHE: dict[str, str] = {}
-"""Cache for `FormatCodes._normalize_key` results."""
+"""Cache for `deprFormatCodes._normalize_key` results."""
 _NORMALIZE_KEY_CACHE_MAX: Final[int] = 4096
 
 _REPLACEMENT_CACHE: dict[str, str] = {}
-"""Cache for `FormatCodes._get_replacement` results when no `default_color` is set."""
+"""Cache for `deprFormatCodes._get_replacement` results when no `default_color` is set."""
 _REPLACEMENT_CACHE_MAX: Final[int] = 4096
 
 _TO_ANSI_CACHE: dict[tuple[str, Optional[tuple[int, int, int]], int], str] = {}
-"""Cache for full `FormatCodes.to_ansi` results on the public entry path."""
+"""Cache for full `deprFormatCodes.to_ansi` results on the public entry path."""
 _TO_ANSI_CACHE_MAX: Final[int] = 1024
 _TO_ANSI_CACHE_MAX_LEN: Final[int] = 8192
 """Strings longer than this are not cached end-to-end."""
 
 
-class FormatCodes:
+class deprFormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
     which are then converted to ANSI codes for pretty terminal output."""
 
@@ -408,7 +417,7 @@ class FormatCodes:
         _escape_char: Literal["/", "\\"] = "/",
     ) -> str:
         """Escapes all valid formatting codes in the string, so they are visible when output<br>
-        to the terminal using `FormatCodes.print()`. Invalid formatting codes remain unchanged.\n
+        to the terminal using `deprFormatCodes.print()`. Invalid formatting codes remain unchanged.\n
         -----------------------------------------------------------------------------------------
         *   `string` – The string that contains the formatting codes to escape.
         *   `default_color` – The default text color to use if no other text color was applied.
@@ -804,7 +813,7 @@ class _EscapeFormatCodeHelper:
 
     def __init__(
         self,
-        cls: type[FormatCodes],
+        cls: type[deprFormatCodes],
         *,
         use_default: bool,
         default_color: Optional[rgba],
@@ -878,7 +887,7 @@ class _ReplaceKeysHelper:
 
     def __init__(
         self,
-        cls: type[FormatCodes],
+        cls: type[deprFormatCodes],
         *,
         use_default: bool,
         default_color: Optional[rgba],

@@ -33,6 +33,10 @@
 *   Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
 *   Improved the performance of `Data.remove_duplicates()` for lists and tuples: hashable items now deduplicate in O(n) using `dict.fromkeys()`, with an O(n²) equality-check fallback only for unhashable items (*lists, dicts, sets*).
 *   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
+*   Added a new, typed, operator-based formatting API in `format_codes`.<br>
+    The `Format` class (*alias* `F`) exposes every ANSI style/color attribute and uses `|` to combine codes and `()` to apply them to text – e.g. `(F.BOLD | F.RED)("hi")` and `F.hex("#F67")("hi")`.<br>
+    The new `FormatCodes(*segments, sep="\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.<br>
+    A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
 
 **BREAKING CHANGES:**
 
@@ -43,6 +47,9 @@
 *   Removed the `format_linebreaks` param from `Console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
 *   The `Console.get_args()` method no longer treats unknown flags as values but therefore saves them to the new `unknown_flags` property of the returned `ParsedArgs` object.
 *   Changed the type of `ParsedArgData.values` and `ArgData.values` from <code>list[*str*]</code> to <code>tuple[*str*, ...]</code>, since the values of an argument should be immutable after parsing.
+*   The original bracket-syntax `FormatCodes` class has been renamed to `deprFormatCodes` and moved into a new `depr_format_codes` module.<br>
+    All internal call sites in the library still use the deprecated implementation; both APIs are exported in parallel.<br>
+    `deprFormatCodes` will be removed in a future release – migrate to the new operator-based API at your convenience.
 
 
 <span id="v1-9-7" />

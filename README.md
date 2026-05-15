@@ -108,12 +108,12 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/color"><img src="https://img.shields.io/badge/color-B272FC?style=for-the-badge" alt="color"></a></td>
-      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with<br>
+      <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>Color</code> classes, which include methods to work with<br>
         colors in various formats.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/console"><img src="https://img.shields.io/badge/console-B272FC?style=for-the-badge" alt="console"></a></td>
-      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging<br>
+      <td><code>Console</code> <code>ProgressBar</code> classes, which include methods for logging<br>
         and other actions within the console.</td>
     </tr>
     <tr>
@@ -134,8 +134,8 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
-      <td><code>FormatCodes</code> class, which includes methods to print and work with strings that contain<br>
-        special formatting codes, which are then converted to ANSI codes for pretty terminal output.</td>
+      <td><code>Format</code> (<i>alias</i> <code>F</code>) <code>FormatCodes</code> <code>Term</code> classes for building richly formatted terminal output<br>
+        via a typed, operator-based syntax and for emitting cursor- and screen-control sequences.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>

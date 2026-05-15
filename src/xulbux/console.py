@@ -7,7 +7,7 @@ from .base.types import ProgressUpdater, AllTextChars, ArgParseConfigs, ArgParse
 from .base.decorators import mypyc_attr
 from .base.consts import CHARS, ANSI
 
-from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
+from .depr_format_codes import _PATTERNS as _FC_PATTERNS, deprFormatCodes
 from .string import String
 from .color import Color
 from .regex import LazyRegex
@@ -454,9 +454,9 @@ class Console(metaclass=_ConsoleMeta):
         *   `exit_code` – The exit code to use when exiting the program.
         *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
 
-        FormatCodes.print(prompt, end="", flush=True)
+        deprFormatCodes.print(prompt, end="", flush=True)
         if reset_ansi:
-            FormatCodes.print("[_]", end="")
+            deprFormatCodes.print("[_]", end="")
         if pause:
             cls._read_single_key()
         if exit:
@@ -532,7 +532,7 @@ class Console(metaclass=_ConsoleMeta):
         px, mx = " " * title_px, " " * title_mx
 
         # TITLE LENGTH INCLUDING PADDING AND MARGIN
-        title_len: int = len(FormatCodes.remove(title)) + (title_px * 2) + (title_mx * 2)
+        title_len: int = len(deprFormatCodes.remove(title)) + (title_px * 2) + (title_mx * 2)
 
         # CALCULATE DISTANCE TO NEXT TAB STOP
         tab: str = " " * (-title_len % tab_size)
@@ -541,7 +541,7 @@ class Console(metaclass=_ConsoleMeta):
         wrap_len: int = cls.width - (title_len + len(tab))
 
         # REMOVE ALL FORMAT CODES AS THEY WON'T AFFECT THE VISIBLE LENGTH OF THE PROMPT
-        clean_prompt, removals = (*FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True), )
+        clean_prompt, removals = (*deprFormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True), )
 
         # SPLIT PROMPT INTO LINES AND THEN SPLIT EACH LINE INTO CHUNKS THAT FIT WITHIN THE WRAP LENGTH
         prompt_lst: list[str] = list(chain.from_iterable(cls._process_lines(clean_prompt, wrap_len)))
@@ -557,7 +557,7 @@ class Console(metaclass=_ConsoleMeta):
             f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]"
         )
 
-        FormatCodes.print(out, default_color=default_color, end=end)
+        deprFormatCodes.print(out, default_color=default_color, end=end)
 
     @classmethod
     def debug(
@@ -782,7 +782,7 @@ class Console(metaclass=_ConsoleMeta):
             + "[*]"
         ) for line, unfmt in zip(lines, unfmt_lines)]
 
-        FormatCodes.print(
+        deprFormatCodes.print(
             ( \
                 f"{start}{spaces_l}[{bg_fc}]{pady}[*]\n"
                 + "\n".join(lines)
@@ -893,7 +893,7 @@ class Console(metaclass=_ConsoleMeta):
             + border_r
         ) for line, unfmt in zip(lines, unfmt_lines)]
 
-        FormatCodes.print(
+        deprFormatCodes.print(
             ( \
                 f"{start}{border_t}[_]\n"
                 + "\n".join(lines)
@@ -928,14 +928,14 @@ class Console(metaclass=_ConsoleMeta):
         information about formatting codes, see the `format_codes` module documentation."""
 
         confirmed = cls.input(
-            FormatCodes.to_ansi(
+            deprFormatCodes.to_ansi(
                 f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
                 default_color=default_color,
             )
         ).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
 
         if end:
-            FormatCodes.print(end, end="")
+            deprFormatCodes.print(end, end="")
         return confirmed
 
     @classmethod
@@ -967,11 +967,11 @@ class Console(metaclass=_ConsoleMeta):
         kb = KeyBindings()
         kb.add("c-d", eager=True)(cls._multiline_input_submit)
 
-        FormatCodes.print(start + str(prompt), default_color=default_color)
+        deprFormatCodes.print(start + str(prompt), default_color=default_color)
         if show_keybindings:
-            FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
+            deprFormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
         input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
-        FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
+        deprFormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
 
         return input_string
 
@@ -1084,7 +1084,7 @@ class Console(metaclass=_ConsoleMeta):
 
         custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
         session: _pt.PromptSession[str] = _pt.PromptSession(
-            message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
+            message=_pt.formatted_text.ANSI(deprFormatCodes.to_ansi(str(prompt), default_color=default_color)),
             validator=_ConsoleInputValidator(
                 helper.get_text,
                 mask_char=mask_char,
@@ -1094,13 +1094,13 @@ class Console(metaclass=_ConsoleMeta):
             validate_while_typing=True,
             key_bindings=kb,
             bottom_toolbar=helper.bottom_toolbar,
-            placeholder=_pt.formatted_text.ANSI(FormatCodes.to_ansi(f"[i|br:black]{placeholder}[_i|_c]"))
+            placeholder=_pt.formatted_text.ANSI(deprFormatCodes.to_ansi(f"[i|br:black]{placeholder}[_i|_c]"))
             if placeholder else "",
             style=custom_style,
         )
-        FormatCodes.print(start, end="")
+        deprFormatCodes.print(start, end="")
         session.prompt()
-        FormatCodes.print(end, end="")
+        deprFormatCodes.print(end, end="")
 
         if (result_text := helper.get_text()) in {"", None}:
             if default_val is not None:
@@ -1242,7 +1242,7 @@ class Console(metaclass=_ConsoleMeta):
         else:
             lines = [line for val in values for line in str(val).splitlines()]
 
-        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
+        unfmt_lines = [deprFormatCodes.remove(line, default_color) for line in lines]
         max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
 
         return lines, unfmt_lines, max_line_len
@@ -1632,7 +1632,7 @@ class _ConsoleInputHelper:
             if self.max_len and len(text_to_check) == self.max_len:
                 toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
 
-            return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
+            return _pt.formatted_text.ANSI(deprFormatCodes.to_ansi(" ".join(toolbar_msgs)))
 
         except Exception:
             return _pt.formatted_text.ANSI("")
@@ -1987,7 +1987,7 @@ class ProgressBar:
             )
 
         bar = f"{self._create_bar(current, total, max(1, bar_width))}[*]"
-        progress_text = _PATTERNS.bar.sub(FormatCodes.to_ansi(bar), formatted)
+        progress_text = _PATTERNS.bar.sub(deprFormatCodes.to_ansi(bar), formatted)
 
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
@@ -2014,9 +2014,9 @@ class ProgressBar:
                 fmt_parts.append(fmt_part)
 
         fmt_str = self.sep.join(fmt_parts)
-        fmt_str = FormatCodes.to_ansi(fmt_str)
+        fmt_str = deprFormatCodes.to_ansi(fmt_str)
 
-        bar_space = Console.width - len(FormatCodes.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
+        bar_space = Console.width - len(deprFormatCodes.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -2315,8 +2315,8 @@ class Throbber:
 
                 self._flush_buffer()
 
-                frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
-                formatted = FormatCodes.to_ansi(self.sep.join(
+                frame = deprFormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
+                formatted = deprFormatCodes.to_ansi(self.sep.join(
                     fmt_part for part in self.throbber_format if \
                     (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", part)))
                 ))

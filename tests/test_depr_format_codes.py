@@ -1,5 +1,5 @@
 from xulbux.base.consts import ANSI
-from xulbux.format_codes import FormatCodes
+from xulbux.depr_format_codes import deprFormatCodes
 
 
 black = ANSI.SEQ_COLOR.format(0, 0, 0)
@@ -21,13 +21,13 @@ reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_inverse', '_invert', 
 reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_underline', '_u')]}{ANSI.END}"
 
 #
-################################################## FormatCodes TESTS ##################################################
+################################################## deprFormatCodes TESTS ##################################################
 
 
 def test_to_ansi():
     assert (
-        FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
-                            default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
+        deprFormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
+                                default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
         + "lo" + f"{reset_bold}{default}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
         + f"{reset_italic}{reset_underline}{default}" + "]" + default + "!" + reset
     )
@@ -36,48 +36,48 @@ def test_to_ansi():
 def test_escape_ansi():
     ansi_string = f"{bold}Hello {orange}World!{reset}"
     escaped_string = ansi_string.replace(ANSI.CHAR, ANSI.CHAR_ESCAPED)
-    assert FormatCodes.escape_ansi(ansi_string) == escaped_string
+    assert deprFormatCodes.escape_ansi(ansi_string) == escaped_string
 
 
 def test_escape():
     # TEST BASIC FORMATTING CODES
-    assert FormatCodes.escape("[b]Hello[_]") == "[/b]Hello[/_]"
-    assert FormatCodes.escape("[bold|italic]Text[_]") == "[/bold|italic]Text[/_]"
+    assert deprFormatCodes.escape("[b]Hello[_]") == "[/b]Hello[/_]"
+    assert deprFormatCodes.escape("[bold|italic]Text[_]") == "[/bold|italic]Text[/_]"
 
     # TEST WITH COLORS
-    assert FormatCodes.escape("[#F87]Hello[_]") == "[/#F87]Hello[/_]"
-    assert FormatCodes.escape("[rgb(255, 136, 119)]Hello[_]") == "[/rgb(255, 136, 119)]Hello[/_]"
+    assert deprFormatCodes.escape("[#F87]Hello[_]") == "[/#F87]Hello[/_]"
+    assert deprFormatCodes.escape("[rgb(255, 136, 119)]Hello[_]") == "[/rgb(255, 136, 119)]Hello[/_]"
 
     # TEST WITH DEFAULT COLOR
-    assert FormatCodes.escape("[default]Hello", default_color="#FFF") == "[/default]Hello"
-    assert FormatCodes.escape("[bg:default]Hello", default_color="#FFF") == "[/bg:default]Hello"
+    assert deprFormatCodes.escape("[default]Hello", default_color="#FFF") == "[/default]Hello"
+    assert deprFormatCodes.escape("[bg:default]Hello", default_color="#FFF") == "[/bg:default]Hello"
 
     # TEST WITH * FORMATTING CODE
-    assert FormatCodes.escape("[*]Hello", default_color="#FFF") == "[/*]Hello"
-    assert FormatCodes.escape("[b|*]Hello", default_color="#FFF") == "[/b|*]Hello"
+    assert deprFormatCodes.escape("[*]Hello", default_color="#FFF") == "[/*]Hello"
+    assert deprFormatCodes.escape("[b|*]Hello", default_color="#FFF") == "[/b|*]Hello"
 
     # TEST WITH AUTO-RESET
-    assert FormatCodes.escape("[b](Hello)") == "[/b](Hello)"
-    assert FormatCodes.escape("[*](Hello)", default_color="#FFF") == "[/*](Hello)"
+    assert deprFormatCodes.escape("[b](Hello)") == "[/b](Hello)"
+    assert deprFormatCodes.escape("[*](Hello)", default_color="#FFF") == "[/*](Hello)"
 
     # TEST INVALID FORMATTING CODES (SHOULD REMAIN UNCHANGED)
-    assert FormatCodes.escape("[invalid]Hello") == "[invalid]Hello"
-    assert FormatCodes.escape("[default]Hello") == "[default]Hello"  # NO 'default_color'
-    assert FormatCodes.escape("[*]Hello") == "[/*]Hello"  # NO 'default_color'
+    assert deprFormatCodes.escape("[invalid]Hello") == "[invalid]Hello"
+    assert deprFormatCodes.escape("[default]Hello") == "[default]Hello"  # NO 'default_color'
+    assert deprFormatCodes.escape("[*]Hello") == "[/*]Hello"  # NO 'default_color'
 
     # TEST ALREADY ESCAPED CODES
-    assert FormatCodes.escape("[/b]Hello") == "[/b]Hello"
-    assert FormatCodes.escape("[/*]Hello", default_color="#FFF") == "[/*]Hello"
+    assert deprFormatCodes.escape("[/b]Hello") == "[/b]Hello"
+    assert deprFormatCodes.escape("[/*]Hello", default_color="#FFF") == "[/*]Hello"
 
     # TEST WITH BRIGHTNESS MODIFIERS
-    assert FormatCodes.escape("[l]Hello", default_color="#FFF") == "[/l]Hello"
-    assert FormatCodes.escape("[ll]Hello", default_color="#FFF") == "[/ll]Hello"
-    assert FormatCodes.escape("[+]Hello", default_color="#FFF") == "[/+]Hello"
-    assert FormatCodes.escape("[++]Hello", default_color="#FFF") == "[/++]Hello"
-    assert FormatCodes.escape("[d]Hello", default_color="#FFF") == "[/d]Hello"
-    assert FormatCodes.escape("[dd]Hello", default_color="#FFF") == "[/dd]Hello"
-    assert FormatCodes.escape("[-]Hello", default_color="#FFF") == "[/-]Hello"
-    assert FormatCodes.escape("[--]Hello", default_color="#FFF") == "[/--]Hello"
+    assert deprFormatCodes.escape("[l]Hello", default_color="#FFF") == "[/l]Hello"
+    assert deprFormatCodes.escape("[ll]Hello", default_color="#FFF") == "[/ll]Hello"
+    assert deprFormatCodes.escape("[+]Hello", default_color="#FFF") == "[/+]Hello"
+    assert deprFormatCodes.escape("[++]Hello", default_color="#FFF") == "[/++]Hello"
+    assert deprFormatCodes.escape("[d]Hello", default_color="#FFF") == "[/d]Hello"
+    assert deprFormatCodes.escape("[dd]Hello", default_color="#FFF") == "[/dd]Hello"
+    assert deprFormatCodes.escape("[-]Hello", default_color="#FFF") == "[/-]Hello"
+    assert deprFormatCodes.escape("[--]Hello", default_color="#FFF") == "[/--]Hello"
 
 
 def test_hyperlinks():
@@ -88,63 +88,63 @@ def test_hyperlinks():
     link_close = ANSI.SEQ_LINK_CLOSE
 
     # BASIC LINK
-    assert FormatCodes.to_ansi(f"[link:{url}](click here)") == f"{link_open}click here{link_close}"
+    assert deprFormatCodes.to_ansi(f"[link:{url}](click here)") == f"{link_open}click here{link_close}"
 
     # FILE URL
-    assert FormatCodes.to_ansi(f"[link:{file_url}](open file)") == f"{link_open_file}open file{link_close}"
+    assert deprFormatCodes.to_ansi(f"[link:{file_url}](open file)") == f"{link_open_file}open file{link_close}"
 
     # LINK WITH NESTED FORMATTING IN DISPLAY TEXT
-    assert FormatCodes.to_ansi(f"[link:{url}]([b](bold link))") == f"{link_open}{bold}bold link{reset_bold}{link_close}"
+    assert deprFormatCodes.to_ansi(f"[link:{url}]([b](bold link))") == f"{link_open}{bold}bold link{reset_bold}{link_close}"
 
     # LINK COMBINED WITH OTHER FORMAT KEYS
-    assert FormatCodes.to_ansi(f"[link:{url}|b](click here)") == f"{link_open}{bold}click here{reset_bold}{link_close}"
+    assert deprFormatCodes.to_ansi(f"[link:{url}|b](click here)") == f"{link_open}{bold}click here{reset_bold}{link_close}"
     bright_blue = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['br:blue']}{ANSI.END}"
-    assert FormatCodes.to_ansi(f"[link:{url}|br:blue](click here)"
-                               ) == (f"{link_open}{bright_blue}click here{reset_color}{link_close}")
+    assert deprFormatCodes.to_ansi(f"[link:{url}|br:blue](click here)"
+                                   ) == (f"{link_open}{bright_blue}click here{reset_color}{link_close}")
 
     # LINK WITHOUT DISPLAY BRACES IS INVALID (LEFT AS-IS)
-    assert FormatCodes.to_ansi(f"[link:{url}]") == f"[link:{url}]"
+    assert deprFormatCodes.to_ansi(f"[link:{url}]") == f"[link:{url}]"
 
     # ESCAPE: LINK SHOULD BE ESCAPED
-    assert FormatCodes.escape(f"[link:{url}](click here)") == f"[/link:{url}](click here)"
-    assert FormatCodes.escape(f"[link:{url}|b](click here)") == f"[/link:{url}|b](click here)"
+    assert deprFormatCodes.escape(f"[link:{url}](click here)") == f"[/link:{url}](click here)"
+    assert deprFormatCodes.escape(f"[link:{url}|b](click here)") == f"[/link:{url}|b](click here)"
 
     # REMOVE: OSC SEQUENCES FROM LINK SHOULD BE STRIPPED, LEAVING ONLY DISPLAY TEXT
-    assert FormatCodes.remove(f"[link:{url}](click here)") == "click here"
-    assert FormatCodes.remove_ansi(f"{link_open}click here{link_close}") == "click here"
+    assert deprFormatCodes.remove(f"[link:{url}](click here)") == "click here"
+    assert deprFormatCodes.remove_ansi(f"{link_open}click here{link_close}") == "click here"
 
 
 def test_remove_ansi():
     ansi_string = f"{bold}Hello {orange}World!{reset}"
     clean_string = "Hello World!"
-    assert FormatCodes.remove_ansi(ansi_string) == clean_string
+    assert deprFormatCodes.remove_ansi(ansi_string) == clean_string
 
 
 def test_remove_ansi_with_removals():
     ansi_string = f"{bold}Hello\n{orange}World!{reset}"
     clean_string = "Hello\nWorld!"
     removals = ((0, bold), (6, orange), (12, reset))
-    assert FormatCodes.remove_ansi(ansi_string, get_removals=True) == (clean_string, removals)
+    assert deprFormatCodes.remove_ansi(ansi_string, get_removals=True) == (clean_string, removals)
     removals = ((0, bold), (5, orange), (11, reset))
-    assert FormatCodes.remove_ansi(ansi_string, get_removals=True, _ignore_linebreaks=True) == (clean_string, removals)
+    assert deprFormatCodes.remove_ansi(ansi_string, get_removals=True, _ignore_linebreaks=True) == (clean_string, removals)
 
 
 def test_remove_formatting():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
-    assert FormatCodes.remove(format_string) == clean_string
+    assert deprFormatCodes.remove(format_string) == clean_string
 
 
 def test_remove_formatting_with_removals():
     format_string = "[b](Hello [#F87](World!))"
     clean_string = "Hello World!"
     removals = ((0, default), (0, bold), (6, orange), (12, default), (12, reset_bold))
-    assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
+    assert deprFormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
     format_string = "[b](Hello)\n[#F87](World!)"
     clean_string = "Hello\nWorld!"
     removals = ((0, default), (0, bold), (5, reset_bold), (6, orange), (12, default))
-    assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
+    assert deprFormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
     removals = ((0, default), (0, bold), (5, reset_bold), (5, orange), (11, default))
-    assert FormatCodes.remove(
+    assert deprFormatCodes.remove(
         format_string, default_color="#FFF", get_removals=True, _ignore_linebreaks=True
     ) == (clean_string, removals)

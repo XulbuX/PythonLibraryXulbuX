@@ -77,26 +77,33 @@ class ANSI:
     """Constants and utilities for ANSI escape code sequences."""
 
     CHAR_ESCAPED: Final = r"\x1b"
-    """Printable ANSI escape character."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    Printable ANSI escape character."""
     CHAR: Final = "\x1b"
     """ANSI escape character."""
     START: Final = "["
-    """Start of an ANSI escape sequence."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    Start of an ANSI escape sequence."""
     SEP: Final = ";"
-    """Separator between ANSI escape sequence parts."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    Separator between ANSI escape sequence parts."""
     END: Final = "m"
-    """End of an ANSI escape sequence."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    End of an ANSI escape sequence."""
 
     @classmethod
     def seq(cls, placeholders: int = 1, /) -> FormattableString:
-        """Generates an ANSI escape sequence with the specified number of placeholders."""
+        """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+        Generates an ANSI escape sequence with the specified number of placeholders."""
 
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
 
     SEQ_COLOR: Final[FormattableString] = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """ANSI escape sequence with three placeholders for setting the RGB text color."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    ANSI escape sequence with three placeholders for setting the RGB text color."""
     SEQ_BG_COLOR: Final[FormattableString] = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """ANSI escape sequence with three placeholders for setting the RGB background color."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    ANSI escape sequence with three placeholders for setting the RGB background color."""
 
     SEQ_LINK_OPEN: Final[FormattableString] = CHAR + "]8;;{}" + CHAR + "\\"
     """OSC 8 hyperlink opening sequence with a placeholder for the URL."""
@@ -113,7 +120,8 @@ class ANSI:
         "cyan",
         "white",
     }
-    """The standard terminal color names."""
+    """**DEPRECATED** – only used by `depr_format_codes` and as the seed for `COLOR_VARIANTS_MAP`.\n
+    The standard terminal color names."""
 
     COLOR_VARIANTS_MAP: Final[set[str]] = COLOR_MAP | {
         "br:black",
@@ -125,7 +133,8 @@ class ANSI:
         "br:cyan",
         "br:white",
     }
-    """All color variants that can be used in formatting."""
+    """**DEPRECATED** – only used by `depr_format_codes` and as the seed for `COLOR_VARIANTS_MAP`.\n
+    All color variants that can be used in formatting."""
 
     CODES_MAP: Final[dict[str | tuple[str, ...], int]] = {
         ################# SPECIFIC RESETS ##################
@@ -186,4 +195,5 @@ class ANSI:
         "bg:br:cyan": 106,
         "bg:br:white": 107,
     }
-    """Dictionary mapping format keys to their corresponding ANSI code numbers."""
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    Dictionary mapping format keys to their corresponding ANSI code numbers."""

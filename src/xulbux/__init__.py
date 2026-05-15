@@ -25,6 +25,7 @@ __all__ = [
     "File",
     "FileSys",
     "FormatCodes",
+    "deprFormatCodes",
     "Json",
     "Regex",
     "String",
@@ -39,6 +40,7 @@ from .env_path import EnvPath
 from .file import File
 from .file_sys import FileSys
 from .format_codes import FormatCodes
+from .depr_format_codes import deprFormatCodes
 from .json import Json
 from .regex import Regex
 from .string import String
