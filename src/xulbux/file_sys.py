@@ -131,7 +131,7 @@ class FileSys(metaclass=_FileSysMeta):
 
         try:
             result = cls.extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match)
-            return result if result is not None else Path()
+            return Path() if result is None else result
 
         except PathNotFoundError:
             path = Path(str(rel_path))

@@ -672,10 +672,8 @@ class FormatCodes:
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
 
         # FAST PATH WHEN NO DEFAULT COLOR: USE CACHED RESULTS
-        if default_color is None:
-            cached = _REPLACEMENT_CACHE.get(format_key)
-            if cached is not None:
-                return cached
+        if default_color is None and (cached := _REPLACEMENT_CACHE.get(format_key)) is not None:
+            return cached
 
         _format_key = format_key
         format_key = cls._normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
@@ -769,8 +767,7 @@ class FormatCodes:
     def _normalize_key(format_key: str, /) -> str:
         """Internal method to normalize the given format key."""
 
-        cached = _NORMALIZE_KEY_CACHE.get(format_key)
-        if cached is not None:
+        if (cached := _NORMALIZE_KEY_CACHE.get(format_key)) is not None:
             return cached
 
         k_parts = format_key.replace(" ", "").lower().split(":")

@@ -59,7 +59,8 @@ class rgba:
 
         if not all((0 <= ch <= 255) for ch in (red, green, blue)):
             raise ValueError(
-                f"The 'red', 'green' and 'blue' parameters must be integers in range [0, 255] inclusive, got {red=!r} {green=!r} {blue=!r}"
+                "The 'red', 'green' and 'blue' parameters must be integers "
+                f"in range [0, 255] inclusive, got {red=!r} {green=!r} {blue=!r}"
             )
         if alpha is not None and not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
@@ -688,19 +689,22 @@ class hexa:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        return f"hexa(#{self.red:02X}{self.green:02X}{self.blue:02X}{'' if self.alpha is None else f'{int(self.alpha * 255):02X}'})"
+        alpha = "" if self.alpha is None else f"{int(self.alpha * 255):02X}"
+        return f"hexa(#{self.red:02X}{self.green:02X}{self.blue:02X}{alpha})"
 
     def __str__(self) -> str:
-        return f"#{self.red:02X}{self.green:02X}{self.blue:02X}{'' if self.alpha is None else f'{int(self.alpha * 255):02X}'}"
+        alpha = "" if self.alpha is None else f"{int(self.alpha * 255):02X}"
+        return f"#{self.red:02X}{self.green:02X}{self.blue:02X}{alpha}"
 
     def dict(self) -> HexaDict:
-        """Returns the color components as a dictionary with hex string values for keys `"red"`, `"green"`, `"blue"` and optionally `"alpha"`."""
+        """Returns the color components as a dictionary with hex string values<br>
+        for keys `"red"`, `"green"`, `"blue"` and optionally `"alpha"`."""
 
         return HexaDict(
             red=f"{self.red:02X}",
             green=f"{self.green:02X}",
             blue=f"{self.blue:02X}",
-            alpha=(f"{int(self.alpha * 255):02X}" if self.alpha is not None else None),
+            alpha=(None if self.alpha is None else f"{int(self.alpha * 255):02X}"),
         )
 
     def values(self, *, round_alpha: bool = True) -> tuple[int, int, int, Optional[float]]:
@@ -1247,7 +1251,8 @@ class Color:
 
         if not all((0 <= ch <= 255) for ch in (red, green, blue)):
             raise ValueError(
-                f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
+                "The 'red', 'green' and 'blue' parameters must be integers "
+                f"in [0, 255], got {red=!r} {green=!r} {blue=!r}"
             )
         if alpha is not None and not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be a float in [0.0, 1.0] or None, got {alpha!r}")
@@ -1387,7 +1392,8 @@ class Color:
 
         if not all(0 <= ch <= 255 for ch in (red, green, blue)):
             raise ValueError(
-                f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
+                "The 'red', 'green' and 'blue' parameters must be integers "
+                f"in [0, 255], got {red=!r} {green=!r} {blue=!r}"
             )
 
         _red, _green, _blue = red / 255.0, green / 255.0, blue / 255.0

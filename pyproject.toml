@@ -119,7 +119,11 @@ max-complexity = 12
 max-line-length = 127
 select = ["E", "F", "W", "C90"]
 extend-ignore = ["E124", "E203", "E266", "E502", "W503"]
-per-file-ignores = ["__init__.py:F403,F405", "types.py:E302,E305"]
+per-file-ignores = [
+  "__init__.py:F403,F405",
+  "src/xulbux/base/types.py:E302,E305",
+  "src/xulbux/cli/help.py:E501",
+]
 
 [tool.setuptools]
 package-dir = { "" = "src" }

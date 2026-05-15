@@ -92,7 +92,14 @@ class ParsedArgData:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        return f"ParsedArgData(\n  exists = {self.exists!r},\n  is_pos = {self.is_pos!r},\n  values = {self.values!r},\n  flag = {self.flag!r}\n)"
+        return (
+            "ParsedArgData(\n"
+            f"  exists = {self.exists!r},\n"
+            f"  is_pos = {self.is_pos!r},\n"
+            f"  values = {self.values!r},\n"
+            f"  flag = {self.flag!r}\n"
+            ")"
+        )
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -313,7 +320,7 @@ class _ConsoleMeta(type):
 
         try:
             encoding = _sys.stdout.encoding
-            return encoding if encoding is not None else "utf-8"
+            return "utf-8" if encoding is None else encoding
         except (AttributeError, Exception):
             return "utf-8"
 
@@ -514,7 +521,8 @@ class Console(metaclass=_ConsoleMeta):
                 title_fg = str(Color.text_color_for_on_bg(title_bg_color))
             else:
                 raise ValueError(
-                    f"The 'title_bg_color' parameter must be a valid terminal color, RGBA value, or HEXA value, got {title_bg_color!r}"
+                    "The 'title_bg_color' parameter must be a valid terminal color, "
+                    f"RGBA value, or HEXA value, got {title_bg_color!r}"
                 )
         else:
             title_px = 0  # REMOVE PADDING IF TITLE HAS NO BG COLOR
@@ -754,7 +762,8 @@ class Console(metaclass=_ConsoleMeta):
                 box_bg_color = Color.to_hexa(box_bg_color)
             else:
                 raise ValueError(
-                    f"The 'box_bg_color' parameter must be a valid terminal color, RGBA value, or HEXA value, got {box_bg_color!r}"
+                    "The 'box_bg_color' parameter must be a valid terminal color, "
+                    f"RGBA value, or HEXA value, got {box_bg_color!r}"
                 )
 
         lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color)
@@ -863,12 +872,20 @@ class Console(metaclass=_ConsoleMeta):
         spaces_l = " " * indent
         pad_w_full = (cls.width - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
 
+        border_t_line = border_chars[1] * (
+            cls.width - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding)
+        )
+        border_b_line = border_chars[5] * (
+            cls.width - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding)
+        )
+        h_rule_line = border_chars[9] * (cls.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
+
         border_l = f"[{border_style}]{border_chars[7]}[*]"
         border_r = f"[{border_style}]{border_chars[3]}[_]"
-        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_chars[1] * (cls.width - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[2]}[_]"
-        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_chars[5] * (cls.width - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[4]}[_]"
+        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_t_line}{border_chars[2]}[_]"
+        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_b_line}{border_chars[4]}[_]"
 
-        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{border_chars[9] * (cls.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))}{border_chars[10]}[_]"
+        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{h_rule_line}{border_chars[10]}[_]"
 
         lines = [( \
             h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]"
@@ -1404,7 +1421,7 @@ class _ConsoleArgsParseHelper:
         """Collect positional `"before"` arguments."""
 
         before_args: list[str] = []
-        end_pos: int = self.first_flag_pos if self.first_flag_pos is not None else self.args_len
+        end_pos: int = self.args_len if self.first_flag_pos is None else self.first_flag_pos
 
         for i in range(end_pos):
             if self._is_positional_arg(arg := self.args[i], allow_separator=False):
@@ -1417,7 +1434,7 @@ class _ConsoleArgsParseHelper:
         """Collect positional `"after"` arguments."""
 
         after_args: list[str] = []
-        start_pos: int = (self.last_flag_pos + 1) if self.last_flag_pos is not None else 0
+        start_pos: int = 0 if self.last_flag_pos is None else (self.last_flag_pos + 1)
 
         # SKIP THE VALUE AFTER THE LAST FLAG IF IT HAS A SEPARATOR
         if self.last_flag_pos is not None:
