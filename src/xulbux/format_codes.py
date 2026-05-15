@@ -2,10 +2,11 @@
 This module provides the `FormatCodes` class, which includes methods to print and work with strings that
 contain special formatting codes, which are then converted to ANSI codes for pretty terminal output.
 
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 ### The Easy Formatting
 
-First, let's take a look at a small example of what a highly styled print string with formatting could look like using this module:
+First, let's take a look at a small example of what a highly styled
+print string with formatting could look like using this module:
 ```
 This here is just unformatted text. [b|u|br:blue](Next we have text that is bright blue + bold + underlined.)\\n
 [#000|bg:#F67](Then there's also black text with a red background.) And finally the ([i](boring)) plain text again.
@@ -13,49 +14,55 @@ This here is just unformatted text. [b|u|br:blue](Next we have text that is brig
 
 How all of this exactly works is explained in the sections below. 🠫
 
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 #### Formatting Codes and Keys
 
 In this module, you can apply styles and colors using simple formatting codes.
 These formatting codes consist of one or multiple different formatting keys in between square brackets.
 
-If a formatting code is placed in a print-string, the formatting of that code will be applied to everything behind it until its
-formatting is reset. If applying multiple styles and colors in the same place, instead of writing the formatting keys all into
-separate brackets (e.g. `[x][y][z]`), they can also be put in a single pair of brackets, separated by pipes (e.g. `[x|y|z]`).
+If a formatting code is placed in a print-string, the formatting of that code
+will be applied to everything behind it until its formatting is reset.
+If applying multiple styles and colors in the same place, instead of writing
+the formatting keys all into separate brackets (e.g. `[x][y][z]`),
+they can also be put in a single pair of brackets, separated by pipes (e.g. `[x|y|z]`).
 
 A list of all possible formatting keys can be found under all possible formatting keys.
 
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 #### Auto Resetting Formatting Codes
 
-Certain formatting can automatically be reset, behind a certain amount of text, just like shown in the following example:
+Certain formatting can automatically be reset, behind a certain
+amount of text, just like shown in the following example:
 ```
 This is plain text, [br:blue](which is bright blue now.) Now it was automatically reset to plain again.
 ```
 
 This will only reset formatting codes, that have a specific reset listed below.
-That means if you use it where another formatting is already applied, that formatting is still there after the automatic reset:
+That means if you use it where another formatting is already applied,
+that formatting is still there after the automatic reset:
 ```
 [cyan]This is cyan text, [dim](which is dimmed now.) Now it's not dimmed any more but still cyan.
 ```
 
-If you want to ignore the auto-reset functionality of `()` brackets, you can put a `\\` or `/` between them and
-the formatting code:
+If you want to ignore the auto-reset functionality of `()` brackets,
+you can put a `\\` or `/` between them and the formatting code:
 ```
 [cyan]This is cyan text, [u]/(which is underlined now.) And now it is still underlined and cyan.
 ```
 
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 #### All possible Formatting Keys
 
 *   RGB colors:
-    Change the text color directly with an RGB color inside the square brackets. (With or without `rgb()` brackets doesn't matter.)
+    Change the text color directly with an RGB color inside the square brackets.
+    (With or without `rgb()` brackets doesn't matter.)
     Examples:
     -   `[rgb(115, 117, 255)]`
     -   `[(255, 0, 136)]`
     -   `[255, 0, 136]`
 *   HEX colors:
-    Change the text color directly with a HEX color inside the square brackets. (Whether the `RGB` or `RRGGBB` HEX format is used,
+    Change the text color directly with a HEX color inside the square brackets.
+    (Whether the `RGB` or `RRGGBB` HEX format is used,
     and if there's a `#` or `0x` prefix, doesn't matter.)
     Examples:
     -   `[0x7788FF]`
@@ -65,7 +72,8 @@ the formatting code:
     -   `[#78F]`
     -   `[78F]`
 *   Background RGB / HEX colors:
-    Change the background color directly with an RGB or HEX color inside the square brackets, using the `background:` `BG:` prefix.
+    Change the background color directly with an RGB or HEX color inside
+    the square brackets, using the `background:` `BG:` prefix.
     (Same RGB / HEX formatting code rules as for text color.)
     Examples:
     -   `[bg:rgb(115, 117, 255)]`
@@ -73,7 +81,8 @@ the formatting code:
     -   `[bg:#7788FF]`
     -   `[bg:#78F]`
 *   Standard terminal colors:
-    Change the text color to one of the standard terminal colors by just writing the color name in the square brackets.
+    Change the text color to one of the standard terminal colors
+    by just writing the color name in the square brackets.
     -   `[black]`
     -   `[red]`
     -   `[green]`
@@ -101,7 +110,8 @@ the formatting code:
     -   `[bg:br:red]`
     -   …
 *   Text styles:
-    Use the built-in text formatting to change the style of the text. There are long and short forms for each formatting code.
+    Use the built-in text formatting to change the style of the text.
+    There are long and short forms for each formatting code.
     (Not all terminals support all text styles.)
     -   `[bold]` `[b]`
     -   `[dim]`
@@ -112,8 +122,8 @@ the formatting code:
     -   `[strikethrough]` `[s]`
     -   `[double-underline]` `[du]`
 *   Specific reset:
-    Use these reset codes to remove a specific style, color or background. Again, there are long and
-    short forms for each reset code.
+    Use these reset codes to remove a specific style, color or background.
+    Again, there are long and short forms for each reset code.
     -   `[_bold]` `[_b]`
     -   `[_dim]`
     -   `[_italic]` `[_i]`
@@ -134,7 +144,7 @@ the formatting code:
     -   `[link:file:///path/to/file.txt](open file)`
     -   `[link:https://example.com|br:blue](click here)`
 
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 #### Additional Formatting Codes when a `default_color` is set
 
 1.  `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
@@ -1045,7 +1055,14 @@ class _ReplaceKeysHelper:
 
         # ADD AUTO-RESET TEXT
         if self.auto_reset_escaped and self.auto_reset_txt:
-            output += f"({self.cls.to_ansi(self.auto_reset_txt, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False)})"
+            output = self.cls.to_ansi(
+                self.auto_reset_txt,
+                self.default_color,
+                self.brightness_steps,
+                _default_start=False,
+                _validate_default=False,
+            )
+            output += f"({output})"
         elif self.auto_reset_txt:
             output += self.auto_reset_txt
 

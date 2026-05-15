@@ -1862,7 +1862,8 @@ class ProgressBar:
         if bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in bar_format):
                 raise ValueError(
-                    f"The 'bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
+                    "The 'bar_format' parameter value must contain the "
+                    f"'{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
                 )
 
             self.bar_format = bar_format
@@ -1870,7 +1871,8 @@ class ProgressBar:
         if limited_bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in limited_bar_format):
                 raise ValueError(
-                    f"The 'limited_bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {limited_bar_format!r}"
+                    "The 'limited_bar_format' parameter value must contain the "
+                    f"'{{bar}}' or '{{b}}' placeholder, got {limited_bar_format!r}"
                 )
 
             self.limited_bar_format = limited_bar_format
@@ -2210,7 +2212,8 @@ class Throbber:
 
         if not any(_PATTERNS.animation.search(fmt) for fmt in throbber_format):
             raise ValueError(
-                f"At least one format string in 'throbber_format' must contain the '{{animation}}' or '{{a}}' placeholder, got {throbber_format!r}"
+                "At least one format string in 'throbber_format' must contain the "
+                f"'{{animation}}' or '{{a}}' placeholder, got {throbber_format!r}"
             )
 
         self.throbber_format = throbber_format

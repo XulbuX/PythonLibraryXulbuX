@@ -189,7 +189,11 @@ class System(metaclass=_SystemMeta):
 
         if _os.name == "nt":  # WINDOWS
             if win_title:
-                args_str = f'-c "import ctypes; ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}"'
+                args_str = (
+                    '-c "import ctypes; '
+                    f'ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); '
+                    f'exec(open(\\"{_sys.argv[0]}\\").read())" ' + " ".join(args_list)
+                )
             else:
                 args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
