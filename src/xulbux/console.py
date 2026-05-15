@@ -504,7 +504,7 @@ class Console(metaclass=_ConsoleMeta):
             raise ValueError(f"The 'title_mx' parameter must be a non-negative integer, got {title_mx!r}")
 
         title_fg: str = "_c"
-        title = "" if title is None else title.strip().upper()
+        title = "" if title is None else title.strip()
 
         if has_title_bg := title_bg_color is not None:
             if str(title_bg_color).replace(" ", "").lower() in ANSI.COLOR_VARIANTS_MAP:

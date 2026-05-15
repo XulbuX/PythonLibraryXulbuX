@@ -20,11 +20,13 @@ For the libraries latest changes and updates, see the [**change log**](https://g
 Run the following commands in a terminal with administrator privileges, so the actions take effect for all users.
 
 Install the library and all its dependencies with the command:
+
 ```shell
 pip install xulbux
 ```
 
 Upgrade the library and all its dependencies to their latest available version with the command:
+
 ```shell
 pip install --upgrade xulbux
 ```
@@ -45,11 +47,13 @@ When the library is installed, the following commands are available in the termi
 ## Usage
 
 Import the full library under the alias `xx`, so its modules and main classes are accessible with `xx.module.Class`, `xx.MainClass.method()`:
+
 ```python
 import xulbux as xx
 ```
 
 So you don't have to import the full library under an alias, you can also import only certain parts of the library's contents:
+
 ```python
 # LIBRARY SUB MODULES
 from xulbux.base.consts import COLOR, CHARS, ANSI
@@ -159,6 +163,7 @@ from xulbux.color import rgba, hsla, hexa
 ## Example Usage
 
 This is what it could look like using this library for a simple but ultra good-looking color converter:
+
 ```python
 from xulbux.base.consts import COLOR, CHARS
 from xulbux.color import hexa

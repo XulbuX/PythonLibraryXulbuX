@@ -32,6 +32,7 @@
 *   Improved the performance of `Console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
 *   Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
 *   Improved the performance of `Data.remove_duplicates()` for lists and tuples: hashable items now deduplicate in O(n) using `dict.fromkeys()`, with an O(n²) equality-check fallback only for unhashable items (*lists, dicts, sets*).
+*   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
 
 **BREAKING CHANGES:**
 
@@ -188,9 +189,11 @@
 
 *   The arguments when calling `Console.get_args()` are no longer specified in a single dictionary, but now each argument is passed as a separate keyword argument.<br>
     You can still use a dictionary just fine by simply unpacking it with `**`, like this:
+
     ```python
     Console.get_args(**{"arg": {"-a", "--arg"}})
     ```
+
 *   Replaced the internal `_COMPILED` regex pattern dictionaries with `LazyRegex` objects so it won't compile all regex patterns on library import, but only when they are used for the first time, which improves the library's import time.
 *   Renamed the internal `_COMPILED` regex pattern dictionaries to `_PATTERNS` for better clarity.
 *   Removed the import of the `ProgressBar` class from the `__init__.py` file, since it's not an important main class that should be imported directly.
@@ -909,14 +912,17 @@
 
 *   Added a library description, which gets shown if the library base-import is run directly.
 *   Made it possible to escape an <span id="auto-reset-format">auto-reset-format</span> (`[format](Automatically resetting)`) with a slash, so you can still have `()` brackets behind a `[format]`:
+
     ```python
     FormatCodes.print('[u](Automatically resetting) following text')
     ```
+
     prints: <code><u>Automatically resetting</u> following text</code>
 
     ```python
     FormatCodes.print('[u]/(Automatically resetting) following text')
     ```
+
     prints: <code><u>(Automatically resetting) following text</u></code>
 
 
@@ -956,6 +962,7 @@
 
 $\color{#F90}\Huge\textsf{INITIAL RELEASE!\ 🤩🎉}$<br>
 **At initial release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
+
 ```python
 # GENERAL LIBRARY
 import XulbuX as xx
