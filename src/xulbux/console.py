@@ -524,7 +524,7 @@ class Console(metaclass=_ConsoleMeta):
         px, mx = " " * title_px, " " * title_mx
 
         # TITLE LENGTH INCLUDING PADDING AND MARGIN
-        title_len: int = len(title) + (title_px * 2) + (title_mx * 2)
+        title_len: int = len(FormatCodes.remove(title)) + (title_px * 2) + (title_mx * 2)
 
         # CALCULATE DISTANCE TO NEXT TAB STOP
         tab: str = " " * (-title_len % tab_size)
