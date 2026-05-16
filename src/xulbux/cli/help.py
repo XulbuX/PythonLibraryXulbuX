@@ -1,5 +1,6 @@
 from .. import __version__
-from ..depr_format_codes import deprFormatCodes
+from ..base.decorators import mypyc_attr
+from ..format_codes import FC, F
 from ..console import Console
 
 from urllib.error import HTTPError
@@ -38,57 +39,67 @@ def is_latest_version() -> Optional[bool]:
 URL = "https://pypi.org/pypi/xulbux/json"
 IS_LATEST_VERSION = is_latest_version()
 
-CLI_COLORS = {
-    "border": "dim|br:black",
-    "class": "br:cyan",
-    "cmd": "green",
-    "const": "br:blue",
-    "fn": "br:green",
-    "heading": "br:white",
-    "import": "magenta",
-    "lib": "br:magenta",
-    "link": "br:blue",
-    "notice": "br:yellow",
-    "punctuator": "br:black",
-    "text": "white",
-}
-CLI_HELP = deprFormatCodes.to_ansi(
-    rf"""[_]
-  [b|#7075FF]               __  __
-  [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
-  [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
-  [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , <
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|#000|BG:#8085FF] v[b]{__version__} [*|dim|{CLI_COLORS["notice"]}]({"" if IS_LATEST_VERSION else " (newer available)"})[*]
 
-  [i|#9095FF]Simplify common programming tasks![*]
+@mypyc_attr(native_class=False)
+class S:
+    """Styling constants for the CLI help message."""
 
-  [b|{CLI_COLORS["heading"]}](Commands:)[*]
-  [{CLI_COLORS["border"]}](╭───────────────────────────────────────────────────╮)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["cmd"]}]xulbux-lib[*]       [{CLI_COLORS["text"]}]Show library info and usage[*]      [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["cmd"]}]xulbux-lib [b|{CLI_COLORS["fn"]}](fc)    [{CLI_COLORS["text"]}]Render a string's format codes[*]   [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](╰───────────────────────────────────────────────────╯)[*]
-  [b|{CLI_COLORS["heading"]}](Usage:)[*]
-  [{CLI_COLORS["border"]}](╭───────────────────────────────────────────────────╮)[*]
-  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# LIBRARY CONSTANTS)[*]                               [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]base[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]consts [{CLI_COLORS["import"]}]import [{CLI_COLORS["const"]}]COLOR[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["const"]}]CHARS[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["const"]}]ANSI[*] [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# Main Classes)[*]                                    [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux [{CLI_COLORS["import"]}]import [{CLI_COLORS["class"]}]Code[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["class"]}]Color[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["class"]}]Console[{CLI_COLORS["punctuator"]}], ...[*]      [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [i|{CLI_COLORS["punctuator"]}](# module specific imports)[*]                         [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["import"]}]from [{CLI_COLORS["lib"]}]xulbux[{CLI_COLORS["punctuator"]}].[{CLI_COLORS["lib"]}]color [{CLI_COLORS["import"]}]import [{CLI_COLORS["fn"]}]rgba[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["fn"]}]hsla[{CLI_COLORS["punctuator"]}], [{CLI_COLORS["fn"]}]hexa[*]         [{CLI_COLORS["border"]}](│)
-  [{CLI_COLORS["border"]}](╰───────────────────────────────────────────────────╯)[*]
-  [b|{CLI_COLORS["heading"]}](Documentation:)[*]
-  [{CLI_COLORS["border"]}](╭───────────────────────────────────────────────────╮)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["text"]}]For more information see the GitHub wiki page:    [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](│) [{CLI_COLORS["link"]}|link:https://github.com/xulbux/python-lib-xulbux/wiki](github.com/xulbux/python-lib-xulbux/wiki)          [{CLI_COLORS["border"]}](│)[*]
-  [{CLI_COLORS["border"]}](╰───────────────────────────────────────────────────╯)[*]
-  [_]"""
+    BORDER = F.DIM | F.BR.BLACK
+    CLS = F.BR.CYAN
+    CMD = F.GREEN
+    CONST = F.BR.BLUE
+    FN = F.BR.GREEN
+    HEADING = F.BOLD | F.BR.WHITE
+    IMPORT = F.MAGENTA
+    LIB = F.BR.MAGENTA
+    META = F.DIM | F.BR.WHITE
+    PUNCT = F.BR.BLACK
+    TEXT = F.WHITE
+
+
+# fmt: OFF
+CLI_HELP = FC(
+    F.RESET,
+    (
+        (F.BOLD | F.hex("#7075FF"))(
+            "                 __  __              \n"
+            "    _  __ __  __/ / / /_  __  ___  __\n"
+            "   | |/ // / / / / / __ \\/ / / | |/ /\n"
+            "   > , </ /_/ / /_/ /_/ / /_/ /> , < \n"
+            "  /_/|_|\\____/\\__/\\____/\\____//_/|_|  ",
+            (F.hex("#000") | F.BG.hex("#8085FF"))(f" v{__version__} "),
+        ),
+        "" if IS_LATEST_VERSION else (F.DIM | F.YELLOW)(" (", F.ITALIC("newer available"), ")"),
+    ),
+    "",
+    (F.ITALIC | F.hex("#9095FF"))("  Simplify common programming tasks!"),
+    "",
+    S.HEADING("  Commands:"),
+    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (S.BORDER("  │ "), S.CMD("xulbux-lib      "), S.TEXT("Show library info and usage       "), S.BORDER("│")),
+    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    S.HEADING("  Usage:"),
+    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("LIBRARY CONSTANTS                               ")), S.BORDER("│")),
+    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux"), (F.DIM | S.LIB)("."), S.LIB("base"), (F.DIM | S.LIB)("."), S.LIB("consts "), S.IMPORT("import "), S.CONST("COLOR"), S.PUNCT(", "), S.CONST("CHARS"), S.PUNCT(", "), S.CONST("ANSI "), S.BORDER("│")),
+    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("Main Classes                                    ")), S.BORDER("│")),
+    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux "), S.IMPORT("import "), S.CLS("Code"), S.PUNCT(", "), S.CLS("Color"), S.PUNCT(", "), S.CLS("Console"), S.PUNCT(", "), S.META("...      "), S.BORDER("│")),
+    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("module specific imports                         ")), S.BORDER("│")),
+    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux"), (F.DIM | S.LIB)("."), S.LIB("color "), S.IMPORT("import "), S.FN("rgba"), S.PUNCT(", "), S.FN("hsla"), S.PUNCT(", "), S.FN("hexa         "), S.BORDER("│")),
+    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    S.HEADING("  Documentation:"),
+    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (S.BORDER("  │ "), S.TEXT("For more information see the GitHub wiki page:    "), S.BORDER("│")),
+    (S.BORDER("  │ "), (F.BR.BLUE | F.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", S.BORDER("│")),
+    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    "",
 )
+# fmt: ON
 
 
 def show_help() -> None:
     """CLI command function for `xulbux-lib` command,<br>
     which shows some information about the library."""
 
-    deprFormatCodes._config_terminal()
-    print(CLI_HELP)
+    CLI_HELP.print()
     Console.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)

@@ -138,22 +138,7 @@ xulbux = ["py.typed", "*.pyi", "**/*.pyi"]
 minversion = "7.0"
 addopts = "-ra -q"
 pythonpath = ["src"]
-testpaths = [
-  "tests/test_code.py",
-  "tests/test_color_types.py",
-  "tests/test_color.py",
-  "tests/test_console.py",
-  "tests/test_data.py",
-  "tests/test_env_path.py",
-  "tests/test_file_sys.py",
-  "tests/test_file.py",
-  "tests/test_format_codes.py",
-  "tests/test_json.py",
-  "tests/test_metadata_consistency.py",
-  "tests/test_regex.py",
-  "tests/test_string.py",
-  "tests/test_system.py",
-]
+testpaths = ["tests/test_*.py"]
 
 [tool.pyright]
 include = ["src", "tests"]

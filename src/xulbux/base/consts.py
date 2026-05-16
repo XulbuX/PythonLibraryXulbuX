@@ -77,10 +77,10 @@ class ANSI:
     """Constants and utilities for ANSI escape code sequences."""
 
     CHAR_ESCAPED: Final = r"\x1b"
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
-    Printable ANSI escape character."""
+    """Printable ANSI escape character."""
     CHAR: Final = "\x1b"
     """ANSI escape character."""
+
     START: Final = "["
     """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
     Start of an ANSI escape sequence."""
@@ -98,16 +98,14 @@ class ANSI:
 
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
 
-    SEQ_COLOR: Final[FormattableString] = CHAR + START + "38" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
-    ANSI escape sequence with three placeholders for setting the RGB text color."""
-    SEQ_BG_COLOR: Final[FormattableString] = CHAR + START + "48" + SEP + "2" + SEP + "{}" + SEP + "{}" + SEP + "{}" + END
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
-    ANSI escape sequence with three placeholders for setting the RGB background color."""
+    SEQ_FG_COLOR: Final[FormattableString] = f"{CHAR}[38;2;{{}};{{}};{{}}m"
+    """RGB foreground color sequence with placeholders for red, green, and blue values."""
+    SEQ_BG_COLOR: Final[FormattableString] = f"{CHAR}[48;2;{{}};{{}};{{}}m"
+    """RGB background color sequence with placeholders for red, green, and blue values."""
 
-    SEQ_LINK_OPEN: Final[FormattableString] = CHAR + "]8;;{}" + CHAR + "\\"
+    SEQ_LINK_OPEN: Final[FormattableString] = f"{CHAR}]8;;{{}}{CHAR}\\"
     """OSC 8 hyperlink opening sequence with a placeholder for the URL."""
-    SEQ_LINK_CLOSE: Final[str] = CHAR + "]8;;" + CHAR + "\\"
+    SEQ_LINK_CLOSE: Final[str] = f"{CHAR}]8;;{CHAR}\\"
     """OSC 8 hyperlink closing sequence."""
 
     COLOR_MAP: Final[set[str]] = {
@@ -120,7 +118,7 @@ class ANSI:
         "cyan",
         "white",
     }
-    """**DEPRECATED** – only used by `depr_format_codes` and as the seed for `COLOR_VARIANTS_MAP`.\n
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
     The standard terminal color names."""
 
     COLOR_VARIANTS_MAP: Final[set[str]] = COLOR_MAP | {
@@ -133,7 +131,7 @@ class ANSI:
         "br:cyan",
         "br:white",
     }
-    """**DEPRECATED** – only used by `depr_format_codes` and as the seed for `COLOR_VARIANTS_MAP`.\n
+    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
     All color variants that can be used in formatting."""
 
     CODES_MAP: Final[dict[str | tuple[str, ...], int]] = {

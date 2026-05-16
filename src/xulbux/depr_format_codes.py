@@ -717,14 +717,15 @@ class deprFormatCodes:
                 is_bg = rgb_match.group(1)
                 red, green, blue = map(int, rgb_match.groups()[1:])
                 if Color.is_valid_rgba((red, green, blue)):
-                    result = ANSI.SEQ_BG_COLOR.format(red, green, blue) if is_bg else ANSI.SEQ_COLOR.format(red, green, blue)
+                    result = ANSI.SEQ_BG_COLOR.format(red, green,
+                                                      blue) if is_bg else ANSI.SEQ_FG_COLOR.format(red, green, blue)
 
             elif hex_match:
                 is_bg = hex_match.group(1)
                 rgb = Color.to_rgba(hex_match.group(2))
                 result = (
                     ANSI.SEQ_BG_COLOR.format(rgb[0], rgb[1], rgb[2])
-                    if is_bg else ANSI.SEQ_COLOR.format(rgb[0], rgb[1], rgb[2])
+                    if is_bg else ANSI.SEQ_FG_COLOR.format(rgb[0], rgb[1], rgb[2])
                 )
 
         except Exception:
@@ -751,7 +752,7 @@ class deprFormatCodes:
         _default_color: tuple[int, int, int] = (default_color[0], default_color[1], default_color[2])
 
         if brightness_steps is None or (format_key and _PATTERNS.bg_opt_default.search(format_key)):
-            return (ANSI.SEQ_BG_COLOR if format_key and _PATTERNS.bg_default.search(format_key) else ANSI.SEQ_COLOR).format(
+            return (ANSI.SEQ_BG_COLOR if format_key and _PATTERNS.bg_default.search(format_key) else ANSI.SEQ_FG_COLOR).format(
                 *_default_color
             )
 
@@ -780,7 +781,7 @@ class deprFormatCodes:
             adjusted_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust)
             new_rgb = (adjusted_rgb[0], adjusted_rgb[1], adjusted_rgb[2])
 
-        return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_COLOR).format(*new_rgb[:3])
+        return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_FG_COLOR).format(*new_rgb[:3])
 
     @staticmethod
     def _normalize_key(format_key: str, /) -> str:

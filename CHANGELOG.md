@@ -35,14 +35,16 @@
 *   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
 *   Added a new, typed, operator-based formatting API in `format_codes`.<br>
     The `Format` class (*alias* `F`) exposes every ANSI style/color attribute and uses `|` to combine codes and `()` to apply them to text – e.g. `(F.BOLD | F.RED)("hi")` and `F.hex("#F67")("hi")`.<br>
-    The new `FormatCodes(*segments, sep="\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.<br>
+    The new `FormatCodes(*segments, sep="\n")` (*alias* `FC`) class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.<br>
     A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
+*   Removed the `xulbux-lib fc` CLI command, since the new formatting API doesn't support its old format string syntax.
 
 **BREAKING CHANGES:**
 
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed the `Console.w` and `Console.h` properties to `Console.width` and `Console.height`, to follow the no-single-letter-names convention.
+*   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
 *   Removed the `background:` and `bright:` prefixes from the library, so now you can just use the `bg:` and `br:` ones, for consistency.
 *   Removed the `format_linebreaks` param from `Console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
 *   The `Console.get_args()` method no longer treats unknown flags as values but therefore saves them to the new `unknown_flags` property of the returned `ParsedArgs` object.

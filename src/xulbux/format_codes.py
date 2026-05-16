@@ -1,6 +1,6 @@
 """
-This module provides the `FormatCodes` class together with the `Format` (alias `F`) and `Term`<br>
-classes for building richly formatted terminal output using a typed, operator-based syntax.
+This module provides the `FormatCodes` (alias `FC`) class together with the `Format` (alias `F`)<br>
+and `Term` classes for building richly formatted terminal output using a typed, operator-based syntax.
 
 -----------------------------------------------------------------------------------------------------------
 ### The Easy Formatting
@@ -38,8 +38,8 @@ A list of all possible format attributes can be found below.
 -----------------------------------------------------------------------------------------------------------
 #### Auto Resetting Formats
 
-Every `_Fmt`, `_FmtGroup`, `_ColorFmt` or `_LinkFmt` call automatically generates the matching<br>
-reset sequence behind its text, just like shown in the following example:
+Every `_Fmt`, `_FmtGroup`, `_ColorFmt` or `_LinkFmt` call automatically generates the<br>
+matching reset sequence behind its text, just like shown in the following example:
 
 ```python
 FormatCodes(
@@ -59,17 +59,41 @@ FormatCodes(
 ```
 
 -----------------------------------------------------------------------------------------------------------
+#### Bare (Open-Only) Formats
+
+Passing a format object *without calling it* emits only its opening ANSI sequence at that<br>
+position, with no matching close/reset appended. This is the typed equivalent of `[…]`<br>
+(open bracket without closing braces) from the legacy string syntax:
+
+```python
+FormatCodes(
+    F.RED, "error: something went wrong ", F.RESET,
+    "back to normal",
+).print()
+```
+
+Any format type supports bare usage: `F.RED` (`_Fmt`), `F.hex("#F67")` (`_ColorFmt`),<br>
+`F.link("url")` (`_LinkFmt`), and `F.BOLD | F.RED` (`_FmtGroup`).<br>
+Bare formats can also appear inside tuples and nested calls:
+
+```python
+FormatCodes(
+    F.DIM("a", F.RED, "b", F.RESET_COLOR, "c"),
+).print()
+```
+
+-----------------------------------------------------------------------------------------------------------
 #### Nesting and Multi-Segment Groups
 
 A format call accepts either a single piece of text or any number of mixed segments.<br>
-Strings, nested `_Styled` calls, sequences built with `+` and even raw tuples can be mixed freely:
+Strings, nested `_Styled` calls, bare format objects, and raw tuples can be mixed freely:
 
 *   `F.X("text")`               – Apply `X` to `"text"`, auto-reset after.
 *   `F.X | F.Y`                 – Combine `X` and `Y` into a single group.
 *   `(F.X | F.Y)("text")`       – Apply the group to `"text"`.
 *   `F.X("a", F.Y("b"), "c")`   – Nested multi-segment: `Y` is applied only to `"b"`.
+*   `F.X`                       – Bare: emit only the opening sequence, no auto-reset.
 *   `("a", F.X("b"), "c")`      – Same-line group – passed as a single tuple to `FormatCodes(…)`.
-*   `"a" + F.X("b") + "c"`      – Same-line group built with `+` (yields a `_Seq`).
 
 Inside `FormatCodes(*segments, sep="\\n")`, every positional argument is treated as one<br>
 logical line and joined by `sep`. An empty string argument `""` therefore produces a blank line.
@@ -93,8 +117,8 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
     -   `F.BR.BLACK`, `F.BR.RED`, `F.BR.GREEN`, …
 *   Standard background colors (`F.BG.*`):
     -   `F.BG.BLACK`, `F.BG.RED`, `F.BG.GREEN`, …
-*   Bright background colors (`F.BG.BR.*` or `F.BR.BG.*`):
-    -   `F.BG.BR.RED`, `F.BR.BG.RED`, …
+*   Bright background colors (`F.BG.BR.*`):
+    -   `F.BG.BR.RED`, `F.BG.BR.GREEN`, …
 *   24-bit true-color (foreground / background):
     -   `F.rgb(255, 96, 112)`
     -   `F.hex("#FF6070")`  or  `F.hex("F67")`
@@ -190,6 +214,13 @@ _RESET_MAP: Final[dict[int, int]] = {
 """Mapping from format code integer to its matching reset integer.\n
 Codes that fully reset everything (`0`) or have no useful specific reset are intentionally omitted."""
 
+_STANDARD_SEQS: Final[
+    dict[int, tuple[tuple[str, ...], tuple[str, ...]]],
+] = {cid: ((f"{ANSI.CHAR}[{cid}m", ), (f"{ANSI.CHAR}[{reset}m", ))
+     for cid, reset in _RESET_MAP.items()}
+"""Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR format.\n
+Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
+
 ################################################## CORE TYPES ##################################################
 
 
@@ -224,12 +255,14 @@ class _FmtGroup:
     def __call__(self, *text: _Segment) -> _Styled:
         """Applies this format group to the given text, auto-resetting after."""
 
-        return _Styled(self, text[0] if len(text) == 1 else text)
+        opens, closes = _build_open_close(self)
+        return _Styled(opens, closes, text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: _Text) -> _Styled:
         """Applies this format group to the given text, auto-resetting after."""
 
-        return _Styled(self, text)
+        opens, closes = _build_open_close(self)
+        return _Styled(opens, closes, text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this format group, showing its individual codes."""
@@ -248,6 +281,8 @@ class _Fmt(int):
     Marked `native_class=False` because MyPyC does not support<br>
     subclassing the built-in `int` type in a native class."""
 
+    _oc: tuple[tuple[str, ...], tuple[str, ...]]
+
     def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:  # type: ignore[override]
         """Combines this format code with another code or group via `|`."""
 
@@ -264,12 +299,28 @@ class _Fmt(int):
     def __call__(self, *text: _Segment) -> _Styled:
         """Applies this format code to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text[0] if len(text) == 1 else text)
+        try:
+            oc = self._oc
+
+        except AttributeError:
+            cached = _STANDARD_SEQS.get(int(self))
+            oc = _build_open_close(_FmtGroup(self)) if cached is None else cached
+            self._oc = oc
+
+        return _Styled(oc[0], oc[1], text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: _Text) -> _Styled:
         """Applies this format code to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text)
+        try:
+            oc = self._oc
+
+        except AttributeError:
+            cached = _STANDARD_SEQS.get(int(self))
+            oc = _build_open_close(_FmtGroup(self)) if cached is None else cached
+            self._oc = oc
+
+        return _Styled(oc[0], oc[1], text)
 
 
 class _ColorFmt:
@@ -280,10 +331,16 @@ class _ColorFmt:
     >>> F.hex("#FF6070")("text")                # HEX FG COLOR
     >>> (F.BOLD | F.rgb(255, 96, 112))("text")  # COMBINED WITH STYLE"""
 
-    __slots__ = ("_red", "_green", "_blue", "_bg")
+    __slots__ = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
         self._red, self._green, self._blue, self._bg = red, green, blue, bg
+        if bg:
+            self._open_seq = ANSI.SEQ_BG_COLOR.format(red, green, blue)
+            self._close_seq = f"{ANSI.CHAR}[{F.RESET_BG}m"
+        else:
+            self._open_seq = ANSI.SEQ_FG_COLOR.format(red, green, blue)
+            self._close_seq = f"{ANSI.CHAR}[{F.RESET_FG}m"
 
     @classmethod
     def from_hex(cls, color: str, /, *, bg: bool = False) -> _ColorFmt:
@@ -312,12 +369,12 @@ class _ColorFmt:
     def __call__(self, *text: _Segment) -> _Styled:
         """Applies this color format to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text[0] if len(text) == 1 else text)
+        return _Styled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: _Text) -> _Styled:
         """Applies this color format to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text)
+        return _Styled((self._open_seq, ), (self._close_seq, ), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this color format, indicating<br>
@@ -332,10 +389,12 @@ class _LinkFmt:
     >>> F.link("https://example.com")("click here")
     >>> (F.link("https://example.com") | F.BR.BLUE)("click here")"""
 
-    __slots__ = ("_url", )
+    __slots__ = ("_url", "_open_seq")
 
     def __init__(self, url: str, /) -> None:
         self._url = url
+        self._open_seq = ANSI.SEQ_LINK_OPEN.format(url)
+        self._open_seq = ANSI.SEQ_LINK_CLOSE
 
     def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:
         """Combines this link format with another format or group via `|`."""
@@ -353,12 +412,12 @@ class _LinkFmt:
     def __call__(self, *text: _Segment) -> _Styled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text[0] if len(text) == 1 else text)
+        return _Styled((self._open_seq, ), (self._open_seq, ), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: _Text) -> _Styled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled(_FmtGroup(self), text)
+        return _Styled((self._open_seq, ), (self._open_seq, ), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this link format, showing the URL it points to."""
@@ -369,117 +428,77 @@ class _LinkFmt:
 _AnyFmt: TypeAlias = Union["_Fmt", "_ColorFmt", "_LinkFmt"]
 """Any single format code, color format, or link format<br>
 that can be combined via `|` and applied to text."""
-_Segment: TypeAlias = Union[str, "_Styled", "_Seq"]
-"""A single segment of text with optional formatting, which can be a plain string,<br>
-a nested styled segment, or a sequence of mixed segments."""
-_Text: TypeAlias = Union[str, "_Styled", "_Seq", "tuple[_Segment, ...]"]
+_Segment: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup]
+"""A single segment: a plain string, a nested styled segment, or a bare format object (open-only)."""
+_Text: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup, "tuple[_Segment, ...]"]
 """Anything that can be passed to a `_Fmt`/`_FmtGroup`/`_ColorFmt`/`_LinkFmt` call."""
-_Renderable: TypeAlias = Union[str, "_Styled", "_Seq", "tuple[_Segment, ...]"]
+_Renderable: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup, "tuple[_Segment, ...]"]
 """Anything that can be passed as a positional argument to `FormatCodes(…)`."""
 
 
 class _Styled:
-    """A `_FmtGroup` applied to text – produced by calling a `_Fmt` or `_FmtGroup`.\n
+    """Pre-computed ANSI open/close sequences applied to text.\n
     -------------------------------------------------------------------------------------------
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
-    `text` may be a plain `str`, a `_Styled`, a `_Seq`, or a tuple of mixed segments for
-    nested formatting."""
+    `text` may be a plain `str`, a nested `_Styled`, or a tuple of mixed segments."""
 
-    __slots__ = ("codes", "text")
+    __slots__ = ("_opens", "_closes", "text")
 
-    def __init__(self, codes: _FmtGroup, text: _Text) -> None:
-        self.codes = codes
+    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: _Text) -> None:
+        self._opens = opens
+        self._closes = closes
         self.text = text
 
-    def __add__(self, other: str | _Styled | _Seq) -> _Seq:
-        """Combines this styled segment with another styled<br>
-        segment or string via `+`, yielding a `_Seq`."""
-
-        if isinstance(other, _Seq):
-            return _Seq(self, *other._parts)
-
-        return _Seq(self, other)
-
-    def __radd__(self, other: str | _Styled) -> _Seq:
-        """Combines this styled segment with another styled<br>
-        segment or string via `+`, yielding a `_Seq`."""
-
-        return _Seq(other, self)
-
     def __repr__(self) -> str:
-        """Returns a string representation of this styled segment, showing its codes and text."""
+        """Returns a string representation of this styled segment, showing its opens and text."""
 
-        return f"_Styled(codes={self.codes!r}, text={self.text!r})"
-
-
-class _Seq:
-    """A flat sequence of segments produced by the `+` operator.\n
-    ----------------------------------------------------------------------------------
-    Alternative to a plain `tuple` when building a multi-segment group;<br>
-    `+` keeps the whole expression as one Python value
-    so a code formatter won't split it across lines.
-
-    >>> "  " + F.BR.BLUE("-f") + ", " + F.BR.BLUE("--fast") + "  description\\n" """
-
-    __slots__ = ("_parts", )
-
-    def __init__(self, *parts: _Segment) -> None:
-        self._parts: tuple[_Segment, ...] = parts
-
-    def __add__(self, other: str | _Styled | _Seq) -> _Seq:
-        """Combines this sequence with another styled segment,<br>
-        string, or sequence via `+`, yielding a new `_Seq`."""
-
-        if isinstance(other, _Seq):
-            return _Seq(*self._parts, *other._parts)
-
-        return _Seq(*self._parts, other)
-
-    def __radd__(self, other: str | _Styled) -> _Seq:
-        """Combines this sequence with another styled<br>
-        segment or string via `+`, yielding a new `_Seq`."""
-
-        return _Seq(other, *self._parts)
-
-    def __iter__(self) -> Iterator[_Segment]:
-        """Iterating a `_Seq` yields its individual segments in order."""
-
-        return iter(self._parts)
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this sequence, showing its individual segments."""
-
-        return f"_Seq{self._parts!r}"
+        return f"_Styled(opens={self._opens!r}, text={self.text!r})"
 
 
 ################################################## NAMESPACE HELPERS ##################################################
 
 
-class _BrBgNS:
-    """Namespace for bright background colors, reachable as `F.BG.BR.*` or `F.BR.BG.*`."""
+class _BgBrNS:
+    """Namespace for bright background colors, reachable as `F.BG.BR.*`."""
 
     BLACK: ClassVar[_Fmt] = _Fmt(100)
+    """Bright black background."""
     RED: ClassVar[_Fmt] = _Fmt(101)
+    """Bright red background."""
     GREEN: ClassVar[_Fmt] = _Fmt(102)
+    """Bright green background."""
     YELLOW: ClassVar[_Fmt] = _Fmt(103)
+    """Bright yellow background."""
     BLUE: ClassVar[_Fmt] = _Fmt(104)
+    """Bright blue background."""
     MAGENTA: ClassVar[_Fmt] = _Fmt(105)
+    """Bright magenta background."""
     CYAN: ClassVar[_Fmt] = _Fmt(106)
+    """Bright cyan background."""
     WHITE: ClassVar[_Fmt] = _Fmt(107)
+    """Bright white background."""
 
 
 class _BgNS:
     """Namespace for background colors, reachable as `F.BG.*`."""
 
     BLACK: ClassVar[_Fmt] = _Fmt(40)
+    """Black background."""
     RED: ClassVar[_Fmt] = _Fmt(41)
+    """Red background."""
     GREEN: ClassVar[_Fmt] = _Fmt(42)
+    """Green background."""
     YELLOW: ClassVar[_Fmt] = _Fmt(43)
+    """Yellow background."""
     BLUE: ClassVar[_Fmt] = _Fmt(44)
+    """Blue background."""
     MAGENTA: ClassVar[_Fmt] = _Fmt(45)
+    """Magenta background."""
     CYAN: ClassVar[_Fmt] = _Fmt(46)
+    """Cyan background."""
     WHITE: ClassVar[_Fmt] = _Fmt(47)
-    BR: ClassVar[type[_BrBgNS]] = _BrBgNS
+    """White background."""
+    BR: ClassVar[type[_BgBrNS]] = _BgBrNS
 
     @staticmethod
     def rgb(red: int, green: int, blue: int, /) -> _ColorFmt:
@@ -500,14 +519,21 @@ class _BrNS:
     """Namespace for bright foreground colors, reachable as `F.BR.*`."""
 
     BLACK: ClassVar[_Fmt] = _Fmt(90)
+    """Bright black foreground."""
     RED: ClassVar[_Fmt] = _Fmt(91)
+    """Bright red foreground."""
     GREEN: ClassVar[_Fmt] = _Fmt(92)
+    """Bright green foreground."""
     YELLOW: ClassVar[_Fmt] = _Fmt(93)
+    """Bright yellow foreground."""
     BLUE: ClassVar[_Fmt] = _Fmt(94)
+    """Bright blue foreground."""
     MAGENTA: ClassVar[_Fmt] = _Fmt(95)
+    """Bright magenta foreground."""
     CYAN: ClassVar[_Fmt] = _Fmt(96)
+    """Bright cyan foreground."""
     WHITE: ClassVar[_Fmt] = _Fmt(97)
-    BG: ClassVar[type[_BrBgNS]] = _BrBgNS
+    """Bright white foreground."""
 
 
 ################################################## FORMAT CODES ##################################################
@@ -528,37 +554,65 @@ class Format:
 
     ######################### TOTAL RESET #########################
     RESET: ClassVar[_Fmt] = _Fmt(0)
+    """Reset all formatting to default."""
 
     ####################### SPECIFIC RESETS #######################
     RESET_BOLD: ClassVar[_Fmt] = _Fmt(22)
+    """Reset bold (also resets dim, as they share the same code)."""
     RESET_DIM: ClassVar[_Fmt] = _Fmt(22)
+    """Reset dim (also resets bold, as they share the same code)."""
     RESET_ITALIC: ClassVar[_Fmt] = _Fmt(23)
+    """Reset italic."""
     RESET_UNDERLINE: ClassVar[_Fmt] = _Fmt(24)
+    """Reset underline and double underline."""
     RESET_INVERSE: ClassVar[_Fmt] = _Fmt(27)
+    """Reset inverse."""
     RESET_HIDDEN: ClassVar[_Fmt] = _Fmt(28)
-    RESET_STRIKE: ClassVar[_Fmt] = _Fmt(29)
-    RESET_COLOR: ClassVar[_Fmt] = _Fmt(39)
+    """Reset hidden."""
+    RESET_STRIKETHROUGH: ClassVar[_Fmt] = _Fmt(29)
+    """Reset strikethrough."""
+    RESET_FG: ClassVar[_Fmt] = _Fmt(39)
+    """Reset foreground color."""
     RESET_BG: ClassVar[_Fmt] = _Fmt(49)
+    """Reset background color."""
 
     ######################### TEXT STYLES #########################
     BOLD: ClassVar[_Fmt] = _Fmt(1)
+    """Bold text.\n
+    Note that this is also reset by `RESET_DIM`."""
     DIM: ClassVar[_Fmt] = _Fmt(2)
+    """Dim text.\n
+    Note that this is also reset by `RESET_BOLD`."""
     ITALIC: ClassVar[_Fmt] = _Fmt(3)
+    """Italic text."""
     UNDERLINE: ClassVar[_Fmt] = _Fmt(4)
+    """Underline text."""
     INVERSE: ClassVar[_Fmt] = _Fmt(7)
+    """Inverse colors (swap foreground and background colors)."""
     HIDDEN: ClassVar[_Fmt] = _Fmt(8)
-    STRIKE: ClassVar[_Fmt] = _Fmt(9)
+    """Hidden (invisible) text."""
+    STRIKETHROUGH: ClassVar[_Fmt] = _Fmt(9)
+    """Strikethrough text."""
     DOUBLE_UNDERLINE: ClassVar[_Fmt] = _Fmt(21)
+    """Double underline text."""
 
     ###################### STANDARD FG COLORS #####################
     BLACK: ClassVar[_Fmt] = _Fmt(30)
+    """Black foreground."""
     RED: ClassVar[_Fmt] = _Fmt(31)
+    """Red foreground."""
     GREEN: ClassVar[_Fmt] = _Fmt(32)
+    """Green foreground."""
     YELLOW: ClassVar[_Fmt] = _Fmt(33)
+    """Yellow foreground."""
     BLUE: ClassVar[_Fmt] = _Fmt(34)
+    """Blue foreground."""
     MAGENTA: ClassVar[_Fmt] = _Fmt(35)
+    """Magenta foreground."""
     CYAN: ClassVar[_Fmt] = _Fmt(36)
+    """Cyan foreground."""
     WHITE: ClassVar[_Fmt] = _Fmt(37)
+    """White foreground."""
 
     ######################### NAMESPACES ##########################
     BR: ClassVar[type[_BrNS]] = _BrNS
@@ -669,6 +723,11 @@ def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, 
     Returns a `(opens, closes)` pair of tuples. Multiple opens / closes are emitted<br>
     only when both an OSC 8 hyperlink and SGR codes are present (OSC wraps SGR)."""
 
+    # FAST PATH: SINGLE STANDARD _Fmt CODE (REALLY COMMON)
+    if len(codes := group._codes) == 1 and type(codes[0]) is _Fmt:
+        if (cached := _STANDARD_SEQS.get(int(codes[0]))) is not None:
+            return cached
+
     sgr_open: list[str] = []
     sgr_close: list[str] = []
     link_url: Optional[str] = None
@@ -717,35 +776,44 @@ def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, 
 
 class FormatCodes:
     """Build a formatted string from a sequence of segments<br>
-    (strings, `_Styled` calls, `_Seq` chains built with `+`, or raw tuples).\n
+    (strings, `_Styled` calls, or raw tuples), joined by `sep`.\n
     ------------------------------------------------------------------------------------------------------
     *   `segments` – Any number of segments to render. Each positional argument represents one logical line.
     *   `sep` – The separator inserted between two adjacent positional arguments (default `"\\n"`).
     ------------------------------------------------------------------------------------------------------
     After construction the instance exposes:
     *   `ansi` – The fully rendered ANSI escape string, ready to be written to a terminal.
-    *   `raw` – The same content with every ANSI escape sequence stripped (the "plain" text).
+    *   `raw` – `ansi` with every ANSI escape sequence stripped; computed on demand.
     *   `code_positions` – A tuple of `(position, sequence)` pairs giving<br>
-        the start offset of every ANSI escape sequence inside `ansi`.<br>
-        The same data can be used to map indices between `raw` and `ansi`.
+        the start offset of every ANSI escape sequence inside `ansi`; computed on demand.
     ------------------------------------------------------------------------------------------------------
     For exact information about how to use the operator syntax,<br>
     see the `format_codes` module documentation."""
 
+    __slots__ = ("_ansi_parts", "ansi")
+
     def __init__(self, /, *segments: _Renderable, sep: str = "\n") -> None:
         self._ansi_parts: list[str] = []
-        self._raw_parts: list[str] = []
-        self._code_positions: list[tuple[int, str]] = []
-        self._offset: int = 0
 
         for i, segment in enumerate(segments):
             if i > 0:
-                self._emit_raw(sep)
+                self._ansi_parts.append(sep)
             self._render(segment)
 
         self.ansi: str = "".join(self._ansi_parts)
-        self.raw: str = "".join(self._raw_parts)
-        self.code_positions: tuple[tuple[int, str], ...] = tuple(self._code_positions)
+
+    @property
+    def raw(self) -> str:
+        """The rendered output with every ANSI escape sequence stripped (the "plain" text)."""
+
+        return _ANSI_SEQ_RX.sub("", self.ansi)
+
+    @property
+    def code_positions(self) -> tuple[tuple[int, str], ...]:
+        """A tuple of `(position, sequence)` pairs giving the<br>
+        start offset of every ANSI escape sequence inside `ansi`."""
+
+        return tuple((match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi))
 
     def __str__(self) -> str:
         """Stringifying a `FormatCodes` instance yields its rendered<br>
@@ -793,45 +861,44 @@ class FormatCodes:
 
         return _ANSI_SEQ_RX.sub("", ansi_string)
 
-    def _emit_raw(self, text: str) -> None:
-        """Internal method to append `text` to both the ANSI and raw outputs and advance the running offset."""
-
-        self._ansi_parts.append(text)
-        self._raw_parts.append(text)
-        self._offset += len(text)
-
-    def _emit_seq(self, sequence: str) -> None:
-        """Internal method to record a `sequence`'s position, then append it to the ANSI output only."""
-
-        self._code_positions.append((self._offset, sequence))
-        self._ansi_parts.append(sequence)
-        self._offset += len(sequence)
-
     def _render(self, segment: object) -> None:
         """Internal method to recursively render a `segment`, dispatching by runtime type.\n
-        -------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
         Strings are emitted as raw text; `_Styled` segments are wrapped in their opening<br>
-        and closing ANSI sequences; `_Seq` and `tuple` segments are flattened in order."""
+        and closing ANSI sequences; `tuple` segments are flattened in order.<br>
+        Bare format objects (`_Fmt`, `_ColorFmt`, `_LinkFmt`, `_FmtGroup`) emit only<br>
+        their opening sequence with no matching close."""
 
         if isinstance(segment, str):
-            self._emit_raw(segment)
+            self._ansi_parts.append(segment)
             return
         if isinstance(segment, _Styled):
-            opens, closes = _build_open_close(segment.codes)
-            for piece in opens:
-                self._emit_seq(piece)
+            for piece in segment._opens:
+                self._ansi_parts.append(piece)
             self._render(segment.text)
-            for piece in closes:
-                self._emit_seq(piece)
-            return
-        if isinstance(segment, _Seq):
-            for seq_part in segment._parts:
-                self._render(seq_part)
+            for piece in segment._closes:
+                self._ansi_parts.append(piece)
             return
         if isinstance(segment, tuple):
             for tuple_part in cast("tuple[object, ...]", segment):
                 self._render(tuple_part)
             return
+        if isinstance(segment, _Fmt):
+            self._ansi_parts.append(f"{ANSI.CHAR}[{int(segment)}m")
+            return
+        if isinstance(segment, _ColorFmt):
+            self._ansi_parts.append(segment._open_seq)
+            return
+        if isinstance(segment, _LinkFmt):
+            self._ansi_parts.append(segment._open_seq)
+            return
+        if isinstance(segment, _FmtGroup):
+            for piece in _build_open_close(segment)[0]:
+                self._ansi_parts.append(piece)
+            return
 
         # FALLBACK – COERCE UNKNOWN OBJECTS TO STR
-        self._emit_raw(str(segment))
+        self._ansi_parts.append(str(segment))
+
+
+FC = FormatCodes  # SHORT ALIAS

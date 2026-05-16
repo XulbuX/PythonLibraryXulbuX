@@ -2,10 +2,10 @@ from xulbux.base.consts import ANSI
 from xulbux.depr_format_codes import deprFormatCodes
 
 
-black = ANSI.SEQ_COLOR.format(0, 0, 0)
+black = ANSI.SEQ_FG_COLOR.format(0, 0, 0)
 bg_red = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['bg:red']}{ANSI.END}"
-default = ANSI.SEQ_COLOR.format(255, 255, 255)
-orange = ANSI.SEQ_COLOR.format(255, 136, 119)
+default = ANSI.SEQ_FG_COLOR.format(255, 255, 255)
+orange = ANSI.SEQ_FG_COLOR.format(255, 136, 119)
 
 bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('bold', 'b')]}{ANSI.END}"
 invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('inverse', 'invert', 'in')]}{ANSI.END}"

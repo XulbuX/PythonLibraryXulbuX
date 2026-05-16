@@ -37,10 +37,9 @@ pip install --upgrade xulbux
 
 When the library is installed, the following commands are available in the terminal:
 
-| Command           | Description                                                       |
-| :---------------- | :---------------------------------------------------------------- |
-| `xulbux-lib`      | Show some information about the library.                          |
-| `xulbux-lib fc`   | Parse and render a string's format codes as ANSI terminal output. |
+| Command      | Description                              |
+| :----------- | :--------------------------------------- |
+| `xulbux-lib` | Show some information about the library. |
 
 <br>
 
@@ -134,8 +133,9 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
-      <td><code>Format</code> (<i>alias</i> <code>F</code>) <code>FormatCodes</code> <code>Term</code> classes for building richly formatted terminal output<br>
-        via a typed, operator-based syntax and for emitting cursor- and screen-control sequences.</td>
+      <td><code>Format</code> (<i>alias</i> <code>F</code>) <code>FormatCodes</code> (<i>alias</i> <code>FC</code>) <code>Term</code> classes for building richly formatted<br>
+        terminal output via a typed, operator-based syntax and for emitting common cursor- and<br>
+        screen-control sequences.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>
