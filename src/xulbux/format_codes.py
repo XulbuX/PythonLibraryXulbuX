@@ -389,12 +389,12 @@ class _LinkFmt:
     >>> F.link("https://example.com")("click here")
     >>> (F.link("https://example.com") | F.BR.BLUE)("click here")"""
 
-    __slots__ = ("_url", "_open_seq")
+    __slots__ = ("_url", "_open_seq", "_close_seq")
 
     def __init__(self, url: str, /) -> None:
         self._url = url
         self._open_seq = ANSI.SEQ_LINK_OPEN.format(url)
-        self._open_seq = ANSI.SEQ_LINK_CLOSE
+        self._close_seq = ANSI.SEQ_LINK_CLOSE
 
     def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:
         """Combines this link format with another format or group via `|`."""
@@ -412,12 +412,12 @@ class _LinkFmt:
     def __call__(self, *text: _Segment) -> _Styled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._open_seq, ), text[0] if len(text) == 1 else text)
+        return _Styled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: _Text) -> _Styled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._open_seq, ), text)
+        return _Styled((self._open_seq, ), (self._close_seq, ), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this link format, showing the URL it points to."""
