@@ -425,17 +425,6 @@ class _LinkFmt:
         return f"_LinkFmt({self._url!r})"
 
 
-_AnyFmt: TypeAlias = Union["_Fmt", "_ColorFmt", "_LinkFmt"]
-"""Any single format code, color format, or link format<br>
-that can be combined via `|` and applied to text."""
-_Segment: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup]
-"""A single segment: a plain string, a nested styled segment, or a bare format object (open-only)."""
-_Text: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup, "tuple[_Segment, ...]"]
-"""Anything that can be passed to a `_Fmt`/`_FmtGroup`/`_ColorFmt`/`_LinkFmt` call."""
-_Renderable: TypeAlias = Union[str, "_Styled", _AnyFmt, _FmtGroup, "tuple[_Segment, ...]"]
-"""Anything that can be passed as a positional argument to `FormatCodes(…)`."""
-
-
 class _Styled:
     """Pre-computed ANSI open/close sequences applied to text.\n
     -------------------------------------------------------------------------------------------
@@ -454,6 +443,16 @@ class _Styled:
 
         return f"_Styled(opens={self._opens!r}, text={self.text!r})"
 
+
+_AnyFmt: TypeAlias = Union[_Fmt, _ColorFmt, _LinkFmt]
+"""Any single format code, color format, or link format<br>
+that can be combined via `|` and applied to text."""
+_Segment: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup]
+"""A single segment: a plain string, a nested styled segment, or a bare format object (open-only)."""
+_Text: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup, tuple[_Segment, ...]]
+"""Anything that can be passed to a `_Fmt`/`_FmtGroup`/`_ColorFmt`/`_LinkFmt` call."""
+_Renderable: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup, tuple[_Segment, ...]]
+"""Anything that can be passed as a positional argument to `FormatCodes(…)`."""
 
 ################################################## NAMESPACE HELPERS ##################################################
 
@@ -815,6 +814,45 @@ class FormatCodes:
 
         return tuple((match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi))
 
+    def __add__(self, other: FormatCodes, /) -> FormatCodes:
+        """Concatenate two `FormatCodes` objects by joining their already-rendered<br>
+        `ansi` strings directly, skipping any re-rendering of the segments."""
+
+        result = FormatCodes.__new__(FormatCodes)
+        result._ansi_parts = []
+        result.ansi = self.ansi + other.ansi
+
+        return result
+
+    def __iadd__(self, other: FormatCodes, /) -> FormatCodes:
+        """Append another `FormatCodes` object in place (`+=`), mutating `ansi` directly."""
+
+        self.ansi += other.ansi
+        return self
+
+    def __mul__(self, n: int, /) -> FormatCodes:
+        """Repeat the rendered output `n` times, e.g. `FC(F.CYAN("─")) * 40`."""
+
+        result = FormatCodes.__new__(FormatCodes)
+        result._ansi_parts = []
+        result.ansi = self.ansi * n
+
+        return result
+
+    def __rmul__(self, n: int, /) -> FormatCodes:
+        """Repeat the rendered output `n` times, e.g. `40 * FC(F.CYAN("─"))`."""
+
+        result = FormatCodes.__new__(FormatCodes)
+        result._ansi_parts = []
+        result.ansi = self.ansi * n
+
+        return result
+
+    def __len__(self) -> int:
+        """Return the visible character count (ANSI sequences stripped)."""
+
+        return len(self.raw)
+
     def __str__(self) -> str:
         """Stringifying a `FormatCodes` instance yields its rendered<br>
         ANSI string, ready to be written to a terminal."""
@@ -880,7 +918,7 @@ class FormatCodes:
                 self._ansi_parts.append(piece)
             return
         if isinstance(segment, tuple):
-            for tuple_part in cast("tuple[object, ...]", segment):
+            for tuple_part in cast(tuple[object, ...], segment):
                 self._render(tuple_part)
             return
         if isinstance(segment, _Fmt):

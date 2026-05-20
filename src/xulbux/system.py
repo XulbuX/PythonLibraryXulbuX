@@ -6,7 +6,7 @@ methods to interact with the underlying operating system.
 from .base.types import MissingLibsMsgs
 from .base.decorators import mypyc_attr
 
-from .depr_format_codes import deprFormatCodes
+from .format_codes import FC, F
 from .console import Console
 
 from typing import Optional
@@ -329,10 +329,12 @@ class _SystemCheckLibsHelper:
     def confirm_installation(self, missing: list[str], /) -> bool:
         """Ask user for confirmation before installing libraries."""
 
-        deprFormatCodes.print(f"[b]({self.missing_libs_msgs['found_missing']})")
-        for lib in missing:
-            deprFormatCodes.print(f" [dim](•) [i]{lib}[_i]")
-        print()
+        FC(
+            F.BOLD(self.missing_libs_msgs["found_missing"]),
+            *((F.DIM(" • "), F.ITALIC(lib)) for lib in missing),
+            "",
+        ).print()
+
         return Console.confirm(self.missing_libs_msgs["should_install"], end="\n")
 
     def install_libs(self, missing: list[str], /) -> Optional[list[str]]:

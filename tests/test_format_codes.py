@@ -9,7 +9,19 @@ import io
 ESC = ANSI.CHAR
 
 #
-################################################## FormatCodes TESTS ##################################################
+################################################## NAMESPACE TESTS ##################################################
+
+
+def test_FormatCodes_and_FC_are_same_object():
+    assert FC is FormatCodes
+
+
+def test_Format_and_F_are_same_object():
+    assert F is Format
+
+
+#
+################################################## BARE FC TESTS ##################################################
 
 
 def test_bare_fmt_emits_only_open_sequence():
@@ -31,24 +43,24 @@ def test_bare_fmt_sequence_with_explicit_reset():
 
 
 def test_bare_fmt_inside_tuple():
-    result = FC((F.RED, "hello", F.RESET))
-    assert result.ansi == f"{ESC}[31mhello{ESC}[0m"
-    assert result.raw == "hello"
+    result = FC((F.RED, "Hello", F.RESET))
+    assert result.ansi == f"{ESC}[31mHello{ESC}[0m"
+    assert result.raw == "Hello"
 
 
-def test_bare_colorfmt_emits_open_sequence():
+def test_bare_ColorFmt_emits_open_sequence():
     result = FC(F.hex("#ff6070"))
     assert result.ansi == f"{ESC}[38;2;255;96;112m"
     assert result.raw == ""
 
 
-def test_bare_linkfmt_emits_open_sequence():
+def test_bare_LinkFmt_emits_open_sequence():
     result = FC(F.link("https://example.com"))
     assert result.ansi == f"{ESC}]8;;https://example.com{ESC}\\"
     assert result.raw == ""
 
 
-def test_bare_fmtgroup_emits_open_sequence():
+def test_bare_FmtGroup_emits_open_sequence():
     result = FC(F.BOLD | F.RED)
     assert result.ansi == f"{ESC}[1;31m"
     assert result.raw == ""
@@ -61,23 +73,27 @@ def test_bare_fmt_inside_nested_styled_call():
     assert result.raw == "abc"
 
 
+#
+################################################## FC CALL TESTS ##################################################
+
+
 def test_plain_string_passes_through():
-    result = FC("hello world")
-    assert result.ansi == "hello world"
-    assert result.raw == "hello world"
+    result = FC("Hello, world!")
+    assert result.ansi == "Hello, world!"
+    assert result.raw == "Hello, world!"
     assert result.code_positions == ()
 
 
 def test_single_style_wraps_text_with_open_and_reset():
-    result = FC(F.BOLD("hi"))
-    assert result.ansi == f"{ESC}[1mhi{ESC}[22m"
-    assert result.raw == "hi"
+    result = FC(F.BOLD("Hi"))
+    assert result.ansi == f"{ESC}[1mHi{ESC}[22m"
+    assert result.raw == "Hi"
 
 
 def test_combined_group_emits_single_sgr():
-    result = FC((F.BOLD | F.RED)("hi"))
-    assert result.ansi == f"{ESC}[1;31mhi{ESC}[22;39m"
-    assert result.raw == "hi"
+    result = FC((F.BOLD | F.RED)("Hi"))
+    assert result.ansi == f"{ESC}[1;31mHi{ESC}[22;39m"
+    assert result.raw == "Hi"
 
 
 def test_default_separator_is_newline():
@@ -92,10 +108,10 @@ def test_custom_separator():
 
 
 def test_nested_styled_keeps_outer_style_after_inner_reset():
-    result = FC(F.CYAN("outer ", F.DIM("inner"), " outer"))
-    expected = f"{ESC}[36mouter {ESC}[2minner{ESC}[22m outer{ESC}[39m"
+    result = FC(F.CYAN("Outer ", F.DIM("Inner"), " Outer"))
+    expected = f"{ESC}[36mOuter {ESC}[2mInner{ESC}[22m Outer{ESC}[39m"
     assert result.ansi == expected
-    assert result.raw == "outer inner outer"
+    assert result.raw == "Outer Inner Outer"
 
 
 def test_tuple_as_multi_segment_group():
@@ -205,14 +221,14 @@ def test_input_uses_ansi_as_prompt(monkeypatch: pytest.MonkeyPatch):
     assert captured["prompt"] == f"{ESC}[1mName: {ESC}[22m"
 
 
-def test_or_chains_produce_fmtgroup():
+def test_or_chains_produce_FmtGroup():
     group = F.BOLD | F.RED | F.UNDERLINE
     assert isinstance(group, _FmtGroup)
     # `_Fmt` IS AN `int` SUBCLASS, SO DIRECT INT COMPARISON WORKS
     assert list(group) == [1, 31, 4]
 
 
-def test_pipe_with_fmtgroup_left_and_right():
+def test_pipe_with_FmtGroup_left_and_right():
     left_assoc = (F.BOLD | F.RED) | F.UNDERLINE
     right_assoc = F.BOLD | (F.RED | F.UNDERLINE)
     assert list(left_assoc) == list(right_assoc) == [1, 31, 4]
@@ -223,6 +239,10 @@ def test_build_open_close_dedupes_close_codes():
     opens, closes = _build_open_close(F.BOLD | F.DIM)
     assert opens == (f"{ESC}[1;2m", )
     assert closes == (f"{ESC}[22m", )
+
+
+#
+################################################## Term OPERATOR TESTS ##################################################
 
 
 def test_term_constants():
@@ -248,9 +268,89 @@ def test_term_save_restore_and_title():
     assert Term.title("hi") == f"{ESC}]2;hi\x07"
 
 
-def test_FormatCodes_and_FC_are_same_object():
-    assert FC is FormatCodes
+#
+################################################## FC OPERATOR TESTS ##################################################
 
 
-def test_Format_and_F_are_same_object():
-    assert F is Format
+def test_add_concatenates_ansi_strings():
+    x = FC("Hello, ")
+    y = FC("world!")
+    result = x + y
+    assert result.ansi == "Hello, world!"
+    assert isinstance(result, FormatCodes)
+
+
+def test_add_preserves_ansi_sequences():
+    x = FC(F.BOLD("Hello"))
+    y = FC(F.RED(" world"))
+    result = x + y
+    assert result.ansi == f"{ESC}[1mHello{ESC}[22m{ESC}[31m world{ESC}[39m"
+    assert result.raw == "Hello world"
+
+
+def test_add_does_not_mutate_operands():
+    x = FC("a")
+    y = FC("b")
+    _ = x + y
+    assert x.ansi == "a"
+    assert y.ansi == "b"
+
+
+def test_iadd_mutates_in_place():
+    x = FC("Hello")
+    original_id = id(x)
+    x += FC(", world!")
+    assert x.ansi == "Hello, world!"
+    assert id(x) == original_id
+
+
+def test_iadd_preserves_ansi_sequences():
+    x = FC(F.CYAN("a"))
+    x += FC(F.DIM("b"))
+    assert x.ansi == f"{ESC}[36ma{ESC}[39m{ESC}[2mb{ESC}[22m"
+
+
+def test_mul_repeats_output():
+    x = FC("-")
+    result = x * 3
+    assert result.ansi == "---"
+    assert isinstance(result, FormatCodes)
+
+
+def test_mul_preserves_ansi_sequences():
+    x = FC(F.BOLD("!"))
+    result = x * 3
+    unit = f"{ESC}[1m!{ESC}[22m"
+    assert result.ansi == unit * 3
+
+
+def test_mul_does_not_mutate_operand():
+    x = FC("x")
+    _ = x * 4
+    assert x.ansi == "x"
+
+
+def test_rmul_equals_mul():
+    x = FC(F.RED("-"))
+    assert (x * 5).ansi == (5 * x).ansi
+
+
+def test_mul_by_zero_gives_empty():
+    result = FC(F.BOLD("hi")) * 0
+    assert result.ansi == ""
+    assert result.raw == ""
+
+
+def test_len_returns_visible_character_count():
+    result = FC(F.BOLD("hello"))
+    assert len(result) == 5
+
+
+def test_len_ignores_ansi_sequences():
+    styled = FC((F.BOLD | F.RED)("abc"))
+    plain = FC("abc")
+    assert len(styled) == len(plain) == 3
+
+
+def test_len_of_empty():
+    assert len(FC()) == 0
