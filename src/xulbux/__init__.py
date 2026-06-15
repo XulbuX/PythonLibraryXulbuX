@@ -17,6 +17,9 @@ __dependencies__ = [
 ]
 
 __all__ = [
+    "FC",
+    "F",
+    "Term",
     "Code",
     "Color",
     "Console",
@@ -24,14 +27,13 @@ __all__ = [
     "EnvPath",
     "File",
     "FileSys",
-    "FormatCodes",
-    "deprFormatCodes",
     "Json",
     "Regex",
     "String",
     "System",
 ]
 
+from .format_codes import FC, F, Term
 from .code import Code
 from .color import Color
 from .console import Console
@@ -39,8 +41,6 @@ from .data import Data
 from .env_path import EnvPath
 from .file import File
 from .file_sys import FileSys
-from .format_codes import FormatCodes
-from .depr_format_codes import deprFormatCodes
 from .json import Json
 from .regex import Regex
 from .string import String

@@ -133,9 +133,8 @@ from xulbux.color import rgba, hsla, hexa
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/format_codes"><img src="https://img.shields.io/badge/format__codes-B272FC?style=for-the-badge" alt="format_codes"></a></td>
-      <td><code>Format</code> (<i>alias</i> <code>F</code>) <code>FormatCodes</code> (<i>alias</i> <code>FC</code>) <code>Term</code> classes for building richly formatted<br>
-        terminal output via a typed, operator-based syntax and for emitting common cursor- and<br>
-        screen-control sequences.</td>
+      <td><code>F</code> <code>FC</code> <code>Term</code> classes for building richly formatted terminal output via a typed,<br>
+        operator-based syntax and for emitting common cursor- and screen-control sequences.</td>
     </tr>
     <tr>
       <td><a href="https://github.com/xulbux/python-lib-xulbux/wiki/json"><img src="https://img.shields.io/badge/json-B272FC?style=for-the-badge" alt="json"></a></td>

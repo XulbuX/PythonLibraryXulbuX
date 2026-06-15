@@ -1,24 +1,13 @@
-from xulbux.format_codes import FormatCodes, FC, Format, F, Term, _FmtGroup, _build_open_close
+from xulbux.format_codes import _FmtGroup, Term, FC, F, _build_open_close
 from xulbux.base.consts import ANSI
 
+from pathlib import Path
 import pytest
 import sys
 import io
 
 
 ESC = ANSI.CHAR
-
-#
-################################################## NAMESPACE TESTS ##################################################
-
-
-def test_FormatCodes_and_FC_are_same_object():
-    assert FC is FormatCodes
-
-
-def test_Format_and_F_are_same_object():
-    assert F is Format
-
 
 #
 ################################################## BARE FC TESTS ##################################################
@@ -179,6 +168,13 @@ def test_link_combined_with_style():
     assert result.ansi == expected
 
 
+def test_link_with_path():
+    p = Path("docs/readme.md")
+    result = FC(F.link(p)("click"))
+    url = p.resolve().as_uri()
+    assert result.ansi == f"{ESC}]8;;{url}{ESC}\\click{ESC}]8;;{ESC}\\"
+
+
 def test_code_positions_match_offsets_in_ansi():
     result = FC(F.BOLD("hi"))
     # ESC[1m  THEN  "hi"  THEN  ESC[22m
@@ -272,12 +268,33 @@ def test_term_save_restore_and_title():
 ################################################## FC OPERATOR TESTS ##################################################
 
 
+def test_add_with_string():
+    result = FC(F.BOLD("hi")) + " there"
+    assert result.ansi == f"{ESC}[1mhi{ESC}[22m there"
+    assert result.raw == "hi there"
+    assert isinstance(result, FC)
+
+
+def test_radd_with_string():
+    result = "hello " + FC(F.RED("world"))
+    assert result.ansi == f"hello {ESC}[31mworld{ESC}[39m"
+    assert result.raw == "hello world"
+    assert isinstance(result, FC)
+
+
+def test_iadd_with_string():
+    x = FC(F.CYAN("a"))
+    x += " b"
+    assert x.ansi == f"{ESC}[36ma{ESC}[39m b"
+    assert x.raw == "a b"
+
+
 def test_add_concatenates_ansi_strings():
     x = FC("Hello, ")
     y = FC("world!")
     result = x + y
     assert result.ansi == "Hello, world!"
-    assert isinstance(result, FormatCodes)
+    assert isinstance(result, FC)
 
 
 def test_add_preserves_ansi_sequences():
@@ -314,7 +331,7 @@ def test_mul_repeats_output():
     x = FC("-")
     result = x * 3
     assert result.ansi == "---"
-    assert isinstance(result, FormatCodes)
+    assert isinstance(result, FC)
 
 
 def test_mul_preserves_ansi_sequences():
@@ -354,3 +371,34 @@ def test_len_ignores_ansi_sequences():
 
 def test_len_of_empty():
     assert len(FC()) == 0
+
+
+def test_join():
+    sep = FC(F.BR.CYAN(" | "))
+    result = sep.join(["a", F.BOLD("b"), "c"])
+    expected = f"a{ESC}[96m | {ESC}[39m{ESC}[1mb{ESC}[22m{ESC}[96m | {ESC}[39mc"
+    assert result.ansi == expected
+
+
+def test_ljust():
+    result = FC(F.RED("hi")).ljust(5)
+    assert result.ansi == f"{ESC}[31mhi{ESC}[39m   "
+    assert len(result) == 5
+
+
+def test_rjust():
+    result = FC(F.RED("hi")).rjust(5)
+    assert result.ansi == f"   {ESC}[31mhi{ESC}[39m"
+    assert len(result) == 5
+
+
+def test_center():
+    result = FC(F.RED("hi")).center(6)
+    assert result.ansi == f"  {ESC}[31mhi{ESC}[39m  "
+    assert len(result) == 6
+
+
+def test_print_with_file():
+    buf = io.StringIO()
+    FC(F.RED("hi")).print(file=buf, end="")
+    assert buf.getvalue() == f"{ESC}[31mhi{ESC}[39m"

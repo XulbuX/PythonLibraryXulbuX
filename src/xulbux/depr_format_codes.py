@@ -1,5 +1,5 @@
 """
-**DEPRECATED MODULE** – use the operator-based API in `xulbux.format_codes` (`F`, `FormatCodes`, `Term`) instead.
+**DEPRECATED MODULE** – use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
 
 This module is kept temporarily so existing internal callers and downstream code
 that relies on the string-based bracket-syntax (`"[b](Hello)"`) keep working

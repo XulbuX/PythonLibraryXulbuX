@@ -1,6 +1,6 @@
 """
-This module provides the `FormatCodes` (alias `FC`) class together with the `Format` (alias `F`)<br>
-and `Term` classes for building richly formatted terminal output using a typed, operator-based syntax.
+This module provides the `FC` class together with the `F` and `Term` classes<br>
+for building richly formatted terminal output using a typed, operator-based syntax.
 
 -----------------------------------------------------------------------------------------------------------
 ### The Easy Formatting
@@ -9,7 +9,7 @@ First, let's take a look at a small example of what a<br>
 highly styled output could look like using this module:
 
 ```python
-FormatCodes(
+FC(
     "This here is just unformatted text. " + (F.BOLD | F.UNDERLINE | F.BR.BLUE)(
         "Next we have text that is bright blue + bold + underlined."
     ),
@@ -24,7 +24,7 @@ How all of this exactly works is explained in the sections below. 🠫
 -----------------------------------------------------------------------------------------------------------
 #### Format Codes and Groups
 
-In this module, you apply styles and colors using `Format` (or its short alias `F`) attributes.<br>
+In this module, you apply styles and colors using `F` attributes.<br>
 Every format attribute supports two operators:
 
 *   `|` combines two or more format codes into a single immutable group, e.g.<br>
@@ -42,7 +42,7 @@ Every `_Fmt`, `_FmtGroup`, `_ColorFmt` or `_LinkFmt` call automatically generate
 matching reset sequence behind its text, just like shown in the following example:
 
 ```python
-FormatCodes(
+FC(
     "This is plain text, "
     + F.BR.BLUE("which is bright blue now.")
     + " Now it was automatically reset to plain again.",
@@ -52,7 +52,7 @@ FormatCodes(
 Only the specific formats that were applied are reset; other formatting in scope is left intact:
 
 ```python
-FormatCodes(
+FC(
     F.CYAN("This is cyan text, ", F.DIM("which is dimmed now."),
            " Now it's not dimmed any more but still cyan."),
 ).print()
@@ -66,7 +66,7 @@ position, with no matching close/reset appended. This is the typed equivalent of
 (open bracket without closing braces) from the legacy string syntax:
 
 ```python
-FormatCodes(
+FC(
     F.RED, "error: something went wrong ", F.RESET,
     "back to normal",
 ).print()
@@ -77,7 +77,7 @@ Any format type supports bare usage: `F.RED` (`_Fmt`), `F.hex("#F67")` (`_ColorF
 Bare formats can also appear inside tuples and nested calls:
 
 ```python
-FormatCodes(
+FC(
     F.DIM("a", F.RED, "b", F.RESET_COLOR, "c"),
 ).print()
 ```
@@ -86,16 +86,16 @@ FormatCodes(
 #### Nesting and Multi-Segment Groups
 
 A format call accepts either a single piece of text or any number of mixed segments.<br>
-Strings, nested `_Styled` calls, bare format objects, and raw tuples can be mixed freely:
+Strings, nested `_FmtStyled` calls, bare format objects, and raw tuples can be mixed freely:
 
 *   `F.X("text")`               – Apply `X` to `"text"`, auto-reset after.
 *   `F.X | F.Y`                 – Combine `X` and `Y` into a single group.
 *   `(F.X | F.Y)("text")`       – Apply the group to `"text"`.
 *   `F.X("a", F.Y("b"), "c")`   – Nested multi-segment: `Y` is applied only to `"b"`.
 *   `F.X`                       – Bare: emit only the opening sequence, no auto-reset.
-*   `("a", F.X("b"), "c")`      – Same-line group – passed as a single tuple to `FormatCodes(…)`.
+*   `("a", F.X("b"), "c")`      – Same-line group – passed as a single tuple to `FC(…)`.
 
-Inside `FormatCodes(*segments, sep="\\n")`, every positional argument is treated as one<br>
+Inside `FC(*segments, sep="\\n")`, every positional argument is treated as one<br>
 logical line and joined by `sep`. An empty string argument `""` therefore produces a blank line.
 
 -----------------------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
 
 `Term` exposes commonly used non-formatting ANSI sequences for cursor- and screen-control.<br>
 These are plain strings (or string-returning helpers), so they can be passed directly into a<br>
-`FormatCodes(…)` call or written to `sys.stdout`:
+`FC(…)` call or written to `sys.stdout`:
 
 *   `Term.CLEAR_LINE`        – Erase the entire current line.
 *   `Term.CLEAR_SCREEN`      – Erase the whole screen.
@@ -162,7 +162,8 @@ from __future__ import annotations
 from .base.consts import ANSI
 from .base.decorators import mypyc_attr
 
-from typing import TypeAlias, ClassVar, Iterator, Optional, Final, Union, cast
+from typing import TypeAlias, ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
+from pathlib import Path
 import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
@@ -231,15 +232,15 @@ class _FmtGroup:
 
     __slots__ = ("_codes", )
 
-    def __init__(self, *codes: _AnyFmt) -> None:
-        self._codes: tuple[_AnyFmt, ...] = codes
+    def __init__(self, *codes: AnyFmt) -> None:
+        self._codes: tuple[AnyFmt, ...] = codes
 
-    def __iter__(self) -> Iterator[_AnyFmt]:
+    def __iter__(self) -> Iterator[AnyFmt]:
         """Iterating a `_FmtGroup` yields its individual format codes in order."""
 
         return iter(self._codes)
 
-    def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:
+    def __or__(self, other: AnyFmt | _FmtGroup) -> _FmtGroup:
         """Combines this format group with another format or group via `|`."""
 
         if isinstance(other, _FmtGroup):
@@ -247,22 +248,22 @@ class _FmtGroup:
 
         return _FmtGroup(*self._codes, other)
 
-    def __ror__(self, other: _AnyFmt) -> _FmtGroup:
+    def __ror__(self, other: AnyFmt) -> _FmtGroup:
         """Combines this format group with another format or group via `|`."""
 
         return _FmtGroup(other, *self._codes)
 
-    def __call__(self, *text: _Segment) -> _Styled:
+    def __call__(self, *text: FmtSegment) -> _FmtStyled:
         """Applies this format group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
-        return _Styled(opens, closes, text[0] if len(text) == 1 else text)
+        return _FmtStyled(opens, closes, text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: _Text) -> _Styled:
+    def __matmul__(self, text: FmtText) -> _FmtStyled:
         """Applies this format group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
-        return _Styled(opens, closes, text)
+        return _FmtStyled(opens, closes, text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this format group, showing its individual codes."""
@@ -283,7 +284,7 @@ class _Fmt(int):
 
     _oc: tuple[tuple[str, ...], tuple[str, ...]]
 
-    def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:  # type: ignore[override]
+    def __or__(self, other: AnyFmt | _FmtGroup) -> _FmtGroup:  # type: ignore[override]
         """Combines this format code with another code or group via `|`."""
 
         if isinstance(other, _FmtGroup):
@@ -291,12 +292,12 @@ class _Fmt(int):
 
         return _FmtGroup(self, other)
 
-    def __ror__(self, other: _AnyFmt) -> _FmtGroup:  # type: ignore[override]
+    def __ror__(self, other: AnyFmt) -> _FmtGroup:  # type: ignore[override]
         """Combines this format code with another code or group via `|`."""
 
         return _FmtGroup(other, self)
 
-    def __call__(self, *text: _Segment) -> _Styled:
+    def __call__(self, *text: FmtSegment) -> _FmtStyled:
         """Applies this format code to the given text, auto-resetting after."""
 
         try:
@@ -307,9 +308,9 @@ class _Fmt(int):
             oc = _build_open_close(_FmtGroup(self)) if cached is None else cached
             self._oc = oc
 
-        return _Styled(oc[0], oc[1], text[0] if len(text) == 1 else text)
+        return _FmtStyled(oc[0], oc[1], text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: _Text) -> _Styled:
+    def __matmul__(self, text: FmtText) -> _FmtStyled:
         """Applies this format code to the given text, auto-resetting after."""
 
         try:
@@ -320,7 +321,7 @@ class _Fmt(int):
             oc = _build_open_close(_FmtGroup(self)) if cached is None else cached
             self._oc = oc
 
-        return _Styled(oc[0], oc[1], text)
+        return _FmtStyled(oc[0], oc[1], text)
 
 
 class _ColorFmt:
@@ -353,7 +354,7 @@ class _ColorFmt:
 
         return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), bg=bg)
 
-    def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:
+    def __or__(self, other: AnyFmt | _FmtGroup) -> _FmtGroup:
         """Combines this color format with another format or group via `|`."""
 
         if isinstance(other, _FmtGroup):
@@ -361,20 +362,20 @@ class _ColorFmt:
 
         return _FmtGroup(self, other)
 
-    def __ror__(self, other: _AnyFmt) -> _FmtGroup:
+    def __ror__(self, other: AnyFmt) -> _FmtGroup:
         """Combines this color format with another format or group via `|`."""
 
         return _FmtGroup(other, self)
 
-    def __call__(self, *text: _Segment) -> _Styled:
+    def __call__(self, *text: FmtSegment) -> _FmtStyled:
         """Applies this color format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
+        return _FmtStyled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: _Text) -> _Styled:
+    def __matmul__(self, text: FmtText) -> _FmtStyled:
         """Applies this color format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._close_seq, ), text)
+        return _FmtStyled((self._open_seq, ), (self._close_seq, ), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this color format, indicating<br>
@@ -391,12 +392,12 @@ class _LinkFmt:
 
     __slots__ = ("_url", "_open_seq", "_close_seq")
 
-    def __init__(self, url: str, /) -> None:
-        self._url = url
-        self._open_seq = ANSI.SEQ_LINK_OPEN.format(url)
+    def __init__(self, url: str | Path, /) -> None:
+        self._url = url.resolve().as_uri() if isinstance(url, Path) else url
+        self._open_seq = ANSI.SEQ_LINK_OPEN.format(self._url)
         self._close_seq = ANSI.SEQ_LINK_CLOSE
 
-    def __or__(self, other: _AnyFmt | _FmtGroup) -> _FmtGroup:
+    def __or__(self, other: AnyFmt | _FmtGroup) -> _FmtGroup:
         """Combines this link format with another format or group via `|`."""
 
         if isinstance(other, _FmtGroup):
@@ -404,20 +405,20 @@ class _LinkFmt:
 
         return _FmtGroup(self, other)
 
-    def __ror__(self, other: _AnyFmt) -> _FmtGroup:
+    def __ror__(self, other: AnyFmt) -> _FmtGroup:
         """Combines this link format with another format or group via `|`."""
 
         return _FmtGroup(other, self)
 
-    def __call__(self, *text: _Segment) -> _Styled:
+    def __call__(self, *text: FmtSegment) -> _FmtStyled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
+        return _FmtStyled((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: _Text) -> _Styled:
+    def __matmul__(self, text: FmtText) -> _FmtStyled:
         """Applies this link format to the given text, auto-resetting after."""
 
-        return _Styled((self._open_seq, ), (self._close_seq, ), text)
+        return _FmtStyled((self._open_seq, ), (self._close_seq, ), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this link format, showing the URL it points to."""
@@ -425,15 +426,15 @@ class _LinkFmt:
         return f"_LinkFmt({self._url!r})"
 
 
-class _Styled:
+class _FmtStyled:
     """Pre-computed ANSI open/close sequences applied to text.\n
     -------------------------------------------------------------------------------------------
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
-    `text` may be a plain `str`, a nested `_Styled`, or a tuple of mixed segments."""
+    `text` may be a plain `str`, a nested `_FmtStyled`, or a tuple of mixed segments."""
 
     __slots__ = ("_opens", "_closes", "text")
 
-    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: _Text) -> None:
+    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: FmtText) -> None:
         self._opens = opens
         self._closes = closes
         self.text = text
@@ -441,18 +442,18 @@ class _Styled:
     def __repr__(self) -> str:
         """Returns a string representation of this styled segment, showing its opens and text."""
 
-        return f"_Styled(opens={self._opens!r}, text={self.text!r})"
+        return f"_FmtStyled(opens={self._opens!r}, text={self.text!r})"
 
 
-_AnyFmt: TypeAlias = Union[_Fmt, _ColorFmt, _LinkFmt]
+AnyFmt: TypeAlias = Union[_Fmt, _ColorFmt, _LinkFmt]
 """Any single format code, color format, or link format<br>
 that can be combined via `|` and applied to text."""
-_Segment: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup]
+FmtSegment: TypeAlias = Union[str, _FmtStyled, AnyFmt, _FmtGroup]
 """A single segment: a plain string, a nested styled segment, or a bare format object (open-only)."""
-_Text: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup, tuple[_Segment, ...]]
+FmtText: TypeAlias = Union[FmtSegment, tuple[FmtSegment, ...]]
 """Anything that can be passed to a `_Fmt`/`_FmtGroup`/`_ColorFmt`/`_LinkFmt` call."""
-_Renderable: TypeAlias = Union[str, _Styled, _AnyFmt, _FmtGroup, tuple[_Segment, ...]]
-"""Anything that can be passed as a positional argument to `FormatCodes(…)`."""
+FmtRenderable: TypeAlias = Union[str, _FmtStyled, AnyFmt, _FmtGroup, tuple[FmtSegment, ...]]
+"""Anything that can be passed as a positional argument to `FC(…)`."""
 
 ################################################## NAMESPACE HELPERS ##################################################
 
@@ -535,10 +536,10 @@ class _BrNS:
     """Bright white foreground."""
 
 
-################################################## FORMAT CODES ##################################################
+################################################## F ##################################################
 
 
-class Format:
+class F:
     """All available ANSI format codes.\n
     -----------------------------------------------------------------------------------------
     Every attribute supports `|` for combining and `()` for applying to text:
@@ -633,14 +634,15 @@ class Format:
         return _ColorFmt.from_hex(color)
 
     @staticmethod
-    def link(url: str, /) -> _LinkFmt:
-        """Clickable hyperlink.\n
-        `F.link("https://example.com")("click here")`"""
+    def link(url: str | Path, /) -> _LinkFmt:
+        """Clickable hyperlink. Accepts strings or `pathlib.Path` objects.\n
+        If a `pathlib.Path` is passed, it is automatically resolved and converted to a URI.\n
+        --------------------------------------------------------------------------------------
+        >>> F.link("https://example.com")("click here")
+        >>> F.link(Path("docs/readme.md"))("open file")"""
 
         return _LinkFmt(url)
 
-
-F = Format  # SHORT ALIAS
 
 ################################################## TERMINAL CONTROL ##################################################
 
@@ -648,8 +650,8 @@ F = Format  # SHORT ALIAS
 class Term:
     """Common ANSI terminal control sequences (cursor, screen, title)<br>
     as plain strings or string-returning static methods.\n
-    ------------------------------------------------------------------------------------------
-    Values can be passed straight into a `FormatCodes(…)` call or written to `sys.stdout`."""
+    ----------------------------------------------------------------------------------
+    Values can be passed straight into an `FC(…)` call or written to `sys.stdout`."""
 
     CLEAR_LINE: ClassVar[str] = f"{ANSI.CHAR}[2K"
     """Erase the entire current line."""
@@ -713,7 +715,7 @@ class Term:
         return f"{ANSI.CHAR}[u"
 
 
-################################################## FORMATCODES ##################################################
+################################################## FC ##################################################
 
 
 def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -773,9 +775,9 @@ def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, 
     return tuple(opens), tuple(closes)
 
 
-class FormatCodes:
+class FC:
     """Build a formatted string from a sequence of segments<br>
-    (strings, `_Styled` calls, or raw tuples), joined by `sep`.\n
+    (strings, `_FmtStyled` calls, or raw tuples), joined by `sep`.\n
     ------------------------------------------------------------------------------------------------------
     *   `segments` – Any number of segments to render. Each positional argument represents one logical line.
     *   `sep` – The separator inserted between two adjacent positional arguments (default `"\\n"`).
@@ -791,7 +793,7 @@ class FormatCodes:
 
     __slots__ = ("_ansi_parts", "ansi")
 
-    def __init__(self, /, *segments: _Renderable, sep: str = "\n") -> None:
+    def __init__(self, /, *segments: FmtRenderable, sep: str = "\n") -> None:
         self._ansi_parts: list[str] = []
 
         for i, segment in enumerate(segments):
@@ -814,35 +816,43 @@ class FormatCodes:
 
         return tuple((match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi))
 
-    def __add__(self, other: FormatCodes, /) -> FormatCodes:
-        """Concatenate two `FormatCodes` objects by joining their already-rendered<br>
-        `ansi` strings directly, skipping any re-rendering of the segments."""
+    def __add__(self, other: FC | str, /) -> FC:
+        """Concatenate a `FC` object with another `FC` object or a plain string."""
 
-        result = FormatCodes.__new__(FormatCodes)
+        result = FC.__new__(FC)
         result._ansi_parts = []
-        result.ansi = self.ansi + other.ansi
+        result.ansi = self.ansi + (other.ansi if isinstance(other, FC) else other)
 
         return result
 
-    def __iadd__(self, other: FormatCodes, /) -> FormatCodes:
-        """Append another `FormatCodes` object in place (`+=`), mutating `ansi` directly."""
+    def __radd__(self, other: str, /) -> FC:
+        """Concatenate a plain string with a `FC` object from the left."""
 
-        self.ansi += other.ansi
+        result = FC.__new__(FC)
+        result._ansi_parts = []
+        result.ansi = other + self.ansi
+
+        return result
+
+    def __iadd__(self, other: FC | str, /) -> FC:
+        """Append another `FC` object or a plain string in place (`+=`)."""
+
+        self.ansi += (other.ansi if isinstance(other, FC) else other)
         return self
 
-    def __mul__(self, n: int, /) -> FormatCodes:
+    def __mul__(self, n: int, /) -> FC:
         """Repeat the rendered output `n` times, e.g. `FC(F.CYAN("─")) * 40`."""
 
-        result = FormatCodes.__new__(FormatCodes)
+        result = FC.__new__(FC)
         result._ansi_parts = []
         result.ansi = self.ansi * n
 
         return result
 
-    def __rmul__(self, n: int, /) -> FormatCodes:
+    def __rmul__(self, n: int, /) -> FC:
         """Repeat the rendered output `n` times, e.g. `40 * FC(F.CYAN("─"))`."""
 
-        result = FormatCodes.__new__(FormatCodes)
+        result = FC.__new__(FC)
         result._ansi_parts = []
         result.ansi = self.ansi * n
 
@@ -853,29 +863,79 @@ class FormatCodes:
 
         return len(self.raw)
 
+    def join(self, iterable: Iterable[FmtRenderable], /) -> FC:
+        """Join a sequence of segments using the current `FC` object as the separator.\n
+        ----------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g. a list of strings or `FC` objects."""
+
+        return FC(*iterable, sep=self.ansi)
+
+    def ljust(self, width: int, fill_char: str = " ", /) -> FC:
+        """Return the `FC` object left justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string, including the original `FC` content.
+        *   `fill_char` – The character to use for padding (default is a space)."""
+
+        result = FC.__new__(FC)
+        result._ansi_parts = []
+        result.ansi = self.ansi + (fill_char * max(0, width - len(self)))
+
+        return result
+
+    def rjust(self, width: int, fill_char: str = " ", /) -> FC:
+        """Return the `FC` object right justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string, including the original `FC` content.
+        *   `fill_char` – The character to use for padding (default is a space)."""
+
+        result = FC.__new__(FC)
+        result._ansi_parts = []
+        result.ansi = (fill_char * max(0, width - len(self))) + self.ansi
+
+        return result
+
+    def center(self, width: int, fill_char: str = " ", /) -> FC:
+        """Return the `FC` object centered in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string, including the original `FC` content.
+        *   `fill_char` – The character to use for padding (default is a space)."""
+
+        padding = max(0, width - len(self))
+        left = padding // 2
+        right = padding - left
+
+        result = FC.__new__(FC)
+        result._ansi_parts = []
+        result.ansi = (fill_char * left) + self.ansi + (fill_char * right)
+
+        return result
+
     def __str__(self) -> str:
-        """Stringifying a `FormatCodes` instance yields its rendered<br>
+        """Stringifying a `FC` instance yields its rendered<br>
         ANSI string, ready to be written to a terminal."""
 
         return self.ansi
 
     def __repr__(self) -> str:
-        """Returns a string representation of this `FormatCodes` instance, showing its rendered ANSI string."""
+        """Returns a string representation of this `FC` instance, showing its rendered ANSI string."""
 
-        return f"FormatCodes(ansi={self.ansi!r})"
+        return f"FC(ansi={self.ansi!r})"
 
-    def print(self, /, *, end: str = "\n", flush: bool = True) -> None:
+    def print(self, /, *, end: str = "\n", flush: bool = True, file: Optional[TextIO] = None) -> None:
         """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
-        for ANSI on first use). Faster than the built-in `print()` for large outputs.\n
+        for ANSI on first use) or to a custom file-like object.\n
         -----------------------------------------------------------------------------------------
         *   `end` – The string to append at the end of the output (default `"\\n"`).
-        *   `flush` – Whether to flush `sys.stdout` after writing (default `True`)."""
+        *   `flush` – Whether to flush the output stream after writing (default `True`).
+        *   `file` – The file-like object to write to (default `sys.stdout`)."""
 
         _config_terminal()
-        _sys.stdout.write(self.ansi + end)
+        target = file or _sys.stdout
+
+        target.write(self.ansi + end)
 
         if flush:
-            _sys.stdout.flush()
+            target.flush()
 
     def input(self, /, *, reset_ansi: bool = False) -> str:
         """Use the rendered ANSI string as an input prompt and return the user's input.\n
@@ -902,7 +962,7 @@ class FormatCodes:
     def _render(self, segment: object) -> None:
         """Internal method to recursively render a `segment`, dispatching by runtime type.\n
         ------------------------------------------------------------------------------------
-        Strings are emitted as raw text; `_Styled` segments are wrapped in their opening<br>
+        Strings are emitted as raw text; `_FmtStyled` segments are wrapped in their opening<br>
         and closing ANSI sequences; `tuple` segments are flattened in order.<br>
         Bare format objects (`_Fmt`, `_ColorFmt`, `_LinkFmt`, `_FmtGroup`) emit only<br>
         their opening sequence with no matching close."""
@@ -910,7 +970,7 @@ class FormatCodes:
         if isinstance(segment, str):
             self._ansi_parts.append(segment)
             return
-        if isinstance(segment, _Styled):
+        if isinstance(segment, _FmtStyled):
             for piece in segment._opens:
                 self._ansi_parts.append(piece)
             self._render(segment.text)
@@ -937,6 +997,3 @@ class FormatCodes:
 
         # FALLBACK – COERCE UNKNOWN OBJECTS TO STR
         self._ansi_parts.append(str(segment))
-
-
-FC = FormatCodes  # SHORT ALIAS

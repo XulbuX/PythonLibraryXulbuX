@@ -949,7 +949,7 @@ def test_input_disable_paste(mock_prompt_session: tuple[MagicMock, MagicMock], m
 
 
 def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], capsys: pytest.CaptureFixture[str]):
-    """Test that start and end parameters trigger FormatCodes.print calls."""
+    """Test that start and end parameters trigger FC.print calls."""
     mock_session_class, _ = mock_prompt_session
 
     Console.input("Enter text: ", start="[green]", end="[_c]")
