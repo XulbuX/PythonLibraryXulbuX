@@ -158,7 +158,7 @@ class Data:
                 result: list[Any] = list(dict.fromkeys(processed))
 
             except TypeError:
-                # UNHASHABLE ITEMS (LISTS, DICTS, SETS) – FALL BACK TO O(n²) EQUALITY CHECK
+                # Unhashable items (lists, dicts, sets); Fall back to O(n²) equality check.
                 result = []
                 for item in processed:
                     if item not in result:
@@ -409,7 +409,7 @@ class Data:
                         raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i + 1]}'")
                     return next(key for key, value in parent.items() if value is idx_iterable_data)
                 parent = idx_iterable_data
-                current_data = list(idx_iterable_data)[path_idx]  # CONVERT TO LIST FOR INDEXING
+                current_data = list(idx_iterable_data)[path_idx]  # Convert to list for indexing.
 
             else:
                 raise TypeError(f"Unsupported type '{type(current_data)}' at path '{path[:i + 1]}'")

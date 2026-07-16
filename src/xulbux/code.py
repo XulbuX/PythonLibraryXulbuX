@@ -112,22 +112,22 @@ class Code:
         js_score = 0.0
         funcs_pattern = r"(" + "|".join(_rx.escape(fn) for fn in funcs) + r")" + Regex.brackets("()")
         js_indicators: list[tuple[str, float]] = [
-            (r"\b(var|let|const)\s+[\w_$]+", 2.0),  # JS VARIABLE DECLARATIONS
-            (r"\$[\w_$]+\s*=", 2.0),  # jQuery-STYLE VARIABLES
-            (r"\$[\w_$]+\s*\(", 2.0),  # jQuery FUNCTION CALLS
-            (r"\bfunction\s*[\w_$]*\s*\(", 2.0),  # FUNCTION DECLARATIONS
-            (r"[\w_$]+\s*=\s*function\s*\(", 2.0),  # FUNCTION ASSIGNMENTS
-            (r"\b[\w_$]+\s*=>\s*[\{\(]", 2.0),  # ARROW FUNCTIONS
-            (r"\(function\s*\(\)\s*\{", 2.0),  # IIFE PATTERN
-            (funcs_pattern, 2.0),  # CUSTOM PREDEFINED FUNCTIONS
-            (r"\b(true|false|null|undefined)\b", 1.0),  # JS LITERALS
-            (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-SPECIFIC OPERATORS
-            (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # OBJECT INSTANTIATION WITH NEW
-            (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2.0),  # JS OBJECTS
-            (r"\basync\s+function|\bawait\b", 2.0),  # ASYNC/AWAIT
-            (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1.0),  # CONTROL STRUCTURES WITH BRACES
-            (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # TRY-CATCH
-            (r";[\s\n]*$", 0.5),  # SEMICOLON LINE ENDINGS
+            (r"\b(var|let|const)\s+[\w_$]+", 2.0),  # JS variable declarations
+            (r"\$[\w_$]+\s*=", 2.0),  # jQuery-style variables
+            (r"\$[\w_$]+\s*\(", 2.0),  # jQuery function calls
+            (r"\bfunction\s*[\w_$]*\s*\(", 2.0),  # Function declarations
+            (r"[\w_$]+\s*=\s*function\s*\(", 2.0),  # Function assignments
+            (r"\b[\w_$]+\s*=>\s*[\{\(]", 2.0),  # Arrow functions
+            (r"\(function\s*\(\)\s*\{", 2.0),  # IIFE pattern
+            (funcs_pattern, 2.0),  # Custom predefined functions
+            (r"\b(true|false|null|undefined)\b", 1.0),  # JS literals
+            (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-specific operators
+            (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # Object instantiation with `new`
+            (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2.0),  # JS objects
+            (r"\basync\s+function|\bawait\b", 2.0),  # async/await
+            (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1.0),  # Control structures with braces
+            (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # Try-catch
+            (r";[\s\n]*$", 0.5),  # Semicolon line endings
         ]
 
         line_endings = [line.strip() for line in code.splitlines() if line.strip()]

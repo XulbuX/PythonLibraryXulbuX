@@ -1,5 +1,5 @@
-# THIS WORKFLOW WILL INSTALL PYTHON DEPENDENCIES, RUN TESTS AND LINT WITH A VARIETY OF PYTHON VERSIONS
-# FOR MORE INFORMATION SEE: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# This workflow will install Python dependencies, run tests and lint with all supported Python versions.
+# See: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: Test & Lint
 permissions:
@@ -7,9 +7,9 @@ permissions:
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
       - uses: actions/checkout@v6
@@ -44,8 +44,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=build
-          python -m flake8 . --exit-zero --max-complexity=12 --statistics --exclude=build
+          python -m flake8
 
       - name: Type check with pyright
         run: |

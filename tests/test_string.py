@@ -3,7 +3,7 @@ from xulbux.string import String
 import pytest
 
 #
-################################################## String TESTS ##################################################
+###################################################### String TESTS ######################################################
 
 
 def test_to_type():
@@ -34,19 +34,19 @@ def test_normalize_spaces():
 def test_escape():
     assert String.escape("Line 1\nLine 2\tTabbed") == r"Line 1\nLine 2\tTabbed"
     assert String.escape("Path: C:\\Users\\Name") == r"Path: C:\\Users\\Name"
-    # DEFAULT: NO ESCAPING QUOTES
+    # Default: no escaping quotes:
     assert String.escape('String with "double quotes"') == 'String with "double quotes"'
     assert String.escape("String with 'single quotes'") == "String with 'single quotes'"
     assert String.escape(
         "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
     ) == r"""Mix: \n "quotes" and 'single' \t tabs \\ backslash"""
-    # ESCAPE DOUBLE QUOTES
+    # Escape double quotes:
     assert String.escape('String with "double quotes"', str_quotes='"') == r'String with \"double quotes\"'
     assert String.escape("String with 'single quotes'", str_quotes='"') == r"String with 'single quotes'"
     assert String.escape(
         "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes='"'
     ) == r"Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
-    # ESCAPE SINGLE QUOTES
+    # Escape single quotes:
     assert String.escape('String with "double quotes"', str_quotes="'") == r'String with "double quotes"'
     assert String.escape("String with 'single quotes'", str_quotes="'") == r"String with \'single quotes\'"
     assert String.escape(

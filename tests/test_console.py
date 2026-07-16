@@ -24,10 +24,10 @@ def mock_terminal_size(monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture
 def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     mock = MagicMock()
-    # PATCH IN THE ORIGINAL MODULE WHERE IT IS DEFINED
+    # Patch in the original module where it is defined:
     import xulbux.dep_format_codes
     monkeypatch.setattr(xulbux.dep_format_codes.FormatCodes, "print", mock)
-    # ALSO PATCH IN CONSOLE MODULE JUST IN CASE
+    # Also patch in console module just in case:
     monkeypatch.setattr("xulbux.console.FormatCodes.print", mock)
     return mock
 
@@ -46,7 +46,7 @@ def mock_prompt_toolkit(monkeypatch: pytest.MonkeyPatch):
     return mock
 
 
-################################################## Console TESTS ##################################################
+###################################################### Console TESTS #####################################################
 
 
 def test_console_user():
@@ -94,7 +94,7 @@ def test_console_supports_color():
 
 @pytest.mark.parametrize(
     "argv, arg_parse_configs, expected_parsed_args", [
-        # SIMPLE FLAG VALUE THE INCLUDES SPACES
+        # Simple flag value the includes spaces:
         (
             ["script.py", "-f=token with spaces", "-d"],
             {"file": {"-f"}, "debug": {"-d"}},
@@ -103,13 +103,13 @@ def test_console_supports_color():
                 "debug": {"exists": True, "is_pos": False, "values": (), "flag": "-d"},
             },
         ),
-        # FLAG VALUE PLUS OTHER TOKENS
+        # Flag value plus other tokens:
         (
             ["script.py", "--msg=hello", "world"],
             {"message": {"--msg"}},
             {"message": {"exists": True, "is_pos": False, "values": ("hello", ), "flag": "--msg"}},
         ),
-        # VALUE SET IN SINGLE TOKEN FOLLOWED BY SECOND FLAG
+        # Value set in single token followed by second flag:
         (
             ["script.py", "--msg=this is a message", "--flag"],
             {"message": {"--msg"}, "flag": {"--flag"}},
@@ -118,13 +118,13 @@ def test_console_supports_color():
                 "flag": {"exists": True, "is_pos": False, "values": (), "flag": "--flag"},
             },
         ),
-        # FLAG, SEPARATOR, AND VALUE SPREAD OVER MULTIPLE TOKENS
+        # Flag, separator, and value spread over multiple tokens:
         (
             ["script.py", "--msg", "=", "this is a message"],
             {"message": {"--msg"}},
             {"message": {"exists": True, "is_pos": False, "values": ("this is a message", ), "flag": "--msg"}},
         ),
-        # CASE SENSITIVE FLAGS WITH SPACES
+        # Case sensitive flags with spaces:
         (
             ["script.py", "-t=this is some text", "-T=THIS IS A TITLE"],
             {"text": {"-t"}, "title": {"-T"}},
@@ -135,7 +135,7 @@ def test_console_supports_color():
         ),
 
         # --- CASES WITH DEFAULTS ---
-        # GIVEN FLAG VALUE OVERWRITES DEFAULT
+        # Given flag value overwrites default:
         (
             ["script.py", "--msg=given message"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
@@ -144,7 +144,7 @@ def test_console_supports_color():
                 "other": {"exists": False, "is_pos": False, "values": (), "flag": None},
             },
         ),
-        # DEFAULT USED WHEN FLAG PRESENT BUT NO VALUE GIVEN
+        # Default used when flag present but no value given:
         (
             ["script.py", "-o", "--msg"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
@@ -153,7 +153,7 @@ def test_console_supports_color():
                 "other": {"exists": True, "is_pos": False, "values": (), "flag": "-o"},
             },
         ),
-        # DEFAULT USED WHEN FLAG ABSENT
+        # Default used when flag absent:
         (
             ["script.py", "-o"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
@@ -163,8 +163,8 @@ def test_console_supports_color():
             },
         ),
 
-        # --- POSITIONAL "before" / "after" SPECIAL CASES ---
-        # POSITIONAL "before"
+        # --- POSITIONAL `before` / `after` SPECIAL CASES ---
+        # Positional `before`:
         (
             ["script.py", "arg1", "arg2.1 arg2.2"],
             {"before": "before", "file": {"-f"}},
@@ -189,7 +189,7 @@ def test_console_supports_color():
                 "file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"},
             },
         ),
-        # POSITIONAL "after"
+        # Positional `after`:
         (
             ["script.py", "arg1", "arg2.1 arg2.2"],
             {"after": "after", "file": {"-f"}},
@@ -216,7 +216,7 @@ def test_console_supports_color():
         ),
 
         # --- CUSTOM FLAG PREFIXES ---
-        # QUESTION MARK AND DOUBLE PLUS PREFIXES
+        # Question mark and double plus prefixes:
         (
             ["script.py", "?help = show detailed info", "++mode=test"],
             {"help": {"?help"}, "mode": {"++mode"}},
@@ -225,7 +225,7 @@ def test_console_supports_color():
                 "mode": {"exists": True, "is_pos": False, "values": ("test", ), "flag": "++mode"},
             },
         ),
-        # AT SYMBOL PREFIX WITH POSITIONAL ARGUMENTS
+        # At symbol prefix with positional arguments:
         (
             ["script.py", "@msg = Hello, world!", "How are you?"],
             {"before": "before", "message": {"@msg"}, "after": "after"},
@@ -249,19 +249,19 @@ def test_console_supports_color():
         ),
 
         # --- SPACE-SEPARATED FLAG VALUES (allow_space_value=True default) ---
-        # SIMPLE SPACE-SEPARATED VALUE
+        # Simple space-separated value:
         (
             ["script.py", "--flag", "myValue"],
             {"flag": {"--flag"}},
             {"flag": {"exists": True, "is_pos": False, "values": ("myValue", ), "flag": "--flag"}},
         ),
-        # SHORT FLAG WITH SPACE-SEPARATED VALUE
+        # Short flag with space-separated value:
         (
             ["script.py", "-f", "file.txt"],
             {"file": {"-f", "--file"}},
             {"file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"}},
         ),
-        # KNOWN FLAG FOLLOWING A FLAG IS NOT CONSUMED AS VALUE
+        # Known flag following a flag is not consumed as value:
         (
             ["script.py", "--msg", "--flag"],
             {"message": {"--msg"}, "flag": {"--flag"}},
@@ -270,7 +270,7 @@ def test_console_supports_color():
                 "flag": {"exists": True, "is_pos": False, "values": (), "flag": "--flag"},
             },
         ),
-        # MULTIPLE FLAGS WITH SPACE-SEPARATED VALUES
+        # Multiple flags with space-separated values:
         (
             ["script.py", "--msg", "hello", "-n", "42"],
             {"message": {"--msg"}, "number": {"-n"}},
@@ -279,7 +279,7 @@ def test_console_supports_color():
                 "number": {"exists": True, "is_pos": False, "values": ("42", ), "flag": "-n"},
             },
         ),
-        # SPACE-SEPARATED VALUE CONSUMED BY FLAG, REMAINING TOKEN IS "after" POSITIONAL
+        # Space-separated value consumed by flag, remaining token is `after` positional:
         (
             ["script.py", "--flag", "val", "after1"],
             {"flag": {"--flag"}, "after": "after"},
@@ -288,7 +288,7 @@ def test_console_supports_color():
                 "after": {"exists": True, "is_pos": True, "values": ("after1", ), "flag": None},
             },
         ),
-        # SPACE-SEPARATED VALUE WITH BOTH "before" AND "after" POSITIONALS
+        # Space-separated value with both `before` and `after` positionals:
         (
             ["script.py", "pre", "--flag", "val", "post"],
             {"before": "before", "flag": {"--flag"}, "after": "after"},
@@ -460,7 +460,7 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
 
 def test_get_args_unknown_flags(monkeypatch: pytest.MonkeyPatch):
     """Unknown flags (not in config) are collected in unknown_flags and not consumed as values."""
-    # STANDALONE UNKNOWN FLAGS AND UNKNOWN FLAG WITH INLINE SEPARATOR
+    # Standalone unknown flags and unknown flag with inline separator:
     monkeypatch.setattr(sys, "argv", ["script.py", "--known=val", "--unknown", "--unknown=extra", "-u"])
     result = Console.get_args({"known": {"--known"}, "after": "after"})
 
@@ -491,24 +491,24 @@ def test_get_args_negative_number_not_unknown_flag(monkeypatch: pytest.MonkeyPat
 
 def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     """Test that skip=N drops the first N argv entries before any parsing."""
-    # WITH skip=1: argv[1] ('fc') IS SKIPPED, PARSING STARTS AT argv[2]
+    # With `skip=1`, `argv[1]` (`fc`) is skipped; Parsing starts at `argv[2]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "fc", "hello", "world"])
     result = Console.get_args({"input": "before"}, skip=1)
     assert result.input.exists is True
     assert result.input.values == ("hello", "world")
 
-    # WITH skip=2: argv[1] AND argv[2] ARE SKIPPED, PARSING STARTS AT argv[3]
+    # With `skip=2`, `argv[1]` and `argv[2]` are skipped; Parsing starts at `argv[3]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "sub", "cmd", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=2)
     assert result.flag.exists is True
     assert result.flag.values == ("val", )
 
-    # WITH skip EXCEEDING ARGV LENGTH: NO ARGS ARE PARSED
+    # With `skip` exceeding argv length, no args are parsed:
     monkeypatch.setattr(sys, "argv", ["script.py", "only"])
     result = Console.get_args({"flag": {"--flag"}}, skip=5)
     assert result.flag.exists is False
 
-    # WITH skip=0 (DEFAULT): BEHAVIOR IS UNCHANGED
+    # With `skip=0` (default); Behavior is unchanged:
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=0)
     assert result.flag.exists is True
@@ -516,77 +516,77 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_parsed_args_is_empty():
-    # ALL MISSING, NO VALUES: is_empty IS True
+    # All missing, no values: `is_empty` is true:
     args = ParsedArgs(
         a=ParsedArgData(exists=False, values=[], is_pos=False),
         b=ParsedArgData(exists=False, values=[], is_pos=True),
     )
     assert args.is_empty is True
 
-    # ONE HAS A DEFAULT VALUE: is_empty IS False
+    # One has a default value: `is_empty` is false:
     args_with_default = ParsedArgs(
         a=ParsedArgData(exists=False, values=["default"], is_pos=False),
         b=ParsedArgData(exists=False, values=[], is_pos=False),
     )
     assert args_with_default.is_empty is False
 
-    # ONE EXISTS: is_empty IS False
+    # One exists: `is_empty` is false:
     args_with_existing = ParsedArgs(
         a=ParsedArgData(exists=True, values=["val"], is_pos=False),
         b=ParsedArgData(exists=False, values=[], is_pos=False),
     )
     assert args_with_existing.is_empty is False
 
-    # EMPTY ParsedArgs: is_empty IS True
+    # Empty `ParsedArgs`: `is_empty` is true:
     assert ParsedArgs().is_empty is True
 
 
 def test_parsed_args_any_exist():
-    # NONE EXIST
+    # None exist:
     args_none = ParsedArgs(
         a=ParsedArgData(exists=False, values=[], is_pos=False),
         b=ParsedArgData(exists=False, values=["default"], is_pos=False),
     )
     assert args_none.any_exist is False
 
-    # ONE EXISTS
+    # One exists:
     args_one = ParsedArgs(
         a=ParsedArgData(exists=True, values=["v"], is_pos=False),
         b=ParsedArgData(exists=False, values=[], is_pos=False),
     )
     assert args_one.any_exist is True
 
-    # ALL EXIST
+    # All exist:
     args_all = ParsedArgs(
         a=ParsedArgData(exists=True, values=["v"], is_pos=False),
         b=ParsedArgData(exists=True, values=[], is_pos=False),
     )
     assert args_all.any_exist is True
 
-    # EMPTY ParsedArgs: any_exist IS False
+    # Empty `ParsedArgs`: `any_exist` is false:
     assert ParsedArgs().any_exist is False
 
 
 def test_parsed_args_all_exist():
-    # ALL EXIST
+    # All exist:
     args_all = ParsedArgs(
         a=ParsedArgData(exists=True, values=["v"], is_pos=False),
         b=ParsedArgData(exists=True, values=[], is_pos=False),
     )
     assert args_all.all_exist is True
 
-    # ONE MISSING
+    # One missing:
     args_partial = ParsedArgs(
         a=ParsedArgData(exists=True, values=["v"], is_pos=False),
         b=ParsedArgData(exists=False, values=[], is_pos=False),
     )
     assert args_partial.all_exist is False
 
-    # NONE EXIST
+    # None exist:
     args_none = ParsedArgs(a=ParsedArgData(exists=False, values=[], is_pos=False), )
     assert args_none.all_exist is False
 
-    # EMPTY ParsedArgs: all_exist IS True (vacuously)
+    # Empty `ParsedArgs`: `all_exist` is true (vacuously):
     assert ParsedArgs().all_exist is True
 
 
@@ -642,7 +642,7 @@ def test_multiline_input(mock_prompt_toolkit: MagicMock, capsys: pytest.CaptureF
     assert result == expected_input
 
     captured = capsys.readouterr()
-    # CHECK THAT PROMPT AND KEYBINDINGS WERE PRINTED
+    # Check that prompt and keybindings were printed:
     assert "Enter text:" in captured.out
     assert "CTRL+D" in captured.out or "end of input" in captured.out
 
@@ -658,7 +658,7 @@ def test_multiline_input_no_bindings(mock_prompt_toolkit: MagicMock, capsys: pyt
     Console.multiline_input("Enter text:", show_keybindings=False, end="DONE")
 
     captured = capsys.readouterr()
-    # CHECK THAT PROMPT WAS PRINTED AND ENDS WITH 'DONE'
+    # Check that prompt was printed and ends with `DONE`:
     assert "Enter text:" in captured.out
     assert captured.out.endswith("DONE")
 
@@ -697,7 +697,7 @@ def test_pause_exit_reset_ansi(monkeypatch: pytest.MonkeyPatch, capsys: pytest.C
     Console.pause_exit(pause=True, exit=False, reset_ansi=True)
 
     captured = capsys.readouterr()
-    # CHECK THAT ANSI RESET CODE IS PRESENT IN OUTPUT
+    # Check that ANSI reset code is present in output:
     assert "\033[0m" in captured.out or captured.out.strip() == ""
 
 
@@ -956,8 +956,8 @@ def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, M
 
     assert mock_session_class.called
     captured = capsys.readouterr()
-    # JUST VERIFY OUTPUT WAS PRODUCED (START/END FORMATTING OCCURRED)
-    assert captured.out != "" or True  # OUTPUT MAY BE CAPTURED OR GO TO REAL STDOUT
+    # Just verify output was produced (start/end formatting occurred):
+    assert captured.out != "" or True  # Output may be captured or go to real STDOUT.
 
 
 def test_input_message_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
@@ -1087,7 +1087,7 @@ def test_input_custom_style_object(mock_prompt_session: tuple[MagicMock, MagicMo
     assert hasattr(style, "style_rules") or hasattr(style, "_style")
 
 
-################################################## ProgressBar TESTS ##################################################
+#################################################### ProgressBar TESTS ###################################################
 
 
 def test_progressbar_init():
@@ -1158,7 +1158,7 @@ def test_progressbar_show_progress_invalid_total():
 @patch("sys.stdout", new_callable=io.StringIO)
 def test_progressbar_show_progress(mock_stdout: MagicMock):
     pb = ProgressBar()
-    # MANUALLY SET AND RESTORE _original_stdout TO AVOID PATCHING ISSUES WITH COMPILED CLASSES
+    # Manually set and restore `_original_stdout` to avoid patching issues with compiled classes:
     original = pb._original_stdout
     pb._original_stdout = mock_stdout
     try:
@@ -1183,28 +1183,28 @@ def test_progressbar_hide_progress():
 def test_progressbar_progress_context(capsys: pytest.CaptureFixture[str]):
     pb = ProgressBar()
 
-    # TEST CONTEXT MANAGER BEHAVIOR BY CHECKING ACTUAL EFFECTS
+    # Test context manager behavior by checking actual effects:
     with pb.progress_context(100, "Testing") as update_progress:
         update_progress(25)
-        assert pb.active is True  # ACTIVE AFTER FIRST UPDATE
+        assert pb.active is True  # Active after first update.
         update_progress(50)
 
-    # AFTER CONTEXT EXITS, PROGRESS BAR SHOULD BE HIDDEN
+    # After context exits, progress bar should be hidden:
     assert pb.active is False
     captured = capsys.readouterr()
-    assert captured.out != ""  # SOME OUTPUT SHOULD HAVE BEEN PRODUCED
+    assert captured.out != ""  # Some output should have been produced.
 
 
 def test_progressbar_progress_context_exception():
     pb = ProgressBar()
 
-    # TEST THAT CLEANUP HAPPENS EVEN WITH EXCEPTIONS
+    # Test that cleanup happens even with exceptions:
     with pytest.raises(ValueError):
         with pb.progress_context(100, "Testing") as update_progress:
             update_progress(25)
             raise ValueError("Test exception")
 
-    # AFTER EXCEPTION, PROGRESS BAR SHOULD STILL BE CLEANED UP
+    # After exception, progress bar should still be cleaned up:
     assert pb.active is False
 
 
@@ -1298,7 +1298,7 @@ def test_progressbar_redraw_progress_bar():
     mock_stdout.flush.assert_called_once()
 
 
-################################################## Throbber TESTS ##################################################
+##################################################### Throbber TESTS #####################################################
 
 
 def test_throbber_init_defaults():
@@ -1326,7 +1326,7 @@ def test_throbber_set_format_valid():
 def test_throbber_set_format_invalid():
     throbber = Throbber()
     with pytest.raises(ValueError):
-        throbber.set_format(["{l}"])  # MISSING {a}
+        throbber.set_format(["{l}"])  # Missing `{a}`.
 
 
 def test_throbber_set_frames_valid():
@@ -1338,7 +1338,7 @@ def test_throbber_set_frames_valid():
 def test_throbber_set_frames_invalid():
     throbber = Throbber()
     with pytest.raises(ValueError):
-        throbber.set_frames(("a", ))  # LESS THAN 2 FRAMES
+        throbber.set_frames(("a", ))  # Less than 2 frames.
 
 
 def test_throbber_set_interval_valid():
@@ -1368,7 +1368,7 @@ def test_throbber_start(mock_stdout: MagicMock, mock_event: MagicMock, mock_thre
     mock_event.assert_called_once()
     mock_thread.assert_called_once()
 
-    # TEST CALLING START AGAIN DOESN'T DO ANYTHING
+    # Test, calling start again doesn't do anything:
     throbber.start("Test2")
     assert mock_event.call_count == 1
 
@@ -1377,7 +1377,7 @@ def test_throbber_start(mock_stdout: MagicMock, mock_event: MagicMock, mock_thre
 @patch("xulbux.console._threading.Event")
 def test_throbber_stop(mock_event: MagicMock, mock_thread: MagicMock):
     throbber = Throbber()
-    # MANUALLY SET ACTIVE TO SIMULATE RUNNING
+    # Manually set active to simulate running:
     throbber.active = True
     mock_stop_event = MagicMock()
     mock_stop_event.set.return_value = None
@@ -1402,24 +1402,24 @@ def test_throbber_update_label():
 def test_throbber_context_manager():
     throbber = Throbber()
 
-    # TEST CONTEXT MANAGER BEHAVIOR BY CHECKING ACTUAL EFFECTS
+    # Test context manager behavior by checking actual effects:
     with throbber.context("Test") as update:
         assert throbber.active is True
         assert throbber.label == "Test"
         update("New Label")
         assert throbber.label == "New Label"
 
-    # AFTER CONTEXT EXITS, THROBBER SHOULD BE STOPPED
+    # After context exits, throbber should be stopped:
     assert throbber.active is False
 
 
 def test_throbber_context_manager_exception():
     throbber = Throbber()
 
-    # TEST THAT CLEANUP HAPPENS EVEN WITH EXCEPTIONS
+    # Test that cleanup happens even with exceptions:
     with pytest.raises(ValueError):
         with throbber.context("Test"):
             raise ValueError("Oops")
 
-    # AFTER EXCEPTION, THROBBER SHOULD STILL BE CLEANED UP
+    # After exception, throbber should still be cleaned up:
     assert throbber.active is False

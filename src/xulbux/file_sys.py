@@ -192,16 +192,16 @@ class _ExtendPathHelper:
         expanded_path = self.expand_env_vars(self.rel_path)
 
         if expanded_path.is_absolute():
-            # ADD ROOT TO SEARCH DIRS
+            # Add root to search dirs:
             if expanded_path.drive:
                 self.search_dirs.extend([Path(expanded_path.drive + _os.sep)])
             else:
                 self.search_dirs.extend([Path(_os.sep)])
-            # REMOVE ROOT FROM PATH PARTS FOR SEARCHING
-            expanded_path = Path(*expanded_path.parts[1:])
+
+            expanded_path = Path(*expanded_path.parts[1:])  # Remove root from path parts for searching.
 
         else:
-            # ADD PREDEFINED SEARCH DIRS
+            # Add predefined search dirs:
             self.search_dirs.extend([
                 self.cls.cwd,
                 self.cls.home,

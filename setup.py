@@ -24,8 +24,8 @@ def generate_stubs_for_package():
 
     try:
         skip_stubgen = {
-            PROJECT_SRC / "base" / "types.py",  # COMPLEX TYPE DEFINITIONS
-            PROJECT_SRC / "__init__.py",  # PRESERVE PACKAGE METADATA CONSTANTS
+            PROJECT_SRC / "base" / "types.py",  # Complex type definitions
+            PROJECT_SRC / "__init__.py",  # Preserve package metadata constants.
         }
 
         generated_count = 0
@@ -73,12 +73,12 @@ def delete_project_stub_files():
 
 ext_modules = []
 
-# ONLY COMPILE AND GENERATE STUBS WHEN ACTUALLY BUILDING, NOT DURING METADATA-ONLY
-# PHASES (egg_info, dist_info) THAT PIP INVOKES AS PART OF PEP 517 PREPARATION.
+# Only compile and generate stubs when actually building, not during metadata-only
+# phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation.
 _BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
 _is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
 
-# OPTIONALLY USE MYPYC COMPILATION
+# Optionally use MyPyC compilation:
 if os.environ.get("XULBUX_USE_MYPYC", "1") == "1" and _is_building:
     try:
         from mypyc.build import mypycify

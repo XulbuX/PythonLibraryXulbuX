@@ -1,16 +1,15 @@
 [build-system]
-requires = [
-  "setuptools>=80.0.0",
-  "wheel>=0.45.0",
-  "mypy>=1.19.0",
-  "mypy-extensions>=1.1.0",
-  # TYPES FOR MyPy
-  "types-setuptools",
-  "types-regex",
-  "types-toml",
-  "prompt_toolkit>=3.0.41",
-]
 build-backend = "setuptools.build_meta"
+requires = [
+  "mypy-extensions>=1.1.0",
+  "mypy>=1.19.0",
+  "prompt_toolkit>=3.0.41",
+  "setuptools>=80.0.0",
+  "types-regex",
+  "types-setuptools",
+  "types-toml",
+  "wheel>=0.45.0",
+]
 
 [project]
 name = "xulbux"
@@ -33,16 +32,17 @@ optional-dependencies = { dev = [
   "pyright>=1.1.408",
   "pytest>=7.4.2",
   "toml>=0.10.2",
+  "yapf>=0.43.0",
 ] }
 classifiers = [
   "Development Status :: 5 - Production/Stable",
-  "Programming Language :: Python :: 3.14",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.10",
-  "Operating System :: OS Independent",
   "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = [
@@ -107,47 +107,76 @@ keywords = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/xulbux/python-lib-xulbux"
-"Documentation" = "https://github.com/xulbux/python-lib-xulbux/wiki"
-"Source Code" = "https://github.com/xulbux/python-lib-xulbux/tree/main/src"
-"Changelog" = "https://github.com/xulbux/python-lib-xulbux/blob/main/CHANGELOG.md"
 "Bug Reports" = "https://github.com/xulbux/python-lib-xulbux/issues"
-"Stats" = "https://clickpy.clickhouse.com/dashboard/xulbux"
+"Changelog" = "https://github.com/xulbux/python-lib-xulbux/blob/main/CHANGELOG.md"
+"Documentation" = "https://github.com/xulbux/python-lib-xulbux/wiki"
+"Homepage" = "https://github.com/xulbux/python-lib-xulbux"
 "License" = "https://github.com/xulbux/python-lib-xulbux/blob/main/LICENSE"
+"Source Code" = "https://github.com/xulbux/python-lib-xulbux/tree/main/src"
+"Stats" = "https://clickpy.clickhouse.com/dashboard/xulbux"
 
 [project.scripts]
 xulbux-lib = "xulbux.cli:main"
 
 [tool.flake8]
+count = true
+extend-exclude = [
+  ".github",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".venv",
+  "assets",
+  "build",
+]
+extend-ignore = ["E124", "E203", "E266", "E502", "W503"]
 max-complexity = 12
 max-line-length = 127
-select = ["E", "F", "W", "C90"]
-extend-ignore = ["E124", "E203", "E266", "E502", "W503"]
 per-file-ignores = [
   "__init__.py:F403,F405",
   "src/xulbux/base/types.py:E302,E305",
   "src/xulbux/cli/help.py:E501",
 ]
+select = ["W", "E", "F", "C90"]
+show-source = true
+statistics = true
+
+[tool.pyright]
+include = ["src", "tests"]
+reportDeprecated = "none"
+reportPrivateUsage = "none"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+minversion = "7.0"
+pythonpath = ["src"]
+testpaths = ["tests/test_*.py"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 
+[tool.setuptools.package-data]
+xulbux = ["*.pyi", "**/*.pyi", "py.typed"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-xulbux = ["py.typed", "*.pyi", "**/*.pyi"]
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q"
-pythonpath = ["src"]
-testpaths = ["tests/test_*.py"]
-
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
-include = ["src", "tests"]
-typeCheckingMode = "strict"
-reportPrivateUsage = "none"
-reportDeprecated = "none"
+[tool.yapf]
+allow_split_before_dict_value = true
+based_on_style = "pep8"
+blank_line_before_nested_class_or_def = 1
+blank_lines_between_top_level_imports_and_variables = 2
+coalesce_brackets = true
+column_limit = 127
+dedent_closing_brackets = true
+disable_split_list_with_comment = true
+each_dict_entry_on_separate_line = false
+indent_closing_brackets = false
+spaces_around_subscript_colon = false
+spaces_before_comment = 2
+split_before_arithmetic_operator = true
+split_before_bitwise_operator = true
+split_before_dot = true
+split_before_first_argument = true
+split_before_logical_operator = true
+split_complex_comprehension = false

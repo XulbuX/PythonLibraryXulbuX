@@ -1,12 +1,13 @@
-# THIS WORKFLOW WILL BUILD WHEELS FOR ALL MAJOR PLATFORMS AND UPLOAD THEM TO PYPI
+# This workflow will build wheels for all major platforms and upload them to PyPI.
 
-# TO BUILD AND INSTALL LOCALLY FOR TESTING, RUN THE FOLLOWING COMMAND:
+# To build and install locally for testing, run the following command:
 # py -m pip install "/path/to/python-lib-xulbux" --no-deps --no-cache-dir --force-reinstall -vv
 
-# TO CREATE A NEW RELEASE, TAG A COMMIT WITH THE FOLLOWING FORMAT:
+# To create a new release, tag a commit with the following format:
 # git tag v1.X.Y
 # git push origin v1.X.Y
-# IF THE TAG v1.X.Y ALREADY EXISTS, RUN THE FOLLOWING COMMANDS FIRST:
+
+# If the tag `v1.X.Y` already exists, run the following commands first:
 # git tag -d v1.X.Y
 # git push origin :refs/tags/v1.X.Y
 
@@ -17,8 +18,8 @@ permissions:
 on:
   push:
     tags:
-      - "v1.[0-9]+.[0-9]+"
-  workflow_dispatch: # ALLOW MANUAL TRIGGER
+      - 'v1.[0-9]+.[0-9]+'
+  workflow_dispatch: # Allow manual trigger.
 
 jobs:
   build_wheels:
@@ -35,7 +36,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-*
-          CIBW_SKIP: "*-musllinux_*"
+          CIBW_SKIP: '*-musllinux_*'
           CIBW_BUILD_FRONTEND: pip
           CIBW_ENVIRONMENT: XULBUX_USE_MYPYC=1
 
@@ -78,7 +79,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v7
         with:
-          pattern: "*"
+          pattern: '*'
           merge-multiple: true
           path: dist
 

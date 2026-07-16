@@ -159,9 +159,9 @@ class Json:
         … the `update_values` dictionary could look like this:
         ```python
         {
-            # CHANGE FIRST LIST-VALUE UNDER 'fruits' TO "strawberries"
+            # Change first list-value under `fruits` to "strawberries":
             "healthy->fruits->0": "strawberries",
-            # CHANGE VALUE OF KEY 'vegetables' TO [1, 2, 3]
+            # Change value of key `vegetables` to [1, 2, 3]:
             "healthy->vegetables": [1, 2, 3]
         }
         ```

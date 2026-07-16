@@ -109,18 +109,19 @@ class EnvPath:
         path_resolved = path.resolve()
 
         if remove:
-            # FILTER OUT THE PATH TO REMOVE
+            # Filter out the path to remove:
             current_paths = [path for path in current_paths if path.resolve() != path_resolved]
         else:
-            # ADD THE NEW PATH IF NOT ALREADY PRESENT
+            # Add the new path if not already present:
             if path_resolved not in {path.resolve() for path in current_paths}:
                 current_paths = [*current_paths, path_resolved]
 
-        # CONVERT TO STRINGS ONLY FOR SETTING THE ENVIRONMENT VARIABLE
+        # Convert to strings only for setting the environment variable:
         path_strings = [str(path) for path in current_paths]
         _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys(filter(bool, path_strings)))
 
-        if _sys.platform == "win32":  # WINDOWS
+        # Windows:
+        if _sys.platform == "win32":
             try:
                 _winreg = __import__("winreg")
                 key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Environment", 0, _winreg.KEY_ALL_ACCESS)
@@ -130,7 +131,8 @@ class EnvPath:
             except Exception as exc:
                 raise RuntimeError("Failed to update PATH in registry:\n  " + str(exc).replace("\n", "  \n"))
 
-        else:  # UNIX-LIKE (LINUX/macOS)
+        # Unix-like (Linux/macOS):
+        else:
             home_path = Path.home()
             bashrc = home_path / ".bashrc"
             zshrc = home_path / ".zshrc"
@@ -144,7 +146,7 @@ class EnvPath:
                     new_content = [line for line in content.splitlines() if not line.endswith(f':{path_resolved}"')]
                     file.write("\n".join(new_content))
                 else:
-                    file.write(f"{content.rstrip()}\n# Added by 'xulbux'\n"
+                    file.write(f"{content.rstrip()}\n# Added by `python-lib-xulbux`.\n"
                                f'export PATH="{new_path}"\n')
 
                 file.truncate()

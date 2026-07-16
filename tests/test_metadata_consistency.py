@@ -7,22 +7,22 @@ import ast
 import os
 import re
 
-# DEFINE PATHS RELATIVE TO THIS TEST FILE tests/test_version.py
+# Define paths relative to this test file `tests/test_version.py`:
 ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 
 
 def get_current_branch() -> Optional[str]:
-    # CHECK GITHUB ACTIONS ENVIRONMENT VARIABLES FIRST
-    # GITHUB_HEAD_REF IS SET FOR PULL REQUESTS (SOURCE BRANCH)
+    # Check GitHub Actions environment variables first.
+    # `GITHUB_HEAD_REF` is set for pull requests (source branch):
     if branch := os.environ.get("GITHUB_HEAD_REF"):
         return branch
-    # GITHUB_REF_NAME IS SET FOR PUSHES (BRANCH NAME)
+    # `GITHUB_REF_NAME` is set for pushes (branch name):
     if branch := os.environ.get("GITHUB_REF_NAME"):
         return branch
 
-    # FALLBACK TO GIT COMMAND FOR LOCAL DEV
+    # Fallback to Git command for local dev:
     try:
         result = subprocess.run(
             ["git", "branch", "--show-current"],
@@ -36,29 +36,29 @@ def get_current_branch() -> Optional[str]:
         return None
 
 
-################################################## VERSION CONSISTENCY TEST ##################################################
+################################################ VERSION CONSISTENCY TEST ################################################
 
 
 def test_version_consistency():
     """Verifies that the version numbers in `pyproject.toml` and `__init__.py`
     match the version specified in the current release branch name (`dev/1.X.Y`)."""
-    # SKIP IF WE CAN'T DETERMINE THE BRANCH (DETACHED HEAD OR NOT A GIT REPO)
+    # Skip if we can't determine the branch (detached head or not a git repo):
     if not (branch_name := get_current_branch()):
         pytest.skip("Could not determine git branch name")
 
-    # SKIP IF BRANCH NAME DOESN'T MATCH RELEASE PATTERN dev/1.X.Y
+    # Skip if branch name doesn't match release pattern `dev/1.X.Y`:
     if not (branch_match := re.match(r"^dev/(1\.[0-9]+\.[0-9]+)$", branch_name)):
         pytest.skip(f"Current branch '{branch_name}' is not a release branch (dev/1.X.Y)")
 
     expected_version = branch_match.group(1)
 
-    # EXTRACT VERSION FROM __init__.py
+    # Extract version from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
         init_version_match = re.search(r'^__version__\s*=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_version = init_version_match.group(1) if init_version_match else None
 
-    # EXTRACT VERSION FROM pyproject.toml
+    # Extract version from `pyproject.toml`:
     with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
         pyproject_data = toml.load(file)
     pyproject_version = pyproject_data.get("project", {}).get("version", "")
@@ -73,17 +73,17 @@ def test_version_consistency():
         f"Hardcoded lib-version in pyproject.toml ({pyproject_version}) does not match branch version ({expected_version})"
 
 
-################################################## DEPENDENCIES CONSISTENCY TEST ##################################################
+############################################## DEPENDENCIES CONSISTENCY TEST #############################################
 
 
 def test_dependencies_consistency():
     """Verifies that dependencies in `pyproject.toml` match `__dependencies__` in `__init__.py`."""
-    # EXTRACT DEPENDENCIES FROM __init__.py
+    # Extract dependencies from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
     init_deps_match = re.search(r'__dependencies__\s*=\s*(\[.*?\])', init_content, re.DOTALL)
 
-    # EXTRACT DEPENDENCIES FROM pyproject.toml
+    # Extract dependencies from `pyproject.toml`:
     with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
         pyproject_data = toml.load(file)
     pyproject_deps = pyproject_data.get("project", {}).get("dependencies", [])
@@ -93,7 +93,7 @@ def test_dependencies_consistency():
 
     init_deps = ast.literal_eval(init_deps_match.group(1))
 
-    # SORT FOR COMPARISON
+    # Sort for comparison:
     pyproject_deps_sorted = sorted(pyproject_deps)
     init_deps_sorted = sorted(init_deps)
 
@@ -103,18 +103,18 @@ def test_dependencies_consistency():
         f"  pyproject.toml : {pyproject_deps_sorted}\n"
 
 
-################################################## DESCRIPTION CONSISTENCY TEST ##################################################
+############################################## DESCRIPTION CONSISTENCY TEST ##############################################
 
 
 def test_description_consistency():
     """Verifies that the description in `pyproject.toml` matches `__description__` in `__init__.py`."""
-    # EXTRACT DESCRIPTION FROM __init__.py
+    # Extract description from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
         init_desc_match = re.search(r'^__description__\s*=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_desc = init_desc_match.group(1) if init_desc_match else None
 
-    # EXTRACT DESCRIPTION FROM pyproject.toml
+    # Extract description from `pyproject.toml`:
     with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
         pyproject_data = toml.load(file)
     pyproject_desc = pyproject_data.get("project", {}).get("description", "")

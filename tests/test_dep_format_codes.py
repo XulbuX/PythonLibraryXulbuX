@@ -21,7 +21,7 @@ reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_inverse', '_invert', 
 reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_underline', '_u')]}{ANSI.END}"
 
 #
-################################################## FormatCodes TESTS ##################################################
+################################################# Dep. FormatCodes TESTS #################################################
 
 
 def test_to_ansi():
@@ -40,36 +40,36 @@ def test_escape_ansi():
 
 
 def test_escape():
-    # TEST BASIC FORMATTING CODES
+    # Test basic formatting codes:
     assert FormatCodes.escape("[b]Hello[_]") == "[/b]Hello[/_]"
     assert FormatCodes.escape("[bold|italic]Text[_]") == "[/bold|italic]Text[/_]"
 
-    # TEST WITH COLORS
+    # Test with colors:
     assert FormatCodes.escape("[#F87]Hello[_]") == "[/#F87]Hello[/_]"
     assert FormatCodes.escape("[rgb(255, 136, 119)]Hello[_]") == "[/rgb(255, 136, 119)]Hello[/_]"
 
-    # TEST WITH DEFAULT COLOR
+    # Test with default color:
     assert FormatCodes.escape("[default]Hello", default_color="#FFF") == "[/default]Hello"
     assert FormatCodes.escape("[bg:default]Hello", default_color="#FFF") == "[/bg:default]Hello"
 
-    # TEST WITH * FORMATTING CODE
+    # Test with `*` formatting code:
     assert FormatCodes.escape("[*]Hello", default_color="#FFF") == "[/*]Hello"
     assert FormatCodes.escape("[b|*]Hello", default_color="#FFF") == "[/b|*]Hello"
 
-    # TEST WITH AUTO-RESET
+    # Test with auto-reset:
     assert FormatCodes.escape("[b](Hello)") == "[/b](Hello)"
     assert FormatCodes.escape("[*](Hello)", default_color="#FFF") == "[/*](Hello)"
 
-    # TEST INVALID FORMATTING CODES (SHOULD REMAIN UNCHANGED)
+    # Test invalid formatting codes (should remain unchanged):
     assert FormatCodes.escape("[invalid]Hello") == "[invalid]Hello"
-    assert FormatCodes.escape("[default]Hello") == "[default]Hello"  # NO 'default_color'
-    assert FormatCodes.escape("[*]Hello") == "[/*]Hello"  # NO 'default_color'
+    assert FormatCodes.escape("[default]Hello") == "[default]Hello"  # No `default_color`.
+    assert FormatCodes.escape("[*]Hello") == "[/*]Hello"  # No `default_color`.
 
-    # TEST ALREADY ESCAPED CODES
+    # Test already escaped codes:
     assert FormatCodes.escape("[/b]Hello") == "[/b]Hello"
     assert FormatCodes.escape("[/*]Hello", default_color="#FFF") == "[/*]Hello"
 
-    # TEST WITH BRIGHTNESS MODIFIERS
+    # Test with brightness modifiers:
     assert FormatCodes.escape("[l]Hello", default_color="#FFF") == "[/l]Hello"
     assert FormatCodes.escape("[ll]Hello", default_color="#FFF") == "[/ll]Hello"
     assert FormatCodes.escape("[+]Hello", default_color="#FFF") == "[/+]Hello"
@@ -87,29 +87,29 @@ def test_hyperlinks():
     link_open_file = ANSI.SEQ_LINK_OPEN.format(file_url)
     link_close = ANSI.SEQ_LINK_CLOSE
 
-    # BASIC LINK
+    # Basic link:
     assert FormatCodes.to_ansi(f"[link:{url}](click here)") == f"{link_open}click here{link_close}"
 
-    # FILE URL
+    # File URL:
     assert FormatCodes.to_ansi(f"[link:{file_url}](open file)") == f"{link_open_file}open file{link_close}"
 
-    # LINK WITH NESTED FORMATTING IN DISPLAY TEXT
+    # Link with nested formatting in display text:
     assert FormatCodes.to_ansi(f"[link:{url}]([b](bold link))") == f"{link_open}{bold}bold link{reset_bold}{link_close}"
 
-    # LINK COMBINED WITH OTHER FORMAT KEYS
+    # Link combined with other format keys:
     assert FormatCodes.to_ansi(f"[link:{url}|b](click here)") == f"{link_open}{bold}click here{reset_bold}{link_close}"
     bright_blue = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['br:blue']}{ANSI.END}"
     assert FormatCodes.to_ansi(f"[link:{url}|br:blue](click here)"
                                ) == (f"{link_open}{bright_blue}click here{reset_color}{link_close}")
 
-    # LINK WITHOUT DISPLAY BRACES IS INVALID (LEFT AS-IS)
+    # Link without display braces is invalid (left as-is):
     assert FormatCodes.to_ansi(f"[link:{url}]") == f"[link:{url}]"
 
-    # ESCAPE: LINK SHOULD BE ESCAPED
+    # Escape: link should be escaped:
     assert FormatCodes.escape(f"[link:{url}](click here)") == f"[/link:{url}](click here)"
     assert FormatCodes.escape(f"[link:{url}|b](click here)") == f"[/link:{url}|b](click here)"
 
-    # REMOVE: OSC SEQUENCES FROM LINK SHOULD BE STRIPPED, LEAVING ONLY DISPLAY TEXT
+    # Remove: osc sequences from link should be stripped, leaving only display text:
     assert FormatCodes.remove(f"[link:{url}](click here)") == "click here"
     assert FormatCodes.remove_ansi(f"{link_open}click here{link_close}") == "click here"
 

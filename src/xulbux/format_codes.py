@@ -173,30 +173,6 @@ import os as _os
 _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI formatting."""
 
-
-def _config_terminal() -> None:
-    """Configure the terminal to be able to interpret and render ANSI formatting.\n
-    This function only does something the first time it is called. Subsequent calls are no-ops."""
-
-    global _terminal_ansi_configured
-    if _terminal_ansi_configured:
-        return
-
-    _sys.stdout.flush()
-
-    if _os.name == "nt":
-        try:
-            kernel32 = getattr(_ctypes, "windll").kernel32
-            handle = kernel32.GetStdHandle(-11)
-            mode = _ctypes.c_ulong()
-            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
-            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
-        except Exception:
-            pass
-
-    _terminal_ansi_configured = True
-
-
 _ANSI_SEQ_RX: Final = _rx.compile(ANSI.CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
 """Regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""
 
@@ -222,7 +198,8 @@ _STANDARD_SEQS: Final[
 """Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR format.\n
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
-################################################## CORE TYPES ##################################################
+#
+####################################################### CORE TYPES #######################################################
 
 
 class _FmtGroup:
@@ -327,10 +304,10 @@ class _Fmt(int):
 class _ColorFmt:
     """A 24-bit true-color format – foreground or background.\n
     ---------------------------------------------------------------------
-    >>> F.rgb(255, 96, 112)("text")             # CUSTOM FG COLOR
-    >>> F.BG.rgb(0, 0, 0)("text")               # CUSTOM BG COLOR
-    >>> F.hex("#FF6070")("text")                # HEX FG COLOR
-    >>> (F.BOLD | F.rgb(255, 96, 112))("text")  # COMBINED WITH STYLE"""
+    >>> F.rgb(255, 96, 112)("text")             # Custom FG color
+    >>> F.BG.rgb(0, 0, 0)("text")               # Custom BG color
+    >>> F.hex("#FF6070")("text")                # Hex FG color
+    >>> (F.BOLD | F.rgb(255, 96, 112))("text")  # Combined with style"""
 
     __slots__ = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
 
@@ -445,6 +422,8 @@ class _FmtStyled:
         return f"_FmtStyled(opens={self._opens!r}, text={self.text!r})"
 
 
+######################### PUBLIC TYPES ########################
+
 AnyFmt: TypeAlias = Union[_Fmt, _ColorFmt, _LinkFmt]
 """Any single format code, color format, or link format<br>
 that can be combined via `|` and applied to text."""
@@ -455,7 +434,8 @@ FmtText: TypeAlias = Union[FmtSegment, tuple[FmtSegment, ...]]
 FmtRenderable: TypeAlias = Union[str, _FmtStyled, AnyFmt, _FmtGroup, tuple[FmtSegment, ...]]
 """Anything that can be passed as a positional argument to `FC(…)`."""
 
-################################################## NAMESPACE HELPERS ##################################################
+#
+#################################################### NAMESPACE HELPERS ###################################################
 
 
 class _BgBrNS:
@@ -536,7 +516,7 @@ class _BrNS:
     """Bright white foreground."""
 
 
-################################################## FORMAT ATTRS ##################################################
+####################################################### FORMAT ATTRS #####################################################
 
 
 class F:
@@ -544,11 +524,11 @@ class F:
     -----------------------------------------------------------------------------------------
     Every attribute supports `|` for combining and `()` for applying to text:
 
-    >>> F.BOLD("hello")                   # BOLD, AUTO-RESET AFTER
-    >>> (F.BOLD | F.RED)("hello")         # BOLD + RED, AUTO-RESET AFTER
-    >>> F.BR.GREEN("hello")               # BRIGHT GREEN
-    >>> F.BG.BLACK("hello")               # BLACK BACKGROUND
-    >>> F.DIM("# ", F.ITALIC("comment"))  # NESTED: DIM WRAPS ITALIC INSIDE
+    >>> F.BOLD("hello")                   # Bold, auto-reset after
+    >>> (F.BOLD | F.RED)("hello")         # Bold + red, auto-reset after
+    >>> F.BR.GREEN("hello")               # Bright green
+    >>> F.BG.BLACK("hello")               # Black background
+    >>> F.DIM("# ", F.ITALIC("comment"))  # Nested: dim wraps italic inside
 
     For a full list of available attributes, see the `format_codes` module documentation."""
 
@@ -644,7 +624,7 @@ class F:
         return _LinkFmt(url)
 
 
-################################################## TERMINAL CONTROL ##################################################
+#################################################### TERMINAL CONTROL ####################################################
 
 
 class Term:
@@ -715,64 +695,7 @@ class Term:
         return f"{ANSI.CHAR}[u"
 
 
-################################################## FC ##################################################
-
-
-def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """Build the opening and closing ANSI sequences for a `_FmtGroup`.\n
-    ------------------------------------------------------------------------------------
-    Returns a `(opens, closes)` pair of tuples. Multiple opens / closes are emitted<br>
-    only when both an OSC 8 hyperlink and SGR codes are present (OSC wraps SGR)."""
-
-    # FAST PATH: SINGLE STANDARD _Fmt CODE (REALLY COMMON)
-    if len(codes := group._codes) == 1 and type(codes[0]) is _Fmt:
-        if (cached := _STANDARD_SEQS.get(int(codes[0]))) is not None:
-            return cached
-
-    sgr_open: list[str] = []
-    sgr_close: list[str] = []
-    link_url: Optional[str] = None
-
-    for code in group:
-        if isinstance(code, _LinkFmt):
-            link_url = code._url
-
-        elif isinstance(code, _ColorFmt):
-            if code._bg:
-                sgr_open.append(f"48;2;{code._red};{code._green};{code._blue}")
-                sgr_close.append("49")
-            else:
-                sgr_open.append(f"38;2;{code._red};{code._green};{code._blue}")
-                sgr_close.append("39")
-
-        else:
-            cid = int(code)
-            sgr_open.append(str(cid))
-            if (reset := _RESET_MAP.get(cid)) is not None:
-                sgr_close.append(str(reset))
-
-    # DE-DUPE WHILE PRESERVING ORDER FOR CLEANER OUTPUT
-    seen: set[str] = set()
-    dedup_close: list[str] = []
-
-    for close_code in sgr_close:
-        if close_code not in seen:
-            seen.add(close_code)
-            dedup_close.append(close_code)
-
-    opens: list[str] = []
-    closes: list[str] = []
-
-    if link_url is not None:
-        opens.append(ANSI.SEQ_LINK_OPEN.format(link_url))
-    if sgr_open:
-        opens.append(f"{ANSI.CHAR}[{';'.join(sgr_open)}m")
-    if dedup_close:
-        closes.append(f"{ANSI.CHAR}[{';'.join(dedup_close)}m")
-    if link_url is not None:
-        closes.append(ANSI.SEQ_LINK_CLOSE)
-
-    return tuple(opens), tuple(closes)
+########################################################### FC ###########################################################
 
 
 class FC:
@@ -995,5 +918,99 @@ class FC:
                 self._ansi_parts.append(piece)
             return
 
-        # FALLBACK – COERCE UNKNOWN OBJECTS TO STR
+        # Fallback; Coerce unknown objects to str:
         self._ansi_parts.append(str(segment))
+
+
+#################################################### INTERNAL HELPERS ####################################################
+
+
+def _build_open_close(group: _FmtGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Internal function to build the opening and closing ANSI sequences for a `_FmtGroup`.\n
+    ------------------------------------------------------------------------------------------
+    Returns a `(opens, closes)` pair of tuples. Multiple opens / closes are emitted<br>
+    only when both an OSC 8 hyperlink and SGR codes are present (OSC wraps SGR)."""
+
+    return _BuildOpenClose(group).build()
+
+
+def _config_terminal() -> None:
+    """Configure the terminal to be able to interpret and render ANSI formatting.\n
+    This function only does something the first time it is called. Subsequent calls are no-ops."""
+
+    global _terminal_ansi_configured
+    if _terminal_ansi_configured:
+        return
+
+    _sys.stdout.flush()
+
+    if _os.name == "nt":
+        try:
+            kernel32 = getattr(_ctypes, "windll").kernel32
+            handle = kernel32.GetStdHandle(-11)
+            mode = _ctypes.c_ulong()
+            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+        except Exception:
+            pass
+
+    _terminal_ansi_configured = True
+
+
+class _BuildOpenClose:
+    """Internal, callable helper class to build the opening and closing ANSI sequences for a `_FmtGroup`."""
+
+    def __init__(self, group: _FmtGroup, /) -> None:
+        self.group = group
+        self.sgr_open: list[str] = []
+        self.sgr_close: list[str] = []
+        self.link_url: Optional[str] = None
+
+    def build(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        if len(codes := self.group._codes) == 1 and type(codes[0]) is _Fmt:
+            if (cached := _STANDARD_SEQS.get(int(codes[0]))) is not None:
+                return cached
+
+        for code in self.group:
+            self._process_code(code)
+
+        return self._build_result()
+
+    def _process_code(self, code: AnyFmt) -> None:
+        if isinstance(code, _LinkFmt):
+            self.link_url = code._url
+        elif isinstance(code, _ColorFmt):
+            if code._bg:
+                self.sgr_open.append(f"48;2;{code._red};{code._green};{code._blue}")
+                self.sgr_close.append("49")
+            else:
+                self.sgr_open.append(f"38;2;{code._red};{code._green};{code._blue}")
+                self.sgr_close.append("39")
+        else:
+            cid = int(code)
+            self.sgr_open.append(str(cid))
+            if (reset := _RESET_MAP.get(cid)) is not None:
+                self.sgr_close.append(str(reset))
+
+    def _build_result(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        seen: set[str] = set()
+        dedup_close: list[str] = []
+
+        for close_code in self.sgr_close:
+            if close_code not in seen:
+                seen.add(close_code)
+                dedup_close.append(close_code)
+
+        opens: list[str] = []
+        closes: list[str] = []
+
+        if self.link_url is not None:
+            opens.append(ANSI.SEQ_LINK_OPEN.format(self.link_url))
+        if self.sgr_open:
+            opens.append(f"{ANSI.CHAR}[{';'.join(self.sgr_open)}m")
+        if dedup_close:
+            closes.append(f"{ANSI.CHAR}[{';'.join(dedup_close)}m")
+        if self.link_url is not None:
+            closes.append(ANSI.SEQ_LINK_CLOSE)
+
+        return tuple(opens), tuple(closes)

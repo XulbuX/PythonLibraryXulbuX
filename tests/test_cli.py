@@ -9,7 +9,7 @@ import toml
 ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
-################################################## ENTRYPOINT REGISTRATION TESTS ##################################################
+############################################## ENTRYPOINT REGISTRATION TESTS #############################################
 
 
 def test_xulbux_lib_entrypoint_registered():
@@ -21,7 +21,7 @@ def test_xulbux_lib_entrypoint_registered():
     assert scripts["xulbux-lib"] == "xulbux.cli:main"
 
 
-################################################## xulbux-lib TESTS ##################################################
+#################################################### xulbux-lib TESTS ####################################################
 
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
@@ -55,7 +55,7 @@ def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
 
     mock_pause_exit.assert_called_once()
     call_kwargs = mock_pause_exit.call_args
-    # pause=True MUST BE PASSED SO THE USER SEES THE PROMPT
+    # `pause=True` must be passed so the user sees the prompt:
     assert call_kwargs.kwargs.get("pause", True) is True
 
 
@@ -63,4 +63,4 @@ def test_show_help_does_not_raise(monkeypatch: pytest.MonkeyPatch):
     """show_help() must complete without errors."""
     monkeypatch.setattr("xulbux.console.Console._read_single_key", MagicMock())
 
-    show_help()  # MUST NOT RAISE
+    show_help()  # Must not raise.

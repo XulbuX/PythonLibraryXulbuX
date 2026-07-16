@@ -194,7 +194,8 @@ class rgba:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
+        # The `method` param is validated in `Color.luminance()`.
+
         self.red = self.green = self.blue = int(Color.luminance(self.red, self.green, self.blue, method=method))
         return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
 
@@ -473,7 +474,8 @@ class hsla:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
+        # The `method` param is validated in `Color.luminance()`.
+
         red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
         light = int(Color.luminance(red, green, blue, output_type=None, method=method))
 
@@ -794,7 +796,8 @@ class hexa:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # THE 'method' PARAM IS CHECKED IN 'Color.luminance()'
+        # The `method` param is validated in `Color.luminance()`.
+
         self.red = self.green = self.blue = int(Color.luminance(self.red, self.green, self.blue, method=method))
         return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
 

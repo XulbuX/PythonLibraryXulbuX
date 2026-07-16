@@ -187,7 +187,8 @@ class System(metaclass=_SystemMeta):
 
         args_list = args or []
 
-        if _os.name == "nt":  # WINDOWS
+        # Windows:
+        if _os.name == "nt":
             if win_title:
                 args_str = (
                     '-c "import ctypes; '
@@ -202,7 +203,8 @@ class System(metaclass=_SystemMeta):
             else:
                 _sys.exit(0)
 
-        else:  # POSIX
+        # Unix-like (Linux/macOS):
+        else:
             cmd = ["pkexec"]
 
             if win_title:

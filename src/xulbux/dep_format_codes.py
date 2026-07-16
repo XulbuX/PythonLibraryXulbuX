@@ -1,3 +1,4 @@
+# flake8: noqa
 """
 **DEPRECATED MODULE** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
 
@@ -374,7 +375,7 @@ class FormatCodes:
         if not (0 < brightness_steps <= 100):
             raise ValueError(f"The 'brightness_steps' parameter must be in range [1, 100] inclusive, got {brightness_steps!r}")
 
-        # FAST PATH: NO FORMATTING CODES POSSIBLE WITHOUT '['
+        # Fast path: no formatting codes possible without `[`:
         if "[" not in string:
             return cls._no_bracket_fast_path(
                 string,
@@ -383,7 +384,7 @@ class FormatCodes:
                 _validate_default=_validate_default,
             )
 
-        # END-TO-END CACHE LOOKUP (PUBLIC ENTRY PATH ONLY)
+        # End-to-end cache lookup (public entry path only):
         cache_key = (
             cls._build_cache_key(string, default_color, brightness_steps) \
             if _default_start and _validate_default else None
@@ -606,10 +607,10 @@ class FormatCodes:
 
             clean_string = _PATTERNS.ansi_seq.sub(
                 _RemAnsiSeqHelper(removals),
-                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string  # REMOVE LINEBREAKS FOR POSITIONS
+                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string  # Remove linebreaks for positions.
             )
             if _ignore_linebreaks:
-                clean_string = _PATTERNS.ansi_seq.sub("", ansi_string)  # BUT KEEP LINEBREAKS IN RETURNED CLEAN STRING
+                clean_string = _PATTERNS.ansi_seq.sub("", ansi_string)  # But keep linebreaks in returned clean string.
 
             return clean_string, tuple(removals)
 
@@ -627,7 +628,7 @@ class FormatCodes:
             _sys.stdout.flush()
             if _os.name == "nt":
                 try:
-                    # ENABLE VT100 MODE ON WINDOWS TO BE ABLE TO USE ANSI CODES
+                    # Enable VT100 mode on Windows:
                     kernel32 = getattr(_ctypes, "windll").kernel32
                     handle = kernel32.GetStdHandle(-11)
                     mode = _ctypes.c_ulong()
@@ -680,7 +681,7 @@ class FormatCodes:
             except (TypeError, ValueError):
                 return None
 
-        return None  # HEX STRINGS AND OTHER TYPES SKIP CACHE
+        return None  # Hex strings and other types skip cache.
 
     @staticmethod
     def _store_in_cache(
@@ -716,9 +717,9 @@ class FormatCodes:
         if "*" not in string:
             return string
         if use_default:
-            return _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+            return _PATTERNS.star_reset.sub(r"[\1_|default\2]", string)  # Replace `[…|*|…]` with `[…|_|default|…]`.
 
-        return _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # REPLACE `[…|*|…]` WITH `[…|_|…]`
+        return _PATTERNS.star_reset.sub(r"[\1_\2]", string)  # Replace `[…|*|…]` with `[…|_|…]`.
 
     @staticmethod
     def _formats_to_keys(formats: str, /) -> list[str]:
@@ -733,14 +734,14 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
 
-        # FAST PATH WHEN NO DEFAULT COLOR: USE CACHED RESULTS
+        # Fast path when no default color; Use cached results:
         if default_color is None and (cached := _REPLACEMENT_CACHE.get(format_key)) is not None:
             return cached
 
         _format_key = format_key
-        format_key = cls._normalize_key(format_key)  # NORMALIZE KEY AND SAVE ORIGINAL
+        format_key = cls._normalize_key(format_key)  # Normalize key and save original.
 
-        # DIRECT LOOKUP IN PRECOMPUTED FLAT TABLE (NO O(N) SCAN OVER CODES_MAP)
+        # Direct lookup in pre-computed flat table (no O(n) scan over `codes_map`):
         flat_hit = _ANSI_FLAT.get(format_key)
 
         if default_color is not None and ( \
@@ -871,11 +872,11 @@ class _EscapeFormatCodeHelper:
     def __call__(self, match: _rx.Match[str], /) -> str:
         formats, auto_reset_txt = match.group(1), match.group(3)
 
-        # CHECK IF ALREADY ESCAPED OR CONTAINS NO FORMATTING
+        # Check if already escaped or contains no formatting:
         if not formats or _PATTERNS.escape_char_cond.match(match.group(0)):
             return match.group(0)
 
-        # TEMPORARILY REPLACE `*` FOR VALIDATION
+        # Temporarily replace `*` for validation:
         _formats = formats
         if self.use_default:
             _formats = _PATTERNS.star_reset_inside.sub(r"\1_|default\2", formats)
@@ -891,19 +892,19 @@ class _EscapeFormatCodeHelper:
                 has_invalid_key = True
 
         if has_link or not has_invalid_key:
-            # ESCAPE THE FORMATTING CODE
+            # Escape the formatting code:
             escaped = f"[{self.escape_char}{formats}]"
             if auto_reset_txt:
-                # RECURSIVELY ESCAPE FORMATTING IN AUTO-RESET TEXT
+                # Recursively escape formatting in auto-reset text:
                 escaped_auto_reset = self.cls.escape(auto_reset_txt, self.default_color, _escape_char=self.escape_char)
                 escaped += f"({escaped_auto_reset})"
             return escaped
 
         else:
-            # KEEP INVALID FORMATTING CODES AS-IS
+            # Keep invalid formatting codes as-is:
             result = f"[{formats}]"
             if auto_reset_txt:
-                # STILL RECURSIVELY PROCESS AUTO-RESET TEXT
+                # Still recursively process auto-reset text:
                 escaped_auto_reset = self.cls.escape(auto_reset_txt, self.default_color, _escape_char=self.escape_char)
                 result += f"({escaped_auto_reset})"
             return result
@@ -942,7 +943,7 @@ class _ReplaceKeysHelper:
         self.default_color = default_color
         self.brightness_steps = brightness_steps
 
-        # INSTANCE VARIABLES FOR CURRENT PROCESSING STATE
+        # Instance variables for current processing state:
         self.formats: str = ""
         self.original_formats: str = ""
         self.formats_escaped: bool = False
@@ -957,19 +958,19 @@ class _ReplaceKeysHelper:
         self.auto_reset_escaped = bool(match.group(2))
         self.auto_reset_txt = match.group(3)
 
-        # CHECK IF THERE'S ESCAPED FORMAT CODES
+        # Check if there are escaped format codes:
         self.formats_escaped = bool(_PATTERNS.escape_char_cond.match(match.group(0)))
         if self.formats_escaped:
             self.original_formats = self.formats = _PATTERNS.escape_char.sub(r"\1", self.formats)
 
-        # HANDLE HYPERLINK FORMAT
+        # Handle hyperlink format:
         all_keys = self.cls._formats_to_keys(self.formats)
         if (result := self.handle_link(match, all_keys)) is not None:
             return result
 
         self.process_formats_and_auto_reset()
 
-        # IF THERE ARE NO FORMATS OR ALL FORMATS ARE INVALID, RETURN THE ORIGINAL STRING
+        # If there are no formats or all formats are invalid, return the original string:
         if not self.formats:
             return match.group(0)
 
@@ -984,7 +985,7 @@ class _ReplaceKeysHelper:
         if link_key is None:
             return None
         if self.auto_reset_txt is None:
-            return match.group(0)  # LINK WITHOUT DISPLAY BRACES IS INVALID
+            return match.group(0)  # Link without display braces is invalid.
         if self.formats_escaped:
             return f"[{self.original_formats}]({self.auto_reset_txt})"
 
@@ -992,7 +993,7 @@ class _ReplaceKeysHelper:
         display = self.auto_reset_txt
 
         if other_keys := [key for key in all_keys if key != link_key]:
-            # APPLY REMAINING FORMAT CODES TO DISPLAY TEXT WITH AUTO-RESET
+            # Apply remaining format codes to display text with auto-reset:
             display = "[{}]({})".format("|".join(other_keys), display)
 
         if other_keys or ("[" in display and "]" in display):
@@ -1009,7 +1010,7 @@ class _ReplaceKeysHelper:
     def process_formats_and_auto_reset(self) -> None:
         """Process nested formatting in both formats and auto-reset text."""
 
-        # PROCESS AUTO-RESET TEXT IF IT CONTAINS NESTED FORMATTING
+        # Process auto-reset text if it contains nested formatting:
         if self.auto_reset_txt and self.auto_reset_txt.count("[") > 0 and self.auto_reset_txt.count("]") > 0:
             self.auto_reset_txt = self.cls.to_ansi(
                 self.auto_reset_txt,
@@ -1019,7 +1020,7 @@ class _ReplaceKeysHelper:
                 _validate_default=False,
             )
 
-        # PROCESS NESTED FORMATTING IN FORMATS
+        # Process nested formatting in formats:
         if self.formats and self.formats.count("[") > 0 and self.formats.count("]") > 0:
             self.formats = self.cls.to_ansi(
                 self.formats,
@@ -1039,7 +1040,7 @@ class _ReplaceKeysHelper:
             else f"[{format_key}]"
         ) for format_key in self.format_keys]
 
-        # GENERATE RESET CODES IF AUTO-RESET IS ACTIVE
+        # Generate reset codes if auto-reset is active:
         if self.auto_reset_txt and not self.auto_reset_escaped:
             self.gen_reset_codes()
         else:
@@ -1055,34 +1056,34 @@ class _ReplaceKeysHelper:
             k_lower = format_key.lower()
             k_set = set(k_lower.split(":"))
 
-            # BACKGROUND COLOR FORMAT
+            # Background color format:
             if _PREFIX["bg"] & k_set and len(k_set) <= 3:
                 if k_set & _PREFIX["br"]:
-                    # BRIGHT BACKGROUND COLOR – RESET BOTH BG AND COLOR
+                    # Bright background color; Reset both BG and color:
                     for i in range(len(format_key)):
                         if self.is_valid_color(format_key[i:]):
                             reset_keys.extend(default_color_resets)
                             break
 
                 else:
-                    # REGULAR BACKGROUND COLOR – RESET ONLY BG
+                    # Regular background color; Reset only BG:
                     for i in range(len(format_key)):
                         if self.is_valid_color(format_key[i:]):
                             reset_keys.append("_bg")
                             break
 
-            # TEXT COLOR FORMAT
+            # Text color format:
             elif self.is_valid_color(format_key) or any(
                 k_lower.startswith(pref_colon := f"{prefix}:") and self.is_valid_color(format_key[len(pref_colon):]) \
                 for prefix in _PREFIX["br"]
             ):
                 reset_keys.append(default_color_resets[1])
 
-            # TEXT STYLE FORMAT
+            # Text style format:
             else:
                 reset_keys.append(f"_{format_key}")
 
-        # CONVERT RESET KEYS TO ANSI CODES
+        # Convert reset keys to ANSI codes:
         self.ansi_resets = [
             ansi_code for reset_key in reset_keys if ( \
                 ansi_code := self.cls._get_replacement(reset_key, self.default_color, self.brightness_steps)
@@ -1092,21 +1093,21 @@ class _ReplaceKeysHelper:
     def build_output(self, match: _rx.Match[str], /) -> str:
         """Build the final output string based on processed formats and resets."""
 
-        # CHECK IF ALL FORMATS WERE VALID
+        # Check if all formats were valid:
         has_single_valid_ansi = len(self.ansi_formats) == 1 and self.ansi_formats[0].count(f"{ANSI.CHAR}{ANSI.START}") >= 1
         all_formats_valid = all(ansi_format.startswith(f"{ANSI.CHAR}{ANSI.START}") for ansi_format in self.ansi_formats)
 
         if not has_single_valid_ansi and not all_formats_valid:
             return match.group(0)
 
-        # HANDLE ESCAPED FORMATTING
+        # Handle escaped formatting:
         if self.formats_escaped:
             return f"[{self.original_formats}]({self.auto_reset_txt})" if self.auto_reset_txt else f"[{self.original_formats}]"
 
-        # BUILD NORMAL OUTPUT WITH FORMATS AND RESETS
+        # Build normal output with formats and resets:
         output = "".join(self.ansi_formats)
 
-        # ADD AUTO-RESET TEXT
+        # Add auto-reset text:
         if self.auto_reset_escaped and self.auto_reset_txt:
             output = self.cls.to_ansi(
                 self.auto_reset_txt,
@@ -1119,7 +1120,7 @@ class _ReplaceKeysHelper:
         elif self.auto_reset_txt:
             output += self.auto_reset_txt
 
-        # ADD RESET CODES IF NOT ESCAPED
+        # Add reset codes if not escaped:
         if not self.auto_reset_escaped:
             output += "".join(self.ansi_resets)
 

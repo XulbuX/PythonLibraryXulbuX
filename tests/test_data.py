@@ -4,17 +4,17 @@ from xulbux.data import Data
 from typing import Literal, Any, cast
 import pytest
 
-# ! DON'T CHANGE THIS DATA !
+# Don't change this data!
 d_comments: dict[str, Any] = {
     "key1": [
-        ">> COMMENT IN THE BEGINNING OF THE STRING <<  value1",
-        "value2  >> COMMENT IN THE END OF THE STRING",
-        "val>> COMMENT IN THE MIDDLE OF THE STRING <<ue3",
-        ">> FULL VALUE IS A COMMENT  value4",
+        ">> Comment in the beginning of the string. <<  value1",
+        "value2  >> Comment in the end of the string.",
+        "val>> Comment in the middle of the string. <<ue3",
+        ">> Full value is a comment:  value4",
     ],
-    ">> FULL KEY + ALL ITS VALUES ARE A COMMENT  key2": ["value", "value", "value"],
+    ">> Full key & all its values are a comment:  key2": ["value", "value", "value"],
     "key3":
-    ">> ALL THE KEYS VALUES ARE COMMENTS  value",
+    ">> All the keys values are comments:  value",
 }
 
 d1_equal: dict[str, Any] = {
@@ -32,7 +32,7 @@ d1_path_id = {"healthy": {"fruit": ["apples", "bananas", "oranges"], "vegetables
 d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": ["math", "science", "history"]}}
 
 #
-################################################## Data TESTS ##################################################
+####################################################### Data TESTS #######################################################
 
 
 def test_serialize_bytes():

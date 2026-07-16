@@ -10,7 +10,7 @@ import io
 ESC = ANSI.CHAR
 
 #
-################################################## BARE FC TESTS ##################################################
+###################################################### BARE FC TESTS #####################################################
 
 
 def test_bare_fmt_emits_only_open_sequence():
@@ -63,7 +63,7 @@ def test_bare_fmt_inside_nested_styled_call():
 
 
 #
-################################################## FC CALL TESTS ##################################################
+###################################################### FC CALL TESTS #####################################################
 
 
 def test_plain_string_passes_through():
@@ -177,9 +177,9 @@ def test_link_with_path():
 
 def test_code_positions_match_offsets_in_ansi():
     result = FC(F.BOLD("hi"))
-    # ESC[1m  THEN  "hi"  THEN  ESC[22m
+    # `{ESC}[1m` then `hi` then `{ESC}[22m`:
     assert result.code_positions == ((0, f"{ESC}[1m"), (len(f"{ESC}[1m") + 2, f"{ESC}[22m"))
-    # OFFSETS MUST BE VALID SLICE POINTS INTO THE ANSI STRING
+    # Offsets must be valid slice points into the ANSI string:
     for position, sequence in result.code_positions:
         assert result.ansi[position:position + len(sequence)] == sequence
 
@@ -220,7 +220,7 @@ def test_input_uses_ansi_as_prompt(monkeypatch: pytest.MonkeyPatch):
 def test_or_chains_produce_FmtGroup():
     group = F.BOLD | F.RED | F.UNDERLINE
     assert isinstance(group, _FmtGroup)
-    # `_Fmt` IS AN `int` SUBCLASS, SO DIRECT INT COMPARISON WORKS
+    # `_Fmt` is an `int` subclass, so direct int comparison works:
     assert list(group) == [1, 31, 4]
 
 
@@ -231,14 +231,14 @@ def test_pipe_with_FmtGroup_left_and_right():
 
 
 def test_build_open_close_dedupes_close_codes():
-    # BOLD + DIM BOTH RESET TO 22 -> ONLY ONE 22 IN CLOSE
+    # Bold + dim both reset to 22 → only one 22 in close:
     opens, closes = _build_open_close(F.BOLD | F.DIM)
     assert opens == (f"{ESC}[1;2m", )
     assert closes == (f"{ESC}[22m", )
 
 
 #
-################################################## Term OPERATOR TESTS ##################################################
+################################################### Term OPERATOR TESTS ##################################################
 
 
 def test_term_constants():
@@ -265,7 +265,7 @@ def test_term_save_restore_and_title():
 
 
 #
-################################################## FC OPERATOR TESTS ##################################################
+#################################################### FC OPERATOR TESTS ###################################################
 
 
 def test_add_with_string():

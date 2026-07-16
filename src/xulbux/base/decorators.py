@@ -6,9 +6,9 @@ from typing import Callable, TypeVar, Any
 import sys as _sys
 
 if _sys.version_info >= (3, 13):
-    from warnings import deprecated as deprecated
+    from warnings import deprecated as deprecated  # type: ignore[attr-defined]  # noqa: F401
 else:
-    from typing_extensions import deprecated as deprecated
+    from typing_extensions import deprecated as deprecated  # noqa: F401
 
 
 T = TypeVar("T")
@@ -31,5 +31,5 @@ def mypyc_attr(**kwargs: Any) -> Callable[[T], T]:
         from mypy_extensions import mypyc_attr as _mypyc_attr
         return _mypyc_attr(**kwargs)
     except ImportError:
-        # IF 'mypy_extensions' IS NOT INSTALLED, JUST RETURN A NO-OP DECORATOR
+        # If `mypy_extensions` is not installed, just return a no-op decorator.
         return _noop_decorator

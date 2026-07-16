@@ -151,7 +151,7 @@ class ParsedArgs:
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.<br>
     Each such attribute (e.g. `args.foo`) is an instance of `ParsedArgData`."""
 
-    # KEEP THESE ATTRS OUT OF __dict__ SO THAT vars(self) ONLY CONTAINS THE ParsedArgData INSTANCES
+    # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
     __slots__ = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
 
     RESERVED_ALIASES: frozenset[str] = frozenset({
@@ -332,7 +332,7 @@ class _ConsoleMeta(type):
             return False
 
         if _os.name == "nt":
-            # CHECK IF VT100 MODE IS ENABLED ON WINDOWS
+            # Check if VT100 mode is enabled on Windows:
             try:
                 kernel32 = getattr(_ctypes, "windll").kernel32
                 handle = kernel32.GetStdHandle(-11)
@@ -386,22 +386,23 @@ class Console(metaclass=_ConsoleMeta):
             ```
         3.  Positional value collection using the literals `"before"` or `"after"`:
             ```python
-            # COLLECT ALL NON-FLAGGED VALUES THAT APPEAR BEFORE THE FIRST FLAG
+            # Collect all non-flagged values that appear before the first flag:
             "alias_name": "before"
-            # COLLECT ALL NON-FLAGGED VALUES THAT APPEAR AFTER THE LAST FLAG'S VALUE
+
+            # Collect all non-flagged values that appear after the last flag's value:
             "alias_name": "after"
             ```
         #### Example usage:
         If you call the `get_args()` method in your script like this:
         ```python
         parsed_args = Console.get_args({
-            "text_before": "before",   # POSITIONAL VALUES BEFORE FIRST FLAG
-            "arg1": {"-A", "--arg1"},  # NORMAL FLAGS
-            "arg2": {                  # FLAGS WITH SPECIFIED DEFAULT VALUE
+            "text_before": "before",   # Positional values before first flag
+            "arg1": {"-A", "--arg1"},  # Normal flags
+            "arg2": {                  # Flags with specified default value
                 "flags": {"-B", "--arg2"},
                 "default": "default value"
             },
-            "text_after": "after",     # POSITIONAL VALUES AFTER LAST FLAG'S VALUE
+            "text_after": "after",     # Positional values after last flag's value
         })
         ```
         … and execute the script via the command line like this:\n
@@ -409,13 +410,13 @@ class Console(metaclass=_ConsoleMeta):
         … the `get_args()` method would return a `ParsedArgs` object with the following structure:
         ```python
         ParsedArgs(
-            # FOUND 2 VALUES BEFORE THE FIRST FLAG
+            # Found 2 values before the first flag:
             text_before = ParsedArgData(exists=True, is_pos=True, values=["Hello", "World"], flag=None),
-            # FOUND ONE OF THE SPECIFIED FLAGS WITH A VALUE
+            # Found one of the specified flags with a value:
             arg1 = ParsedArgData(exists=True, is_pos=False, values=["42"], flag="--arg1"),
-            # DIDN'T FIND ANY OF THE SPECIFIED FLAGS, USED THE DEFAULT VALUE
+            # Didn't find any of the specified flags, used the default value:
             arg2 = ParsedArgData(exists=False, is_pos=False, values=["default value"], flag=None),
-            # FOUND 1 VALUE AFTER THE LAST FLAG'S VALUE
+            # Found 1 value after the last flag's value:
             text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
         )
         ```
@@ -525,34 +526,34 @@ class Console(metaclass=_ConsoleMeta):
                     f"RGBA value, or HEXA value, got {title_bg_color!r}"
                 )
         else:
-            title_px = 0  # REMOVE PADDING IF TITLE HAS NO BG COLOR
+            title_px = 0  # Remove padding if title has no bg color.
 
-        # PADDING = SPACE INSIDE TITLE BG COLOR
-        # MARGIN = SPACE OUTSIDE TITLE BG COLOR
+        # Padding = space inside title bg color
+        # Margin = space outside title bg color
         px, mx = " " * title_px, " " * title_mx
 
-        # TITLE LENGTH INCLUDING PADDING AND MARGIN
+        # Title length including padding and margin:
         title_len: int = len(FormatCodes.remove(title)) + (title_px * 2) + (title_mx * 2)
 
-        # CALCULATE DISTANCE TO NEXT TAB STOP
+        # Distance to next tab stop:
         tab: str = " " * (-title_len % tab_size)
 
-        # POSITION WHERE PROMPT NEEDS TO WRAP TO NEXT LINE
+        # Position where prompt needs to wrap to next line:
         wrap_len: int = cls.width - (title_len + len(tab))
 
-        # REMOVE ALL FORMAT CODES AS THEY WON'T AFFECT THE VISIBLE LENGTH OF THE PROMPT
-        clean_prompt, removals = (*FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True), )
+        # Remove all format codes as they won't affect the visible length of the prompt:
+        clean_prompt, removals = FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True)
 
-        # SPLIT PROMPT INTO LINES AND THEN SPLIT EACH LINE INTO CHUNKS THAT FIT WITHIN THE WRAP LENGTH
+        # Split prompt into lines and then split each line into chunks that fit within the wrap length:
         prompt_lst: list[str] = list(chain.from_iterable(cls._process_lines(clean_prompt, wrap_len)))
 
-        # ADD BACK REMOVED FORMAT CODES TO THEIR ORIGINAL POSITIONS IN THE PROMPT
+        # Add back removed format codes to their original positions in the prompt:
         prompt = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
 
         out: str = (
-            # LOG WITHOUT A TITLE
+            # Log without a title:
             f"{start}{mx}{f'[{default_color}]' if default_color else ''}{prompt}[_]" if title == "" else
-            # LOG WITH A TITLE
+            # Log with a title:
             f"{start}{mx}[b|{title_fg}{f'|bg:{title_bg_color}' if has_title_bg else ''}]{px}{title}{px}[_]{mx}"
             f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]"
         )
@@ -1302,7 +1303,7 @@ class _ConsoleArgsParseHelper:
                     f"{', '.join(sorted(ParsedArgs.RESERVED_ALIASES))}"
                 )
 
-            # PARSE ARG CONFIG & BUILD FLAG LOOKUP FOR NON-POSITIONAL ARGS
+            # Parse arg config & build flag lookup for non-positional args.
             if (flags := self._parse_arg_config(alias, config)) is not None:
                 for flag in flags:
                     if flag in self.arg_lookup:
@@ -1314,7 +1315,7 @@ class _ConsoleArgsParseHelper:
     def _parse_arg_config(self, alias: str, config: ArgParseConfig, /) -> Optional[set[str]]:
         """Parse an individual argument configuration."""
 
-        # POSITIONAL ARGUMENT CONFIGURATION
+        # Positional argument configuration:
         if isinstance(config, str):
             if config == "before":
                 if self.pos_before_configured:
@@ -1333,9 +1334,9 @@ class _ConsoleArgsParseHelper:
             self.positional_configs[alias] = config
             self.parsed_args[alias] = ParsedArgData(exists=False, values=[], is_pos=True)
 
-            return None  # NO FLAGS TO RETURN FOR POSITIONAL ARGS
+            return None  # No flags to return for positional args.
 
-        # NORMAL SET OF FLAGS
+        # Normal set of flags:
         elif isinstance(config, set):
             if not config:
                 raise ValueError(
@@ -1347,7 +1348,7 @@ class _ConsoleArgsParseHelper:
 
             return config
 
-        # SET OF FLAGS WITH SPECIFIED DEFAULT VALUE
+        # Set of flags with specified default value:
         else:
             if not config["flags"]:
                 raise ValueError(
@@ -1370,7 +1371,7 @@ class _ConsoleArgsParseHelper:
         while i < self.args_len:
             arg = self.args[i]
 
-            # CHECK FOR FLAG WITH INLINE SEPARATOR ('--flag=value')
+            # Check for flag with inline separator (`--flag=value`):
             if self.flag_value_sep and self.flag_value_sep in arg:
                 if arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup:
                     if self.first_flag_pos is None:
@@ -1379,26 +1380,26 @@ class _ConsoleArgsParseHelper:
                     i += 1
                     continue
 
-            # CHECK FOR STANDALONE FLAG
+            # Check for standalone flag:
             if arg in self.arg_lookup:
                 if self.first_flag_pos is None:
                     self.first_flag_pos = i
                 self.last_flag_pos = i
 
-                # CHECK FOR SEPARATOR IN NEXT TOKENS ('--flag', '=', 'value')
+                # Check for separator in next tokens (`--flag`, `=`, `value`):
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
-                        i += 3  # SKIP FLAG, SEPARATOR, AND VALUE
+                        i += 3  # Skip flag, separator, and value.
                         continue
                     else:
-                        i += 2  # SKIP FLAG AND SEPARATOR
+                        i += 2  # Skip flag and separator.
                         continue
 
-                # CHECK FOR SPACE-SEPARATED VALUE ('--flag value')
+                # Check for space-separated value (`--flag value`):
                 if self.allow_space_value and i + 1 < self.args_len:
                     next_arg = self.args[i + 1]
                     if self._is_flag_value(next_arg):
-                        i += 2  # SKIP FLAG AND ITS SPACE-SEPARATED VALUE
+                        i += 2  # Skip flag and its space-separated value.
                         continue
 
             i += 1
@@ -1436,25 +1437,25 @@ class _ConsoleArgsParseHelper:
         after_args: list[str] = []
         start_pos: int = 0 if self.last_flag_pos is None else (self.last_flag_pos + 1)
 
-        # SKIP THE VALUE AFTER THE LAST FLAG IF IT HAS A SEPARATOR
+        # Skip the value after the last flag if it has a separator:
         if self.last_flag_pos is not None:
-            # CHECK IF LAST FLAG HAS INLINE VALUE ('--flag=value')
+            # Check if last flag has inline value (`--flag=value`):
             if self.flag_value_sep and self.flag_value_sep in self.args[self.last_flag_pos]:
-                start_pos = self.last_flag_pos + 1  # VALUE IS INLINE, START AFTER THIS POSITION
-            # CHECK IF NEXT TOKEN IS SEPARATOR ('--flag', '=', 'value')
+                start_pos = self.last_flag_pos + 1  # Value is inline; Start after this position.
+            # Check if next token is separator (`--flag`, `=`, `value`):
             elif self.flag_value_sep and start_pos < self.args_len and self.args[start_pos].strip() == self.flag_value_sep:
                 if start_pos + 1 < self.args_len:
-                    start_pos += 2  # SKIP SEPARATOR AND VALUE
+                    start_pos += 2  # Skip separator and value.
                 else:
-                    start_pos += 1  # SKIP SEPARATOR ONLY
-            # CHECK IF NEXT TOKEN IS SPACE-SEPARATED VALUE ('--flag value')
+                    start_pos += 1  # Skip separator only.
+            # Check if next token is space-separated value (`--flag value`):
             elif self.allow_space_value and start_pos < self.args_len and self._is_flag_value(self.args[start_pos]):
                 start_pos += 1  # SKIP SPACE-SEPARATED VALUE
-            # NO SEPARATOR = FLAG HAS NO VALUE = START COLLECTING FROM NEXT POSITION
+            # No separator = flag has no value; Start collecting from next position.
 
         for i in range(start_pos, self.args_len):
             arg = self.args[i]
-            # DON'T INCLUDE FLAGS OR SEPARATORS
+            # Don't include flags or separators:
             if self.flag_value_sep and arg == self.flag_value_sep:
                 continue
             elif self._is_positional_arg(arg):
@@ -1517,7 +1518,7 @@ class _ConsoleArgsParseHelper:
         while i < self.args_len:
             arg = self.args[i]
 
-            # CASE 1: FLAG WITH INLINE SEPARATOR ('--flag=value')
+            # [CASE 1] Flag with inline separator (`--flag=value`):
             if self.flag_value_sep and self.flag_value_sep in arg:
                 parts = arg.split(self.flag_value_sep, 1)
                 potential_flag = parts[0].strip()
@@ -1533,17 +1534,17 @@ class _ConsoleArgsParseHelper:
                     continue
 
                 elif self._looks_like_flag(potential_flag):
-                    # UNKNOWN FLAG WITH INLINE SEPARATOR (e.g. '--unknown=value')
+                    # Unknown flag with inline separator (`--unknown=value`):
                     self.unknown_flags.append(arg)
                     i += 1
                     continue
 
-            # CASE 2: STANDALONE KNOWN FLAG
+            # [CASE 2] Standalone known flag:
             if arg in self.arg_lookup:
                 alias = self.arg_lookup[arg]
                 self.parsed_args[alias]._update(exists=True, flag=arg)
 
-                # CHECK FOR SEPARATOR IN NEXT TOKENS ('--flag', '=', 'value')
+                # Check for separator in next tokens (`--flag`, `=`, `value`):
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
@@ -1553,15 +1554,15 @@ class _ConsoleArgsParseHelper:
                     i += 2
                     continue
 
-                # CHECK FOR SPACE-SEPARATED VALUE ('--flag value')
+                # Check for space-separated value (`--flag value`):
                 if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
                     self.parsed_args[alias]._update(values=(next_arg, ))
                     i += 2
                     continue
-                # NO SEPARATOR = JUST A FLAG WITHOUT VALUE
+                # No separator = just a flag without value.
 
+            # [CASE 3] Unknown standalone flag (`--unknown`, `-u`):
             elif self._looks_like_flag(arg):
-                # CASE 3: UNKNOWN STANDALONE FLAG (e.g. '--unknown', '-u')
                 self.unknown_flags.append(arg)
 
             i += 1
@@ -1817,7 +1818,7 @@ class ProgressBar:
         self._current_progress_str: str = ""
         self._last_line_len: int = 0
         self._last_update_time: float = 0.0
-        self._min_update_interval: float = 0.02  # 20ms = MAX 50 UPDATES/SECOND
+        self._min_update_interval: float = 0.02  # 20ms = max 50 updates/second
 
     def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
         """Set the width of the progress bar.\n
@@ -1903,7 +1904,7 @@ class ProgressBar:
         *   `total` – The total value representing 100% progress (must be greater than `0`).
         *   `label` – An optional label which is inserted at the `{label}` or `{l}` placeholder."""
 
-        # THROTTLE UPDATES (UNLESS IT'S THE FIRST/FINAL UPDATE)
+        # Throttle updates (unless it's the first/final update):
         current_time = _time.time()
         if (
             not (self._last_update_time == 0.0 or current >= total or current < 0) \
@@ -1950,17 +1951,17 @@ class ProgressBar:
         #### Example usage:
         ```python
         with ProgressBar().progress_context(500, "Loading...") as update_progress:
-            update_progress(0)  # Show empty bar at start
+            update_progress(0)  # Show empty bar at start.
 
             for i in range(400):
                 # Do some work...
                 update_progress(i)  # Update progress
 
-            update_progress(label="Finalizing...")  # Update label
+            update_progress(label="Finalizing...")  # Update label.
 
             for i in range(400, 500):
                 # Do some work...
-                update_progress(i, f"Finalizing ({i})")  # Update both
+                update_progress(i, f"Finalizing ({i})")  # Update both.
         ```"""
 
         if total <= 0:

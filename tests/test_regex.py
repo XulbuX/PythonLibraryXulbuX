@@ -6,7 +6,7 @@ import pytest
 import re
 
 #
-################################################## Regex TESTS ##################################################
+####################################################### Regex TESTS ######################################################
 
 
 def test_regex_quotes_pattern():
@@ -175,7 +175,7 @@ def test_regex_brackets_ignore_in_strings():
     assert len(matches) == 1
     assert 'param = "f(x)"' in matches[0]
 
-    # TEST THAT IT CORRECTLY HANDLES BRACKETS INSIDE STRINGS
+    # Test that it correctly handles brackets inside strings:
     text2 = 'outer("inner(test)")'
     matches2 = rx.findall(pattern, text2)
     assert len(matches2) == 1
@@ -290,15 +290,15 @@ def test_regex_rgba_str_default_separator():
 def test_regex_rgba_str_valid_values():
     """Test rgba_str pattern validates correct ranges"""
     pattern = Regex.rgba_str()
-    # VALID RGB VALUES IN A STRING
+    # Valid RGB values in a string:
     text = "Colors: rgba(255, 255, 255, 1.0) and rgb(0, 0, 0) and (128, 128, 128) and plain 255, 128, 0"
     matches = re.findall(pattern, text)
     assert len(matches) >= 4, f"Should match all valid colors, got: {matches}"
 
-    # INVALID RGB VALUES (OUT OF RANGE) SHOULD NOT MATCH OR MATCH PARTIALLY
+    # Invalid RGB values (out of range) should not match or match partially:
     text_invalid = "Invalid: rgba(256, 128, 0) and rgb(300, 0, 0)"
     matches_invalid = re.findall(pattern, text_invalid)
-    # SHOULD EITHER NOT MATCH OR NOT INCLUDE THE INVALID VALUES
+    # Should either not match or not include the invalid values:
     for match in matches_invalid:
         match_str = str(match)
         assert "256" not in match_str
@@ -335,23 +335,26 @@ def test_regex_hsla_str_default_separator():
 def test_regex_hsla_str_valid_values():
     """Test hsla_str pattern validates correct ranges"""
     pattern = Regex.hsla_str()
-    # VALID HSL VALUES IN A STRING
-    text = "Colors: hsla(360, 100%, 50%, 1.0) and hsl(0, 0%, 0%) and (180, 50%, 50%) and plain 240, 100%, 50% and with degree 120°, 80%, 60%"
+    # Valid HSL values in a string:
+    text = (
+        "Colors: hsla(360°, 100%, 50%, 1.0) and hsl(0, 0%, 0%) and (180, 50%, 50%) "
+        "and plain 240, 100%, 50% and with degree 120°, 80%, 60%"
+    )
     matches = re.findall(pattern, text)
     assert len(matches) >= 5, f"Should match all valid colors, got: {matches}"
 
-    # VERIFY THAT % AND ° SYMBOLS ARE NOT IN THE CAPTURED GROUPS
+    # Verify that `%` and `°` symbols are not in the captured groups:
     for match in matches:
         groups = cast(tuple[str], match if isinstance(match, tuple) else (match, ))
         for group in groups:
-            if group:  # SKIP EMPTY GROUPS
+            if group:  # Skip empty groups.
                 assert "%" not in group, f"Percent sign should not be in captured group: {group}"
                 assert "°" not in group, f"Degree sign should not be in captured group: {group}"
 
-    # INVALID HSL VALUES (OUT OF RANGE)
+    # Invalid HSL values (out of range):
     text_invalid = "Invalid: hsla(361, 100%, 50%) and hsl(240, 101%, 50%)"
     matches_invalid = re.findall(pattern, text_invalid)
-    # SHOULD EITHER NOT MATCH OR NOT INCLUDE THE INVALID VALUES
+    # Should either not match or not include the invalid values:
     for match in matches_invalid:
         match_str = str(match)
         assert "361" not in match_str
@@ -382,7 +385,7 @@ def test_regex_hexa_str_with_alpha():
     text = "Colors: FF0000 and FF0000FF and F00 and F00F and #ABCDEF and 0xF0F in text"
     matches = re.findall(pattern, text)
     assert len(matches) == 6, f"Should match all 6 colors, got: {matches}"
-    # VERIFY ALL EXPECTED COLORS ARE CAPTURED (GROUP 1 CONTAINS THE HEX VALUE)
+    # Verify all expected colors are captured (group 1 contains the hex value):
     expected = ["FF0000", "FF0000FF", "F00", "F00F", "ABCDEF", "F0F"]
     for exp in expected:
         assert any(exp.upper() == match.upper() for match in matches), f"Should match {exp}"
@@ -392,19 +395,19 @@ def test_regex_hexa_str_no_alpha():
     """Test hexa_str pattern without alpha channel"""
     pattern = Regex.hexa_str(allow_alpha=False)
 
-    # TEST VALID COLORS (3 AND 6 DIGIT FORMATS)
+    # Test valid colors (3 and 6 digit formats):
     text = "Valid colors: FF0000 and F00 and #ABCDEF and 0xABC in the text"
     matches = re.findall(pattern, text)
     assert len(matches) == 4, f"Should match all 4 valid colors, got: {matches}"
-    # THE CAPTURED GROUPS SHOULD NOT INCLUDE PREFIX
+    # The captured groups should not include prefix:
     for hex_value in matches:
         assert "#" not in hex_value
         assert "0x" not in hex_value.lower()
 
-    # TEST THAT 4-DIGIT AND 8-DIGIT FORMATS ONLY PARTIALLY MATCH (FIRST 3 OR 6 CHARS)
+    # Test that 4-digit and 8-digit formats only partially match (first 3 or 6 chars):
     text_with_alpha = "With alpha: FF0000FF and F00F should only match the non-alpha part"
     matches_alpha = re.findall(pattern, text_with_alpha)
-    # SHOULD MATCH FF0000 AND F00 (WITHOUT THE ALPHA CHANNEL)
+    # Should match `FF0000` and `F00` (without the alpha channel):
     assert len(matches_alpha) == 2
     for hex_value in matches_alpha:
         assert len(hex_value) in [3, 6], f"Should only match 3 or 6 digit formats, got: {hex_value}"
@@ -417,7 +420,7 @@ def test_regex_hexa_str_with_prefix():
     matches = re.findall(pattern, text)
     assert len(matches) == 4, f"Should match all 4 colors, got: {matches}"
 
-    # VERIFY THE CAPTURED HEX VALUES (WITHOUT PREFIX)
+    # Verify the captured hex values (without prefix):
     expected = ["FF0000", "ABCDEF", "F00", "F00F"]
     for exp in expected:
         assert any(exp.upper() == match.upper() for match in matches), f"Should capture {exp}"
@@ -467,7 +470,7 @@ def test_regex_brackets_deeply_nested():
     assert "Level2" in matches[0]
 
 
-################################################## LazyRegex TESTS ##################################################
+##################################################### LazyRegex TESTS ####################################################
 
 
 def test_lazy_regex_init():
@@ -479,7 +482,7 @@ def test_lazy_regex_getattr_valid():
     patterns = LazyRegex(test=r"\d+")
     regex = patterns.test
     assert regex.pattern == r"\d+"
-    assert "test" in patterns.__dict__  # CHECK CACHING
+    assert "test" in patterns.__dict__  # Check caching.
 
 
 def test_lazy_regex_getattr_invalid():

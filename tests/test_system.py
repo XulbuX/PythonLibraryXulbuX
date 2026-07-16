@@ -6,7 +6,7 @@ import pytest
 import os
 
 #
-################################################## System TESTS ##################################################
+###################################################### System TESTS ######################################################
 
 
 def test_system_is_elevated():
@@ -100,7 +100,7 @@ def test_check_libs_nonexistent_module():
 
 
 @patch("xulbux.system._subprocess.check_call")
-@patch("xulbux.console.Console.confirm", return_value=False)  # DECLINE INSTALLATION
+@patch("xulbux.console.Console.confirm", return_value=False)  # Decline installation.
 def test_check_libs_decline_install(mock_confirm: MagicMock, mock_subprocess: MagicMock):
     """Test check_libs when user declines installation"""
     result = System.check_libs(["nonexistent_module_12345"], install_missing=True)
@@ -144,7 +144,7 @@ def test_restart_unsupported_system(mock_subprocess: MagicMock, mock_platform: M
 @patch("xulbux.system._ctypes")
 def test_elevate_windows_already_elevated(mock_ctypes: MagicMock):
     """Test elevate on WINDOWS when already elevated"""
-    # SETUP THE MOCK TO RETURN 1 (True) FOR IsUserAnAdmin
+    # Setup the mock to return true for `IsUserAnAdmin`:
     mock_ctypes.windll.shell32.IsUserAnAdmin.return_value = 1
 
     result = System.elevate()
