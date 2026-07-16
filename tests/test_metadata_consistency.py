@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import pytest
 import toml
+import ast
 import os
 import re
 
@@ -80,17 +81,17 @@ def test_dependencies_consistency():
     # EXTRACT DEPENDENCIES FROM __init__.py
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
-    init_deps = re.search(r'__dependencies__\s*=\s*\[(.*?)\]', init_content, re.DOTALL)
+    init_deps_match = re.search(r'__dependencies__\s*=\s*(\[.*?\])', init_content, re.DOTALL)
 
     # EXTRACT DEPENDENCIES FROM pyproject.toml
     with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
         pyproject_data = toml.load(file)
     pyproject_deps = pyproject_data.get("project", {}).get("dependencies", [])
 
-    assert init_deps is not None, f"Could not find var '__dependencies__' in {INIT_PATH}"
+    assert init_deps_match is not None, f"Could not find var '__dependencies__' in {INIT_PATH}"
     assert pyproject_deps, f"Could not find 'dependencies' in {PYPROJECT_PATH}"
 
-    init_deps = [dep.strip().strip('"').strip("'") for dep in init_deps.group(1).split(",") if dep.strip()]
+    init_deps = ast.literal_eval(init_deps_match.group(1))
 
     # SORT FOR COMPARISON
     pyproject_deps_sorted = sorted(pyproject_deps)

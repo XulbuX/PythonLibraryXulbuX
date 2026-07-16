@@ -14,6 +14,7 @@ __requires_python__ = ">=3.10.0"
 __dependencies__ = [
     "prompt_toolkit>=3.0.41",
     "regex>=2023.10.3",
+    "typing-extensions>=4.6.0; python_version < '3.13'",
 ]
 
 __all__ = [

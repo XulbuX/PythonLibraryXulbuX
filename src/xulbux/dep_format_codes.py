@@ -180,6 +180,7 @@ All of these lighten/darken formatting codes are treated as invalid if no `defau
 """
 
 from .base.types import FormattableString, Rgba, Hexa
+from .base.decorators import deprecated
 from .base.consts import ANSI
 
 from .string import String
@@ -192,11 +193,6 @@ import ctypes as _ctypes
 import regex as _rx
 import sys as _sys
 import os as _os
-
-if _sys.version_info >= (3, 13):
-    from warnings import deprecated
-else:
-    from typing_extensions import deprecated
 
 
 _TERMINAL_ANSI_CONFIGURED: bool = False

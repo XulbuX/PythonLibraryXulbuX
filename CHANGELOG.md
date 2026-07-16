@@ -28,6 +28,7 @@
     -   `all_exist` is true if every argument was explicitly found.
     -   `unknown_flags` is a list of all the unknown flags that were found in the command-line arguments (*args that look like flags but are not defined in the config*).
 *   Added `ParsedArgs.RESERVED_ALIASES` – a `frozenset` of names that cannot be used as argument aliases. Passing a reserved name now raises a clear `ValueError`.
+*   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
 *   Reformat all docstrings of the whole library.
 *   Improved the performance of `Console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
 *   Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.

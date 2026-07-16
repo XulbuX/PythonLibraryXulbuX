@@ -3,6 +3,12 @@ This module contains custom decorators used throughout the library.
 """
 
 from typing import Callable, TypeVar, Any
+import sys as _sys
+
+if _sys.version_info >= (3, 13):
+    from warnings import deprecated as deprecated
+else:
+    from typing_extensions import deprecated as deprecated
 
 
 T = TypeVar("T")

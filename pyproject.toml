@@ -22,7 +22,11 @@ maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10.0"
-dependencies = ["prompt_toolkit>=3.0.41", "regex>=2023.10.3"]
+dependencies = [
+  "prompt_toolkit>=3.0.41",
+  "regex>=2023.10.3",
+  "typing-extensions>=4.6.0; python_version < '3.13'",
+]
 optional-dependencies = { dev = [
   "flake8-pyproject>=1.2.3",
   "flake8>=6.1.0",
@@ -141,6 +145,9 @@ pythonpath = ["src"]
 testpaths = ["tests/test_*.py"]
 
 [tool.pyright]
+venvPath = "."
+venv = ".venv"
 include = ["src", "tests"]
 typeCheckingMode = "strict"
 reportPrivateUsage = "none"
+reportDeprecated = "none"
