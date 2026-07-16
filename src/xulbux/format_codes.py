@@ -93,7 +93,7 @@ Strings, nested `_FmtStyled` calls, bare format objects, and raw tuples can be m
 *   `(F.X | F.Y)("text")`       – Apply the group to `"text"`.
 *   `F.X("a", F.Y("b"), "c")`   – Nested multi-segment: `Y` is applied only to `"b"`.
 *   `F.X`                       – Bare: emit only the opening sequence, no auto-reset.
-*   `("a", F.X("b"), "c")`      – Same-line group – passed as a single tuple to `FC(…)`.
+*   `("a", F.X("b"), "c")`      – Same-line group; passed as a single tuple to `FC(…)`.
 
 Inside `FC(*segments, sep="\\n")`, every positional argument is treated as one<br>
 logical line and joined by `sep`. An empty string argument `""` therefore produces a blank line.
@@ -141,20 +141,20 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
 These are plain strings (or string-returning helpers), so they can be passed directly into a<br>
 `FC(…)` call or written to `sys.stdout`:
 
-*   `Term.CLEAR_LINE`        – Erase the entire current line.
-*   `Term.CLEAR_SCREEN`      – Erase the whole screen.
-*   `Term.HIDE_CURSOR`       – Hide the cursor.
-*   `Term.SHOW_CURSOR`       – Show the cursor.
-*   `Term.ALT_SCREEN`        – Enter the alternate screen buffer.
-*   `Term.MAIN_SCREEN`       – Leave the alternate screen buffer.
-*   `Term.up(n)`             – Move the cursor up by `n` rows.
-*   `Term.down(n)`           – Move the cursor down by `n` rows.
-*   `Term.right(n)`          – Move the cursor right by `n` columns.
-*   `Term.left(n)`           – Move the cursor left by `n` columns.
-*   `Term.move(row, col)`    – Move the cursor to an absolute `(row, col)` position.
-*   `Term.title(text)`       – Set the terminal window / tab title (OSC 2).
-*   `Term.save()`            – Save the current cursor position.
-*   `Term.restore()`         – Restore the previously saved cursor position.
+*   `Term.CLEAR_LINE`       – Erase the entire current line.
+*   `Term.CLEAR_SCREEN`     – Erase the whole screen.
+*   `Term.HIDE_CURSOR`      – Hide the cursor.
+*   `Term.SHOW_CURSOR`      – Show the cursor.
+*   `Term.ALT_SCREEN`       – Enter the alternate screen buffer.
+*   `Term.MAIN_SCREEN`      – Leave the alternate screen buffer.
+*   `Term.up(n)`            – Move the cursor up by `n` rows.
+*   `Term.down(n)`          – Move the cursor down by `n` rows.
+*   `Term.right(n)`         – Move the cursor right by `n` columns.
+*   `Term.left(n)`          – Move the cursor left by `n` columns.
+*   `Term.move(row, col)`   – Move the cursor to an absolute `(row, col)` position.
+*   `Term.title(text)`      – Set the terminal window / tab title (OSC 2).
+*   `Term.save()`           – Save the current cursor position.
+*   `Term.restore()`        – Restore the previously saved cursor position.
 """
 
 from __future__ import annotations
@@ -536,7 +536,7 @@ class _BrNS:
     """Bright white foreground."""
 
 
-################################################## F ##################################################
+################################################## FORMAT ATTRS ##################################################
 
 
 class F:

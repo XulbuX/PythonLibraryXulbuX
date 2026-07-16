@@ -5,7 +5,7 @@ methods to work with nested data structures.
 
 from .base.types import IndexIterableTT, IndexIterable, DataObjTT, DataObj as DataObjType
 
-from .depr_format_codes import deprFormatCodes
+from .dep_format_codes import FormatCodes
 from .string import String
 from .regex import Regex
 
@@ -541,7 +541,7 @@ class Data:
         ----------------------------------------------------------------------------------------------------------------
         For more detailed information about formatting codes, see the `format_codes` module documentation."""
 
-        deprFormatCodes.print(
+        FormatCodes.print(
             cls.render(
                 data,
                 indent=indent,

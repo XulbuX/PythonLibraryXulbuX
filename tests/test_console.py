@@ -25,10 +25,10 @@ def mock_terminal_size(monkeypatch: pytest.MonkeyPatch):
 def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     mock = MagicMock()
     # PATCH IN THE ORIGINAL MODULE WHERE IT IS DEFINED
-    import xulbux.depr_format_codes
-    monkeypatch.setattr(xulbux.depr_format_codes.deprFormatCodes, "print", mock)
+    import xulbux.dep_format_codes
+    monkeypatch.setattr(xulbux.dep_format_codes.FormatCodes, "print", mock)
     # ALSO PATCH IN CONSOLE MODULE JUST IN CASE
-    monkeypatch.setattr("xulbux.console.deprFormatCodes.print", mock)
+    monkeypatch.setattr("xulbux.console.FormatCodes.print", mock)
     return mock
 
 

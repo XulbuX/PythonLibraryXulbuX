@@ -4,7 +4,13 @@ This module contains constant values used throughout the library.
 
 from .types import FormattableString, AllTextChars
 
-from typing import Final
+from typing import Annotated, Final
+import sys as _sys
+
+if _sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 
 class COLOR:
@@ -81,19 +87,22 @@ class ANSI:
     CHAR: Final = "\x1b"
     """ANSI escape character."""
 
-    START: Final = "["
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    START: Final[Annotated[str, deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = "["
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     Start of an ANSI escape sequence."""
-    SEP: Final = ";"
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    SEP: Final[Annotated[str, deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = ";"
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     Separator between ANSI escape sequence parts."""
-    END: Final = "m"
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    END: Final[Annotated[str, deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = "m"
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     End of an ANSI escape sequence."""
 
     @classmethod
+    @deprecated(
+        "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update."
+    )
     def seq(cls, placeholders: int = 1, /) -> FormattableString:
-        """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+        """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
         Generates an ANSI escape sequence with the specified number of placeholders."""
 
         return cls.CHAR + cls.START + cls.SEP.join(["{}" for _ in range(placeholders)]) + cls.END
@@ -108,90 +117,90 @@ class ANSI:
     SEQ_LINK_CLOSE: Final[str] = f"{CHAR}]8;;{CHAR}\\"
     """OSC 8 hyperlink closing sequence."""
 
-    COLOR_MAP: Final[set[str]] = {
-        "black",
-        "red",
-        "green",
-        "yellow",
-        "blue",
-        "magenta",
-        "cyan",
-        "white",
-    }
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    COLOR_MAP: Final[Annotated[set[str], deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = {
+            "black",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "white",
+        }
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     The standard terminal color names."""
 
-    COLOR_VARIANTS_MAP: Final[set[str]] = COLOR_MAP | {
-        "br:black",
-        "br:red",
-        "br:green",
-        "br:yellow",
-        "br:blue",
-        "br:magenta",
-        "br:cyan",
-        "br:white",
-    }
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    COLOR_VARIANTS_MAP: Final[Annotated[set[str], deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = COLOR_MAP | {
+            "br:black",
+            "br:red",
+            "br:green",
+            "br:yellow",
+            "br:blue",
+            "br:magenta",
+            "br:cyan",
+            "br:white",
+        }
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     All color variants that can be used in formatting."""
 
-    CODES_MAP: Final[dict[str | tuple[str, ...], int]] = {
-        ################# SPECIFIC RESETS ##################
-        "_": 0,
-        ("_bold", "_b"): 22,
-        ("_dim", "_d"): 22,
-        ("_italic", "_i"): 23,
-        ("_underline", "_u"): 24,
-        ("_double-underline", "_du"): 24,
-        ("_inverse", "_invert", "_in"): 27,
-        ("_hidden", "_hide", "_h"): 28,
-        ("_strikethrough", "_s"): 29,
-        ("_color", "_c"): 39,
-        ("_background", "_bg"): 49,
-        ################### TEXT STYLES ####################
-        ("bold", "b"): 1,
-        ("dim", "d"): 2,
-        ("italic", "i"): 3,
-        ("underline", "u"): 4,
-        ("inverse", "invert", "in"): 7,
-        ("hidden", "hide", "h"): 8,
-        ("strikethrough", "s"): 9,
-        ("double-underline", "du"): 21,
-        ################## DEFAULT COLORS ##################
-        "black": 30,
-        "red": 31,
-        "green": 32,
-        "yellow": 33,
-        "blue": 34,
-        "magenta": 35,
-        "cyan": 36,
-        "white": 37,
-        ############## BRIGHT DEFAULT COLORS ###############
-        "br:black": 90,
-        "br:red": 91,
-        "br:green": 92,
-        "br:yellow": 93,
-        "br:blue": 94,
-        "br:magenta": 95,
-        "br:cyan": 96,
-        "br:white": 97,
-        ############ DEFAULT BACKGROUND COLORS #############
-        "bg:black": 40,
-        "bg:red": 41,
-        "bg:green": 42,
-        "bg:yellow": 43,
-        "bg:blue": 44,
-        "bg:magenta": 45,
-        "bg:cyan": 46,
-        "bg:white": 47,
-        ######### BRIGHT DEFAULT BACKGROUND COLORS #########
-        "bg:br:black": 100,
-        "bg:br:red": 101,
-        "bg:br:green": 102,
-        "bg:br:yellow": 103,
-        "bg:br:blue": 104,
-        "bg:br:magenta": 105,
-        "bg:br:cyan": 106,
-        "bg:br:white": 107,
-    }
-    """**DEPRECATED** – only used by `depr_format_codes`. Will be removed together with that module.\n
+    CODES_MAP: Final[Annotated[dict[str | tuple[str, ...], int], deprecated("Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.")]] = {
+            ################# SPECIFIC RESETS ##################
+            "_": 0,
+            ("_bold", "_b"): 22,
+            ("_dim", "_d"): 22,
+            ("_italic", "_i"): 23,
+            ("_underline", "_u"): 24,
+            ("_double-underline", "_du"): 24,
+            ("_inverse", "_invert", "_in"): 27,
+            ("_hidden", "_hide", "_h"): 28,
+            ("_strikethrough", "_s"): 29,
+            ("_color", "_c"): 39,
+            ("_background", "_bg"): 49,
+            ################### TEXT STYLES ####################
+            ("bold", "b"): 1,
+            ("dim", "d"): 2,
+            ("italic", "i"): 3,
+            ("underline", "u"): 4,
+            ("inverse", "invert", "in"): 7,
+            ("hidden", "hide", "h"): 8,
+            ("strikethrough", "s"): 9,
+            ("double-underline", "du"): 21,
+            ################## DEFAULT COLORS ##################
+            "black": 30,
+            "red": 31,
+            "green": 32,
+            "yellow": 33,
+            "blue": 34,
+            "magenta": 35,
+            "cyan": 36,
+            "white": 37,
+            ############## BRIGHT DEFAULT COLORS ###############
+            "br:black": 90,
+            "br:red": 91,
+            "br:green": 92,
+            "br:yellow": 93,
+            "br:blue": 94,
+            "br:magenta": 95,
+            "br:cyan": 96,
+            "br:white": 97,
+            ############ DEFAULT BACKGROUND COLORS #############
+            "bg:black": 40,
+            "bg:red": 41,
+            "bg:green": 42,
+            "bg:yellow": 43,
+            "bg:blue": 44,
+            "bg:magenta": 45,
+            "bg:cyan": 46,
+            "bg:white": 47,
+            ######### BRIGHT DEFAULT BACKGROUND COLORS #########
+            "bg:br:black": 100,
+            "bg:br:red": 101,
+            "bg:br:green": 102,
+            "bg:br:yellow": 103,
+            "bg:br:blue": 104,
+            "bg:br:magenta": 105,
+            "bg:br:cyan": 106,
+            "bg:br:white": 107,
+        }
+    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. This will be completely removed in an upcoming future update.\n
     Dictionary mapping format keys to their corresponding ANSI code numbers."""

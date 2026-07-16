@@ -1,4 +1,4 @@
-﻿<div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
+<div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
     <a href="#release" title="scroll to bottom">
         <div style="
             font-size: 2em;
@@ -36,7 +36,8 @@
 
 **BREAKING CHANGES:**
 
-*   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based formatting API:
+*   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based formatting API.<br>
+    The old module was temporarily renamed to `dep_format_codes` and marked as deprecated, but kept so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
     -   The new `Format` class (*alias* `F`) exposes every ANSI style/color attribute and uses `|` to combine codes and `()` to apply them to text – e.g. `(F.BOLD | F.RED)("hi")` and `F.hex("#F67")("hi")`.
     -   The new `FormatCodes(*segments, sep="\n")` (*alias* `FC`) class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
