@@ -23,11 +23,11 @@ class File:
         camel_case_filename: bool = False,
     ) -> Path:
         """Rename the extension of a file.\n
-        ----------------------------------------------------------------------------------
+        -----------------------------------------------------------------------------------
         *   `file_path` – The path to the file whose extension should be changed.
         *   `new_extension` – The new extension for the file (with or without dot).
-        *   `full_extension` – Whether to replace the full extension (e.g. `.tar.gz`)<br>
-            or just the last part of it (e.g. `.gz`).
+        *   `full_extension` – Whether to replace the full extension (e.g., `.tar.gz`)<br>
+            or just the last part of it (e.g., `.gz`).
         *   `camel_case_filename` – Whether to convert the filename to CamelCase<br>
             in addition to changing the files extension."""
 

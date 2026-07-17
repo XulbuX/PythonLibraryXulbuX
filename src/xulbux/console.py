@@ -7,7 +7,7 @@ from .base.types import ProgressUpdater, AllTextChars, ArgParseConfigs, ArgParse
 from .base.decorators import mypyc_attr
 from .base.consts import CHARS, ANSI
 
-from .dep_format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
+from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
 from .string import String
 from .color import Color
 from .regex import LazyRegex
@@ -55,7 +55,7 @@ class ParsedArgData:
     *   `exists` – Whether the argument was found in the command-line arguments or not.
     *   `is_pos` – Whether the argument is a positional `"before"`/`"after"` argument or not.
     *   `values` – The tuple of values associated with the argument.
-    *   `flag` – The specific flag that was found (e.g. `-v`, `-vv`, `-vvv`), or `None` for positional args.
+    *   `flag` – The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args.
     ------------------------------------------------------------------------------------------------------------
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
@@ -67,10 +67,10 @@ class ParsedArgData:
         self.values: Final[tuple[str, ...]] = tuple(values)
         """The tuple of values associated with the argument."""
         self.flag: Final[Optional[str]] = flag
-        """The specific flag that was found (e.g. `-v`, `-vv`, `-vvv`), or `None` for positional args."""
+        """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
     def __bool__(self) -> bool:
-        """Whether the argument was found or not (i.e. the `exists` attribute)."""
+        """Whether the argument was found or not (i.e., the `exists` attribute)."""
 
         return self.exists
 
@@ -149,7 +149,7 @@ class ParsedArgs:
         saved in an `ParsedArgData` object.
     -------------------------------------------------------------------------------------
     For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.<br>
-    Each such attribute (e.g. `args.foo`) is an instance of `ParsedArgData`."""
+    Each such attribute (e.g., `args.foo`) is an instance of `ParsedArgData`."""
 
     # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
     __slots__ = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
@@ -316,7 +316,7 @@ class _ConsoleMeta(type):
 
     @property
     def encoding(cls) -> str:
-        """The encoding used by the terminal (e.g. `utf-8`, `cp1252`, …)."""
+        """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
 
         try:
             encoding = _sys.stdout.encoding
@@ -362,16 +362,16 @@ class Console(metaclass=_ConsoleMeta):
     ) -> ParsedArgs:
         """Will search for the specified args in the command-line arguments
         and return the results as a special `ParsedArgs` object.\n
-        ---------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------------
         *   `arg_parse_configs` – A dictionary where each key is an alias name for the argument<br>
             and the key's value is the parsing configuration for that argument.
         *   `skip` – The number of leading command-line arguments to skip before parsing;<br>
             useful when the first N args are a command/subcommand and not relevant to the caller.
         *   `flag_value_sep` – The character/s used to separate flags from their values;<br>
-            pass `None` to disable separator-based syntax (e.g. `--flag=value`) entirely.
-        *   `allow_space_value` – Whether to allow space-separated flag values (e.g. `--flag value`)<br>
+            pass `None` to disable separator-based syntax (e.g., `--flag=value`) entirely.
+        *   `allow_space_value` – Whether to allow space-separated flag values (e.g., `--flag value`)<br>
             in addition to the separator-based syntax; enabled by default.
-        ---------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------------
         The `arg_parse_configs` dictionary can have the following structures for each item:
         1.  Simple set of flags (when no default value is needed):
             ```python
@@ -420,8 +420,8 @@ class Console(metaclass=_ConsoleMeta):
             text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
         )
         ```
-        ---------------------------------------------------------------------------------------------------------
-        NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g. `--flag value`)<br>
+        ----------------------------------------------------------------------------------------------------------
+        NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g., `--flag value`)<br>
         is consumed as that flag's value and is not available as a positional `"after"` argument."""
 
         if skip < 0:
@@ -490,11 +490,11 @@ class Console(metaclass=_ConsoleMeta):
     ) -> None:
         """Prints a nicely formatted log message.\n
         ----------------------------------------------------------------------------------------------
-        *   `title` – The title of the log message (e.g. `DEBUG`, `WARN`, `FAIL`, …).
+        *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
         *   `prompt` – The log message.
         *   `format_linebreaks` – Whether to format (indent after) the line breaks or not.
         *   `start` – Something to print before the log is printed.
-        *   `end` – Something to print after the log is printed (e.g. `\\n`).
+        *   `end` – Something to print after the log is printed (e.g., `\\n`).
         *   `title_bg_color` – The background color of the `title` (terminal color, RGBA, or HEXA).
         *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
         *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
@@ -502,7 +502,7 @@ class Console(metaclass=_ConsoleMeta):
         *   `title_mx` – The horizontal margin (in chars) to the title.
         ----------------------------------------------------------------------------------------------
         The log message can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see `format_codes` module documentation."""
+        information about styling, see `ansi` module documentation."""
 
         if tab_size < 0:
             raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
@@ -740,8 +740,8 @@ class Console(metaclass=_ConsoleMeta):
         """Will print a box with a colored background, containing a formatted log message.\n
         --------------------------------------------------------------------------------------
         *   `*values` – The box content (each value is on a new line).
-        *   `start` – Something to print before the log box is printed (e.g. `\\n`).
-        *   `end` – Something to print after the log box is printed (e.g. `\\n`).
+        *   `start` – Something to print before the log box is printed (e.g., `\\n`).
+        *   `end` – Something to print after the log box is printed (e.g., `\\n`).
         *   `box_bg_color` – The background color of the box (terminal color, RGBA, or HEXA).
         *   `default_color` – The default text color of the `*values`.
         *   `w_padding` – The horizontal padding (in chars) to the box content.
@@ -749,7 +749,7 @@ class Console(metaclass=_ConsoleMeta):
         *   `indent` – The indentation of the box (in chars).
         --------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see `format_codes` module documentation."""
+        information about styling, see `ansi` module documentation."""
 
         if w_padding < 0:
             raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
@@ -812,8 +812,8 @@ class Console(metaclass=_ConsoleMeta):
         """Will print a bordered box, containing a formatted log message.\n
         ---------------------------------------------------------------------------------------------
         *   `*values` – The box content (each value is on a new line).
-        *   `start` – Something to print before the log box is printed (e.g. `\\n`).
-        *   `end` – Something to print after the log box is printed (e.g. `\\n`).
+        *   `start` – Something to print before the log box is printed (e.g., `\\n`).
+        *   `end` – Something to print after the log box is printed (e.g., `\\n`).
         *   `border_type` – One of the predefined border character sets.
         *   `border_style` – The style of the border (special formatting codes).
         *   `default_color` – The default text color of the `*values`.
@@ -825,7 +825,7 @@ class Console(metaclass=_ConsoleMeta):
         You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
         ---------------------------------------------------------------------------------------------
         The box content can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see `format_codes` module documentation.\n
+        information about styling, see `ansi` module documentation.\n
         ---------------------------------------------------------------------------------------------
         The `border_type` can be one of the following:
         *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
@@ -921,12 +921,12 @@ class Console(metaclass=_ConsoleMeta):
         ------------------------------------------------------------------------------------
         *   `prompt` – The input prompt.
         *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g. `\\n`).
+        *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
         *   `default_is_yes` – The default answer if the user just presses enter.
         ------------------------------------------------------------------------------------
         The prompt can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see the `format_codes` module documentation."""
+        information about styling, see the `ansi` module documentation."""
 
         confirmed = cls.input(
             FormatCodes.to_ansi(
@@ -956,14 +956,14 @@ class Console(metaclass=_ConsoleMeta):
         ---------------------------------------------------------------------------------------
         *   `prompt` – The input prompt.
         *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g. `\\n`).
+        *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
         *   `show_keybindings` – Whether to show the special keybindings or not.
         *   `input_prefix` – The prefix of the input line.
         *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
         ---------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see the `format_codes` module documentation."""
+        information about styling, see the `ansi` module documentation."""
 
         kb = KeyBindings()
         kb.add("c-d", eager=True)(cls._multiline_input_submit)
@@ -1043,7 +1043,7 @@ class Console(metaclass=_ConsoleMeta):
         ----------------------------------------------------------------------------------------
         *   `prompt` – The input prompt.
         *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g. `\\n`).
+        *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
         *   `placeholder` – A placeholder text that is shown when the input is empty.
         *   `mask_char` – If set, the input will be masked with this character.
@@ -1058,7 +1058,7 @@ class Console(metaclass=_ConsoleMeta):
         *   `output_type` – The type (class) to convert the input to before returning it.
         ----------------------------------------------------------------------------------------
         The input prompt can be formatted with special formatting codes. For more detailed<br>
-        information about formatting codes, see the `format_codes` module documentation."""
+        information about styling, see the `ansi` module documentation."""
 
         if mask_char is not None and len(mask_char) != 1:
             raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
@@ -1122,7 +1122,7 @@ class Console(metaclass=_ConsoleMeta):
     @staticmethod
     def _read_single_key() -> None:
         """Wait for a single key press without requiring elevated privileges.<br>
-        Falls back to reading a line when stdin is not a TTY (e.g. piped input)."""
+        Falls back to reading a line when stdin is not a TTY (e.g., piped input)."""
 
         if not _sys.stdin.isatty():
             _sys.stdin.readline()
@@ -1467,7 +1467,7 @@ class _ConsoleArgsParseHelper:
     @staticmethod
     def _looks_like_flag(arg: str, /) -> bool:
         """Returns `True` if the arg resembles a flag (starts with `--` or `-<letter>`).<br>
-        Arguments that look like negative numbers (e.g. `-42`, `-.5`) are not flags."""
+        Arguments that look like negative numbers (e.g., `-42`, `-.5`) are not flags."""
 
         if arg.startswith("--"):
             return True
@@ -1495,7 +1495,7 @@ class _ConsoleArgsParseHelper:
 
     def _is_flag_value(self, arg: str, /) -> bool:
         """Check if an argument can be treated as a space-separated flag value<br>
-        (i.e. it is not a known flag, not the separator, not a `flag=value` token, and does not look like a flag itself)."""
+        (i.e., it is not a known flag, not the separator, not a `flag=value` token, and does not look like a flag itself)."""
 
         if arg in self.arg_lookup:
             return False
@@ -1764,25 +1764,25 @@ class _ConsoleInputValidator(Validator):
 
 class ProgressBar:
     """A terminal progress bar with smooth transitions and customizable appearance.\n
-    ------------------------------------------------------------------------------------------------------
+    -------------------------------------------------------------------------------------------------------
     *   `min_width` – The min width of the progress bar in chars.
     *   `max_width` – The max width of the progress bar in chars.
     *   `bar_format` – The format strings used to render the progress bar, containing placeholders:
         -   `{label}` `{l}`
         -   `{bar}` `{b}`
-        -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g. `{c:,}`)
-        -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g. `{t:,}`)
+        -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
+        -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
         -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
-            to specified number of decimal places, e.g. `{p:.1f}`)
+            to specified number of decimal places, e.g., `{p:.1f}`)
     *   `limited_bar_format` – A simplified format string used when the terminal width is too small<br>
         for the normal `bar_format`.
     *   `chars` – A tuple of characters ordered from full to empty progress:<br>
         The first character represents completely filled sections.<br>
         Intermediate characters create smooth transitions<br>
         The last character represents empty sections.
-    ------------------------------------------------------------------------------------------------------
+    -------------------------------------------------------------------------------------------------------
     The bar format (also limited) can additionally be formatted with special formatting codes.<br>
-    For more detailed information about formatting codes, see the `format_codes` module documentation."""
+    For more detailed information about styling, see the `ansi` module documentation."""
 
     def __init__(
         self,
@@ -1846,19 +1846,19 @@ class ProgressBar:
         sep: Optional[str] = None,
     ) -> None:
         """Set the format string used to render the progress bar.\n
-        ------------------------------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------------------------
         *   `bar_format` – The format strings used to render the progress bar, containing placeholders:
             -   `{label}` `{l}`
             -   `{bar}` `{b}`
-            -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g. `{c:,}`)
-            -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g. `{t:,}`)
+            -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
+            -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
             -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
-                to specified number of decimal places, e.g. `{p:.1f}`)
+                to specified number of decimal places, e.g., `{p:.1f}`)
         *   `limited_bar_format` – A simplified format strings used when the terminal width is too small.
         *   `sep` – The separator string used to join multiple format strings.
-        ------------------------------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------------------------
         The bar format (also limited) can additionally be formatted with special formatting codes.<br>
-        For more detailed information about formatting codes, see the `format_codes` module documentation."""
+        For more detailed information about styling, see the `ansi` module documentation."""
 
         if bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in bar_format):
@@ -2166,7 +2166,7 @@ class Throbber:
     *   `interval` – The time in seconds between each animation frame.
     ------------------------------------------------------------------------------------------------
     The `throbber_format` can additionally be formatted with special formatting codes. For more<br>
-    detailed information about formatting codes, see the `format_codes` module documentation."""
+    detailed information about styling, see the `ansi` module documentation."""
 
     def __init__(
         self,

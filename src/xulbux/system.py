@@ -6,8 +6,8 @@ methods to interact with the underlying operating system.
 from .base.types import MissingLibsMsgs
 from .base.decorators import mypyc_attr
 
-from .format_codes import FC, F
 from .console import Console
+from .ansi import StyledText, S
 
 from typing import Optional
 import multiprocessing as _multiprocessing
@@ -84,7 +84,7 @@ class _SystemMeta(type):
 
     @property
     def os_name(cls) -> str:
-        """The name of the operating system (e.g. `Windows`, `Linux`, …)."""
+        """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
 
         return _platform.system()
 
@@ -99,7 +99,7 @@ class _SystemMeta(type):
 
     @property
     def architecture(cls) -> str:
-        """The CPU architecture (e.g. `x86_64`, `ARM`, …)."""
+        """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
 
         return _platform.machine()
 
@@ -114,7 +114,7 @@ class _SystemMeta(type):
 
     @property
     def python_version(cls) -> str:
-        """The version string of the currently running Python interpreter (e.g. `3.10.4`)."""
+        """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
 
         return _platform.python_version()
 
@@ -331,9 +331,9 @@ class _SystemCheckLibsHelper:
     def confirm_installation(self, missing: list[str], /) -> bool:
         """Ask user for confirmation before installing libraries."""
 
-        FC(
-            F.BOLD(self.missing_libs_msgs["found_missing"]),
-            *((F.DIM(" • "), F.ITALIC(lib)) for lib in missing),
+        StyledText(
+            S.BOLD(self.missing_libs_msgs["found_missing"]),
+            *((S.DIM(" • "), S.ITALIC(lib)) for lib in missing),
             "",
         ).print()
 

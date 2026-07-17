@@ -37,12 +37,12 @@
 
 **BREAKING CHANGES:**
 
-*   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based formatting API.<br>
-    The old module was temporarily renamed to `dep_format_codes` and marked as deprecated, but kept so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
-    -   The new `Format` class (*alias* `F`) exposes every ANSI style/color attribute and uses `|` to combine codes and `()` to apply them to text – e.g. `(F.BOLD | F.RED)("hi")` and `F.hex("#F67")("hi")`.
-    -   The new `FormatCodes(*segments, sep="\n")` (*alias* `FC`) class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.
+*   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
+    The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
+    -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text – e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
+    -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
-*   Removed the `xulbux-lib fc` CLI command, since the new formatting API doesn't support its old format string syntax.
+*   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed the `Console.w` and `Console.h` properties to `Console.width` and `Console.height`, to follow the no-single-letter-names convention.
@@ -527,7 +527,7 @@
     Inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset.<br>
     Now this is fixed and auto-reset-formatting works as expected.
 *   Added a new param <code>ignore_in_strings: *bool* = True</code> to `Regex.brackets()`:<br>
-    If this param is true and a bracket is inside a string (e.g. `'…'` or `"…"`), it will not be counted as the matching closing bracket.
+    If this param is true and a bracket is inside a string (e.g., `'…'` or `"…"`), it will not be counted as the matching closing bracket.
 *   Removed `lru_cache` from the `xx_format_codes` module's internal methods, since it was unnecessary.
 *   Adjusted `FormatCodes.__config_console()` so it can only be called once per process.
 

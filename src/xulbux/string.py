@@ -55,7 +55,7 @@ class String:
 
     @classmethod
     def escape(cls, string: str, /, str_quotes: Optional[Literal["'", '"']] = None) -> str:
-        """Escapes Python's special characters (e.g. `\\n`, `\\t`, …) and quotes inside the string.\n
+        """Escapes Python's special characters (e.g., `\\n`, `\\t`, …) and quotes inside the string.\n
         -------------------------------------------------------------------------------------------------------------
         *   `string` – The string to escape.
         *   `str_quotes` – The type of quotes the string will be put inside of (or `None` to not escape quotes):<br>

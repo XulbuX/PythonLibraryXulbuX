@@ -25,8 +25,8 @@ def mock_terminal_size(monkeypatch: pytest.MonkeyPatch):
 def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     mock = MagicMock()
     # Patch in the original module where it is defined:
-    import xulbux.dep_format_codes
-    monkeypatch.setattr(xulbux.dep_format_codes.FormatCodes, "print", mock)
+    import xulbux.format_codes
+    monkeypatch.setattr(xulbux.format_codes.FormatCodes, "print", mock)
     # Also patch in console module just in case:
     monkeypatch.setattr("xulbux.console.FormatCodes.print", mock)
     return mock
@@ -481,7 +481,7 @@ def test_get_args_unknown_flag_not_consumed_as_value(monkeypatch: pytest.MonkeyP
 
 
 def test_get_args_negative_number_not_unknown_flag(monkeypatch: pytest.MonkeyPatch):
-    """Negative numbers (e.g. -42, -.5) are not treated as unknown flags."""
+    """Negative numbers (e.g., -42, -.5) are not treated as unknown flags."""
     monkeypatch.setattr(sys, "argv", ["script.py", "-42", "-.5", "--known"])
     result = Console.get_args({"before": "before", "known": {"--known"}})
 
@@ -949,7 +949,7 @@ def test_input_disable_paste(mock_prompt_session: tuple[MagicMock, MagicMock], m
 
 
 def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], capsys: pytest.CaptureFixture[str]):
-    """Test that start and end parameters trigger FC.print calls."""
+    """Test that start and end parameters trigger `StyledText.print` calls."""
     mock_session_class, _ = mock_prompt_session
 
     Console.input("Enter text: ", start="[green]", end="[_c]")

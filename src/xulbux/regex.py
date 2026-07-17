@@ -38,12 +38,12 @@ class Regex:
     ) -> str:
         """Matches everything inside pairs of brackets, including other nested brackets.\n
         ------------------------------------------------------------------------------------------
-        *   `bracket1` – The opening bracket (e.g. `(`, `{`, `[`, …).
-        *   `bracket2` – The closing bracket (e.g. `)`, `}`, `]`, …).
+        *   `bracket1` – The opening bracket (e.g., `(`, `{`, `[`, …).
+        *   `bracket2` – The closing bracket (e.g., `)`, `}`, `]`, …).
         *   `is_group` – Whether to create a capturing group for the content inside the brackets.
         *   `strip_spaces` – Whether to strip spaces from the bracket content or not.
         *   `ignore_in_strings` – Whether to ignore closing brackets that are inside<br>
-            strings/quotes (e.g. `'…)…'` or `"…)…"`).
+            strings/quotes (e.g., `'…)…'` or `"…)…"`).
         ------------------------------------------------------------------------------------------
         Attention: Requires non-standard library `regex`, not standard library `re`!"""
 
@@ -122,12 +122,12 @@ class Regex:
     @classmethod
     def rgba_str(cls, fix_sep: Optional[str] = ",", *, allow_alpha: bool = True) -> str:
         """Matches an RGBA color inside a string.\n
-        -----------------------------------------------------------------------------------
-        *   `fix_sep` – The fixed separator between the RGBA values (e.g. `,`, `;` …):<br>
+        ------------------------------------------------------------------------------------
+        *   `fix_sep` – The fixed separator between the RGBA values (e.g., `,`, `;` …):<br>
             If set to nothing or `None`, any char that is not a letter or number<br>
             can be used to separate the RGBA values, including just a space.
         *   `allow_alpha` – Whether to include the alpha channel in the match.
-        -----------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
         The RGBA color can be in the formats (for `fix_sep = ','`):
         *   `rgba(red, green, blue)`
         *   `rgba(red, green, blue, alpha)` (if `allow_alpha=True`)
@@ -165,12 +165,12 @@ class Regex:
     @classmethod
     def hsla_str(cls, fix_sep: Optional[str] = ",", *, allow_alpha: bool = True) -> str:
         """Matches a HSLA color inside a string.\n
-        -----------------------------------------------------------------------------------
-        *   `fix_sep` – The fixed separator between the HSLA values (e.g. `,`, `;` …):<br>
+        ------------------------------------------------------------------------------------
+        *   `fix_sep` – The fixed separator between the HSLA values (e.g., `,`, `;` …):<br>
             If set to nothing or `None`, any char that is not a letter or number<br>
             can be used to separate the HSLA values, including just a space.
         *   `allow_alpha` – Whether to include the alpha channel in the match.
-        -----------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
         The HSLA color can be in the formats (for `fix_sep = ','`):
         *   `hsla(hue, sat, light)`
         *   `hsla(hue, sat, light, alpha)` (if `allow_alpha=True`)

@@ -85,41 +85,41 @@ class ANSI:
     START: Final[Annotated[
         str,
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = "["
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     Start of an ANSI escape sequence."""
     SEP: Final[Annotated[
         str,
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = ";"
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     Separator between ANSI escape sequence parts."""
     END: Final[Annotated[
         str,
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = "m"
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     End of an ANSI escape sequence."""
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
         "This will be completely removed in an upcoming future update."
     )
     def seq(cls, placeholders: int = 1, /) -> FormattableString:
-        """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+        """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
         This will be completely removed in an upcoming future update.\n
         Generates an ANSI escape sequence with the specified number of placeholders."""
 
@@ -138,7 +138,7 @@ class ANSI:
     COLOR_MAP: Final[Annotated[
         set[str],
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = {
@@ -151,14 +151,14 @@ class ANSI:
         "cyan",
         "white",
     }
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     The standard terminal color names."""
 
     COLOR_VARIANTS_MAP: Final[Annotated[
         set[str],
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = COLOR_MAP | {
@@ -171,14 +171,14 @@ class ANSI:
         "br:cyan",
         "br:white",
     }
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     All color variants that can be used in formatting."""
 
     CODES_MAP: Final[Annotated[
         dict[str | tuple[str, ...], int],
         deprecated(
-            "Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead. "
+            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
             "This will be completely removed in an upcoming future update."
         ),
     ]] = {
@@ -240,6 +240,6 @@ class ANSI:
         "bg:br:cyan": 106,
         "bg:br:white": 107,
     }
-    """**DEPRECATED** – Use the operator-based API in `xulbux.format_codes` (`F`, `FC`, `Term`) instead.
+    """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     Dictionary mapping format keys to their corresponding ANSI code numbers."""

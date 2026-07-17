@@ -1,7 +1,7 @@
 from .. import __version__
 from ..base.decorators import mypyc_attr
-from ..format_codes import FC, F
 from ..console import Console
+from ..ansi import StyledText, S
 
 from urllib.error import HTTPError
 from typing import Optional
@@ -41,57 +41,57 @@ IS_LATEST_VERSION = is_latest_version()
 
 
 @mypyc_attr(native_class=False)
-class S:
+class H:
     """Styling constants for the CLI help message."""
 
-    BORDER = F.DIM | F.BR.BLACK
-    CLS = F.BR.CYAN
-    CMD = F.GREEN
-    CONST = F.BR.BLUE
-    FN = F.BR.GREEN
-    HEADING = F.BOLD | F.BR.WHITE
-    IMPORT = F.MAGENTA
-    LIB = F.BR.MAGENTA
-    META = F.DIM | F.BR.WHITE
-    PUNCT = F.BR.BLACK
-    TEXT = F.WHITE
+    BORDER = S.DIM | S.BR.BLACK
+    CLS = S.BR.CYAN
+    CMD = S.GREEN
+    CONST = S.BR.BLUE
+    FN = S.BR.GREEN
+    HEADING = S.BOLD | S.BR.WHITE
+    IMPORT = S.MAGENTA
+    LIB = S.BR.MAGENTA
+    META = S.DIM | S.BR.WHITE
+    PUNCT = S.BR.BLACK
+    TEXT = S.WHITE
 
 
 # fmt: OFF
-CLI_HELP = FC(
-    F.RESET,
+CLI_HELP = StyledText(
+    S.RESET,
     (
-        (F.BOLD | F.hex("#7075FF"))(
+        (S.BOLD | S.hex("#7075FF"))(
             "                 __  __              \n"
             "    _  __ __  __/ / / /_  __  ___  __\n"
             "   | |/ // / / / / / __ \\/ / / | |/ /\n"
             "   > , </ /_/ / /_/ /_/ / /_/ /> , < \n"
             "  /_/|_|\\____/\\__/\\____/\\____//_/|_|  ",
-            (F.hex("#000") | F.BG.hex("#8085FF"))(f" v{__version__} "),
+            (S.hex("#000") | S.BG.hex("#8085FF"))(f" v{__version__} "),
         ),
-        "" if IS_LATEST_VERSION else (F.DIM | F.YELLOW)(" (", F.ITALIC("newer available"), ")"),
+        "" if IS_LATEST_VERSION else (S.DIM | S.YELLOW)(" (", S.ITALIC("newer available"), ")"),
     ),
     "",
-    (F.ITALIC | F.hex("#9095FF"))("  Simplify common programming tasks!"),
+    (S.ITALIC | S.hex("#9095FF"))("  Simplify common programming tasks!"),
     "",
-    S.HEADING("  Commands:"),
-    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (S.BORDER("  │ "), S.CMD("xulbux-lib      "), S.TEXT("Show library info and usage       "), S.BORDER("│")),
-    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
-    S.HEADING("  Usage:"),
-    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("LIBRARY CONSTANTS                               ")), S.BORDER("│")),
-    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux"), (F.DIM | S.LIB)("."), S.LIB("base"), (F.DIM | S.LIB)("."), S.LIB("consts "), S.IMPORT("import "), S.CONST("COLOR"), S.PUNCT(", "), S.CONST("CHARS"), S.PUNCT(", "), S.CONST("ANSI "), S.BORDER("│")),
-    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("Main Classes                                    ")), S.BORDER("│")),
-    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux "), S.IMPORT("import "), S.CLS("Code"), S.PUNCT(", "), S.CLS("Color"), S.PUNCT(", "), S.CLS("Console"), S.PUNCT(", "), S.META("...      "), S.BORDER("│")),
-    (S.BORDER("  │ "), S.PUNCT("# ", F.ITALIC("module specific imports                         ")), S.BORDER("│")),
-    (S.BORDER("  │ "), S.IMPORT("from "), S.LIB("xulbux"), (F.DIM | S.LIB)("."), S.LIB("color "), S.IMPORT("import "), S.FN("rgba"), S.PUNCT(", "), S.FN("hsla"), S.PUNCT(", "), S.FN("hexa         "), S.BORDER("│")),
-    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
-    S.HEADING("  Documentation:"),
-    S.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (S.BORDER("  │ "), S.TEXT("For more information see the GitHub wiki page:    "), S.BORDER("│")),
-    (S.BORDER("  │ "), (F.BR.BLUE | F.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", S.BORDER("│")),
-    S.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    H.HEADING("  Commands:"),
+    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (H.BORDER("  │ "), H.CMD("xulbux-lib      "), H.TEXT("Show library info and usage       "), H.BORDER("│")),
+    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    H.HEADING("  Usage:"),
+    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("LIBRARY CONSTANTS                               ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Main Classes                                    ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("Code"), H.PUNCT(", "), H.CLS("Color"), H.PUNCT(", "), H.CLS("Console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("module specific imports                         ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),
+    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    H.HEADING("  Documentation:"),
+    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
+    (H.BORDER("  │ "), H.TEXT("For more information see the GitHub wiki page:    "), H.BORDER("│")),
+    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
+    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
 )
 # fmt: ON

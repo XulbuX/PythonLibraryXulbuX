@@ -18,8 +18,8 @@ __dependencies__ = [
 ]
 
 __all__ = [
-    "FC",
-    "F",
+    "StyledText",
+    "S",
     "Term",
     "Code",
     "Color",
@@ -34,7 +34,7 @@ __all__ = [
     "System",
 ]
 
-from .format_codes import FC, F, Term
+from .ansi import StyledText, S, Term
 from .code import Code
 from .color import Color
 from .console import Console

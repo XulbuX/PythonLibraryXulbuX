@@ -5,7 +5,7 @@ methods to work with nested data structures.
 
 from .base.types import IndexIterableTT, IndexIterable, DataObjTT, DataObj as DataObjType
 
-from .dep_format_codes import FormatCodes
+from .format_codes import FormatCodes
 from .string import String
 from .regex import Regex
 
@@ -478,7 +478,7 @@ class Data:
         *   `type: "i|green"`
         *   `punctuation: "br:black"
         -------------------------------------------------------------------------------------------------------------------
-        For more detailed information about formatting codes, see the `format_codes` module documentation."""
+        For more detailed information about styling, see the `ansi` module documentation."""
 
         if indent < 0:
             raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
@@ -539,7 +539,7 @@ class Data:
         *   `punctuation: "br:black"`\n
         For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
         ----------------------------------------------------------------------------------------------------------------
-        For more detailed information about formatting codes, see the `format_codes` module documentation."""
+        For more detailed information about styling, see the `ansi` module documentation."""
 
         FormatCodes.print(
             cls.render(
