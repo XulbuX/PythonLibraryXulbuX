@@ -430,7 +430,7 @@ that can be combined via `|` and applied to text."""
 StyledSegment: TypeAlias = Union[str, _StyledSequence, AnyStyle, _StyleGroup]
 """A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
 TextLike: TypeAlias = Union[StyledSegment, tuple[StyledSegment, ...]]
-"""Anything that can be styled or rendered. 
+"""Anything that can be styled or rendered.
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
 
 #
@@ -515,7 +515,7 @@ class _BrNS:
     """Bright white foreground."""
 
 
-####################################################### STYLE ATTRS #####################################################
+####################################################### STYLE ATTRS ######################################################
 
 
 class S:
@@ -694,7 +694,7 @@ class Term:
         return f"{ANSI.CHAR}[u"
 
 
-########################################################### StyledText ###########################################################
+####################################################### StyledText #######################################################
 
 
 class StyledText:
