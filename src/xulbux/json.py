@@ -115,7 +115,7 @@ class Json:
         file_path = FileSys.extend_or_make_path(json_path, prefer_script_dir=True)
         File.create(
             file_path,
-            Data.render(data, indent=indent, compactness=compactness, as_json=True, syntax_highlighting=False),
+            Data.render(data, indent=indent, compactness=compactness, as_json=True, syntax_highlighting=False).raw,
             force=force,
         )
 

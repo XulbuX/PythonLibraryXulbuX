@@ -5,11 +5,11 @@ methods to work with nested data structures.
 
 from .base.types import IndexIterableTT, IndexIterable, DataObjTT, DataObj as DataObjType
 
-from .format_codes import FormatCodes
 from .string import String
 from .regex import Regex
+from .ansi import StyledText, S, AnyStyle, _StyleGroup
 
-from typing import Optional, Literal, TypeVar, Final, Any, overload, cast
+from typing import Optional, Literal, TypeVar, Final, Union, Any, overload, cast
 import base64 as _base64
 import math as _math
 import re as _re
@@ -17,12 +17,15 @@ import re as _re
 
 DataObj = TypeVar("DataObj", bound=DataObjType)
 
-_DEFAULT_SYNTAX_HL: Final[dict[str, tuple[str, str]]] = {
-    "str": ("[br:blue]", "[_c]"),
-    "number": ("[br:magenta]", "[_c]"),
-    "literal": ("[magenta]", "[_c]"),
-    "type": ("[i|green]", "[_i|_c]"),
-    "punctuation": ("[br:black]", "[_c]"),
+AnySyntaxStyle = Union[AnyStyle, _StyleGroup]
+"""Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
+
+_DEFAULT_SYNTAX_HL: Final[dict[str, AnySyntaxStyle]] = {
+    "str": S.BR.BLUE,
+    "number": S.BR.MAGENTA,
+    "literal": S.MAGENTA,
+    "type": S.ITALIC | S.GREEN,
+    "punctuation": S.BR.BLACK,
 }
 """Default syntax highlighting styles for data structure rendering."""
 
@@ -448,9 +451,9 @@ class Data:
         max_width: int = 127,
         sep: str = ", ",
         as_json: bool = False,
-        syntax_highlighting: dict[str, str] | bool = False,
-    ) -> str:
-        """Get nicely formatted data structure-strings.\n
+        syntax_highlighting: dict[str, AnySyntaxStyle] | bool = False,
+    ) -> StyledText:
+        """Get nicely formatted data structures as a `StyledText` object.\n
         -------------------------------------------------------------------------------------------------------------------
         *   `data` – The data structure to format.
         *   `indent` – The amount of spaces to use for indentation.
@@ -468,16 +471,18 @@ class Data:
         *   `2` keeps everything collapsed (all on one line).
         -------------------------------------------------------------------------------------------------------------------
         The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
-        The key's values are the formatting codes to apply to this data part.<br>
-        The formatting can be changed by simply adding the key with the new value<br>
+        The key's values are the `S` style attributes (or combined style groups) to apply to this data part.<br>
+        The styling can be changed by simply adding the key with the new value<br>
         inside the `syntax_highlighting` dictionary.\n
         The keys with their default values are:
-        *   `str: "br:blue"`
-        *   `number: "br:magenta"`
-        *   `literal: "magenta"`
-        *   `type: "i|green"`
-        *   `punctuation: "br:black"
+        *   `str: S.BR.BLUE`
+        *   `number: S.BR.MAGENTA`
+        *   `literal: S.MAGENTA`
+        *   `type: S.ITALIC | S.GREEN`
+        *   `punctuation: S.BR.BLACK`
         -------------------------------------------------------------------------------------------------------------------
+        The returned `StyledText` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)<br>
+        and the plain, un-styled text via `.raw`.\n
         For more detailed information about styling, see the `ansi` module documentation."""
 
         if indent < 0:
@@ -495,64 +500,6 @@ class Data:
             as_json=as_json,
             syntax_highlighting=syntax_highlighting,
         )()
-
-    @classmethod
-    def print(
-        cls,
-        data: DataObjType,
-        /,
-        *,
-        indent: int = 4,
-        compactness: Literal[0, 1, 2] = 1,
-        max_width: int = 127,
-        sep: str = ", ",
-        end: str = "\n",
-        as_json: bool = False,
-        syntax_highlighting: dict[str, str] | bool = {},
-    ) -> None:
-        """Print nicely formatted data structures.\n
-        ----------------------------------------------------------------------------------------------------------------
-        *   `data` – The data structure to format and print.
-        *   `indent` – The amount of spaces to use for indentation.
-        *   `compactness` – The level of compactness for the output (explained below – section 1).
-        *   `max_width` – The maximum width of a line before expanding (only used if `compactness` is `1`).
-        *   `sep` – The separator between items in the data structure.
-        *   `end` – The string appended after the last value, default a newline `\\n`.
-        *   `as_json` – If true, the output will be in valid JSON format.
-        *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles (explained below – section 2).
-        ----------------------------------------------------------------------------------------------------------------
-        There are three different levels of `compactness`:
-        *   `0` expands everything possible.
-        *   `1` only expands if there's other lists, tuples or dicts inside of data,<br>
-            or if the data's content is longer than `max_width`.
-        *   `2` keeps everything collapsed (all on one line).
-        ----------------------------------------------------------------------------------------------------------------
-        The `syntax_highlighting` parameter is a dictionary with 5 keys for each part of the data.<br>
-        The key's values are the formatting codes to apply to this data part.<br>
-        The formatting can be changed by simply adding the key with the new value<br>
-        inside the `syntax_highlighting` dictionary.\n
-        The keys with their default values are:
-        *   `str: "br:blue"`
-        *   `number: "br:magenta"`
-        *   `literal: "magenta"`
-        *   `type: "i|green"`
-        *   `punctuation: "br:black"`\n
-        For no syntax highlighting, set `syntax_highlighting` to `False` or `None`.\n
-        ----------------------------------------------------------------------------------------------------------------
-        For more detailed information about styling, see the `ansi` module documentation."""
-
-        FormatCodes.print(
-            cls.render(
-                data,
-                indent=indent,
-                compactness=compactness,
-                max_width=max_width,
-                sep=sep,
-                as_json=as_json,
-                syntax_highlighting=syntax_highlighting,
-            ),
-            end=end,
-        )
 
     @classmethod
     def _compare_nested(
@@ -774,7 +721,7 @@ class _DataGetPathIdHelper:
 
 
 class _DataRenderHelper:
-    """Internal, callable helper class to format data structures as strings."""
+    """Internal, callable helper class to format data structures as `StyledText` objects."""
 
     def __init__(
         self,
@@ -787,7 +734,7 @@ class _DataRenderHelper:
         max_width: int,
         sep: str,
         as_json: bool,
-        syntax_highlighting: dict[str, str] | bool,
+        syntax_highlighting: dict[str, AnySyntaxStyle] | bool,
     ):
         self.cls = cls
         self.data = data
@@ -796,46 +743,38 @@ class _DataRenderHelper:
         self.max_width = max_width
         self.as_json = as_json
 
-        self.syntax_hl: dict[str, tuple[str, str]] = _DEFAULT_SYNTAX_HL.copy()
+        self.styles: dict[str, AnySyntaxStyle] = _DEFAULT_SYNTAX_HL.copy()
         self.do_syntax_hl = syntax_highlighting not in {None, False}
 
         if self.do_syntax_hl:
             if syntax_highlighting is True:
-                syntax_highlighting = {}
+                pass
 
             elif isinstance(syntax_highlighting, dict):
-                self.syntax_hl.update({
-                    key: (f"[{val}]", "[_]") if key in self.syntax_hl and val not in {"", None} else ("", "")
-                    for key, val in syntax_highlighting.items()
-                })
-                sep = f"{self.syntax_hl['punctuation'][0]}{sep}{self.syntax_hl['punctuation'][1]}"
+                self.styles.update({key: val for key, val in syntax_highlighting.items() if key in self.styles})
+                sep = self._hl("punctuation", sep)
 
             else:
                 raise TypeError(f"The 'syntax_highlighting' parameter must be a dict or bool, got {type(syntax_highlighting)}")
 
         self.sep = sep
 
-        punct_map: dict[str, str | tuple[str, str]] = {"(": ("/(", "("), **{char: char for char in "'\":)[]{}"}}
         self.punct: dict[str, str] = {
-            key: (
-                (
-                    f"{self.syntax_hl['punctuation'][0]}{val[0]}{self.syntax_hl['punctuation'][1]}" \
-                    if self.do_syntax_hl
-                    else val[1]
-                ) \
-                if isinstance(val, (list, tuple))
-                else (
-                    f"{self.syntax_hl['punctuation'][0]}{val}{self.syntax_hl['punctuation'][1]}" \
-                    if self.do_syntax_hl
-                    else val
-                )
-            ) for key, val in punct_map.items()
+            char: (self._hl("punctuation", char) if self.do_syntax_hl else char)
+            for char in "'\":)([]{}"
         }
 
-    def __call__(self) -> str:
-        return _re.sub(
-            r"\s+(?=\n)", "",
-            self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0)
+    def _hl(self, key: str, text: str, /) -> str:
+        """Applies the syntax-highlighting style registered for `key` to `text`, returning the rendered ANSI string."""
+
+        return str(StyledText(self.styles[key](text)))
+
+    def __call__(self) -> StyledText:
+        return StyledText(
+            _re.sub(
+                r"\s+(?=\n)", "",
+                self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0)
+            )
         )
 
     def format_value(self, value: Any, /, current_indent: Optional[int] = None) -> str:
@@ -852,44 +791,37 @@ class _DataRenderHelper:
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
             obj_dict = self.cls.serialize_bytes(value)
-            return (
-                self.format_dict(obj_dict, current_indent + self.indent) if self.as_json else (
-                    f"{self.syntax_hl['type'][0]}{(key := next(iter(obj_dict)))}{self.syntax_hl['type'][1]}"
-                    + self.format_sequence((obj_dict[key], obj_dict["encoding"]), current_indent + self.indent)
-                    if self.do_syntax_hl else (key := next(iter(obj_dict)))
-                    + self.format_sequence((obj_dict[key], obj_dict["encoding"]), current_indent + self.indent)
-                )
-            )
+            if self.as_json:
+                return self.format_dict(obj_dict, current_indent + self.indent)
+            key = next(iter(obj_dict))
+            type_label = self._hl("type", key) if self.do_syntax_hl else key
+            return type_label + self.format_sequence((obj_dict[key], obj_dict["encoding"]), current_indent + self.indent)
 
         elif isinstance(value, bool):
             val = str(value).lower() if self.as_json else str(value)
-            return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+            return self._hl("literal", val) if self.do_syntax_hl else val
 
         elif isinstance(value, (int, float)):
             val = "null" if self.as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
-            return f"{self.syntax_hl['number'][0]}{val}{self.syntax_hl['number'][1]}" if self.do_syntax_hl else val
+            return self._hl("number", val) if self.do_syntax_hl else val
 
         elif current_indent is not None and isinstance(value, complex):
-            return (
-                self.format_value(str(value).strip("()")) if self.as_json else (
-                    f"{self.syntax_hl['type'][0]}complex{self.syntax_hl['type'][1]}"
-                    + self.format_sequence((value.real, value.imag), current_indent + self.indent) if self.do_syntax_hl else
-                    f"complex{self.format_sequence((value.real, value.imag), current_indent + self.indent)}"
-                )
-            )
+            if self.as_json:
+                return self.format_value(str(value).strip("()"))
+            type_label = self._hl("type", "complex") if self.do_syntax_hl else "complex"
+            return type_label + self.format_sequence((value.real, value.imag), current_indent + self.indent)
 
         elif value is None:
             val = "null" if self.as_json else "None"
-            return f"{self.syntax_hl['literal'][0]}{val}{self.syntax_hl['literal'][1]}" if self.do_syntax_hl else val
+            return self._hl("literal", val) if self.do_syntax_hl else val
 
         else:
-            return ((
-                self.punct['"'] + self.syntax_hl["str"][0] + String.escape(str(value), '"') + self.syntax_hl["str"][1]
-                + self.punct['"'] if self.do_syntax_hl else self.punct['"'] + String.escape(str(value), '"') + self.punct['"']
-            ) if self.as_json else (
-                self.punct["'"] + self.syntax_hl["str"][0] + String.escape(str(value), "'") + self.syntax_hl["str"][1]
-                + self.punct["'"] if self.do_syntax_hl else self.punct["'"] + String.escape(str(value), "'") + self.punct["'"]
-            ))
+            if self.as_json:
+                quote, escaped = '"', String.escape(str(value), '"')
+            else:
+                quote, escaped = "'", String.escape(str(value), "'")
+            inner = self._hl("str", escaped) if self.do_syntax_hl else escaped
+            return self.punct[quote] + inner + self.punct[quote]
 
     def should_expand(self, seq: IndexIterable, /) -> bool:
         """Determines whether a sequence should be expanded based on its content and the current compactness settings."""

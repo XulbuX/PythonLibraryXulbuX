@@ -27,21 +27,24 @@
     -   `any_exist` is true if at least one argument was explicitly found.
     -   `all_exist` is true if every argument was explicitly found.
     -   `unknown_flags` is a list of all the unknown flags that were found in the command-line arguments (*args that look like flags but are not defined in the config*).
-*   Added `ParsedArgs.RESERVED_ALIASES` – a `frozenset` of names that cannot be used as argument aliases. Passing a reserved name now raises a clear `ValueError`.
+*   Added `ParsedArgs.RESERVED_ALIASES`; A `frozenset` of names that cannot be used as argument aliases. Passing a reserved name now raises a clear `ValueError`.
 *   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
 *   Reformat all docstrings of the whole library.
 *   Improved the performance of `Console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
 *   Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
-*   Improved the performance of `Data.remove_duplicates()` for lists and tuples: hashable items now deduplicate in O(n) using `dict.fromkeys()`, with an O(n²) equality-check fallback only for unhashable items (*lists, dicts, sets*).
+*   Improved the performance of `Data.remove_duplicates()` for lists and tuples:<br>
+    Hashable items now deduplicate in O(n) using `dict.fromkeys()`, with an O(n²) equality-check fallback only for unhashable items (*lists, dicts, sets*).
 *   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
 
 **BREAKING CHANGES:**
 
 *   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
     The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
-    -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text – e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
+    -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
     -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
+*   `Data.render()` now returns a `StyledText` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
+*   Removed the `Data.print()` method, since `Data.render()` now returns a `StyledText` object, so you can simply call `Data.render(…).print()` instead.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.

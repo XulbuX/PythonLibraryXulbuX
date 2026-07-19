@@ -1,5 +1,6 @@
 from xulbux.base.types import DataObj
 from xulbux.data import Data
+from xulbux.ansi import StyledText
 
 from typing import Literal, Any, cast
 import pytest
@@ -230,6 +231,7 @@ def test_render(
         as_json=as_json,
         syntax_highlighting=False,
     )
-    normalized_result = "\n".join(line.rstrip() for line in result.splitlines())
+    assert isinstance(result, StyledText)
+    normalized_result = "\n".join(line.rstrip() for line in result.raw.splitlines())
     normalized_expected = "\n".join(line.rstrip() for line in expected_str.splitlines())
     assert normalized_result == normalized_expected
