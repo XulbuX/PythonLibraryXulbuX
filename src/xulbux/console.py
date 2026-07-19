@@ -7,11 +7,11 @@ from .base.types import ProgressUpdater, AllTextChars, ArgParseConfigs, ArgParse
 from .base.decorators import mypyc_attr
 from .base.consts import CHARS, ANSI
 
-from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
+from .format_codes import FormatCodes
 from .string import String
 from .color import Color
 from .regex import LazyRegex
-from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link
+from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link, _ANSI_SEQ_RX
 
 from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -735,69 +735,59 @@ class Console(metaclass=_ConsoleMeta):
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: Optional[str | Rgba | Hexa] = None,
+        box_bg_color: Optional[AnyStyle | _StyleGroup | Rgba | Hexa] = None,
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 2,
         w_full: bool = False,
         indent: int = 0,
     ) -> None:
-        """Will print a box with a colored background, containing a formatted log message.\n
+        """Will print a box with a colored background, containing a log message.\n
         --------------------------------------------------------------------------------------
-        *   `*values` – The box content (each value is on a new line).
+        *   `*values` – The box content (plain values or `StyledText` objects, one per line).
         *   `start` – Something to print before the log box is printed (e.g., `\\n`).
         *   `end` – Something to print after the log box is printed (e.g., `\\n`).
-        *   `box_bg_color` – The background color of the box (terminal color, RGBA, or HEXA).
+        *   `box_bg_color` – The background color of the box<br>
+            (an `S` background style, RGBA, or HEXA color).
         *   `default_color` – The default text color of the `*values`.
         *   `w_padding` – The horizontal padding (in chars) to the box content.
         *   `w_full` – Whether to make the box be the full terminal width or not.
         *   `indent` – The indentation of the box (in chars).
         --------------------------------------------------------------------------------------
-        The box content can be formatted with special formatting codes. For more detailed<br>
-        information about styling, see `ansi` module documentation."""
+        To style the content, pass `StyledText` objects. For more detailed<br>
+        information about styling, see the `ansi` module documentation."""
 
         if w_padding < 0:
             raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
         if indent < 0:
             raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-        if box_bg_color is not None:
-            if str(box_bg_color).replace(" ", "").lower() in ANSI.COLOR_VARIANTS_MAP:
-                pass
-            elif Color.is_valid_rgba(box_bg_color) or Color.is_valid_hexa(box_bg_color):
-                box_bg_color = Color.to_hexa(box_bg_color)
-            else:
-                raise ValueError(
-                    "The 'box_bg_color' parameter must be a valid terminal color, "
-                    f"RGBA value, or HEXA value, got {box_bg_color!r}"
-                )
+        default_hexa = str(Color.to_hexa(default_color)) if default_color is not None else "#000"
 
-        lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color)
+        # If no box BG color is set, use the console foreground color as the box BG (via inversion):
+        bg_style: AnyStyle | _StyleGroup = ((S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa))
+                                            if box_bg_color is None else cls._as_bg_style(box_bg_color))
+
+        open_seq = StyledText(S.hex(default_hexa) | bg_style).ansi
+        bg_open = StyledText(bg_style).ansi
+        reset = StyledText(S.RESET).ansi
+
+        ansi_lines, plain_lines, max_line_len = cls._prepare_log_box(values)
 
         spaces_l = " " * indent
         pady = " " * (cls.width if w_full else max_line_len + (2 * w_padding))
         pad_w_full = (cls.width - (max_line_len + (2 * w_padding))) if w_full else 0
 
-        default_color = default_color or "#000"
-        bg_fc = f"_c|invert|bg:{default_color}" if box_bg_color is None else f"bg:{box_bg_color}"
+        box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
 
-        lines = [( \
-            f"{spaces_l}[{bg_fc}]{' ' * w_padding}"
-            + _FC_PATTERNS.formatting.sub(_ConsoleLogBoxBgReplacer(bg_fc), line)
-            + (" " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full))
-            + "[*]"
-        ) for line, unfmt in zip(lines, unfmt_lines)]
+        for ansi_line, plain_line in zip(ansi_lines, plain_lines):
+            right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
+            box_lines.append(
+                f"{spaces_l}{open_seq}{' ' * w_padding}" + cls._persist_style(ansi_line, bg_open) + f"{right_pad}{reset}"
+            )
 
-        FormatCodes.print(
-            ( \
-                f"{start}{spaces_l}[{bg_fc}]{pady}[*]\n"
-                + "\n".join(lines)
-                + ("\n" if lines else "")
-                + f"{spaces_l}[{bg_fc}]{pady}[_]"
-            ),
-            default_color=default_color,
-            sep="\n",
-            end=end,
-        )
+        box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
+
+        StyledText(start + "\n".join(box_lines)).print(end=end)
 
     @classmethod
     def log_box_bordered(
@@ -806,20 +796,20 @@ class Console(metaclass=_ConsoleMeta):
         start: str = "",
         end: str = "\n",
         border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-        border_style: str | Rgba | Hexa = "br:black",
+        border_style: AnyStyle | _StyleGroup | Rgba | Hexa = S.BR.BLACK,
         default_color: Optional[Rgba | Hexa] = None,
         w_padding: int = 1,
         w_full: bool = False,
         indent: int = 0,
         _border_chars: Optional[tuple[str, str, str, str, str, str, str, str, str, str, str]] = None,
     ) -> None:
-        """Will print a bordered box, containing a formatted log message.\n
+        """Will print a bordered box, containing a log message.\n
         ---------------------------------------------------------------------------------------------
-        *   `*values` – The box content (each value is on a new line).
+        *   `*values` – The box content (plain values or `StyledText` objects, one per line).
         *   `start` – Something to print before the log box is printed (e.g., `\\n`).
         *   `end` – Something to print after the log box is printed (e.g., `\\n`).
         *   `border_type` – One of the predefined border character sets.
-        *   `border_style` – The style of the border (special formatting codes).
+        *   `border_style` – The style of the border (an `S` style, RGBA, or HEXA color).
         *   `default_color` – The default text color of the `*values`.
         *   `w_padding` – The horizontal padding (in chars) to the box content.
         *   `w_full` – Whether to make the box be the full terminal width or not.
@@ -828,8 +818,8 @@ class Console(metaclass=_ConsoleMeta):
         ---------------------------------------------------------------------------------------------
         You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
         ---------------------------------------------------------------------------------------------
-        The box content can be formatted with special formatting codes. For more detailed<br>
-        information about styling, see `ansi` module documentation.\n
+        To style the content, pass `StyledText` objects. For more detailed<br>
+        information about styling, see the `ansi` module documentation.\n
         ---------------------------------------------------------------------------------------------
         The `border_type` can be one of the following:
         *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
@@ -861,8 +851,9 @@ class Console(metaclass=_ConsoleMeta):
                     f"The '_border_chars' parameter must only contain single-character strings, got {_border_chars!r}"
                 )
 
-        if Color.is_valid(border_style):
-            border_style = Color.to_hexa(border_style)
+        border_open = StyledText(cls._as_fg_style(border_style)).ansi
+        content_open = StyledText(S.hex(str(Color.to_hexa(default_color)))).ansi if default_color is not None else ""
+        reset = StyledText(S.RESET).ansi
 
         borders = {
             "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
@@ -872,7 +863,7 @@ class Console(metaclass=_ConsoleMeta):
         }
         border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
 
-        lines, unfmt_lines, max_line_len = cls._prepare_log_box(values, default_color, has_rules=True)
+        ansi_lines, plain_lines, max_line_len = cls._prepare_log_box(values, has_rules=True)
 
         spaces_l = " " * indent
         pad_w_full = (cls.width - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
@@ -885,30 +876,23 @@ class Console(metaclass=_ConsoleMeta):
         )
         h_rule_line = border_chars[9] * (cls.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
 
-        border_l = f"[{border_style}]{border_chars[7]}[*]"
-        border_r = f"[{border_style}]{border_chars[3]}[_]"
-        border_t = f"{spaces_l}[{border_style}]{border_chars[0]}{border_t_line}{border_chars[2]}[_]"
-        border_b = f"{spaces_l}[{border_style}]{border_chars[6]}{border_b_line}{border_chars[4]}[_]"
+        border_l = f"{border_open}{border_chars[7]}{reset}"
+        border_r = f"{border_open}{border_chars[3]}{reset}"
+        border_t = f"{spaces_l}{border_open}{border_chars[0]}{border_t_line}{border_chars[2]}{reset}"
+        border_b = f"{spaces_l}{border_open}{border_chars[6]}{border_b_line}{border_chars[4]}{reset}"
 
-        h_rule = f"{spaces_l}[{border_style}]{border_chars[8]}{h_rule_line}{border_chars[10]}[_]"
+        h_rule = f"{spaces_l}{border_open}{border_chars[8]}{h_rule_line}{border_chars[10]}{reset}"
 
-        lines = [( \
-            h_rule if _PATTERNS.hr.match(line) else f"{spaces_l}{border_l}{' ' * w_padding}{line}[_]"
-            + " " * ((w_padding + max_line_len - len(unfmt)) + pad_w_full)
-            + border_r
-        ) for line, unfmt in zip(lines, unfmt_lines)]
+        box_lines: list[str] = []
+        for ansi_line, plain_line in zip(ansi_lines, plain_lines):
+            if _PATTERNS.hr.match(plain_line):
+                box_lines.append(h_rule)
+                continue
+            right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
+            box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
-        FormatCodes.print(
-            ( \
-                f"{start}{border_t}[_]\n"
-                + "\n".join(lines)
-                + ("\n" if lines else "")
-                + f"{border_b}[_]"
-            ),
-            default_color=default_color,
-            sep="\n",
-            end=end,
-        )
+        StyledText(f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "")
+                   + f"{border_b}{reset}").print(end=end)
 
     @classmethod
     def confirm(
@@ -1172,6 +1156,43 @@ class Console(metaclass=_ConsoleMeta):
         )
 
     @staticmethod
+    def _as_bg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+        """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
+
+        if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+            return color
+        if Color.is_valid_rgba(color) or Color.is_valid_hexa(color):
+            return S.BG.hex(str(Color.to_hexa(color)))
+
+        raise ValueError(
+            "The 'box_bg_color' parameter must be a valid ANSI background style, "
+            f"RGBA value, or HEXA value, got {color!r}"
+        )
+
+    @staticmethod
+    def _as_fg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+        """Resolves an `S` style or an RGBA/HEXA color to an `S` foreground style."""
+
+        if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+            return color
+        if Color.is_valid_rgba(color) or Color.is_valid_hexa(color):
+            return S.hex(str(Color.to_hexa(color)))
+
+        raise ValueError(
+            "The 'border_style' parameter must be a valid ANSI style, "
+            f"RGBA value, or HEXA value, got {color!r}"
+        )
+
+    @staticmethod
+    def _persist_style(ansi_text: str, style_open: str, /) -> str:
+        """Re-inserts `style_open` right after every ANSI escape sequence in `ansi_text`,<br>
+        so the style keeps applying even across (e.g. full) resets contained in the text."""
+
+        if not style_open or ANSI.CHAR not in ansi_text:
+            return ansi_text
+        return _ANSI_SEQ_RX.sub(lambda match: match.group(0) + style_open, ansi_text)
+
+    @staticmethod
     def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
         """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
 
@@ -1238,57 +1259,68 @@ class Console(metaclass=_ConsoleMeta):
         return left
 
     @staticmethod
+    def _split_hr_parts(val_str: str, /) -> list[str]:
+        """Splits `val_str` into parts around any `{hr}` markers, keeping each marker as its own part."""
+
+        result_parts: list[str] = []
+        current_pos = 0
+
+        for match in _PATTERNS.hr.finditer(val_str):
+            start, end = match.span()
+            should_split_before = start > 0 and val_str[start - 1] != "\n"
+            should_split_after = end < len(val_str) and val_str[end] != "\n"
+
+            if should_split_before:
+                if start > current_pos:
+                    result_parts.append(val_str[current_pos:start])
+                if should_split_after:
+                    result_parts.append(match.group())
+                    current_pos = end
+                else:
+                    current_pos = start
+
+            elif should_split_after:
+                result_parts.append(val_str[current_pos:end])
+                current_pos = end
+
+        if current_pos < len(val_str):
+            result_parts.append(val_str[current_pos:])
+        if not result_parts:
+            result_parts.append(val_str)
+
+        return result_parts
+
+    @staticmethod
     def _prepare_log_box(
         values: list[object] | tuple[object, ...],
         /,
-        default_color: Optional[Rgba | Hexa] = None,
         *,
         has_rules: bool = False,
     ) -> tuple[list[str], list[str], int]:
-        """Prepares the log box content and returns it along with the max line length."""
+        """Prepares the log box content, returning the ANSI lines, their plain-text<br>
+        counterparts, and the maximum visible line length."""
 
-        if has_rules:
-            lines: list[str] = []
+        ansi_lines: list[str] = []
+        plain_lines: list[str] = []
 
-            for val in values:
-                result_parts: list[str] = []
-                val_str, current_pos = str(val), 0
+        for val in values:
+            if isinstance(val, StyledText):
+                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n")):
+                    ansi_lines.append(ansi_line)
+                    plain_lines.append(plain_line)
+                continue
 
-                for match in _PATTERNS.hr.finditer(val_str):
-                    start, end = match.span()
-                    should_split_before = start > 0 and val_str[start - 1] != "\n"
-                    should_split_after = end < len(val_str) and val_str[end] != "\n"
+            val_str = str(val)
+            parts = Console._split_hr_parts(val_str) if has_rules else [val_str]
 
-                    if should_split_before:
-                        if start > current_pos:
-                            result_parts.append(val_str[current_pos:start])
-                        if should_split_after:
-                            result_parts.append(match.group())
-                            current_pos = end
-                        else:
-                            current_pos = start
+            for part in parts:
+                for line in part.splitlines():
+                    ansi_lines.append(line)
+                    plain_lines.append(line)
 
-                    else:
-                        if should_split_after:
-                            result_parts.append(val_str[current_pos:end])
-                            current_pos = end
+        max_line_len = max((len(line) for line in plain_lines), default=0)
 
-                if current_pos < len(val_str):
-                    result_parts.append(val_str[current_pos:])
-
-                if not result_parts:
-                    result_parts.append(val_str)
-
-                for part in result_parts:
-                    lines.extend(part.splitlines())
-
-        else:
-            lines = [line for val in values for line in str(val).splitlines()]
-
-        unfmt_lines = [FormatCodes.remove(line, default_color) for line in lines]
-        max_line_len = max(len(line) for line in unfmt_lines) if unfmt_lines else 0
-
-        return lines, unfmt_lines, max_line_len
+        return ansi_lines, plain_lines, max_line_len
 
     @staticmethod
     def _multiline_input_submit(event: KeyPressEvent, /) -> None:
@@ -1608,16 +1640,6 @@ class _ConsoleArgsParseHelper:
                 self.unknown_flags.append(arg)
 
             i += 1
-
-
-class _ConsoleLogBoxBgReplacer:
-    """Internal, callable class to replace matched text with background-format-code text for log boxes."""
-
-    def __init__(self, bg_fc: str, /) -> None:
-        self.bg_fc = bg_fc
-
-    def __call__(self, match: _rx.Match[str], /) -> str:
-        return f"{match.group(0)}[{self.bg_fc}]"
 
 
 class _ConsoleInputHelper:

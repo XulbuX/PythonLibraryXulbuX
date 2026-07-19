@@ -1,6 +1,7 @@
 from xulbux.console import ParsedArgData, ParsedArgs
 from xulbux.console import Throbber, ProgressBar
 from xulbux.console import Console
+from xulbux.ansi import S
 from xulbux import console
 
 from typing import Any
@@ -801,7 +802,7 @@ def test_exit_method(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.Mon
 
 
 def test_log_box_filled(capsys: pytest.CaptureFixture[str]):
-    Console.log_box_filled("Line 1", "Line 2", box_bg_color="green")
+    Console.log_box_filled("Line 1", "Line 2", box_bg_color=S.BG.GREEN)
 
     captured = capsys.readouterr()
     assert "Line 1" in captured.out
