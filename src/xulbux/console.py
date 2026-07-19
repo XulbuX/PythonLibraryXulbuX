@@ -11,6 +11,7 @@ from .format_codes import _PATTERNS as _FC_PATTERNS, FormatCodes
 from .string import String
 from .color import Color
 from .regex import LazyRegex
+from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link
 
 from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -47,6 +48,11 @@ _PATTERNS = LazyRegex(
     percentage=r"(?i){(?:percentage|percent|p)(?::\.([0-9])+f)?}",
     animation=r"(?i){(?:animation|a)}",
 )
+
+_LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
+"""Cache of rendered log-title ANSI strings, keyed by `(padded_title, style_repr)`."""
+_LOG_TITLE_CACHE_MAX: Final = 256
+"""Maximum number of entries kept in `_LOG_TITLE_CACHE`."""
 
 
 class ParsedArgData:
@@ -455,9 +461,14 @@ class Console(metaclass=_ConsoleMeta):
         *   `exit_code` – The exit code to use when exiting the program.
         *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
 
-        FormatCodes.print(prompt, end="", flush=True)
-        if reset_ansi:
-            FormatCodes.print("[_]", end="")
+        if isinstance(prompt, StyledText):
+            styled = prompt + StyledText(S.RESET) if reset_ansi else prompt
+        else:
+            text = str(prompt)
+            styled = StyledText(text, S.RESET, sep="") if reset_ansi else StyledText(text)
+
+        styled.print(end="", flush=True)
+
         if pause:
             cls._read_single_key()
         if exit:
@@ -482,7 +493,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[str | Rgba | Hexa] = None,
+        title_bg_color: Optional[AnyStyle | Rgba | Hexa] = None,
         default_color: Optional[Rgba | Hexa] = None,
         tab_size: int = 8,
         title_px: int = 1,
@@ -491,18 +502,18 @@ class Console(metaclass=_ConsoleMeta):
         """Prints a nicely formatted log message.\n
         ----------------------------------------------------------------------------------------------
         *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
-        *   `prompt` – The log message.
-        *   `format_linebreaks` – Whether to format (indent after) the line breaks or not.
+        *   `prompt` – The log message (a plain value or a `StyledText` object for styled output).
         *   `start` – Something to print before the log is printed.
         *   `end` – Something to print after the log is printed (e.g., `\\n`).
-        *   `title_bg_color` – The background color of the `title` (terminal color, RGBA, or HEXA).
+        *   `title_bg_color` – The background color of the `title`<br>
+            (an `S` background style, RGBA, or HEXA color).
         *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
         *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
         *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
         *   `title_mx` – The horizontal margin (in chars) to the title.
         ----------------------------------------------------------------------------------------------
-        The log message can be formatted with special formatting codes. For more detailed<br>
-        information about styling, see `ansi` module documentation."""
+        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+        information about styling, see the `ansi` module documentation."""
 
         if tab_size < 0:
             raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
@@ -511,29 +522,22 @@ class Console(metaclass=_ConsoleMeta):
         if title_mx < 0:
             raise ValueError(f"The 'title_mx' parameter must be a non-negative integer, got {title_mx!r}")
 
-        title_fg: str = "_c"
         title = "" if title is None else title.strip()
 
-        if has_title_bg := title_bg_color is not None:
-            if str(title_bg_color).replace(" ", "").lower() in ANSI.COLOR_VARIANTS_MAP:
-                title_fg = "black"
-            elif Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color):
-                title_bg_color = Color.to_hexa(title_bg_color)
-                title_fg = str(Color.text_color_for_on_bg(title_bg_color))
-            else:
-                raise ValueError(
-                    "The 'title_bg_color' parameter must be a valid terminal color, "
-                    f"RGBA value, or HEXA value, got {title_bg_color!r}"
-                )
+        title_style: _StyleGroup | _Style
+        if title_bg_color is not None:
+            bg_style, fg_style = cls._resolve_title_colors(title_bg_color)
+            title_style = S.BOLD | fg_style | bg_style
         else:
-            title_px = 0  # Remove padding if title has no bg color.
+            title_style = S.BOLD
+            title_px = 0  # Remove padding if title has no BG color.
 
-        # Padding = space inside title bg color
-        # Margin = space outside title bg color
+        # Padding = space inside title BG color
+        # Margin = space outside title BG color
         px, mx = " " * title_px, " " * title_mx
 
         # Title length including padding and margin:
-        title_len: int = len(FormatCodes.remove(title)) + (title_px * 2) + (title_mx * 2)
+        title_len: int = len(title) + (title_px * 2) + (title_mx * 2)
 
         # Distance to next tab stop:
         tab: str = " " * (-title_len % tab_size)
@@ -541,24 +545,24 @@ class Console(metaclass=_ConsoleMeta):
         # Position where prompt needs to wrap to next line:
         wrap_len: int = cls.width - (title_len + len(tab))
 
-        # Remove all format codes as they won't affect the visible length of the prompt:
-        clean_prompt, removals = FormatCodes.remove(str(prompt), get_removals=True, _ignore_linebreaks=True)
+        # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
+        prompt_st = prompt if isinstance(prompt, StyledText) else StyledText(str(prompt))
+        clean_prompt = prompt_st.raw
+        removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
 
         # Split prompt into lines and then split each line into chunks that fit within the wrap length:
         prompt_lst: list[str] = list(chain.from_iterable(cls._process_lines(clean_prompt, wrap_len)))
 
-        # Add back removed format codes to their original positions in the prompt:
-        prompt = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
+        # Add back the removed ANSI codes to their original positions in the wrapped prompt:
+        wrapped = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
 
-        out: str = (
-            # Log without a title:
-            f"{start}{mx}{f'[{default_color}]' if default_color else ''}{prompt}[_]" if title == "" else
-            # Log with a title:
-            f"{start}{mx}[b|{title_fg}{f'|bg:{title_bg_color}' if has_title_bg else ''}]{px}{title}{px}[_]{mx}"
-            f"{tab}{f'[{default_color}]' if default_color else ''}{prompt}[_]"
-        )
+        prompt_segment = (S.hex(str(Color.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped)
 
-        FormatCodes.print(out, default_color=default_color, end=end)
+        if title == "":
+            StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
+        else:
+            title_ansi = cls._render_log_title(f"{px}{title}{px}", title_style)
+            StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", prompt_segment, sep="").print(end=end)
 
     @classmethod
     def debug(
@@ -585,7 +589,7 @@ class Console(metaclass=_ConsoleMeta):
                 prompt,
                 start=start,
                 end=end,
-                title_bg_color="br:yellow",
+                title_bg_color=S.BG.BR.YELLOW,
                 default_color=default_color,
             )
             cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -612,7 +616,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt,
             start=start,
             end=end,
-            title_bg_color="br:blue",
+            title_bg_color=S.BG.BR.BLUE,
             default_color=default_color,
         )
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -639,7 +643,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt,
             start=start,
             end=end,
-            title_bg_color="br:green",
+            title_bg_color=S.BG.BR.GREEN,
             default_color=default_color,
         )
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -666,7 +670,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt,
             start=start,
             end=end,
-            title_bg_color="br:yellow",
+            title_bg_color=S.BG.BR.YELLOW,
             default_color=default_color,
         )
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -693,7 +697,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt,
             start=start,
             end=end,
-            title_bg_color="br:red",
+            title_bg_color=S.BG.BR.RED,
             default_color=default_color,
         )
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -720,7 +724,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt,
             start=start,
             end=end,
-            title_bg_color="br:magenta",
+            title_bg_color=S.BG.BR.MAGENTA,
             default_color=default_color,
         )
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
@@ -1146,6 +1150,28 @@ class Console(metaclass=_ConsoleMeta):
                 _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
 
     @staticmethod
+    def _resolve_title_colors(
+        title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa,
+        /,
+    ) -> tuple[AnyStyle | _StyleGroup, AnyStyle]:
+        """Resolves the log title's background style and its matching foreground style.\n
+        ------------------------------------------------------------------------------------
+        *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
+            RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
+
+        if isinstance(title_bg_color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+            return title_bg_color, S.BLACK
+
+        if Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color):
+            hexa_bg = Color.to_hexa(title_bg_color)
+            return S.BG.hex(str(hexa_bg)), S.hex(str(Color.text_color_for_on_bg(hexa_bg)))
+
+        raise ValueError(
+            "The 'title_bg_color' parameter must be a valid ANSI background style, "
+            f"RGBA value, or HEXA value, got {title_bg_color!r}"
+        )
+
+    @staticmethod
     def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
         """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
 
@@ -1176,6 +1202,22 @@ class Console(metaclass=_ConsoleMeta):
             offset_adjusts[i] += len(removal)
 
         return result
+
+    @staticmethod
+    def _render_log_title(text: str, style: _StyleGroup | AnyStyle, /) -> str:
+        """Renders (and caches) the styled log title as an ANSI string.\n
+        ----------------------------------------------------------------------------
+        Since consecutive log calls often reuse the exact same title and style,<br>
+        the rendered string is cached and reused instead of being rebuilt."""
+
+        key = (text, repr(style))
+
+        if (cached := _LOG_TITLE_CACHE.get(key)) is None:
+            cached = StyledText(style(text)).ansi
+            if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:
+                _LOG_TITLE_CACHE[key] = cached
+
+        return cached
 
     @staticmethod
     def _find_string_part(pos: int, cumulative_pos: list[int], /) -> int:

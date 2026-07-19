@@ -20,7 +20,7 @@
 ## … `v1.9.8` Big Update 🚀
 
 *   Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
-*   Added a new param `allow_space_value` to `Console.get_args()` and made `flag_value_sep` optional, which allows you to specify whether flags should be able to receive their values with a space in between (*e.g.* `--flag value` instead of just `--flag=value`).
+*   Added a new param `allow_space_value` to `Console.get_args()` and made `flag_value_sep` optional, which allows you to specify whether flags should be able to receive their values with a space in between (*e.g.,* `--flag value` instead of just `--flag=value`).
 *   Added a new `skip` param to `Console.get_args()`, which skips the first N command-line arguments before parsing; useful when the leading argv entries are a command/subcommand and not relevant to the caller.
 *   Added three new read-only attributes to `ParsedArgs`:
     -   `is_empty` is true if no argument was found **and** none have any values (*not even defaults*).
@@ -41,10 +41,13 @@
 *   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
     The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
     -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
-    -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.print()` and `.input()`.
+    -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
 *   `Data.render()` now returns a `StyledText` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
 *   Removed the `Data.print()` method, since `Data.render()` now returns a `StyledText` object, so you can simply call `Data.render(…).print()` instead.
+*   Migrated `Console.pause_exit()` and `Console.log()` (*and therefore also all the presets*) to the new operator-based styling API:
+    -   Their prompt/message now takes plain values or `StyledText` objects instead of format-code strings.
+    -   `Console.log()`'s `title_bg_color` now takes an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, instead of a terminal-color name string.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
@@ -100,18 +103,18 @@
 
 ## 25.01.2026 `v1.9.5`
 
-*   Added a new class property `Console.encoding`, which returns the encoding used by the console (*e.g.* `utf-8`*,* `cp1252`*, …*).
+*   Added a new class property `Console.encoding`, which returns the encoding used by the console (*e.g.,* `utf-8`*,* `cp1252`*, …*).
 *   Added multiple new class properties to the `System` class:
     -   `is_linux` Whether the current OS is Linux or not.
     -   `is_mac` Whether the current OS is macOS or not.
     -   `is_unix` Whether the current OS is a Unix-like OS (Linux, macOS, BSD, …) or not.
     -   `hostname` The network hostname of the current machine.
     -   `username` The current user's username.
-    -   `os_name` The name of the operating system (*e.g.* `Windows`*,* `Linux`*, …*).
+    -   `os_name` The name of the operating system (*e.g.,* `Windows`*,* `Linux`*, …*).
     -   `os_version` The version of the operating system.
-    -   `architecture` The CPU architecture (*e.g.* `x86_64`*,* `ARM`*, …*).
+    -   `architecture` The CPU architecture (*e.g.,* `x86_64`*,* `ARM`*, …*).
     -   `cpu_count` The number of CPU cores available.
-    -   `python_version` The Python version string (*e.g.* `3.10.4`).
+    -   `python_version` The Python version string (*e.g.,* `3.10.4`).
 *   Created a two new TypeAliases:
     -   `ArgParseConfig` Matches the command-line-parsing configuration of a single argument.
     -   `ArgParseConfigs` Matches the command-line-parsing configurations of multiple arguments, packed in a dictionary.
@@ -123,7 +126,7 @@
     -   Flagged values are now too saved to lists, so now only the `values` attribute is used for all argument types.
     -   The results of parsed command-line arguments are also no longer differentiated between regular flagged arguments and positional `"before"`/`"after"` arguments.
     -   The param `allow_spaces` was removed, and therefore a new param `flag_value_sep` was added, which specifies the character/s used to separate flags from their values.<br>
-        This means, flags can new **only** receive values when the separator is present (*e.g.* `--flag=value` *or* `--flag = value`).
+        This means, flags can new **only** receive values when the separator is present (*e.g.,* `--flag=value` *or* `--flag = value`).
 *   Combined the custom TypedDict classes `ArgResultRegular` and `ArgResultPositional` into a single TypedDict class `ArgData`, which is now used for all parsed command-line arguments.
 *   Renamed the classes `Args` and `ArgResult` to `ParsedArgs` and `ParsedArgData`, to better describe their purpose.
 *   Renamed the attribute `is_positional` to `is_pos` everywhere, so its name isn't that long.
@@ -249,7 +252,7 @@
 
 *   The `find_args` param from the method `Console.get_args()` now only accepts sets for the flags instead of lists/tuples, since the order of flags doesn't matter and sets have better performance for lookups.
 *   Added missing type checking to all public methods in the whole library, so now they will all throw errors if the params aren't of the expected type.
-*   Removed the second definitions of constants in with lowercase names in the `ANSI` class inside the `consts` module, so now you can only access them with their uppercase names (*e.g.* `ANSI.CHAR` instead of `ANSI.char`).
+*   Removed the second definitions of constants in with lowercase names in the `ANSI` class inside the `consts` module, so now you can only access them with their uppercase names (*e.g.,* `ANSI.CHAR` instead of `ANSI.char`).
 
 
 <span id="v1-8-5" />
@@ -258,7 +261,7 @@
 
 *   Made the help command `xulbux-help` new primarily use console default colors so it fits the user's console theme.
 *   Changed the default `box_bg_color` in `Console.log_box_filled()` from `green` to `br:green`.
-*   Fixed a bug in all methods of `FormatCodes`, where as soon as you used more than a single modifier format code (*e.g.* `[ll]` *or* `[++]`), it was treated as invalid and ignored.
+*   Fixed a bug in all methods of `FormatCodes`, where as soon as you used more than a single modifier format code (*e.g.,* `[ll]` *or* `[++]`), it was treated as invalid and ignored.
 *   Added a new method `FormatCodes.escape()` which will escape all valid formatting codes in a string.
 *   Again refactored the whole `CHANGELOG.md` to use actual sentences and add a `BREAKING CHANGES` section to more clearly highlight breaking changes.
 
@@ -382,7 +385,7 @@
 ## 17.06.2025 `v1.7.2`
 
 *   The `Console.w`, `Console.h` and `Console.wh` class properties now return a default size if there is no console, instead of throwing an error.
-*   It wasn't actually possible to use default console-colors (*e.g.* `"red"`, `"green"`, …) for the color params in `Console.log()` so that option was completely removed again.
+*   It wasn't actually possible to use default console-colors (*e.g.,* `"red"`, `"green"`, …) for the color params in `Console.log()` so that option was completely removed again.
 *   Upgraded the speed of `FormatCodes.to_ansi()` by adding the internal ability to skip the `default_color` validation.
 *   Fixed type hints for the whole library.
 *   Fixed a small bug in `Console.pause_exit()`, where the key, pressed to unpause wasn't suppressed, so it was written into the next console input after unpausing.
@@ -396,7 +399,7 @@
 *   Added a new method `Console.log_box_bordered()`, which does the same as `Console.log_box_filled()`, but with a border instead of a background color.
 *   The module `xx_format_codes` now treats the `[*]` to-default-color-reset as a normal full-reset, when no `default_color` is set, instead of just counting it as an invalid format code.
 *   Fixed bug where entering a color as HEX integer in the color params of the methods `Console.log()`, `Console.log_box_filled()` and `Console.log_box_bordered()` would not work, because it was not properly converted to a format code.
-*   You can now use default console colors (*e.g.* `"red"`, `"green"`, …) for the color params in `Console.log()`.
+*   You can now use default console colors (*e.g.,* `"red"`, `"green"`, …) for the color params in `Console.log()`.
 *   The methods `Console.log_box_filled()` and `Console.log_box_bordered()` no longer right-strip spaces, so you can make multiple log boxes the same width, by adding spaces to the end of the text.
 
 **BREAKING CHANGES:**
@@ -441,7 +444,7 @@
 
 ## 18.03.2025 `v1.6.8`
 
-*   Made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.* `[/red]`).
+*   Made it possible to escape formatting codes by putting a slash (`/` *or* `\\`) at the beginning inside the brackets (*e.g.,* `[/red]`).
 *   New methods for `Args` (*the returned object from* `Console.get_args()`):
     -   The `len()` function can now be used on `Args` (*the returned object from* `Console.get_args()`).
     -   The `Args` object now also has the dict like methods `.keys()`, `.values()` and `.items()`.
@@ -493,7 +496,7 @@
 **BREAKING CHANGES:**
 
 *   Restructured the `_consts_` library constants to use `@dataclass` classes (*and simpler structured classes*) as much as possible.
-*   Renamed the `DEFAULT` class from the `_consts_` to `COLOR`, whose colors are now directly accessible as variables (*e.g.* `COLOR.red`) and not through dictionary keys.
+*   Renamed the `DEFAULT` class from the `_consts_` to `COLOR`, whose colors are now directly accessible as variables (*e.g.,* `COLOR.red`) and not through dictionary keys.
 *   Changed the methods `Console.w()`, `Console.h()`, `Console.wh()` and `Console.user()` to modern class properties instead:<br>
     `Console.w` current console columns (*in text characters*)<br>
     `Console.h` current console lines<br>
@@ -527,7 +530,7 @@
 ## 22.01.2025 `v1.6.3` **⚠️ This release is broken!**
 
 *   Fixed a small bug in `xx_format_codes`:<br>
-    Inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset.<br>
+    Inside print-strings, if there was a `'` or `"` inside an auto-reset-formatting (*e.g.,* `[u](there's a quote)`), that caused it to not be recognized as valid, and therefore not be automatically reset.<br>
     Now this is fixed and auto-reset-formatting works as expected.
 *   Added a new param <code>ignore_in_strings: *bool* = True</code> to `Regex.brackets()`:<br>
     If this param is true and a bracket is inside a string (e.g., `'…'` or `"…"`), it will not be counted as the matching closing bracket.
@@ -587,7 +590,7 @@
     1.  The method always returned an empty string, because the color validation was broken, and it would identify all colors as invalid.<br>
         Now the validation `Color.is_valid_rgba()` and `Color.is_valid_hexa()` are fixed and now, if a color is identified as invalid, the method returns the original string instead of an empty string.
     2.  Previously the method `to_ansi()` couldn't handle formats inside `[]` because everything inside the brackets was recognized as an invalid format.<br>
-        Now you are able to use formats inside `[]` (*e.g.* `"[[red](Red text [b](inside) square brackets!)]"`).
+        Now you are able to use formats inside `[]` (*e.g.,* `"[[red](Red text [b](inside) square brackets!)]"`).
 *   Introduced a new test for the `xx_format_codes` module.
 *   Fixed a small bug in the help client-command:<br>
     Added back the default text color.
@@ -697,7 +700,7 @@
 *   Fixed the `grayscale()` method of `rgba()`, `hsla()` and `hexa()`:<br>
     The method would previously just return the color, fully desaturated (*not grayscale*).<br>
     Now this is fixed, and the method uses the luminance formula, to get the actual grayscale value.
-*   All the methods in the `xx_color` module now support HEX integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`).
+*   All the methods in the `xx_color` module now support HEX integers (*e.g.,* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`).
 
 **BREAKING CHANGES:**
 

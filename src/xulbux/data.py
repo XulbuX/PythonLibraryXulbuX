@@ -7,7 +7,7 @@ from .base.types import IndexIterableTT, IndexIterable, DataObjTT, DataObj as Da
 
 from .string import String
 from .regex import Regex
-from .ansi import StyledText, S, AnyStyle, _StyleGroup
+from .ansi import StyledText, AnyStyle, S, _StyleGroup
 
 from typing import Optional, Literal, TypeVar, Final, Union, Any, overload, cast
 import base64 as _base64

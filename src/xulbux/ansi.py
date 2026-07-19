@@ -738,6 +738,24 @@ class StyledText:
 
         return tuple((match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi))
 
+    @property
+    def raw_code_positions(self) -> tuple[tuple[int, str], ...]:
+        """A tuple of `(position, sequence)` pairs giving the start offset of every ANSI escape<br>
+        sequence relative to the plain `raw` text (i.e., as if all escape sequences were removed).\n
+        ---------------------------------------------------------------------------------------------
+        This is the counterpart to `code_positions`, which reports offsets inside the rendered<br>
+        `ansi` string. It is useful for re-inserting the styling after processing the plain text<br>
+        (e.g., wrapping or splitting it), since the positions stay valid against `raw`."""
+
+        result: list[tuple[int, str]] = []
+        consumed = 0
+
+        for match in _ANSI_SEQ_RX.finditer(self.ansi):
+            result.append((match.start() - consumed, match.group()))
+            consumed += len(match.group())
+
+        return tuple(result)
+
     def __add__(self, other: StyledText | str, /) -> StyledText:
         """Concatenate a `StyledText` object with another `StyledText` object or a plain string."""
 
