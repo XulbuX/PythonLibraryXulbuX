@@ -10,7 +10,7 @@ from .base.consts import CHARS, ANSI
 from .string import String
 from .color import Color
 from .regex import LazyRegex
-from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link
+from .ansi import StyledText, AnyStyle, TextLike, S, _ColorStyle, _StyleGroup, _Style, _Link
 
 from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -56,19 +56,26 @@ _LOG_TITLE_CACHE_MAX: Final = 256
 _ANSI_RESET: Final = StyledText(S.RESET).ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
-_DEFAULT_BAR_FORMAT: Final[list[str]] = [
+_DEFAULT_BAR_FORMAT: Final[list[TextLike]] = [
     "{l}",
-    StyledText(S.BG.BLACK("{b}")).ansi,
-    StyledText(S.BOLD("{c:,}")).ansi + "/{t:,}",
-    StyledText(S.DIM("(", S.ITALIC("{p}%"), ")")).ansi,
+    S.BG.BLACK("{b}"),
+    (S.BOLD("{c:,}"), "/{t:,}"),
+    S.DIM("(", S.ITALIC("{p}%"), ")"),
 ]
 """Default `ProgressBar` format, styled with the operator-based API."""
-_DEFAULT_LIMITED_BAR_FORMAT: Final[list[str]] = [StyledText(S.BG.BLACK("{b}")).ansi]
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[TextLike]] = [S.BG.BLACK("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[str]] = ["{l}", StyledText(S.BOLD("{a}")).ansi + " "]
+_DEFAULT_THROBBER_FORMAT: Final[list[TextLike]] = ["{l}", (S.BOLD("{a}"), " ")]
 """Default `Throbber` format, styled with the operator-based API."""
 
 
+def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> list[str]:
+    if isinstance(fmt, (list, tuple)):
+        return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
+    return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
+
+
+@mypyc_attr(native_class=False)
 class ParsedArgData:
     """Represents the result of a parsed command-line argument, containing the attributes listed below.\n
     ------------------------------------------------------------------------------------------------------------
@@ -80,13 +87,13 @@ class ParsedArgData:
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
     def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: Optional[str] = None):
-        self.exists: Final[bool] = exists
+        self.exists: bool = exists
         """Whether the argument was found or not."""
-        self.is_pos: Final[bool] = is_pos
+        self.is_pos: bool = is_pos
         """Whether the argument is a positional argument or not."""
-        self.values: Final[tuple[str, ...]] = tuple(values)
+        self.values: tuple[str, ...] = tuple(values)
         """The tuple of values associated with the argument."""
-        self.flag: Final[Optional[str]] = flag
+        self.flag: Optional[str] = flag
         """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
     def __bool__(self) -> bool:
@@ -124,11 +131,12 @@ class ParsedArgData:
     def __str__(self) -> str:
         return self.__repr__()
 
-    def _update(self, **kwargs: Any) -> None:
-        """Internal method to update the attributes of the `ParsedArgData` instance."""
+    def _replace(self, **kwargs: Any) -> "ParsedArgData":
+        """Internal method to return a new `ParsedArgData` with updated attributes."""
 
-        for k, v in kwargs.items():
-            object.__setattr__(self, k, v)
+        current: dict[str, Any] = dict(exists=self.exists, values=list(self.values), is_pos=self.is_pos, flag=self.flag)
+        current.update(kwargs)
+        return ParsedArgData(**current)
 
     def dict(self) -> ArgData:
         """Returns the argument result as a dictionary."""
@@ -1208,7 +1216,8 @@ class Console(metaclass=_ConsoleMeta):
 
         if not style_open or ANSI.CHAR not in ansi_text:
             return ansi_text
-        return ANSI.SEQ_PATTERN.sub(lambda match: match.group(0) + style_open, ansi_text)
+
+        return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", "\\\\"), ansi_text)
 
     @staticmethod
     def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
@@ -1521,7 +1530,7 @@ class _ConsoleArgsParseHelper:
                 before_args.append(arg)
 
         if before_args:
-            self.parsed_args[alias]._update(values=tuple(before_args), exists=True)
+            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=tuple(before_args), exists=True)
 
     def _collect_after_arg(self, alias: str, /) -> None:
         """Collect positional `"after"` arguments."""
@@ -1554,7 +1563,7 @@ class _ConsoleArgsParseHelper:
                 after_args.append(arg)
 
         if after_args:
-            self.parsed_args[alias]._update(values=tuple(after_args), exists=True)
+            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=tuple(after_args), exists=True)
 
     @staticmethod
     def _looks_like_flag(arg: str, /) -> bool:
@@ -1617,10 +1626,10 @@ class _ConsoleArgsParseHelper:
 
                 if potential_flag in self.arg_lookup:
                     alias = self.arg_lookup[potential_flag]
-                    self.parsed_args[alias]._update(exists=True, flag=potential_flag)
+                    self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=potential_flag)
 
                     if len(parts) > 1 and (val := parts[1].strip()):
-                        self.parsed_args[alias]._update(values=(val, ))
+                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val, ))
 
                     i += 1
                     continue
@@ -1634,13 +1643,13 @@ class _ConsoleArgsParseHelper:
             # [CASE 2] Standalone known flag:
             if arg in self.arg_lookup:
                 alias = self.arg_lookup[arg]
-                self.parsed_args[alias]._update(exists=True, flag=arg)
+                self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=arg)
 
                 # Check for separator in next tokens (`--flag`, `=`, `value`):
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
-                            self.parsed_args[alias]._update(values=(val, ))
+                            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val, ))
                             i += 3
                             continue
                     i += 2
@@ -1648,7 +1657,7 @@ class _ConsoleArgsParseHelper:
 
                 # Check for space-separated value (`--flag value`):
                 if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
-                    self.parsed_args[alias]._update(values=(next_arg, ))
+                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(next_arg, ))
                     i += 2
                     continue
                 # No separator = just a flag without value.
@@ -1880,8 +1889,8 @@ class ProgressBar:
         *,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: list[str] | tuple[str, ...] = _DEFAULT_BAR_FORMAT,
-        limited_bar_format: list[str] | tuple[str, ...] = _DEFAULT_LIMITED_BAR_FORMAT,
+        bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_BAR_FORMAT,
+        limited_bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ):
@@ -1891,9 +1900,9 @@ class ProgressBar:
         """The min width of the progress bar in chars."""
         self.max_width: int
         """The max width of the progress bar in chars."""
-        self.bar_format: list[str] | tuple[str, ...]
+        self.bar_format: list[str]
         """The format strings used to render the progress bar (joined by `sep`)."""
-        self.limited_bar_format: list[str] | tuple[str, ...]
+        self.limited_bar_format: list[str]
         """The simplified format strings used when the terminal width is too small."""
         self.sep: str
         """The separator string used to join multiple bar-format strings."""
@@ -1931,8 +1940,8 @@ class ProgressBar:
 
     def set_bar_format(
         self,
-        bar_format: Optional[list[str] | tuple[str, ...]] = None,
-        limited_bar_format: Optional[list[str] | tuple[str, ...]] = None,
+        bar_format: Optional[list[TextLike] | tuple[TextLike, ...] | TextLike] = None,
+        limited_bar_format: Optional[list[TextLike] | tuple[TextLike, ...] | TextLike] = None,
         *,
         sep: Optional[str] = None,
     ) -> None:
@@ -1953,22 +1962,24 @@ class ProgressBar:
         For more detailed information, see the `ansi` module documentation."""
 
         if bar_format is not None:
-            if not any(_PATTERNS.bar.search(part) for part in bar_format):
+            compiled_bar = _compile_format(bar_format)
+            if not any(_PATTERNS.bar.search(part) for part in compiled_bar):
                 raise ValueError(
                     "The 'bar_format' parameter value must contain the "
                     f"'{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
                 )
 
-            self.bar_format = bar_format
+            self.bar_format = compiled_bar
 
         if limited_bar_format is not None:
-            if not any(_PATTERNS.bar.search(part) for part in limited_bar_format):
+            compiled_limited = _compile_format(limited_bar_format)
+            if not any(_PATTERNS.bar.search(part) for part in compiled_limited):
                 raise ValueError(
                     "The 'limited_bar_format' parameter value must contain the "
                     f"'{{bar}}' or '{{b}}' placeholder, got {limited_bar_format!r}"
                 )
 
-            self.limited_bar_format = limited_bar_format
+            self.limited_bar_format = compiled_limited
 
         if sep is not None:
             self.sep = sep
@@ -2089,7 +2100,7 @@ class ProgressBar:
 
     def _get_formatted_info_and_bar_width(
         self,
-        bar_format: list[str] | tuple[str, ...],
+        bar_format: list[str],
         current: int,
         total: int,
         percentage: float,
@@ -2263,12 +2274,12 @@ class Throbber:
         self,
         *,
         label: Optional[str] = None,
-        throbber_format: list[str] | tuple[str, ...] = _DEFAULT_THROBBER_FORMAT,
+        throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
     ):
-        self.throbber_format: list[str] | tuple[str, ...]
+        self.throbber_format: list[str]
         """The format strings used to render the throbber (joined by `sep`)."""
         self.sep: str
         """The separator string used to join multiple throbber-format strings."""
@@ -2294,7 +2305,9 @@ class Throbber:
         self._stop_event: Optional[_threading.Event] = None
         self._animation_thread: Optional[_threading.Thread] = None
 
-    def set_format(self, throbber_format: list[str] | tuple[str, ...], *, sep: Optional[str] = None) -> None:
+    def set_format(
+        self, throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: Optional[str] = None
+    ) -> None:
         """Set the format string used to render the throbber.\n
         -------------------------------------------------------------------------------------------------
         *   `throbber_format` – The format strings used to render the throbber, containing placeholders:
@@ -2302,13 +2315,14 @@ class Throbber:
             -   `{animation}` `{a}`
         *   `sep` – The separator string used to join multiple format strings."""
 
-        if not any(_PATTERNS.animation.search(fmt) for fmt in throbber_format):
+        compiled_throbber = _compile_format(throbber_format)
+        if not any(_PATTERNS.animation.search(fmt) for fmt in compiled_throbber):
             raise ValueError(
                 "At least one format string in 'throbber_format' must contain the "
                 f"'{{animation}}' or '{{a}}' placeholder, got {throbber_format!r}"
             )
 
-        self.throbber_format = throbber_format
+        self.throbber_format = compiled_throbber
         self.sep = sep or self.sep
 
     def set_frames(self, frames: tuple[str, ...], /) -> None:

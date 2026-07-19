@@ -136,7 +136,7 @@ class ANSI:
     SEQ_LINK_CLOSE: Final[str] = f"{CHAR}]8;;{CHAR}\\"
     """OSC 8 hyperlink closing sequence."""
 
-    SEQ_PATTERN: Final = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
+    SEQ_PATTERN: Final[_rx.Pattern[str]] = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
     """Compiled regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""
 
     COLOR_MAP: Final[Annotated[

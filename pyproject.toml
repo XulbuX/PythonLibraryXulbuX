@@ -125,6 +125,7 @@ extend-exclude = [
   ".mypy_cache",
   ".pytest_cache",
   ".venv",
+  "**/__pycache__",
   "assets",
   "build",
 ]
@@ -140,8 +141,20 @@ select = ["W", "E", "F", "C90"]
 show-source = true
 statistics = true
 
+[tool.mypy]
+exclude = ["^build/"]
+
 [tool.pyright]
 include = ["src", "tests"]
+exclude = [
+  ".github",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".venv",
+  "**/__pycache__",
+  "assets",
+  "build",
+]
 reportDeprecated = "none"
 reportPrivateUsage = "none"
 typeCheckingMode = "strict"

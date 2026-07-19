@@ -173,7 +173,8 @@ _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
 
 _ANSI_SEQ_RX: Final = ANSI.SEQ_PATTERN
-"""Module shorthand for `ANSI.SEQ_PATTERN` – matches any ANSI escape sequence (CSI, OSC, or single-character)."""
+"""Module shorthand for `ANSI.SEQ_PATTERN`.<br>
+Matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
 _RESET_MAP: Final[dict[int, int]] = {
     ######################### TEXT STYLES #########################
