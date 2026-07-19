@@ -45,10 +45,11 @@
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
 *   `Data.render()` now returns a `StyledText` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
 *   Removed the `Data.print()` method, since `Data.render()` now returns a `StyledText` object, so you can simply call `Data.render(…).print()` instead.
-*   Migrated `Console.pause_exit()`, `Console.log()`, `Console.log_box_filled()` and `Console.log_box_bordered()` (*and therefore also all the presets*) to the new operator-based styling API:
-    -   Their prompt/message/content now takes plain values or `StyledText` objects instead of format-code strings.
-    -   `Console.log()`'s `title_bg_color` and `Console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, instead of a terminal-color name string.
-    -   `Console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`), instead of a terminal-color name string.
+*   Migrated the entire `Console` class as well as the `ProgressBar` and `Throbber` classes off the deprecated `format_codes` module and onto the new operator-based styling API:
+    -   All prompts/messages/content now take plain values or `StyledText` objects instead of format-code strings.
+    -   `Console.log()`'s `title_bg_color` and `Console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `Console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.
+    -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
+*   Added `ANSI.SEQ_PATTERN` (in `xulbux.base.consts`) – a compiled regex that matches any ANSI escape sequence (CSI, OSC, or single-character), used across the library to detect/strip ANSI sequences.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.

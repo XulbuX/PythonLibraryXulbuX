@@ -165,7 +165,6 @@ from .base.consts import ANSI
 from typing import TypeAlias, ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
 from pathlib import Path
 import ctypes as _ctypes
-import regex as _rx
 import sys as _sys
 import os as _os
 
@@ -173,8 +172,8 @@ import os as _os
 _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
 
-_ANSI_SEQ_RX: Final = _rx.compile(ANSI.CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
-"""Regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""
+_ANSI_SEQ_RX: Final = ANSI.SEQ_PATTERN
+"""Module shorthand for `ANSI.SEQ_PATTERN` – matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
 _RESET_MAP: Final[dict[int, int]] = {
     ######################### TEXT STYLES #########################

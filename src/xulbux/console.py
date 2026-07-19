@@ -7,11 +7,10 @@ from .base.types import ProgressUpdater, AllTextChars, ArgParseConfigs, ArgParse
 from .base.decorators import mypyc_attr
 from .base.consts import CHARS, ANSI
 
-from .format_codes import FormatCodes
 from .string import String
 from .color import Color
 from .regex import LazyRegex
-from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link, _ANSI_SEQ_RX
+from .ansi import StyledText, AnyStyle, S, _ColorStyle, _StyleGroup, _Style, _Link
 
 from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
@@ -53,6 +52,21 @@ _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
 """Cache of rendered log-title ANSI strings, keyed by `(padded_title, style_repr)`."""
 _LOG_TITLE_CACHE_MAX: Final = 256
 """Maximum number of entries kept in `_LOG_TITLE_CACHE`."""
+
+_ANSI_RESET: Final = StyledText(S.RESET).ansi
+"""The ANSI full-reset sequence (`ESC[0m`)."""
+
+_DEFAULT_BAR_FORMAT: Final[list[str]] = [
+    "{l}",
+    StyledText(S.BG.BLACK("{b}")).ansi,
+    StyledText(S.BOLD("{c:,}")).ansi + "/{t:,}",
+    StyledText(S.DIM("(", S.ITALIC("{p}%"), ")")).ansi,
+]
+"""Default `ProgressBar` format, styled with the operator-based API."""
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[str]] = [StyledText(S.BG.BLACK("{b}")).ansi]
+"""Default simplified `ProgressBar` format used when the terminal is too narrow."""
+_DEFAULT_THROBBER_FORMAT: Final[list[str]] = ["{l}", StyledText(S.BOLD("{a}")).ansi + " "]
+"""Default `Throbber` format, styled with the operator-based API."""
 
 
 class ParsedArgData:
@@ -913,18 +927,18 @@ class Console(metaclass=_ConsoleMeta):
         *   `default_color` – The default text color of the `prompt`.
         *   `default_is_yes` – The default answer if the user just presses enter.
         ------------------------------------------------------------------------------------
-        The prompt can be formatted with special formatting codes. For more detailed<br>
+        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
-        confirmed = cls.input(
-            FormatCodes.to_ansi(
-                f"{start}{str(prompt)} [_|dim](({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): )",
-                default_color=default_color,
-            )
-        ).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
+        yes_no = f"({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): "
+        head = f"{start}{prompt.ansi if isinstance(prompt, StyledText) else str(prompt)} "
+        head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
+
+        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no),
+                                         sep="")).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
 
         if end:
-            FormatCodes.print(end, end="")
+            StyledText(end).print(end="", flush=True)
         return confirmed
 
     @classmethod
@@ -950,17 +964,19 @@ class Console(metaclass=_ConsoleMeta):
         *   `input_prefix` – The prefix of the input line.
         *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
         ---------------------------------------------------------------------------------------
-        The input prompt can be formatted with special formatting codes. For more detailed<br>
+        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
         kb = KeyBindings()
         kb.add("c-d", eager=True)(cls._multiline_input_submit)
 
-        FormatCodes.print(start + str(prompt), default_color=default_color)
+        head = f"{start}{prompt.ansi if isinstance(prompt, StyledText) else str(prompt)}"
+        head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
+        StyledText(head_seg).print()
         if show_keybindings:
-            FormatCodes.print("[dim][[b](CTRL+D)[dim] : end of input][_dim]")
+            StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
         input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
-        FormatCodes.print("[_]" if reset_ansi else "", end=end[1:] if end.startswith("\n") else end)
+        StyledText(S.RESET if reset_ansi else "").print(end=end[1:] if end.startswith("\n") else end)
 
         return input_string
 
@@ -1045,7 +1061,7 @@ class Console(metaclass=_ConsoleMeta):
         *   `default_val` – The default value to return if the input is empty.
         *   `output_type` – The type (class) to convert the input to before returning it.
         ----------------------------------------------------------------------------------------
-        The input prompt can be formatted with special formatting codes. For more detailed<br>
+        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
         if mask_char is not None and len(mask_char) != 1:
@@ -1072,8 +1088,11 @@ class Console(metaclass=_ConsoleMeta):
         kb.add(Keys.Any)(helper.handle_any)
 
         custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
+        prompt_ansi = prompt.ansi if isinstance(prompt, StyledText) else StyledText(str(prompt)).ansi
+        if default_color is not None:
+            prompt_ansi = StyledText(S.hex(str(Color.to_hexa(default_color)))(prompt_ansi)).ansi
         session: _pt.PromptSession[str] = _pt.PromptSession(
-            message=_pt.formatted_text.ANSI(FormatCodes.to_ansi(str(prompt), default_color=default_color)),
+            message=_pt.formatted_text.ANSI(prompt_ansi),
             validator=_ConsoleInputValidator(
                 helper.get_text,
                 mask_char=mask_char,
@@ -1083,13 +1102,12 @@ class Console(metaclass=_ConsoleMeta):
             validate_while_typing=True,
             key_bindings=kb,
             bottom_toolbar=helper.bottom_toolbar,
-            placeholder=_pt.formatted_text.ANSI(FormatCodes.to_ansi(f"[i|br:black]{placeholder}[_i|_c]"))
-            if placeholder else "",
+            placeholder=_pt.formatted_text.ANSI(StyledText((S.ITALIC | S.BR.BLACK)(placeholder)).ansi) if placeholder else "",
             style=custom_style,
         )
-        FormatCodes.print(start, end="")
+        StyledText(start).print(end="", flush=True)
         session.prompt()
-        FormatCodes.print(end, end="")
+        StyledText(end).print(end="", flush=True)
 
         if (result_text := helper.get_text()) in {"", None}:
             if default_val is not None:
@@ -1190,7 +1208,7 @@ class Console(metaclass=_ConsoleMeta):
 
         if not style_open or ANSI.CHAR not in ansi_text:
             return ansi_text
-        return _ANSI_SEQ_RX.sub(lambda match: match.group(0) + style_open, ansi_text)
+        return ANSI.SEQ_PATTERN.sub(lambda match: match.group(0) + style_open, ansi_text)
 
     @staticmethod
     def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
@@ -1682,22 +1700,30 @@ class _ConsoleInputHelper:
 
             toolbar_msgs: list[str] = []
             if self.max_len and len(text_to_check) > self.max_len:
-                toolbar_msgs.append("[b|#FFF|bg:red]( Text too long! )")
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#FFF") | S.BG.RED)(" Text too long! ")).ansi)
             if self.validator and text_to_check and (validation_error_msg := self.validator(text_to_check)) not in {"", None}:
-                toolbar_msgs.append(f"[b|#000|bg:br:red] {validation_error_msg} [_bg]")
+                toolbar_msgs.append(
+                    StyledText((S.BOLD | S.hex("#000") | S.BG.BR.RED), f" {validation_error_msg} ", S.RESET_BG, sep="").ansi
+                )
             if self.filtered_chars:
                 plural = "" if len(char_list := "".join(sorted(self.filtered_chars))) == 1 else "s"
-                toolbar_msgs.append(f"[b|#000|bg:yellow]( Char{plural} '{char_list}' not allowed )")
+                toolbar_msgs.append(
+                    StyledText((S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Char{plural} '{char_list}' not allowed )")).ansi
+                )
                 self.filtered_chars.clear()
             if self.min_len and len(text_to_check) < self.min_len:
-                toolbar_msgs.append(f"[b|#000|bg:yellow]( Need {self.min_len - len(text_to_check)} more chars )")
+                toolbar_msgs.append(
+                    StyledText(
+                        (S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Need {self.min_len - len(text_to_check)} more chars )")
+                    ).ansi
+                )
             if self.tried_pasting:
-                toolbar_msgs.append("[b|#000|bg:br:yellow]( Pasting disabled )")
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Pasting disabled )")).ansi)
                 self.tried_pasting = False
             if self.max_len and len(text_to_check) == self.max_len:
-                toolbar_msgs.append("[b|#000|bg:br:yellow]( Maximum length reached )")
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Maximum length reached )")).ansi)
 
-            return _pt.formatted_text.ANSI(FormatCodes.to_ansi(" ".join(toolbar_msgs)))
+            return _pt.formatted_text.ANSI(" ".join(toolbar_msgs))
 
         except Exception:
             return _pt.formatted_text.ANSI("")
@@ -1845,16 +1871,17 @@ class ProgressBar:
         Intermediate characters create smooth transitions<br>
         The last character represents empty sections.
     -------------------------------------------------------------------------------------------------------
-    The bar format (also limited) can additionally be formatted with special formatting codes.<br>
-    For more detailed information about styling, see the `ansi` module documentation."""
+    The bar format (also limited) can additionally be styled by embedding ANSI from the operator-based API<br>
+    (e.g., <code>StyledText(S.BG.BLACK("{b}")).ansi</code>).<br>
+    For more detailed information, see the `ansi` module documentation."""
 
     def __init__(
         self,
         *,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: list[str] | tuple[str, ...] = ["{l}", "[bg:black]({b})", "[b]({c:,})/{t:,}", "[dim](([i]({p}%)))"],
-        limited_bar_format: list[str] | tuple[str, ...] = ["[bg:black]({b})"],
+        bar_format: list[str] | tuple[str, ...] = _DEFAULT_BAR_FORMAT,
+        limited_bar_format: list[str] | tuple[str, ...] = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ):
@@ -1921,8 +1948,9 @@ class ProgressBar:
         *   `limited_bar_format` – A simplified format strings used when the terminal width is too small.
         *   `sep` – The separator string used to join multiple format strings.
         -------------------------------------------------------------------------------------------------------
-        The bar format (also limited) can additionally be formatted with special formatting codes.<br>
-        For more detailed information about styling, see the `ansi` module documentation."""
+        The bar format (also limited) can additionally be styled by embedding ANSI from the operator-based API<br>
+        (e.g., <code>StyledText(S.BG.BLACK("{b}")).ansi</code>).<br>
+        For more detailed information, see the `ansi` module documentation."""
 
         if bar_format is not None:
             if not any(_PATTERNS.bar.search(part) for part in bar_format):
@@ -2051,8 +2079,8 @@ class ProgressBar:
                 self.limited_bar_format, current, total, percentage, label
             )
 
-        bar = f"{self._create_bar(current, total, max(1, bar_width))}[*]"
-        progress_text = _PATTERNS.bar.sub(FormatCodes.to_ansi(bar), formatted)
+        bar = self._create_bar(current, total, max(1, bar_width)) + _ANSI_RESET
+        progress_text = _PATTERNS.bar.sub(bar, formatted)
 
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
@@ -2079,9 +2107,8 @@ class ProgressBar:
                 fmt_parts.append(fmt_part)
 
         fmt_str = self.sep.join(fmt_parts)
-        fmt_str = FormatCodes.to_ansi(fmt_str)
 
-        bar_space = Console.width - len(FormatCodes.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
+        bar_space = Console.width - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -2229,14 +2256,14 @@ class Throbber:
     *   `frames` – A tuple of strings representing the animation frames.
     *   `interval` – The time in seconds between each animation frame.
     ------------------------------------------------------------------------------------------------
-    The `throbber_format` can additionally be formatted with special formatting codes. For more<br>
-    detailed information about styling, see the `ansi` module documentation."""
+    The `throbber_format` can additionally be styled by embedding ANSI from the operator-based API<br>
+    (e.g., <code>StyledText(S.BOLD("{a}")).ansi</code>). For more detailed information, see the `ansi` module documentation."""
 
     def __init__(
         self,
         *,
         label: Optional[str] = None,
-        throbber_format: list[str] | tuple[str, ...] = ["{l}", "[b]({a}) "],
+        throbber_format: list[str] | tuple[str, ...] = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
@@ -2380,11 +2407,11 @@ class Throbber:
 
                 self._flush_buffer()
 
-                frame = FormatCodes.to_ansi(f"{self.frames[self._frame_index % len(self.frames)]}[*]")
-                formatted = FormatCodes.to_ansi(self.sep.join(
+                frame = self.frames[self._frame_index % len(self.frames)] + _ANSI_RESET
+                formatted = self.sep.join(
                     fmt_part for part in self.throbber_format if \
                     (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", part)))
-                ))
+                )
 
                 self._current_animation_str = formatted
                 self._last_line_len = len(formatted)

@@ -28,8 +28,6 @@ def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     # Patch in the original module where it is defined:
     import xulbux.format_codes
     monkeypatch.setattr(xulbux.format_codes.FormatCodes, "print", mock)
-    # Also patch in console module just in case:
-    monkeypatch.setattr("xulbux.console.FormatCodes.print", mock)
     return mock
 
 

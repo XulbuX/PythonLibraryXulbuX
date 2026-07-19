@@ -6,6 +6,7 @@ from .types import FormattableString, AllTextChars
 from .decorators import deprecated
 
 from typing import Annotated, Final
+import regex as _rx
 
 
 class COLOR:
@@ -134,6 +135,9 @@ class ANSI:
     """OSC 8 hyperlink opening sequence with a placeholder for the URL."""
     SEQ_LINK_CLOSE: Final[str] = f"{CHAR}]8;;{CHAR}\\"
     """OSC 8 hyperlink closing sequence."""
+
+    SEQ_PATTERN: Final = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
+    """Compiled regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""
 
     COLOR_MAP: Final[Annotated[
         set[str],
