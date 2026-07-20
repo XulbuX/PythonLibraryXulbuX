@@ -1,8 +1,7 @@
+from typing import Any, Literal, cast
+from xulbux.ansi import StyledText
 from xulbux.base.types import DataObj
 from xulbux.data import Data
-from xulbux.ansi import StyledText
-
-from typing import Literal, Any, cast
 import pytest
 
 # Don't change this data!
@@ -14,8 +13,7 @@ d_comments: dict[str, Any] = {
         ">> Full value is a comment:  value4",
     ],
     ">> Full key & all its values are a comment:  key2": ["value", "value", "value"],
-    "key3":
-    ">> All the keys values are comments:  value",
+    "key3": ">> All the keys values are comments:  value",
 }
 
 d1_equal: dict[str, Any] = {
@@ -46,6 +44,7 @@ def test_serialize_bytes():
     serialized_non_utf8 = Data.serialize_bytes(non_utf8_bytes)
     assert serialized_non_utf8["encoding"] == "base64"
     import base64
+
     assert base64.b64decode(serialized_non_utf8["bytes"]).decode("latin-1") == non_utf8_bytes.decode("latin-1")
 
 
@@ -53,6 +52,7 @@ def test_deserialize_bytes():
     utf8_serialized_bytes = {"bytes": "Hello", "encoding": "utf-8"}
     utf8_serialized_bytearray = {"bytearray": "World", "encoding": "utf-8"}
     import base64
+
     non_utf8_bytes = b"\x80abc"
     base64_encoded = base64.b64encode(non_utf8_bytes).decode("utf-8")
     base64_serialized_bytes = {"bytes": base64_encoded, "encoding": "base64"}
@@ -68,7 +68,8 @@ def test_deserialize_bytes():
 
 
 @pytest.mark.parametrize(
-    "input_data, expected_count", [
+    "input_data, expected_count",
+    [
         (["a", "bc", "def"], 6),
         (("a", "bc", "def"), 6),
         ({"a", "bc", "def"}, 6),
@@ -77,19 +78,20 @@ def test_deserialize_bytes():
         ({"k": ["v1", "v2"]}, 5),
         ([], 0),
         ({}, 0),
-    ]
+    ],
 )
 def test_chars_count(input_data: DataObj, expected_count: int):
     assert Data.chars_count(input_data) == expected_count
 
 
 @pytest.mark.parametrize(
-    "input_data, expected_output", [
+    "input_data, expected_output",
+    [
         (["  a  ", " b ", "c"], ["a", "b", "c"]),
         (("  a  ", " b ", "c"), ("a", "b", "c")),
         ({"  a  ": "  v1 ", " b ": "v2"}, {"a": "v1", "b": "v2"}),
         ([" a ", [" b ", " c"]], ["a", ["b", "c"]]),
-    ]
+    ],
 )
 def test_strip(input_data: DataObj, expected_output: DataObj):
     assert Data.strip(input_data) == expected_output
@@ -98,7 +100,8 @@ def test_strip(input_data: DataObj, expected_output: DataObj):
 @pytest.mark.parametrize(
     "input_data, spaces_are_empty, expected_output",
     cast(
-        list[tuple[DataObj, bool, DataObj]], [
+        "list[tuple[DataObj, bool, DataObj]]",
+        [
             (["a", "", "b", None, "  "], False, ["a", "b", "  "]),
             (["a", "", "b", None, "  "], True, ["a", "b"]),
             (("a", "", "b", None, "  "), False, ("a", "b", "  ")),
@@ -110,34 +113,30 @@ def test_strip(input_data: DataObj, expected_output: DataObj):
             (["a", {"x": "", "y": "b"}, "c"], False, ["a", {"y": "b"}, "c"]),
             (["a", {"x": "", "y": "b"}, "c"], True, ["a", {"y": "b"}, "c"]),
             (["a", [], {}], False, ["a"]),
-        ]
-    )
+        ],
+    ),
 )
 def test_remove_empty_items(input_data: DataObj, spaces_are_empty: bool, expected_output: DataObj):
     assert Data.remove_empty_items(input_data, spaces_are_empty=spaces_are_empty) == expected_output
 
 
 @pytest.mark.parametrize(
-    "input_data, expected_output", [
+    "input_data, expected_output",
+    [
         (["a", "b", "a", "c", "b"], ["a", "b", "c"]),
         (("a", "b", "a", "c", "b"), ("a", "b", "c")),
-        ({"a", "b", "a", "c", "b"}, {"a", "b", "c"}),
+        ({"a", "b", "c"}, {"a", "b", "c"}),
         ({"k1": "a", "k2": "b", "k3": "a"}, {"k1": "a", "k2": "b", "k3": "a"}),
         (["a", ["b", "b"], "c"], ["a", ["b"], "c"]),
         ({"k": ["v", "v"]}, {"k": ["v"]}),
-    ]
+    ],
 )
 def test_remove_duplicates(input_data: DataObj, expected_output: DataObj):
     assert Data.remove_duplicates(input_data) == expected_output
 
 
 def test_remove_comments():
-    assert Data.remove_comments(
-        d_comments, comment_sep="__"
-    ) == {
-        "key1": ["value1", "value2", "val__ue3"],
-        "key3": None,
-    }
+    assert Data.remove_comments(d_comments, comment_sep="__") == {"key1": ["value1", "value2", "val__ue3"], "key3": None}
 
 
 def test_is_equal():
@@ -146,9 +145,7 @@ def test_is_equal():
 
 
 def test_get_path_id():
-    id1, id2 = Data.get_path_id(
-        d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"]
-    )  # type: ignore[return-value]
+    id1, id2 = Data.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])  # type: ignore[return-value]
     assert id1 == "1>001"
     assert id2 == "1>012"
     assert Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
@@ -198,12 +195,20 @@ def test_set_value_by_path_id() -> None:
 
 
 @pytest.mark.parametrize(
-    "data, indent, compactness, max_width, sep, as_json, expected_str", [
+    "data, indent, compactness, max_width, sep, as_json, expected_str",
+    [
         ([1, 2, 3], 4, 1, 80, ", ", False, "[1, 2, 3]"),
         ({"a": 1, "b": 2}, 4, 1, 80, ", ", False, "{'a': 1, 'b': 2}"),
         ({"a": [1, 2], "b": {"c": 3}}, 4, 1, 80, ", ", False, "{\n    'a': [1, 2],\n    'b': {'c': 3}\n}"),
-        ({"a": [1, 2], "b": {"c": 3}
-          }, 4, 0, 80, ", ", False, "{\n    'a': [\n        1,\n        2\n    ],\n    'b': {\n        'c': 3\n    }\n}"),
+        (
+            {"a": [1, 2], "b": {"c": 3}},
+            4,
+            0,
+            80,
+            ", ",
+            False,
+            "{\n    'a': [\n        1,\n        2\n    ],\n    'b': {\n        'c': 3\n    }\n}",
+        ),
         ({"a": [1, 2], "b": {"c": 3}}, 4, 2, 80, ", ", False, "{'a': [1, 2], 'b': {'c': 3}}"),
         ([1, [2, 3]], 2, 1, 80, ", ", False, "[\n  1,\n  [2, 3]\n]"),
         ({"ultralongkeyname": [1, None, False]}, 4, 1, 20, ", ", False, "{'ultralongkeyname': [1, None, False]}"),
@@ -211,25 +216,13 @@ def test_set_value_by_path_id() -> None:
         ({"a": True, "b": None, "c": [1, 2.5]}, 4, 2, 80, ", ", True, '{"a": true, "b": null, "c": [1, 2.5]}'),
         ({"data": b"hello"}, 2, 0, 80, ", ", True, '{\n  "data": {\n    "bytes": "hello",\n    "encoding": "utf-8"\n  }\n}'),
         ({"data": b"hello"}, 4, 1, 80, ", ", False, "{'data': bytes('hello', 'utf-8')}"),
-    ]
+    ],
 )
 def test_render(
-    data: DataObj,
-    indent: int,
-    compactness: Literal[1, 0, 2],
-    max_width: int,
-    sep: str,
-    as_json: bool,
-    expected_str: str,
+    data: DataObj, indent: int, compactness: Literal[1, 0, 2], max_width: int, sep: str, as_json: bool, expected_str: str
 ):
     result = Data.render(
-        data,
-        indent=indent,
-        compactness=compactness,
-        max_width=max_width,
-        sep=sep,
-        as_json=as_json,
-        syntax_highlighting=False,
+        data, indent=indent, compactness=compactness, max_width=max_width, sep=sep, as_json=as_json, syntax_highlighting=False
     )
     assert isinstance(result, StyledText)
     normalized_result = "\n".join(line.rstrip() for line in result.raw.splitlines())

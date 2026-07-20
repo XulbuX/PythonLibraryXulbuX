@@ -3,22 +3,20 @@ This module provides the `FileSys` class, which includes
 methods to work with the file system and directories.
 """
 
-from .base.types import PathsList
-from .base.exceptions import PathNotFoundError
 from .base.decorators import mypyc_attr
+from .base.exceptions import PathNotFoundError
+from .base.types import PathsList
 
-from typing import Optional
-from pathlib import Path
-import tempfile as _tempfile
 import difflib as _difflib
+import os as _os
 import shutil as _shutil
 import sys as _sys
-import os as _os
+import tempfile as _tempfile
+from pathlib import Path
 
 
 @mypyc_attr(native_class=False)
 class _FileSysMeta(type):
-
     @property
     def cwd(cls) -> Path:
         """The path to the current working directory."""
@@ -41,7 +39,7 @@ class _FileSysMeta(type):
             main_module = _sys.modules["__main__"]
             if hasattr(main_module, "__file__") and main_module.__file__ is not None:
                 base_path = Path(main_module.__file__).resolve().parent
-            elif (hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None):
+            elif hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None:
                 base_path = Path(main_module.__spec__.origin).resolve().parent
             else:
                 raise RuntimeError("Can only get base directory if accessed from a file.")
@@ -56,11 +54,11 @@ class FileSys(metaclass=_FileSysMeta):
         cls,
         rel_path: Path | str,
         /,
-        search_in: Optional[Path | str | PathsList] = None,
+        search_in: Path | str | PathsList | None = None,
         *,
         fuzzy_match: bool = False,
         raise_error: bool = False,
-    ) -> Optional[Path]:
+    ) -> Path | None:
         """Tries to resolve and extend a relative path to an absolute path.\n
         ----------------------------------------------------------------------------------------------
         *   `rel_path` – The relative path to extend.
@@ -105,7 +103,7 @@ class FileSys(metaclass=_FileSysMeta):
         cls,
         rel_path: Path | str,
         /,
-        search_in: Optional[Path | str | list[Path | str]] = None,
+        search_in: Path | str | list[Path | str] | None = None,
         *,
         prefer_script_dir: bool = True,
         fuzzy_match: bool = False,
@@ -170,14 +168,7 @@ class _ExtendPathHelper:
     """Internal, callable helper class to extend a relative path to an absolute path."""
 
     def __init__(
-        self,
-        cls: type[FileSys],
-        rel_path: Path,
-        /,
-        search_dirs: list[Path],
-        *,
-        fuzzy_match: bool,
-        raise_error: bool,
+        self, cls: type[FileSys], rel_path: Path, /, search_dirs: list[Path], *, fuzzy_match: bool, raise_error: bool
     ) -> None:
         self.cls: type[FileSys] = cls
         self.rel_path: Path = rel_path
@@ -185,7 +176,7 @@ class _ExtendPathHelper:
         self.fuzzy_match: bool = fuzzy_match
         self.raise_error: bool = raise_error
 
-    def __call__(self) -> Optional[Path]:
+    def __call__(self) -> Path | None:
         """Execute the path extension logic."""
 
         expanded_path = self.expand_env_vars(self.rel_path)
@@ -201,12 +192,7 @@ class _ExtendPathHelper:
 
         else:
             # Add predefined search dirs:
-            self.search_dirs.extend([
-                self.cls.cwd,
-                self.cls.home,
-                self.cls.script_dir,
-                Path(_tempfile.gettempdir()),
-            ])
+            self.search_dirs.extend([self.cls.cwd, self.cls.home, self.cls.script_dir, Path(_tempfile.gettempdir())])
 
         return self.search_in_dirs(expanded_path)
 
@@ -223,7 +209,7 @@ class _ExtendPathHelper:
 
         return Path("".join(parts))
 
-    def search_in_dirs(self, path: Path, /) -> Optional[Path]:
+    def search_in_dirs(self, path: Path, /) -> Path | None:
         """Search for the path in all configured directories."""
 
         for search_dir in self.search_dirs:
@@ -238,7 +224,7 @@ class _ExtendPathHelper:
 
         return None
 
-    def find_path(self, base_dir: Path, target_path: Path, /, *, fuzzy_match: bool) -> Optional[Path]:
+    def find_path(self, base_dir: Path, target_path: Path, /, *, fuzzy_match: bool) -> Path | None:
         """Find a path by traversing the given parts from the base directory,<br>
         optionally using closest matches for each part."""
 
@@ -254,14 +240,16 @@ class _ExtendPathHelper:
         return current_path if current_path.exists() and current_path != base_dir else None
 
     @staticmethod
-    def get_closest_match(dir: Path, path_part: str, /) -> Optional[str]:
+    def get_closest_match(dir: Path, path_part: str, /) -> str | None:
         """Internal method to get the closest matching file or folder name<br>
         in the given directory for the given path part."""
 
         try:
-            return matches[0] if (
-                matches := _difflib.get_close_matches(path_part, [item.name for item in dir.iterdir()], n=1, cutoff=0.6)
-            ) else None
+            return (
+                matches[0]
+                if (matches := _difflib.get_close_matches(path_part, [item.name for item in dir.iterdir()], n=1, cutoff=0.6))
+                else None
+            )
 
         except Exception:
             return None

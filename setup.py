@@ -1,10 +1,9 @@
-from setuptools import setup
-from pathlib import Path
-import subprocess
-import shutil
-import sys
 import os
-
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from setuptools import setup
 
 PROJECT_ROOT = Path(__file__).parent
 PROJECT_SRC = PROJECT_ROOT / "src" / "xulbux"
@@ -46,22 +45,19 @@ def generate_stubs_for_package() -> None:
 
             if py_file in skip_stubgen:
                 pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
-                print(f"  copied {rel_path.with_suffix(".pyi")} (preserving type definitions)")
+                print(f"  copied {rel_path.with_suffix('.pyi')} (preserving type definitions)")
                 skipped_count += 1
                 continue
 
-            stubgen_exe: str = (
-                shutil.which("stubgen")
-                or str(Path(sys.executable).parent / ("stubgen.exe" if sys.platform == "win32" else "stubgen"))
+            stubgen_exe: str = shutil.which("stubgen") or str(
+                Path(sys.executable).parent / ("stubgen.exe" if sys.platform == "win32" else "stubgen")
             )
             result: subprocess.CompletedProcess[str] = subprocess.run(
-                [stubgen_exe, str(py_file), "-o", "src", "--include-private", "--export-less"],
-                capture_output=True,
-                text=True,
+                [stubgen_exe, str(py_file), "-o", "src", "--include-private", "--export-less"], capture_output=True, text=True
             )
 
             if result.returncode == 0:
-                print(f"  generated {rel_path.with_suffix(".pyi")}")
+                print(f"  generated {rel_path.with_suffix('.pyi')}")
                 generated_count += 1
             else:
                 print(f"  failed {rel_path}")
@@ -124,16 +120,12 @@ if __name__ == "__main__":
                 "\nInstalling as pure Python package...\n"
             )
 
-    setup(
-        name="xulbux",
-        ext_modules=ext_modules,
-    )
+    setup(name="xulbux", ext_modules=ext_modules)
 
     if _is_building:
         clean_project_files({"*.pyi"}, "\nCleaned up {n} stub file{s} from project directory.\n")
 
         if "--inplace" in sys.argv:
             clean_project_files(
-                {"*.pyd", "*.so", "*.c"},
-                "\nCleaned up {n} compiled extension file{s} from project directory.\n",
+                {"*.pyd", "*.so", "*.c"}, "\nCleaned up {n} compiled extension file{s} from project directory.\n"
             )

@@ -1,16 +1,13 @@
-from xulbux.console import ParsedArgData, ParsedArgs
-from xulbux.console import Throbber, ProgressBar
-from xulbux.console import Console
-from xulbux.ansi import S
-from xulbux import console
-
-from typing import Any
-from unittest.mock import MagicMock, patch
 import builtins
-import pytest
-import sys
 import io
 import os
+import sys
+from typing import Any
+from unittest.mock import MagicMock, patch
+from xulbux import console
+from xulbux.ansi import S
+from xulbux.console import Console, ParsedArgData, ParsedArgs, ProgressBar, Throbber
+import pytest
 
 
 @pytest.fixture
@@ -27,6 +24,7 @@ def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     mock = MagicMock()
     # Patch in the original module where it is defined:
     import xulbux.format_codes
+
     monkeypatch.setattr(xulbux.format_codes.FormatCodes, "print", mock)
     return mock
 
@@ -92,13 +90,14 @@ def test_console_supports_color():
 
 
 @pytest.mark.parametrize(
-    "argv, arg_parse_configs, expected_parsed_args", [
+    "argv, arg_parse_configs, expected_parsed_args",
+    [
         # Simple flag value the includes spaces:
         (
             ["script.py", "-f=token with spaces", "-d"],
             {"file": {"-f"}, "debug": {"-d"}},
             {
-                "file": {"exists": True, "is_pos": False, "values": ("token with spaces", ), "flag": "-f"},
+                "file": {"exists": True, "is_pos": False, "values": ("token with spaces",), "flag": "-f"},
                 "debug": {"exists": True, "is_pos": False, "values": (), "flag": "-d"},
             },
         ),
@@ -106,14 +105,14 @@ def test_console_supports_color():
         (
             ["script.py", "--msg=hello", "world"],
             {"message": {"--msg"}},
-            {"message": {"exists": True, "is_pos": False, "values": ("hello", ), "flag": "--msg"}},
+            {"message": {"exists": True, "is_pos": False, "values": ("hello",), "flag": "--msg"}},
         ),
         # Value set in single token followed by second flag:
         (
             ["script.py", "--msg=this is a message", "--flag"],
             {"message": {"--msg"}, "flag": {"--flag"}},
             {
-                "message": {"exists": True, "is_pos": False, "values": ("this is a message", ), "flag": "--msg"},
+                "message": {"exists": True, "is_pos": False, "values": ("this is a message",), "flag": "--msg"},
                 "flag": {"exists": True, "is_pos": False, "values": (), "flag": "--flag"},
             },
         ),
@@ -121,25 +120,24 @@ def test_console_supports_color():
         (
             ["script.py", "--msg", "=", "this is a message"],
             {"message": {"--msg"}},
-            {"message": {"exists": True, "is_pos": False, "values": ("this is a message", ), "flag": "--msg"}},
+            {"message": {"exists": True, "is_pos": False, "values": ("this is a message",), "flag": "--msg"}},
         ),
         # Case sensitive flags with spaces:
         (
             ["script.py", "-t=this is some text", "-T=THIS IS A TITLE"],
             {"text": {"-t"}, "title": {"-T"}},
             {
-                "text": {"exists": True, "is_pos": False, "values": ("this is some text", ), "flag": "-t"},
-                "title": {"exists": True, "is_pos": False, "values": ("THIS IS A TITLE", ), "flag": "-T"},
+                "text": {"exists": True, "is_pos": False, "values": ("this is some text",), "flag": "-t"},
+                "title": {"exists": True, "is_pos": False, "values": ("THIS IS A TITLE",), "flag": "-T"},
             },
         ),
-
         # --- CASES WITH DEFAULTS ---
         # Given flag value overwrites default:
         (
             ["script.py", "--msg=given message"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
             {
-                "msg": {"exists": True, "is_pos": False, "values": ("given message", ), "flag": "--msg"},
+                "msg": {"exists": True, "is_pos": False, "values": ("given message",), "flag": "--msg"},
                 "other": {"exists": False, "is_pos": False, "values": (), "flag": None},
             },
         ),
@@ -148,7 +146,7 @@ def test_console_supports_color():
             ["script.py", "-o", "--msg"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
             {
-                "msg": {"exists": True, "is_pos": False, "values": ("no message", ), "flag": "--msg"},
+                "msg": {"exists": True, "is_pos": False, "values": ("no message",), "flag": "--msg"},
                 "other": {"exists": True, "is_pos": False, "values": (), "flag": "-o"},
             },
         ),
@@ -157,11 +155,10 @@ def test_console_supports_color():
             ["script.py", "-o"],
             {"msg": {"flags": {"--msg"}, "default": "no message"}, "other": {"-o"}},
             {
-                "msg": {"exists": False, "is_pos": False, "values": ("no message", ), "flag": None},
+                "msg": {"exists": False, "is_pos": False, "values": ("no message",), "flag": None},
                 "other": {"exists": True, "is_pos": False, "values": (), "flag": "-o"},
             },
         ),
-
         # --- POSITIONAL `before` / `after` SPECIAL CASES ---
         # Positional `before`:
         (
@@ -177,7 +174,7 @@ def test_console_supports_color():
             {"before": "before", "file": {"-f"}},
             {
                 "before": {"exists": True, "is_pos": True, "values": ("arg1", "arg2.1 arg2.2"), "flag": None},
-                "file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"},
+                "file": {"exists": True, "is_pos": False, "values": ("file.txt",), "flag": "-f"},
             },
         ),
         (
@@ -185,7 +182,7 @@ def test_console_supports_color():
             {"before": "before", "file": {"-f"}},
             {
                 "before": {"exists": False, "is_pos": True, "values": (), "flag": None},
-                "file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"},
+                "file": {"exists": True, "is_pos": False, "values": ("file.txt",), "flag": "-f"},
             },
         ),
         # Positional `after`:
@@ -201,7 +198,7 @@ def test_console_supports_color():
             ["script.py", "arg1", "-f=file.txt", "arg2", "arg3.1 arg3.2"],
             {"after": "after", "file": {"-f"}},
             {
-                "file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"},
+                "file": {"exists": True, "is_pos": False, "values": ("file.txt",), "flag": "-f"},
                 "after": {"exists": True, "is_pos": True, "values": ("arg2", "arg3.1 arg3.2"), "flag": None},
             },
         ),
@@ -209,19 +206,18 @@ def test_console_supports_color():
             ["script.py", "arg1", "-f=file.txt"],
             {"after": "after", "file": {"-f"}},
             {
-                "file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"},
+                "file": {"exists": True, "is_pos": False, "values": ("file.txt",), "flag": "-f"},
                 "after": {"exists": False, "is_pos": True, "values": (), "flag": None},
             },
         ),
-
         # --- CUSTOM FLAG PREFIXES ---
         # Question mark and double plus prefixes:
         (
             ["script.py", "?help = show detailed info", "++mode=test"],
             {"help": {"?help"}, "mode": {"++mode"}},
             {
-                "help": {"exists": True, "is_pos": False, "values": ("show detailed info", ), "flag": "?help"},
-                "mode": {"exists": True, "is_pos": False, "values": ("test", ), "flag": "++mode"},
+                "help": {"exists": True, "is_pos": False, "values": ("show detailed info",), "flag": "?help"},
+                "mode": {"exists": True, "is_pos": False, "values": ("test",), "flag": "++mode"},
             },
         ),
         # At symbol prefix with positional arguments:
@@ -230,35 +226,33 @@ def test_console_supports_color():
             {"before": "before", "message": {"@msg"}, "after": "after"},
             {
                 "before": {"exists": False, "is_pos": True, "values": (), "flag": None},
-                "message": {"exists": True, "is_pos": False, "values": ("Hello, world!", ), "flag": "@msg"},
-                "after": {"exists": True, "is_pos": True, "values": ("How are you?", ), "flag": None},
+                "message": {"exists": True, "is_pos": False, "values": ("Hello, world!",), "flag": "@msg"},
+                "after": {"exists": True, "is_pos": True, "values": ("How are you?",), "flag": None},
             },
         ),
-
         # --- NEGATIVE NUMBERS ARE TREATED AS VALUES; UNKNOWN FLAGS ARE COLLECTED SEPARATELY ---
         (
             ["script.py", "-42", "-d=-256", "--file=--not-a-flag", "--also-no-flag"],
             {"before": "before", "data": {"-d"}, "file": {"--file"}, "after": "after"},
             {
-                "before": {"exists": True, "is_pos": True, "values": ("-42", ), "flag": None},
-                "data": {"exists": True, "is_pos": False, "values": ("-256", ), "flag": "-d"},
-                "file": {"exists": True, "is_pos": False, "values": ("--not-a-flag", ), "flag": "--file"},
+                "before": {"exists": True, "is_pos": True, "values": ("-42",), "flag": None},
+                "data": {"exists": True, "is_pos": False, "values": ("-256",), "flag": "-d"},
+                "file": {"exists": True, "is_pos": False, "values": ("--not-a-flag",), "flag": "--file"},
                 "after": {"exists": False, "is_pos": True, "values": (), "flag": None},
             },
         ),
-
         # --- SPACE-SEPARATED FLAG VALUES (allow_space_value=True default) ---
         # Simple space-separated value:
         (
             ["script.py", "--flag", "myValue"],
             {"flag": {"--flag"}},
-            {"flag": {"exists": True, "is_pos": False, "values": ("myValue", ), "flag": "--flag"}},
+            {"flag": {"exists": True, "is_pos": False, "values": ("myValue",), "flag": "--flag"}},
         ),
         # Short flag with space-separated value:
         (
             ["script.py", "-f", "file.txt"],
             {"file": {"-f", "--file"}},
-            {"file": {"exists": True, "is_pos": False, "values": ("file.txt", ), "flag": "-f"}},
+            {"file": {"exists": True, "is_pos": False, "values": ("file.txt",), "flag": "-f"}},
         ),
         # Known flag following a flag is not consumed as value:
         (
@@ -274,8 +268,8 @@ def test_console_supports_color():
             ["script.py", "--msg", "hello", "-n", "42"],
             {"message": {"--msg"}, "number": {"-n"}},
             {
-                "message": {"exists": True, "is_pos": False, "values": ("hello", ), "flag": "--msg"},
-                "number": {"exists": True, "is_pos": False, "values": ("42", ), "flag": "-n"},
+                "message": {"exists": True, "is_pos": False, "values": ("hello",), "flag": "--msg"},
+                "number": {"exists": True, "is_pos": False, "values": ("42",), "flag": "-n"},
             },
         ),
         # Space-separated value consumed by flag, remaining token is `after` positional:
@@ -283,8 +277,8 @@ def test_console_supports_color():
             ["script.py", "--flag", "val", "after1"],
             {"flag": {"--flag"}, "after": "after"},
             {
-                "flag": {"exists": True, "is_pos": False, "values": ("val", ), "flag": "--flag"},
-                "after": {"exists": True, "is_pos": True, "values": ("after1", ), "flag": None},
+                "flag": {"exists": True, "is_pos": False, "values": ("val",), "flag": "--flag"},
+                "after": {"exists": True, "is_pos": True, "values": ("after1",), "flag": None},
             },
         ),
         # Space-separated value with both `before` and `after` positionals:
@@ -292,12 +286,12 @@ def test_console_supports_color():
             ["script.py", "pre", "--flag", "val", "post"],
             {"before": "before", "flag": {"--flag"}, "after": "after"},
             {
-                "before": {"exists": True, "is_pos": True, "values": ("pre", ), "flag": None},
-                "flag": {"exists": True, "is_pos": False, "values": ("val", ), "flag": "--flag"},
-                "after": {"exists": True, "is_pos": True, "values": ("post", ), "flag": None},
+                "before": {"exists": True, "is_pos": True, "values": ("pre",), "flag": None},
+                "flag": {"exists": True, "is_pos": False, "values": ("val",), "flag": "--flag"},
+                "after": {"exists": True, "is_pos": True, "values": ("post",), "flag": None},
             },
         ),
-    ]
+    ],
 )
 def test_get_args(
     monkeypatch: pytest.MonkeyPatch,
@@ -342,32 +336,26 @@ def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
 
     assert result.message.exists is True
     assert result.message.is_pos is False
-    assert result.message.values == ("This is a message", )
+    assert result.message.values == ("This is a message",)
     assert result.message.flag == "--msg"
 
     assert result.data.exists is True
     assert result.data.is_pos is False
-    assert result.data.values == ("42", )
+    assert result.data.values == ("42",)
     assert result.data.flag == "-d"
 
-    assert result.dict() == {
-        "message": result.message.dict(),
-        "data": result.data.dict(),
-    }
+    assert result.dict() == {"message": result.message.dict(), "data": result.data.dict()}
 
 
 def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
     """Test that flag_value_sep=None disables separator syntax and only space-separated values work."""
     # SEPARATOR SYNTAX SHOULD NOT BE RECOGNIZED – '--flag=val' IS TREATED AS A STANDALONE UNKNOWN TOKEN
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "space_val", "--other=ignored"])
-    result = Console.get_args(
-        {"flag": {"--flag"}, "other": {"--other"}, "after": "after"},
-        flag_value_sep=None,
-    )
+    result = Console.get_args({"flag": {"--flag"}, "other": {"--other"}, "after": "after"}, flag_value_sep=None)
 
     # '--flag' CONSUMES 'space_val' VIA SPACE-SEPARATED SYNTAX
     assert result.flag.exists is True
-    assert result.flag.values == ("space_val", )
+    assert result.flag.values == ("space_val",)
     assert result.flag.flag == "--flag"
 
     # '--other=ignored' LOOKS LIKE A FLAG WITH NO SEPARATOR PROCESSING – TREATED AS UNKNOWN FLAG
@@ -382,10 +370,7 @@ def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
 def test_get_args_allow_space_value_false(monkeypatch: pytest.MonkeyPatch):
     """Test that allow_space_value=False does not consume the next token as a flag value."""
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "val", "after1"])
-    result = Console.get_args(
-        {"flag": {"--flag"}, "after": "after"},
-        allow_space_value=False,
-    )
+    result = Console.get_args({"flag": {"--flag"}, "after": "after"}, allow_space_value=False)
 
     # 'val' must NOT be consumed by --flag
     assert result.flag.exists is True
@@ -400,8 +385,9 @@ def test_get_args_allow_space_value_false(monkeypatch: pytest.MonkeyPatch):
 def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
     """Test complex scenario mixing defined flags with dash-prefixed values"""
     monkeypatch.setattr(
-        sys, "argv", \
-        ["script.py", "before string", "-42", "-d=256", "--file=my-file.txt", "-vv", "after string", "--also-no-flag"]
+        sys,
+        "argv",
+        ["script.py", "before string", "-42", "-d=256", "--file=my-file.txt", "-vv", "after string", "--also-no-flag"],
     )
     result = Console.get_args(
         {
@@ -422,12 +408,12 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
 
     assert result.data.exists is True
     assert result.data.is_pos is False
-    assert result.data.values == ("256", )
+    assert result.data.values == ("256",)
     assert result.data.flag == "-d"
 
     assert result.file.exists is True
     assert result.file.is_pos is False
-    assert result.file.values == ("my-file.txt", )
+    assert result.file.values == ("my-file.txt",)
     assert result.file.flag == "--file"
 
     assert result.verbose.exists is True
@@ -442,7 +428,7 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
 
     assert result.after.exists is True
     assert result.after.is_pos is True
-    assert result.after.values == ("after string", )
+    assert result.after.values == ("after string",)
     assert result.after.flag is None
 
     assert result.unknown_flags == frozenset({"--also-no-flag"})
@@ -464,7 +450,7 @@ def test_get_args_unknown_flags(monkeypatch: pytest.MonkeyPatch):
     result = Console.get_args({"known": {"--known"}, "after": "after"})
 
     assert result.known.exists is True
-    assert result.known.values == ("val", )
+    assert result.known.values == ("val",)
     assert result.unknown_flags == frozenset({"--unknown", "--unknown=extra", "-u"})
     assert result.after.values == ()
 
@@ -500,7 +486,7 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "sub", "cmd", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=2)
     assert result.flag.exists is True
-    assert result.flag.values == ("val", )
+    assert result.flag.values == ("val",)
 
     # With `skip` exceeding argv length, no args are parsed:
     monkeypatch.setattr(sys, "argv", ["script.py", "only"])
@@ -511,28 +497,25 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=0)
     assert result.flag.exists is True
-    assert result.flag.values == ("val", )
+    assert result.flag.values == ("val",)
 
 
 def test_parsed_args_is_empty():
     # All missing, no values: `is_empty` is true:
     args = ParsedArgs(
-        a=ParsedArgData(exists=False, values=[], is_pos=False),
-        b=ParsedArgData(exists=False, values=[], is_pos=True),
+        a=ParsedArgData(exists=False, values=[], is_pos=False), b=ParsedArgData(exists=False, values=[], is_pos=True)
     )
     assert args.is_empty is True
 
     # One has a default value: `is_empty` is false:
     args_with_default = ParsedArgs(
-        a=ParsedArgData(exists=False, values=["default"], is_pos=False),
-        b=ParsedArgData(exists=False, values=[], is_pos=False),
+        a=ParsedArgData(exists=False, values=["default"], is_pos=False), b=ParsedArgData(exists=False, values=[], is_pos=False)
     )
     assert args_with_default.is_empty is False
 
     # One exists: `is_empty` is false:
     args_with_existing = ParsedArgs(
-        a=ParsedArgData(exists=True, values=["val"], is_pos=False),
-        b=ParsedArgData(exists=False, values=[], is_pos=False),
+        a=ParsedArgData(exists=True, values=["val"], is_pos=False), b=ParsedArgData(exists=False, values=[], is_pos=False)
     )
     assert args_with_existing.is_empty is False
 
@@ -543,22 +526,19 @@ def test_parsed_args_is_empty():
 def test_parsed_args_any_exist():
     # None exist:
     args_none = ParsedArgs(
-        a=ParsedArgData(exists=False, values=[], is_pos=False),
-        b=ParsedArgData(exists=False, values=["default"], is_pos=False),
+        a=ParsedArgData(exists=False, values=[], is_pos=False), b=ParsedArgData(exists=False, values=["default"], is_pos=False)
     )
     assert args_none.any_exist is False
 
     # One exists:
     args_one = ParsedArgs(
-        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
-        b=ParsedArgData(exists=False, values=[], is_pos=False),
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False), b=ParsedArgData(exists=False, values=[], is_pos=False)
     )
     assert args_one.any_exist is True
 
     # All exist:
     args_all = ParsedArgs(
-        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
-        b=ParsedArgData(exists=True, values=[], is_pos=False),
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False), b=ParsedArgData(exists=True, values=[], is_pos=False)
     )
     assert args_all.any_exist is True
 
@@ -569,20 +549,18 @@ def test_parsed_args_any_exist():
 def test_parsed_args_all_exist():
     # All exist:
     args_all = ParsedArgs(
-        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
-        b=ParsedArgData(exists=True, values=[], is_pos=False),
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False), b=ParsedArgData(exists=True, values=[], is_pos=False)
     )
     assert args_all.all_exist is True
 
     # One missing:
     args_partial = ParsedArgs(
-        a=ParsedArgData(exists=True, values=["v"], is_pos=False),
-        b=ParsedArgData(exists=False, values=[], is_pos=False),
+        a=ParsedArgData(exists=True, values=["v"], is_pos=False), b=ParsedArgData(exists=False, values=[], is_pos=False)
     )
     assert args_partial.all_exist is False
 
     # None exist:
-    args_none = ParsedArgs(a=ParsedArgData(exists=False, values=[], is_pos=False), )
+    args_none = ParsedArgs(a=ParsedArgData(exists=False, values=[], is_pos=False))
     assert args_none.all_exist is False
 
     # Empty `ParsedArgs`: `all_exist` is true (vacuously):
@@ -591,7 +569,7 @@ def test_parsed_args_all_exist():
 
 def test_parsed_args_properties_not_in_iter():
     """Properties is_empty, any_exist, all_exist must not appear when iterating."""
-    args = ParsedArgs(flag=ParsedArgData(exists=True, values=[], is_pos=False), )
+    args = ParsedArgs(flag=ParsedArgData(exists=True, values=[], is_pos=False))
     keys = [k for k, _ in args]
     assert "is_empty" not in keys
     assert "any_exist" not in keys
@@ -647,7 +625,7 @@ def test_multiline_input(mock_prompt_toolkit: MagicMock, capsys: pytest.CaptureF
 
     mock_prompt_toolkit.assert_called_once()
     pt_args, pt_kwargs = mock_prompt_toolkit.call_args
-    assert pt_args == (" ⮡ ", )
+    assert pt_args == (" ⮡ ",)
     assert pt_kwargs.get("multiline") is True
     assert pt_kwargs.get("wrap_lines") is True
     assert "key_bindings" in pt_kwargs
@@ -1003,8 +981,7 @@ def test_input_style_configuration(mock_prompt_session: tuple[MagicMock, MagicMo
 
 
 def test_input_validate_while_typing_enabled(
-    mock_prompt_session: tuple[MagicMock, MagicMock],
-    mock_formatcodes_print: MagicMock,
+    mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock
 ):
     """Test that validate_while_typing is enabled."""
     mock_session_class, _ = mock_prompt_session
@@ -1141,7 +1118,7 @@ def test_progressbar_set_chars():
 def test_progressbar_set_chars_invalid():
     pb = ProgressBar()
     with pytest.raises(ValueError, match="must contain at least two characters"):
-        pb.set_chars(("█", ))
+        pb.set_chars(("█",))
     with pytest.raises(ValueError, match="must be single-character strings"):
         pb.set_chars(("█", "▓▓", " "))
 
@@ -1198,10 +1175,9 @@ def test_progressbar_progress_context_exception():
     pb = ProgressBar()
 
     # Test that cleanup happens even with exceptions:
-    with pytest.raises(ValueError):
-        with pb.progress_context(100, "Testing") as update_progress:
-            update_progress(25)
-            raise ValueError("Test exception")
+    with pytest.raises(ValueError), pb.progress_context(100, "Testing") as update_progress:
+        update_progress(25)
+        raise ValueError("Test exception")
 
     # After exception, progress bar should still be cleaned up:
     assert pb.active is False
@@ -1245,11 +1221,7 @@ def test_progressbar_emergency_cleanup():
 def test_progressbar_get_formatted_info_and_bar_width(mock_terminal_size: MagicMock):
     pb = ProgressBar()
     formatted, bar_width = pb._get_formatted_info_and_bar_width(
-        ["{l}", "|{b}|", "{c}/{t}", "({p}%)"],
-        50,
-        100,
-        50.0,
-        "Loading",
+        ["{l}", "|{b}|", "{c}/{t}", "({p}%)"], 50, 100, 50.0, "Loading"
     )
     assert "Loading" in formatted
     assert "50" in formatted
@@ -1337,7 +1309,7 @@ def test_throbber_set_frames_valid():
 def test_throbber_set_frames_invalid():
     throbber = Throbber()
     with pytest.raises(ValueError):
-        throbber.set_frames(("a", ))  # Less than 2 frames.
+        throbber.set_frames(("a",))  # Less than 2 frames.
 
 
 def test_throbber_set_interval_valid():
@@ -1416,9 +1388,8 @@ def test_throbber_context_manager_exception():
     throbber = Throbber()
 
     # Test that cleanup happens even with exceptions:
-    with pytest.raises(ValueError):
-        with throbber.context("Test"):
-            raise ValueError("Oops")
+    with pytest.raises(ValueError), throbber.context("Test"):
+        raise ValueError("Oops")
 
     # After exception, throbber should still be cleaned up:
     assert throbber.active is False

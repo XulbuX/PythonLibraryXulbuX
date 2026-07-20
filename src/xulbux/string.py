@@ -3,10 +3,10 @@ This module provides the `String` class, which includes
 various utility methods for string manipulation and conversion.
 """
 
-from typing import Optional, Literal, Any
-import json as _json
 import ast as _ast
+import json as _json
 import re as _re
+from typing import Any, Literal
 
 
 class String:
@@ -48,13 +48,13 @@ class String:
             "\u2007": " ",
             "\u2008": " ",
             "\u2009": " ",
-            "\u200A": " ",
+            "\u200a": " ",
         }
 
         return string.translate(str.maketrans(table))
 
     @classmethod
-    def escape(cls, string: str, /, str_quotes: Optional[Literal["'", '"']] = None) -> str:
+    def escape(cls, string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
         """Escapes Python's special characters (e.g., `\\n`, `\\t`, …) and quotes inside the string.\n
         -------------------------------------------------------------------------------------------------------------
         *   `string` – The string to escape.
@@ -63,8 +63,15 @@ class String:
             So if your string will be `"string"`, `str_quotes` should be `"`.<br>
             That way, if the string includes the same quotes, they will be escaped."""
 
-        string = string.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") \
-            .replace("\b", "\\b").replace("\f", "\\f").replace("\a", "\\a")
+        string = (
+            string.replace("\\", "\\\\")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+            .replace("\b", "\\b")
+            .replace("\f", "\\f")
+            .replace("\a", "\\a")
+        )
 
         if str_quotes == '"':
             return string.replace("\\'", "'").replace('"', '\\"')
@@ -74,16 +81,13 @@ class String:
             return string
 
     @classmethod
-    def is_empty(cls, string: Optional[str], /, *, spaces_are_empty: bool = False) -> bool:
+    def is_empty(cls, string: str | None, /, *, spaces_are_empty: bool = False) -> bool:
         """Returns `True` if the string is considered empty and `False` otherwise.\n
         --------------------------------------------------------------------------------------------------
         *   `string` – The string to check (or `None`, which is considered empty).
         *   `spaces_are_empty` – If true, strings consisting only of spaces are also considered empty."""
 
-        return bool(
-            (string in {"", None}) or \
-            (spaces_are_empty and isinstance(string, str) and not string.strip())
-        )
+        return bool((string in {"", None}) or (spaces_are_empty and isinstance(string, str) and not string.strip()))
 
     @classmethod
     def single_char_repeats(cls, string: str, char: str, /) -> int:
@@ -110,7 +114,7 @@ class String:
         *   `lower_all` – If true, all parts will be converted to lowercase."""
 
         return [
-            (part.lower() if lower_all else part) \
+            (part.lower() if lower_all else part)
             for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
         ]
 
@@ -123,10 +127,7 @@ class String:
 
         parts = cls.decompose(string)
 
-        return (
-            ("" if upper else parts[0].lower()) + \
-            "".join(part.capitalize() for part in (parts if upper else parts[1:]))
-        )
+        return ("" if upper else parts[0].lower()) + "".join(part.capitalize() for part in (parts if upper else parts[1:]))
 
     @classmethod
     def to_delimited_case(cls, string: str, /, delimiter: str = "_", *, screaming: bool = False) -> str:
@@ -136,10 +137,7 @@ class String:
         *   `delimiter` – The delimiter to use between parts.
         *   `screaming` – Whether to convert all parts to uppercase."""
 
-        return delimiter.join(
-            part.upper() if screaming else part \
-            for part in cls.decompose(string)
-        )
+        return delimiter.join(part.upper() if screaming else part for part in cls.decompose(string))
 
     @classmethod
     def get_lines(cls, string: str, /, *, remove_empty_lines: bool = False) -> list[str]:
@@ -150,9 +148,7 @@ class String:
 
         if not remove_empty_lines:
             return string.splitlines()
-        elif not (lines := string.splitlines()):
-            return []
-        elif not (non_empty_lines := [line for line in lines if line.strip()]):
+        elif not (lines := string.splitlines()) or not (non_empty_lines := [line for line in lines if line.strip()]):
             return []
         else:
             return non_empty_lines
@@ -182,4 +178,4 @@ class String:
         if count <= 0:
             raise ValueError(f"The 'count' parameter must be a positive integer, got {count!r}")
 
-        return [string[i:i + count] for i in range(0, len(string), count)]
+        return [string[i : i + count] for i in range(0, len(string), count)]

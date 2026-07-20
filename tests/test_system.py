@@ -1,9 +1,8 @@
-from xulbux.system import System
-
-from unittest.mock import MagicMock, patch
-import platform
-import pytest
 import os
+import platform
+from unittest.mock import MagicMock, patch
+from xulbux.system import System
+import pytest
 
 #
 ###################################################### System TESTS ######################################################

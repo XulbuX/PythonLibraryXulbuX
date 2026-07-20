@@ -1,6 +1,5 @@
 from typing import Final
 
-
 __package_name__: Final[str] = "xulbux"
 __version__: Final[str] = "1.9.8"
 __description__: Final[str] = "A Python library to simplify common programming tasks."
@@ -21,17 +20,6 @@ __dependencies__: Final[list[str]] = [
 ]
 
 __all__ = [
-    "__author__",
-    "__copyright__",
-    "__dependencies__",
-    "__description__",
-    "__email__",
-    "__license__",
-    "__package_name__",
-    "__requires_python__",
-    "__status__",
-    "__url__",
-    "__version__",
     "Code",
     "Color",
     "Console",
@@ -47,9 +35,20 @@ __all__ = [
     "StyledText",
     "System",
     "Term",
+    "__author__",
+    "__copyright__",
+    "__dependencies__",
+    "__description__",
+    "__email__",
+    "__license__",
+    "__package_name__",
+    "__requires_python__",
+    "__status__",
+    "__url__",
+    "__version__",
 ]
 
-from .ansi import StyledText, Term, S
+from .ansi import S, StyledText, Term
 from .code import Code
 from .color import Color
 from .console import Console

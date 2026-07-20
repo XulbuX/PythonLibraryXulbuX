@@ -1,5 +1,4 @@
 from xulbux.string import String
-
 import pytest
 
 #
@@ -37,21 +36,24 @@ def test_escape():
     # Default: no escaping quotes:
     assert String.escape('String with "double quotes"') == 'String with "double quotes"'
     assert String.escape("String with 'single quotes'") == "String with 'single quotes'"
-    assert String.escape(
-        "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
-    ) == r"""Mix: \n "quotes" and 'single' \t tabs \\ backslash"""
+    assert (
+        String.escape("Mix: \n \"quotes\" and 'single' \t tabs \\ backslash")
+        == r"""Mix: \n "quotes" and 'single' \t tabs \\ backslash"""
+    )
     # Escape double quotes:
-    assert String.escape('String with "double quotes"', str_quotes='"') == r'String with \"double quotes\"'
+    assert String.escape('String with "double quotes"', str_quotes='"') == r"String with \"double quotes\""
     assert String.escape("String with 'single quotes'", str_quotes='"') == r"String with 'single quotes'"
-    assert String.escape(
-        "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes='"'
-    ) == r"Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
+    assert (
+        String.escape("Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes='"')
+        == r"Mix: \n \"quotes\" and 'single' \t tabs \\ backslash"
+    )
     # Escape single quotes:
     assert String.escape('String with "double quotes"', str_quotes="'") == r'String with "double quotes"'
     assert String.escape("String with 'single quotes'", str_quotes="'") == r"String with \'single quotes\'"
-    assert String.escape(
-        "Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes="'"
-    ) == r'Mix: \n "quotes" and \'single\' \t tabs \\ backslash'
+    assert (
+        String.escape("Mix: \n \"quotes\" and 'single' \t tabs \\ backslash", str_quotes="'")
+        == r'Mix: \n "quotes" and \'single\' \t tabs \\ backslash'
+    )
 
 
 def test_is_empty():
@@ -150,9 +152,10 @@ def test_remove_consecutive_empty_lines():
     assert String.remove_consecutive_empty_lines("\n\n\n") == "\n"
 
     assert String.remove_consecutive_empty_lines("Line 1\n\n\nLine 2", max_consecutive=1) == "Line 1\n\nLine 2"
-    assert String.remove_consecutive_empty_lines(
-        "Line 1\n\nLine 2\n\n\n\nLine 3", max_consecutive=1
-    ) == "Line 1\n\nLine 2\n\nLine 3"
+    assert (
+        String.remove_consecutive_empty_lines("Line 1\n\nLine 2\n\n\n\nLine 3", max_consecutive=1)
+        == "Line 1\n\nLine 2\n\nLine 3"
+    )
     assert String.remove_consecutive_empty_lines("Line 1\n\n\n\nLine 2", max_consecutive=2) == "Line 1\n\n\nLine 2"
     assert String.remove_consecutive_empty_lines("\n\n\n\n", max_consecutive=1) == "\n\n"
     assert String.remove_consecutive_empty_lines("\n\n\n\n", max_consecutive=0) == "\n"

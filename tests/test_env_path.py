@@ -1,6 +1,5 @@
-from xulbux.env_path import EnvPath
-
 from pathlib import Path
+from xulbux.env_path import EnvPath
 
 #
 ###################################################### EnvPath TESTS #####################################################

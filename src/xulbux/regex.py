@@ -5,9 +5,8 @@ to dynamically generate complex regex patterns for common use cases.
 
 from .base.decorators import mypyc_attr
 
-from typing import Optional
-import regex as _rx
 import re as _re
+import regex as _rx
 
 
 class Regex:
@@ -54,7 +53,7 @@ class Regex:
         s2 = "" if strip_spaces else r"\s*"
 
         if ignore_in_strings:
-            return cls._clean( \
+            return cls._clean(
                 rf"""{b1}{s1}({gr}{s2}(?:
                     [^{b1}{b2}"']
                     |"(?:\\.|[^"\\])*"
@@ -68,7 +67,7 @@ class Regex:
                 )*{s2}){s1}{b2}"""
             )
         else:
-            return cls._clean( \
+            return cls._clean(
                 rf"""{b1}{s1}({gr}{s2}(?:
                     [^{b1}{b2}]
                     |{b1}(?:
@@ -98,7 +97,7 @@ class Regex:
 
         gr = "" if is_group else "?:"
 
-        return cls._clean( \
+        return cls._clean(
             rf"""({gr}
                 (?:(?!{ignore_pattern}).)*
                 (?:(?!{cls.outside_strings(disallowed_pattern)}).)*
@@ -106,7 +105,7 @@ class Regex:
         )
 
     @classmethod
-    def func_call(cls, func_name: Optional[str] = None, /) -> str:
+    def func_call(cls, func_name: str | None = None, /) -> str:
         """Match a function call, and get back two groups:
         1.  The function name.
         2.  The function's arguments (content inside the parentheses).\n
@@ -120,7 +119,7 @@ class Regex:
         return rf"""(?<=\b)({func_name})\s*{cls.brackets("(", ")", is_group=True)}"""
 
     @classmethod
-    def rgba_str(cls, fix_sep: Optional[str] = ",", *, allow_alpha: bool = True) -> str:
+    def rgba_str(cls, fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
         """Matches an RGBA color inside a string.\n
         ------------------------------------------------------------------------------------
         *   `fix_sep` – The fixed separator between the RGBA values (e.g., `,`, `;` …):<br>
@@ -148,7 +147,7 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
         if allow_alpha:
-            return cls._clean( \
+            return cls._clean(
                 rf"""(?ix)(?:rgb|rgba)?\s*(?:
                     \(?\s*{rgb_part}
                         (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
@@ -156,14 +155,14 @@ class Regex:
                 )"""
             )
         else:
-            return cls._clean( \
+            return cls._clean(
                 rf"""(?ix)(?:rgb|rgba)?\s*(?:
                     \(?\s*{rgb_part}\s*\)?
                 )"""
             )
 
     @classmethod
-    def hsla_str(cls, fix_sep: Optional[str] = ",", *, allow_alpha: bool = True) -> str:
+    def hsla_str(cls, fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
         """Matches a HSLA color inside a string.\n
         ------------------------------------------------------------------------------------
         *   `fix_sep` – The fixed separator between the HSLA values (e.g., `,`, `;` …):<br>
@@ -191,7 +190,7 @@ class Regex:
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
         if allow_alpha:
-            return cls._clean( \
+            return cls._clean(
                 rf"""(?ix)(?:hsl|hsla)?\s*(?:
                     \(?\s*{hsl_part}
                         (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
@@ -199,7 +198,7 @@ class Regex:
                 )"""
             )
         else:
-            return cls._clean( \
+            return cls._clean(
                 rf"""(?ix)(?:hsl|hsla)?\s*(?:
                     \(?\s*{hsl_part}\s*\)?
                 )"""
@@ -219,8 +218,11 @@ class Regex:
         #### Valid ranges:
         Every channel from 0-9 and A-F (case insensitive)"""
 
-        return r"(?i)(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})" \
-            if allow_alpha else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
+        return (
+            r"(?i)(?:#|0x)?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})"
+            if allow_alpha
+            else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
+        )
 
     @classmethod
     def _clean(cls, pattern: str) -> str:

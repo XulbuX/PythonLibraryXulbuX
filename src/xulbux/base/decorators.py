@@ -2,14 +2,15 @@
 This module contains custom decorators used throughout the library.
 """
 
-from typing import LiteralString, Callable, Any, TYPE_CHECKING
 import sys as _sys
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, LiteralString
 
 if TYPE_CHECKING:
     if _sys.version_info >= (3, 13):
-        from warnings import deprecated as deprecated  # type: ignore[attr-defined]  # noqa: F401
+        from warnings import deprecated as deprecated  # type: ignore[attr-defined]
     else:
-        from typing_extensions import deprecated as deprecated  # noqa: F401
+        from typing_extensions import deprecated as deprecated
 
 
 class _DeprecatedWrapper:
@@ -49,7 +50,7 @@ def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> _DeprecatedWra
     return _DeprecatedWrapper(message, **kwargs)
 
 
-deprecated = _deprecated_runtime  # type: ignore[assignment,misc]  # noqa: F811
+deprecated = _deprecated_runtime  # type: ignore[assignment,misc]
 
 
 def _noop_decorator[T](obj: T) -> T:
@@ -68,6 +69,7 @@ def mypyc_attr[T](**kwargs: Any) -> Callable[[T], T]:
 
     try:
         from mypy_extensions import mypyc_attr as _mypyc_attr
+
         return _mypyc_attr(**kwargs)
 
     except ImportError:

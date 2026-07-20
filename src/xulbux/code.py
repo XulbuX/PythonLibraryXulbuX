@@ -2,9 +2,9 @@
 This module provides the `Code` class, which offers methods to work with code strings.
 """
 
-from .string import String
-from .regex import Regex
 from .data import Data
+from .regex import Regex
+from .string import String
 
 from typing import Any
 import regex as _rx
@@ -68,7 +68,7 @@ class Code:
         nested_func_calls: list[list[Any]] = []
 
         for _, func_attrs in (funcs := _rx.findall(r"(?i)" + Regex.func_call(), code)):
-            if (nested_calls := _rx.findall(r"(?i)" + Regex.func_call(), func_attrs)):
+            if nested_calls := _rx.findall(r"(?i)" + Regex.func_call(), func_attrs):
                 nested_func_calls.extend(nested_calls)
 
         return list(Data.remove_duplicates(funcs + nested_func_calls))
@@ -137,7 +137,7 @@ class Code:
             js_score += 1
 
         for pattern, score in js_indicators:
-            if (matches := _rx.compile(pattern, _rx.IGNORECASE).findall(code)):
+            if matches := _rx.compile(pattern, _rx.IGNORECASE).findall(code):
                 js_score += len(matches) * score
 
         return js_score >= 2.0

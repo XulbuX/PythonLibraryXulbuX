@@ -1,11 +1,10 @@
+import os
+import sys
+import tempfile
+from pathlib import Path
 from xulbux.base.exceptions import PathNotFoundError
 from xulbux.file_sys import FileSys
-
-from pathlib import Path
-import tempfile
 import pytest
-import sys
-import os
 
 
 @pytest.fixture
@@ -91,8 +90,9 @@ def test_extend(setup_test_environment: dict[str, Path]):
 
     # Found in standard locations:
     assert str(FileSys.extend_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
-    assert str(FileSys.extend_path("subdir/file_in_script_subdir.txt")
-               ) == str(env["script_dir"] / "subdir" / "file_in_script_subdir.txt")
+    assert str(FileSys.extend_path("subdir/file_in_script_subdir.txt")) == str(
+        env["script_dir"] / "subdir" / "file_in_script_subdir.txt"
+    )
     assert str(FileSys.extend_path("file_in_home.txt")) == str(env["home"] / "file_in_home.txt")
     assert str(FileSys.extend_path("temp_file.tmp")) == str(env["temp"] / "temp_file.tmp")
 
@@ -102,9 +102,8 @@ def test_extend(setup_test_environment: dict[str, Path]):
 
     # Not found:
     assert FileSys.extend_path("non_existent_file.xyz") is None
-    with pytest.raises( \
-        PathNotFoundError,
-        match=r"Path [A-Za-z]*Path\('non_existent_file\.xyz'\) not found in specified directories\.",
+    with pytest.raises(
+        PathNotFoundError, match=r"Path [A-Za-z]*Path\('non_existent_file\.xyz'\) not found in specified directories\."
     ):
         FileSys.extend_path("non_existent_file.xyz", raise_error=True)
 
@@ -137,8 +136,9 @@ def test_extend_or_make(setup_test_environment: dict[str, Path]):
 
     # Uses closest match when finding:
     expected_typo = env["search_in"] / "TypoDir" / "file_in_typo.txt"
-    assert str(FileSys.extend_or_make_path("TypoDir/file_in_typx.txt", search_in=search_dir,
-                                           fuzzy_match=True)) == str(expected_typo)
+    assert str(FileSys.extend_or_make_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(
+        expected_typo
+    )
 
     # Makes path when closest match fails:
     rel_path_wrong = "VeryWrong/made_up.file"

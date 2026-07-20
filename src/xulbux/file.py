@@ -14,13 +14,7 @@ class File:
 
     @classmethod
     def rename_extension(
-        cls,
-        file_path: Path | str,
-        new_extension: str,
-        /,
-        *,
-        full_extension: bool = False,
-        camel_case_filename: bool = False,
+        cls, file_path: Path | str, new_extension: str, /, *, full_extension: bool = False, camel_case_filename: bool = False
     ) -> Path:
         """Rename the extension of a file.\n
         -----------------------------------------------------------------------------------
@@ -66,7 +60,7 @@ class File:
         path = Path(file_path)
 
         if path.exists() and not force:
-            with open(path, "r", encoding="utf-8") as existing_file:
+            with open(path, encoding="utf-8") as existing_file:
                 existing_content = existing_file.read()
                 if existing_content == content:
                     raise SameContentFileExistsError("Already created this file. (nothing changed)")

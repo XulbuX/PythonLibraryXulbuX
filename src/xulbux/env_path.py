@@ -5,11 +5,11 @@ methods to work with the PATH environment variable.
 
 from .file_sys import FileSys
 
-from typing import Optional, Literal, overload
-from pathlib import Path
+import os as _os
 import subprocess as _subprocess
 import sys as _sys
-import os as _os
+from pathlib import Path
+from typing import Literal, overload
 
 
 class EnvPath:
@@ -17,18 +17,15 @@ class EnvPath:
 
     @overload
     @classmethod
-    def paths(cls, *, as_list: Literal[True]) -> list[Path]:
-        ...
+    def paths(cls, *, as_list: Literal[True]) -> list[Path]: ...
 
     @overload
     @classmethod
-    def paths(cls, *, as_list: Literal[False] = False) -> Path:
-        ...
+    def paths(cls, *, as_list: Literal[False] = False) -> Path: ...
 
     @overload
     @classmethod
-    def paths(cls, *, as_list: bool = False) -> Path | list[Path]:
-        ...
+    def paths(cls, *, as_list: bool = False) -> Path | list[Path]: ...
 
     @classmethod
     def paths(cls, *, as_list: bool = False) -> Path | list[Path]:
@@ -44,7 +41,7 @@ class EnvPath:
         return Path(paths_str)
 
     @classmethod
-    def has_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> bool:
+    def has_path(cls, path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> bool:
         """Check if a path is present in the PATH environment variable.\n
         ---------------------------------------------------------------------------
         *   `path` – The path to check for.
@@ -52,12 +49,11 @@ class EnvPath:
         *   `base_dir` – If true, uses the script's base directory as the path."""
 
         return bool(
-            cls._get(path, cwd=cwd, base_dir=base_dir).resolve() \
-            in {path.resolve() for path in cls.paths(as_list=True)}
+            cls._get(path, cwd=cwd, base_dir=base_dir).resolve() in {path.resolve() for path in cls.paths(as_list=True)}
         )
 
     @classmethod
-    def add_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
+    def add_path(cls, path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
         """Add a path to the PATH environment variable.\n
         ---------------------------------------------------------------------------
         *   `path` – The path to add.
@@ -70,7 +66,7 @@ class EnvPath:
             cls._persistent(path_obj)
 
     @classmethod
-    def remove_path(cls, path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
+    def remove_path(cls, path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
         """Remove a path from the PATH environment variable.\n
         ---------------------------------------------------------------------------
         *   `path` – The path to remove.
@@ -83,7 +79,7 @@ class EnvPath:
             cls._persistent(path_obj, remove=True)
 
     @staticmethod
-    def _get(path: Optional[Path | str] = None, /, *, cwd: bool = False, base_dir: bool = False) -> Path:
+    def _get(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> Path:
         """Internal method to get the normalized `path`, CWD path or script directory path.\n
         --------------------------------------------------------------------------------------
         Raise an error if no path is provided and neither `cwd` or `base_dir` is true."""
@@ -146,9 +142,8 @@ class EnvPath:
                     new_content = [line for line in content.splitlines() if not line.endswith(f':{path_resolved}"')]
                     file.write("\n".join(new_content))
                 else:
-                    file.write(f"{content.rstrip()}\n# Added by `python-lib-xulbux`.\n"
-                               f'export PATH="{new_path}"\n')
+                    file.write(f'{content.rstrip()}\n# Added by `python-lib-xulbux`.\nexport PATH="{new_path}"\n')
 
                 file.truncate()
 
-            _subprocess.run(f"source {shell_rc_file}", shell=True, executable='/bin/bash')
+            _subprocess.run(f"source {shell_rc_file}", shell=True, executable="/bin/bash")

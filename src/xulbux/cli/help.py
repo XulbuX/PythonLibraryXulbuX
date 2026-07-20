@@ -1,15 +1,15 @@
 from .. import __version__
+from ..ansi import S, StyledText, _Style, _StyleGroup
 from ..base.decorators import mypyc_attr
 from ..console import Console
-from ..ansi import StyledText, S, _StyleGroup, _Style
 
-from urllib.error import HTTPError
-from typing import Optional, Final
-import urllib.request as _request
 import json as _json
+import urllib.request as _request
+from typing import Final
+from urllib.error import HTTPError
 
 
-def get_latest_version() -> Optional[str]:
+def get_latest_version() -> str | None:
     """Fetches the latest version of the library from PyPI."""
 
     with _request.urlopen(PACKAGE_META_URL) as response:
@@ -19,7 +19,7 @@ def get_latest_version() -> Optional[str]:
             raise HTTPError(PACKAGE_META_URL, response.status, "Failed to fetch latest version info", response.headers, None)
 
 
-def is_latest_version() -> Optional[bool]:
+def is_latest_version() -> bool | None:
     """Checks if the currently installed version of the<br>
     library is the latest one available on PyPI."""
 
@@ -37,7 +37,7 @@ def is_latest_version() -> Optional[bool]:
 
 
 PACKAGE_META_URL: Final[str] = "https://pypi.org/pypi/xulbux/json"
-IS_LATEST_VERSION: Optional[bool] = is_latest_version()
+IS_LATEST_VERSION: bool | None = is_latest_version()
 
 
 @mypyc_attr(native_class=False)
@@ -81,16 +81,62 @@ CLI_HELP: Final[StyledText] = StyledText(
     H.HEADING("  Usage:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("LIBRARY CONSTANTS                               ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),
+    (
+        H.BORDER("  │ "),
+        H.IMPORT("from "),
+        H.LIB("xulbux"),
+        (S.DIM | H.LIB)("."),
+        H.LIB("base"),
+        (S.DIM | H.LIB)("."),
+        H.LIB("consts "),
+        H.IMPORT("import "),
+        H.CONST("COLOR"),
+        H.PUNCT(", "),
+        H.CONST("CHARS"),
+        H.PUNCT(", "),
+        H.CONST("ANSI "),
+        H.BORDER("│"),
+    ),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Main Classes                                    ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("Code"), H.PUNCT(", "), H.CLS("Color"), H.PUNCT(", "), H.CLS("Console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),
+    (
+        H.BORDER("  │ "),
+        H.IMPORT("from "),
+        H.LIB("xulbux "),
+        H.IMPORT("import "),
+        H.CLS("Code"),
+        H.PUNCT(", "),
+        H.CLS("Color"),
+        H.PUNCT(", "),
+        H.CLS("Console"),
+        H.PUNCT(", "),
+        H.META("...      "),
+        H.BORDER("│"),
+    ),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("module specific imports                         ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),
+    (
+        H.BORDER("  │ "),
+        H.IMPORT("from "),
+        H.LIB("xulbux"),
+        (S.DIM | H.LIB)("."),
+        H.LIB("color "),
+        H.IMPORT("import "),
+        H.FN("rgba"),
+        H.PUNCT(", "),
+        H.FN("hsla"),
+        H.PUNCT(", "),
+        H.FN("hexa         "),
+        H.BORDER("│"),
+    ),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.TEXT("For more information see the GitHub wiki page:    "), H.BORDER("│")),
-    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
+    (
+        H.BORDER("  │ "),
+        (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"),
+        "          ",
+        H.BORDER("│"),
+    ),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
 )

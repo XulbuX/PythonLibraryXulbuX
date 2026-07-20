@@ -161,13 +161,15 @@ from __future__ import annotations
 
 from .base.consts import ANSI
 
-from typing import ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
-from pathlib import Path
 import ctypes as _ctypes
-import regex as _rx
-import sys as _sys
 import os as _os
+import sys as _sys
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Final, TextIO, cast
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+    import regex as _rx
 
 _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
@@ -177,24 +179,58 @@ _ANSI_SEQ_RX: Final[_rx.Pattern[str]] = ANSI.SEQ_PATTERN
 Matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
 _RESET_MAP: Final[dict[int, int]] = {
-    ######################### TEXT STYLES #########################
-    1: 22, 2: 22, 3: 23, 4: 24, 7: 27, 8: 28, 9: 29, 21: 24,
-    ########################## FG COLORS ##########################
-    30: 39, 31: 39, 32: 39, 33: 39, 34: 39, 35: 39, 36: 39, 37: 39,
-    ########################## BG COLORS ##########################
-    40: 49, 41: 49, 42: 49, 43: 49, 44: 49, 45: 49, 46: 49, 47: 49,
-    ####################### BRIGHT FG COLORS ######################
-    90: 39, 91: 39, 92: 39, 93: 39, 94: 39, 95: 39, 96: 39, 97: 39,
-    ####################### BRIGHT BG COLORS ######################
-    100: 49, 101: 49, 102: 49, 103: 49, 104: 49, 105: 49, 106: 49, 107: 49
+    # Text styles:
+    1: 22,
+    2: 22,
+    3: 23,
+    4: 24,
+    7: 27,
+    8: 28,
+    9: 29,
+    21: 24,
+    # FG colors:
+    30: 39,
+    31: 39,
+    32: 39,
+    33: 39,
+    34: 39,
+    35: 39,
+    36: 39,
+    37: 39,
+    # BG colors:
+    40: 49,
+    41: 49,
+    42: 49,
+    43: 49,
+    44: 49,
+    45: 49,
+    46: 49,
+    47: 49,
+    # Bright FG colors:
+    90: 39,
+    91: 39,
+    92: 39,
+    93: 39,
+    94: 39,
+    95: 39,
+    96: 39,
+    97: 39,
+    # Bright BG colors:
+    100: 49,
+    101: 49,
+    102: 49,
+    103: 49,
+    104: 49,
+    105: 49,
+    106: 49,
+    107: 49,
 }
 """Mapping from ANSI style integer to its matching reset integer.\n
 Codes that fully reset everything (`0`) or have no useful specific reset are intentionally omitted."""
 
-_STANDARD_SEQS: Final[
-    dict[int, tuple[tuple[str, ...], tuple[str, ...]]],
-] = {cid: ((f"{ANSI.CHAR}[{cid}m", ), (f"{ANSI.CHAR}[{reset}m", ))
-     for cid, reset in _RESET_MAP.items()}
+_STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
+    cid: ((f"{ANSI.CHAR}[{cid}m",), (f"{ANSI.CHAR}[{reset}m",)) for cid, reset in _RESET_MAP.items()
+}
 """Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR style.\n
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
@@ -207,7 +243,7 @@ class _StyleGroup:
     ------------------------------------------------------------------
     Supports further `|` chaining and `()` application."""
 
-    __slots__: Final[tuple[str, ...]] = ("_codes", )
+    __slots__: Final[tuple[str, ...]] = ("_codes",)
 
     def __init__(self, *codes: AnyStyle) -> None:
         self._codes: tuple[AnyStyle, ...] = codes
@@ -257,7 +293,7 @@ class _Style:
     ----------------------------------------------------------------------------
     """
 
-    __slots__: Final[tuple[str, ...]] = ("_value", "_oc")
+    __slots__: Final[tuple[str, ...]] = ("_oc", "_value")
     _oc: tuple[tuple[str, ...], tuple[str, ...]]
 
     def __init__(self, value: int, /) -> None:
@@ -327,7 +363,7 @@ class _ColorStyle:
     >>> S.hex("#FF6070")("text")                # Hex FG color
     >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
 
-    __slots__: Final[tuple[str, ...]] = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
+    __slots__: Final[tuple[str, ...]] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
         self._red: int = red
@@ -371,12 +407,12 @@ class _ColorStyle:
     def __call__(self, *text: StyledSegment) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: TextLike) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq, ), (self._close_seq, ), text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this color style, indicating<br>
@@ -391,7 +427,7 @@ class _Link:
     >>> S.link("https://example.com")("click here")
     >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
 
-    __slots__: Final[tuple[str, ...]] = ("_url", "_open_seq", "_close_seq")
+    __slots__: Final[tuple[str, ...]] = ("_close_seq", "_open_seq", "_url")
 
     def __init__(self, url: str | Path, /) -> None:
         self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
@@ -414,12 +450,12 @@ class _Link:
     def __call__(self, *text: StyledSegment) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq, ), (self._close_seq, ), text[0] if len(text) == 1 else text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: TextLike) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq, ), (self._close_seq, ), text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text)
 
     def __repr__(self) -> str:
         """Returns a string representation of this link style, showing the URL it points to."""
@@ -433,7 +469,7 @@ class _StyledSequence:
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
     `text` may be a plain `str`, a nested `_StyledSequence`, or a tuple of mixed segments."""
 
-    __slots__: Final[tuple[str, ...]] = ("_opens", "_closes", "text")
+    __slots__: Final[tuple[str, ...]] = ("_closes", "_opens", "text")
 
     def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: TextLike) -> None:
         self._opens: tuple[str, ...] = opens
@@ -448,12 +484,12 @@ class _StyledSequence:
 
 ######################### PUBLIC TYPES ########################
 
-type AnyStyle = Union[_Style, _ColorStyle, _Link]
+type AnyStyle = _Style | _ColorStyle | _Link
 """Any single style code, color style, or link style<br>
 that can be combined via `|` and applied to text."""
-type StyledSegment = Union[str, _StyledSequence, AnyStyle, _StyleGroup]
+type StyledSegment = str | _StyledSequence | AnyStyle | _StyleGroup
 """A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
-type TextLike = Union[StyledSegment, tuple[StyledSegment, ...]]
+type TextLike = StyledSegment | tuple[StyledSegment, ...]
 """Anything that can be styled or rendered.
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
 
@@ -801,7 +837,7 @@ class StyledText:
     def __iadd__(self, other: StyledText | str, /) -> StyledText:
         """Append another `StyledText` object or a plain string in place (`+=`)."""
 
-        self.ansi += (other.ansi if isinstance(other, StyledText) else other)
+        self.ansi += other.ansi if isinstance(other, StyledText) else other
         return self
 
     def __mul__(self, n: int, /) -> StyledText:
@@ -885,7 +921,7 @@ class StyledText:
 
         return f"StyledText(ansi={self.ansi!r})"
 
-    def print(self, /, *, end: str = "\n", flush: bool = True, file: Optional[TextIO] = None) -> None:
+    def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
         """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
         for ANSI on first use) or to a custom file-like object.\n
         -----------------------------------------------------------------------------------------
@@ -942,7 +978,7 @@ class StyledText:
                 self._ansi_parts.append(piece)
             return
         if isinstance(segment, tuple):
-            for tuple_part in cast(tuple[object, ...], segment):
+            for tuple_part in cast("tuple[object, ...]", segment):
                 self._render(tuple_part)
             return
         if isinstance(segment, _Style):
@@ -987,7 +1023,7 @@ def _config_terminal() -> None:
 
     if _os.name == "nt":
         try:
-            kernel32 = getattr(_ctypes, "windll").kernel32
+            kernel32 = _ctypes.windll.kernel32
             handle = kernel32.GetStdHandle(-11)
             mode = _ctypes.c_ulong()
             kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
@@ -1005,7 +1041,7 @@ class _BuildOpenClose:
         self.group: _StyleGroup = group
         self.sgr_open: list[str] = []
         self.sgr_close: list[str] = []
-        self.link_url: Optional[str] = None
+        self.link_url: str | None = None
 
     def build(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
         if len(codes := self.group._codes) == 1 and type(codes[0]) is _Style:
@@ -1048,9 +1084,9 @@ class _BuildOpenClose:
         if self.link_url is not None:
             opens.append(ANSI.SEQ_LINK_OPEN.format(self.link_url))
         if self.sgr_open:
-            opens.append(f"{ANSI.CHAR}[{";".join(self.sgr_open)}m")
+            opens.append(f"{ANSI.CHAR}[{';'.join(self.sgr_open)}m")
         if dedup_close:
-            closes.append(f"{ANSI.CHAR}[{";".join(dedup_close)}m")
+            closes.append(f"{ANSI.CHAR}[{';'.join(dedup_close)}m")
         if self.link_url is not None:
             closes.append(ANSI.SEQ_LINK_CLOSE)
 

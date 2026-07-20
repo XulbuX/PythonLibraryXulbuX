@@ -3,14 +3,16 @@ This module provides the `Json` class, which includes methods to read,
 create and update JSON files, with support for comments inside the JSON data.
 """
 
-from .base.types import DataObj
-from .file_sys import FileSys
 from .data import Data
 from .file import File
+from .file_sys import FileSys
 
-from typing import Literal, Any, overload, cast
-from pathlib import Path
 import json as _json
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
+
+if TYPE_CHECKING:
+    from .base.types import DataObj
 
 
 class Json:
@@ -20,15 +22,8 @@ class Json:
     @overload
     @classmethod
     def read(
-        cls,
-        json_file: Path | str,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        return_original: Literal[True],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        ...
+        cls, json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[True]
+    ) -> tuple[dict[str, Any], dict[str, Any]]: ...
 
     @overload
     @classmethod
@@ -40,18 +35,11 @@ class Json:
         comment_start: str = ">>",
         comment_end: str = "<<",
         return_original: Literal[False] = False,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
     @classmethod
     def read(
-        cls,
-        json_file: Path | str,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        return_original: bool = False,
+        cls, json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: bool = False
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """Read JSON files, ignoring comments.\n
         --------------------------------------------------------------------------------------
@@ -70,7 +58,7 @@ class Json:
             json_path = json_path.with_suffix(".json")
         file_path = FileSys.extend_or_make_path(json_path, prefer_script_dir=True)
 
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             content = file.read()
 
         try:
@@ -170,17 +158,12 @@ class Json:
         you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
         ⇾ If the given value-path doesn't exist, it will be created."""
 
-        processed_data, data = cls.read(
-            json_file,
-            comment_start=comment_start,
-            comment_end=comment_end,
-            return_original=True,
-        )
+        processed_data, data = cls.read(json_file, comment_start=comment_start, comment_end=comment_end, return_original=True)
 
         update: dict[str, Any] = {}
         for val_path, new_val in update_values.items():
             try:
-                if (path_id := Data.get_path_id(cast(DataObj, processed_data), val_path, path_sep=path_sep)) is not None:
+                if (path_id := Data.get_path_id(cast("DataObj", processed_data), val_path, path_sep=path_sep)) is not None:
                     update[path_id] = new_val
                 else:
                     data = cls._create_nested_path(data, val_path.split(path_sep), new_val)
@@ -206,29 +189,29 @@ class Json:
 
                 elif isinstance(current, list) and key.isdigit():
                     idx = int(key)
-                    while len(cast(list[Any], current)) <= idx:
-                        cast(list[Any], current).append(None)
+                    while len(cast("list[Any]", current)) <= idx:
+                        cast("list[Any]", current).append(None)
                     current[idx] = value
 
                 else:
-                    raise TypeError(f"Cannot set key '{key}' on {type(cast(Any, current))}")
+                    raise TypeError(f"Cannot set key '{key}' on {type(cast('Any', current))}")
 
             else:
                 next_key = path_keys[i + 1]
                 if isinstance(current, dict):
                     if key not in current:
                         current[key] = [] if next_key.isdigit() else {}
-                    current = cast(dict[str, Any], current)[key]  # type: ignore[unnecessary-cast]
+                    current = cast("dict[str, Any]", current)[key]  # type: ignore[unnecessary-cast]
 
                 elif isinstance(current, list) and key.isdigit():
                     idx = int(key)
-                    while len(cast(list[Any], current)) <= idx:
-                        cast(list[Any], current).append(None)
+                    while len(cast("list[Any]", current)) <= idx:
+                        cast("list[Any]", current).append(None)
                     if current[idx] is None:
                         current[idx] = [] if next_key.isdigit() else {}
-                    current = cast(list[Any], current)[idx]
+                    current = cast("list[Any]", current)[idx]
 
                 else:
-                    raise TypeError(f"Cannot navigate through {type(cast(Any, current))}")
+                    raise TypeError(f"Cannot navigate through {type(cast('Any', current))}")
 
         return data_obj

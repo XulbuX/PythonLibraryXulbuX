@@ -1,11 +1,10 @@
-from typing import Optional
-from pathlib import Path
-import subprocess
-import tomllib
-import pytest
 import ast
 import os
 import re
+import subprocess
+import tomllib
+from pathlib import Path
+import pytest
 
 # Define paths relative to this test file `tests/test_version.py`:
 ROOT_DIR = Path(__file__).parent.parent
@@ -13,7 +12,7 @@ PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 
 
-def get_current_branch() -> Optional[str]:
+def get_current_branch() -> str | None:
     # Check GitHub Actions environment variables first.
     # `GITHUB_HEAD_REF` is set for pull requests (source branch):
     if branch := os.environ.get("GITHUB_HEAD_REF"):
@@ -25,11 +24,7 @@ def get_current_branch() -> Optional[str]:
     # Fallback to Git command for local dev:
     try:
         result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            stdin=subprocess.DEVNULL,
-            capture_output=True,
-            text=True,
-            check=True,
+            ["git", "branch", "--show-current"], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True
         )
         return result.stdout.strip() or None
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -53,7 +48,7 @@ def test_version_consistency():
     expected_version = branch_match.group(1)
 
     # Extract version from `__init__.py`:
-    with open(INIT_PATH, "r", encoding="utf-8") as file:
+    with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
         init_version_match = re.search(r'^__version__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_version = init_version_match.group(1) if init_version_match else None
@@ -66,11 +61,13 @@ def test_version_consistency():
     assert init_version is not None, f"Could not find var '__version__' in {INIT_PATH}"
     assert pyproject_version, f"Could not find var 'version' in {PYPROJECT_PATH}"
 
-    assert init_version == expected_version, \
+    assert init_version == expected_version, (
         f"Hardcoded lib-version in src/xulbux/__init__.py ({init_version}) does not match branch version ({expected_version})"
+    )
 
-    assert pyproject_version == expected_version, \
+    assert pyproject_version == expected_version, (
         f"Hardcoded lib-version in pyproject.toml ({pyproject_version}) does not match branch version ({expected_version})"
+    )
 
 
 ############################################## DEPENDENCIES CONSISTENCY TEST #############################################
@@ -79,9 +76,9 @@ def test_version_consistency():
 def test_dependencies_consistency():
     """Verifies that dependencies in `pyproject.toml` match `__dependencies__` in `__init__.py`."""
     # Extract dependencies from `__init__.py`:
-    with open(INIT_PATH, "r", encoding="utf-8") as file:
+    with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
-    init_deps_match = re.search(r'__dependencies__(?:[^=]*)?=\s*(\[.*?\])', init_content, re.DOTALL)
+    init_deps_match = re.search(r"__dependencies__(?:[^=]*)?=\s*(\[.*?\])", init_content, re.DOTALL)
 
     # Extract dependencies from `pyproject.toml`:
     with open(PYPROJECT_PATH, "rb") as file:
@@ -97,10 +94,9 @@ def test_dependencies_consistency():
     pyproject_deps_sorted = sorted(pyproject_deps)
     init_deps_sorted = sorted(init_deps)
 
-    assert init_deps_sorted == pyproject_deps_sorted, \
-        f"\nDependencies mismatch:\n" \
-        f"  __init__.py    : {init_deps_sorted}\n" \
-        f"  pyproject.toml : {pyproject_deps_sorted}\n"
+    assert init_deps_sorted == pyproject_deps_sorted, (
+        f"\nDependencies mismatch:\n  __init__.py    : {init_deps_sorted}\n  pyproject.toml : {pyproject_deps_sorted}\n"
+    )
 
 
 ############################################## DESCRIPTION CONSISTENCY TEST ##############################################
@@ -109,7 +105,7 @@ def test_dependencies_consistency():
 def test_description_consistency():
     """Verifies that the description in `pyproject.toml` matches `__description__` in `__init__.py`."""
     # Extract description from `__init__.py`:
-    with open(INIT_PATH, "r", encoding="utf-8") as file:
+    with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
         init_desc_match = re.search(r'^__description__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_desc = init_desc_match.group(1) if init_desc_match else None
@@ -122,7 +118,6 @@ def test_description_consistency():
     assert init_desc is not None, f"Could not find var '__description__' in {INIT_PATH}"
     assert pyproject_desc, f"Could not find 'description' in {PYPROJECT_PATH}"
 
-    assert init_desc == pyproject_desc, \
-        f"\nDescription mismatch:\n" \
-        f"  __init__.py    : {init_desc}\n" \
-        f"  pyproject.toml : {pyproject_desc}\n"
+    assert init_desc == pyproject_desc, (
+        f"\nDescription mismatch:\n  __init__.py    : {init_desc}\n  pyproject.toml : {pyproject_desc}\n"
+    )

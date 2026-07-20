@@ -3,6 +3,7 @@ __pycache__/
 __pypackages__/
 .mypy_cache/
 .pytest_cache/
+.ruff_cache/
 *.py[cdio]
 *$py.class
 

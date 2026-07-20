@@ -1,11 +1,9 @@
-from xulbux.base.consts import ANSI
-from xulbux.ansi import _StyleGroup, Term, StyledText, S, _build_open_close
-
-from pathlib import Path
-import pytest
-import sys
 import io
-
+import sys
+from pathlib import Path
+from xulbux.ansi import S, StyledText, Term, _build_open_close, _StyleGroup
+from xulbux.base.consts import ANSI
+import pytest
 
 ESC = ANSI.CHAR
 
@@ -160,11 +158,7 @@ def test_link_alone_wraps_text():
 
 def test_link_combined_with_style():
     result = StyledText((S.link("https://x") | S.BOLD)("click"))
-    expected = (f"{ESC}]8;;https://x{ESC}\\"
-                f"{ESC}[1m"
-                f"click"
-                f"{ESC}[22m"
-                f"{ESC}]8;;{ESC}\\")
+    expected = f"{ESC}]8;;https://x{ESC}\\{ESC}[1mclick{ESC}[22m{ESC}]8;;{ESC}\\"
     assert result.ansi == expected
 
 
@@ -181,7 +175,7 @@ def test_code_positions_match_offsets_in_ansi():
     assert result.code_positions == ((0, f"{ESC}[1m"), (len(f"{ESC}[1m") + 2, f"{ESC}[22m"))
     # Offsets must be valid slice points into the ANSI string:
     for position, sequence in result.code_positions:
-        assert result.ansi[position:position + len(sequence)] == sequence
+        assert result.ansi[position : position + len(sequence)] == sequence
 
 
 def test_raw_equals_ansi_minus_sequences():
@@ -233,8 +227,8 @@ def test_pipe_with_FmtGroup_left_and_right():
 def test_build_open_close_dedupes_close_codes():
     # Bold + dim both reset to 22 → only one 22 in close:
     opens, closes = _build_open_close(S.BOLD | S.DIM)
-    assert opens == (f"{ESC}[1;2m", )
-    assert closes == (f"{ESC}[22m", )
+    assert opens == (f"{ESC}[1;2m",)
+    assert closes == (f"{ESC}[22m",)
 
 
 #
@@ -242,12 +236,12 @@ def test_build_open_close_dedupes_close_codes():
 
 
 def test_term_constants():
-    assert Term.CLEAR_LINE == f"{ESC}[2K"
-    assert Term.CLEAR_SCREEN == f"{ESC}[2J"
-    assert Term.HIDE_CURSOR == f"{ESC}[?25l"
-    assert Term.SHOW_CURSOR == f"{ESC}[?25h"
-    assert Term.ALT_SCREEN == f"{ESC}[?1049h"
-    assert Term.MAIN_SCREEN == f"{ESC}[?1049l"
+    assert f"{ESC}[2K" == Term.CLEAR_LINE
+    assert f"{ESC}[2J" == Term.CLEAR_SCREEN
+    assert f"{ESC}[?25l" == Term.HIDE_CURSOR
+    assert f"{ESC}[?25h" == Term.SHOW_CURSOR
+    assert f"{ESC}[?1049h" == Term.ALT_SCREEN
+    assert f"{ESC}[?1049l" == Term.MAIN_SCREEN
 
 
 def test_term_cursor_movement():

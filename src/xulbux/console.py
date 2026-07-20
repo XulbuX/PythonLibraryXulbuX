@@ -3,34 +3,34 @@ This module provides the `Console`, `ProgressBar`, and `Throbber` classes
 which offer methods for logging and other actions within the terminal.
 """
 
-from .base.types import ProgressUpdater, AllTextChars, ArgParseConfigs, ArgParseConfig, ArgData, Rgba, Hexa
+from .ansi import AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
+from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
-from .base.consts import CHARS, ANSI
-
-from .string import String
+from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
 from .color import Color
 from .regex import LazyRegex
-from .ansi import StyledText, AnyStyle, TextLike, S, _ColorStyle, _StyleGroup, _Style, _Link
+from .string import String
 
-from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TextIO, Final, Any, overload, cast
-from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
-from prompt_toolkit.validation import ValidationError, Validator
-from prompt_toolkit.document import Document
-from prompt_toolkit.styles import Style
-from prompt_toolkit.keys import Keys
-from contextlib import contextmanager
-from itertools import chain
-from io import StringIO
-import prompt_toolkit as _pt
-import subprocess as _subprocess
-import threading as _threading
-import getpass as _getpass
 import ctypes as _ctypes
-import shutil as _shutil
-import regex as _rx
-import time as _time
-import sys as _sys
+import getpass as _getpass
 import os as _os
+import shutil as _shutil
+import subprocess as _subprocess
+import sys as _sys
+import threading as _threading
+import time as _time
+from collections.abc import Callable, Generator, KeysView, ValuesView
+from contextlib import contextmanager
+from io import StringIO
+from itertools import chain
+from typing import Any, Final, Literal, TextIO, cast, overload
+import prompt_toolkit as _pt
+import regex as _rx
+from prompt_toolkit.document import Document
+from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.styles import Style
+from prompt_toolkit.validation import ValidationError, Validator
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
     hr=r"(?i){hr}",
@@ -82,14 +82,14 @@ class ParsedArgData:
     ------------------------------------------------------------------------------------------------------------
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: Optional[str] = None) -> None:
+    def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: str | None = None) -> None:
         self.exists: bool = exists
         """Whether the argument was found or not."""
         self.is_pos: bool = is_pos
         """Whether the argument is a positional argument or not."""
         self.values: tuple[str, ...] = tuple(values)
         """The tuple of values associated with the argument."""
-        self.flag: Optional[str] = flag
+        self.flag: str | None = flag
         """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
     def __bool__(self) -> bool:
@@ -103,7 +103,7 @@ class ParsedArgData:
         if not isinstance(other, ParsedArgData):
             return False
         return (
-            self.exists == other.exists \
+            self.exists == other.exists
             and self.is_pos == other.is_pos
             and self.values == other.values
             and self.flag == other.flag
@@ -140,18 +140,15 @@ class ParsedArgData:
         return ArgData(exists=self.exists, is_pos=self.is_pos, values=self.values, flag=self.flag)
 
     @overload
-    def get(self, index: int, /) -> Optional[str]:
-        ...
+    def get(self, index: int, /) -> str | None: ...
 
     @overload
-    def get(self, index: int, /, default: None) -> Optional[str]:
-        ...
+    def get(self, index: int, /, default: None) -> str | None: ...
 
     @overload
-    def get(self, index: int, /, default: str) -> str:
-        ...
+    def get(self, index: int, /, default: str) -> str: ...
 
-    def get(self, index: int, /, default: Optional[str] = None) -> Optional[str]:
+    def get(self, index: int, /, default: str | None = None) -> str | None:
         """Safely access a value from the `values` list by index.\n
         -------------------------------------------------------------------
         *   `index` – The index of the value to access.
@@ -178,16 +175,28 @@ class ParsedArgs:
     # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
     __slots__: Final[tuple[str, ...]] = ("__dict__", "all_exist", "any_exist", "is_empty", "unknown_flags")
 
-    RESERVED_ALIASES: frozenset[str] = frozenset({
-        "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "unknown_flags", "values"
-    })
+    RESERVED_ALIASES: frozenset[str] = frozenset(
+        {
+            "all_exist",
+            "any_exist",
+            "dict",
+            "existing",
+            "get",
+            "is_empty",
+            "items",
+            "keys",
+            "missing",
+            "unknown_flags",
+            "values",
+        }
+    )
     """Alias names that are reserved and cannot be used as argument aliases."""
 
-    def __init__(self, unknown_flags: Optional[list[str]] = None, **parsed_args: ParsedArgData) -> None:
+    def __init__(self, unknown_flags: list[str] | None = None, **parsed_args: ParsedArgData) -> None:
         for alias_name, parsed_arg_data in parsed_args.items():
             setattr(self, alias_name, parsed_arg_data)
 
-        _parsed_args = cast(dict[str, ParsedArgData], vars(self)).values()
+        _parsed_args = cast("dict[str, ParsedArgData]", vars(self)).values()
 
         self.is_empty: Final[bool] = all(not arg.exists and not arg.values for arg in _parsed_args)
         """Whether no argument was found and none have any values (not even defaults)."""
@@ -223,8 +232,7 @@ class ParsedArgs:
         return getattr(self, key)
 
     def __iter__(self) -> Generator[tuple[str, ParsedArgData], None, None]:
-        for key, val in cast(dict[str, ParsedArgData], vars(self)).items():
-            yield (key, val)
+        yield from cast("dict[str, ParsedArgData]", vars(self)).items()
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `ParsedArgs` objects are equal by comparing their stored arguments."""
@@ -239,10 +247,7 @@ class ParsedArgs:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        items: list[str] = [
-            f"{key} = " + "\n  ".join(repr(val).splitlines()) \
-            for key, val in self.__iter__()
-        ]
+        items: list[str] = [f"{key} = " + "\n  ".join(repr(val).splitlines()) for key, val in self.__iter__()]
 
         if self.unknown_flags:
             items.append(f"unknown_flags = {self.unknown_flags!r}")
@@ -277,8 +282,7 @@ class ParsedArgs:
     def items(self) -> Generator[tuple[str, ParsedArgData], None, None]:
         """Yields tuples of `(alias, ParsedArgData)`."""
 
-        for key, val in self.__iter__():
-            yield (key, val)
+        yield from self.__iter__()
 
     def existing(self) -> Generator[tuple[str, ParsedArgData], None, None]:
         """Yields tuples of `(alias, ParsedArgData)` for existing arguments only."""
@@ -297,7 +301,6 @@ class ParsedArgs:
 
 @mypyc_attr(native_class=False)
 class _ConsoleMeta(type):
-
     @property
     def width(cls) -> int:
         """The terminal width in characters."""
@@ -358,7 +361,7 @@ class _ConsoleMeta(type):
         if _os.name == "nt":
             # Check if VT100 mode is enabled on Windows:
             try:
-                kernel32 = getattr(_ctypes, "windll").kernel32
+                kernel32 = _ctypes.windll.kernel32
                 handle = kernel32.GetStdHandle(-11)
                 mode = _ctypes.c_ulong()
                 if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):
@@ -381,7 +384,7 @@ class Console(metaclass=_ConsoleMeta):
         /,
         *,
         skip: int = 0,
-        flag_value_sep: Optional[str] = "=",
+        flag_value_sep: str | None = "=",
         allow_space_value: bool = True,
     ) -> ParsedArgs:
         """Will search for the specified args in the command-line arguments
@@ -454,22 +457,12 @@ class Console(metaclass=_ConsoleMeta):
             raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
 
         return _ConsoleArgsParseHelper(
-            arg_parse_configs,
-            skip=skip,
-            flag_value_sep=flag_value_sep,
-            allow_space_value=allow_space_value,
+            arg_parse_configs, skip=skip, flag_value_sep=flag_value_sep, allow_space_value=allow_space_value
         )()
 
     @classmethod
     def pause_exit(
-        cls,
-        prompt: object = "",
-        /,
-        *,
-        pause: bool = True,
-        exit: bool = False,
-        exit_code: int = 0,
-        reset_ansi: bool = False,
+        cls, prompt: object = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
     ) -> None:
         """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
         -----------------------------------------------------------------------------------------------------
@@ -505,14 +498,14 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def log(
         cls,
-        title: Optional[str] = None,
+        title: str | None = None,
         prompt: object = "",
         /,
         *,
         start: str = "",
         end: str = "\n",
-        title_bg_color: Optional[AnyStyle | Rgba | Hexa] = None,
-        default_color: Optional[Rgba | Hexa] = None,
+        title_bg_color: AnyStyle | Rgba | Hexa | None = None,
+        default_color: Rgba | Hexa | None = None,
         tab_size: int = 8,
         title_px: int = 1,
         title_mx: int = 2,
@@ -574,7 +567,7 @@ class Console(metaclass=_ConsoleMeta):
         # Add back the removed ANSI codes to their original positions in the wrapped prompt:
         wrapped = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
 
-        prompt_segment = (S.hex(str(Color.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped)
+        prompt_segment = S.hex(str(Color.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped
 
         if title == "":
             StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
@@ -591,7 +584,7 @@ class Console(metaclass=_ConsoleMeta):
         active: bool = True,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = False,
         exit_code: int = 0,
@@ -602,14 +595,7 @@ class Console(metaclass=_ConsoleMeta):
         If `active` is false, no debug message will be printed."""
 
         if active:
-            cls.log(
-                "DEBUG",
-                prompt,
-                start=start,
-                end=end,
-                title_bg_color=S.BG.BR.YELLOW,
-                default_color=default_color,
-            )
+            cls.log("DEBUG", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
             cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -620,7 +606,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = False,
         exit_code: int = 0,
@@ -629,14 +615,7 @@ class Console(metaclass=_ConsoleMeta):
         """A preset for `log()`: `INFO` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
 
-        cls.log(
-            "INFO",
-            prompt,
-            start=start,
-            end=end,
-            title_bg_color=S.BG.BR.BLUE,
-            default_color=default_color,
-        )
+        cls.log("INFO", prompt, start=start, end=end, title_bg_color=S.BG.BR.BLUE, default_color=default_color)
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -647,7 +626,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = False,
         exit_code: int = 0,
@@ -656,14 +635,7 @@ class Console(metaclass=_ConsoleMeta):
         """A preset for `log()`: `DONE` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
 
-        cls.log(
-            "DONE",
-            prompt,
-            start=start,
-            end=end,
-            title_bg_color=S.BG.BR.GREEN,
-            default_color=default_color,
-        )
+        cls.log("DONE", prompt, start=start, end=end, title_bg_color=S.BG.BR.GREEN, default_color=default_color)
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -674,7 +646,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = False,
         exit_code: int = 1,
@@ -683,14 +655,7 @@ class Console(metaclass=_ConsoleMeta):
         """A preset for `log()`: `WARN` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
 
-        cls.log(
-            "WARN",
-            prompt,
-            start=start,
-            end=end,
-            title_bg_color=S.BG.BR.YELLOW,
-            default_color=default_color,
-        )
+        cls.log("WARN", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -701,7 +666,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = True,
         exit_code: int = 1,
@@ -710,14 +675,7 @@ class Console(metaclass=_ConsoleMeta):
         """A preset for `log()`: `FAIL` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
 
-        cls.log(
-            "FAIL",
-            prompt,
-            start=start,
-            end=end,
-            title_bg_color=S.BG.BR.RED,
-            default_color=default_color,
-        )
+        cls.log("FAIL", prompt, start=start, end=end, title_bg_color=S.BG.BR.RED, default_color=default_color)
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -728,7 +686,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         pause: bool = False,
         exit: bool = True,
         exit_code: int = 0,
@@ -737,14 +695,7 @@ class Console(metaclass=_ConsoleMeta):
         """A preset for `log()`: `EXIT` log message with the options to pause<br>
         at the message and exit the program after the message was printed."""
 
-        cls.log(
-            "EXIT",
-            prompt,
-            start=start,
-            end=end,
-            title_bg_color=S.BG.BR.MAGENTA,
-            default_color=default_color,
-        )
+        cls.log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
         cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
     @classmethod
@@ -753,8 +704,8 @@ class Console(metaclass=_ConsoleMeta):
         *values: object,
         start: str = "",
         end: str = "\n",
-        box_bg_color: Optional[AnyStyle | _StyleGroup | Rgba | Hexa] = None,
-        default_color: Optional[Rgba | Hexa] = None,
+        box_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa | None = None,
+        default_color: Rgba | Hexa | None = None,
         w_padding: int = 2,
         w_full: bool = False,
         indent: int = 0,
@@ -782,8 +733,9 @@ class Console(metaclass=_ConsoleMeta):
         default_hexa = str(Color.to_hexa(default_color)) if default_color is not None else "#000"
 
         # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-        bg_style: AnyStyle | _StyleGroup = ((S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa))
-                                            if box_bg_color is None else cls._as_bg_style(box_bg_color))
+        bg_style: AnyStyle | _StyleGroup = (
+            (S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa)) if box_bg_color is None else cls._as_bg_style(box_bg_color)
+        )
 
         open_seq = StyledText(S.hex(default_hexa) | bg_style).ansi
         bg_open = StyledText(bg_style).ansi
@@ -815,11 +767,11 @@ class Console(metaclass=_ConsoleMeta):
         end: str = "\n",
         border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
         border_style: AnyStyle | _StyleGroup | Rgba | Hexa = S.BR.BLACK,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         w_padding: int = 1,
         w_full: bool = False,
         indent: int = 0,
-        _border_chars: Optional[tuple[str, str, str, str, str, str, str, str, str, str, str]] = None,
+        _border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
     ) -> None:
         """Will print a bordered box, containing a log message.\n
         ---------------------------------------------------------------------------------------------
@@ -909,8 +861,9 @@ class Console(metaclass=_ConsoleMeta):
             right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
             box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
-        StyledText(f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "")
-                   + f"{border_b}{reset}").print(end=end)
+        StyledText(
+            f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "") + f"{border_b}{reset}"
+        ).print(end=end)
 
     @classmethod
     def confirm(
@@ -920,7 +873,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
@@ -938,8 +891,9 @@ class Console(metaclass=_ConsoleMeta):
         head = f"{start}{prompt.ansi if isinstance(prompt, StyledText) else str(prompt)} "
         head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
 
-        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no),
-                                         sep="")).strip().lower() in ({"", "y", "yes"} if default_is_yes else {"y", "yes"})
+        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no), sep="")).strip().lower() in (
+            {"", "y", "yes"} if default_is_yes else {"y", "yes"}
+        )
 
         if end:
             StyledText(end).print(end="", flush=True)
@@ -953,7 +907,7 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "\n",
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         show_keybindings: bool = True,
         input_prefix: str = " ⮡ ",
         reset_ansi: bool = True,
@@ -993,18 +947,17 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "",
-        default_color: Optional[Rgba | Hexa] = None,
-        placeholder: Optional[str] = None,
-        mask_char: Optional[str] = None,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        default_color: Rgba | Hexa | None = None,
+        placeholder: str | None = None,
+        mask_char: str | None = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
-        validator: Optional[Callable[[str], Optional[str]]] = None,
-        default_val: Optional[str] = None,
+        validator: Callable[[str], str | None] | None = None,
+        default_val: str | None = None,
         output_type: type[str] = str,
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @overload
     @classmethod
@@ -1015,18 +968,17 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "",
-        default_color: Optional[Rgba | Hexa] = None,
-        placeholder: Optional[str] = None,
-        mask_char: Optional[str] = None,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        default_color: Rgba | Hexa | None = None,
+        placeholder: str | None = None,
+        mask_char: str | None = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
-        validator: Optional[Callable[[str], Optional[str]]] = None,
-        default_val: Optional[T] = None,
+        validator: Callable[[str], str | None] | None = None,
+        default_val: T | None = None,
         output_type: type[T] = ...,
-    ) -> T:
-        ...
+    ) -> T: ...
 
     @classmethod
     def input(
@@ -1036,14 +988,14 @@ class Console(metaclass=_ConsoleMeta):
         *,
         start: str = "",
         end: str = "",
-        default_color: Optional[Rgba | Hexa] = None,
-        placeholder: Optional[str] = None,
-        mask_char: Optional[str] = None,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
+        default_color: Rgba | Hexa | None = None,
+        placeholder: str | None = None,
+        mask_char: str | None = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
         allowed_chars: str | AllTextChars = CHARS.ALL,
         allow_paste: bool = True,
-        validator: Optional[Callable[[str], Optional[str]]] = None,
+        validator: Callable[[str], str | None] | None = None,
         default_val: Any = None,
         output_type: type[Any] = str,
     ) -> Any:
@@ -1097,12 +1049,7 @@ class Console(metaclass=_ConsoleMeta):
             prompt_ansi = StyledText(S.hex(str(Color.to_hexa(default_color)))(prompt_ansi)).ansi
         session: _pt.PromptSession[str] = _pt.PromptSession(
             message=_pt.formatted_text.ANSI(prompt_ansi),
-            validator=_ConsoleInputValidator(
-                helper.get_text,
-                mask_char=mask_char,
-                min_len=min_len,
-                validator=validator,
-            ),
+            validator=_ConsoleInputValidator(helper.get_text, mask_char=mask_char, min_len=min_len, validator=validator),
             validate_while_typing=True,
             key_bindings=kb,
             bottom_toolbar=helper.bottom_toolbar,
@@ -1118,7 +1065,7 @@ class Console(metaclass=_ConsoleMeta):
                 return default_val
             result_text = ""
 
-        if output_type == str:
+        if output_type is str:
             return result_text
 
         else:
@@ -1140,11 +1087,12 @@ class Console(metaclass=_ConsoleMeta):
 
         if _sys.platform == "win32":
             import msvcrt as _msvcrt  # type: ignore[import-not-found]
+
             _msvcrt.getch()  # type: ignore[attr-defined]
 
         else:
-            import tty as _tty  # type: ignore[import-not-found]
             import termios as _termios  # type: ignore[import-not-found]
+            import tty as _tty  # type: ignore[import-not-found]
 
             fd = _sys.stdin.fileno()
             old_settings = _termios.tcgetattr(fd)  # type: ignore[attr-defined]
@@ -1157,8 +1105,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @staticmethod
     def _resolve_title_colors(
-        title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa,
-        /,
+        title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa, /
     ) -> tuple[AnyStyle | _StyleGroup, AnyStyle]:
         """Resolves the log title's background style and its matching foreground style.\n
         ------------------------------------------------------------------------------------
@@ -1187,8 +1134,7 @@ class Console(metaclass=_ConsoleMeta):
             return S.BG.hex(str(Color.to_hexa(color)))
 
         raise ValueError(
-            "The 'box_bg_color' parameter must be a valid ANSI background style, "
-            f"RGBA value, or HEXA value, got {color!r}"
+            f"The 'box_bg_color' parameter must be a valid ANSI background style, RGBA value, or HEXA value, got {color!r}"
         )
 
     @staticmethod
@@ -1200,10 +1146,7 @@ class Console(metaclass=_ConsoleMeta):
         if Color.is_valid_rgba(color) or Color.is_valid_hexa(color):
             return S.hex(str(Color.to_hexa(color)))
 
-        raise ValueError(
-            "The 'border_style' parameter must be a valid ANSI style, "
-            f"RGBA value, or HEXA value, got {color!r}"
-        )
+        raise ValueError(f"The 'border_style' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
 
     @staticmethod
     def _persist_style(ansi_text: str, style_open: str, /) -> str:
@@ -1221,7 +1164,7 @@ class Console(metaclass=_ConsoleMeta):
 
         for line in clean_prompt.splitlines():
             lst = String.split_count(line, wrap_len)
-            yield ("", ) if not lst else lst
+            yield ("",) if not lst else lst
 
     @classmethod
     def _add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:
@@ -1315,10 +1258,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @staticmethod
     def _prepare_log_box(
-        values: list[object] | tuple[object, ...],
-        /,
-        *,
-        has_rules: bool = False,
+        values: list[object] | tuple[object, ...], /, *, has_rules: bool = False
     ) -> tuple[list[str], list[str], int]:
         """Prepares the log box content, returning the ANSI lines, their plain-text<br>
         counterparts, and the maximum visible line length."""
@@ -1359,11 +1299,11 @@ class _ConsoleArgsParseHelper:
         /,
         *,
         skip: int = 0,
-        flag_value_sep: Optional[str],
+        flag_value_sep: str | None,
         allow_space_value: bool = True,
     ) -> None:
         self.arg_parse_configs: ArgParseConfigs = arg_parse_configs
-        self.flag_value_sep: Optional[str] = flag_value_sep
+        self.flag_value_sep: str | None = flag_value_sep
         self.allow_space_value: bool = allow_space_value
 
         self.parsed_args: dict[str, ParsedArgData] = {}
@@ -1371,12 +1311,12 @@ class _ConsoleArgsParseHelper:
         self.arg_lookup: dict[str, str] = {}
         self.unknown_flags: list[str] = []
 
-        self.args: list[str] = _sys.argv[1 + skip:]
+        self.args: list[str] = _sys.argv[1 + skip :]
         self.args_len: int = len(self.args)
         self.pos_before_configured: bool = False
         self.pos_after_configured: bool = False
-        self.first_flag_pos: Optional[int] = None
-        self.last_flag_pos: Optional[int] = None
+        self.first_flag_pos: int | None = None
+        self.last_flag_pos: int | None = None
 
     def __call__(self) -> ParsedArgs:
         self.parse_arg_configs()
@@ -1391,8 +1331,7 @@ class _ConsoleArgsParseHelper:
 
         for alias, config in self.arg_parse_configs.items():
             if not alias.isidentifier():
-                raise ValueError(f"Invalid argument alias '{alias}'.\n"
-                                 "Aliases must be valid Python identifiers.")
+                raise ValueError(f"Invalid argument alias '{alias}'.\nAliases must be valid Python identifiers.")
             elif alias in ParsedArgs.RESERVED_ALIASES:
                 raise ValueError(
                     f"Invalid argument alias '{alias}'.\n"
@@ -1409,7 +1348,7 @@ class _ConsoleArgsParseHelper:
                         )
                     self.arg_lookup[flag] = alias
 
-    def _parse_arg_config(self, alias: str, config: ArgParseConfig, /) -> Optional[set[str]]:
+    def _parse_arg_config(self, alias: str, config: ArgParseConfig, /) -> set[str] | None:
         """Parse an individual argument configuration."""
 
         # Positional argument configuration:
@@ -1424,8 +1363,7 @@ class _ConsoleArgsParseHelper:
                 self.pos_after_configured = True
             else:
                 raise ValueError(
-                    f"Invalid positional argument type '{config}' under alias '{alias}'.\n"
-                    "Must be either 'before' or 'after'."
+                    f"Invalid positional argument type '{config}' under alias '{alias}'.\nMust be either 'before' or 'after'."
                 )
 
             self.positional_configs[alias] = config
@@ -1437,8 +1375,7 @@ class _ConsoleArgsParseHelper:
         elif isinstance(config, set):
             if not config:
                 raise ValueError(
-                    f"The flag set under alias '{alias}' is empty.\n"
-                    "The set must contain at least one flag to search for."
+                    f"The flag set under alias '{alias}' is empty.\nThe set must contain at least one flag to search for."
                 )
 
             self.parsed_args[alias] = ParsedArgData(exists=False, values=[], is_pos=False)
@@ -1453,11 +1390,7 @@ class _ConsoleArgsParseHelper:
                     "The 'flags'-key set must contain at least one flag to search for."
                 )
 
-            self.parsed_args[alias] = ParsedArgData(
-                exists=False,
-                values=[config["default"]],
-                is_pos=False,
-            )
+            self.parsed_args[alias] = ParsedArgData(exists=False, values=[config["default"]], is_pos=False)
 
             return config["flags"]
 
@@ -1511,8 +1444,7 @@ class _ConsoleArgsParseHelper:
                 self._collect_after_arg(alias)
             else:
                 raise ValueError(
-                    f"Invalid positional argument type '{pos_type}' for alias '{alias}'.\n"
-                    "Must be either 'before' or 'after'."
+                    f"Invalid positional argument type '{pos_type}' for alias '{alias}'.\nMust be either 'before' or 'after'."
                 )
 
     def _collect_before_arg(self, alias: str, /) -> None:
@@ -1576,9 +1508,11 @@ class _ConsoleArgsParseHelper:
     def _is_positional_arg(self, arg: str, /, *, allow_separator: bool = True) -> bool:
         """Check if an argument is positional (not a flag or separator)."""
 
-        if (self.flag_value_sep \
-                and self.flag_value_sep in arg
-                and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup):
+        if (
+            self.flag_value_sep
+            and self.flag_value_sep in arg
+            and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup
+        ):
             if self._looks_like_flag(arg.split(self.flag_value_sep, 1)[0].strip()):
                 return False
             return True
@@ -1598,9 +1532,11 @@ class _ConsoleArgsParseHelper:
             return False
         if self.flag_value_sep and arg.strip() == self.flag_value_sep:
             return False
-        if (self.flag_value_sep \
-                and self.flag_value_sep in arg
-                and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup):
+        if (
+            self.flag_value_sep
+            and self.flag_value_sep in arg
+            and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup
+        ):
             return False
         if self._looks_like_flag(arg):
             return False
@@ -1625,7 +1561,7 @@ class _ConsoleArgsParseHelper:
                     self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=potential_flag)
 
                     if len(parts) > 1 and (val := parts[1].strip()):
-                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val, ))
+                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
 
                     i += 1
                     continue
@@ -1645,7 +1581,7 @@ class _ConsoleArgsParseHelper:
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
                     if i + 2 < self.args_len:
                         if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
-                            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val, ))
+                            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
                             i += 3
                             continue
                     i += 2
@@ -1653,7 +1589,7 @@ class _ConsoleArgsParseHelper:
 
                 # Check for space-separated value (`--flag value`):
                 if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
-                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(next_arg, ))
+                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(next_arg,))
                     i += 2
                     continue
                 # No separator = just a flag without value.
@@ -1670,19 +1606,19 @@ class _ConsoleInputHelper:
 
     def __init__(
         self,
-        mask_char: Optional[str],
-        min_len: Optional[int],
-        max_len: Optional[int],
+        mask_char: str | None,
+        min_len: int | None,
+        max_len: int | None,
         allowed_chars: str | AllTextChars,
         allow_paste: bool,
-        validator: Optional[Callable[[str], Optional[str]]],
+        validator: Callable[[str], str | None] | None,
     ) -> None:
-        self.mask_char: Optional[str] = mask_char
-        self.min_len: Optional[int] = min_len
-        self.max_len: Optional[int] = max_len
+        self.mask_char: str | None = mask_char
+        self.min_len: int | None = min_len
+        self.max_len: int | None = max_len
         self.allowed_chars: str | AllTextChars = allowed_chars
         self.allow_paste: bool = allow_paste
-        self.validator: Optional[Callable[[str], Optional[str]]] = validator
+        self.validator: Callable[[str], str | None] | None = validator
 
         self.result_text: str = ""
         self.filtered_chars: set[str] = set()
@@ -1745,7 +1681,7 @@ class _ConsoleInputHelper:
         if self.allowed_chars is not CHARS.ALL:
             filtered_text = ""
             for char in processed_text:
-                if char in cast(str, self.allowed_chars):
+                if char in cast("str", self.allowed_chars):
                     filtered_text += char
                 else:
                     removed_chars.add(char)
@@ -1798,11 +1734,11 @@ class _ConsoleInputHelper:
             else:
                 if is_backspace:
                     if cursor_pos > 0:
-                        self.result_text = self.result_text[:cursor_pos - 1] + self.result_text[cursor_pos:]
+                        self.result_text = self.result_text[: cursor_pos - 1] + self.result_text[cursor_pos:]
                         buffer.delete_before_cursor(1)
                 else:
                     if cursor_pos < len(self.result_text):
-                        self.result_text = self.result_text[:cursor_pos] + self.result_text[cursor_pos + 1:]
+                        self.result_text = self.result_text[:cursor_pos] + self.result_text[cursor_pos + 1 :]
                         buffer.delete(1)
 
         except Exception:
@@ -1832,20 +1768,19 @@ class _ConsoleInputHelper:
 
 
 class _ConsoleInputValidator(Validator):
-
     def __init__(
         self,
         get_text: Callable[[], str],
         /,
         *,
-        mask_char: Optional[str],
-        min_len: Optional[int],
-        validator: Optional[Callable[[str], Optional[str]]],
+        mask_char: str | None,
+        min_len: int | None,
+        validator: Callable[[str], str | None] | None,
     ) -> None:
         self.get_text: Callable[[], str] = get_text
-        self.mask_char: Optional[str] = mask_char
-        self.min_len: Optional[int] = min_len
-        self.validator: Optional[Callable[[str], Optional[str]]] = validator
+        self.mask_char: str | None = mask_char
+        self.min_len: int | None = min_len
+        self.validator: Callable[[str], str | None] | None = validator
 
     def validate(self, document: Document) -> None:
         """Validates the input text according to the minimum length and custom validator function."""
@@ -1910,13 +1845,13 @@ class ProgressBar:
         self.set_chars(chars)
 
         self._buffer: list[str] = []
-        self._original_stdout: Optional[TextIO] = None
+        self._original_stdout: TextIO | None = None
         self._current_progress_str: str = ""
         self._last_line_len: int = 0
         self._last_update_time: float = 0.0
         self._min_update_interval: float = 0.02  # 20ms = max 50 updates/second
 
-    def set_width(self, min_width: Optional[int] = None, max_width: Optional[int] = None) -> None:
+    def set_width(self, min_width: int | None = None, max_width: int | None = None) -> None:
         """Set the width of the progress bar.\n
         -----------------------------------------------------------------
         *   `min_width` – The min width of the progress bar in chars.
@@ -1936,10 +1871,10 @@ class ProgressBar:
 
     def set_bar_format(
         self,
-        bar_format: Optional[list[TextLike] | tuple[TextLike, ...] | TextLike] = None,
-        limited_bar_format: Optional[list[TextLike] | tuple[TextLike, ...] | TextLike] = None,
+        bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
+        limited_bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
         *,
-        sep: Optional[str] = None,
+        sep: str | None = None,
     ) -> None:
         """Set the format string used to render the progress bar.\n
         -------------------------------------------------------------------------------------------------------
@@ -1961,8 +1896,7 @@ class ProgressBar:
             compiled_bar = _compile_format(bar_format)
             if not any(_PATTERNS.bar.search(part) for part in compiled_bar):
                 raise ValueError(
-                    "The 'bar_format' parameter value must contain the "
-                    f"'{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
+                    f"The 'bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
                 )
 
             self.bar_format = compiled_bar
@@ -1996,7 +1930,7 @@ class ProgressBar:
 
         self.chars = chars
 
-    def show_progress(self, current: int, total: int, /, label: Optional[str] = None) -> None:
+    def show_progress(self, current: int, total: int, /, label: str | None = None) -> None:
         """Show or update the progress bar.\n
         ----------------------------------------------------------------------------------------------
         *   `current` – The current progress value (below `0` or greater than `total` hides the bar).
@@ -2006,7 +1940,7 @@ class ProgressBar:
         # Throttle updates (unless it's the first/final update):
         current_time = _time.time()
         if (
-            not (self._last_update_time == 0.0 or current >= total or current < 0) \
+            not (self._last_update_time == 0.0 or current >= total or current < 0)
             and (current_time - self._last_update_time) < self._min_update_interval
         ):
             return
@@ -2036,7 +1970,7 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, /, label: Optional[str] = None) -> Generator[ProgressUpdater, None, None]:
+    def progress_context(self, total: int, /, label: str | None = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         -----------------------------------------------------------------------------------------
         *   `total` – The total value representing 100% progress (must be greater than `0`).
@@ -2074,7 +2008,7 @@ class ProgressBar:
         finally:
             self.hide_progress()
 
-    def _draw_progress_bar(self, current: int, total: int, /, label: Optional[str] = None) -> None:
+    def _draw_progress_bar(self, current: int, total: int, /, label: str | None = None) -> None:
         if total <= 0 or not self._original_stdout:
             return
 
@@ -2095,13 +2029,7 @@ class ProgressBar:
         self._original_stdout.flush()
 
     def _get_formatted_info_and_bar_width(
-        self,
-        bar_format: list[str],
-        current: int,
-        total: int,
-        percentage: float,
-        /,
-        label: Optional[str] = None,
+        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: str | None = None
     ) -> tuple[str, int]:
         fmt_parts: list[str] = []
 
@@ -2186,10 +2114,10 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
-    def __init__(self, progress_bar: ProgressBar, total: int, label: Optional[str], /) -> None:
+    def __init__(self, progress_bar: ProgressBar, total: int, label: str | None, /) -> None:
         self.progress_bar: ProgressBar = progress_bar
         self.total: int = total
-        self.current_label: Optional[str] = label
+        self.current_label: str | None = label
         self.current_progress: int = 0
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
@@ -2225,7 +2153,7 @@ class _ProgressBarCurrentReplacer:
         self.current: int = current
 
     def __call__(self, match: _rx.Match[str], /) -> str:
-        if (sep := match.group(1)):
+        if sep := match.group(1):
             return f"{self.current:,}".replace(",", sep)
         return str(self.current)
 
@@ -2237,7 +2165,7 @@ class _ProgressBarTotalReplacer:
         self.total: int = total
 
     def __call__(self, match: _rx.Match[str], /) -> str:
-        if (sep := match.group(1)):
+        if sep := match.group(1):
             return f"{self.total:,}".replace(",", sep)
         return str(self.total)
 
@@ -2269,7 +2197,7 @@ class Throbber:
     def __init__(
         self,
         *,
-        label: Optional[str] = None,
+        label: str | None = None,
         throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
@@ -2283,7 +2211,7 @@ class Throbber:
         """A tuple of strings representing the animation frames."""
         self.interval: float
         """The time in seconds between each animation frame."""
-        self.label: Optional[str]
+        self.label: str | None
         """The current label text."""
         self.active: bool = False
         """Whether the throbber is currently active (intercepting stdout) or not."""
@@ -2294,16 +2222,14 @@ class Throbber:
         self.set_interval(interval)
 
         self._buffer: list[str] = []
-        self._original_stdout: Optional[TextIO] = None
+        self._original_stdout: TextIO | None = None
         self._current_animation_str: str = ""
         self._last_line_len: int = 0
         self._frame_index: int = 0
-        self._stop_event: Optional[_threading.Event] = None
-        self._animation_thread: Optional[_threading.Thread] = None
+        self._stop_event: _threading.Event | None = None
+        self._animation_thread: _threading.Thread | None = None
 
-    def set_format(
-        self, throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: Optional[str] = None
-    ) -> None:
+    def set_format(self, throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: str | None = None) -> None:
         """Set the format string used to render the throbber.\n
         -------------------------------------------------------------------------------------------------
         *   `throbber_format` – The format strings used to render the throbber, containing placeholders:
@@ -2341,7 +2267,7 @@ class Throbber:
 
         self.interval = interval
 
-    def start(self, label: Optional[str] = None, /) -> None:
+    def start(self, label: str | None = None, /) -> None:
         """Start the throbber animation and intercept stdout.\n
         --------------------------------------------------------------
         *   `label` – The label to display alongside the throbber."""
@@ -2371,7 +2297,7 @@ class Throbber:
             self._clear_throbber_line()
             self._stop_intercepting()
 
-    def update_label(self, label: Optional[str], /) -> None:
+    def update_label(self, label: str | None, /) -> None:
         """Update the throbber's label text.\n
         -----------------------------------------
         *   `new_label` – The new label text."""
@@ -2379,7 +2305,7 @@ class Throbber:
         self.label = label
 
     @contextmanager
-    def context(self, label: Optional[str] = None, /) -> Generator[Callable[[str], None], None, None]:
+    def context(self, label: str | None = None, /) -> Generator[Callable[[str], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
         ------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber.
@@ -2419,8 +2345,9 @@ class Throbber:
 
                 frame = self.frames[self._frame_index % len(self.frames)] + _ANSI_RESET
                 formatted = self.sep.join(
-                    fmt_part for part in self.throbber_format if \
-                    (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", part)))
+                    fmt_part
+                    for part in self.throbber_format
+                    if (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", part)))
                 )
 
                 self._current_animation_str = formatted

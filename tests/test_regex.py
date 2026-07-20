@@ -1,9 +1,8 @@
-from xulbux.regex import LazyRegex, Regex
-
-from typing import cast
-import regex as rx
-import pytest
 import re
+from typing import cast
+from xulbux.regex import LazyRegex, Regex
+import pytest
+import regex as rx
 
 #
 ####################################################### Regex TESTS ######################################################
@@ -345,7 +344,7 @@ def test_regex_hsla_str_valid_values():
 
     # Verify that `%` and `°` symbols are not in the captured groups:
     for match in matches:
-        groups = cast(tuple[str], match if isinstance(match, tuple) else (match, ))
+        groups = cast("tuple[str]", match if isinstance(match, tuple) else (match,))
         for group in groups:
             if group:  # Skip empty groups.
                 assert "%" not in group, f"Percent sign should not be in captured group: {group}"

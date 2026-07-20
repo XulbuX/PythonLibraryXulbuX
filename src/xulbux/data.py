@@ -3,18 +3,18 @@ This module provides the `Data` class, which offers
 methods to work with nested data structures.
 """
 
-from .base.types import IndexIterableTT, IndexIterable, DataObjTT, DataObj as DataObjType
-
-from .string import String
+from .ansi import AnyStyle, S, StyledText, _StyleGroup
+from .base.types import DataObj as DataObjType
+from .base.types import DataObjTT, IndexIterable, IndexIterableTT
 from .regex import Regex
-from .ansi import StyledText, AnyStyle, S, _StyleGroup
+from .string import String
 
-from typing import Optional, Literal, Final, Union, Any, overload, cast
 import base64 as _base64
 import math as _math
 import re as _re
+from typing import Any, Final, Literal, cast, overload
 
-AnySyntaxStyle = Union[AnyStyle, _StyleGroup]
+AnySyntaxStyle = AnyStyle | _StyleGroup
 """Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, AnySyntaxStyle]] = {
@@ -75,17 +75,11 @@ class Data:
         if isinstance(data, dict):
             for key, val in data.items():
                 chars_count += len(str(key)) + (
-                    cls.chars_count(cast(DataObjType, val)) \
-                    if isinstance(val, DataObjTT)
-                    else len(str(val))
+                    cls.chars_count(cast("DataObjType", val)) if isinstance(val, DataObjTT) else len(str(val))
                 )
         else:
             for item in data:
-                chars_count += (
-                    cls.chars_count(cast(DataObjType, item)) \
-                    if isinstance(item, DataObjTT)
-                    else len(str(item))
-                )
+                chars_count += cls.chars_count(cast("DataObjType", item)) if isinstance(item, DataObjTT) else len(str(item))
 
         return chars_count
 
@@ -95,19 +89,20 @@ class Data:
         -------------------------------------------------------------------------------
         *   `data` – The data structure to strip the items from."""
         if isinstance(data, dict):
-            return type(data)({key.strip(): (
-                cls.strip(cast(DataObjType, val)) \
-                if isinstance(val, DataObjTT)
-                else val.strip()
-            ) for key, val in data.items()})
+            return type(data)(
+                {
+                    key.strip(): (cls.strip(cast("DataObjType", val)) if isinstance(val, DataObjTT) else val.strip())
+                    for key, val in data.items()
+                }
+            )
 
         else:
-            return cast(DataObj, type(data)([
-                cls.strip(cast(DataObjType, item)) \
-                if isinstance(item, DataObjTT)
-                else item.strip()
-                for item in data
-            ]))
+            return cast(
+                "DataObj",
+                type(data)(
+                    [cls.strip(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item.strip() for item in data]
+                ),
+            )
 
     @classmethod
     def remove_empty_items[DataObj: DataObjType](cls, data: DataObj, /, *, spaces_are_empty: bool = False) -> DataObj:
@@ -116,26 +111,40 @@ class Data:
         *   `data` – The data structure to remove empty items from.
         *   `spaces_are_empty` – If true, it will count items with only spaces as empty."""
         if isinstance(data, dict):
-            return type(data)({
-                key: (
-                    val if not isinstance(val, DataObjTT) else
-                    cls.remove_empty_items(cast(DataObjType, val), spaces_are_empty=spaces_are_empty)
-                )
-                for key, val in data.items() if not String.is_empty(val, spaces_are_empty=spaces_are_empty)
-            })
+            return type(data)(
+                {
+                    key: (
+                        val
+                        if not isinstance(val, DataObjTT)
+                        else cls.remove_empty_items(cast("DataObjType", val), spaces_are_empty=spaces_are_empty)
+                    )
+                    for key, val in data.items()
+                    if not String.is_empty(val, spaces_are_empty=spaces_are_empty)
+                }
+            )
 
         else:
-            return cast(DataObj, type(data)([
-                item for item in [
-                    (
-                        item \
-                        if not isinstance(item, DataObjTT)
-                        else cls.remove_empty_items(cast(DataObjType, item), spaces_are_empty=spaces_are_empty)
-                    )
-                    for item in data
-                    if not (isinstance(item, (str, type(None))) and String.is_empty(item, spaces_are_empty=spaces_are_empty))
-                ] if item not in ([], (), {}, set(), frozenset())
-            ]))
+            return cast(
+                "DataObj",
+                type(data)(
+                    [
+                        item
+                        for item in [
+                            (
+                                item
+                                if not isinstance(item, DataObjTT)
+                                else cls.remove_empty_items(cast("DataObjType", item), spaces_are_empty=spaces_are_empty)
+                            )
+                            for item in data
+                            if not (
+                                isinstance(item, (str, type(None)))
+                                and String.is_empty(item, spaces_are_empty=spaces_are_empty)
+                            )
+                        ]
+                        if item not in ([], (), {}, set(), frozenset())
+                    ]
+                ),
+            )
 
     @classmethod
     def remove_duplicates[DataObj: DataObjType](cls, data: DataObj, /) -> DataObj:
@@ -143,15 +152,16 @@ class Data:
         --------------------------------------------------------------
         *   `data` – The data structure to remove duplicates from."""
         if isinstance(data, dict):
-            return type(data)({
-                key: cls.remove_duplicates(cast(DataObjType, val)) if isinstance(val, DataObjTT) else val
-                for key, val in data.items()
-            })
+            return type(data)(
+                {
+                    key: cls.remove_duplicates(cast("DataObjType", val)) if isinstance(val, DataObjTT) else val
+                    for key, val in data.items()
+                }
+            )
 
         elif isinstance(data, (list, tuple)):
             processed: list[Any] = [
-                cls.remove_duplicates(cast(DataObjType, item)) if isinstance(item, DataObjTT) else item \
-                for item in data
+                cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item for item in data
             ]
 
             try:
@@ -164,24 +174,18 @@ class Data:
                     if item not in result:
                         result.append(item)
 
-            return cast(DataObj, type(data)(result))
+            return cast("DataObj", type(data)(result))
 
         else:
             processed_elements: set[Any] = set()
             for item in data:
-                processed_item = cls.remove_duplicates(cast(DataObjType, item)) if isinstance(item, DataObjTT) else item
+                processed_item = cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item
                 processed_elements.add(processed_item)
-            return cast(DataObj, type(data)(processed_elements))
+            return cast("DataObj", type(data)(processed_elements))
 
     @classmethod
     def remove_comments[DataObj: DataObjType](
-        cls,
-        data: DataObj,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        comment_sep: str = "",
+        cls, data: DataObj, /, *, comment_start: str = ">>", comment_end: str = "<<", comment_sep: str = ""
     ) -> DataObj:
         """Remove comments from a list, tuple or dictionary.\n
         -----------------------------------------------------------------------------------------------------------------
@@ -236,13 +240,8 @@ class Data:
             raise ValueError(f"The 'comment_start' parameter must be a non-empty string, got {comment_start!r}")
 
         return cast(
-            DataObj,
-            _DataRemoveCommentsHelper(
-                data,
-                comment_start=comment_start,
-                comment_end=comment_end,
-                comment_sep=comment_sep,
-            )()
+            "DataObj",
+            _DataRemoveCommentsHelper(data, comment_start=comment_start, comment_end=comment_end, comment_sep=comment_sep)(),
         )
 
     @classmethod
@@ -296,8 +295,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> Optional[str]:
-        ...
+    ) -> str | None: ...
 
     @overload
     @classmethod
@@ -311,8 +309,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> list[Optional[str]]:
-        ...
+    ) -> list[str | None]: ...
 
     @overload
     @classmethod
@@ -326,8 +323,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> Optional[str | list[Optional[str]]]:
-        ...
+    ) -> str | list[str | None] | None: ...
 
     @classmethod
     def get_path_id(
@@ -340,7 +336,7 @@ class Data:
         comment_start: str = ">>",
         comment_end: str = "<<",
         ignore_not_found: bool = False,
-    ) -> Optional[str | list[Optional[str]]]:
+    ) -> str | list[str | None] | None:
         """Generates a unique ID based on the path to a specific value within a nested data structure.\n
         -----------------------------------------------------------------------------------------------------
         *   `data` – The list, tuple, or dictionary, which the id should be generated for.
@@ -389,13 +385,13 @@ class Data:
         *   `path_id` – The path ID to the value to retrieve, created before using `Data.get_path_id()`.
         *   `get_key` – If true and the final item is in a dict, it returns the key instead of the value."""
 
-        parent: Optional[DataObjType] = None
+        parent: DataObjType | None = None
         path = cls._sep_path_id(path_id)
         current_data: Any = data
 
         for i, path_idx in enumerate(path):
             if isinstance(current_data, dict):
-                dict_data = cast(dict[Any, Any], current_data)
+                dict_data = cast("dict[Any, Any]", current_data)
                 keys: list[str] = list(dict_data.keys())
                 if i == len(path) - 1 and get_key:
                     return keys[path_idx]
@@ -403,16 +399,16 @@ class Data:
                 current_data = dict_data[keys[path_idx]]
 
             elif isinstance(current_data, IndexIterableTT):
-                idx_iterable_data = cast(IndexIterable, current_data)
+                idx_iterable_data = cast("IndexIterable", current_data)
                 if i == len(path) - 1 and get_key:
                     if parent is None or not isinstance(parent, dict):
-                        raise ValueError(f"Cannot get key from a non-dict parent at path '{path[:i + 1]}'")
+                        raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'")
                     return next(key for key, value in parent.items() if value is idx_iterable_data)
                 parent = idx_iterable_data
                 current_data = list(idx_iterable_data)[path_idx]  # Convert to list for indexing.
 
             else:
-                raise TypeError(f"Unsupported type '{type(current_data)}' at path '{path[:i + 1]}'")
+                raise TypeError(f"Unsupported type '{type(current_data)}' at path '{path[: i + 1]}'")
 
         return current_data
 
@@ -499,43 +495,34 @@ class Data:
         )()
 
     @classmethod
-    def _compare_nested(
-        cls,
-        data1: Any,
-        data2: Any,
-        /,
-        ignore_paths: list[list[str]],
-        current_path: list[str] = [],
-    ) -> bool:
+    def _compare_nested(cls, data1: Any, data2: Any, /, ignore_paths: list[list[str]], current_path: list[str] = []) -> bool:
         """Internal method to recursively compare two nested data structures while ignoring specified paths."""
 
-        if any(current_path == path[:len(current_path)] for path in ignore_paths):
+        if any(current_path == path[: len(current_path)] for path in ignore_paths):
             return True
 
         if type(data1) is not type(data2):
             return False
 
         if isinstance(data1, dict) and isinstance(data2, dict):
-            dict_data1, dict_data2 = cast(dict[Any, Any], data1), cast(dict[Any, Any], data2)
+            dict_data1, dict_data2 = cast("dict[Any, Any]", data1), cast("dict[Any, Any]", data2)
             if set(dict_data1.keys()) != set(dict_data2.keys()):
                 return False
-            return all(cls._compare_nested( \
-                dict_data1[key],
-                dict_data2[key],
-                ignore_paths=ignore_paths,
-                current_path=current_path + [key],
-            ) for key in dict_data1)
+            return all(
+                cls._compare_nested(
+                    dict_data1[key], dict_data2[key], ignore_paths=ignore_paths, current_path=current_path + [key]
+                )
+                for key in dict_data1
+            )
 
         elif isinstance(data1, (list, tuple)) and isinstance(data2, (list, tuple)):
-            array_data1, array_data2 = cast(IndexIterable, data1), cast(IndexIterable, data2)
+            array_data1, array_data2 = cast("IndexIterable", data1), cast("IndexIterable", data2)
             if len(array_data1) != len(array_data2):
                 return False
-            return all(cls._compare_nested( \
-                item1,
-                item2,
-                ignore_paths=ignore_paths,
-                current_path=current_path + [str(i)],
-            ) for i, (item1, item2) in enumerate(zip(array_data1, array_data2)))
+            return all(
+                cls._compare_nested(item1, item2, ignore_paths=ignore_paths, current_path=current_path + [str(i)])
+                for i, (item1, item2) in enumerate(zip(array_data1, array_data2))
+            )
 
         elif isinstance(data1, (set, frozenset)):
             return data1 == data2
@@ -549,11 +536,11 @@ class Data:
         if len(split_id := path_id.split(">")) == 2:
             id_part_len, path_id_parts = split_id
 
-            if (id_part_len.isdigit() and path_id_parts.isdigit()):
+            if id_part_len.isdigit() and path_id_parts.isdigit():
                 id_part_len_int = int(id_part_len)
 
                 if id_part_len_int > 0 and (len(path_id_parts) % id_part_len_int == 0):
-                    return [int(path_id_parts[i:i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
+                    return [int(path_id_parts[i : i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
 
         raise ValueError(f"Path ID '{path_id}' is an invalid format.")
 
@@ -565,24 +552,24 @@ class Data:
 
         if len(id_path) == 1:
             if isinstance(current_data, dict):
-                dict_data = cast(dict[Any, Any], current_data)
+                dict_data = cast("dict[Any, Any]", current_data)
                 keys, dict_data = list(dict_data.keys()), dict(dict_data)
                 dict_data[keys[id_path[0]]] = value
                 return dict_data
             elif isinstance(current_data, IndexIterableTT):
-                idx_iterable_data = cast(IndexIterable, current_data)
+                idx_iterable_data = cast("IndexIterable", current_data)
                 was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
                 idx_iterable_data[id_path[0]] = value
                 return was_t(idx_iterable_data)
 
         else:
             if isinstance(current_data, dict):
-                dict_data = cast(dict[Any, Any], current_data)
+                dict_data = cast("dict[Any, Any]", current_data)
                 keys, dict_data = list(dict_data.keys()), dict(dict_data)
                 dict_data[keys[id_path[0]]] = cls._set_nested_val(dict_data[keys[id_path[0]]], id_path[1:], value)
                 return dict_data
             elif isinstance(current_data, IndexIterableTT):
-                idx_iterable_data = cast(IndexIterable, current_data)
+                idx_iterable_data = cast("IndexIterable", current_data)
                 was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
                 idx_iterable_data[id_path[0]] = cls._set_nested_val(idx_iterable_data[id_path[0]], id_path[1:], value)
                 return was_t(idx_iterable_data)
@@ -599,17 +586,21 @@ class _DataRemoveCommentsHelper:
         self.comment_end: str = comment_end
         self.comment_sep: str = comment_sep
 
-        self.pattern: Optional[_re.Pattern[str]] = _re.compile(
-            Regex._clean(
-                rf"""^(
+        self.pattern: _re.Pattern[str] | None = (
+            _re.compile(
+                Regex._clean(
+                    rf"""^(
                     (?:(?!{_re.escape(comment_start)}).)*
                 )
                 {_re.escape(comment_start)}
                 (?:(?:(?!{_re.escape(comment_end)}).)*)
                 (?:{_re.escape(comment_end)})?
                 (.*?)$"""
+                )
             )
-        ) if len(comment_end) > 0 else None
+            if len(comment_end) > 0
+            else None
+        )
 
     def __call__(self) -> DataObjType:
         return self.remove_nested_comments(self.data)
@@ -618,22 +609,23 @@ class _DataRemoveCommentsHelper:
         """Recursively removes comments from the given item, which can be a dictionary, list, tuple, or string."""
 
         if isinstance(item, dict):
-            dict_item = cast(dict[Any, Any], item)
+            dict_item = cast("dict[Any, Any]", item)
             return {
                 key: val
                 for key, val in [
-                    (self.remove_nested_comments(key), self.remove_nested_comments(val)) for key, val in dict_item.items() \
-                ] if key is not None
+                    (self.remove_nested_comments(key), self.remove_nested_comments(val)) for key, val in dict_item.items()
+                ]
+                if key is not None
             }
 
         if isinstance(item, IndexIterableTT):
-            idx_iterable_item = cast(IndexIterable, item)
+            idx_iterable_item = cast("IndexIterable", item)
             processed = [val for val in map(self.remove_nested_comments, idx_iterable_item) if val is not None]
             return type(idx_iterable_item)(processed)
 
         if isinstance(item, str):
             if self.pattern:
-                if (match := self.pattern.match(item)):
+                if match := self.pattern.match(item):
                     start, end = match.group(1).strip(), match.group(2).strip()
                     return f"{start}{self.comment_sep if start and end else ''}{end}" or None
                 return item.strip() or None
@@ -655,7 +647,7 @@ class _DataGetPathIdHelper:
         self.max_id_length: int = 0
         self.current_data: Any = data_obj
 
-    def __call__(self) -> Optional[str]:
+    def __call__(self) -> str | None:
         for key in self.keys:
             if not self.process_key(key):
                 break
@@ -667,7 +659,7 @@ class _DataGetPathIdHelper:
     def process_key(self, key: str, /) -> bool:
         """Process a single key and update `path_ids`. Returns `False` if processing should stop."""
 
-        idx: Optional[int] = None
+        idx: int | None = None
 
         if isinstance(self.current_data, dict):
             if (idx := self.process_dict_key(key)) is None:
@@ -682,7 +674,7 @@ class _DataGetPathIdHelper:
         self.max_id_length = max(self.max_id_length, len(str(idx)))
         return True
 
-    def process_dict_key(self, key: str, /) -> Optional[int]:
+    def process_dict_key(self, key: str, /) -> int | None:
         """Process a key for dictionary data. Returns the index or `None` if not found."""
 
         if key.isdigit():
@@ -699,7 +691,7 @@ class _DataGetPathIdHelper:
                 return None
             raise KeyError(f"Key '{key}' not found in dict.")
 
-    def process_iterable_key(self, key: str, /) -> Optional[int]:
+    def process_iterable_key(self, key: str, /) -> int | None:
         """Process a key for iterable data. Returns the index or `None` if not found."""
 
         try:
@@ -757,8 +749,7 @@ class _DataRenderHelper:
         self.sep: str = sep
 
         self.punct: dict[str, str] = {
-            char: (self._hl("punctuation", char) if self.do_syntax_hl else char)
-            for char in "'\":)([]{}"
+            char: (self._hl("punctuation", char) if self.do_syntax_hl else char) for char in "'\":)([]{}"
         }
 
     def _hl(self, key: str, text: str, /) -> str:
@@ -769,22 +760,23 @@ class _DataRenderHelper:
     def __call__(self) -> StyledText:
         return StyledText(
             _re.sub(
-                r"\s+(?=\n)", "",
-                self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0)
+                r"\s+(?=\n)",
+                "",
+                self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0),
             )
         )
 
-    def format_value(self, value: Any, /, current_indent: Optional[int] = None) -> str:
+    def format_value(self, value: Any, /, current_indent: int | None = None) -> str:
         """Formats a single value based on its type and the current indentation level."""
 
         if current_indent is not None and isinstance(value, dict):
-            return self.format_dict(cast(dict[Any, Any], value), current_indent + self.indent)
+            return self.format_dict(cast("dict[Any, Any]", value), current_indent + self.indent)
 
         elif current_indent is not None and hasattr(value, "__dict__"):
             return self.format_dict(value.__dict__, current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, IndexIterableTT):
-            return self.format_sequence(cast(IndexIterable, value), current_indent + self.indent)
+            return self.format_sequence(cast("IndexIterable", value), current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
             obj_dict = self.cls.serialize_bytes(value)
@@ -834,18 +826,24 @@ class _DataRenderHelper:
 
         complex_items = sum(1 for item in seq if isinstance(item, complex_types))
 
-        return complex_items > 1 \
-            or (complex_items == 1 and len(seq) > 1) \
+        return (
+            complex_items > 1
+            or (complex_items == 1 and len(seq) > 1)
             or self.cls.chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
+        )
 
     def format_dict(self, data_dict: dict[Any, Any], current_indent: int, /) -> str:
         """Formats a dictionary as a string, applying indentation and compactness rules."""
 
         if self.compactness == 2 or not data_dict or not self.should_expand(list(data_dict.values())):
-            return self.punct["{"] + self.sep.join(
-                f"{self.format_value(key)}{self.punct[':']} {self.format_value(val, current_indent)}"
-                for key, val in data_dict.items()
-            ) + self.punct["}"]
+            return (
+                self.punct["{"]
+                + self.sep.join(
+                    f"{self.format_value(key)}{self.punct[':']} {self.format_value(val, current_indent)}"
+                    for key, val in data_dict.items()
+                )
+                + self.punct["}"]
+            )
 
         items: list[str] = []
         for key, val in data_dict.items():
@@ -866,6 +864,6 @@ class _DataRenderHelper:
             return f"{brackets[0]}{self.sep.join(self.format_value(item, current_indent) for item in seq)}{brackets[1]}"
 
         items = [self.format_value(item, current_indent) for item in seq]
-        formatted_items = f"{self.sep}\n".join(f'{" " * (current_indent + self.indent)}{item}' for item in items)
+        formatted_items = f"{self.sep}\n".join(f"{' ' * (current_indent + self.indent)}{item}" for item in items)
 
         return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"

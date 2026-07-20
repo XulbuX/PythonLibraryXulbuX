@@ -1,7 +1,6 @@
 from xulbux.base.consts import ANSI
 from xulbux.format_codes import FormatCodes
 
-
 black = ANSI.SEQ_FG_COLOR.format(0, 0, 0)
 bg_red = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['bg:red']}{ANSI.END}"
 default = ANSI.SEQ_FG_COLOR.format(255, 255, 255)
@@ -26,10 +25,22 @@ reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_underline', '_u')]
 
 def test_to_ansi():
     assert (
-        FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]",
-                            default_color="#FFF") == f"{default}{bold}{black}{bg_red}" + "He" + invert + "l" + reset_invert
-        + "lo" + f"{reset_bold}{default}{reset_bg}" + " [" + f"{italic}{underline}{orange}" + "world"
-        + f"{reset_italic}{reset_underline}{default}" + "]" + default + "!" + reset
+        FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]", default_color="#FFF")
+        == f"{default}{bold}{black}{bg_red}"
+        + "He"
+        + invert
+        + "l"
+        + reset_invert
+        + "lo"
+        + f"{reset_bold}{default}{reset_bg}"
+        + " ["
+        + f"{italic}{underline}{orange}"
+        + "world"
+        + f"{reset_italic}{reset_underline}{default}"
+        + "]"
+        + default
+        + "!"
+        + reset
     )
 
 
@@ -99,8 +110,9 @@ def test_hyperlinks():
     # Link combined with other format keys:
     assert FormatCodes.to_ansi(f"[link:{url}|b](click here)") == f"{link_open}{bold}click here{reset_bold}{link_close}"
     bright_blue = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['br:blue']}{ANSI.END}"
-    assert FormatCodes.to_ansi(f"[link:{url}|br:blue](click here)"
-                               ) == (f"{link_open}{bright_blue}click here{reset_color}{link_close}")
+    assert FormatCodes.to_ansi(f"[link:{url}|br:blue](click here)") == (
+        f"{link_open}{bright_blue}click here{reset_color}{link_close}"
+    )
 
     # Link without display braces is invalid (left as-is):
     assert FormatCodes.to_ansi(f"[link:{url}]") == f"[link:{url}]"
@@ -145,6 +157,7 @@ def test_remove_formatting_with_removals():
     removals = ((0, default), (0, bold), (5, reset_bold), (6, orange), (12, default))
     assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True) == (clean_string, removals)
     removals = ((0, default), (0, bold), (5, reset_bold), (5, orange), (11, default))
-    assert FormatCodes.remove(
-        format_string, default_color="#FFF", get_removals=True, _ignore_linebreaks=True
-    ) == (clean_string, removals)
+    assert FormatCodes.remove(format_string, default_color="#FFF", get_removals=True, _ignore_linebreaks=True) == (
+        clean_string,
+        removals,
+    )

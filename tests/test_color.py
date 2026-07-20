@@ -1,4 +1,4 @@
-from xulbux.color import Color, rgba, hsla, hexa
+from xulbux.color import Color, hexa, hsla, rgba
 
 #
 ####################################################### Color TESTS ######################################################

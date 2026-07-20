@@ -3,34 +3,31 @@ This module provides the `System` class, which includes
 methods to interact with the underlying operating system.
 """
 
-from .base.types import MissingLibsMsgs
+from .ansi import S, StyledText
 from .base.decorators import mypyc_attr
-
+from .base.types import MissingLibsMsgs
 from .console import Console
-from .ansi import StyledText, S
 
-from typing import Optional
-import multiprocessing as _multiprocessing
-import subprocess as _subprocess
-import platform as _platform
-import getpass as _getpass
 import ctypes as _ctypes
-import socket as _socket
-import time as _time
-import sys as _sys
+import getpass as _getpass
+import multiprocessing as _multiprocessing
 import os as _os
+import platform as _platform
+import socket as _socket
+import subprocess as _subprocess
+import sys as _sys
+import time as _time
 
 
 @mypyc_attr(native_class=False)
 class _SystemMeta(type):
-
     @property
     def is_elevated(cls) -> bool:
         """Whether the current process has elevated privileges or not."""
 
         try:
             if _os.name == "nt":
-                return getattr(_ctypes, "windll").shell32.IsUserAnAdmin() != 0
+                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
             elif _os.name == "posix":
                 return _os.geteuid() == 0  # type: ignore[attr-defined]
         except Exception:
@@ -148,7 +145,7 @@ class System(metaclass=_SystemMeta):
             "should_install": "Do you want to install them now?",
         },
         confirm_install: bool = True,
-    ) -> Optional[list[str]]:
+    ) -> list[str] | None:
         """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
         -------------------------------------------------------------------------------------------------------------
         *   `lib_names` – A list of library names to check.
@@ -162,14 +159,11 @@ class System(metaclass=_SystemMeta):
         If all libraries are installed (or were installed successfully), `None` will be returned."""
 
         return _SystemCheckLibsHelper(
-            lib_names,
-            install_missing=install_missing,
-            missing_libs_msgs=missing_libs_msgs,
-            confirm_install=confirm_install,
+            lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
         )()
 
     @classmethod
-    def elevate(cls, win_title: Optional[str] = None, args: Optional[list[str]] = None) -> bool:
+    def elevate(cls, win_title: str | None = None, args: list[str] | None = None) -> bool:
         """Attempts to start a new process with elevated privileges.\n
         -------------------------------------------------------------------------------------
         *   `win_title` – The window title of the elevated process (only on Windows).
@@ -198,7 +192,7 @@ class System(metaclass=_SystemMeta):
             else:
                 args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-            if getattr(_ctypes, "windll").shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:
+            if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:
                 raise PermissionError("Failed to launch elevated process.")
             else:
                 _sys.exit(0)
@@ -291,20 +285,14 @@ class _SystemCheckLibsHelper:
     """Internal, callable helper class to check and install missing Python libraries."""
 
     def __init__(
-        self,
-        lib_names: list[str],
-        /,
-        *,
-        install_missing: bool,
-        missing_libs_msgs: MissingLibsMsgs,
-        confirm_install: bool,
+        self, lib_names: list[str], /, *, install_missing: bool, missing_libs_msgs: MissingLibsMsgs, confirm_install: bool
     ) -> None:
         self.lib_names: list[str] = lib_names
         self.install_missing: bool = install_missing
         self.missing_libs_msgs: MissingLibsMsgs = missing_libs_msgs
         self.confirm_install: bool = confirm_install
 
-    def __call__(self) -> Optional[list[str]]:
+    def __call__(self) -> list[str] | None:
         missing = self.find_missing_libs()
 
         if not missing:
@@ -332,14 +320,12 @@ class _SystemCheckLibsHelper:
         """Ask user for confirmation before installing libraries."""
 
         StyledText(
-            S.BOLD(self.missing_libs_msgs["found_missing"]),
-            *((S.DIM(" • "), S.ITALIC(lib)) for lib in missing),
-            "",
+            S.BOLD(self.missing_libs_msgs["found_missing"]), *((S.DIM(" • "), S.ITALIC(lib)) for lib in missing), ""
         ).print()
 
         return Console.confirm(self.missing_libs_msgs["should_install"], end="\n")
 
-    def install_libs(self, missing: list[str], /) -> Optional[list[str]]:
+    def install_libs(self, missing: list[str], /) -> list[str] | None:
         """Install missing libraries using pip."""
 
         for lib in missing[:]:

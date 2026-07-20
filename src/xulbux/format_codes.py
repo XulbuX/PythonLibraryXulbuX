@@ -1,4 +1,3 @@
-# flake8: noqa
 """
 **DEPRECATED MODULE** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
 
@@ -180,43 +179,32 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
-from .base.types import FormattableString, Rgba, Hexa
-from .base.decorators import deprecated
 from .base.consts import ANSI
-
-from .string import String
+from .base.decorators import deprecated
+from .base.types import FormattableString, Hexa, Rgba
+from .color import Color, hexa, rgba
 from .regex import LazyRegex, Regex
-from .color import Color, rgba, hexa
+from .string import String
 
-from typing import Optional, Literal, Final, overload, cast
-from itertools import chain as _chain
 import ctypes as _ctypes
-import regex as _rx
-import sys as _sys
 import os as _os
-
+import sys as _sys
+from itertools import chain as _chain
+from typing import Final, Literal, cast, overload
+import regex as _rx
 
 _TERMINAL_ANSI_CONFIGURED: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI formatting."""
 
 _ANSI_SEQ_1: Final[FormattableString] = ANSI.seq(1)
 """ANSI escape sequence with a single placeholder."""
-_DEFAULT_COLOR_MODS: Final[dict[str, str]] = {
-    "lighten": "+l",
-    "darken": "-d",
-}
+_DEFAULT_COLOR_MODS: Final[dict[str, str]] = {"lighten": "+l", "darken": "-d"}
 """Formatting codes for lightening and darkening the `default_color`."""
-_PREFIX: Final[dict[str, set[str]]] = {
-    "bg": {"bg"},
-    "br": {"br"},
-}
+_PREFIX: Final[dict[str, set[str]]] = {"bg": {"bg"}, "br": {"br"}}
 """Formatting code prefixes for setting background- and bright-colors."""
 _PREFIX_VALUES: Final[frozenset[str]] = frozenset(_chain.from_iterable(_PREFIX.values()))
 """Flat frozenset of all prefix values, precomputed for fast membership tests."""
-_PREFIX_RX: Final[dict[str, str]] = {
-    "bg": rf"(?:{'|'.join(_PREFIX['bg'])})\s*:",
-    "br": rf"(?:{'|'.join(_PREFIX['br'])})\s*:",
-}
+_PREFIX_RX: Final[dict[str, str]] = {"bg": rf"(?:{'|'.join(_PREFIX['bg'])})\s*:", "br": rf"(?:{'|'.join(_PREFIX['br'])})\s*:"}
 """Regex patterns for matching background- and bright-color prefixes."""
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
@@ -225,8 +213,10 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     ansi_seq=ANSI.CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])",
     link=r"(?i)^\s*link\s*:\s*(.+?)\s*$",
     formatting=(
-        Regex.brackets("[", "]", is_group=True, ignore_in_strings=False) + r"(?:([/\\]?)"
-        + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False) + r")?"
+        Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
+        + r"(?:([/\\]?)"
+        + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
+        + r")?"
     ),
     escape_char=r"(\s*)(\/|\\)",
     escape_char_cond=r"(\s*\[\s*)(\/|\\)(?!\2+)",
@@ -234,7 +224,8 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     bg_default=r"(?i)" + _PREFIX_RX["bg"] + r"\s*default",
     modifier=(
         r"(?i)^((?:BG\s*:)?)\s*("
-        + "|".join([f"{_rx.escape(m)}+" for m in _DEFAULT_COLOR_MODS["lighten"] + _DEFAULT_COLOR_MODS["darken"]]) + r")$"
+        + "|".join([f"{_rx.escape(m)}+" for m in _DEFAULT_COLOR_MODS["lighten"] + _DEFAULT_COLOR_MODS["darken"]])
+        + r")$"
     ),
     rgb=r"(?i)^\s*(" + _PREFIX_RX["bg"] + r")?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$",
     hex=r"(?i)^\s*(" + _PREFIX_RX["bg"] + r")?\s*(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})\s*$",
@@ -269,7 +260,7 @@ _REPLACEMENT_CACHE: dict[str, str] = {}
 """Cache for `FormatCodes._get_replacement` results when no `default_color` is set."""
 _REPLACEMENT_CACHE_MAX: Final[int] = 4096
 
-_TO_ANSI_CACHE: dict[tuple[str, Optional[tuple[int, int, int]], int], str] = {}
+_TO_ANSI_CACHE: dict[tuple[str, tuple[int, int, int] | None, int], str] = {}
 """Cache for full `FormatCodes.to_ansi` results on the public entry path."""
 _TO_ANSI_CACHE_MAX: Final[int] = 1024
 _TO_ANSI_CACHE_MAX_LEN: Final[int] = 8192
@@ -292,7 +283,7 @@ class FormatCodes:
     def print(
         cls,
         *values: object,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         brightness_steps: int = 20,
         sep: str = " ",
         end: str = "\n",
@@ -325,7 +316,7 @@ class FormatCodes:
         cls,
         prompt: object = "",
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         brightness_steps: int = 20,
         *,
         reset_ansi: bool = False,
@@ -358,7 +349,7 @@ class FormatCodes:
         cls,
         string: str,
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         brightness_steps: int = 20,
         *,
         _default_start: bool = True,
@@ -382,16 +373,12 @@ class FormatCodes:
         # Fast path: no formatting codes possible without `[`:
         if "[" not in string:
             return cls._no_bracket_fast_path(
-                string,
-                default_color,
-                _default_start=_default_start,
-                _validate_default=_validate_default,
+                string, default_color, _default_start=_default_start, _validate_default=_validate_default
             )
 
         # End-to-end cache lookup (public entry path only):
         cache_key = (
-            cls._build_cache_key(string, default_color, brightness_steps) \
-            if _default_start and _validate_default else None
+            cls._build_cache_key(string, default_color, brightness_steps) if _default_start and _validate_default else None
         )
         if cache_key is not None and (cached := _TO_ANSI_CACHE.get(cache_key)) is not None:
             return cached
@@ -400,25 +387,25 @@ class FormatCodes:
             use_default, default_color = cls._validate_default_color(default_color)
         else:
             use_default = default_color is not None
-            default_color = cast(Optional[rgba], default_color)
+            default_color = cast("rgba | None", default_color)
 
         string = cls._apply_star_reset(string, use_default)
 
         string = "\n".join(
             _PATTERNS.formatting.sub(
                 _ReplaceKeysHelper(
-                    cls,
-                    use_default=use_default,
-                    default_color=default_color,
-                    brightness_steps=brightness_steps,
-                ), line
-            ) for line in string.split("\n")
+                    cls, use_default=use_default, default_color=default_color, brightness_steps=brightness_steps
+                ),
+                line,
+            )
+            for line in string.split("\n")
         )
 
         result = (
-            ((cls._get_default_ansi(default_color) or "") if _default_start else "") \
-            + string
-        ) if default_color is not None else string
+            (((cls._get_default_ansi(default_color) or "") if _default_start else "") + string)
+            if default_color is not None
+            else string
+        )
 
         if cache_key is not None:
             cls._store_in_cache(cache_key, result)
@@ -431,12 +418,7 @@ class FormatCodes:
         "This will be completely removed in an upcoming future update."
     )
     def escape(
-        cls,
-        string: str,
-        /,
-        default_color: Optional[Rgba | Hexa] = None,
-        *,
-        _escape_char: Literal["/", "\\"] = "/",
+        cls, string: str, /, default_color: Rgba | Hexa | None = None, *, _escape_char: Literal["/", "\\"] = "/"
     ) -> str:
         """Escapes all valid formatting codes in the string, so they are visible when output<br>
         to the terminal using `FormatCodes.print()`. Invalid formatting codes remain unchanged.\n
@@ -454,7 +436,8 @@ class FormatCodes:
             _PATTERNS.formatting.sub(
                 _EscapeFormatCodeHelper(cls, use_default=use_default, default_color=default_color, escape_char=_escape_char),
                 line,
-            ) for line in string.split("\n")
+            )
+            for line in string.split("\n")
         )
 
     @classmethod
@@ -479,12 +462,11 @@ class FormatCodes:
         cls,
         string: str,
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         *,
         get_removals: Literal[True],
         _ignore_linebreaks: bool = False,
-    ) -> tuple[str, tuple[tuple[int, str], ...]]:
-        ...
+    ) -> tuple[str, tuple[tuple[int, str], ...]]: ...
 
     @overload
     @classmethod
@@ -496,12 +478,11 @@ class FormatCodes:
         cls,
         string: str,
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         *,
         get_removals: Literal[False] = False,
         _ignore_linebreaks: bool = False,
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @overload
     @classmethod
@@ -513,12 +494,11 @@ class FormatCodes:
         cls,
         string: str,
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         *,
         get_removals: bool = False,
         _ignore_linebreaks: bool = False,
-    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
-        ...
+    ) -> str | tuple[str, tuple[tuple[int, str], ...]]: ...
 
     @classmethod
     @deprecated(
@@ -529,7 +509,7 @@ class FormatCodes:
         cls,
         string: str,
         /,
-        default_color: Optional[Rgba | Hexa] = None,
+        default_color: Rgba | Hexa | None = None,
         *,
         get_removals: bool = False,
         _ignore_linebreaks: bool = False,
@@ -543,9 +523,7 @@ class FormatCodes:
         *   `_ignore_linebreaks` – Whether to ignore line breaks for the removal positions."""
 
         return cls.remove_ansi(
-            cls.to_ansi(string, default_color=default_color),
-            get_removals=get_removals,
-            _ignore_linebreaks=_ignore_linebreaks,
+            cls.to_ansi(string, default_color=default_color), get_removals=get_removals, _ignore_linebreaks=_ignore_linebreaks
         )
 
     @overload
@@ -555,14 +533,8 @@ class FormatCodes:
         "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
-        cls,
-        ansi_string: str,
-        /,
-        *,
-        get_removals: Literal[True],
-        _ignore_linebreaks: bool = False,
-    ) -> tuple[str, tuple[tuple[int, str], ...]]:
-        ...
+        cls, ansi_string: str, /, *, get_removals: Literal[True], _ignore_linebreaks: bool = False
+    ) -> tuple[str, tuple[tuple[int, str], ...]]: ...
 
     @overload
     @classmethod
@@ -571,14 +543,8 @@ class FormatCodes:
         "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
-        cls,
-        ansi_string: str,
-        /,
-        *,
-        get_removals: Literal[False] = False,
-        _ignore_linebreaks: bool = False,
-    ) -> str:
-        ...
+        cls, ansi_string: str, /, *, get_removals: Literal[False] = False, _ignore_linebreaks: bool = False
+    ) -> str: ...
 
     @overload
     @classmethod
@@ -587,14 +553,8 @@ class FormatCodes:
         "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
-        cls,
-        ansi_string: str,
-        /,
-        *,
-        get_removals: bool = False,
-        _ignore_linebreaks: bool = False,
-    ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
-        ...
+        cls, ansi_string: str, /, *, get_removals: bool = False, _ignore_linebreaks: bool = False
+    ) -> str | tuple[str, tuple[tuple[int, str], ...]]: ...
 
     @classmethod
     @deprecated(
@@ -602,12 +562,7 @@ class FormatCodes:
         "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
-        cls,
-        ansi_string: str,
-        /,
-        *,
-        get_removals: bool = False,
-        _ignore_linebreaks: bool = False,
+        cls, ansi_string: str, /, *, get_removals: bool = False, _ignore_linebreaks: bool = False
     ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all ANSI codes from the string with optional tracking of removed codes.\n
         ---------------------------------------------------------------------------------------------------------
@@ -621,7 +576,7 @@ class FormatCodes:
 
             clean_string = _PATTERNS.ansi_seq.sub(
                 _RemAnsiSeqHelper(removals),
-                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string  # Remove linebreaks for positions.
+                ansi_string.replace("\n", "") if _ignore_linebreaks else ansi_string,  # Remove linebreaks for positions.
             )
             if _ignore_linebreaks:
                 clean_string = _PATTERNS.ansi_seq.sub("", ansi_string)  # But keep linebreaks in returned clean string.
@@ -643,7 +598,7 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # Enable VT100 mode on Windows:
-                    kernel32 = getattr(_ctypes, "windll").kernel32
+                    kernel32 = _ctypes.windll.kernel32
                     handle = kernel32.GetStdHandle(-11)
                     mode = _ctypes.c_ulong()
                     kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
@@ -654,12 +609,7 @@ class FormatCodes:
 
     @classmethod
     def _no_bracket_fast_path(
-        cls,
-        string: str,
-        default_color: Optional[Rgba | Hexa],
-        *,
-        _default_start: bool,
-        _validate_default: bool,
+        cls, string: str, default_color: Rgba | Hexa | None, *, _default_start: bool, _validate_default: bool
     ) -> str:
         """Handle fast path when the string contains no `[` bracket."""
 
@@ -667,7 +617,7 @@ class FormatCodes:
             _, default_color = cls._validate_default_color(default_color)
 
         if _default_start and default_color is not None:
-            prefix = cls._get_default_ansi(cast(rgba, default_color))
+            prefix = cls._get_default_ansi(cast("rgba", default_color))
             if prefix:
                 return prefix + string
 
@@ -675,11 +625,8 @@ class FormatCodes:
 
     @classmethod
     def _build_cache_key(
-        cls,
-        string: str,
-        default_color: Optional[Rgba | Hexa],
-        brightness_steps: int,
-    ) -> Optional[tuple[str, Optional[tuple[int, int, int]], int]]:
+        cls, string: str, default_color: Rgba | Hexa | None, brightness_steps: int
+    ) -> tuple[str, tuple[int, int, int] | None, int] | None:
         """Build a cache key for `to_ansi`, returning None if caching should be skipped."""
 
         if len(string) > _TO_ANSI_CACHE_MAX_LEN:
@@ -698,11 +645,7 @@ class FormatCodes:
         return None  # Hex strings and other types skip cache.
 
     @staticmethod
-    def _store_in_cache(
-        cache_key: tuple[str, Optional[tuple[int, int, int]], int],
-        result: str,
-        /,
-    ) -> None:
+    def _store_in_cache(cache_key: tuple[str, tuple[int, int, int] | None, int], result: str, /) -> None:
         """Store a `to_ansi` result in the end-to-end cache, evicting all entries if at capacity."""
 
         if len(_TO_ANSI_CACHE) >= _TO_ANSI_CACHE_MAX:
@@ -711,15 +654,15 @@ class FormatCodes:
         _TO_ANSI_CACHE[cache_key] = result
 
     @staticmethod
-    def _validate_default_color(default_color: Optional[Rgba | Hexa], /) -> tuple[bool, Optional[rgba]]:
+    def _validate_default_color(default_color: Rgba | Hexa | None, /) -> tuple[bool, rgba | None]:
         """Internal method to validate and convert `default_color` to a `rgba` color object."""
 
         if default_color is None:
             return False, None
         if Color.is_valid_hexa(default_color, allow_alpha=False):
-            return True, hexa(cast(str | int, default_color)).to_rgba()
+            return True, hexa(cast("str | int", default_color)).to_rgba()
         elif Color.is_valid_rgba(default_color, allow_alpha=False):
-            return True, Color._parse_rgba(cast(Rgba, default_color))
+            return True, Color._parse_rgba(cast("Rgba", default_color))
         raise ValueError(
             f"The 'default_color' parameter must be either a valid RGBA or HEXA color, or None, got {default_color!r}"
         )
@@ -743,7 +686,7 @@ class FormatCodes:
         return [key.strip() for key in formats.split("|") if key.strip()]
 
     @classmethod
-    def _get_replacement(cls, format_key: str, default_color: Optional[rgba], /, brightness_steps: int = 20) -> str:
+    def _get_replacement(cls, format_key: str, default_color: rgba | None, /, brightness_steps: int = 20) -> str:
         """Internal method that gives you the corresponding ANSI code for the given format key.\n
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
@@ -758,7 +701,7 @@ class FormatCodes:
         # Direct lookup in pre-computed flat table (no O(n) scan over `codes_map`):
         flat_hit = _ANSI_FLAT.get(format_key)
 
-        if default_color is not None and ( \
+        if default_color is not None and (
             new_default_color := cls._get_default_ansi(default_color, format_key, brightness_steps)
         ):
             return new_default_color
@@ -775,15 +718,17 @@ class FormatCodes:
                 is_bg = rgb_match.group(1)
                 red, green, blue = map(int, rgb_match.groups()[1:])
                 if Color.is_valid_rgba((red, green, blue)):
-                    result = ANSI.SEQ_BG_COLOR.format(red, green,
-                                                      blue) if is_bg else ANSI.SEQ_FG_COLOR.format(red, green, blue)
+                    result = (
+                        ANSI.SEQ_BG_COLOR.format(red, green, blue) if is_bg else ANSI.SEQ_FG_COLOR.format(red, green, blue)
+                    )
 
             elif hex_match:
                 is_bg = hex_match.group(1)
                 rgb = Color.to_rgba(hex_match.group(2))
                 result = (
                     ANSI.SEQ_BG_COLOR.format(rgb[0], rgb[1], rgb[2])
-                    if is_bg else ANSI.SEQ_FG_COLOR.format(rgb[0], rgb[1], rgb[2])
+                    if is_bg
+                    else ANSI.SEQ_FG_COLOR.format(rgb[0], rgb[1], rgb[2])
                 )
 
         except Exception:
@@ -800,11 +745,11 @@ class FormatCodes:
     def _get_default_ansi(
         default_color: rgba,
         /,
-        format_key: Optional[str] = None,
-        brightness_steps: Optional[int] = None,
+        format_key: str | None = None,
+        brightness_steps: int | None = None,
         *,
         _modifiers: tuple[str, str] = (_DEFAULT_COLOR_MODS["lighten"], _DEFAULT_COLOR_MODS["darken"]),
-    ) -> Optional[str]:
+    ) -> str | None:
         """Internal method to get the `default_color` and lighter/darker versions of it as ANSI code."""
 
         _default_color: tuple[int, int, int] = (default_color[0], default_color[1], default_color[2])
@@ -851,14 +796,12 @@ class FormatCodes:
         k_parts = format_key.replace(" ", "").lower().split(":")
 
         prefix_str = "".join(
-            f"{prefix_key.lower()}:" for prefix_key, prefix_values in _PREFIX.items()
+            f"{prefix_key.lower()}:"
+            for prefix_key, prefix_values in _PREFIX.items()
             if any(k_part in prefix_values for k_part in k_parts)
         )
 
-        result = prefix_str + ":".join(
-            part for part in k_parts \
-            if part not in _PREFIX_VALUES
-        )
+        result = prefix_str + ":".join(part for part in k_parts if part not in _PREFIX_VALUES)
 
         if len(_NORMALIZE_KEY_CACHE) >= _NORMALIZE_KEY_CACHE_MAX:
             _NORMALIZE_KEY_CACHE.clear()
@@ -871,16 +814,11 @@ class _EscapeFormatCodeHelper:
     """Internal, callable helper class to escape formatting codes."""
 
     def __init__(
-        self,
-        cls: type[FormatCodes],
-        *,
-        use_default: bool,
-        default_color: Optional[rgba],
-        escape_char: Literal["/", "\\"],
+        self, cls: type[FormatCodes], *, use_default: bool, default_color: rgba | None, escape_char: Literal["/", "\\"]
     ) -> None:
         self.cls: type[FormatCodes] = cls
         self.use_default: bool = use_default
-        self.default_color: Optional[rgba] = default_color
+        self.default_color: rgba | None = default_color
         self.escape_char: Literal["/", "\\"] = escape_char
 
     def __call__(self, match: _rx.Match[str], /) -> str:
@@ -945,16 +883,11 @@ class _ReplaceKeysHelper:
     """Internal, callable helper class to replace formatting keys with their respective ANSI codes."""
 
     def __init__(
-        self,
-        cls: type[FormatCodes],
-        *,
-        use_default: bool,
-        default_color: Optional[rgba],
-        brightness_steps: int,
+        self, cls: type[FormatCodes], *, use_default: bool, default_color: rgba | None, brightness_steps: int
     ) -> None:
         self.cls: type[FormatCodes] = cls
         self.use_default: bool = use_default
-        self.default_color: Optional[rgba] = default_color
+        self.default_color: rgba | None = default_color
         self.brightness_steps: int = brightness_steps
 
         # Instance variables for current processing state:
@@ -962,7 +895,7 @@ class _ReplaceKeysHelper:
         self.original_formats: str = ""
         self.formats_escaped: bool = False
         self.auto_reset_escaped: bool = False
-        self.auto_reset_txt: Optional[str] = None
+        self.auto_reset_txt: str | None = None
         self.format_keys: list[str] = []
         self.ansi_formats: list[str] = []
         self.ansi_resets: list[str] = []
@@ -991,7 +924,7 @@ class _ReplaceKeysHelper:
         self.convert_to_ansi()
         return self.build_output(match)
 
-    def handle_link(self, match: _rx.Match[str], all_keys: list[str], /) -> Optional[str]:
+    def handle_link(self, match: _rx.Match[str], all_keys: list[str], /) -> str | None:
         """Handle a hyperlink style code, returning the OSC 8 sequence or None if not a link."""
 
         link_key = next((key for key in all_keys if _PATTERNS.link.match(key)), None)
@@ -1012,11 +945,7 @@ class _ReplaceKeysHelper:
 
         if other_keys or ("[" in display and "]" in display):
             display = self.cls.to_ansi(
-                display,
-                self.default_color,
-                self.brightness_steps,
-                _default_start=False,
-                _validate_default=False,
+                display, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False
             )
 
         return ANSI.SEQ_LINK_OPEN.format(link_url) + display + ANSI.SEQ_LINK_CLOSE
@@ -1027,32 +956,28 @@ class _ReplaceKeysHelper:
         # Process auto-reset text if it contains nested formatting:
         if self.auto_reset_txt and self.auto_reset_txt.count("[") > 0 and self.auto_reset_txt.count("]") > 0:
             self.auto_reset_txt = self.cls.to_ansi(
-                self.auto_reset_txt,
-                self.default_color,
-                self.brightness_steps,
-                _default_start=False,
-                _validate_default=False,
+                self.auto_reset_txt, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False
             )
 
         # Process nested formatting in formats:
         if self.formats and self.formats.count("[") > 0 and self.formats.count("]") > 0:
             self.formats = self.cls.to_ansi(
-                self.formats,
-                self.default_color,
-                self.brightness_steps,
-                _default_start=False,
-                _validate_default=False,
+                self.formats, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False
             )
 
     def convert_to_ansi(self) -> None:
         """Convert format keys to ANSI codes and generate resets if needed."""
 
         self.format_keys = self.cls._formats_to_keys(self.formats)
-        self.ansi_formats = [(
-            ansi_code \
-            if (ansi_code := self.cls._get_replacement(format_key, self.default_color, self.brightness_steps)) != format_key
-            else f"[{format_key}]"
-        ) for format_key in self.format_keys]
+        self.ansi_formats = [
+            (
+                ansi_code
+                if (ansi_code := self.cls._get_replacement(format_key, self.default_color, self.brightness_steps))
+                != format_key
+                else f"[{format_key}]"
+            )
+            for format_key in self.format_keys
+        ]
 
         # Generate reset codes if auto-reset is active:
         if self.auto_reset_txt and not self.auto_reset_escaped:
@@ -1088,7 +1013,7 @@ class _ReplaceKeysHelper:
 
             # Text color style:
             elif self.is_valid_color(format_key) or any(
-                k_lower.startswith(pref_colon := f"{prefix}:") and self.is_valid_color(format_key[len(pref_colon):]) \
+                k_lower.startswith(pref_colon := f"{prefix}:") and self.is_valid_color(format_key[len(pref_colon) :])
                 for prefix in _PREFIX["br"]
             ):
                 reset_keys.append(default_color_resets[1])
@@ -1099,9 +1024,11 @@ class _ReplaceKeysHelper:
 
         # Convert reset keys to ANSI codes:
         self.ansi_resets = [
-            ansi_code for reset_key in reset_keys if ( \
-                ansi_code := self.cls._get_replacement(reset_key, self.default_color, self.brightness_steps)
-            ).startswith(f"{ANSI.CHAR}{ANSI.START}")
+            ansi_code
+            for reset_key in reset_keys
+            if (ansi_code := self.cls._get_replacement(reset_key, self.default_color, self.brightness_steps)).startswith(
+                f"{ANSI.CHAR}{ANSI.START}"
+            )
         ]
 
     def build_output(self, match: _rx.Match[str], /) -> str:
@@ -1124,11 +1051,7 @@ class _ReplaceKeysHelper:
         # Add auto-reset text:
         if self.auto_reset_escaped and self.auto_reset_txt:
             output = self.cls.to_ansi(
-                self.auto_reset_txt,
-                self.default_color,
-                self.brightness_steps,
-                _default_start=False,
-                _validate_default=False,
+                self.auto_reset_txt, self.default_color, self.brightness_steps, _default_start=False, _validate_default=False
             )
             output += f"({output})"
         elif self.auto_reset_txt:
@@ -1143,8 +1066,4 @@ class _ReplaceKeysHelper:
     def is_valid_color(self, color: str, /) -> bool:
         """Check whether the given color string is a valid formatting-key color."""
 
-        return bool(
-            color in ANSI.COLOR_MAP \
-            or Color.is_valid_rgba(color)
-            or Color.is_valid_hexa(color)
-        )
+        return bool(color in ANSI.COLOR_MAP or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))

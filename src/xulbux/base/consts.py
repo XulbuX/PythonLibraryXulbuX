@@ -2,8 +2,8 @@
 This module contains constant values used throughout the library.
 """
 
-from .types import FormattableString, AllTextChars
 from .decorators import deprecated
+from .types import AllTextChars, FormattableString
 
 from typing import Annotated, Final
 import regex as _rx
@@ -67,8 +67,9 @@ class CHARS:
 
     SPECIAL_ASCII: Final[str] = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
     """Standard ASCII special characters and symbols."""
-    SPECIAL_ASCII_EXTENDED: Final[
-        str] = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    SPECIAL_ASCII_EXTENDED: Final[str] = (
+        SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    )
     """Standard and extended ASCII special characters."""
     STANDARD_ASCII: Final[str] = DIGITS + LETTERS + SPECIAL_ASCII
     """All standard ASCII characters (letters, digits, and symbols)."""
@@ -84,33 +85,39 @@ class ANSI:
     CHAR: Final[str] = "\x1b"
     """ANSI escape character."""
 
-    START: Final[Annotated[
-        str,
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = "["
+    START: Final[
+        Annotated[
+            str,
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = "["
     """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     Start of an ANSI escape sequence."""
-    SEP: Final[Annotated[
-        str,
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = ";"
+    SEP: Final[
+        Annotated[
+            str,
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = ";"
     """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     Separator between ANSI escape sequence parts."""
-    END: Final[Annotated[
-        str,
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = "m"
+    END: Final[
+        Annotated[
+            str,
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = "m"
     """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     End of an ANSI escape sequence."""
@@ -140,53 +147,41 @@ class ANSI:
     SEQ_PATTERN: Final[_rx.Pattern[str]] = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
     """Compiled regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""
 
-    COLOR_MAP: Final[Annotated[
-        set[str],
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = {
-        "black",
-        "red",
-        "green",
-        "yellow",
-        "blue",
-        "magenta",
-        "cyan",
-        "white",
-    }
+    COLOR_MAP: Final[
+        Annotated[
+            set[str],
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = {"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"}
     """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     The standard terminal color names."""
 
-    COLOR_VARIANTS_MAP: Final[Annotated[
-        set[str],
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = COLOR_MAP | {
-        "br:black",
-        "br:red",
-        "br:green",
-        "br:yellow",
-        "br:blue",
-        "br:magenta",
-        "br:cyan",
-        "br:white",
-    }
+    COLOR_VARIANTS_MAP: Final[
+        Annotated[
+            set[str],
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = COLOR_MAP | {"br:black", "br:red", "br:green", "br:yellow", "br:blue", "br:magenta", "br:cyan", "br:white"}
     """**DEPRECATED** – Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead.
     This will be completely removed in an upcoming future update.\n
     All color variants that can be used in formatting."""
 
-    CODES_MAP: Final[Annotated[
-        dict[str | tuple[str, ...], int],
-        deprecated(
-            "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-            "This will be completely removed in an upcoming future update."
-        ),
-    ]] = {
+    CODES_MAP: Final[
+        Annotated[
+            dict[str | tuple[str, ...], int],
+            deprecated(
+                "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+                "This will be completely removed in an upcoming future update."
+            ),
+        ]
+    ] = {
         ################# SPECIFIC RESETS ##################
         "_": 0,
         ("_bold", "_b"): 22,

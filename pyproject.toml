@@ -7,7 +7,6 @@ requires = [
   "setuptools>=80.0.0",
   "types-regex",
   "types-setuptools",
-  "types-toml",
   "wheel>=0.45.0",
 ]
 
@@ -27,11 +26,9 @@ dependencies = [
   "typing-extensions>=4.6.0; python_version < '3.13'",
 ]
 optional-dependencies = { dev = [
-  "flake8-pyproject>=1.2.3",
-  "flake8>=6.1.0",
   "pyright>=1.1.408",
   "pytest>=7.4.2",
-  "yapf>=0.43.0",
+  "ruff>=0.9.0",
 ] }
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -115,29 +112,6 @@ keywords = [
 [project.scripts]
 xulbux-lib = "xulbux.cli:main"
 
-[tool.flake8]
-count = true
-extend-exclude = [
-  ".github",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".venv",
-  "**/__pycache__",
-  "assets",
-  "build",
-]
-extend-ignore = ["E124", "E203", "E266", "E502", "W503"]
-max-complexity = 12
-max-line-length = 127
-per-file-ignores = [
-  "__init__.py:F403,F405",
-  "src/xulbux/base/types.py:E302,E305",
-  "src/xulbux/cli/help.py:E501",
-]
-select = ["W", "E", "F", "C90"]
-show-source = true
-statistics = true
-
 [tool.mypy]
 exclude = ["^assets/", "^build/"]
 
@@ -162,6 +136,45 @@ minversion = "7.0"
 pythonpath = ["src"]
 testpaths = ["tests/test_*.py"]
 
+[tool.ruff]
+line-length = 127
+target-version = "py312"
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = [
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "C90", # mccabe complexity
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort (import sorting)
+  "RUF", # Ruff-specific rules
+  "SIM", # flake8-simplify
+  "TCH", # flake8-type-checking
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warnings
+]
+ignore = ["E203", "E266", "E501", "RUF002"]
+mccabe = { max-complexity = 12 }
+
+[tool.ruff.lint.isort]
+section-order = [
+  "future",
+  "local-folder",
+  "standard-library",
+  "first-party",
+  "third-party",
+]
+no-lines-before = ["first-party", "third-party"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/xulbux/base/types.py" = ["E302", "E305"]
+"src/xulbux/cli/help.py" = ["E501"]
+"__init__.py" = ["F403", "F405"]
+
 [tool.setuptools]
 package-dir = { "" = "src" }
 
@@ -170,23 +183,3 @@ xulbux = ["*.pyi", "**/*.pyi", "py.typed"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.yapf]
-allow_split_before_dict_value = true
-based_on_style = "pep8"
-blank_line_before_nested_class_or_def = 1
-blank_lines_between_top_level_imports_and_variables = 2
-coalesce_brackets = true
-column_limit = 127
-dedent_closing_brackets = true
-disable_split_list_with_comment = true
-each_dict_entry_on_separate_line = false
-indent_closing_brackets = false
-spaces_around_subscript_colon = false
-spaces_before_comment = 2
-split_before_arithmetic_operator = true
-split_before_bitwise_operator = true
-split_before_dot = true
-split_before_first_argument = true
-split_before_logical_operator = true
-split_complex_comprehension = false
