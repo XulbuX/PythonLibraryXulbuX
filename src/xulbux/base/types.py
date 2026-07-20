@@ -8,34 +8,42 @@ from pathlib import Path
 # yapf: disable
 
 
-################################################## Annotated ##################################################
+################################################## TypeAlias ##################################################
 
-Int_0_100 = Annotated[int, "Integer constrained to the range [0, 100] inclusive."]
+Int_0_100: TypeAlias = Annotated[int, "Integer constrained to the range [0, 100] inclusive."]
 """Integer constrained to the range [0, 100] inclusive."""
-Int_0_255 = Annotated[int, "Integer constrained to the range [0, 255] inclusive."]
+Int_0_255: TypeAlias = Annotated[int, "Integer constrained to the range [0, 255] inclusive."]
 """Integer constrained to the range [0, 255] inclusive."""
-Int_0_360 = Annotated[int, "Integer constrained to the range [0, 360] inclusive."]
+Int_0_360: TypeAlias = Annotated[int, "Integer constrained to the range [0, 360] inclusive."]
 """Integer constrained to the range [0, 360] inclusive."""
-Float_0_1 = Annotated[float, "Float constrained to the range [0.0, 1.0] inclusive."]
+Float_0_1: TypeAlias = Annotated[float, "Float constrained to the range [0.0, 1.0] inclusive."]
 """Float constrained to the range [0.0, 1.0] inclusive."""
 
-FormattableString = Annotated[str, "String made to be formatted with the `.format()` method."]
+FormattableString: TypeAlias = Annotated[str, "String made to be formatted with the `.format()` method."]
 """String made to be formatted with the `.format()` method."""
-
-
-################################################## TypeAlias ##################################################
 
 PathsList: TypeAlias = Union[list[Path], list[str], list[Union[Path, str]]]
 """Union of all supported list types for a list of paths."""
 
 DataObj: TypeAlias = Union[list[Any], tuple[Any, ...], set[Any], frozenset[Any], dict[Any, Any]]
 """Union of supported data structures used in the `data` module."""
-DataObjTT = (list, tuple, set, frozenset, dict)
+DataObjTT: tuple[
+    type[list[Any]],
+    type[tuple[Any, ...]],
+    type[set[Any]],
+    type[frozenset[Any]],
+    type[dict[Any, Any]],
+] = (list, tuple, set, frozenset, dict)
 """Tuple of supported data structures used in the `data` module."""
 
 IndexIterable: TypeAlias = Union[list[Any], tuple[Any, ...], set[Any], frozenset[Any]]
 """Union of all iterable types that support indexing operations."""
-IndexIterableTT = (list, tuple, set, frozenset)
+IndexIterableTT: tuple[
+    type[list[Any]],
+    type[tuple[Any, ...]],
+    type[set[Any]],
+    type[frozenset[Any]],
+] = (list, tuple, set, frozenset)
 """Tuple of all iterable types that support indexing operations."""
 
 class _RgbaObj(Protocol):

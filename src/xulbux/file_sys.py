@@ -180,11 +180,11 @@ class _ExtendPathHelper:
         fuzzy_match: bool,
         raise_error: bool,
     ) -> None:
-        self.cls = cls
-        self.rel_path = rel_path
-        self.search_dirs = search_dirs
-        self.fuzzy_match = fuzzy_match
-        self.raise_error = raise_error
+        self.cls: type[FileSys] = cls
+        self.rel_path: Path = rel_path
+        self.search_dirs: list[Path] = search_dirs
+        self.fuzzy_match: bool = fuzzy_match
+        self.raise_error: bool = raise_error
 
     def __call__(self) -> Optional[Path]:
         """Execute the path extension logic."""

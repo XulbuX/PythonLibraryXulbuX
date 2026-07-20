@@ -219,7 +219,7 @@ _PREFIX_RX: Final[dict[str, str]] = {
 }
 """Regex patterns for matching background- and bright-color prefixes."""
 
-_PATTERNS = LazyRegex(
+_PATTERNS: Final[LazyRegex] = LazyRegex(
     star_reset=r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]",
     star_reset_inside=r"([^|]*?)\s*\*\s*([^|]*)",
     ansi_seq=ANSI.CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])",
@@ -277,7 +277,8 @@ _TO_ANSI_CACHE_MAX_LEN: Final[int] = 8192
 
 
 @deprecated(
-    "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+    "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+    "This will be completely removed in an upcoming future update."
 )
 class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
@@ -285,7 +286,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def print(
         cls,
@@ -316,7 +318,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def input(
         cls,
@@ -348,7 +351,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def to_ansi(
         cls,
@@ -423,7 +427,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def escape(
         cls,
@@ -454,7 +459,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def escape_ansi(cls, ansi_string: str, /) -> str:
         """Escapes all ANSI codes in the string, so they are visible when output to the terminal.\n
@@ -466,7 +472,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove(
         cls,
@@ -482,7 +489,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove(
         cls,
@@ -498,7 +506,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove(
         cls,
@@ -513,7 +522,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove(
         cls,
@@ -541,7 +551,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
         cls,
@@ -556,7 +567,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
         cls,
@@ -571,7 +583,8 @@ class FormatCodes:
     @overload
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
         cls,
@@ -585,7 +598,8 @@ class FormatCodes:
 
     @classmethod
     @deprecated(
-        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. This will be completely removed in an upcoming future update."
+        "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
+        "This will be completely removed in an upcoming future update."
     )
     def remove_ansi(
         cls,
@@ -864,9 +878,9 @@ class _EscapeFormatCodeHelper:
         default_color: Optional[rgba],
         escape_char: Literal["/", "\\"],
     ) -> None:
-        self.cls = cls
-        self.use_default = use_default
-        self.default_color = default_color
+        self.cls: type[FormatCodes] = cls
+        self.use_default: bool = use_default
+        self.default_color: Optional[rgba] = default_color
         self.escape_char: Literal["/", "\\"] = escape_char
 
     def __call__(self, match: _rx.Match[str], /) -> str:
@@ -914,7 +928,7 @@ class _RemAnsiSeqHelper:
     """Internal, callable helper class to remove ANSI sequences and track their removal positions."""
 
     def __init__(self, removals: list[tuple[int, str]], /) -> None:
-        self.removals = removals
+        self.removals: list[tuple[int, str]] = removals
 
     def __call__(self, match: _rx.Match[str], /) -> str:
         start_pos = match.start() - sum(len(removed) for _, removed in self.removals)
@@ -938,10 +952,10 @@ class _ReplaceKeysHelper:
         default_color: Optional[rgba],
         brightness_steps: int,
     ) -> None:
-        self.cls = cls
-        self.use_default = use_default
-        self.default_color = default_color
-        self.brightness_steps = brightness_steps
+        self.cls: type[FormatCodes] = cls
+        self.use_default: bool = use_default
+        self.default_color: Optional[rgba] = default_color
+        self.brightness_steps: int = brightness_steps
 
         # Instance variables for current processing state:
         self.formats: str = ""

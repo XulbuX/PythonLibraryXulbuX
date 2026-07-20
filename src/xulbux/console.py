@@ -35,7 +35,7 @@ import os as _os
 
 T = TypeVar("T")
 
-_PATTERNS = LazyRegex(
+_PATTERNS: Final[LazyRegex] = LazyRegex(
     hr=r"(?i){hr}",
     hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",
     hr_r_nl=r"(?i)(?<!\n){hr}(?=\n)",
@@ -50,10 +50,10 @@ _PATTERNS = LazyRegex(
 
 _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
 """Cache of rendered log-title ANSI strings, keyed by `(padded_title, style_repr)`."""
-_LOG_TITLE_CACHE_MAX: Final = 256
+_LOG_TITLE_CACHE_MAX: Final[int] = 256
 """Maximum number of entries kept in `_LOG_TITLE_CACHE`."""
 
-_ANSI_RESET: Final = StyledText(S.RESET).ansi
+_ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
 _DEFAULT_BAR_FORMAT: Final[list[TextLike]] = [
@@ -180,7 +180,7 @@ class ParsedArgs:
     Each such attribute (e.g., `args.foo`) is an instance of `ParsedArgData`."""
 
     # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
-    __slots__ = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
+    __slots__: tuple[str, ...] = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
 
     RESERVED_ALIASES: frozenset[str] = frozenset({
         "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "unknown_flags", "values"
@@ -1366,19 +1366,19 @@ class _ConsoleArgsParseHelper:
         flag_value_sep: Optional[str],
         allow_space_value: bool = True,
     ) -> None:
-        self.arg_parse_configs = arg_parse_configs
-        self.flag_value_sep = flag_value_sep
-        self.allow_space_value = allow_space_value
+        self.arg_parse_configs: ArgParseConfigs = arg_parse_configs
+        self.flag_value_sep: Optional[str] = flag_value_sep
+        self.allow_space_value: bool = allow_space_value
 
         self.parsed_args: dict[str, ParsedArgData] = {}
         self.positional_configs: dict[str, str] = {}
         self.arg_lookup: dict[str, str] = {}
         self.unknown_flags: list[str] = []
 
-        self.args = _sys.argv[1 + skip:]
-        self.args_len = len(self.args)
-        self.pos_before_configured = False
-        self.pos_after_configured = False
+        self.args: list[str] = _sys.argv[1 + skip:]
+        self.args_len: int = len(self.args)
+        self.pos_before_configured: bool = False
+        self.pos_after_configured: bool = False
         self.first_flag_pos: Optional[int] = None
         self.last_flag_pos: Optional[int] = None
 
@@ -1681,12 +1681,12 @@ class _ConsoleInputHelper:
         allow_paste: bool,
         validator: Optional[Callable[[str], Optional[str]]],
     ) -> None:
-        self.mask_char = mask_char
-        self.min_len = min_len
-        self.max_len = max_len
-        self.allowed_chars = allowed_chars
-        self.allow_paste = allow_paste
-        self.validator = validator
+        self.mask_char: Optional[str] = mask_char
+        self.min_len: Optional[int] = min_len
+        self.max_len: Optional[int] = max_len
+        self.allowed_chars: str | AllTextChars = allowed_chars
+        self.allow_paste: bool = allow_paste
+        self.validator: Optional[Callable[[str], Optional[str]]] = validator
 
         self.result_text: str = ""
         self.filtered_chars: set[str] = set()
@@ -1846,10 +1846,10 @@ class _ConsoleInputValidator(Validator):
         min_len: Optional[int],
         validator: Optional[Callable[[str], Optional[str]]],
     ) -> None:
-        self.get_text = get_text
-        self.mask_char = mask_char
-        self.min_len = min_len
-        self.validator = validator
+        self.get_text: Callable[[], str] = get_text
+        self.mask_char: Optional[str] = mask_char
+        self.min_len: Optional[int] = min_len
+        self.validator: Optional[Callable[[str], Optional[str]]] = validator
 
     def validate(self, document: Document) -> None:
         """Validates the input text according to the minimum length and custom validator function."""
@@ -2191,10 +2191,10 @@ class _ProgressContextHelper:
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
     def __init__(self, progress_bar: ProgressBar, total: int, label: Optional[str], /) -> None:
-        self.progress_bar = progress_bar
-        self.total = total
-        self.current_label = label
-        self.current_progress = 0
+        self.progress_bar: ProgressBar = progress_bar
+        self.total: int = total
+        self.current_label: Optional[str] = label
+        self.current_progress: int = 0
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         current, label = None, None
@@ -2226,7 +2226,7 @@ class _ProgressBarCurrentReplacer:
     """Internal, callable class to replace `{current}` placeholder with formatted number."""
 
     def __init__(self, current: int, /) -> None:
-        self.current = current
+        self.current: int = current
 
     def __call__(self, match: _rx.Match[str], /) -> str:
         if (sep := match.group(1)):
@@ -2238,7 +2238,7 @@ class _ProgressBarTotalReplacer:
     """Internal, callable class to replace `{total}` placeholder with formatted number."""
 
     def __init__(self, total: int, /) -> None:
-        self.total = total
+        self.total: int = total
 
     def __call__(self, match: _rx.Match[str], /) -> str:
         if (sep := match.group(1)):
@@ -2250,7 +2250,7 @@ class _ProgressBarPercentageReplacer:
     """Internal, callable class to replace `{percentage}` placeholder with formatted float."""
 
     def __init__(self, percentage: float, /) -> None:
-        self.percentage = percentage
+        self.percentage: float = percentage
 
     def __call__(self, match: _rx.Match[str], /) -> str:
         return f"{self.percentage:.{match.group(1) if match.group(1) else '1'}f}"
@@ -2485,8 +2485,8 @@ class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
     def __init__(self, status_indicator: ProgressBar | Throbber, /) -> None:
-        self.status_indicator = status_indicator
-        self.string_io = StringIO()
+        self.status_indicator: ProgressBar | Throbber = status_indicator
+        self.string_io: StringIO = StringIO()
 
     def write(self, content: str, /) -> int:
         self.string_io.write(content)

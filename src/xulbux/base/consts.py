@@ -12,75 +12,76 @@ import regex as _rx
 class COLOR:
     """Hexadecimal color presets."""
 
-    WHITE: Final = "#F1F2FF"
-    LIGHT_GRAY: Final = "#B6B7C0"
-    GRAY: Final = "#7B7C8D"
-    DARK_GRAY: Final = "#67686C"
-    BLACK: Final = "#202125"
-    RED: Final = "#FF606A"
-    CORAL: Final = "#FF7069"
-    ORANGE: Final = "#FF876A"
-    TANGERINE: Final = "#FF9962"
-    GOLD: Final = "#FFAF60"
-    YELLOW: Final = "#FFD260"
-    LIME: Final = "#C9F16E"
-    GREEN: Final = "#7EE787"
-    NEON_GREEN: Final = "#4CFF85"
-    TEAL: Final = "#50EAAF"
-    CYAN: Final = "#3EDEE6"
-    ICE: Final = "#77DBEF"
-    LIGHT_BLUE: Final = "#60AAFF"
-    BLUE: Final = "#8085FF"
-    LAVENDER: Final = "#9B7DFF"
-    PURPLE: Final = "#AD68FF"
-    MAGENTA: Final = "#C860FF"
-    PINK: Final = "#F162EF"
-    ROSE: Final = "#FF609F"
+    WHITE: Final[str] = "#F1F2FF"
+    LIGHT_GRAY: Final[str] = "#B6B7C0"
+    GRAY: Final[str] = "#7B7C8D"
+    DARK_GRAY: Final[str] = "#67686C"
+    BLACK: Final[str] = "#202125"
+    RED: Final[str] = "#FF606A"
+    CORAL: Final[str] = "#FF7069"
+    ORANGE: Final[str] = "#FF876A"
+    TANGERINE: Final[str] = "#FF9962"
+    GOLD: Final[str] = "#FFAF60"
+    YELLOW: Final[str] = "#FFD260"
+    LIME: Final[str] = "#C9F16E"
+    GREEN: Final[str] = "#7EE787"
+    NEON_GREEN: Final[str] = "#4CFF85"
+    TEAL: Final[str] = "#50EAAF"
+    CYAN: Final[str] = "#3EDEE6"
+    ICE: Final[str] = "#77DBEF"
+    LIGHT_BLUE: Final[str] = "#60AAFF"
+    BLUE: Final[str] = "#8085FF"
+    LAVENDER: Final[str] = "#9B7DFF"
+    PURPLE: Final[str] = "#AD68FF"
+    MAGENTA: Final[str] = "#C860FF"
+    PINK: Final[str] = "#F162EF"
+    ROSE: Final[str] = "#FF609F"
 
 
 class CHARS:
     """Character set constants for text validation and filtering."""
 
-    ALL: Final = AllTextChars()
+    ALL: Final[AllTextChars] = AllTextChars()
     """Sentinel value indicating all characters are allowed."""
 
-    DIGITS: Final = "0123456789"
+    DIGITS: Final[str] = "0123456789"
     """Numeric digits: `0`-`9`"""
-    FLOAT_DIGITS: Final = "." + DIGITS
+    FLOAT_DIGITS: Final[str] = "." + DIGITS
     """Numeric digits with decimal point: `0`-`9` and `.`"""
-    HEX_DIGITS: Final = "#" + DIGITS + "abcdefABCDEF"
+    HEX_DIGITS: Final[str] = "#" + DIGITS + "abcdefABCDEF"
     """Hexadecimal digits: `0`-`9`, `a`-`f`, `A`-`F`, and `#`"""
 
-    LOWERCASE: Final = "abcdefghijklmnopqrstuvwxyz"
+    LOWERCASE: Final[str] = "abcdefghijklmnopqrstuvwxyz"
     """Lowercase ASCII letters: `a`-`z`"""
-    LOWERCASE_EXTENDED: Final = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
+    LOWERCASE_EXTENDED: Final[str] = LOWERCASE + "äëïöüÿàèìòùáéíóúýâêîôûãñõåæç"
     """Lowercase ASCII letters with diacritic marks."""
-    UPPERCASE: Final = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    UPPERCASE: Final[str] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     """Uppercase ASCII letters: `A`-`Z`"""
-    UPPERCASE_EXTENDED: Final = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
+    UPPERCASE_EXTENDED: Final[str] = UPPERCASE + "ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß"
     """Uppercase ASCII letters with diacritic marks."""
 
-    LETTERS: Final = LOWERCASE + UPPERCASE
+    LETTERS: Final[str] = LOWERCASE + UPPERCASE
     """All ASCII letters: `a`-`z` and `A`-`Z`"""
-    LETTERS_EXTENDED: Final = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
+    LETTERS_EXTENDED: Final[str] = LOWERCASE_EXTENDED + UPPERCASE_EXTENDED
     """All ASCII letters with diacritic marks."""
 
-    SPECIAL_ASCII: Final = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    SPECIAL_ASCII: Final[str] = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
     """Standard ASCII special characters and symbols."""
-    SPECIAL_ASCII_EXTENDED: Final = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
+    SPECIAL_ASCII_EXTENDED: Final[
+        str] = SPECIAL_ASCII + "ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ "
     """Standard and extended ASCII special characters."""
-    STANDARD_ASCII: Final = DIGITS + LETTERS + SPECIAL_ASCII
+    STANDARD_ASCII: Final[str] = DIGITS + LETTERS + SPECIAL_ASCII
     """All standard ASCII characters (letters, digits, and symbols)."""
-    FULL_ASCII: Final = DIGITS + LETTERS_EXTENDED + SPECIAL_ASCII_EXTENDED
+    FULL_ASCII: Final[str] = DIGITS + LETTERS_EXTENDED + SPECIAL_ASCII_EXTENDED
     """Complete ASCII character set including extended characters."""
 
 
 class ANSI:
     """Constants and utilities for ANSI escape code sequences."""
 
-    CHAR_ESCAPED: Final = r"\x1b"
+    CHAR_ESCAPED: Final[str] = r"\x1b"
     """Printable ANSI escape character."""
-    CHAR: Final = "\x1b"
+    CHAR: Final[str] = "\x1b"
     """ANSI escape character."""
 
     START: Final[Annotated[

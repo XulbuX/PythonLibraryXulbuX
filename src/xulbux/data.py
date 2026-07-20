@@ -597,12 +597,12 @@ class _DataRemoveCommentsHelper:
     """Internal, callable helper class to remove all comments from nested data structures."""
 
     def __init__(self, data: DataObjType, /, *, comment_start: str, comment_end: str, comment_sep: str) -> None:
-        self.data = data
-        self.comment_start = comment_start
-        self.comment_end = comment_end
-        self.comment_sep = comment_sep
+        self.data: DataObjType = data
+        self.comment_start: str = comment_start
+        self.comment_end: str = comment_end
+        self.comment_sep: str = comment_sep
 
-        self.pattern = _re.compile(
+        self.pattern: Optional[_re.Pattern[str]] = _re.compile(
             Regex._clean(
                 rf"""^(
                     (?:(?!{_re.escape(comment_start)}).)*
@@ -650,12 +650,12 @@ class _DataGetPathIdHelper:
     """Internal, callable helper class to process a data path and generate its unique path ID."""
 
     def __init__(self, path: str, /, *, path_sep: str, data_obj: DataObjType, ignore_not_found: bool) -> None:
-        self.keys = path.split(path_sep)
-        self.data_obj = data_obj
-        self.ignore_not_found = ignore_not_found
+        self.keys: list[str] = path.split(path_sep)
+        self.data_obj: DataObjType = data_obj
+        self.ignore_not_found: bool = ignore_not_found
 
         self.path_ids: list[str] = []
-        self.max_id_length = 0
+        self.max_id_length: int = 0
         self.current_data: Any = data_obj
 
     def __call__(self) -> Optional[str]:
@@ -736,15 +736,15 @@ class _DataRenderHelper:
         as_json: bool,
         syntax_highlighting: dict[str, AnySyntaxStyle] | bool,
     ) -> None:
-        self.cls = cls
-        self.data = data
-        self.indent = indent
-        self.compactness = compactness
-        self.max_width = max_width
-        self.as_json = as_json
+        self.cls: type[Data] = cls
+        self.data: DataObjType = data
+        self.indent: int = indent
+        self.compactness: Literal[0, 1, 2] = compactness
+        self.max_width: int = max_width
+        self.as_json: bool = as_json
 
         self.styles: dict[str, AnySyntaxStyle] = _DEFAULT_SYNTAX_HL.copy()
-        self.do_syntax_hl = syntax_highlighting not in {None, False}
+        self.do_syntax_hl: bool = syntax_highlighting not in {None, False}
 
         if self.do_syntax_hl:
             if syntax_highlighting is True:
@@ -757,7 +757,7 @@ class _DataRenderHelper:
             else:
                 raise TypeError(f"The 'syntax_highlighting' parameter must be a dict or bool, got {type(syntax_highlighting)}")
 
-        self.sep = sep
+        self.sep: str = sep
 
         self.punct: dict[str, str] = {
             char: (self._hl("punctuation", char) if self.do_syntax_hl else char)

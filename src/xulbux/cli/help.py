@@ -1,10 +1,10 @@
 from .. import __version__
 from ..base.decorators import mypyc_attr
 from ..console import Console
-from ..ansi import StyledText, S
+from ..ansi import StyledText, S, _StyleGroup, _Style
 
 from urllib.error import HTTPError
-from typing import Optional
+from typing import Optional, Final
 import urllib.request as _request
 import json as _json
 
@@ -12,11 +12,11 @@ import json as _json
 def get_latest_version() -> Optional[str]:
     """Fetches the latest version of the library from PyPI."""
 
-    with _request.urlopen(URL) as response:
+    with _request.urlopen(PACKAGE_META_URL) as response:
         if response.status == 200:
             return _json.load(response)["info"]["version"]
         else:
-            raise HTTPError(URL, response.status, "Failed to fetch latest version info", response.headers, None)
+            raise HTTPError(PACKAGE_META_URL, response.status, "Failed to fetch latest version info", response.headers, None)
 
 
 def is_latest_version() -> Optional[bool]:
@@ -36,29 +36,29 @@ def is_latest_version() -> Optional[bool]:
         return None
 
 
-URL = "https://pypi.org/pypi/xulbux/json"
-IS_LATEST_VERSION = is_latest_version()
+PACKAGE_META_URL: Final[str] = "https://pypi.org/pypi/xulbux/json"
+IS_LATEST_VERSION: Optional[bool] = is_latest_version()
 
 
 @mypyc_attr(native_class=False)
 class H:
     """Styling constants for the CLI help message."""
 
-    BORDER = S.DIM | S.BR.BLACK
-    CLS = S.BR.CYAN
-    CMD = S.GREEN
-    CONST = S.BR.BLUE
-    FN = S.BR.GREEN
-    HEADING = S.BOLD | S.BR.WHITE
-    IMPORT = S.MAGENTA
-    LIB = S.BR.MAGENTA
-    META = S.DIM | S.BR.WHITE
-    PUNCT = S.BR.BLACK
-    TEXT = S.WHITE
+    BORDER: Final[_StyleGroup] = S.DIM | S.BR.BLACK
+    CLS: Final[_Style] = S.BR.CYAN
+    CMD: Final[_Style] = S.GREEN
+    CONST: Final[_Style] = S.BR.BLUE
+    FN: Final[_Style] = S.BR.GREEN
+    HEADING: Final[_StyleGroup] = S.BOLD | S.BR.WHITE
+    IMPORT: Final[_Style] = S.MAGENTA
+    LIB: Final[_Style] = S.BR.MAGENTA
+    META: Final[_StyleGroup] = S.DIM | S.BR.WHITE
+    PUNCT: Final[_Style] = S.BR.BLACK
+    TEXT: Final[_Style] = S.WHITE
 
 
 # fmt: OFF
-CLI_HELP = StyledText(
+CLI_HELP: Final[StyledText] = StyledText(
     S.RESET,
     (
         (S.BOLD | S.hex("#7075FF"))(

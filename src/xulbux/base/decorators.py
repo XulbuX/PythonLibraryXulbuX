@@ -28,7 +28,7 @@ def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> Callable[[T], 
     return _DeprecatedWrapper(message, **kwargs)
 
 
-deprecated = _deprecated_runtime  # type: ignore[assignment,misc]
+deprecated = _deprecated_runtime  # type: ignore[assignment,misc]  # noqa: F810
 
 
 class _DeprecatedWrapper:

@@ -165,6 +165,7 @@ from .base.consts import ANSI
 from typing import TypeAlias, ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
 from pathlib import Path
 import ctypes as _ctypes
+import regex as _rx
 import sys as _sys
 import os as _os
 
@@ -172,7 +173,7 @@ import os as _os
 _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
 
-_ANSI_SEQ_RX: Final = ANSI.SEQ_PATTERN
+_ANSI_SEQ_RX: Final[_rx.Pattern[str]] = ANSI.SEQ_PATTERN
 """Module shorthand for `ANSI.SEQ_PATTERN`.<br>
 Matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
@@ -207,7 +208,7 @@ class _StyleGroup:
     ------------------------------------------------------------------
     Supports further `|` chaining and `()` application."""
 
-    __slots__ = ("_codes", )
+    __slots__: tuple[str, ...] = ("_codes", )
 
     def __init__(self, *codes: AnyStyle) -> None:
         self._codes: tuple[AnyStyle, ...] = codes
@@ -309,10 +310,16 @@ class _ColorStyle:
     >>> S.hex("#FF6070")("text")                # Hex FG color
     >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
 
-    __slots__ = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
+    __slots__: tuple[str, ...] = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
-        self._red, self._green, self._blue, self._bg = red, green, blue, bg
+        self._red: int = red
+        self._green: int = green
+        self._blue: int = blue
+        self._bg: bool = bg
+        self._open_seq: str
+        self._close_seq: str
+
         if bg:
             self._open_seq = ANSI.SEQ_BG_COLOR.format(red, green, blue)
             self._close_seq = f"{ANSI.CHAR}[{S.RESET_BG}m"
@@ -367,12 +374,12 @@ class _Link:
     >>> S.link("https://example.com")("click here")
     >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
 
-    __slots__ = ("_url", "_open_seq", "_close_seq")
+    __slots__: tuple[str, ...] = ("_url", "_open_seq", "_close_seq")
 
     def __init__(self, url: str | Path, /) -> None:
-        self._url = url.resolve().as_uri() if isinstance(url, Path) else url
-        self._open_seq = ANSI.SEQ_LINK_OPEN.format(self._url)
-        self._close_seq = ANSI.SEQ_LINK_CLOSE
+        self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
+        self._open_seq: str = ANSI.SEQ_LINK_OPEN.format(self._url)
+        self._close_seq: str = ANSI.SEQ_LINK_CLOSE
 
     def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
         """Combines this link style with another style or group via `|`."""
@@ -409,12 +416,12 @@ class _StyledSequence:
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
     `text` may be a plain `str`, a nested `_StyledSequence`, or a tuple of mixed segments."""
 
-    __slots__ = ("_opens", "_closes", "text")
+    __slots__: tuple[str, ...] = ("_opens", "_closes", "text")
 
     def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: TextLike) -> None:
-        self._opens = opens
-        self._closes = closes
-        self.text = text
+        self._opens: tuple[str, ...] = opens
+        self._closes: tuple[str, ...] = closes
+        self.text: TextLike = text
 
     def __repr__(self) -> str:
         """Returns a string representation of this styled segment, showing its opens and text."""
@@ -713,7 +720,7 @@ class StyledText:
     For exact information about how to use the operator syntax,<br>
     see the `ansi` module documentation."""
 
-    __slots__ = ("_ansi_parts", "ansi")
+    __slots__: tuple[str, ...] = ("_ansi_parts", "ansi")
 
     def __init__(self, /, *segments: TextLike, sep: str = "\n") -> None:
         self._ansi_parts: list[str] = []
@@ -978,7 +985,7 @@ class _BuildOpenClose:
     """Internal, callable helper class to build the opening and closing ANSI sequences for a `_StyleGroup`."""
 
     def __init__(self, group: _StyleGroup, /) -> None:
-        self.group = group
+        self.group: _StyleGroup = group
         self.sgr_open: list[str] = []
         self.sgr_close: list[str] = []
         self.link_url: Optional[str] = None

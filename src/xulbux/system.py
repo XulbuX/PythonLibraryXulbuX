@@ -222,10 +222,10 @@ class _SystemRestartHelper:
     """Internal, callable helper class to handle system restart with platform-specific logic."""
 
     def __init__(self, prompt: object, /, *, wait: int, continue_program: bool, force: bool) -> None:
-        self.prompt = prompt
-        self.wait = wait
-        self.continue_program = continue_program
-        self.force = force
+        self.prompt: object = prompt
+        self.wait: int = wait
+        self.continue_program: bool = continue_program
+        self.force: bool = force
 
     def __call__(self) -> None:
         if (system := _platform.system().lower()) == "windows":
@@ -299,10 +299,10 @@ class _SystemCheckLibsHelper:
         missing_libs_msgs: MissingLibsMsgs,
         confirm_install: bool,
     ) -> None:
-        self.lib_names = lib_names
-        self.install_missing = install_missing
-        self.missing_libs_msgs = missing_libs_msgs
-        self.confirm_install = confirm_install
+        self.lib_names: list[str] = lib_names
+        self.install_missing: bool = install_missing
+        self.missing_libs_msgs: MissingLibsMsgs = missing_libs_msgs
+        self.confirm_install: bool = confirm_install
 
     def __call__(self) -> Optional[list[str]]:
         missing = self.find_missing_libs()

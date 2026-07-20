@@ -248,7 +248,7 @@ class LazyRegex:
     ```"""
 
     def __init__(self, **patterns: str) -> None:
-        self._patterns = patterns
+        self._patterns: dict[str, str] = patterns
 
     def __getattr__(self, name: str, /) -> _rx.Pattern[str]:
         if name in self._patterns:
