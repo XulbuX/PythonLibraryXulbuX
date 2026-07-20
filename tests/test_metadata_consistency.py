@@ -55,7 +55,7 @@ def test_version_consistency():
     # Extract version from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
-        init_version_match = re.search(r'^__version__\s*=\s*"([^"]+)"', init_content, re.MULTILINE)
+        init_version_match = re.search(r'^__version__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_version = init_version_match.group(1) if init_version_match else None
 
     # Extract version from `pyproject.toml`:
@@ -81,7 +81,7 @@ def test_dependencies_consistency():
     # Extract dependencies from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
-    init_deps_match = re.search(r'__dependencies__\s*=\s*(\[.*?\])', init_content, re.DOTALL)
+    init_deps_match = re.search(r'__dependencies__(?:[^=]*)?=\s*(\[.*?\])', init_content, re.DOTALL)
 
     # Extract dependencies from `pyproject.toml`:
     with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
@@ -111,7 +111,7 @@ def test_description_consistency():
     # Extract description from `__init__.py`:
     with open(INIT_PATH, "r", encoding="utf-8") as file:
         init_content = file.read()
-        init_desc_match = re.search(r'^__description__\s*=\s*"([^"]+)"', init_content, re.MULTILINE)
+        init_desc_match = re.search(r'^__description__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
     init_desc = init_desc_match.group(1) if init_desc_match else None
 
     # Extract description from `pyproject.toml`:

@@ -76,8 +76,7 @@ class Json:
         try:
             data = _json.loads(content)
         except _json.JSONDecodeError as exc:
-            fmt_error = "\n  ".join(str(exc).splitlines())
-            raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {fmt_error}") from exc
+            raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
 
         if not (processed_data := dict(Data.remove_comments(data, comment_start=comment_start, comment_end=comment_end))):
             raise ValueError(f"The JSON file {file_path!r} contains no data")

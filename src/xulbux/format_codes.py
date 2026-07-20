@@ -748,7 +748,7 @@ class FormatCodes:
         If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
         are reset or you can get lighter or darker version of `default_color` (also as BG)"""
 
-        # Fast path when no default color; Use cached results:
+        # Fast path when no default color; use cached results:
         if default_color is None and (cached := _REPLACEMENT_CACHE.get(format_key)) is not None:
             return cached
 
@@ -1073,14 +1073,14 @@ class _ReplaceKeysHelper:
             # Background color style:
             if _PREFIX["bg"] & k_set and len(k_set) <= 3:
                 if k_set & _PREFIX["br"]:
-                    # Bright background color; Reset both BG and color:
+                    # Bright background color; reset both BG and color:
                     for i in range(len(format_key)):
                         if self.is_valid_color(format_key[i:]):
                             reset_keys.extend(default_color_resets)
                             break
 
                 else:
-                    # Regular background color; Reset only BG:
+                    # Regular background color; reset only BG:
                     for i in range(len(format_key)):
                         if self.is_valid_color(format_key[i:]):
                             reset_keys.append("_bg")

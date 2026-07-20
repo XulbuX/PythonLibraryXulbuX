@@ -11,51 +11,57 @@ PROJECT_SRC = PROJECT_ROOT / "src" / "xulbux"
 
 
 def find_python_files(directory: str) -> list[str]:
+    """Recursively finds all Python source files in the
+    specified directory, excluding `__init__.py` files."""
+
     python_files: list[str] = []
+
     for file in Path(directory).rglob("*.py"):
         if file.name == "__init__.py":
             continue
         python_files.append(str(file))
+
     return python_files
 
 
-def generate_stubs_for_package():
+def generate_stubs_for_package() -> None:
+    """Generates typing stubs (`.pyi`) for the package using stubgen.<br>
+    Certain files are copied as-is to preserve specific decorators and type hints."""
+
     print("\nGenerating stub files with stubgen...\n")
 
     try:
-        skip_stubgen = {
-            PROJECT_SRC / "base" / "decorators.py",  # Preserve conditional typing imports
-            PROJECT_SRC / "base" / "types.py",  # Complex type definitions
-            PROJECT_SRC / "base" / "consts.py",  # Preserve decorators
-            PROJECT_SRC / "format_codes.py",  # Preserve decorators
-            PROJECT_SRC / "__init__.py",  # Preserve package metadata constants.
+        skip_stubgen: set[Path] = {
+            PROJECT_SRC / "base" / "consts.py",  # Preserve `@deprecated` decorators.
+            PROJECT_SRC / "base" / "decorators.py",  # Preserve conditional typing imports.
+            PROJECT_SRC / "format_codes.py",  # Preserve `@deprecated` decorators.
         }
 
-        generated_count = 0
-        skipped_count = 0
+        generated_count: int = 0
+        skipped_count: int = 0
 
         for py_file in PROJECT_SRC.rglob("*.py"):
-            pyi_file = py_file.with_suffix(".pyi")
-            rel_path = py_file.relative_to(PROJECT_SRC.parent)
+            pyi_file: Path = py_file.with_suffix(".pyi")
+            rel_path: Path = py_file.relative_to(PROJECT_SRC.parent)
 
             if py_file in skip_stubgen:
                 pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
-                print(f"  copied {rel_path.with_suffix('.pyi')} (preserving type definitions)")
+                print(f"  copied {rel_path.with_suffix(".pyi")} (preserving type definitions)")
                 skipped_count += 1
                 continue
 
-            stubgen_exe = (
+            stubgen_exe: str = (
                 shutil.which("stubgen")
                 or str(Path(sys.executable).parent / ("stubgen.exe" if sys.platform == "win32" else "stubgen"))
             )
-            result = subprocess.run(
+            result: subprocess.CompletedProcess[str] = subprocess.run(
                 [stubgen_exe, str(py_file), "-o", "src", "--include-private", "--export-less"],
                 capture_output=True,
                 text=True,
             )
 
             if result.returncode == 0:
-                print(f"  generated {rel_path.with_suffix('.pyi')}")
+                print(f"  generated {rel_path.with_suffix(".pyi")}")
                 generated_count += 1
             else:
                 print(f"  failed {rel_path}")
@@ -65,51 +71,66 @@ def generate_stubs_for_package():
         print(f"\nStub generation complete. ({generated_count} generated, {skipped_count} copied)\n")
 
     except Exception as exc:
-        fmt_error = "\n  ".join(str(exc).splitlines())
-        print(f"[WARNING] Could not generate stubs:\n  {fmt_error}\n")
+        print(f"[WARNING] Could not generate stubs:\n  {'\n  '.join(str(exc).splitlines())}\n")
 
 
-def delete_project_stub_files():
-    deleted = [f for f in PROJECT_SRC.rglob("*.pyi") if f.unlink() or True]
-    print(f"\nCleaned up {len(deleted)} stub file(s) from project directory.\n")
+def clean_project_files(patterns: set[str], message: str) -> None:
+    """Removes all files matching the given glob patterns from the source directory.<br>
+    Prints a formatted success message if any files were deleted."""
+
+    deleted_count = 0
+    for pattern in patterns:
+        for f in (PROJECT_ROOT / "src").rglob(pattern):
+            try:
+                f.unlink()
+                deleted_count += 1
+            except OSError:
+                pass
+
+    if deleted_count > 0:
+        print(message.format(n=deleted_count, s="" if deleted_count == 1 else "s"))
 
 
-# If the user runs the setup script with the --gen-stubs flag,
-# generate stub files and exit without building the package:
-if "--gen-stubs" in sys.argv:
-    generate_stubs_for_package()
-    sys.exit(0)
-
-ext_modules = []
-
-# Only compile and generate stubs when actually building, not during metadata-only
-# phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation:
-_BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
-_is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
-
-# Optionally use MyPyC compilation:
-if os.environ.get("XULBUX_USE_MYPYC", "1") == "1" and _is_building:
-    try:
-        from mypyc.build import mypycify
-
-        print("\nCompiling with mypyc...\n")
-        source_files = find_python_files("src/xulbux")
-        ext_modules = mypycify(source_files, opt_level="3")
-        print("\nMypyc compilation complete.\n")
-
+if __name__ == "__main__":
+    # If the user runs the setup script with the --gen-stubs flag,
+    # generate stub files and exit without building the package:
+    if "--gen-stubs" in sys.argv:
         generate_stubs_for_package()
+        sys.exit(0)
 
-    except (ImportError, Exception) as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
-        print(
-            f"\n[WARNING] mypyc compilation disabled (not available or failed):\n  {fmt_error}\n"
-            "\nInstalling as pure Python package...\n"
-        )
+    ext_modules = []
 
-setup(
-    name="xulbux",
-    ext_modules=ext_modules,
-)
+    # Only compile and generate stubs when actually building, not during metadata-only
+    # phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation:
+    _BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
+    _is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
 
-if _is_building:
-    delete_project_stub_files()
+    # Optionally use MyPyC compilation:
+    if os.environ.get("XULBUX_USE_MYPYC", "1") == "1" and _is_building:
+        try:
+            from mypyc.build import mypycify
+
+            print("\nCompiling with mypyc...\n")
+            source_files = find_python_files("src/xulbux")
+            ext_modules = mypycify(source_files, opt_level="3")
+            print("\nMypyc compilation complete.\n")
+
+            generate_stubs_for_package()
+
+        except (ImportError, Exception) as exc:
+            print(
+                "\n[WARNING] mypyc compilation disabled (not available or failed):\n"
+                f"  {'\n  '.join(str(exc).splitlines())}\n"
+                "\nInstalling as pure Python package...\n"
+            )
+
+    setup(
+        name="xulbux",
+        ext_modules=ext_modules,
+    )
+
+    if _is_building:
+        clean_project_files({"*.pyi"}, "\nCleaned up {n} stub file{s} from project directory.\n")
+
+        if "--inplace" in sys.argv:
+            clean_project_files({"*.pyd", "*.so", "*.c"}, "\nCleaned up {n} compiled extension file{s} from project directory.\n")

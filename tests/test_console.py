@@ -490,13 +490,13 @@ def test_get_args_negative_number_not_unknown_flag(monkeypatch: pytest.MonkeyPat
 
 def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     """Test that skip=N drops the first N argv entries before any parsing."""
-    # With `skip=1`, `argv[1]` (`fc`) is skipped; Parsing starts at `argv[2]`:
+    # With `skip=1`, `argv[1]` (`fc`) is skipped; parsing starts at `argv[2]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "fc", "hello", "world"])
     result = Console.get_args({"input": "before"}, skip=1)
     assert result.input.exists is True
     assert result.input.values == ("hello", "world")
 
-    # With `skip=2`, `argv[1]` and `argv[2]` are skipped; Parsing starts at `argv[3]`:
+    # With `skip=2`, `argv[1]` and `argv[2]` are skipped; parsing starts at `argv[3]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "sub", "cmd", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=2)
     assert result.flag.exists is True
@@ -507,7 +507,7 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     result = Console.get_args({"flag": {"--flag"}}, skip=5)
     assert result.flag.exists is False
 
-    # With `skip=0` (default); Behavior is unchanged:
+    # With `skip=0` (default); behavior is unchanged:
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag=val"])
     result = Console.get_args({"flag": {"--flag"}}, skip=0)
     assert result.flag.exists is True

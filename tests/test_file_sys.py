@@ -125,12 +125,12 @@ def test_extend_or_make(setup_test_environment: dict[str, Path]):
     assert isinstance(result, Path)
     assert str(result) == str(env["cwd"] / "file_in_cwd.txt")
 
-    # Not found; Make path (prefer script dir):
+    # Not found; make path (prefer script dir):
     rel_path_script = "new_dir/new_file.txt"
     expected_script = env["script_dir"] / rel_path_script
     assert str(FileSys.extend_or_make_path(rel_path_script, prefer_script_dir=True)) == str(expected_script)
 
-    # Not found; Make path (prefer CWD):
+    # Not found; make path (prefer CWD):
     rel_path_cwd = "another_new_dir/another_new_file.txt"
     expected_cwd = env["cwd"] / rel_path_cwd
     assert str(FileSys.extend_or_make_path(rel_path_cwd, prefer_script_dir=False)) == str(expected_cwd)

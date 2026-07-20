@@ -75,7 +75,6 @@ def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> li
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
 
 
-@mypyc_attr(native_class=False)
 class ParsedArgData:
     """Represents the result of a parsed command-line argument, containing the attributes listed below.\n
     ------------------------------------------------------------------------------------------------------------
@@ -180,7 +179,7 @@ class ParsedArgs:
     Each such attribute (e.g., `args.foo`) is an instance of `ParsedArgData`."""
 
     # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
-    __slots__: tuple[str, ...] = ('__dict__', 'all_exist', 'any_exist', 'is_empty', 'unknown_flags')
+    __slots__: Final[tuple[str, ...]] = ("__dict__", "all_exist", "any_exist", "is_empty", "unknown_flags")
 
     RESERVED_ALIASES: frozenset[str] = frozenset({
         "all_exist", "any_exist", "dict", "existing", "get", "is_empty", "items", "keys", "missing", "unknown_flags", "values"
@@ -804,7 +803,7 @@ class Console(metaclass=_ConsoleMeta):
         for ansi_line, plain_line in zip(ansi_lines, plain_lines):
             right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
             box_lines.append(
-                f"{spaces_l}{open_seq}{' ' * w_padding}" + cls._persist_style(ansi_line, bg_open) + f"{right_pad}{reset}"
+                f"{spaces_l}{open_seq}{' ' * w_padding}{cls._persist_style(ansi_line, bg_open)}{right_pad}{reset}"
             )
 
         box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
@@ -1542,7 +1541,7 @@ class _ConsoleArgsParseHelper:
         if self.last_flag_pos is not None:
             # Check if last flag has inline value (`--flag=value`):
             if self.flag_value_sep and self.flag_value_sep in self.args[self.last_flag_pos]:
-                start_pos = self.last_flag_pos + 1  # Value is inline; Start after this position.
+                start_pos = self.last_flag_pos + 1  # Value is inline; start after this position.
             # Check if next token is separator (`--flag`, `=`, `value`):
             elif self.flag_value_sep and start_pos < self.args_len and self.args[start_pos].strip() == self.flag_value_sep:
                 if start_pos + 1 < self.args_len:
@@ -1552,7 +1551,7 @@ class _ConsoleArgsParseHelper:
             # Check if next token is space-separated value (`--flag value`):
             elif self.allow_space_value and start_pos < self.args_len and self._is_flag_value(self.args[start_pos]):
                 start_pos += 1  # SKIP SPACE-SEPARATED VALUE
-            # No separator = flag has no value; Start collecting from next position.
+            # No separator = flag has no value; start collecting from next position.
 
         for i in range(start_pos, self.args_len):
             arg = self.args[i]

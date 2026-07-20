@@ -129,7 +129,7 @@ class EnvPath:
                 _winreg.CloseKey(key)
 
             except Exception as exc:
-                raise RuntimeError("Failed to update PATH in registry:\n  " + str(exc).replace("\n", "  \n"))
+                raise RuntimeError(f"Failed to update PATH in registry:\n  {str(exc).replace('\n', '  \n')}") from exc
 
         # Unix-like (Linux/macOS):
         else:

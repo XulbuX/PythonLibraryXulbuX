@@ -159,10 +159,9 @@ These are plain strings (or string-returning helpers), so they can be passed dir
 
 from __future__ import annotations
 
-from .base.decorators import mypyc_attr
 from .base.consts import ANSI
 
-from typing import TypeAlias, ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
+from typing import ClassVar, Iterable, Iterator, Optional, TextIO, Final, Union, cast
 from pathlib import Path
 import ctypes as _ctypes
 import regex as _rx
@@ -208,7 +207,7 @@ class _StyleGroup:
     ------------------------------------------------------------------
     Supports further `|` chaining and `()` application."""
 
-    __slots__: tuple[str, ...] = ("_codes", )
+    __slots__: Final[tuple[str, ...]] = ("_codes", )
 
     def __init__(self, *codes: AnyStyle) -> None:
         self._codes: tuple[AnyStyle, ...] = codes
@@ -249,20 +248,38 @@ class _StyleGroup:
         return f"_StyleGroup{self._codes!r}"
 
 
-@mypyc_attr(native_class=False)
-class _Style(int):
-    """A single ANSI ANSI style integer.\n
+class _Style:
+    """A single ANSI style integer.\n
     ----------------------------------------------------------------------------
     Supports two operators:
     *   `|`  combines two or more codes into a `_StyleGroup` → `S.BOLD | S.RED`
     *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`
     ----------------------------------------------------------------------------
-    Marked `native_class=False` because MyPyC does not support<br>
-    subclassing the built-in `int` type in a native class."""
+    """
 
+    __slots__: Final[tuple[str, ...]] = ("_value", "_oc")
     _oc: tuple[tuple[str, ...], tuple[str, ...]]
 
-    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:  # type: ignore[override]
+    def __init__(self, value: int, /) -> None:
+        self._value: int = value
+
+    def __int__(self) -> int:
+        return self._value
+
+    def __str__(self) -> str:
+        return str(self._value)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self._value == other
+        if isinstance(other, _Style):
+            return self._value == other._value
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
         """Combines this style with another code or group via `|`."""
 
         if isinstance(other, _StyleGroup):
@@ -270,7 +287,7 @@ class _Style(int):
 
         return _StyleGroup(self, other)
 
-    def __ror__(self, other: AnyStyle) -> _StyleGroup:  # type: ignore[override]
+    def __ror__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this style with another code or group via `|`."""
 
         return _StyleGroup(other, self)
@@ -310,7 +327,7 @@ class _ColorStyle:
     >>> S.hex("#FF6070")("text")                # Hex FG color
     >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
 
-    __slots__: tuple[str, ...] = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
+    __slots__: Final[tuple[str, ...]] = ("_red", "_green", "_blue", "_bg", "_open_seq", "_close_seq")
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
         self._red: int = red
@@ -374,7 +391,7 @@ class _Link:
     >>> S.link("https://example.com")("click here")
     >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
 
-    __slots__: tuple[str, ...] = ("_url", "_open_seq", "_close_seq")
+    __slots__: Final[tuple[str, ...]] = ("_url", "_open_seq", "_close_seq")
 
     def __init__(self, url: str | Path, /) -> None:
         self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
@@ -416,7 +433,7 @@ class _StyledSequence:
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
     `text` may be a plain `str`, a nested `_StyledSequence`, or a tuple of mixed segments."""
 
-    __slots__: tuple[str, ...] = ("_opens", "_closes", "text")
+    __slots__: Final[tuple[str, ...]] = ("_opens", "_closes", "text")
 
     def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: TextLike) -> None:
         self._opens: tuple[str, ...] = opens
@@ -431,12 +448,12 @@ class _StyledSequence:
 
 ######################### PUBLIC TYPES ########################
 
-AnyStyle: TypeAlias = Union[_Style, _ColorStyle, _Link]
+type AnyStyle = Union[_Style, _ColorStyle, _Link]
 """Any single style code, color style, or link style<br>
 that can be combined via `|` and applied to text."""
-StyledSegment: TypeAlias = Union[str, _StyledSequence, AnyStyle, _StyleGroup]
+type StyledSegment = Union[str, _StyledSequence, AnyStyle, _StyleGroup]
 """A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
-TextLike: TypeAlias = Union[StyledSegment, tuple[StyledSegment, ...]]
+type TextLike = Union[StyledSegment, tuple[StyledSegment, ...]]
 """Anything that can be styled or rendered.
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
 
@@ -720,7 +737,7 @@ class StyledText:
     For exact information about how to use the operator syntax,<br>
     see the `ansi` module documentation."""
 
-    __slots__: tuple[str, ...] = ("_ansi_parts", "ansi")
+    __slots__: Final[tuple[str, ...]] = ("_ansi_parts", "ansi")
 
     def __init__(self, /, *segments: TextLike, sep: str = "\n") -> None:
         self._ansi_parts: list[str] = []
@@ -942,7 +959,7 @@ class StyledText:
                 self._ansi_parts.append(piece)
             return
 
-        # Fallback; Coerce unknown objects to str:
+        # Fallback; coerce unknown objects to str:
         self._ansi_parts.append(str(segment))
 
 
@@ -1031,9 +1048,9 @@ class _BuildOpenClose:
         if self.link_url is not None:
             opens.append(ANSI.SEQ_LINK_OPEN.format(self.link_url))
         if self.sgr_open:
-            opens.append(f"{ANSI.CHAR}[{';'.join(self.sgr_open)}m")
+            opens.append(f"{ANSI.CHAR}[{";".join(self.sgr_open)}m")
         if dedup_close:
-            closes.append(f"{ANSI.CHAR}[{';'.join(dedup_close)}m")
+            closes.append(f"{ANSI.CHAR}[{";".join(dedup_close)}m")
         if self.link_url is not None:
             closes.append(ANSI.SEQ_LINK_CLOSE)
 

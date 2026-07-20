@@ -161,7 +161,7 @@ class Data:
                 result: list[Any] = list(dict.fromkeys(processed))
 
             except TypeError:
-                # Unhashable items (lists, dicts, sets); Fall back to O(n²) equality check.
+                # Unhashable items (lists, dicts, sets); fall back to O(n²) equality check.
                 result = []
                 for item in processed:
                     if item not in result:

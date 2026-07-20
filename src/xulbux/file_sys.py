@@ -163,8 +163,7 @@ class FileSys(metaclass=_FileSysMeta):
                         _shutil.rmtree(item)
 
                 except Exception as exc:
-                    fmt_error = "\n  ".join(str(exc).splitlines())
-                    raise Exception(f"Failed to delete {item!r}:\n  {fmt_error}") from exc
+                    raise RuntimeError(f"Failed to delete {item!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
 
 
 class _ExtendPathHelper:

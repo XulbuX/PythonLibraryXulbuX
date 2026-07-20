@@ -44,17 +44,17 @@ IS_LATEST_VERSION: Optional[bool] = is_latest_version()
 class H:
     """Styling constants for the CLI help message."""
 
-    BORDER: Final[_StyleGroup] = S.DIM | S.BR.BLACK
-    CLS: Final[_Style] = S.BR.CYAN
-    CMD: Final[_Style] = S.GREEN
-    CONST: Final[_Style] = S.BR.BLUE
-    FN: Final[_Style] = S.BR.GREEN
-    HEADING: Final[_StyleGroup] = S.BOLD | S.BR.WHITE
-    IMPORT: Final[_Style] = S.MAGENTA
-    LIB: Final[_Style] = S.BR.MAGENTA
-    META: Final[_StyleGroup] = S.DIM | S.BR.WHITE
-    PUNCT: Final[_Style] = S.BR.BLACK
-    TEXT: Final[_Style] = S.WHITE
+    BORDER: _StyleGroup = S.DIM | S.BR.BLACK
+    CLS: _Style = S.BR.CYAN
+    CMD: _Style = S.GREEN
+    CONST: _Style = S.BR.BLUE
+    FN: _Style = S.BR.GREEN
+    HEADING: _StyleGroup = S.BOLD | S.BR.WHITE
+    IMPORT: _Style = S.MAGENTA
+    LIB: _Style = S.BR.MAGENTA
+    META: _StyleGroup = S.DIM | S.BR.WHITE
+    PUNCT: _Style = S.BR.BLACK
+    TEXT: _Style = S.WHITE
 
 
 # fmt: OFF
