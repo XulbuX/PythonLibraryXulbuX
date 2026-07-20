@@ -24,7 +24,7 @@ class _DeprecatedWrapper:
     def __call__[T](self, obj: T) -> T:
         try:
             if _sys.version_info >= (3, 13):
-                from warnings import deprecated as _dep
+                from warnings import deprecated as _dep  # type: ignore[attr-defined]
             else:
                 try:
                     from typing_extensions import deprecated as _dep

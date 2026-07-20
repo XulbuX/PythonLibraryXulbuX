@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with all supported Python versions.
 # See: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Test & Lint
+name: CI
 permissions:
   contents: read
 
@@ -44,12 +44,12 @@ jobs:
 
       - name: Validate code with Ruff
         run: |
-          ruff check .
-          ruff format --check .
+          python -m ruff check .
+          python -m ruff format --check .
 
       - name: Type check with PyRight
         run: |
-          pyright
+          python -m pyright
 
       - name: Test with PyTest
         run: |
