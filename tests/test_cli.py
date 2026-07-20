@@ -2,8 +2,8 @@ from xulbux.cli.help import show_help
 
 from unittest.mock import MagicMock
 from pathlib import Path
+import tomllib
 import pytest
-import toml
 
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -14,8 +14,8 @@ PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 def test_xulbux_lib_entrypoint_registered():
     """Verifies that the `xulbux-lib` script is registered in pyproject.toml pointing to the CLI main()."""
-    with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
-        pyproject_data = toml.load(file)
+    with open(PYPROJECT_PATH, "rb") as file:
+        pyproject_data = tomllib.load(file)
     scripts = pyproject_data.get("project", {}).get("scripts", {})
     assert "xulbux-lib" in scripts, "`xulbux-lib` not found in [project.scripts] in pyproject.toml"
     assert scripts["xulbux-lib"] == "xulbux.cli:main"

@@ -2,7 +2,7 @@
 This module contains custom decorators used throughout the library.
 """
 
-from typing import LiteralString, Callable, TypeVar, Any, TYPE_CHECKING
+from typing import LiteralString, Callable, Any, TYPE_CHECKING
 import sys as _sys
 
 if TYPE_CHECKING:
@@ -10,25 +10,6 @@ if TYPE_CHECKING:
         from warnings import deprecated as deprecated  # type: ignore[attr-defined]  # noqa: F401
     else:
         from typing_extensions import deprecated as deprecated  # noqa: F401
-
-
-T = TypeVar("T")
-
-
-def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> Callable[[T], T]:
-    """A decorator that marks a function or class as deprecated at runtime, using the `deprecated`<br>
-    decorator from either `warnings` or `typing_extensions` depending on the Python version.<br>
-    If neither is available, it will return the object unchanged.\n
-    ---------------------------------------------------------------------------------------------------
-    *   `message` – A string message to display when the deprecated function or class is called.
-    *   `**kwargs` – Additional keyword arguments to pass to the `deprecated` decorator.
-    ---------------------------------------------------------------------------------------------------
-    Returns a callable that can be used as a decorator for functions or classes."""
-
-    return _DeprecatedWrapper(message, **kwargs)
-
-
-deprecated = _deprecated_runtime  # type: ignore[assignment,misc]  # noqa: F811
 
 
 class _DeprecatedWrapper:
@@ -39,7 +20,7 @@ class _DeprecatedWrapper:
         self.message: LiteralString = message
         self.kwargs: Any = kwargs
 
-    def __call__(self, obj: T) -> T:
+    def __call__[T](self, obj: T) -> T:
         try:
             if _sys.version_info >= (3, 13):
                 from warnings import deprecated as _dep
@@ -55,13 +36,29 @@ class _DeprecatedWrapper:
             return obj
 
 
-def _noop_decorator(obj: T) -> T:
+def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> _DeprecatedWrapper:
+    """A decorator that marks a function or class as deprecated at runtime, using the `deprecated`<br>
+    decorator from either `warnings` or `typing_extensions` depending on the Python version.<br>
+    If neither is available, it will return the object unchanged.\n
+    ---------------------------------------------------------------------------------------------------
+    *   `message` – A string message to display when the deprecated function or class is called.
+    *   `**kwargs` – Additional keyword arguments to pass to the `deprecated` decorator.
+    ---------------------------------------------------------------------------------------------------
+    Returns a callable that can be used as a decorator for functions or classes."""
+
+    return _DeprecatedWrapper(message, **kwargs)
+
+
+deprecated = _deprecated_runtime  # type: ignore[assignment,misc]  # noqa: F811
+
+
+def _noop_decorator[T](obj: T) -> T:
     """No-op decorator that returns the object unchanged."""
 
     return obj
 
 
-def mypyc_attr(**kwargs: Any) -> Callable[[T], T]:
+def mypyc_attr[T](**kwargs: Any) -> Callable[[T], T]:
     """A custom decorator that wraps `mypy_extensions.mypyc_attr` when available,<br>
     or acts as a no-op decorator when `mypy_extensions` is not installed.\n
     This allows the use of `mypyc` compilation hints for compiling without making

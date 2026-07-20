@@ -12,7 +12,7 @@ from .color import Color
 from .regex import LazyRegex
 from .ansi import StyledText, AnyStyle, TextLike, S, _ColorStyle, _StyleGroup, _Style, _Link
 
-from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TypeVar, TextIO, Final, Any, overload, cast
+from typing import ValuesView, Generator, Callable, KeysView, Optional, Literal, TextIO, Final, Any, overload, cast
 from prompt_toolkit.key_binding import KeyPressEvent, KeyBindings
 from prompt_toolkit.validation import ValidationError, Validator
 from prompt_toolkit.document import Document
@@ -31,9 +31,6 @@ import regex as _rx
 import time as _time
 import sys as _sys
 import os as _os
-
-
-T = TypeVar("T")
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
     hr=r"(?i){hr}",
@@ -1011,7 +1008,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @overload
     @classmethod
-    def input(
+    def input[T](
         cls,
         prompt: object = "",
         /,

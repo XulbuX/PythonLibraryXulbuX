@@ -31,7 +31,6 @@ optional-dependencies = { dev = [
   "flake8>=6.1.0",
   "pyright>=1.1.408",
   "pytest>=7.4.2",
-  "toml>=0.10.2",
   "yapf>=0.43.0",
 ] }
 classifiers = [

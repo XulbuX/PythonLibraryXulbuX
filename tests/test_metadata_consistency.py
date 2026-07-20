@@ -1,8 +1,8 @@
 from typing import Optional
 from pathlib import Path
 import subprocess
+import tomllib
 import pytest
-import toml
 import ast
 import os
 import re
@@ -59,8 +59,8 @@ def test_version_consistency():
     init_version = init_version_match.group(1) if init_version_match else None
 
     # Extract version from `pyproject.toml`:
-    with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
-        pyproject_data = toml.load(file)
+    with open(PYPROJECT_PATH, "rb") as file:
+        pyproject_data = tomllib.load(file)
     pyproject_version = pyproject_data.get("project", {}).get("version", "")
 
     assert init_version is not None, f"Could not find var '__version__' in {INIT_PATH}"
@@ -84,8 +84,8 @@ def test_dependencies_consistency():
     init_deps_match = re.search(r'__dependencies__(?:[^=]*)?=\s*(\[.*?\])', init_content, re.DOTALL)
 
     # Extract dependencies from `pyproject.toml`:
-    with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
-        pyproject_data = toml.load(file)
+    with open(PYPROJECT_PATH, "rb") as file:
+        pyproject_data = tomllib.load(file)
     pyproject_deps = pyproject_data.get("project", {}).get("dependencies", [])
 
     assert init_deps_match is not None, f"Could not find var '__dependencies__' in {INIT_PATH}"
@@ -115,8 +115,8 @@ def test_description_consistency():
     init_desc = init_desc_match.group(1) if init_desc_match else None
 
     # Extract description from `pyproject.toml`:
-    with open(PYPROJECT_PATH, "r", encoding="utf-8") as file:
-        pyproject_data = toml.load(file)
+    with open(PYPROJECT_PATH, "rb") as file:
+        pyproject_data = tomllib.load(file)
     pyproject_desc = pyproject_data.get("project", {}).get("description", "")
 
     assert init_desc is not None, f"Could not find var '__description__' in {INIT_PATH}"

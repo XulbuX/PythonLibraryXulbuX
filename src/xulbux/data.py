@@ -9,13 +9,10 @@ from .string import String
 from .regex import Regex
 from .ansi import StyledText, AnyStyle, S, _StyleGroup
 
-from typing import Optional, Literal, TypeVar, Final, Union, Any, overload, cast
+from typing import Optional, Literal, Final, Union, Any, overload, cast
 import base64 as _base64
 import math as _math
 import re as _re
-
-
-DataObj = TypeVar("DataObj", bound=DataObjType)
 
 AnySyntaxStyle = Union[AnyStyle, _StyleGroup]
 """Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
@@ -93,7 +90,7 @@ class Data:
         return chars_count
 
     @classmethod
-    def strip(cls, data: DataObj, /) -> DataObj:
+    def strip[DataObj: DataObjType](cls, data: DataObj, /) -> DataObj:
         """Removes leading and trailing whitespaces from the data structure's items.\n
         -------------------------------------------------------------------------------
         *   `data` – The data structure to strip the items from."""
@@ -113,7 +110,7 @@ class Data:
             ]))
 
     @classmethod
-    def remove_empty_items(cls, data: DataObj, /, *, spaces_are_empty: bool = False) -> DataObj:
+    def remove_empty_items[DataObj: DataObjType](cls, data: DataObj, /, *, spaces_are_empty: bool = False) -> DataObj:
         """Removes empty items from the data structure.\n
         ------------------------------------------------------------------------------------
         *   `data` – The data structure to remove empty items from.
@@ -141,7 +138,7 @@ class Data:
             ]))
 
     @classmethod
-    def remove_duplicates(cls, data: DataObj, /) -> DataObj:
+    def remove_duplicates[DataObj: DataObjType](cls, data: DataObj, /) -> DataObj:
         """Removes all duplicates from the data structure.\n
         --------------------------------------------------------------
         *   `data` – The data structure to remove duplicates from."""
@@ -177,7 +174,7 @@ class Data:
             return cast(DataObj, type(data)(processed_elements))
 
     @classmethod
-    def remove_comments(
+    def remove_comments[DataObj: DataObjType](
         cls,
         data: DataObj,
         /,
@@ -420,7 +417,7 @@ class Data:
         return current_data
 
     @classmethod
-    def set_value_by_path_id(cls, data: DataObj, update_values: dict[str, Any], /) -> DataObj:
+    def set_value_by_path_id[DataObj: DataObjType](cls, data: DataObj, update_values: dict[str, Any], /) -> DataObj:
         """Updates the value/s from `update_values` in the `data`, as long as the<br>
         data structure hasn't changed since creating the path ID to that value.\n
         ------------------------------------------------------------------------------

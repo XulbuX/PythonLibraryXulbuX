@@ -133,4 +133,7 @@ if __name__ == "__main__":
         clean_project_files({"*.pyi"}, "\nCleaned up {n} stub file{s} from project directory.\n")
 
         if "--inplace" in sys.argv:
-            clean_project_files({"*.pyd", "*.so", "*.c"}, "\nCleaned up {n} compiled extension file{s} from project directory.\n")
+            clean_project_files(
+                {"*.pyd", "*.so", "*.c"},
+                "\nCleaned up {n} compiled extension file{s} from project directory.\n",
+            )
