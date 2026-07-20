@@ -19,8 +19,8 @@ __dependencies__ = [
 
 __all__ = [
     "StyledText",
-    "S",
     "Term",
+    "S",
     "Code",
     "Color",
     "Console",
@@ -28,13 +28,14 @@ __all__ = [
     "EnvPath",
     "File",
     "FileSys",
+    "FormatCodes",
     "Json",
     "Regex",
     "String",
     "System",
 ]
 
-from .ansi import StyledText, S, Term
+from .ansi import StyledText, Term, S
 from .code import Code
 from .color import Color
 from .console import Console
@@ -42,6 +43,7 @@ from .data import Data
 from .env_path import EnvPath
 from .file import File
 from .file_sys import FileSys
+from .format_codes import FormatCodes
 from .json import Json
 from .regex import Regex
 from .string import String

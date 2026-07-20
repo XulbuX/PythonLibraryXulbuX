@@ -142,7 +142,7 @@ show-source = true
 statistics = true
 
 [tool.mypy]
-exclude = ["^build/"]
+exclude = ["^assets/", "^build/"]
 
 [tool.pyright]
 include = ["src", "tests"]
