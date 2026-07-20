@@ -24,7 +24,10 @@ def generate_stubs_for_package():
 
     try:
         skip_stubgen = {
+            PROJECT_SRC / "base" / "decorators.py",  # Preserve conditional typing imports
             PROJECT_SRC / "base" / "types.py",  # Complex type definitions
+            PROJECT_SRC / "base" / "consts.py",  # Preserve decorators
+            PROJECT_SRC / "format_codes.py",  # Preserve decorators
             PROJECT_SRC / "__init__.py",  # Preserve package metadata constants.
         }
 
@@ -71,10 +74,16 @@ def delete_project_stub_files():
     print(f"\nCleaned up {len(deleted)} stub file(s) from project directory.\n")
 
 
+# If the user runs the setup script with the --gen-stubs flag,
+# generate stub files and exit without building the package:
+if "--gen-stubs" in sys.argv:
+    generate_stubs_for_package()
+    sys.exit(0)
+
 ext_modules = []
 
 # Only compile and generate stubs when actually building, not during metadata-only
-# phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation.
+# phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation:
 _BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
 _is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
 

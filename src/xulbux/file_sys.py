@@ -179,7 +179,7 @@ class _ExtendPathHelper:
         *,
         fuzzy_match: bool,
         raise_error: bool,
-    ):
+    ) -> None:
         self.cls = cls
         self.rel_path = rel_path
         self.search_dirs = search_dirs

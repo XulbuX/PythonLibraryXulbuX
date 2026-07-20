@@ -247,7 +247,7 @@ class LazyRegex:
     phone_pattern = PATTERNS.phone  # Compiles and caches the PHONE pattern
     ```"""
 
-    def __init__(self, **patterns: str):
+    def __init__(self, **patterns: str) -> None:
         self._patterns = patterns
 
     def __getattr__(self, name: str, /) -> _rx.Pattern[str]:

@@ -86,7 +86,7 @@ class ParsedArgData:
     ------------------------------------------------------------------------------------------------------------
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: Optional[str] = None):
+    def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: Optional[str] = None) -> None:
         self.exists: bool = exists
         """Whether the argument was found or not."""
         self.is_pos: bool = is_pos
@@ -187,7 +187,7 @@ class ParsedArgs:
     })
     """Alias names that are reserved and cannot be used as argument aliases."""
 
-    def __init__(self, unknown_flags: Optional[list[str]] = None, **parsed_args: ParsedArgData):
+    def __init__(self, unknown_flags: Optional[list[str]] = None, **parsed_args: ParsedArgData) -> None:
         for alias_name, parsed_arg_data in parsed_args.items():
             setattr(self, alias_name, parsed_arg_data)
 
@@ -1365,7 +1365,7 @@ class _ConsoleArgsParseHelper:
         skip: int = 0,
         flag_value_sep: Optional[str],
         allow_space_value: bool = True,
-    ):
+    ) -> None:
         self.arg_parse_configs = arg_parse_configs
         self.flag_value_sep = flag_value_sep
         self.allow_space_value = allow_space_value
@@ -1845,7 +1845,7 @@ class _ConsoleInputValidator(Validator):
         mask_char: Optional[str],
         min_len: Optional[int],
         validator: Optional[Callable[[str], Optional[str]]],
-    ):
+    ) -> None:
         self.get_text = get_text
         self.mask_char = mask_char
         self.min_len = min_len
@@ -1893,7 +1893,7 @@ class ProgressBar:
         limited_bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
-    ):
+    ) -> None:
         self.active: bool = False
         """Whether the progress bar is currently active (intercepting stdout) or not."""
         self.min_width: int
@@ -2190,7 +2190,7 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
-    def __init__(self, progress_bar: ProgressBar, total: int, label: Optional[str], /):
+    def __init__(self, progress_bar: ProgressBar, total: int, label: Optional[str], /) -> None:
         self.progress_bar = progress_bar
         self.total = total
         self.current_label = label
@@ -2278,7 +2278,7 @@ class Throbber:
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
-    ):
+    ) -> None:
         self.throbber_format: list[str]
         """The format strings used to render the throbber (joined by `sep`)."""
         self.sep: str
@@ -2484,7 +2484,7 @@ class Throbber:
 class _InterceptedOutput:
     """Custom StringIO that captures output and stores it in the progress bar buffer."""
 
-    def __init__(self, status_indicator: ProgressBar | Throbber, /):
+    def __init__(self, status_indicator: ProgressBar | Throbber, /) -> None:
         self.status_indicator = status_indicator
         self.string_io = StringIO()
 

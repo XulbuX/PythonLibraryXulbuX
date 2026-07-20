@@ -863,7 +863,7 @@ class _EscapeFormatCodeHelper:
         use_default: bool,
         default_color: Optional[rgba],
         escape_char: Literal["/", "\\"],
-    ):
+    ) -> None:
         self.cls = cls
         self.use_default = use_default
         self.default_color = default_color
@@ -913,7 +913,7 @@ class _EscapeFormatCodeHelper:
 class _RemAnsiSeqHelper:
     """Internal, callable helper class to remove ANSI sequences and track their removal positions."""
 
-    def __init__(self, removals: list[tuple[int, str]], /):
+    def __init__(self, removals: list[tuple[int, str]], /) -> None:
         self.removals = removals
 
     def __call__(self, match: _rx.Match[str], /) -> str:
@@ -937,7 +937,7 @@ class _ReplaceKeysHelper:
         use_default: bool,
         default_color: Optional[rgba],
         brightness_steps: int,
-    ):
+    ) -> None:
         self.cls = cls
         self.use_default = use_default
         self.default_color = default_color

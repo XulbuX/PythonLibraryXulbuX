@@ -596,7 +596,7 @@ class Data:
 class _DataRemoveCommentsHelper:
     """Internal, callable helper class to remove all comments from nested data structures."""
 
-    def __init__(self, data: DataObjType, /, *, comment_start: str, comment_end: str, comment_sep: str):
+    def __init__(self, data: DataObjType, /, *, comment_start: str, comment_end: str, comment_sep: str) -> None:
         self.data = data
         self.comment_start = comment_start
         self.comment_end = comment_end
@@ -649,7 +649,7 @@ class _DataRemoveCommentsHelper:
 class _DataGetPathIdHelper:
     """Internal, callable helper class to process a data path and generate its unique path ID."""
 
-    def __init__(self, path: str, /, *, path_sep: str, data_obj: DataObjType, ignore_not_found: bool):
+    def __init__(self, path: str, /, *, path_sep: str, data_obj: DataObjType, ignore_not_found: bool) -> None:
         self.keys = path.split(path_sep)
         self.data_obj = data_obj
         self.ignore_not_found = ignore_not_found
@@ -735,7 +735,7 @@ class _DataRenderHelper:
         sep: str,
         as_json: bool,
         syntax_highlighting: dict[str, AnySyntaxStyle] | bool,
-    ):
+    ) -> None:
         self.cls = cls
         self.data = data
         self.indent = indent

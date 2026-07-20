@@ -221,7 +221,7 @@ class System(metaclass=_SystemMeta):
 class _SystemRestartHelper:
     """Internal, callable helper class to handle system restart with platform-specific logic."""
 
-    def __init__(self, prompt: object, /, *, wait: int, continue_program: bool, force: bool):
+    def __init__(self, prompt: object, /, *, wait: int, continue_program: bool, force: bool) -> None:
         self.prompt = prompt
         self.wait = wait
         self.continue_program = continue_program
@@ -298,7 +298,7 @@ class _SystemCheckLibsHelper:
         install_missing: bool,
         missing_libs_msgs: MissingLibsMsgs,
         confirm_install: bool,
-    ):
+    ) -> None:
         self.lib_names = lib_names
         self.install_missing = install_missing
         self.missing_libs_msgs = missing_libs_msgs

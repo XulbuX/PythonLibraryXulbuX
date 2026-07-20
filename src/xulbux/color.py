@@ -43,7 +43,16 @@ class rgba:
     *   `with_alpha(alpha)` to create a new color with different alpha
     *   `complementary()` to get the complementary color"""
 
-    def __init__(self, red: int, green: int, blue: int, alpha: Optional[float] = None, /, *, _validate: bool = True):
+    def __init__(
+        self,
+        red: int,
+        green: int,
+        blue: int,
+        alpha: Optional[float] = None,
+        /,
+        *,
+        _validate: bool = True,
+    ) -> None:
         self.red: int
         """The red channel in range [0, 255] inclusive."""
         self.green: int
@@ -322,7 +331,16 @@ class hsla:
     *   `with_alpha(alpha)` to create a new color with different alpha
     *   `complementary()` to get the complementary color"""
 
-    def __init__(self, hue: int, sat: int, light: int, alpha: Optional[float] = None, /, *, _validate: bool = True):
+    def __init__(
+        self,
+        hue: int,
+        sat: int,
+        light: int,
+        alpha: Optional[float] = None,
+        /,
+        *,
+        _validate: bool = True,
+    ) -> None:
         self.hue: int
         """The hue channel in range [0, 360] inclusive."""
         self.sat: int
