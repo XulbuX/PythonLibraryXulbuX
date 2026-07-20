@@ -306,22 +306,22 @@ def test_get_args(
 
 
 def test_get_args_invalid_params():
-    with pytest.raises(ValueError, match="Duplicate flag '-f' found. It's assigned to both 'file1' and 'file2'."):
+    with pytest.raises(ValueError, match=r"Duplicate flag '-f' found\. It's assigned to both 'file1' and 'file2'\."):
         Console.get_args({"file1": {"-f", "--file1"}, "file2": {"flags": {"-f", "--file2"}, "default": "..."}})
 
-    with pytest.raises(ValueError, match="Duplicate flag '--long' found. It's assigned to both 'arg1' and 'arg2'."):
+    with pytest.raises(ValueError, match=r"Duplicate flag '--long' found\. It's assigned to both 'arg1' and 'arg2'\."):
         Console.get_args({"arg1": {"flags": {"--long"}, "default": "..."}, "arg2": {"-a", "--long"}})
 
-    with pytest.raises(ValueError, match="The set must contain at least one flag to search for."):
+    with pytest.raises(ValueError, match=r"The set must contain at least one flag to search for\."):
         Console.get_args({"arg": set()})
 
-    with pytest.raises(ValueError, match="The 'flags'-key set must contain at least one flag to search for."):
+    with pytest.raises(ValueError, match=r"The 'flags'-key set must contain at least one flag to search for\."):
         Console.get_args({"arg": {"flags": set(), "default": "..."}})
 
     with pytest.raises(ValueError, match=r"non-empty string or None, got"):
         Console.get_args({"arg": {"-a"}}, flag_value_sep="")
 
-    with pytest.raises(ValueError, match="non-negative integer"):
+    with pytest.raises(ValueError, match=r"non-negative integer"):
         Console.get_args({"arg": {"-a"}}, skip=-1)
 
     for reserved in ParsedArgs.RESERVED_ALIASES:
@@ -349,7 +349,7 @@ def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
 
 def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
     """Test that flag_value_sep=None disables separator syntax and only space-separated values work."""
-    # SEPARATOR SYNTAX SHOULD NOT BE RECOGNIZED – '--flag=val' IS TREATED AS A STANDALONE UNKNOWN TOKEN
+    # SEPARATOR SYNTAX SHOULD NOT BE RECOGNIZED - '--flag=val' IS TREATED AS A STANDALONE UNKNOWN TOKEN
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "space_val", "--other=ignored"])
     result = Console.get_args({"flag": {"--flag"}, "other": {"--other"}, "after": "after"}, flag_value_sep=None)
 
@@ -358,7 +358,7 @@ def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
     assert result.flag.values == ("space_val",)
     assert result.flag.flag == "--flag"
 
-    # '--other=ignored' LOOKS LIKE A FLAG WITH NO SEPARATOR PROCESSING – TREATED AS UNKNOWN FLAG
+    # '--other=ignored' LOOKS LIKE A FLAG WITH NO SEPARATOR PROCESSING - TREATED AS UNKNOWN FLAG
     assert result.other.exists is False
     assert result.other.values == ()
 
@@ -932,9 +932,9 @@ def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, M
     Console.input("Enter text: ", start="[green]", end="[_c]")
 
     assert mock_session_class.called
-    captured = capsys.readouterr()
+    capsys.readouterr()
     # Just verify output was produced (start/end formatting occurred):
-    assert captured.out != "" or True  # Output may be captured or go to real STDOUT.
+    assert True  # Output may be captured or go to real STDOUT.
 
 
 def test_input_message_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
@@ -1102,9 +1102,9 @@ def test_progressbar_set_bar_format():
 
 def test_progressbar_set_bar_format_invalid():
     pb = ProgressBar()
-    with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
+    with pytest.raises(ValueError, match=r"must contain the '{bar}' or '{b}' placeholder"):
         pb.set_bar_format(bar_format=["Progress: {p}%"])
-    with pytest.raises(ValueError, match="must contain the '{bar}' or '{b}' placeholder"):
+    with pytest.raises(ValueError, match=r"must contain the '{bar}' or '{b}' placeholder"):
         pb.set_bar_format(limited_bar_format=["Progress: {p}%"])
 
 
@@ -1117,17 +1117,17 @@ def test_progressbar_set_chars():
 
 def test_progressbar_set_chars_invalid():
     pb = ProgressBar()
-    with pytest.raises(ValueError, match="must contain at least two characters"):
+    with pytest.raises(ValueError, match=r"must contain at least two characters"):
         pb.set_chars(("█",))
-    with pytest.raises(ValueError, match="must be single-character strings"):
+    with pytest.raises(ValueError, match=r"must be single-character strings"):
         pb.set_chars(("█", "▓▓", " "))
 
 
 def test_progressbar_show_progress_invalid_total():
     pb = ProgressBar()
-    with pytest.raises(ValueError, match="The 'total' parameter must be a positive integer."):
+    with pytest.raises(ValueError, match=r"The 'total' parameter must be a positive integer, got 0"):
         pb.show_progress(10, 0)
-    with pytest.raises(ValueError, match="The 'total' parameter must be a positive integer."):
+    with pytest.raises(ValueError, match=r"The 'total' parameter must be a positive integer, got -5"):
         pb.show_progress(10, -5)
 
 

@@ -161,6 +161,7 @@ ignore = ["E203", "E266", "E501", "RUF002"]
 mccabe = { max-complexity = 12 }
 
 [tool.ruff.lint.isort]
+split-on-trailing-comma = false
 section-order = [
   "future",
   "local-folder",
@@ -171,6 +172,7 @@ section-order = [
 no-lines-before = ["first-party", "third-party"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/xulbux/base/consts.py" = ["RUF001"]
 "src/xulbux/base/types.py" = ["E302", "E305"]
 "src/xulbux/cli/help.py" = ["E501"]
 "__init__.py" = ["F403", "F405"]

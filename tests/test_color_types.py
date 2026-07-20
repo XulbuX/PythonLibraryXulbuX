@@ -1,4 +1,3 @@
-
 from xulbux.color import hexa, hsla, rgba
 
 
@@ -59,12 +58,12 @@ def test_rgba_construction():
     assert rgba(255, 255, 255).values() == (255, 255, 255, None)
     try:
         rgba(300, 150, 200)
-        assert False, "Should raise ValueError for invalid RGB values"
+        raise AssertionError("Should raise ValueError for invalid RGB values")
     except ValueError:
         pass
     try:
         rgba(100, 150, 200, 2.0)
-        assert False, "Should raise ValueError for invalid alpha value"
+        raise AssertionError("Should raise ValueError for invalid alpha value")
     except ValueError:
         pass
 
@@ -121,12 +120,12 @@ def test_hsla_construction():
     assert hsla(360, 100, 100).values() == (360, 100, 100, None)
     try:
         hsla(361, 50, 60)
-        assert False, "Should raise ValueError for invalid hue value"
+        raise AssertionError("Should raise ValueError for invalid hue value")
     except ValueError:
         pass
     try:
         hsla(210, 101, 60)
-        assert False, "Should raise ValueError for invalid saturation value"
+        raise AssertionError("Should raise ValueError for invalid saturation value")
     except ValueError:
         pass
 
@@ -185,12 +184,12 @@ def test_hexa_construction():
     assert hexa(0xFF000080).values() == (255, 0, 0, 0.5)
     try:
         hexa("#XX0000")
-        assert False, "Should raise ValueError for invalid hex digits"
+        raise AssertionError("Should raise ValueError for invalid hex digits")
     except ValueError:
         pass
     try:
         hexa("#F0000")
-        assert False, "Should raise ValueError for invalid length"
+        raise AssertionError("Should raise ValueError for invalid length")
     except ValueError:
         pass
 

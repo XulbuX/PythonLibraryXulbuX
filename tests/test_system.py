@@ -125,7 +125,7 @@ def test_restart_too_many_processes(mock_subprocess: MagicMock, mock_platform: M
     """Test restart fails when too many processes running"""
     mock_platform.return_value = "Windows"
     mock_subprocess.return_value = b"many\nprocess\nlines\nhere\nmore\nprocesses\neven\nmore\n"
-    with pytest.raises(RuntimeError, match="Processes are still running"):
+    with pytest.raises(RuntimeError, match=r"Processes are still running"):
         System.restart()
 
 
@@ -135,7 +135,7 @@ def test_restart_unsupported_system(mock_subprocess: MagicMock, mock_platform: M
     """Test restart on unsupported system"""
     mock_platform.return_value = "Unknown"
     mock_subprocess.return_value = b"some output"
-    with pytest.raises(NotImplementedError, match="Restart not implemented for 'unknown' systems."):
+    with pytest.raises(NotImplementedError, match=r"Restart not implemented for 'unknown' systems\."):
         System.restart()
 
 

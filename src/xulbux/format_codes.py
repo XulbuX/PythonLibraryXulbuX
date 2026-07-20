@@ -598,11 +598,11 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # Enable VT100 mode on Windows:
-                    kernel32 = _ctypes.windll.kernel32
-                    handle = kernel32.GetStdHandle(-11)
-                    mode = _ctypes.c_ulong()
-                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
-                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+                    kernel32 = _ctypes.windll.kernel32  # type: ignore
+                    handle = kernel32.GetStdHandle(-11)  # type: ignore
+                    mode = _ctypes.c_ulong()  # type: ignore
+                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type: ignore
+                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type: ignore
                 except Exception:
                     pass
             _TERMINAL_ANSI_CONFIGURED = True  # type: ignore[assignment]

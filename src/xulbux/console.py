@@ -20,7 +20,7 @@ import sys as _sys
 import threading as _threading
 import time as _time
 from collections.abc import Callable, Generator, KeysView, ValuesView
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from io import StringIO
 from itertools import chain
 from typing import Any, Final, Literal, TextIO, cast, overload
@@ -130,7 +130,12 @@ class ParsedArgData:
     def _replace(self, **kwargs: Any) -> "ParsedArgData":
         """Internal method to return a new `ParsedArgData` with updated attributes."""
 
-        current: dict[str, Any] = dict(exists=self.exists, values=list(self.values), is_pos=self.is_pos, flag=self.flag)
+        current: dict[str, Any] = {
+            "exists": self.exists,
+            "values": list(self.values),
+            "is_pos": self.is_pos,
+            "flag": self.flag,
+        }
         current.update(kwargs)
         return ParsedArgData(**current)
 
@@ -361,10 +366,10 @@ class _ConsoleMeta(type):
         if _os.name == "nt":
             # Check if VT100 mode is enabled on Windows:
             try:
-                kernel32 = _ctypes.windll.kernel32
-                handle = kernel32.GetStdHandle(-11)
-                mode = _ctypes.c_ulong()
-                if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):
+                kernel32 = _ctypes.windll.kernel32  # type: ignore
+                handle = kernel32.GetStdHandle(-11)  # type: ignore
+                mode = _ctypes.c_ulong()  # type: ignore
+                if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # type: ignore
                     return (mode.value & 0x0004) != 0
             except Exception:
                 pass
@@ -749,7 +754,7 @@ class Console(metaclass=_ConsoleMeta):
 
         box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
 
-        for ansi_line, plain_line in zip(ansi_lines, plain_lines):
+        for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
             right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
             box_lines.append(
                 f"{spaces_l}{open_seq}{' ' * w_padding}{cls._persist_style(ansi_line, bg_open)}{right_pad}{reset}"
@@ -854,7 +859,7 @@ class Console(metaclass=_ConsoleMeta):
         h_rule = f"{spaces_l}{border_open}{border_chars[8]}{h_rule_line}{border_chars[10]}{reset}"
 
         box_lines: list[str] = []
-        for ansi_line, plain_line in zip(ansi_lines, plain_lines):
+        for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
             if _PATTERNS.hr.match(plain_line):
                 box_lines.append(h_rule)
                 continue
@@ -1164,7 +1169,7 @@ class Console(metaclass=_ConsoleMeta):
 
         for line in clean_prompt.splitlines():
             lst = String.split_count(line, wrap_len)
-            yield ("",) if not lst else lst
+            yield lst if lst else ("",)
 
     @classmethod
     def _add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:
@@ -1268,7 +1273,7 @@ class Console(metaclass=_ConsoleMeta):
 
         for val in values:
             if isinstance(val, StyledText):
-                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n")):
+                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
                     ansi_lines.append(ansi_line)
                     plain_lines.append(plain_line)
                 continue
@@ -1402,13 +1407,16 @@ class _ConsoleArgsParseHelper:
             arg = self.args[i]
 
             # Check for flag with inline separator (`--flag=value`):
-            if self.flag_value_sep and self.flag_value_sep in arg:
-                if arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup:
-                    if self.first_flag_pos is None:
-                        self.first_flag_pos = i
-                    self.last_flag_pos = i
-                    i += 1
-                    continue
+            if (
+                self.flag_value_sep
+                and self.flag_value_sep in arg
+                and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup
+            ):
+                if self.first_flag_pos is None:
+                    self.first_flag_pos = i
+                self.last_flag_pos = i
+                i += 1
+                continue
 
             # Check for standalone flag:
             if arg in self.arg_lookup:
@@ -1500,10 +1508,7 @@ class _ConsoleArgsParseHelper:
 
         if arg.startswith("--"):
             return True
-        if len(arg) >= 2 and arg[0] == "-" and not arg[1].isdigit() and arg[1] != ".":
-            return True
-
-        return False
+        return bool(len(arg) >= 2 and arg[0] == "-" and not arg[1].isdigit() and arg[1] != ".")
 
     def _is_positional_arg(self, arg: str, /, *, allow_separator: bool = True) -> bool:
         """Check if an argument is positional (not a flag or separator)."""
@@ -1513,14 +1518,10 @@ class _ConsoleArgsParseHelper:
             and self.flag_value_sep in arg
             and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup
         ):
-            if self._looks_like_flag(arg.split(self.flag_value_sep, 1)[0].strip()):
-                return False
-            return True
+            return not self._looks_like_flag(arg.split(self.flag_value_sep, 1)[0].strip())
 
         if arg not in self.arg_lookup and (allow_separator or not self.flag_value_sep or arg != self.flag_value_sep):
-            if self._looks_like_flag(arg):
-                return False
-            return True
+            return not self._looks_like_flag(arg)
 
         return False
 
@@ -1538,10 +1539,7 @@ class _ConsoleArgsParseHelper:
             and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup
         ):
             return False
-        if self._looks_like_flag(arg):
-            return False
-
-        return True
+        return not self._looks_like_flag(arg)
 
     def process_flagged_args(self) -> None:
         """Process flagged arguments."""
@@ -1579,11 +1577,14 @@ class _ConsoleArgsParseHelper:
 
                 # Check for separator in next tokens (`--flag`, `=`, `value`):
                 if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
-                    if i + 2 < self.args_len:
-                        if (val := self.args[i + 2]) not in self.arg_lookup and val != self.flag_value_sep:
-                            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
-                            i += 3
-                            continue
+                    if (
+                        i + 2 < self.args_len
+                        and (val := self.args[i + 2]) not in self.arg_lookup
+                        and val != self.flag_value_sep
+                    ):
+                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
+                        i += 3
+                        continue
                     i += 2
                     continue
 
@@ -2082,10 +2083,8 @@ class ProgressBar:
     def _emergency_cleanup(self) -> None:
         """Emergency cleanup to restore stdout in case of exceptions."""
 
-        try:
+        with suppress(Exception):
             self._stop_intercepting()
-        except Exception:
-            pass
 
     def _clear_progress_line(self) -> None:
         if self._last_line_len > 0 and self._original_stdout:
@@ -2379,10 +2378,8 @@ class Throbber:
     def _emergency_cleanup(self) -> None:
         """Emergency cleanup to restore stdout in case of exceptions."""
 
-        try:
+        with suppress(Exception):
             self._stop_intercepting()
-        except Exception:
-            pass
 
     def _clear_throbber_line(self) -> None:
         if self._last_line_len > 0 and self._original_stdout:

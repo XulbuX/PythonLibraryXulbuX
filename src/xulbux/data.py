@@ -59,11 +59,11 @@ class Data:
                 elif obj["encoding"] == "base64":
                     data = _base64.b64decode(obj[key].encode("utf-8"))
                 else:
-                    raise ValueError(f"Unknown encoding method '{obj['encoding']}'")
+                    raise ValueError(f"Unknown encoding method '{obj['encoding']}'") from None
 
                 return bytearray(data) if key == "bytearray" else data
 
-        raise ValueError(f"Invalid serialized data:\n  {obj}")
+        raise ValueError(f"Invalid serialized data:\n  {obj}") from None
 
     @classmethod
     def chars_count(cls, data: DataObjType, /) -> int:
@@ -237,7 +237,7 @@ class Data:
         *   For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
 
         if not comment_start:
-            raise ValueError(f"The 'comment_start' parameter must be a non-empty string, got {comment_start!r}")
+            raise ValueError(f"The 'comment_start' parameter must be a non-empty string, got {comment_start!r}") from None
 
         return cast(
             "DataObj",
@@ -272,7 +272,7 @@ class Data:
         the method `Data.get_path_id()`. See its documentation for more details."""
 
         if not path_sep:
-            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}")
+            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}") from None
 
         if isinstance(ignore_paths, str):
             ignore_paths = [ignore_paths]
@@ -362,7 +362,7 @@ class Data:
         the index of the value, so `healthy->fruit->0`."""
 
         if not path_sep:
-            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}")
+            raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}") from None
 
         data = cls.remove_comments(data, comment_start=comment_start, comment_end=comment_end)
 
@@ -402,7 +402,7 @@ class Data:
                 idx_iterable_data = cast("IndexIterable", current_data)
                 if i == len(path) - 1 and get_key:
                     if parent is None or not isinstance(parent, dict):
-                        raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'")
+                        raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'") from None
                     return next(key for key, value in parent.items() if value is idx_iterable_data)
                 parent = idx_iterable_data
                 current_data = list(idx_iterable_data)[path_idx]  # Convert to list for indexing.
@@ -425,8 +425,8 @@ class Data:
             ```
             The path IDs should have been created using `Data.get_path_id()`."""
 
-        if not (valid_update_values := [(path_id, new_val) for path_id, new_val in update_values.items()]):
-            raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}")
+        if not (valid_update_values := list(update_values.items())):
+            raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}") from None
 
         for path_id, new_val in valid_update_values:
             data = cls._set_nested_val(data, cls._sep_path_id(path_id), new_val)
@@ -479,9 +479,9 @@ class Data:
         For more detailed information about styling, see the `ansi` module documentation."""
 
         if indent < 0:
-            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
+            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}") from None
         if max_width <= 0:
-            raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
+            raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}") from None
 
         return _DataRenderHelper(
             cls,
@@ -495,9 +495,13 @@ class Data:
         )()
 
     @classmethod
-    def _compare_nested(cls, data1: Any, data2: Any, /, ignore_paths: list[list[str]], current_path: list[str] = []) -> bool:
+    def _compare_nested(
+        cls, data1: Any, data2: Any, /, ignore_paths: list[list[str]], current_path: list[str] | None = None
+    ) -> bool:
         """Internal method to recursively compare two nested data structures while ignoring specified paths."""
 
+        if current_path is None:
+            current_path = []
         if any(current_path == path[: len(current_path)] for path in ignore_paths):
             return True
 
@@ -510,7 +514,7 @@ class Data:
                 return False
             return all(
                 cls._compare_nested(
-                    dict_data1[key], dict_data2[key], ignore_paths=ignore_paths, current_path=current_path + [key]
+                    dict_data1[key], dict_data2[key], ignore_paths=ignore_paths, current_path=[*current_path, key]
                 )
                 for key in dict_data1
             )
@@ -520,8 +524,8 @@ class Data:
             if len(array_data1) != len(array_data2):
                 return False
             return all(
-                cls._compare_nested(item1, item2, ignore_paths=ignore_paths, current_path=current_path + [str(i)])
-                for i, (item1, item2) in enumerate(zip(array_data1, array_data2))
+                cls._compare_nested(item1, item2, ignore_paths=ignore_paths, current_path=[*current_path, str(i)])
+                for i, (item1, item2) in enumerate(zip(array_data1, array_data2, strict=False))
             )
 
         elif isinstance(data1, (set, frozenset)):
@@ -542,7 +546,7 @@ class Data:
                 if id_part_len_int > 0 and (len(path_id_parts) % id_part_len_int == 0):
                     return [int(path_id_parts[i : i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
 
-        raise ValueError(f"Path ID '{path_id}' is an invalid format.")
+        raise ValueError(f"Path ID '{path_id}' is an invalid format.") from None
 
     @classmethod
     def _set_nested_val(cls, data: DataObjType, id_path: list[int], value: Any, /) -> Any:
@@ -689,7 +693,7 @@ class _DataGetPathIdHelper:
         except (ValueError, KeyError):
             if self.ignore_not_found:
                 return None
-            raise KeyError(f"Key '{key}' not found in dict.")
+            raise KeyError(f"Key '{key}' not found in dict.") from None
 
     def process_iterable_key(self, key: str, /) -> int | None:
         """Process a key for iterable data. Returns the index or `None` if not found."""
@@ -706,7 +710,7 @@ class _DataGetPathIdHelper:
             except ValueError:
                 if self.ignore_not_found:
                     return None
-                raise ValueError(f"Value '{key}' not found in '{type(self.current_data).__name__}'")
+                raise ValueError(f"Value '{key}' not found in '{type(self.current_data).__name__}'") from None
 
 
 class _DataRenderHelper:

@@ -215,9 +215,8 @@ class _ExtendPathHelper:
         for search_dir in self.search_dirs:
             if (full_path := search_dir / path).exists():
                 return full_path
-            elif self.fuzzy_match:
-                if (match := self.find_path(search_dir, path, fuzzy_match=self.fuzzy_match)) is not None:
-                    return match
+            elif self.fuzzy_match and (match := self.find_path(search_dir, path, fuzzy_match=self.fuzzy_match)) is not None:
+                return match
 
         if self.raise_error:
             raise PathNotFoundError(f"Path {self.rel_path!r} not found in specified directories.")

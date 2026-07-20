@@ -85,7 +85,7 @@ def test_extend(setup_test_environment: dict[str, Path]):
 
     # Empty path:
     assert FileSys.extend_path("") is None
-    with pytest.raises(PathNotFoundError, match="Given 'rel_path' is an empty string."):
+    with pytest.raises(PathNotFoundError, match=r"Given 'rel_path' is an empty string\."):
         FileSys.extend_path("", raise_error=True)
 
     # Found in standard locations:

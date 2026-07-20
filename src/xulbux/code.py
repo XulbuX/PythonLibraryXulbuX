@@ -74,7 +74,7 @@ class Code:
         return list(Data.remove_duplicates(funcs + nested_func_calls))
 
     @classmethod
-    def is_js(cls, code: str, /, *, funcs: set[str] = {"__", "$t", "$lang"}) -> bool:
+    def is_js(cls, code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "$t", "$lang"})) -> bool:
         """Will check if the code is very likely to be JavaScript.\n
         ---------------------------------------------------------------
         *   `code` – The code to analyze.

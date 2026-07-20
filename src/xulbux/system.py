@@ -27,7 +27,7 @@ class _SystemMeta(type):
 
         try:
             if _os.name == "nt":
-                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
+                return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore
             elif _os.name == "posix":
                 return _os.geteuid() == 0  # type: ignore[attr-defined]
         except Exception:
@@ -140,10 +140,7 @@ class System(metaclass=_SystemMeta):
         /,
         *,
         install_missing: bool = False,
-        missing_libs_msgs: MissingLibsMsgs = {
-            "found_missing": "The following required libraries are missing:",
-            "should_install": "Do you want to install them now?",
-        },
+        missing_libs_msgs: MissingLibsMsgs | None = None,
         confirm_install: bool = True,
     ) -> list[str] | None:
         """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
@@ -158,6 +155,11 @@ class System(metaclass=_SystemMeta):
         If some libraries are missing or they could not be installed, their names will be returned as a list.<br>
         If all libraries are installed (or were installed successfully), `None` will be returned."""
 
+        if missing_libs_msgs is None:
+            missing_libs_msgs = {
+                "found_missing": "The following required libraries are missing:",
+                "should_install": "Do you want to install them now?",
+            }
         return _SystemCheckLibsHelper(
             lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
         )()
@@ -192,8 +194,8 @@ class System(metaclass=_SystemMeta):
             else:
                 args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-            if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:
-                raise PermissionError("Failed to launch elevated process.")
+            if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type: ignore
+                raise PermissionError("Failed to launch elevated process.") from None
             else:
                 _sys.exit(0)
 
@@ -203,12 +205,12 @@ class System(metaclass=_SystemMeta):
 
             if win_title:
                 cmd.extend(["--description", win_title])
-            cmd.extend([_sys.executable] + _sys.argv[1:] + args_list)
+            cmd.extend([_sys.executable, *_sys.argv[1:], *args_list])
 
             proc = _subprocess.Popen(cmd)
             proc.wait()
             if proc.returncode != 0:
-                raise PermissionError("Process elevation was denied.")
+                raise PermissionError("Process elevation was denied.") from None
             _sys.exit(0)
 
 
@@ -269,7 +271,9 @@ class _SystemRestartHelper:
         try:
             _subprocess.run(["sudo", "shutdown", "-r", "now"])
         except _subprocess.CalledProcessError:
-            raise PermissionError("Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted.")
+            raise PermissionError(
+                "Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted."
+            ) from None
 
         if self.continue_program:
             self.wait_for_restart()

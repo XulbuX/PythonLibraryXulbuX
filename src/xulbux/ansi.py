@@ -1023,11 +1023,11 @@ def _config_terminal() -> None:
 
     if _os.name == "nt":
         try:
-            kernel32 = _ctypes.windll.kernel32
-            handle = kernel32.GetStdHandle(-11)
-            mode = _ctypes.c_ulong()
-            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
-            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+            kernel32 = _ctypes.windll.kernel32  # type: ignore
+            handle = kernel32.GetStdHandle(-11)  # type: ignore
+            mode = _ctypes.c_ulong()  # type: ignore
+            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type: ignore
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type: ignore
         except Exception:
             pass
 
@@ -1044,9 +1044,12 @@ class _BuildOpenClose:
         self.link_url: str | None = None
 
     def build(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
-        if len(codes := self.group._codes) == 1 and type(codes[0]) is _Style:
-            if (cached := _STANDARD_SEQS.get(int(codes[0]))) is not None:
-                return cached
+        if (
+            len(codes := self.group._codes) == 1
+            and type(codes[0]) is _Style
+            and (cached := _STANDARD_SEQS.get(int(codes[0]))) is not None
+        ):
+            return cached
 
         for code in self.group:
             self._process_code(code)

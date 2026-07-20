@@ -291,7 +291,7 @@ class rgba:
 
             hue /= 6
 
-        return int(round(hue * 360)), int(round(sat * 100)), int(round(light * 100))
+        return round(hue * 360), round(sat * 100), round(light * 100)
 
 
 class hsla:
@@ -547,9 +547,9 @@ class hsla:
             chroma_max = _light * (1 + _sat) if _light < 0.5 else _light + _sat - _light * _sat
             chroma_min = 2 * _light - chroma_max
 
-            red = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue + 1 / 3) * 255))
-            green = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue) * 255))
-            blue = int(round(cls._hue_to_rgb(chroma_min, chroma_max, _hue - 1 / 3) * 255))
+            red = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue + 1 / 3) * 255)
+            green = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue) * 255)
+            blue = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue - 1 / 3) * 255)
 
         return red, green, blue
 
@@ -1543,9 +1543,8 @@ class Color:
                 _validate=False,
             )
 
-        elif isinstance(color, str):
-            if parsed := cls.str_to_rgba(color, only_first=True):
-                return parsed
+        elif isinstance(color, str) and (parsed := cls.str_to_rgba(color, only_first=True)):
+            return parsed
 
         raise ValueError(f"Could not parse RGBA color: {color!r}")
 
@@ -1576,9 +1575,8 @@ class Color:
                 _validate=False,
             )
 
-        elif isinstance(color, str):
-            if parsed := cls.str_to_hsla(color, only_first=True):
-                return parsed
+        elif isinstance(color, str) and (parsed := cls.str_to_hsla(color, only_first=True)):
+            return parsed
 
         raise ValueError(f"Could not parse HSLA color: {color!r}")
 

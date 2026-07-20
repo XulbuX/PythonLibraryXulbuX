@@ -104,7 +104,7 @@ def test_read_non_existent_file():
 
 def test_read_invalid_json(tmp_path: Path):
     file_path = create_test_json_string(tmp_path, "invalid.json", "{invalid json")
-    with pytest.raises(ValueError, match="Error parsing JSON"):
+    with pytest.raises(ValueError, match=r"Error parsing JSON"):
         Json.read(str(file_path))
 
 
@@ -119,7 +119,7 @@ def test_read_empty_json(tmp_path: Path):
 
 def test_read_comment_only_json(tmp_path: Path):
     file_path = create_test_json_string(tmp_path, "comment_only.json", '{\n">>": "comment"\n}')
-    with pytest.raises(ValueError, match="contains no data"):
+    with pytest.raises(ValueError, match=r"contains no data"):
         Json.read(str(file_path))
 
 

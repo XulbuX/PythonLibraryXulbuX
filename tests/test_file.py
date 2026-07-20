@@ -83,7 +83,7 @@ def test_create_file_force_overwrite_different_content(tmp_path: Path):
     new_content = "New configuration values"
 
     File.create(str(file_path), initial_content)
-    assert open(file_path, encoding="utf-8").read() == initial_content
+    assert file_path.read_text(encoding="utf-8") == initial_content
 
     abs_path = File.create(str(file_path), new_content, force=True)
     assert isinstance(abs_path, Path)
@@ -98,7 +98,7 @@ def test_create_file_force_overwrite_same_content(tmp_path: Path):
     content = "[Settings]\nValue=1"
 
     File.create(str(file_path), content)
-    assert open(file_path, encoding="utf-8").read() == content
+    assert file_path.read_text(encoding="utf-8") == content
 
     abs_path = File.create(str(file_path), content, force=True)
     assert isinstance(abs_path, Path)
