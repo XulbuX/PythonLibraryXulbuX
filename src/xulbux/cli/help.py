@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from .. import __version__
 from ..ansi import S, StyledText, _Style, _StyleGroup
 from ..base.decorators import mypyc_attr
@@ -57,7 +59,7 @@ class H:
     TEXT: _Style = S.WHITE
 
 
-# fmt: OFF
+# fmt: off
 CLI_HELP: Final[StyledText] = StyledText(
     S.RESET,
     (
@@ -81,66 +83,20 @@ CLI_HELP: Final[StyledText] = StyledText(
     H.HEADING("  Usage:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("LIBRARY CONSTANTS                               ")), H.BORDER("│")),
-    (
-        H.BORDER("  │ "),
-        H.IMPORT("from "),
-        H.LIB("xulbux"),
-        (S.DIM | H.LIB)("."),
-        H.LIB("base"),
-        (S.DIM | H.LIB)("."),
-        H.LIB("consts "),
-        H.IMPORT("import "),
-        H.CONST("COLOR"),
-        H.PUNCT(", "),
-        H.CONST("CHARS"),
-        H.PUNCT(", "),
-        H.CONST("ANSI "),
-        H.BORDER("│"),
-    ),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Main Classes                                    ")), H.BORDER("│")),
-    (
-        H.BORDER("  │ "),
-        H.IMPORT("from "),
-        H.LIB("xulbux "),
-        H.IMPORT("import "),
-        H.CLS("Code"),
-        H.PUNCT(", "),
-        H.CLS("Color"),
-        H.PUNCT(", "),
-        H.CLS("Console"),
-        H.PUNCT(", "),
-        H.META("...      "),
-        H.BORDER("│"),
-    ),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("Code"), H.PUNCT(", "), H.CLS("Color"), H.PUNCT(", "), H.CLS("Console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("module specific imports                         ")), H.BORDER("│")),
-    (
-        H.BORDER("  │ "),
-        H.IMPORT("from "),
-        H.LIB("xulbux"),
-        (S.DIM | H.LIB)("."),
-        H.LIB("color "),
-        H.IMPORT("import "),
-        H.FN("rgba"),
-        H.PUNCT(", "),
-        H.FN("hsla"),
-        H.PUNCT(", "),
-        H.FN("hexa         "),
-        H.BORDER("│"),
-    ),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.TEXT("For more information see the GitHub wiki page:    "), H.BORDER("│")),
-    (
-        H.BORDER("  │ "),
-        (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"),
-        "          ",
-        H.BORDER("│"),
-    ),
+    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
 )
-# fmt: ON
+# fmt: on
 
 
 def show_help() -> None:

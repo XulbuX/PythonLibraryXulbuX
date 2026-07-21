@@ -1,3 +1,5 @@
+# ruff: noqa: RUF001
+
 """
 This module contains constant values used throughout the library.
 """
