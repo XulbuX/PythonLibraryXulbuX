@@ -269,7 +269,7 @@ _TO_ANSI_CACHE_MAX_LEN: Final[int] = 8192
 
 @deprecated(
     "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-    "This will be completely removed in an upcoming future update."
+    "This will be completely removed in an upcoming update."
 )
 class FormatCodes:
     """This class provides methods to print and work with strings that contain special formatting codes,
@@ -278,7 +278,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def print(
         cls,
@@ -310,7 +310,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def input(
         cls,
@@ -343,7 +343,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def to_ansi(
         cls,
@@ -415,7 +415,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def escape(
         cls, string: str, /, default_color: Rgba | Hexa | None = None, *, _escape_char: Literal["/", "\\"] = "/"
@@ -443,7 +443,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def escape_ansi(cls, ansi_string: str, /) -> str:
         """Escapes all ANSI codes in the string, so they are visible when output to the terminal.\n
@@ -456,7 +456,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove(
         cls,
@@ -472,7 +472,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove(
         cls,
@@ -488,7 +488,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove(
         cls,
@@ -503,7 +503,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove(
         cls,
@@ -530,7 +530,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: Literal[True], _ignore_linebreaks: bool = False
@@ -540,7 +540,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: Literal[False] = False, _ignore_linebreaks: bool = False
@@ -550,7 +550,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: bool = False, _ignore_linebreaks: bool = False
@@ -559,7 +559,7 @@ class FormatCodes:
     @classmethod
     @deprecated(
         "Use the operator-based API in `xulbux.ansi` (`StyledText`, `S`, `Term`) instead. "
-        "This will be completely removed in an upcoming future update."
+        "This will be completely removed in an upcoming update."
     )
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: bool = False, _ignore_linebreaks: bool = False

@@ -1,7 +1,7 @@
 from typing import Final
 
 __package_name__: Final[str] = "xulbux"
-__version__: Final[str] = "1.9.8"
+__version__: Final[str] = "1.10.0"
 __description__: Final[str] = "A Python library to simplify common programming tasks."
 __status__: Final[str] = "Production/Stable"
 

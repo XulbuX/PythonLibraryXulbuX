@@ -4,56 +4,59 @@ This module contains custom decorators used throughout the library.
 
 import sys as _sys
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, LiteralString
-
-if TYPE_CHECKING:
-    if _sys.version_info >= (3, 13):
-        from warnings import deprecated as deprecated  # type: ignore[attr-defined]
-    else:
-        from typing_extensions import deprecated as deprecated
+from typing import TYPE_CHECKING, Any, Final, LiteralString
 
 
-class _DeprecatedWrapper:
-    """Internal, callable class that wraps the `deprecated` decorator from either<br>
-    `warnings` or `typing_extensions` depending on the Python version."""
+class _SafeDeprecated:
+    """Safe implementation of deprecated that emits warnings at runtime
+    but handles mypyc compiled functions gracefully without crashing.\n
+    Standard PEP 702 decorators crash when applying `__deprecated__` to
+    mypyc `builtin_function_or_method` objects."""
+
+    __slots__: Final[tuple[str, ...]] = ("kwargs", "message")
 
     def __init__(self, message: LiteralString, **kwargs: Any) -> None:
         self.message: LiteralString = message
         self.kwargs: Any = kwargs
 
-    def __call__[T](self, obj: T) -> T:
-        try:
-            if _sys.version_info >= (3, 13):
-                from warnings import deprecated as _dep  # type: ignore[attr-defined]
-            else:
-                try:
-                    from typing_extensions import deprecated as _dep
-                except ImportError:
-                    return obj
+    def __call__(self, arg: Any, /) -> Any:
+        if _sys.version_info >= (3, 13):
+            from warnings import deprecated as _dep
+        else:
+            try:
+                from typing_extensions import deprecated as _dep
+            except ImportError:
+                from contextlib import suppress
 
-            return _dep(self.message, **self.kwargs)(obj)
+                with suppress(AttributeError, TypeError):
+                    arg.__deprecated__ = self.message
+                return arg
+
+        try:
+            return _dep(self.message, **self.kwargs)(arg)
 
         except (AttributeError, TypeError):
-            return obj
+            # Standard decorator failed to set `__deprecated__`.
+            if callable(arg) and not isinstance(arg, type):
+                import functools
+
+                @functools.wraps(arg)
+                def _mypyc_wrapper(*args: Any, **kw: Any) -> Any:
+                    return arg(*args, **kw)
+
+                return _dep(self.message, **self.kwargs)(_mypyc_wrapper)
+
+            return arg  # If it's a class or something else, just return it.
 
 
-def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> _DeprecatedWrapper:
-    """A decorator that marks a function or class as deprecated at runtime, using the `deprecated`<br>
-    decorator from either `warnings` or `typing_extensions` depending on the Python version.<br>
-    If neither is available, it will return the object unchanged.\n
-    ---------------------------------------------------------------------------------------------------
-    *   `message` – A string message to display when the deprecated function or class is called.
-    *   `**kwargs` – Additional keyword arguments to pass to the `deprecated` decorator.
-    ---------------------------------------------------------------------------------------------------
-    Returns a callable that can be used as a decorator for functions or classes."""
-
-    return _DeprecatedWrapper(message, **kwargs)
+deprecated = _SafeDeprecated
 
 
-# Only use the custom decorator during runtime to keep
-# the IDE functionality for the `@deprecated` decorator:
-if not TYPE_CHECKING:
-    deprecated = _deprecated_runtime
+if TYPE_CHECKING:
+    if _sys.version_info >= (3, 13):
+        from warnings import deprecated as deprecated  # type: ignore[assignment]
+    else:
+        from typing_extensions import deprecated as deprecated  # type: ignore[assignment]
 
 
 def _noop_decorator[T](obj: T) -> T:
