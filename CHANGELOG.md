@@ -38,6 +38,7 @@
 
 **BREAKING CHANGES:**
 
+*   **Dropped support for Python 3.10 and 3.11.** The library now requires Python 3.12 or higher.
 *   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
     The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
     -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
