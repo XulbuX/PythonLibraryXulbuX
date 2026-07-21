@@ -1,9 +1,8 @@
 """
-This module provides functions to dynamically generate<br>
-complex regex patterns for common use cases.
+Provides utilities for dynamic regex pattern generation and evaluation.
 
-This module also provides the `LazyRegex` class, which allows<br>
-for lazy compilation and caching of regex patterns.
+Includes a `LazyRegex` class for deferred compilation, improving
+startup performance for large libraries.
 """
 
 from .base.decorators import mypyc_attr

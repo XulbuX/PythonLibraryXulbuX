@@ -1,6 +1,8 @@
 """
-This module provides functions to read, create, and update JSON files,<br>
-with support for comments inside the JSON data.
+Provides enhanced JSON file operations with support for comments.
+
+Features include robust reading, validation, formatting, and
+graceful fallback handling when updating complex JSON structures.
 """
 
 from . import data as _data_module

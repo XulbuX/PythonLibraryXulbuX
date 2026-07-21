@@ -1,5 +1,8 @@
 """
-This module contains all custom exception classes used throughout the library.
+Provides custom exception classes used throughout the library.
+
+Includes exceptions for missing dependencies,
+execution failures, and formatting errors.
 """
 
 from .decorators import mypyc_attr

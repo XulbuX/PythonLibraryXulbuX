@@ -1,5 +1,8 @@
 """
-This module provides various utility functions for string manipulation and conversion.
+Provides utility functions for advanced string manipulation.
+
+Includes methods for casing, stripping, finding differences,
+and safely converting to numeric or boolean types.
 """
 
 from .regex import LazyRegex

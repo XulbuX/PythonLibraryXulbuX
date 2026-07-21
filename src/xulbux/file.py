@@ -1,5 +1,8 @@
 """
-This module provides functions to work with files and file paths.
+Provides high-level object-oriented file manipulation.
+
+Features include secure reading, writing, caching, locking,
+and formatting file sizes or line counts.
 """
 
 from . import string as _string_module

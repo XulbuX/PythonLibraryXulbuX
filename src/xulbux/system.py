@@ -1,5 +1,8 @@
 """
-This module provides functions to interact with the underlying operating system.
+Provides OS-level integration and automation helpers.
+
+Features include copying to clipboard, opening files, executing shell
+commands, installing dependencies, and managing application restarts.
 """
 
 from . import console as _console_module

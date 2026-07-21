@@ -1,5 +1,8 @@
 """
-This module provides functions to work with nested data structures.
+Provides utilities for processing and managing complex data structures.
+
+This includes deep merging, nested key access, recursive sorting,
+syntax-highlighted rendering, and data type conversions.
 """
 
 from . import regex as _regex_module

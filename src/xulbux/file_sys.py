@@ -1,5 +1,8 @@
 """
-This module provides functions to work with the file system and directories.
+Provides file system and path resolution utilities.
+
+Includes fuzzy matching, recursive searching, safe directory creation,
+and dynamic access to common paths like `cwd` and `home`.
 """
 
 from .base.exceptions import PathNotFoundError

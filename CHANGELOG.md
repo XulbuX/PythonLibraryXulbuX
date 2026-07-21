@@ -39,6 +39,8 @@
 **BREAKING CHANGES:**
 
 *   **Dropped support for Python 3.10 and 3.11.** The library now requires Python 3.12 or higher.
+*   **Architectural Refactor:** Removed default module classes (`Console`, `System`, `FileSys`, `Data`, `String`, `Code`, `EnvPath`, `Json`, `Regex`, `File`) that acted as namespaces.<br>
+    All methods are now accessible directly as module-level functions (e.g., `xulbux.console.log` instead of `xulbux.console.Console.log`). Properties like `Console.width` and `System.is_elevated` are now dynamic module properties.
 *   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
     The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
     -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.

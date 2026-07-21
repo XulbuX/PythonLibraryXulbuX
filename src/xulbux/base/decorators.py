@@ -1,5 +1,8 @@
 """
-This module contains custom decorators used throughout the library.
+Provides utility decorators used throughout the library.
+
+Includes decorators for caching properties, deprecating
+functions, and marking MyPyC compatibility.
 """
 
 import sys as _sys

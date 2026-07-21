@@ -1,6 +1,8 @@
 """
-This module provides functions to work with the console and terminal,<br>
-including argument parsing, logging, and ANSI styling.
+Provides comprehensive tools for terminal output and interaction.
+
+Features include styled logging, progress bars, interactive prompts,
+and command-line argument parsing.
 """
 
 from . import color as _color_module
@@ -1140,7 +1142,7 @@ def _as_fg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _
 
 def _persist_style(ansi_text: str, style_open: str, /) -> str:
     """Re-inserts `style_open` right after every ANSI escape sequence in `ansi_text`,<br>
-    so the style keeps applying even across (e.g. full) resets contained in the text."""
+    so the style keeps applying even across (e.g., full) resets contained in the text."""
 
     if not style_open or ANSI.CHAR not in ansi_text:
         return ansi_text

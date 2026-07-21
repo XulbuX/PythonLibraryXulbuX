@@ -1,7 +1,10 @@
 # ruff: noqa: RUF001
 
 """
-This module contains constant values used throughout the library.
+Provides constant values used throughout the library.
+
+Includes color hex codes, ANSI sequences,
+character sets, and default styling settings.
 """
 
 from .decorators import deprecated

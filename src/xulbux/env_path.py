@@ -1,5 +1,8 @@
 """
-This module provides functions to work with the PATH environment variable.
+Provides utilities for interacting with the system's PATH environment variable.
+
+This includes adding, checking, and removing paths, as well as resolving
+script or executable locations.
 """
 
 from . import file_sys as _file_sys_module

@@ -47,7 +47,7 @@ def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pyt
 def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
     """show_help() must call `console.pause_exit` to wait for a key press before exiting."""
     mock_pause_exit = MagicMock()
-    monkeypatch.setattr("xulbux.cli.help.console.pause_exit", mock_pause_exit)
+    monkeypatch.setattr("xulbux.console.pause_exit", mock_pause_exit)
 
     show_help()
 

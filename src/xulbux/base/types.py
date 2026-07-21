@@ -1,5 +1,7 @@
 """
-This module contains all custom type definitions used throughout the library.
+Provides custom type definitions and TypeVars used throughout the library.
+
+Includes type aliases for complex structures and protocol definitions.
 """
 
 from pathlib import Path

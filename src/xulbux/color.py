@@ -1,8 +1,8 @@
 """
-This modules provides functions to work with colors in different color spaces.
+Provides robust handling for RGBA, HSLA, and HEXA color spaces.
 
-This module also provides the `rgba`, `hsla` and `hexa` classes,<br>
-which offer methods to manipulate colors in their respective color spaces.
+Includes dedicated classes for each color model and utility methods
+for interpolating, lightening, darkening, and blending colors.
 """
 
 from __future__ import annotations

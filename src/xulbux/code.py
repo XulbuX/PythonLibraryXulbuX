@@ -1,5 +1,8 @@
 """
-This module provides functions to work with code strings.
+Provides tools for parsing and transforming source code.
+
+Includes methods for removing comments, formatting docstrings,
+and stripping ANSI escape sequences.
 """
 
 from . import data as _data_module
