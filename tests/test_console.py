@@ -230,7 +230,7 @@ def test_log_no_title(capsys: pytest.CaptureFixture[str]):
 
 def test_pause_exit_pause_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
-    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._read_single_key", mock_read_key)
 
     _console_module.pause_exit("Press any key...", pause=True, exit=False)
 
@@ -241,7 +241,7 @@ def test_pause_exit_pause_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.C
 
 def test_pause_exit_reset_ansi(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
-    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._read_single_key", mock_read_key)
 
     _console_module.pause_exit(pause=True, exit=False, reset_ansi=True)
 
@@ -253,7 +253,7 @@ def test_pause_exit_reset_ansi(monkeypatch: pytest.MonkeyPatch, capsys: pytest.C
 def test_pause_exit_with_exit(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
     mock_sys_exit = MagicMock()
-    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._read_single_key", mock_read_key)
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
 
     _console_module.pause_exit("Exiting...", pause=True, exit=True, exit_code=1)
@@ -546,28 +546,28 @@ def test_multiline_input_no_bindings(mock_prompt_toolkit: MagicMock, capsys: pyt
     mock_prompt_toolkit.assert_called_once()
 
 
-@patch("xulbux.console._console_module.input")
+@patch("xulbux.console.input")
 def test_confirm_default_no(mock_input: MagicMock):
     mock_input.return_value = ""
     result = _console_module.confirm("Continue?", default_is_yes=False)
     assert result is False
 
 
-@patch("xulbux.console._console_module.input")
+@patch("xulbux.console.input")
 def test_confirm_default_yes(mock_input: MagicMock):
     mock_input.return_value = ""
     result = _console_module.confirm("Continue?", default_is_yes=True)
     assert result is True
 
 
-@patch("xulbux.console._console_module.input")
+@patch("xulbux.console.input")
 def test_confirm_no(mock_input: MagicMock):
     mock_input.return_value = "n"
     result = _console_module.confirm("Continue?")
     assert result is False
 
 
-@patch("xulbux.console._console_module.input")
+@patch("xulbux.console.input")
 def test_confirm_yes(mock_input: MagicMock):
     mock_input.return_value = "y"
     result = _console_module.confirm("Continue?")

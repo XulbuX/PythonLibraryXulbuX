@@ -72,7 +72,6 @@ def remove_path(path: Path | str | None = None, /, *, cwd: bool = False, base_di
         _persistent(path_obj, remove=True)
 
 
-@staticmethod
 def _get(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> Path:
     """Internal method to get the normalized `path`, CWD path or script directory path.\n
     --------------------------------------------------------------------------------------

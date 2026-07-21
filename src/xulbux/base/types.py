@@ -173,7 +173,7 @@ class AllTextChars:
 
 
 class MissingLibsMsgs(TypedDict):
-    """Configuration schema for custom messages in `System.check_libs()` when checking library dependencies."""
+    """Configuration schema for custom messages in `system.check_libs()` when checking library dependencies."""
 
     found_missing: str
     should_install: str

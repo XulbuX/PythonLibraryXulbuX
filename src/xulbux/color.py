@@ -193,7 +193,7 @@ class rgba:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `Color.luminance()`.
+        # The `method` param is validated in `luminance()`.
 
         self.red = self.green = self.blue = int(luminance(self.red, self.green, self.blue, method=method))
         return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
@@ -470,7 +470,7 @@ class hsla:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `Color.luminance()`.
+        # The `method` param is validated in `luminance()`.
 
         red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
         light = int(luminance(red, green, blue, output_type=None, method=method))
@@ -799,7 +799,7 @@ class hexa:
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `Color.luminance()`.
+        # The `method` param is validated in `luminance()`.
 
         self.red = self.green = self.blue = int(luminance(self.red, self.green, self.blue, method=method))
         return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
@@ -1221,7 +1221,7 @@ def rgba_to_hex_int(red: int, green: int, blue: int, alpha: float | None = None,
     if the HEX integer would start with a `0`.\n
     This could affect the color a little bit, but will make sure, that it won't be interpreted<br>
     as a completely different color, when initializing it as a `hexa()` color or changing it<br>
-    back to RGBA using `Color.hex_int_to_rgba()`."""
+    back to RGBA using `hex_int_to_rgba()`."""
 
     if not all((0 <= ch <= 255) for ch in (red, green, blue)):
         raise ValueError(

@@ -23,7 +23,16 @@ from collections.abc import Callable, Generator, KeysView, ValuesView
 from contextlib import contextmanager, suppress
 from io import StringIO
 from itertools import chain
-from typing import Any, Final, Literal, TextIO, cast, overload
+from typing import TYPE_CHECKING, Any, Final, Literal, TextIO, cast, overload
+
+if TYPE_CHECKING:
+    width: int
+    height: int
+    size: tuple[int, int]
+    user: str
+    is_tty: bool
+    encoding: str
+    supports_color: bool
 import prompt_toolkit as _pt
 import regex as _rx
 from prompt_toolkit.document import Document
@@ -310,79 +319,76 @@ class ParsedArgs:
                 yield (key, val)
 
 
-@mypyc_attr(native_class=False)
-class _ConsoleMeta(type):
-    @property
-    def width(cls) -> int:
-        """The terminal width in characters."""
+def _get_width() -> int:
+    """The terminal width in characters."""
 
+    try:
+        return _os.get_terminal_size().columns
+    except OSError:
+        return 80
+
+
+def _get_height() -> int:
+    """The terminal height in lines."""
+
+    try:
+        return _os.get_terminal_size().lines
+    except OSError:
+        return 24
+
+
+def _get_size() -> tuple[int, int]:
+    """A tuple with the terminal width and height in characters and lines."""
+
+    try:
+        size = _os.get_terminal_size()
+        return (size.columns, size.lines)
+    except OSError:
+        return (80, 24)
+
+
+def _get_user() -> str:
+    """The name of the current user."""
+
+    return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
+
+
+def _get_is_tty() -> bool:
+    """Whether the terminal is connected to a TTY or not."""
+
+    return _sys.stdout.isatty()
+
+
+def _get_encoding() -> str:
+    """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
+
+    try:
+        encoding = _sys.stdout.encoding
+        return "utf-8" if encoding is None else encoding
+    except (AttributeError, Exception):
+        return "utf-8"
+
+
+def _get_supports_color() -> bool:
+    """Whether the terminal supports ANSI color codes or not."""
+
+    if not _get_is_tty():
+        return False
+
+    if _os.name == "nt":
+        # Check if VT100 mode is enabled on Windows:
         try:
-            return _os.get_terminal_size().columns
-        except OSError:
-            return 80
+            kernel32 = _ctypes.windll.kernel32  # type: ignore
+            handle = kernel32.GetStdHandle(-11)  # type: ignore
+            mode = _ctypes.c_ulong()  # type: ignore
+            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # type: ignore
+                return (mode.value & 0x0004) != 0
+        except Exception:
+            pass
 
-    @property
-    def height(cls) -> int:
-        """The terminal height in lines."""
+        return False
 
-        try:
-            return _os.get_terminal_size().lines
-        except OSError:
-            return 24
-
-    @property
-    def size(cls) -> tuple[int, int]:
-        """A tuple with the terminal width and height in characters and lines."""
-
-        try:
-            size = _os.get_terminal_size()
-            return (size.columns, size.lines)
-        except OSError:
-            return (80, 24)
-
-    @property
-    def user(cls) -> str:
-        """The name of the current user."""
-
-        return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
-
-    @property
-    def is_tty(cls) -> bool:
-        """Whether the terminal is connected to a TTY or not."""
-
-        return _sys.stdout.isatty()
-
-    @property
-    def encoding(cls) -> str:
-        """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
-
-        try:
-            encoding = _sys.stdout.encoding
-            return "utf-8" if encoding is None else encoding
-        except (AttributeError, Exception):
-            return "utf-8"
-
-    @property
-    def supports_color(cls) -> bool:
-        """Whether the terminal supports ANSI color codes or not."""
-
-        if not cls.is_tty:
-            return False
-
-        if _os.name == "nt":
-            # Check if VT100 mode is enabled on Windows:
-            try:
-                kernel32 = _ctypes.windll.kernel32  # type: ignore
-                handle = kernel32.GetStdHandle(-11)  # type: ignore
-                mode = _ctypes.c_ulong()  # type: ignore
-                if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # type: ignore
-                    return (mode.value & 0x0004) != 0
-            except Exception:
-                pass
-
-            return False
-
-        return _os.getenv("TERM", "").lower() not in {"", "dumb"}
+    return _os.getenv("TERM", "").lower() not in {"", "dumb"}
 
 
 def get_args(
@@ -423,7 +429,7 @@ def get_args(
     #### Example usage:
     If you call the `get_args()` method in your script like this:
     ```python
-    parsed_args = Console.get_args({
+    parsed_args = get_args({
         "text_before": "before",   # Positional values before first flag
         "arg1": {"-A", "--arg1"},  # Normal flags
         "arg2": {                  # Flags with specified default value
@@ -558,7 +564,7 @@ def log(
     tab: str = " " * (-title_len % tab_size)
 
     # Position where prompt needs to wrap to next line:
-    wrap_len: int = Console.width - (title_len + len(tab))
+    wrap_len: int = _get_width() - (title_len + len(tab))
 
     # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
     clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
@@ -740,8 +746,8 @@ def log_box_filled(
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(values)
 
     spaces_l = " " * indent
-    pady = " " * (Console.width if w_full else max_line_len + (2 * w_padding))
-    pad_w_full = (Console.width - (max_line_len + (2 * w_padding))) if w_full else 0
+    pady = " " * (_get_width() if w_full else max_line_len + (2 * w_padding))
+    pad_w_full = (_get_width() - (max_line_len + (2 * w_padding))) if w_full else 0
 
     box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
 
@@ -829,15 +835,11 @@ def log_box_bordered(
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(values, has_rules=True)
 
     spaces_l = " " * indent
-    pad_w_full = (Console.width - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+    pad_w_full = (_get_width() - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
 
-    border_t_line = border_chars[1] * (
-        Console.width - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding)
-    )
-    border_b_line = border_chars[5] * (
-        Console.width - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding)
-    )
-    h_rule_line = border_chars[9] * (Console.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
+    border_t_line = border_chars[1] * (_get_width() - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))
+    border_b_line = border_chars[5] * (_get_width() - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))
+    h_rule_line = border_chars[9] * (_get_width() - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
 
     border_l = f"{border_open}{border_chars[7]}{reset}"
     border_r = f"{border_open}{border_chars[3]}{reset}"
@@ -2027,7 +2029,7 @@ class ProgressBar:
 
         fmt_str = self.sep.join(fmt_parts)
 
-        bar_space = Console.width - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
+        bar_space = _get_width() - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -2414,3 +2416,20 @@ class _InterceptedOutput:
 
     def __getattr__(self, name: str, /) -> Any:
         return getattr(self.string_io, name)
+
+
+_META_PROPS = {
+    "width": _get_width,
+    "height": _get_height,
+    "size": _get_size,
+    "user": _get_user,
+    "is_tty": _get_is_tty,
+    "encoding": _get_encoding,
+    "supports_color": _get_supports_color,
+}
+
+
+def __getattr__(name: str) -> "Any":
+    if name in _META_PROPS:
+        return _META_PROPS[name]()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -157,7 +157,6 @@ def update(
     create(json_file, data, force=True)
 
 
-@staticmethod
 def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: Any, /) -> dict[str, Any]:
     """Internal method that creates nested dictionaries/lists based on the<br>
     given path keys and sets the specified value at the end of the path."""

@@ -99,7 +99,7 @@ def test_check_libs_nonexistent_module():
 
 
 @patch("xulbux.system._subprocess.check_call")
-@patch("xulbux.console.Console.confirm", return_value=False)  # Decline installation.
+@patch("xulbux.console.confirm", return_value=False)  # Decline installation.
 def test_check_libs_decline_install(mock_confirm: MagicMock, mock_subprocess: MagicMock):
     """Test check_libs when user declines installation"""
     result = _system_module.check_libs(["nonexistent_module_12345"], install_missing=True)

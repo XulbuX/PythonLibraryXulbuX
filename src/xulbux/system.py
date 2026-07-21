@@ -4,7 +4,6 @@ This module provides functions to interact with the underlying operating system.
 
 from . import console as _console_module
 from .ansi import S, StyledText
-from .base.decorators import mypyc_attr
 from .base.types import MissingLibsMsgs
 
 import ctypes as _ctypes
@@ -16,103 +15,115 @@ import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
 import time as _time
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    is_elevated: bool
+    is_win: bool
+    is_linux: bool
+    is_mac: bool
+    is_unix: bool
+    hostname: str
+    username: str
+    os_name: str
+    os_version: str
+    architecture: str
+    cpu_count: int
+    python_version: str
 
 
-@mypyc_attr(native_class=False)
-class _SystemMeta(type):
-    @property
-    def is_elevated(cls) -> bool:
-        """Whether the current process has elevated privileges or not."""
+def _get_is_elevated() -> bool:
+    """Whether the current process has elevated privileges or not."""
 
+    try:
+        if _os.name == "nt":
+            return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore
+        elif _os.name == "posix":
+            return _os.geteuid() == 0  # type: ignore[attr-defined]
+    except Exception:
+        pass
+    return False
+
+
+def _get_is_win() -> bool:
+    """Whether the current operating system is Windows or not."""
+
+    return _platform.system() == "Windows"
+
+
+def _get_is_linux() -> bool:
+    """Whether the current operating system is Linux or not."""
+
+    return _platform.system() == "Linux"
+
+
+def _get_is_mac() -> bool:
+    """Whether the current operating system is macOS or not."""
+
+    return _platform.system() == "Darwin"
+
+
+def _get_is_unix() -> bool:
+    """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
+
+    return _os.name == "posix"
+
+
+def _get_hostname() -> str:
+    """The network hostname of the current machine."""
+
+    try:
+        return _socket.gethostname()
+    except Exception:
+        return "unknown"
+
+
+def _get_username() -> str:
+    """The name of the current user."""
+
+    try:
+        return _getpass.getuser()
+    except Exception:
         try:
-            if _os.name == "nt":
-                return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore
-            elif _os.name == "posix":
-                return _os.geteuid() == 0  # type: ignore[attr-defined]
-        except Exception:
-            pass
-        return False
-
-    @property
-    def is_win(cls) -> bool:
-        """Whether the current operating system is Windows or not."""
-
-        return _platform.system() == "Windows"
-
-    @property
-    def is_linux(cls) -> bool:
-        """Whether the current operating system is Linux or not."""
-
-        return _platform.system() == "Linux"
-
-    @property
-    def is_mac(cls) -> bool:
-        """Whether the current operating system is macOS or not."""
-
-        return _platform.system() == "Darwin"
-
-    @property
-    def is_unix(cls) -> bool:
-        """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
-
-        return _os.name == "posix"
-
-    @property
-    def hostname(cls) -> str:
-        """The network hostname of the current machine."""
-
-        try:
-            return _socket.gethostname()
-        except Exception:
-            return "unknown"
-
-    @property
-    def username(cls) -> str:
-        """The name of the current user."""
-
-        try:
-            return _getpass.getuser()
-        except Exception:
-            try:
-                return _os.getlogin()
-            except Exception:
-                return "unknown"
-
-    @property
-    def os_name(cls) -> str:
-        """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
-
-        return _platform.system()
-
-    @property
-    def os_version(cls) -> str:
-        """The version of the operating system."""
-
-        try:
-            return _platform.version()
+            return _os.getlogin()
         except Exception:
             return "unknown"
 
-    @property
-    def architecture(cls) -> str:
-        """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
 
-        return _platform.machine()
+def _get_os_name() -> str:
+    """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
 
-    @property
-    def cpu_count(cls) -> int:
-        """The number of CPU cores available."""
+    return _platform.system()
 
-        try:
-            return _multiprocessing.cpu_count()
-        except (NotImplementedError, AttributeError):
-            return 1
 
-    @property
-    def python_version(cls) -> str:
-        """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
+def _get_os_version() -> str:
+    """The version of the operating system."""
 
-        return _platform.python_version()
+    try:
+        return _platform.version()
+    except Exception:
+        return "unknown"
+
+
+def _get_architecture() -> str:
+    """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
+
+    return _platform.machine()
+
+
+def _get_cpu_count() -> int:
+    """The number of CPU cores available."""
+
+    try:
+        return _multiprocessing.cpu_count()
+    except (NotImplementedError, AttributeError):
+        return 1
+
+
+def _get_python_version() -> str:
+    """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
+
+    return _platform.python_version()
 
 
 def restart(prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
@@ -172,7 +183,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
     Returns `True` if the current process already has elevated privileges and raises<br>
     a `PermissionError` if the user denied the elevation or the elevation failed."""
 
-    if System.is_elevated:
+    if _get_is_elevated():
         return True
 
     args_list = args or []
@@ -334,3 +345,25 @@ class _SystemCheckLibsHelper:
                 pass
 
         return None if len(missing) == 0 else missing
+
+
+_META_PROPS = {
+    "is_elevated": _get_is_elevated,
+    "is_win": _get_is_win,
+    "is_linux": _get_is_linux,
+    "is_mac": _get_is_mac,
+    "is_unix": _get_is_unix,
+    "hostname": _get_hostname,
+    "username": _get_username,
+    "os_name": _get_os_name,
+    "os_version": _get_os_version,
+    "architecture": _get_architecture,
+    "cpu_count": _get_cpu_count,
+    "python_version": _get_python_version,
+}
+
+
+def __getattr__(name: str) -> "Any":
+    if name in _META_PROPS:
+        return _META_PROPS[name]()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

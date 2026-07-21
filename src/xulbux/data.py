@@ -49,7 +49,7 @@ def deserialize_bytes(obj: dict[str, str], /) -> bytes | bytearray:
     --------------------------------------------------------------------------------------------------------
     *   `obj` – The dictionary to deserialize.
     --------------------------------------------------------------------------------------------------------
-    If the serialized object was created with `Data.serialize_bytes()`, it will work.<br>
+    If the serialized object was created with `serialize_bytes()`, it will work.<br>
     If it fails to decode the data, it will raise a `ValueError`."""
 
     for key in ("bytes", "bytearray"):
@@ -71,18 +71,16 @@ def chars_count(data: DataObjType, /) -> int:
     ------------------------------------------------------------------------------
     *   `data` – The data structure to count the characters from."""
 
-    chars_count = 0
+    count = 0
 
     if isinstance(data, dict):
         for key, val in data.items():
-            chars_count += len(str(key)) + (
-                chars_count(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else len(str(val))
-            )
+            count += len(str(key)) + (chars_count(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else len(str(val)))
     else:
         for item in data:
-            chars_count += chars_count(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else len(str(item))
+            count += chars_count(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else len(str(item))
 
-    return chars_count
+    return count
 
 
 def strip[DataObj: DataObjType](data: DataObj, /) -> DataObj:
@@ -213,7 +211,7 @@ def remove_comments[DataObj: DataObjType](
         "key3": ">> ALL THE KEYS VALUES ARE COMMENTS  value",
     }
 
-    processed_data = Data.remove_comments(
+    processed_data = remove_comments(
         data,
         comment_start=">>",
         comment_end="<<",
@@ -270,7 +268,7 @@ def is_equal(
     *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.
     ---------------------------------------------------------------------------------------------------
     The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
-    the method `Data.get_path_id()`. See its documentation for more details."""
+    `get_path_id()`. See its documentation for more details."""
 
     if not path_sep:
         raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}") from None
@@ -379,7 +377,7 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
     as long as the data structure hasn't changed since creating the path ID.\n
     -----------------------------------------------------------------------------------------------------
     *   `data` – The list, tuple, or dictionary to retrieve the value from.
-    *   `path_id` – The path ID to the value to retrieve, created before using `Data.get_path_id()`.
+    *   `path_id` – The path ID to the value to retrieve, created before using `get_path_id()`.
     *   `get_key` – If true and the final item is in a dict, it returns the key instead of the value."""
 
     parent: DataObjType | None = None
@@ -420,7 +418,7 @@ def set_value_by_path_id[DataObj: DataObjType](data: DataObj, update_values: dic
         ```python
         { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
         ```
-        The path IDs should have been created using `Data.get_path_id()`."""
+        The path IDs should have been created using `get_path_id()`."""
 
     if not (valid_update_values := list(update_values.items())):
         raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}") from None
@@ -525,7 +523,6 @@ def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], cu
     return data1 == data2
 
 
-@staticmethod
 def _sep_path_id(path_id: str, /) -> list[int]:
     """Internal method to separate a path-ID string into its ID parts as a list of integers."""
 

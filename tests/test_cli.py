@@ -24,7 +24,7 @@ def test_xulbux_lib_entrypoint_registered():
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """show_help() must print the ANSI help banner to stdout."""
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", MagicMock())
+    monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     show_help()
 
@@ -36,7 +36,7 @@ def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pyt
     """The help banner must contain the installed package version."""
     from xulbux import __version__
 
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", MagicMock())
+    monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     show_help()
 
@@ -45,9 +45,9 @@ def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pyt
 
 
 def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
-    """show_help() must call Console.pause_exit to wait for a key press before exiting."""
+    """show_help() must call `console.pause_exit` to wait for a key press before exiting."""
     mock_pause_exit = MagicMock()
-    monkeypatch.setattr("xulbux.cli.help.Console.pause_exit", mock_pause_exit)
+    monkeypatch.setattr("xulbux.cli.help.console.pause_exit", mock_pause_exit)
 
     show_help()
 
@@ -59,6 +59,6 @@ def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
 
 def test_show_help_does_not_raise(monkeypatch: pytest.MonkeyPatch):
     """show_help() must complete without errors."""
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", MagicMock())
+    monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     show_help()  # Must not raise.

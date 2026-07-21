@@ -1,9 +1,9 @@
 # ruff: noqa: E501
 
 from .. import __version__
+from .. import console as _console_module
 from ..ansi import S, StyledText, _Style, _StyleGroup
 from ..base.decorators import mypyc_attr
-from ..console import Console
 
 import json as _json
 import urllib.request as _request
@@ -104,4 +104,4 @@ def show_help() -> None:
     which shows some information about the library."""
 
     CLI_HELP.print()
-    Console.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)
+    _console_module.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)

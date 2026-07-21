@@ -2,7 +2,6 @@
 This module provides functions to work with the file system and directories.
 """
 
-from .base.decorators import mypyc_attr
 from .base.exceptions import PathNotFoundError
 from .base.types import PathsList
 
@@ -12,37 +11,40 @@ import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    cwd: Path
+    home: Path
+    script_dir: Path
 
 
-@mypyc_attr(native_class=False)
-class _FileSysMeta(type):
-    @property
-    def cwd(cls) -> Path:
-        """The path to the current working directory."""
+def _get_cwd() -> Path:
+    """The path to the current working directory."""
 
-        return Path.cwd()
+    return Path.cwd()
 
-    @property
-    def home(cls) -> Path:
-        """The path to the user's home directory."""
 
-        return Path.home()
+def _get_home() -> Path:
+    """The path to the user's home directory."""
 
-    @property
-    def script_dir(cls) -> Path:
-        """The path to the directory of the current script."""
+    return Path.home()
 
-        if getattr(_sys, "frozen", False):
-            base_path = Path(_sys.executable).parent
+
+def _get_script_dir() -> Path:
+    """The path to the directory of the current script."""
+
+    if getattr(_sys, "frozen", False):
+        base_path = Path(_sys.executable).parent
+    else:
+        main_module = _sys.modules["__main__"]
+        if hasattr(main_module, "__file__") and main_module.__file__ is not None:
+            base_path = Path(main_module.__file__).resolve().parent
+        elif hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None:
+            base_path = Path(main_module.__spec__.origin).resolve().parent
         else:
-            main_module = _sys.modules["__main__"]
-            if hasattr(main_module, "__file__") and main_module.__file__ is not None:
-                base_path = Path(main_module.__file__).resolve().parent
-            elif hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None:
-                base_path = Path(main_module.__spec__.origin).resolve().parent
-            else:
-                raise RuntimeError("Can only get base directory if accessed from a file.")
-        return base_path
+            raise RuntimeError("Can only get base directory if accessed from a file.")
+    return base_path
 
 
 def extend_path(
@@ -125,7 +127,7 @@ def extend_or_make_path(
 
     except PathNotFoundError:
         path = Path(str(rel_path))
-        base_dir = FileSys.script_dir if prefer_script_dir else Path.cwd()
+        base_dir = _get_script_dir() if prefer_script_dir else Path.cwd()
         return base_dir / path
 
 
@@ -179,7 +181,7 @@ class _ExtendPathHelper:
 
         else:
             # Add predefined search dirs:
-            self.search_dirs.extend([FileSys.cwd, FileSys.home, FileSys.script_dir, Path(_tempfile.gettempdir())])
+            self.search_dirs.extend([_get_cwd(), _get_home(), _get_script_dir(), Path(_tempfile.gettempdir())])
 
         return self.search_in_dirs(expanded_path)
 
@@ -239,3 +241,12 @@ class _ExtendPathHelper:
 
         except Exception:
             return None
+
+
+_META_PROPS = {"cwd": _get_cwd, "home": _get_home, "script_dir": _get_script_dir}
+
+
+def __getattr__(name: str) -> "Any":
+    if name in _META_PROPS:
+        return _META_PROPS[name]()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
