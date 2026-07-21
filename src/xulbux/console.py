@@ -902,12 +902,13 @@ class Console(metaclass=_ConsoleMeta):
         head = f"{start}{_to_styled_text(prompt).ansi} "
         head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
 
-        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no), sep="")).strip().lower() in (
+        confirmed = cls.input((head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
             {"", "y", "yes"} if default_is_yes else {"y", "yes"}
         )
 
         if end:
             StyledText(end).print(end="", flush=True)
+
         return confirmed
 
     @classmethod
