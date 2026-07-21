@@ -484,7 +484,7 @@ class Console(metaclass=_ConsoleMeta):
     ) -> None:
         """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
         -----------------------------------------------------------------------------------------------------
-        *   `prompt` – The message to print before pausing/exiting.
+        *   `prompt` – The message to print before pausing/exiting (any object, or a `StyledText` object).
         *   `pause` – Whether to pause and wait for a key press after printing the prompt.
         *   `exit` – Whether to exit the program after printing the prompt (and pausing if `pause` is true).
         *   `exit_code` – The exit code to use when exiting the program.
@@ -529,7 +529,7 @@ class Console(metaclass=_ConsoleMeta):
         """Prints a nicely formatted log message.\n
         ----------------------------------------------------------------------------------------------
         *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
-        *   `prompt` – The log message (a plain value or a `StyledText` object for styled output).
+        *   `prompt` – The log message (any object, or a `StyledText` object for styled output).
         *   `start` – Something to print before the log is printed.
         *   `end` – Something to print after the log is printed (e.g., `\\n`).
         *   `title_bg_color` – The background color of the `title`<br>
@@ -727,7 +727,7 @@ class Console(metaclass=_ConsoleMeta):
     ) -> None:
         """Will print a box with a colored background, containing a log message.\n
         --------------------------------------------------------------------------------------
-        *   `*values` – The box content (plain values or `StyledText` objects, one per line).
+        *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
         *   `start` – Something to print before the log box is printed (e.g., `\\n`).
         *   `end` – Something to print after the log box is printed (e.g., `\\n`).
         *   `box_bg_color` – The background color of the box<br>
@@ -790,7 +790,7 @@ class Console(metaclass=_ConsoleMeta):
     ) -> None:
         """Will print a bordered box, containing a log message.\n
         ---------------------------------------------------------------------------------------------
-        *   `*values` – The box content (plain values or `StyledText` objects, one per line).
+        *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
         *   `start` – Something to print before the log box is printed (e.g., `\\n`).
         *   `end` – Something to print after the log box is printed (e.g., `\\n`).
         *   `border_type` – One of the predefined border character sets.
@@ -892,13 +892,13 @@ class Console(metaclass=_ConsoleMeta):
         default_is_yes: bool = True,
     ) -> bool:
         """Ask a yes/no question.\n
-        ------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt.
+        ------------------------------------------------------------------------------------------
+        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
         *   `start` – Something to print before the input.
         *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
         *   `default_is_yes` – The default answer if the user just presses enter.
-        ------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------
         To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
@@ -906,7 +906,7 @@ class Console(metaclass=_ConsoleMeta):
         head = f"{start}{_to_styled_text(prompt).ansi} "
         head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
 
-        confirmed = cls.input((head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
+        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
             {"", "y", "yes"} if default_is_yes else {"y", "yes"}
         )
 
@@ -929,15 +929,15 @@ class Console(metaclass=_ConsoleMeta):
         reset_ansi: bool = True,
     ) -> str:
         """An input where users can write (and paste) text over multiple lines.\n
-        ---------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt.
+        ------------------------------------------------------------------------------------------
+        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
         *   `start` – Something to print before the input.
         *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
         *   `show_keybindings` – Whether to show the special keybindings or not.
         *   `input_prefix` – The prefix of the input line.
         *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
-        ---------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------
         To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
@@ -1016,8 +1016,8 @@ class Console(metaclass=_ConsoleMeta):
         output_type: type[Any] = str,
     ) -> Any:
         """Acts like a standard Python `input()` a bunch of cool extra features.\n
-        ----------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt.
+        ------------------------------------------------------------------------------------------
+        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
         *   `start` – Something to print before the input.
         *   `end` – Something to print after the input (e.g., `\\n`).
         *   `default_color` – The default text color of the `prompt`.
@@ -1032,7 +1032,7 @@ class Console(metaclass=_ConsoleMeta):
             message if invalid, or nothing if valid.
         *   `default_val` – The default value to return if the input is empty.
         *   `output_type` – The type (class) to convert the input to before returning it.
-        ----------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------
         To style the `prompt`, pass a `StyledText` object. For more detailed<br>
         information about styling, see the `ansi` module documentation."""
 
