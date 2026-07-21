@@ -25,8 +25,8 @@ def test_bare_reset_fmt():
 
 def test_bare_fmt_sequence_with_explicit_reset():
     result = StyledText(S.RED, "hello", S.RESET)
-    assert result.ansi == f"{ESC}[31m\nhello\n{ESC}[0m"
-    assert result.raw == "\nhello\n"
+    assert result.ansi == f"{ESC}[31mhello{ESC}[0m"
+    assert result.raw == "hello"
 
 
 def test_bare_fmt_inside_tuple():
@@ -83,10 +83,10 @@ def test_combined_group_emits_single_sgr():
     assert result.raw == "Hi"
 
 
-def test_default_separator_is_newline():
+def test_default_separator_is_empty_string():
     result = StyledText("a", "b", "c")
-    assert result.ansi == "a\nb\nc"
-    assert result.raw == "a\nb\nc"
+    assert result.ansi == "abc"
+    assert result.raw == "abc"
 
 
 def test_custom_separator():

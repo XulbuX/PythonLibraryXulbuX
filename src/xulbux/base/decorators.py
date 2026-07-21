@@ -50,7 +50,10 @@ def _deprecated_runtime(message: LiteralString, **kwargs: Any) -> _DeprecatedWra
     return _DeprecatedWrapper(message, **kwargs)
 
 
-deprecated = _deprecated_runtime  # type: ignore[assignment,misc]
+# Only use the custom decorator during runtime to keep
+# the IDE functionality for the `@deprecated` decorator:
+if not TYPE_CHECKING:
+    deprecated = _deprecated_runtime
 
 
 def _noop_decorator[T](obj: T) -> T:

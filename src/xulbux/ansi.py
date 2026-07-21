@@ -762,7 +762,7 @@ class StyledText:
     (strings, `_StyledSequence` calls, or raw tuples), joined by `sep`.\n
     ------------------------------------------------------------------------------------------------------
     *   `segments` – Any number of segments to render. Each positional argument represents one logical line.
-    *   `sep` – The separator inserted between two adjacent positional arguments (default `"\\n"`).
+    *   `sep` – The separator inserted between two adjacent positional arguments (default `""`).
     ------------------------------------------------------------------------------------------------------
     After construction the instance exposes:
     *   `ansi` – The fully rendered ANSI escape string, ready to be written to a terminal.
@@ -775,11 +775,11 @@ class StyledText:
 
     __slots__: Final[tuple[str, ...]] = ("_ansi_parts", "ansi")
 
-    def __init__(self, /, *segments: TextLike, sep: str = "\n") -> None:
+    def __init__(self, /, *segments: TextLike, sep: str = "") -> None:
         self._ansi_parts: list[str] = []
 
         for i, segment in enumerate(segments):
-            if i > 0:
+            if i > 0 and sep:
                 self._ansi_parts.append(sep)
             self._render(segment)
 

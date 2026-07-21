@@ -324,7 +324,7 @@ class _SystemCheckLibsHelper:
         """Ask user for confirmation before installing libraries."""
 
         StyledText(
-            S.BOLD(self.missing_libs_msgs["found_missing"]), *((S.DIM(" • "), S.ITALIC(lib)) for lib in missing), ""
+            S.BOLD(self.missing_libs_msgs["found_missing"]), *[(S.DIM(" • "), S.ITALIC(lib)) for lib in missing], ""
         ).print()
 
         return Console.confirm(self.missing_libs_msgs["should_install"], end="\n")
