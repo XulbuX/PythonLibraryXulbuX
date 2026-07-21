@@ -4,10 +4,11 @@ import os
 import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
+import xulbux.console as _console_module
 from xulbux import console
 from xulbux.ansi import S, StyledText
 from xulbux.base.consts import ANSI
-from xulbux.console import Console, ParsedArgData, ParsedArgs, ProgressBar, Throbber
+from xulbux.console import ParsedArgData, ParsedArgs, ProgressBar, Throbber
 import pytest
 
 
@@ -65,7 +66,7 @@ def test_cls(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(builtins, "print", mock_print)
 
     mock_shutil.side_effect = lambda cmd: "/bin/cls" if cmd == "cls" else None  # type: ignore[type-unknown]
-    Console.cls()
+    _console_module.cls()
     mock_subprocess_run.assert_called_with(["cls"])
     mock_print.assert_called_with("\033[0m", end="", flush=True)
 
@@ -73,31 +74,31 @@ def test_cls(monkeypatch: pytest.MonkeyPatch):
     mock_print.reset_mock()
 
     mock_shutil.side_effect = lambda cmd: "/bin/clear" if cmd == "clear" else None  # type: ignore[type-unknown]
-    Console.cls()
+    _console_module.cls()
     mock_subprocess_run.assert_called_with(["clear"])
     mock_print.assert_called_with("\033[0m", end="", flush=True)
 
 
 def test_console_encoding():
-    encoding = Console.encoding
+    encoding = _console_module.encoding
     assert isinstance(encoding, str)
     assert encoding != ""
     assert encoding.lower() in {"utf-8", "cp1252", "ascii", "latin-1", "iso-8859-1"} or "-" in encoding
 
 
 def test_console_height(mock_terminal_size: MagicMock):
-    height_output = Console.height
+    height_output = _console_module.height
     assert isinstance(height_output, int)
     assert height_output == 24
 
 
 def test_console_is_tty():
-    result = Console.is_tty
+    result = _console_module.is_tty
     assert isinstance(result, bool)
 
 
 def test_console_size(mock_terminal_size: MagicMock):
-    size_output = Console.size
+    size_output = _console_module.size
     assert isinstance(size_output, tuple)
     assert len(size_output) == 2
     assert size_output[0] == 80
@@ -105,18 +106,18 @@ def test_console_size(mock_terminal_size: MagicMock):
 
 
 def test_console_supports_color():
-    result = Console.supports_color
+    result = _console_module.supports_color
     assert isinstance(result, bool)
 
 
 def test_console_user():
-    user_output = Console.user
+    user_output = _console_module.user
     assert isinstance(user_output, str)
     assert user_output != ""
 
 
 def test_console_width(mock_terminal_size: MagicMock):
-    width_output = Console.width
+    width_output = _console_module.width
     assert isinstance(width_output, int)
     assert width_output == 80
 
@@ -126,7 +127,7 @@ def test_console_exception_fallback(capsys: pytest.CaptureFixture[str], monkeypa
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
 
     exc = ValueError("Something bad happened")
-    Console.fail(exc)
+    _console_module.fail(exc)
 
     captured = capsys.readouterr()
     assert "FAIL" in captured.out
@@ -135,7 +136,7 @@ def test_console_exception_fallback(capsys: pytest.CaptureFixture[str], monkeypa
 
 
 def test_console_styled_text_prompt(capsys: pytest.CaptureFixture[str]):
-    Console.log("TEST", StyledText("Styled ", S.BOLD("text")))
+    _console_module.log("TEST", StyledText("Styled ", S.BOLD("text")))
 
     captured = capsys.readouterr()
     assert "TEST" in captured.out
@@ -144,7 +145,7 @@ def test_console_styled_text_prompt(capsys: pytest.CaptureFixture[str]):
 
 
 def test_debug_active(capsys: pytest.CaptureFixture[str]):
-    Console.debug("Debug message", active=True)
+    _console_module.debug("Debug message", active=True)
 
     captured = capsys.readouterr()
     assert "DEBUG" in captured.out
@@ -152,13 +153,13 @@ def test_debug_active(capsys: pytest.CaptureFixture[str]):
 
 
 def test_debug_inactive(mock_formatcodes_print: MagicMock):
-    Console.debug("Debug message", active=False)
+    _console_module.debug("Debug message", active=False)
 
     mock_formatcodes_print.assert_not_called()
 
 
 def test_done(capsys: pytest.CaptureFixture[str]):
-    Console.done("Task completed")
+    _console_module.done("Task completed")
 
     captured = capsys.readouterr()
     assert "DONE" in captured.out
@@ -169,7 +170,7 @@ def test_exit_method(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.Mon
     mock_sys_exit = MagicMock()
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
 
-    Console.exit("Program ending")
+    _console_module.exit("Program ending")
 
     captured = capsys.readouterr()
     assert "EXIT" in captured.out
@@ -181,7 +182,7 @@ def test_fail(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
     mock_sys_exit = MagicMock()
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
 
-    Console.fail("Error occurred")
+    _console_module.fail("Error occurred")
 
     captured = capsys.readouterr()
     assert "FAIL" in captured.out
@@ -190,7 +191,7 @@ def test_fail(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
 
 
 def test_info(capsys: pytest.CaptureFixture[str]):
-    Console.info("Info message")
+    _console_module.info("Info message")
 
     captured = capsys.readouterr()
     assert "INFO" in captured.out
@@ -198,7 +199,7 @@ def test_info(capsys: pytest.CaptureFixture[str]):
 
 
 def test_log_basic(capsys: pytest.CaptureFixture[str]):
-    Console.log("INFO", "Test message")
+    _console_module.log("INFO", "Test message")
 
     captured = capsys.readouterr()
     assert "INFO" in captured.out
@@ -206,14 +207,14 @@ def test_log_basic(capsys: pytest.CaptureFixture[str]):
 
 
 def test_log_box_bordered(capsys: pytest.CaptureFixture[str]):
-    Console.log_box_bordered("Content line", border_type="rounded")
+    _console_module.log_box_bordered("Content line", border_type="rounded")
 
     captured = capsys.readouterr()
     assert "Content line" in captured.out
 
 
 def test_log_box_filled(capsys: pytest.CaptureFixture[str]):
-    Console.log_box_filled("Line 1", "Line 2", box_bg_color=S.BG.GREEN)
+    _console_module.log_box_filled("Line 1", "Line 2", box_bg_color=S.BG.GREEN)
 
     captured = capsys.readouterr()
     assert "Line 1" in captured.out
@@ -221,7 +222,7 @@ def test_log_box_filled(capsys: pytest.CaptureFixture[str]):
 
 
 def test_log_no_title(capsys: pytest.CaptureFixture[str]):
-    Console.log(None, "Just a message")
+    _console_module.log(None, "Just a message")
 
     captured = capsys.readouterr()
     assert "Just a message" in captured.out
@@ -229,9 +230,9 @@ def test_log_no_title(capsys: pytest.CaptureFixture[str]):
 
 def test_pause_exit_pause_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
 
-    Console.pause_exit("Press any key...", pause=True, exit=False)
+    _console_module.pause_exit("Press any key...", pause=True, exit=False)
 
     captured = capsys.readouterr()
     assert "Press any key..." in captured.out
@@ -240,9 +241,9 @@ def test_pause_exit_pause_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.C
 
 def test_pause_exit_reset_ansi(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
 
-    Console.pause_exit(pause=True, exit=False, reset_ansi=True)
+    _console_module.pause_exit(pause=True, exit=False, reset_ansi=True)
 
     captured = capsys.readouterr()
     # Check that ANSI reset code is present in output:
@@ -252,10 +253,10 @@ def test_pause_exit_reset_ansi(monkeypatch: pytest.MonkeyPatch, capsys: pytest.C
 def test_pause_exit_with_exit(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
     mock_sys_exit = MagicMock()
-    monkeypatch.setattr("xulbux.console.Console._read_single_key", mock_read_key)
+    monkeypatch.setattr("xulbux.console._console_module._read_single_key", mock_read_key)
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
 
-    Console.pause_exit("Exiting...", pause=True, exit=True, exit_code=1)
+    _console_module.pause_exit("Exiting...", pause=True, exit=True, exit_code=1)
 
     captured = capsys.readouterr()
     assert "Exiting..." in captured.out
@@ -264,7 +265,7 @@ def test_pause_exit_with_exit(monkeypatch: pytest.MonkeyPatch, capsys: pytest.Ca
 
 
 def test_warn(capsys: pytest.CaptureFixture[str]):
-    Console.warn("Warning message")
+    _console_module.warn("Warning message")
 
     captured = capsys.readouterr()
     assert "WARN" in captured.out
@@ -275,7 +276,7 @@ def test_input_bottom_toolbar_function(mock_prompt_session: tuple[MagicMock, Mag
     """Test that bottom toolbar function is set up."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -291,10 +292,10 @@ def test_input_bottom_toolbar_function(mock_prompt_session: tuple[MagicMock, Mag
 
 
 def test_input_creates_prompt_session(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
-    """Test that Console.input creates a PromptSession with correct parameters."""
+    """Test that _console_module.input creates a PromptSession with correct parameters."""
     mock_session_class, mock_session = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -311,7 +312,7 @@ def test_input_custom_style_object(mock_prompt_session: tuple[MagicMock, MagicMo
     """Test that a custom Style object is created."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -325,7 +326,7 @@ def test_input_default_val_handling(mock_prompt_session: tuple[MagicMock, MagicM
     """Test that default_val parameter is properly handled."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", default_val="default_value")
+    _console_module.input("Enter text: ", default_val="default_value")
 
     assert mock_session_class.called
 
@@ -334,7 +335,7 @@ def test_input_disable_paste(mock_prompt_session: tuple[MagicMock, MagicMock], m
     """Test that allow_paste=False is handled."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", allow_paste=False)
+    _console_module.input("Enter text: ", allow_paste=False)
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -346,7 +347,7 @@ def test_input_key_bindings_setup(mock_prompt_session: tuple[MagicMock, MagicMoc
     """Test that key bindings are properly set up."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -360,7 +361,7 @@ def test_input_mask_char_single_character(mock_prompt_session: tuple[MagicMock, 
     """Test that mask_char works with single characters."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter password: ", mask_char="*")
+    _console_module.input("Enter password: ", mask_char="*")
 
     assert mock_session_class.called
 
@@ -369,7 +370,7 @@ def test_input_message_formatting(mock_prompt_session: tuple[MagicMock, MagicMoc
     """Test that the prompt message is properly formatted."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("[b]Bold prompt:[_b] ", default_color="#ABC")
+    _console_module.input("[b]Bold prompt:[_b] ", default_color="#ABC")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -381,7 +382,7 @@ def test_input_output_type_int(mock_prompt_session: tuple[MagicMock, MagicMock],
     """Test that output_type parameter is handled for int conversion."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter number: ", output_type=int, default_val=42)
+    _console_module.input("Enter number: ", output_type=int, default_val=42)
 
     assert mock_session_class.called
 
@@ -390,7 +391,7 @@ def test_input_style_configuration(mock_prompt_session: tuple[MagicMock, MagicMo
     """Test that custom style is applied."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -400,7 +401,7 @@ def test_input_style_configuration(mock_prompt_session: tuple[MagicMock, MagicMo
 
 def test_input_styled_text_prompt(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     mock_session_class, _ = mock_prompt_session
-    Console.input(StyledText("Prompt ", S.RED("styled")))
+    _console_module.input(StyledText("Prompt ", S.RED("styled")))
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -414,7 +415,7 @@ def test_input_validate_while_typing_enabled(
     """Test that validate_while_typing is enabled."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -426,7 +427,7 @@ def test_input_validator_class_creation(mock_prompt_session: tuple[MagicMock, Ma
     """Test that InputValidator class is properly instantiated."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", min_len=5)
+    _console_module.input("Enter text: ", min_len=5)
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -440,7 +441,7 @@ def test_input_with_allowed_chars(mock_prompt_session: tuple[MagicMock, MagicMoc
     """Test that allowed_chars parameter is handled."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter digits only: ", allowed_chars="0123456789")
+    _console_module.input("Enter digits only: ", allowed_chars="0123456789")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -452,7 +453,7 @@ def test_input_with_length_constraints(mock_prompt_session: tuple[MagicMock, Mag
     """Test that min_len and max_len are properly handled."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", min_len=3, max_len=10)
+    _console_module.input("Enter text: ", min_len=3, max_len=10)
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -465,7 +466,7 @@ def test_input_with_placeholder(mock_prompt_session: tuple[MagicMock, MagicMock]
     """Test that placeholder is correctly passed to PromptSession."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", placeholder="Type here...")
+    _console_module.input("Enter text: ", placeholder="Type here...")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -477,7 +478,7 @@ def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, M
     """Test that start and end parameters trigger `StyledText.print` calls."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ", start="[green]", end="[_c]")
+    _console_module.input("Enter text: ", start="[green]", end="[_c]")
 
     assert mock_session_class.called
     capsys.readouterr()
@@ -494,7 +495,7 @@ def test_input_with_validator_function(mock_prompt_session: tuple[MagicMock, Mag
             return "Invalid email"
         return None
 
-    Console.input("Enter email: ", validator=email_validator)
+    _console_module.input("Enter email: ", validator=email_validator)
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -507,7 +508,7 @@ def test_input_without_placeholder(mock_prompt_session: tuple[MagicMock, MagicMo
     """Test that placeholder is empty when not provided."""
     mock_session_class, _ = mock_prompt_session
 
-    Console.input("Enter text: ")
+    _console_module.input("Enter text: ")
 
     assert mock_session_class.called
     call_kwargs = mock_session_class.call_args[1]
@@ -517,7 +518,7 @@ def test_input_without_placeholder(mock_prompt_session: tuple[MagicMock, MagicMo
 
 def test_multiline_input(mock_prompt_toolkit: MagicMock, capsys: pytest.CaptureFixture[str]):
     expected_input = "mocked multiline input"
-    result = Console.multiline_input("Enter text:", show_keybindings=True, default_color="#BCA")
+    result = _console_module.multiline_input("Enter text:", show_keybindings=True, default_color="#BCA")
 
     assert result == expected_input
 
@@ -535,7 +536,7 @@ def test_multiline_input(mock_prompt_toolkit: MagicMock, capsys: pytest.CaptureF
 
 
 def test_multiline_input_no_bindings(mock_prompt_toolkit: MagicMock, capsys: pytest.CaptureFixture[str]):
-    Console.multiline_input("Enter text:", show_keybindings=False, end="DONE")
+    _console_module.multiline_input("Enter text:", show_keybindings=False, end="DONE")
 
     captured = capsys.readouterr()
     # Check that prompt was printed and ends with `DONE`:
@@ -545,31 +546,31 @@ def test_multiline_input_no_bindings(mock_prompt_toolkit: MagicMock, capsys: pyt
     mock_prompt_toolkit.assert_called_once()
 
 
-@patch("xulbux.console.Console.input")
+@patch("xulbux.console._console_module.input")
 def test_confirm_default_no(mock_input: MagicMock):
     mock_input.return_value = ""
-    result = Console.confirm("Continue?", default_is_yes=False)
+    result = _console_module.confirm("Continue?", default_is_yes=False)
     assert result is False
 
 
-@patch("xulbux.console.Console.input")
+@patch("xulbux.console._console_module.input")
 def test_confirm_default_yes(mock_input: MagicMock):
     mock_input.return_value = ""
-    result = Console.confirm("Continue?", default_is_yes=True)
+    result = _console_module.confirm("Continue?", default_is_yes=True)
     assert result is True
 
 
-@patch("xulbux.console.Console.input")
+@patch("xulbux.console._console_module.input")
 def test_confirm_no(mock_input: MagicMock):
     mock_input.return_value = "n"
-    result = Console.confirm("Continue?")
+    result = _console_module.confirm("Continue?")
     assert result is False
 
 
-@patch("xulbux.console.Console.input")
+@patch("xulbux.console._console_module.input")
 def test_confirm_yes(mock_input: MagicMock):
     mock_input.return_value = "y"
-    result = Console.confirm("Continue?")
+    result = _console_module.confirm("Continue?")
     assert result is True
 
 
@@ -804,7 +805,7 @@ def test_get_args(
     expected_parsed_args: dict[str, dict[str, Any]],
 ):
     monkeypatch.setattr(sys, "argv", argv)
-    args_result = Console.get_args(arg_parse_configs)
+    args_result = _console_module.get_args(arg_parse_configs)
     assert isinstance(args_result, ParsedArgs)
     assert args_result.dict() == expected_parsed_args
 
@@ -812,7 +813,7 @@ def test_get_args(
 def test_get_args_allow_space_value_false(monkeypatch: pytest.MonkeyPatch):
     """Test that allow_space_value=False does not consume the next token as a flag value."""
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "val", "after1"])
-    result = Console.get_args({"flag": {"--flag"}, "after": "after"}, allow_space_value=False)
+    result = _console_module.get_args({"flag": {"--flag"}, "after": "after"}, allow_space_value=False)
 
     # 'val' must NOT be consumed by --flag
     assert result.flag.exists is True
@@ -827,7 +828,7 @@ def test_get_args_allow_space_value_false(monkeypatch: pytest.MonkeyPatch):
 def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
     """Test custom flag-value separator handling"""
     monkeypatch.setattr(sys, "argv", ["script.py", "--msg::This is a message", "-d::42"])
-    result = Console.get_args({"message": {"--msg"}, "data": {"-d"}}, flag_value_sep="::")
+    result = _console_module.get_args({"message": {"--msg"}, "data": {"-d"}}, flag_value_sep="::")
 
     assert result.message.exists is True
     assert result.message.is_pos is False
@@ -844,26 +845,26 @@ def test_get_args_custom_sep(monkeypatch: pytest.MonkeyPatch):
 
 def test_get_args_invalid_params():
     with pytest.raises(ValueError, match=r"Duplicate flag '-f' found\. It's assigned to both 'file1' and 'file2'\."):
-        Console.get_args({"file1": {"-f", "--file1"}, "file2": {"flags": {"-f", "--file2"}, "default": "..."}})
+        _console_module.get_args({"file1": {"-f", "--file1"}, "file2": {"flags": {"-f", "--file2"}, "default": "..."}})
 
     with pytest.raises(ValueError, match=r"Duplicate flag '--long' found\. It's assigned to both 'arg1' and 'arg2'\."):
-        Console.get_args({"arg1": {"flags": {"--long"}, "default": "..."}, "arg2": {"-a", "--long"}})
+        _console_module.get_args({"arg1": {"flags": {"--long"}, "default": "..."}, "arg2": {"-a", "--long"}})
 
     with pytest.raises(ValueError, match=r"The set must contain at least one flag to search for\."):
-        Console.get_args({"arg": set()})
+        _console_module.get_args({"arg": set()})
 
     with pytest.raises(ValueError, match=r"The 'flags'-key set must contain at least one flag to search for\."):
-        Console.get_args({"arg": {"flags": set(), "default": "..."}})
+        _console_module.get_args({"arg": {"flags": set(), "default": "..."}})
 
     with pytest.raises(ValueError, match=r"non-empty string or None, got"):
-        Console.get_args({"arg": {"-a"}}, flag_value_sep="")
+        _console_module.get_args({"arg": {"-a"}}, flag_value_sep="")
 
     with pytest.raises(ValueError, match=r"non-negative integer"):
-        Console.get_args({"arg": {"-a"}}, skip=-1)
+        _console_module.get_args({"arg": {"-a"}}, skip=-1)
 
     for reserved in ParsedArgs.RESERVED_ALIASES:
         with pytest.raises(ValueError, match=f"Invalid argument alias '{reserved}'"):
-            Console.get_args({reserved: {"-a"}})
+            _console_module.get_args({reserved: {"-a"}})
 
 
 def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
@@ -873,7 +874,7 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
         "argv",
         ["script.py", "before string", "-42", "-d=256", "--file=my-file.txt", "-vv", "after string", "--also-no-flag"],
     )
-    result = Console.get_args(
+    result = _console_module.get_args(
         {
             "before": "before",
             "data": {"-d", "--data"},
@@ -930,7 +931,7 @@ def test_get_args_mixed_dash_scenarios(monkeypatch: pytest.MonkeyPatch):
 def test_get_args_negative_number_not_unknown_flag(monkeypatch: pytest.MonkeyPatch):
     """Negative numbers (e.g., -42, -.5) are not treated as unknown flags."""
     monkeypatch.setattr(sys, "argv", ["script.py", "-42", "-.5", "--known"])
-    result = Console.get_args({"before": "before", "known": {"--known"}})
+    result = _console_module.get_args({"before": "before", "known": {"--known"}})
 
     assert result.before.values == ("-42", "-.5")
     assert result.unknown_flags == frozenset()
@@ -940,7 +941,7 @@ def test_get_args_no_sep(monkeypatch: pytest.MonkeyPatch):
     """Test that flag_value_sep=None disables separator syntax and only space-separated values work."""
     # SEPARATOR SYNTAX SHOULD NOT BE RECOGNIZED - '--flag=val' IS TREATED AS A STANDALONE UNKNOWN TOKEN
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag", "space_val", "--other=ignored"])
-    result = Console.get_args({"flag": {"--flag"}, "other": {"--other"}, "after": "after"}, flag_value_sep=None)
+    result = _console_module.get_args({"flag": {"--flag"}, "other": {"--other"}, "after": "after"}, flag_value_sep=None)
 
     # '--flag' CONSUMES 'space_val' VIA SPACE-SEPARATED SYNTAX
     assert result.flag.exists is True
@@ -960,24 +961,24 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
     """Test that skip=N drops the first N argv entries before any parsing."""
     # With `skip=1`, `argv[1]` (`fc`) is skipped; parsing starts at `argv[2]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "fc", "hello", "world"])
-    result = Console.get_args({"input": "before"}, skip=1)
+    result = _console_module.get_args({"input": "before"}, skip=1)
     assert result.input.exists is True
     assert result.input.values == ("hello", "world")
 
     # With `skip=2`, `argv[1]` and `argv[2]` are skipped; parsing starts at `argv[3]`:
     monkeypatch.setattr(sys, "argv", ["script.py", "sub", "cmd", "--flag=val"])
-    result = Console.get_args({"flag": {"--flag"}}, skip=2)
+    result = _console_module.get_args({"flag": {"--flag"}}, skip=2)
     assert result.flag.exists is True
     assert result.flag.values == ("val",)
 
     # With `skip` exceeding argv length, no args are parsed:
     monkeypatch.setattr(sys, "argv", ["script.py", "only"])
-    result = Console.get_args({"flag": {"--flag"}}, skip=5)
+    result = _console_module.get_args({"flag": {"--flag"}}, skip=5)
     assert result.flag.exists is False
 
     # With `skip=0` (default); behavior is unchanged:
     monkeypatch.setattr(sys, "argv", ["script.py", "--flag=val"])
-    result = Console.get_args({"flag": {"--flag"}}, skip=0)
+    result = _console_module.get_args({"flag": {"--flag"}}, skip=0)
     assert result.flag.exists is True
     assert result.flag.values == ("val",)
 
@@ -985,7 +986,7 @@ def test_get_args_skip(monkeypatch: pytest.MonkeyPatch):
 def test_get_args_unknown_flag_not_consumed_as_value(monkeypatch: pytest.MonkeyPatch):
     """An unknown flag following a known flag is NOT consumed as that flag's space-separated value."""
     monkeypatch.setattr(sys, "argv", ["script.py", "--known", "--unknown"])
-    result = Console.get_args({"known": {"--known"}})
+    result = _console_module.get_args({"known": {"--known"}})
 
     assert result.known.exists is True
     assert result.known.values == ()
@@ -996,7 +997,7 @@ def test_get_args_unknown_flags(monkeypatch: pytest.MonkeyPatch):
     """Unknown flags (not in config) are collected in unknown_flags and not consumed as values."""
     # Standalone unknown flags and unknown flag with inline separator:
     monkeypatch.setattr(sys, "argv", ["script.py", "--known=val", "--unknown", "--unknown=extra", "-u"])
-    result = Console.get_args({"known": {"--known"}, "after": "after"})
+    result = _console_module.get_args({"known": {"--known"}, "after": "after"})
 
     assert result.known.exists is True
     assert result.known.values == ("val",)

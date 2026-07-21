@@ -2,8 +2,8 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+import xulbux.file_sys as _file_sys_module
 from xulbux.base.exceptions import PathNotFoundError
-from xulbux.file_sys import FileSys
 import pytest
 
 
@@ -54,19 +54,19 @@ def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> d
 
 
 def test_path_cwd(setup_test_environment: dict[str, Path]):
-    cwd_output = FileSys.cwd
+    cwd_output = _file_sys_module.cwd
     assert isinstance(cwd_output, Path)
     assert str(cwd_output) == str(setup_test_environment["cwd"])
 
 
 def test_path_script_dir(setup_test_environment: dict[str, Path]):
-    script_dir_output = FileSys.script_dir
+    script_dir_output = _file_sys_module.script_dir
     assert isinstance(script_dir_output, Path)
     assert str(script_dir_output) == str(setup_test_environment["script_dir"])
 
 
 def test_path_home():
-    home = FileSys.home
+    home = _file_sys_module.home
     assert isinstance(home, Path)
     assert len(str(home)) > 0
     assert home.exists()
@@ -79,40 +79,50 @@ def test_extend(setup_test_environment: dict[str, Path]):
     search_dirs = [str(env["cwd"]), search_dir]
 
     # Absolute path:
-    result = FileSys.extend_path(str(env["abs_file"]))
+    result = _file_sys_module.extend_path(str(env["abs_file"]))
     assert isinstance(result, Path)
     assert str(result) == str(env["abs_file"])
 
     # Empty path:
-    assert FileSys.extend_path("") is None
+    assert _file_sys_module.extend_path("") is None
     with pytest.raises(PathNotFoundError, match=r"Given 'rel_path' is an empty string\."):
-        FileSys.extend_path("", raise_error=True)
+        _file_sys_module.extend_path("", raise_error=True)
 
     # Found in standard locations:
-    assert str(FileSys.extend_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
-    assert str(FileSys.extend_path("subdir/file_in_script_subdir.txt")) == str(
+    assert str(_file_sys_module.extend_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
+    assert str(_file_sys_module.extend_path("subdir/file_in_script_subdir.txt")) == str(
         env["script_dir"] / "subdir" / "file_in_script_subdir.txt"
     )
-    assert str(FileSys.extend_path("file_in_home.txt")) == str(env["home"] / "file_in_home.txt")
-    assert str(FileSys.extend_path("temp_file.tmp")) == str(env["temp"] / "temp_file.tmp")
+    assert str(_file_sys_module.extend_path("file_in_home.txt")) == str(env["home"] / "file_in_home.txt")
+    assert str(_file_sys_module.extend_path("temp_file.tmp")) == str(env["temp"] / "temp_file.tmp")
 
     # Found in `search_in` directory:
-    assert str(FileSys.extend_path("custom_file.dat", search_in=search_dir)) == str(env["search_in"] / "custom_file.dat")
-    assert str(FileSys.extend_path("custom_file.dat", search_in=search_dirs)) == str(env["search_in"] / "custom_file.dat")
+    assert str(_file_sys_module.extend_path("custom_file.dat", search_in=search_dir)) == str(
+        env["search_in"] / "custom_file.dat"
+    )
+    assert str(_file_sys_module.extend_path("custom_file.dat", search_in=search_dirs)) == str(
+        env["search_in"] / "custom_file.dat"
+    )
 
     # Not found:
-    assert FileSys.extend_path("non_existent_file.xyz") is None
+    assert _file_sys_module.extend_path("non_existent_file.xyz") is None
     with pytest.raises(
         PathNotFoundError, match=r"Path [A-Za-z]*Path\('non_existent_file\.xyz'\) not found in specified directories\."
     ):
-        FileSys.extend_path("non_existent_file.xyz", raise_error=True)
+        _file_sys_module.extend_path("non_existent_file.xyz", raise_error=True)
 
     # Closest match:
     expected_typo = env["search_in"] / "TypoDir" / "file_in_typo.txt"
-    assert str(FileSys.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=False)) == str(expected_typo)
-    assert str(FileSys.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=True)) == str(expected_typo)
-    assert str(FileSys.extend_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(expected_typo)
-    assert FileSys.extend_path("CompletelyWrong/no_file_here.dat", search_in=search_dir, fuzzy_match=True) is None
+    assert str(_file_sys_module.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=False)) == str(
+        expected_typo
+    )
+    assert str(_file_sys_module.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=True)) == str(
+        expected_typo
+    )
+    assert str(_file_sys_module.extend_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(
+        expected_typo
+    )
+    assert _file_sys_module.extend_path("CompletelyWrong/no_file_here.dat", search_in=search_dir, fuzzy_match=True) is None
 
 
 def test_extend_or_make(setup_test_environment: dict[str, Path]):
@@ -120,46 +130,48 @@ def test_extend_or_make(setup_test_environment: dict[str, Path]):
     search_dir = str(env["search_in"])
 
     # Found:
-    result = FileSys.extend_or_make_path("file_in_cwd.txt")
+    result = _file_sys_module.extend_or_make_path("file_in_cwd.txt")
     assert isinstance(result, Path)
     assert str(result) == str(env["cwd"] / "file_in_cwd.txt")
 
     # Not found; make path (prefer script dir):
     rel_path_script = "new_dir/new_file.txt"
     expected_script = env["script_dir"] / rel_path_script
-    assert str(FileSys.extend_or_make_path(rel_path_script, prefer_script_dir=True)) == str(expected_script)
+    assert str(_file_sys_module.extend_or_make_path(rel_path_script, prefer_script_dir=True)) == str(expected_script)
 
     # Not found; make path (prefer CWD):
     rel_path_cwd = "another_new_dir/another_new_file.txt"
     expected_cwd = env["cwd"] / rel_path_cwd
-    assert str(FileSys.extend_or_make_path(rel_path_cwd, prefer_script_dir=False)) == str(expected_cwd)
+    assert str(_file_sys_module.extend_or_make_path(rel_path_cwd, prefer_script_dir=False)) == str(expected_cwd)
 
     # Uses closest match when finding:
     expected_typo = env["search_in"] / "TypoDir" / "file_in_typo.txt"
-    assert str(FileSys.extend_or_make_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(
-        expected_typo
-    )
+    assert str(
+        _file_sys_module.extend_or_make_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)
+    ) == str(expected_typo)
 
     # Makes path when closest match fails:
     rel_path_wrong = "VeryWrong/made_up.file"
     expected_made = env["script_dir"] / rel_path_wrong
-    assert str(FileSys.extend_or_make_path(rel_path_wrong, search_in=search_dir, fuzzy_match=True)) == str(expected_made)
+    assert str(_file_sys_module.extend_or_make_path(rel_path_wrong, search_in=search_dir, fuzzy_match=True)) == str(
+        expected_made
+    )
 
 
 def test_remove(tmp_path: Path):
     # Non-existent:
     non_existent_path = tmp_path / "does_not_exist"
     assert not non_existent_path.exists()
-    FileSys.remove(str(non_existent_path))
+    _file_sys_module.remove(str(non_existent_path))
     assert not non_existent_path.exists()
-    FileSys.remove(str(non_existent_path), only_content=True)
+    _file_sys_module.remove(str(non_existent_path), only_content=True)
     assert not non_existent_path.exists()
 
     # File removal:
     file_to_remove = tmp_path / "remove_me.txt"
     file_to_remove.touch()
     assert file_to_remove.exists()
-    FileSys.remove(str(file_to_remove))
+    _file_sys_module.remove(str(file_to_remove))
     assert not file_to_remove.exists()
 
     # Directory removal (full):
@@ -169,7 +181,7 @@ def test_remove(tmp_path: Path):
     (dir_to_remove / "subdir").mkdir()
     (dir_to_remove / "subdir" / "file2.txt").touch()
     assert dir_to_remove.exists()
-    FileSys.remove(str(dir_to_remove))
+    _file_sys_module.remove(str(dir_to_remove))
     assert not dir_to_remove.exists()
 
     # Directory removal (only content):
@@ -179,7 +191,7 @@ def test_remove(tmp_path: Path):
     (dir_to_empty / "subdir").mkdir()
     (dir_to_empty / "subdir" / "file2.txt").touch()
     assert dir_to_empty.exists()
-    FileSys.remove(str(dir_to_empty), only_content=True)
+    _file_sys_module.remove(str(dir_to_empty), only_content=True)
     assert dir_to_empty.exists()
     assert not list(dir_to_empty.iterdir())
 
@@ -187,6 +199,6 @@ def test_remove(tmp_path: Path):
     file_path_content = tmp_path / "file_content.txt"
     file_path_content.write_text("content")
     assert file_path_content.exists()
-    FileSys.remove(str(file_path_content), only_content=True)
+    _file_sys_module.remove(str(file_path_content), only_content=True)
     assert file_path_content.exists()
     assert file_path_content.read_text() == "content"

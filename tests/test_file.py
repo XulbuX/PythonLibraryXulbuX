@@ -1,6 +1,6 @@
 from pathlib import Path
+import xulbux.file as _file_module
 from xulbux.base.exceptions import SameContentFileExistsError
-from xulbux.file import File
 import pytest
 
 #
@@ -35,14 +35,16 @@ import pytest
 def test_rename_extension(
     input_file: str | Path, new_extension: str, full_extension: bool, camel_case: bool, expected_output: str
 ):
-    result = File.rename_extension(input_file, new_extension, full_extension=full_extension, camel_case_filename=camel_case)
+    result = _file_module.rename_extension(
+        input_file, new_extension, full_extension=full_extension, camel_case_filename=camel_case
+    )
     assert isinstance(result, Path)
     assert str(result) == expected_output
 
 
 def test_create_new_file(tmp_path: Path):
     file_path = tmp_path / "new_file.txt"
-    abs_path = File.create(str(file_path))
+    abs_path = _file_module.create(str(file_path))
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -53,7 +55,7 @@ def test_create_new_file(tmp_path: Path):
 def test_create_file_with_content(tmp_path: Path):
     file_path = tmp_path / "content_file.log"
     content = "This is the file content.\nWith multiple lines."
-    abs_path = File.create(str(file_path), content)
+    abs_path = _file_module.create(str(file_path), content)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -66,15 +68,15 @@ def test_create_file_exists_error(tmp_path: Path):
     with open(file_path, "w", encoding="utf-8") as file:
         file.write("Initial content")
     with pytest.raises(FileExistsError):
-        File.create(str(file_path), "New content", force=False)
+        _file_module.create(str(file_path), "New content", force=False)
 
 
 def test_create_file_same_content_exists_error(tmp_path: Path):
     file_path = tmp_path / "same_content_file.data"
     content = "Identical content"
-    File.create(str(file_path), content)
+    _file_module.create(str(file_path), content)
     with pytest.raises(SameContentFileExistsError):
-        File.create(str(file_path), content, force=False)
+        _file_module.create(str(file_path), content, force=False)
 
 
 def test_create_file_force_overwrite_different_content(tmp_path: Path):
@@ -82,10 +84,10 @@ def test_create_file_force_overwrite_different_content(tmp_path: Path):
     initial_content = "Old config"
     new_content = "New configuration values"
 
-    File.create(str(file_path), initial_content)
+    _file_module.create(str(file_path), initial_content)
     assert file_path.read_text(encoding="utf-8") == initial_content
 
-    abs_path = File.create(str(file_path), new_content, force=True)
+    abs_path = _file_module.create(str(file_path), new_content, force=True)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -97,10 +99,10 @@ def test_create_file_force_overwrite_same_content(tmp_path: Path):
     file_path = tmp_path / "overwrite_same_file.ini"
     content = "[Settings]\nValue=1"
 
-    File.create(str(file_path), content)
+    _file_module.create(str(file_path), content)
     assert file_path.read_text(encoding="utf-8") == content
 
-    abs_path = File.create(str(file_path), content, force=True)
+    abs_path = _file_module.create(str(file_path), content, force=True)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -114,10 +116,10 @@ def test_create_file_in_subdirectory(tmp_path: Path):
     content = "Content in subdirectory"
 
     with pytest.raises(FileNotFoundError):
-        File.create(str(file_path), content)
+        _file_module.create(str(file_path), content)
 
     dir_path.mkdir()
-    abs_path = File.create(str(file_path), content)
+    abs_path = _file_module.create(str(file_path), content)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()

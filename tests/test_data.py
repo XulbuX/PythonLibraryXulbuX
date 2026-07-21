@@ -1,7 +1,7 @@
 from typing import Any, Literal, cast
+import xulbux.data as _data_module
 from xulbux.ansi import StyledText
 from xulbux.base.types import DataObj
-from xulbux.data import Data
 import pytest
 
 # Don't change this data!
@@ -39,9 +39,9 @@ def test_serialize_bytes():
     utf8_bytearray = bytearray(b"World")
     non_utf8_bytes = b"\x80abc"
 
-    assert Data.serialize_bytes(utf8_bytes) == {"bytes": "Hello", "encoding": "utf-8"}
-    assert Data.serialize_bytes(utf8_bytearray) == {"bytearray": "World", "encoding": "utf-8"}
-    serialized_non_utf8 = Data.serialize_bytes(non_utf8_bytes)
+    assert _data_module.serialize_bytes(utf8_bytes) == {"bytes": "Hello", "encoding": "utf-8"}
+    assert _data_module.serialize_bytes(utf8_bytearray) == {"bytearray": "World", "encoding": "utf-8"}
+    serialized_non_utf8 = _data_module.serialize_bytes(non_utf8_bytes)
     assert serialized_non_utf8["encoding"] == "base64"
     import base64
 
@@ -57,14 +57,14 @@ def test_deserialize_bytes():
     base64_encoded = base64.b64encode(non_utf8_bytes).decode("utf-8")
     base64_serialized_bytes = {"bytes": base64_encoded, "encoding": "base64"}
 
-    assert Data.deserialize_bytes(utf8_serialized_bytes) == b"Hello"
-    assert Data.deserialize_bytes(utf8_serialized_bytearray) == bytearray(b"World")
-    assert Data.deserialize_bytes(base64_serialized_bytes) == non_utf8_bytes
+    assert _data_module.deserialize_bytes(utf8_serialized_bytes) == b"Hello"
+    assert _data_module.deserialize_bytes(utf8_serialized_bytearray) == bytearray(b"World")
+    assert _data_module.deserialize_bytes(base64_serialized_bytes) == non_utf8_bytes
 
     with pytest.raises(ValueError):
-        Data.deserialize_bytes({"bytes": "abc", "encoding": "unknown"})
+        _data_module.deserialize_bytes({"bytes": "abc", "encoding": "unknown"})
     with pytest.raises(ValueError):
-        Data.deserialize_bytes({"wrong_key": "abc", "encoding": "utf-8"})
+        _data_module.deserialize_bytes({"wrong_key": "abc", "encoding": "utf-8"})
 
 
 @pytest.mark.parametrize(
@@ -81,7 +81,7 @@ def test_deserialize_bytes():
     ],
 )
 def test_chars_count(input_data: DataObj, expected_count: int):
-    assert Data.chars_count(input_data) == expected_count
+    assert _data_module.chars_count(input_data) == expected_count
 
 
 @pytest.mark.parametrize(
@@ -94,7 +94,7 @@ def test_chars_count(input_data: DataObj, expected_count: int):
     ],
 )
 def test_strip(input_data: DataObj, expected_output: DataObj):
-    assert Data.strip(input_data) == expected_output
+    assert _data_module.strip(input_data) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -117,7 +117,7 @@ def test_strip(input_data: DataObj, expected_output: DataObj):
     ),
 )
 def test_remove_empty_items(input_data: DataObj, spaces_are_empty: bool, expected_output: DataObj):
-    assert Data.remove_empty_items(input_data, spaces_are_empty=spaces_are_empty) == expected_output
+    assert _data_module.remove_empty_items(input_data, spaces_are_empty=spaces_are_empty) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -132,66 +132,69 @@ def test_remove_empty_items(input_data: DataObj, spaces_are_empty: bool, expecte
     ],
 )
 def test_remove_duplicates(input_data: DataObj, expected_output: DataObj):
-    assert Data.remove_duplicates(input_data) == expected_output
+    assert _data_module.remove_duplicates(input_data) == expected_output
 
 
 def test_remove_comments():
-    assert Data.remove_comments(d_comments, comment_sep="__") == {"key1": ["value1", "value2", "val__ue3"], "key3": None}
+    assert _data_module.remove_comments(d_comments, comment_sep="__") == {
+        "key1": ["value1", "value2", "val__ue3"],
+        "key3": None,
+    }
 
 
 def test_is_equal():
-    assert Data.is_equal(d1_equal, d2_equal) is False
-    assert Data.is_equal(d1_equal, d2_equal, ignore_paths="key3") is True
+    assert _data_module.is_equal(d1_equal, d2_equal) is False
+    assert _data_module.is_equal(d1_equal, d2_equal, ignore_paths="key3") is True
 
 
 def test_get_path_id():
-    id1, id2 = Data.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])  # type: ignore[return-value]
+    id1, id2 = _data_module.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])  # type: ignore[return-value]
     assert id1 == "1>001"
     assert id2 == "1>012"
-    assert Data.get_value_by_path_id(d1_path_id, id1) == "bananas"
-    assert Data.get_value_by_path_id(d1_path_id, id2) == "celery"
-    assert Data.set_value_by_path_id(d2_path_id, {id1: "NEW1", id2: "NEW2"}) == {
+    assert _data_module.get_value_by_path_id(d1_path_id, id1) == "bananas"
+    assert _data_module.get_value_by_path_id(d1_path_id, id2) == "celery"
+    assert _data_module.set_value_by_path_id(d2_path_id, {id1: "NEW1", id2: "NEW2"}) == {
         "school": {"material": ["pencil", "NEW1", "rubber"], "subjects": ["math", "science", "NEW2"]}
     }
 
 
 def test_get_value_by_path_id() -> None:
     data: dict[str, Any] = {"a": [1, {"b": "c"}], "d": ("e", "f")}
-    path_id_1 = str(Data.get_path_id(data, "a->1->b"))
-    path_id_2 = str(Data.get_path_id(data, "d->1"))
+    path_id_1 = str(_data_module.get_path_id(data, "a->1->b"))
+    path_id_2 = str(_data_module.get_path_id(data, "d->1"))
 
     assert path_id_1 == "1>010"
     assert path_id_2 == "1>11"
-    assert Data.get_value_by_path_id(data, path_id_1) == "c"
-    assert Data.get_value_by_path_id(data, path_id_2) == "f"
-    assert Data.get_value_by_path_id(data, path_id_1, get_key=True) == "b"
-    assert Data.get_value_by_path_id(data, path_id_2, get_key=True) == "d"
+    assert _data_module.get_value_by_path_id(data, path_id_1) == "c"
+    assert _data_module.get_value_by_path_id(data, path_id_2) == "f"
+    assert _data_module.get_value_by_path_id(data, path_id_1, get_key=True) == "b"
+    assert _data_module.get_value_by_path_id(data, path_id_2, get_key=True) == "d"
 
     with pytest.raises(ValueError):
-        Data.get_value_by_path_id(data, "invalid_id")
+        _data_module.get_value_by_path_id(data, "invalid_id")
     with pytest.raises(IndexError):
-        Data.get_value_by_path_id({"a": [1]}, "1>01")
+        _data_module.get_value_by_path_id({"a": [1]}, "1>01")
 
 
 def test_set_value_by_path_id() -> None:
     data: dict[str, Any] = {"a": [1, {"b": "c"}], "d": ("e", "f")}
-    path_id_c = Data.get_path_id(data, "a->1->b")
-    path_id_f = Data.get_path_id(data, "d->1")
+    path_id_c = _data_module.get_path_id(data, "a->1->b")
+    path_id_f = _data_module.get_path_id(data, "d->1")
     assert path_id_c is not None and path_id_f is not None
 
-    updated_data = Data.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})  # type: ignore[assignment]
+    updated_data = _data_module.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})  # type: ignore[assignment]
     expected_data: dict[str, Any] = {"a": [1, {"b": "NEW_C"}], "d": ("e", "NEW_F")}
     assert updated_data == expected_data
 
-    updated_data_types = Data.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})  # type: ignore[assignment]
+    updated_data_types = _data_module.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})  # type: ignore[assignment]
     expected_data_types: dict[str, Any] = {"a": [1, {"b": [1, 2]}], "d": ("e", {"x": 1})}
     assert updated_data_types == expected_data_types
 
     with pytest.raises(ValueError):
-        Data.set_value_by_path_id(data, {"invalid": "value"})
+        _data_module.set_value_by_path_id(data, {"invalid": "value"})
 
     with pytest.raises(ValueError):
-        Data.set_value_by_path_id(data, {})
+        _data_module.set_value_by_path_id(data, {})
 
 
 @pytest.mark.parametrize(
@@ -221,7 +224,7 @@ def test_set_value_by_path_id() -> None:
 def test_render(
     data: DataObj, indent: int, compactness: Literal[1, 0, 2], max_width: int, sep: str, as_json: bool, expected_str: str
 ):
-    result = Data.render(
+    result = _data_module.render(
         data, indent=indent, compactness=compactness, max_width=max_width, sep=sep, as_json=as_json, syntax_highlighting=False
     )
     assert isinstance(result, StyledText)

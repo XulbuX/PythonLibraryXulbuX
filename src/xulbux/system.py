@@ -1,12 +1,11 @@
 """
-This module provides the `System` class, which includes
-methods to interact with the underlying operating system.
+This module provides functions to interact with the underlying operating system.
 """
 
+from . import console as _console_module
 from .ansi import S, StyledText
 from .base.decorators import mypyc_attr
 from .base.types import MissingLibsMsgs
-from .console import Console
 
 import ctypes as _ctypes
 import getpass as _getpass
@@ -116,102 +115,97 @@ class _SystemMeta(type):
         return _platform.python_version()
 
 
-class System(metaclass=_SystemMeta):
-    """This class provides methods to interact with the underlying operating system."""
+def restart(prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
+    """Restarts the system with some advanced options\n
+    -----------------------------------------------------------------------------------------------------
+    *   `prompt` – The message to be displayed in the systems restart notification.
+    *   `wait` – The time to wait until restarting in seconds.
+    *   `continue_program` – Whether to continue the current Python program after calling this function.
+    *   `force` – Whether to force a restart even if other processes are still running."""
 
-    @classmethod
-    def restart(cls, prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
-        """Restarts the system with some advanced options\n
-        -----------------------------------------------------------------------------------------------------
-        *   `prompt` – The message to be displayed in the systems restart notification.
-        *   `wait` – The time to wait until restarting in seconds.
-        *   `continue_program` – Whether to continue the current Python program after calling this function.
-        *   `force` – Whether to force a restart even if other processes are still running."""
+    if wait < 0:
+        raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
 
-        if wait < 0:
-            raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
+    _SystemRestartHelper(prompt, wait=wait, continue_program=continue_program, force=force)()
 
-        _SystemRestartHelper(prompt, wait=wait, continue_program=continue_program, force=force)()
 
-    @classmethod
-    def check_libs(
-        cls,
-        lib_names: list[str],
-        /,
-        *,
-        install_missing: bool = False,
-        missing_libs_msgs: MissingLibsMsgs | None = None,
-        confirm_install: bool = True,
-    ) -> list[str] | None:
-        """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
-        -------------------------------------------------------------------------------------------------------------
-        *   `lib_names` – A list of library names to check.
-        *   `install_missing` – Whether to directly missing libraries will be installed automatically using pip.
-        *   `missing_libs_msgs` – Two messages:
-            -   The first one is displayed when missing libraries are found.
-            -   The second one is the confirmation message before installing missing libraries.
-        *   `confirm_install` – Whether the user will be asked for confirmation before installing missing libraries.
-        -------------------------------------------------------------------------------------------------------------
-        If some libraries are missing or they could not be installed, their names will be returned as a list.<br>
-        If all libraries are installed (or were installed successfully), `None` will be returned."""
+def check_libs(
+    lib_names: list[str],
+    /,
+    *,
+    install_missing: bool = False,
+    missing_libs_msgs: MissingLibsMsgs | None = None,
+    confirm_install: bool = True,
+) -> list[str] | None:
+    """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
+    -------------------------------------------------------------------------------------------------------------
+    *   `lib_names` – A list of library names to check.
+    *   `install_missing` – Whether to directly missing libraries will be installed automatically using pip.
+    *   `missing_libs_msgs` – Two messages:
+        -   The first one is displayed when missing libraries are found.
+        -   The second one is the confirmation message before installing missing libraries.
+    *   `confirm_install` – Whether the user will be asked for confirmation before installing missing libraries.
+    -------------------------------------------------------------------------------------------------------------
+    If some libraries are missing or they could not be installed, their names will be returned as a list.<br>
+    If all libraries are installed (or were installed successfully), `None` will be returned."""
 
-        if missing_libs_msgs is None:
-            missing_libs_msgs = {
-                "found_missing": "The following required libraries are missing:",
-                "should_install": "Do you want to install them now?",
-            }
-        return _SystemCheckLibsHelper(
-            lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
-        )()
+    if missing_libs_msgs is None:
+        missing_libs_msgs = {
+            "found_missing": "The following required libraries are missing:",
+            "should_install": "Do you want to install them now?",
+        }
+    return _SystemCheckLibsHelper(
+        lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
+    )()
 
-    @classmethod
-    def elevate(cls, win_title: str | None = None, args: list[str] | None = None) -> bool:
-        """Attempts to start a new process with elevated privileges.\n
-        -------------------------------------------------------------------------------------
-        *   `win_title` – The window title of the elevated process (only on Windows).
-        *   `args` – A list of additional arguments to be passed to the elevated process.
-        -------------------------------------------------------------------------------------
-        After the elevated process started, the original process will exit.\n
-        This means, that this method has to be run at the beginning of the program or<br>
-        or else the program has to continue in a new window after elevation.\n
-        -------------------------------------------------------------------------------------
-        Returns `True` if the current process already has elevated privileges and raises<br>
-        a `PermissionError` if the user denied the elevation or the elevation failed."""
 
-        if cls.is_elevated:
-            return True
+def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool:
+    """Attempts to start a new process with elevated privileges.\n
+    -------------------------------------------------------------------------------------
+    *   `win_title` – The window title of the elevated process (only on Windows).
+    *   `args` – A list of additional arguments to be passed to the elevated process.
+    -------------------------------------------------------------------------------------
+    After the elevated process started, the original process will exit.\n
+    This means, that this method has to be run at the beginning of the program or<br>
+    or else the program has to continue in a new window after elevation.\n
+    -------------------------------------------------------------------------------------
+    Returns `True` if the current process already has elevated privileges and raises<br>
+    a `PermissionError` if the user denied the elevation or the elevation failed."""
 
-        args_list = args or []
+    if System.is_elevated:
+        return True
 
-        # Windows:
-        if _os.name == "nt":
-            if win_title:
-                args_str = (
-                    '-c "import ctypes; '
-                    f'ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); '
-                    f'exec(open(\\"{_sys.argv[0]}\\").read())" ' + " ".join(args_list)
-                )
-            else:
-                args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
+    args_list = args or []
 
-            if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type: ignore
-                raise PermissionError("Failed to launch elevated process.") from None
-            else:
-                _sys.exit(0)
-
-        # Unix-like (Linux/macOS):
+    # Windows:
+    if _os.name == "nt":
+        if win_title:
+            args_str = (
+                '-c "import ctypes; '
+                f'ctypes.windll.kernel32.SetConsoleTitleW(\\"{win_title}\\"); '
+                f'exec(open(\\"{_sys.argv[0]}\\").read())" ' + " ".join(args_list)
+            )
         else:
-            cmd = ["pkexec"]
+            args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-            if win_title:
-                cmd.extend(["--description", win_title])
-            cmd.extend([_sys.executable, *_sys.argv[1:], *args_list])
-
-            proc = _subprocess.Popen(cmd)
-            proc.wait()
-            if proc.returncode != 0:
-                raise PermissionError("Process elevation was denied.") from None
+        if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type: ignore
+            raise PermissionError("Failed to launch elevated process.") from None
+        else:
             _sys.exit(0)
+
+    # Unix-like (Linux/macOS):
+    else:
+        cmd = ["pkexec"]
+
+        if win_title:
+            cmd.extend(["--description", win_title])
+        cmd.extend([_sys.executable, *_sys.argv[1:], *args_list])
+
+        proc = _subprocess.Popen(cmd)
+        proc.wait()
+        if proc.returncode != 0:
+            raise PermissionError("Process elevation was denied.") from None
+        _sys.exit(0)
 
 
 class _SystemRestartHelper:
@@ -327,7 +321,7 @@ class _SystemCheckLibsHelper:
             S.BOLD(self.missing_libs_msgs["found_missing"]), *[(S.DIM(" • "), S.ITALIC(lib)) for lib in missing], ""
         ).print()
 
-        return Console.confirm(self.missing_libs_msgs["should_install"], end="\n")
+        return _console_module.confirm(self.missing_libs_msgs["should_install"], end="\n")
 
     def install_libs(self, missing: list[str], /) -> list[str] | None:
         """Install missing libraries using pip."""

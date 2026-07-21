@@ -179,12 +179,14 @@ Per default, you can also use `+` and `-` to get lighter and darker `default_col
 All of these lighten/darken formatting codes are treated as invalid if no `default_color` is set.
 """
 
+from . import color as _color_module
+from . import regex as _regex_module
+from . import string as _string_module
 from .base.consts import ANSI
 from .base.decorators import deprecated
 from .base.types import FormattableString, Hexa, Rgba
-from .color import Color, hexa, rgba
-from .regex import LazyRegex, Regex
-from .string import String
+from .color import hexa, rgba
+from .regex import LazyRegex
 
 import ctypes as _ctypes
 import os as _os
@@ -205,7 +207,7 @@ _PREFIX: Final[dict[str, set[str]]] = {"bg": {"bg"}, "br": {"br"}}
 _PREFIX_VALUES: Final[frozenset[str]] = frozenset(_chain.from_iterable(_PREFIX.values()))
 """Flat frozenset of all prefix values, precomputed for fast membership tests."""
 _PREFIX_RX: Final[dict[str, str]] = {"bg": rf"(?:{'|'.join(_PREFIX['bg'])})\s*:", "br": rf"(?:{'|'.join(_PREFIX['br'])})\s*:"}
-"""Regex patterns for matching background- and bright-color prefixes."""
+"""_regex_module. patterns for matching background- and bright-color prefixes."""
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
     star_reset=r"\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]",
@@ -213,9 +215,9 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     ansi_seq=ANSI.CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])",
     link=r"(?i)^\s*link\s*:\s*(.+?)\s*$",
     formatting=(
-        Regex.brackets("[", "]", is_group=True, ignore_in_strings=False)
+        _regex_module.brackets("[", "]", is_group=True, ignore_in_strings=False)
         + r"(?:([/\\]?)"
-        + Regex.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
+        + _regex_module.brackets("(", ")", is_group=True, strip_spaces=False, ignore_in_strings=False)
         + r")?"
     ),
     escape_char=r"(\s*)(\/|\\)",
@@ -659,10 +661,10 @@ class FormatCodes:
 
         if default_color is None:
             return False, None
-        if Color.is_valid_hexa(default_color, allow_alpha=False):
+        if _color_module.is_valid_hexa(default_color, allow_alpha=False):
             return True, hexa(cast("str | int", default_color)).to_rgba()
-        elif Color.is_valid_rgba(default_color, allow_alpha=False):
-            return True, Color._parse_rgba(cast("Rgba", default_color))
+        elif _color_module.is_valid_rgba(default_color, allow_alpha=False):
+            return True, _color_module._parse_rgba(cast("Rgba", default_color))
         raise ValueError(
             f"The 'default_color' parameter must be either a valid RGBA or HEXA color, or None, got {default_color!r}"
         )
@@ -717,14 +719,14 @@ class FormatCodes:
             if rgb_match:
                 is_bg = rgb_match.group(1)
                 red, green, blue = map(int, rgb_match.groups()[1:])
-                if Color.is_valid_rgba((red, green, blue)):
+                if _color_module.is_valid_rgba((red, green, blue)):
                     result = (
                         ANSI.SEQ_BG_COLOR.format(red, green, blue) if is_bg else ANSI.SEQ_FG_COLOR.format(red, green, blue)
                     )
 
             elif hex_match:
                 is_bg = hex_match.group(1)
-                rgb = Color.to_rgba(hex_match.group(2))
+                rgb = _color_module.to_rgba(hex_match.group(2))
                 result = (
                     ANSI.SEQ_BG_COLOR.format(rgb[0], rgb[1], rgb[2])
                     if is_bg
@@ -766,7 +768,7 @@ class FormatCodes:
         adjust = 0
 
         for mod in _modifiers[0] + _modifiers[1]:
-            adjust = String.single_char_repeats(modifiers, mod)
+            adjust = _string_module.single_char_repeats(modifiers, mod)
             if adjust and adjust > 0:
                 modifiers = mod
                 break
@@ -777,11 +779,11 @@ class FormatCodes:
             return None
 
         elif modifiers in _modifiers[0]:
-            adjusted_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * adjust)
+            adjusted_rgb = _color_module.adjust_lightness(default_color, (brightness_steps / 100) * adjust)
             new_rgb = (adjusted_rgb[0], adjusted_rgb[1], adjusted_rgb[2])
 
         elif modifiers in _modifiers[1]:
-            adjusted_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * adjust)
+            adjusted_rgb = _color_module.adjust_lightness(default_color, -(brightness_steps / 100) * adjust)
             new_rgb = (adjusted_rgb[0], adjusted_rgb[1], adjusted_rgb[2])
 
         return (ANSI.SEQ_BG_COLOR if is_bg else ANSI.SEQ_FG_COLOR).format(*new_rgb[:3])
@@ -1066,4 +1068,4 @@ class _ReplaceKeysHelper:
     def is_valid_color(self, color: str, /) -> bool:
         """Check whether the given color string is a valid formatting-key color."""
 
-        return bool(color in ANSI.COLOR_MAP or Color.is_valid_rgba(color) or Color.is_valid_hexa(color))
+        return bool(color in ANSI.COLOR_MAP or _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color))

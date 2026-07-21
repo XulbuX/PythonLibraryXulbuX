@@ -1,15 +1,15 @@
 """
-This module provides the `Console`, `ProgressBar`, and `Throbber` classes
-which offer methods for logging and other actions within the terminal.
+This module provides functions to work with the console and terminal,<br>
+including argument parsing, logging, and ANSI styling.
 """
 
+from . import color as _color_module
+from . import string as _string_module
 from .ansi import AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
-from .color import Color
 from .regex import LazyRegex
-from .string import String
 
 import ctypes as _ctypes
 import getpass as _getpass
@@ -385,925 +385,896 @@ class _ConsoleMeta(type):
         return _os.getenv("TERM", "").lower() not in {"", "dumb"}
 
 
-class Console(metaclass=_ConsoleMeta):
-    """This class provides methods for logging and other actions within the terminal."""
-
-    @classmethod
-    def get_args(
-        cls,
-        arg_parse_configs: ArgParseConfigs,
-        /,
-        *,
-        skip: int = 0,
-        flag_value_sep: str | None = "=",
-        allow_space_value: bool = True,
-    ) -> ParsedArgs:
-        """Will search for the specified args in the command-line arguments
-        and return the results as a special `ParsedArgs` object.\n
-        ----------------------------------------------------------------------------------------------------------
-        *   `arg_parse_configs` – A dictionary where each key is an alias name for the argument<br>
-            and the key's value is the parsing configuration for that argument.
-        *   `skip` – The number of leading command-line arguments to skip before parsing;<br>
-            useful when the first N args are a command/subcommand and not relevant to the caller.
-        *   `flag_value_sep` – The character/s used to separate flags from their values;<br>
-            pass `None` to disable separator-based syntax (e.g., `--flag=value`) entirely.
-        *   `allow_space_value` – Whether to allow space-separated flag values (e.g., `--flag value`)<br>
-            in addition to the separator-based syntax; enabled by default.
-        ----------------------------------------------------------------------------------------------------------
-        The `arg_parse_configs` dictionary can have the following structures for each item:
-        1.  Simple set of flags (when no default value is needed):
-            ```python
-            "alias_name": {"-f", "--flag"}
-            ```
-        2.  Dictionary with the`"flags"` set, plus a specified `"default"` value:
-            ```python
-            "alias_name": {
-                "flags": {"-f", "--flag"},
-                "default": "some_value",
-            }
-            ```
-        3.  Positional value collection using the literals `"before"` or `"after"`:
-            ```python
-            # Collect all non-flagged values that appear before the first flag:
-            "alias_name": "before"
-
-            # Collect all non-flagged values that appear after the last flag's value:
-            "alias_name": "after"
-            ```
-        #### Example usage:
-        If you call the `get_args()` method in your script like this:
+def get_args(
+    arg_parse_configs: ArgParseConfigs, /, *, skip: int = 0, flag_value_sep: str | None = "=", allow_space_value: bool = True
+) -> ParsedArgs:
+    """Will search for the specified args in the command-line arguments
+    and return the results as a special `ParsedArgs` object.\n
+    ----------------------------------------------------------------------------------------------------------
+    *   `arg_parse_configs` – A dictionary where each key is an alias name for the argument<br>
+        and the key's value is the parsing configuration for that argument.
+    *   `skip` – The number of leading command-line arguments to skip before parsing;<br>
+        useful when the first N args are a command/subcommand and not relevant to the caller.
+    *   `flag_value_sep` – The character/s used to separate flags from their values;<br>
+        pass `None` to disable separator-based syntax (e.g., `--flag=value`) entirely.
+    *   `allow_space_value` – Whether to allow space-separated flag values (e.g., `--flag value`)<br>
+        in addition to the separator-based syntax; enabled by default.
+    ----------------------------------------------------------------------------------------------------------
+    The `arg_parse_configs` dictionary can have the following structures for each item:
+    1.  Simple set of flags (when no default value is needed):
         ```python
-        parsed_args = Console.get_args({
-            "text_before": "before",   # Positional values before first flag
-            "arg1": {"-A", "--arg1"},  # Normal flags
-            "arg2": {                  # Flags with specified default value
-                "flags": {"-B", "--arg2"},
-                "default": "default value"
-            },
-            "text_after": "after",     # Positional values after last flag's value
-        })
+        "alias_name": {"-f", "--flag"}
         ```
-        … and execute the script via the command line like this:\n
-        `$ python script.py "Hello" "World" --arg1=42 "Goodbye"`\n
-        … the `get_args()` method would return a `ParsedArgs` object with the following structure:
+    2.  Dictionary with the`"flags"` set, plus a specified `"default"` value:
         ```python
-        ParsedArgs(
-            # Found 2 values before the first flag:
-            text_before = ParsedArgData(exists=True, is_pos=True, values=["Hello", "World"], flag=None),
-            # Found one of the specified flags with a value:
-            arg1 = ParsedArgData(exists=True, is_pos=False, values=["42"], flag="--arg1"),
-            # Didn't find any of the specified flags, used the default value:
-            arg2 = ParsedArgData(exists=False, is_pos=False, values=["default value"], flag=None),
-            # Found 1 value after the last flag's value:
-            text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
-        )
+        "alias_name": {
+            "flags": {"-f", "--flag"},
+            "default": "some_value",
+        }
         ```
-        ----------------------------------------------------------------------------------------------------------
-        NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g., `--flag value`)<br>
-        is consumed as that flag's value and is not available as a positional `"after"` argument."""
+    3.  Positional value collection using the literals `"before"` or `"after"`:
+        ```python
+        # Collect all non-flagged values that appear before the first flag:
+        "alias_name": "before"
 
-        if skip < 0:
-            raise ValueError(f"The 'skip' parameter must be a non-negative integer, got {skip!r}")
-        if flag_value_sep is not None and not flag_value_sep:
-            raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
+        # Collect all non-flagged values that appear after the last flag's value:
+        "alias_name": "after"
+        ```
+    #### Example usage:
+    If you call the `get_args()` method in your script like this:
+    ```python
+    parsed_args = Console.get_args({
+        "text_before": "before",   # Positional values before first flag
+        "arg1": {"-A", "--arg1"},  # Normal flags
+        "arg2": {                  # Flags with specified default value
+            "flags": {"-B", "--arg2"},
+            "default": "default value"
+        },
+        "text_after": "after",     # Positional values after last flag's value
+    })
+    ```
+    … and execute the script via the command line like this:\n
+    `$ python script.py "Hello" "World" --arg1=42 "Goodbye"`\n
+    … the `get_args()` method would return a `ParsedArgs` object with the following structure:
+    ```python
+    ParsedArgs(
+        # Found 2 values before the first flag:
+        text_before = ParsedArgData(exists=True, is_pos=True, values=["Hello", "World"], flag=None),
+        # Found one of the specified flags with a value:
+        arg1 = ParsedArgData(exists=True, is_pos=False, values=["42"], flag="--arg1"),
+        # Didn't find any of the specified flags, used the default value:
+        arg2 = ParsedArgData(exists=False, is_pos=False, values=["default value"], flag=None),
+        # Found 1 value after the last flag's value:
+        text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
+    )
+    ```
+    ----------------------------------------------------------------------------------------------------------
+    NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g., `--flag value`)<br>
+    is consumed as that flag's value and is not available as a positional `"after"` argument."""
 
-        return _ConsoleArgsParseHelper(
-            arg_parse_configs, skip=skip, flag_value_sep=flag_value_sep, allow_space_value=allow_space_value
-        )()
+    if skip < 0:
+        raise ValueError(f"The 'skip' parameter must be a non-negative integer, got {skip!r}")
+    if flag_value_sep is not None and not flag_value_sep:
+        raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
 
-    @classmethod
-    def pause_exit(
-        cls,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        pause: bool = True,
-        exit: bool = False,
-        exit_code: int = 0,
-        reset_ansi: bool = False,
-    ) -> None:
-        """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
-        -----------------------------------------------------------------------------------------------------
-        *   `prompt` – The message to print before pausing/exiting (any object, or a `StyledText` object).
-        *   `pause` – Whether to pause and wait for a key press after printing the prompt.
-        *   `exit` – Whether to exit the program after printing the prompt (and pausing if `pause` is true).
-        *   `exit_code` – The exit code to use when exiting the program.
-        *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
+    return _ConsoleArgsParseHelper(
+        arg_parse_configs, skip=skip, flag_value_sep=flag_value_sep, allow_space_value=allow_space_value
+    )()
 
-        styled = _to_styled_text(prompt)
-        if reset_ansi:
-            styled += StyledText(S.RESET)
 
-        styled.print(end="", flush=True)
+def pause_exit(
+    prompt: StyledText | object = "",
+    /,
+    *,
+    pause: bool = True,
+    exit: bool = False,
+    exit_code: int = 0,
+    reset_ansi: bool = False,
+) -> None:
+    """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
+    -----------------------------------------------------------------------------------------------------
+    *   `prompt` – The message to print before pausing/exiting (any object, or a `StyledText` object).
+    *   `pause` – Whether to pause and wait for a key press after printing the prompt.
+    *   `exit` – Whether to exit the program after printing the prompt (and pausing if `pause` is true).
+    *   `exit_code` – The exit code to use when exiting the program.
+    *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
 
-        if pause:
-            cls._read_single_key()
-        if exit:
-            _sys.exit(exit_code)
+    styled = _to_styled_text(prompt)
+    if reset_ansi:
+        styled += StyledText(S.RESET)
 
-    @classmethod
-    def cls(cls) -> None:
-        """Will clear the terminal in addition to completely resetting the ANSI formats."""
+    styled.print(end="", flush=True)
 
-        if _shutil.which("cls"):
-            _subprocess.run(["cls"])
-        elif _shutil.which("clear"):
-            _subprocess.run(["clear"])
-        print("\033[0m", end="", flush=True)
+    if pause:
+        _read_single_key()
+    if exit:
+        _sys.exit(exit_code)
 
-    @classmethod
-    def log(
-        cls,
-        title: str | None = None,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        title_bg_color: AnyStyle | Rgba | Hexa | None = None,
-        default_color: Rgba | Hexa | None = None,
-        tab_size: int = 8,
-        title_px: int = 1,
-        title_mx: int = 2,
-    ) -> None:
-        """Prints a nicely formatted log message.\n
-        ----------------------------------------------------------------------------------------------
-        *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
-        *   `prompt` – The log message (any object, or a `StyledText` object for styled output).
-        *   `start` – Something to print before the log is printed.
-        *   `end` – Something to print after the log is printed (e.g., `\\n`).
-        *   `title_bg_color` – The background color of the `title`<br>
-            (an `S` background style, RGBA, or HEXA color).
-        *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
-        *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
-        *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
-        *   `title_mx` – The horizontal margin (in chars) to the title.
-        ----------------------------------------------------------------------------------------------
-        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
-        information about styling, see the `ansi` module documentation."""
 
-        if tab_size < 0:
-            raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
-        if title_px < 0:
-            raise ValueError(f"The 'title_px' parameter must be a non-negative integer, got {title_px!r}")
-        if title_mx < 0:
-            raise ValueError(f"The 'title_mx' parameter must be a non-negative integer, got {title_mx!r}")
+def cls() -> None:
+    """Will clear the terminal in addition to completely resetting the ANSI formats."""
 
-        title = "" if title is None else title.strip()
+    if _shutil.which("cls"):
+        _subprocess.run(["cls"])
+    elif _shutil.which("clear"):
+        _subprocess.run(["clear"])
+    print("\033[0m", end="", flush=True)
 
-        title_style: _StyleGroup | _Style
-        if title_bg_color is not None:
-            bg_style, fg_style = cls._resolve_title_colors(title_bg_color)
-            title_style = S.BOLD | fg_style | bg_style
-        else:
-            title_style = S.BOLD
-            title_px = 0  # Remove padding if title has no BG color.
 
-        # Padding = space inside title BG color
-        # Margin = space outside title BG color
-        px, mx = " " * title_px, " " * title_mx
+def log(
+    title: str | None = None,
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    title_bg_color: AnyStyle | Rgba | Hexa | None = None,
+    default_color: Rgba | Hexa | None = None,
+    tab_size: int = 8,
+    title_px: int = 1,
+    title_mx: int = 2,
+) -> None:
+    """Prints a nicely formatted log message.\n
+    ----------------------------------------------------------------------------------------------
+    *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
+    *   `prompt` – The log message (any object, or a `StyledText` object for styled output).
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `title_bg_color` – The background color of the `title`<br>
+        (an `S` background style, RGBA, or HEXA color).
+    *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
+    *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
+    *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
+    *   `title_mx` – The horizontal margin (in chars) to the title.
+    ----------------------------------------------------------------------------------------------
+    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    information about styling, see the `ansi` module documentation."""
 
-        # Title length including padding and margin:
-        title_len: int = len(title) + (title_px * 2) + (title_mx * 2)
+    if tab_size < 0:
+        raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
+    if title_px < 0:
+        raise ValueError(f"The 'title_px' parameter must be a non-negative integer, got {title_px!r}")
+    if title_mx < 0:
+        raise ValueError(f"The 'title_mx' parameter must be a non-negative integer, got {title_mx!r}")
 
-        # Distance to next tab stop:
-        tab: str = " " * (-title_len % tab_size)
+    title = "" if title is None else title.strip()
 
-        # Position where prompt needs to wrap to next line:
-        wrap_len: int = cls.width - (title_len + len(tab))
+    title_style: _StyleGroup | _Style
+    if title_bg_color is not None:
+        bg_style, fg_style = _resolve_title_colors(title_bg_color)
+        title_style = S.BOLD | fg_style | bg_style
+    else:
+        title_style = S.BOLD
+        title_px = 0  # Remove padding if title has no BG color.
 
-        # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
-        clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
-        removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
+    # Padding = space inside title BG color
+    # Margin = space outside title BG color
+    px, mx = " " * title_px, " " * title_mx
 
-        # Split prompt into lines and then split each line into chunks that fit within the wrap length:
-        prompt_lst: list[str] = list(chain.from_iterable(cls._process_lines(clean_prompt, wrap_len)))
+    # Title length including padding and margin:
+    title_len: int = len(title) + (title_px * 2) + (title_mx * 2)
 
-        # Add back the removed ANSI codes to their original positions in the wrapped prompt:
-        wrapped = f"\n{' ' * title_len}{tab}".join(cls._add_back_removed_parts(prompt_lst, removals))
+    # Distance to next tab stop:
+    tab: str = " " * (-title_len % tab_size)
 
-        prompt_segment = S.hex(str(Color.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped
+    # Position where prompt needs to wrap to next line:
+    wrap_len: int = Console.width - (title_len + len(tab))
 
-        if title == "":
-            StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
-        else:
-            title_ansi = cls._render_log_title(f"{px}{title}{px}", title_style)
-            StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", prompt_segment, sep="").print(end=end)
+    # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
+    clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
+    removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
 
-    @classmethod
-    def debug(
-        cls,
-        prompt: StyledText | object = "Point in program reached.",
-        /,
-        *,
-        active: bool = True,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = False,
-        exit_code: int = 0,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `DEBUG` log message with the options to pause<br>
-        at the message and exit the program after the message was printed.\n
-        If `active` is false, no debug message will be printed."""
+    # Split prompt into lines and then split each line into chunks that fit within the wrap length:
+    prompt_lst: list[str] = list(chain.from_iterable(_process_lines(clean_prompt, wrap_len)))
 
-        if active:
-            cls.log("DEBUG", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-            cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    # Add back the removed ANSI codes to their original positions in the wrapped prompt:
+    wrapped = f"\n{' ' * title_len}{tab}".join(_add_back_removed_parts(prompt_lst, removals))
 
-    @classmethod
-    def info(
-        cls,
-        prompt: StyledText | object = "Program running.",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = False,
-        exit_code: int = 0,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `INFO` log message with the options to pause<br>
-        at the message and exit the program after the message was printed."""
+    prompt_segment = S.hex(str(_color_module.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped
 
-        cls.log("INFO", prompt, start=start, end=end, title_bg_color=S.BG.BR.BLUE, default_color=default_color)
-        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    if title == "":
+        StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
+    else:
+        title_ansi = _render_log_title(f"{px}{title}{px}", title_style)
+        StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", prompt_segment, sep="").print(end=end)
 
-    @classmethod
-    def done(
-        cls,
-        prompt: StyledText | object = "Program finished.",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = False,
-        exit_code: int = 0,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `DONE` log message with the options to pause<br>
-        at the message and exit the program after the message was printed."""
 
-        cls.log("DONE", prompt, start=start, end=end, title_bg_color=S.BG.BR.GREEN, default_color=default_color)
-        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+def debug(
+    prompt: StyledText | object = "Point in program reached.",
+    /,
+    *,
+    active: bool = True,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = False,
+    exit_code: int = 0,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `DEBUG` log message with the options to pause<br>
+    at the message and exit the program after the message was printed.\n
+    If `active` is false, no debug message will be printed."""
 
-    @classmethod
-    def warn(
-        cls,
-        prompt: StyledText | object = "Important message.",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = False,
-        exit_code: int = 1,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `WARN` log message with the options to pause<br>
-        at the message and exit the program after the message was printed."""
+    if active:
+        log("DEBUG", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
+        pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-        cls.log("WARN", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @classmethod
-    def fail(
-        cls,
-        prompt: StyledText | object = "Program error.",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = True,
-        exit_code: int = 1,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `FAIL` log message with the options to pause<br>
-        at the message and exit the program after the message was printed."""
+def info(
+    prompt: StyledText | object = "Program running.",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = False,
+    exit_code: int = 0,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `INFO` log message with the options to pause<br>
+    at the message and exit the program after the message was printed."""
 
-        cls.log("FAIL", prompt, start=start, end=end, title_bg_color=S.BG.BR.RED, default_color=default_color)
-        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    log("INFO", prompt, start=start, end=end, title_bg_color=S.BG.BR.BLUE, default_color=default_color)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-    @classmethod
-    def exit(
-        cls,
-        prompt: StyledText | object = "Program ended.",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        pause: bool = False,
-        exit: bool = True,
-        exit_code: int = 0,
-        reset_ansi: bool = True,
-    ) -> None:
-        """A preset for `log()`: `EXIT` log message with the options to pause<br>
-        at the message and exit the program after the message was printed."""
 
-        cls.log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
-        cls.pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+def done(
+    prompt: StyledText | object = "Program finished.",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = False,
+    exit_code: int = 0,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `DONE` log message with the options to pause<br>
+    at the message and exit the program after the message was printed."""
 
-    @classmethod
-    def log_box_filled(
-        cls,
-        *values: StyledText | object,
-        start: str = "",
-        end: str = "\n",
-        box_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa | None = None,
-        default_color: Rgba | Hexa | None = None,
-        w_padding: int = 2,
-        w_full: bool = False,
-        indent: int = 0,
-    ) -> None:
-        """Will print a box with a colored background, containing a log message.\n
-        --------------------------------------------------------------------------------------
-        *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
-        *   `start` – Something to print before the log box is printed (e.g., `\\n`).
-        *   `end` – Something to print after the log box is printed (e.g., `\\n`).
-        *   `box_bg_color` – The background color of the box<br>
-            (an `S` background style, RGBA, or HEXA color).
-        *   `default_color` – The default text color of the `*values`.
-        *   `w_padding` – The horizontal padding (in chars) to the box content.
-        *   `w_full` – Whether to make the box be the full terminal width or not.
-        *   `indent` – The indentation of the box (in chars).
-        --------------------------------------------------------------------------------------
-        To style the content, pass `StyledText` objects. For more detailed<br>
-        information about styling, see the `ansi` module documentation."""
+    log("DONE", prompt, start=start, end=end, title_bg_color=S.BG.BR.GREEN, default_color=default_color)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-        if w_padding < 0:
-            raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
-        if indent < 0:
-            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-        default_hexa = str(Color.to_hexa(default_color)) if default_color is not None else "#000"
+def warn(
+    prompt: StyledText | object = "Important message.",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = False,
+    exit_code: int = 1,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `WARN` log message with the options to pause<br>
+    at the message and exit the program after the message was printed."""
 
-        # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-        bg_style: AnyStyle | _StyleGroup = (
-            (S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa)) if box_bg_color is None else cls._as_bg_style(box_bg_color)
-        )
+    log("WARN", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-        open_seq = StyledText(S.hex(default_hexa) | bg_style).ansi
-        bg_open = StyledText(bg_style).ansi
-        reset = StyledText(S.RESET).ansi
 
-        ansi_lines, plain_lines, max_line_len = cls._prepare_log_box(values)
+def fail(
+    prompt: StyledText | object = "Program error.",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = True,
+    exit_code: int = 1,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `FAIL` log message with the options to pause<br>
+    at the message and exit the program after the message was printed."""
 
-        spaces_l = " " * indent
-        pady = " " * (cls.width if w_full else max_line_len + (2 * w_padding))
-        pad_w_full = (cls.width - (max_line_len + (2 * w_padding))) if w_full else 0
+    log("FAIL", prompt, start=start, end=end, title_bg_color=S.BG.BR.RED, default_color=default_color)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
-        box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
 
-        for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
-            right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
-            box_lines.append(
-                f"{spaces_l}{open_seq}{' ' * w_padding}{cls._persist_style(ansi_line, bg_open)}{right_pad}{reset}"
+def exit(
+    prompt: StyledText | object = "Program ended.",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    pause: bool = False,
+    exit: bool = True,
+    exit_code: int = 0,
+    reset_ansi: bool = True,
+) -> None:
+    """A preset for `log()`: `EXIT` log message with the options to pause<br>
+    at the message and exit the program after the message was printed."""
+
+    log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+
+
+def log_box_filled(
+    *values: StyledText | object,
+    start: str = "",
+    end: str = "\n",
+    box_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa | None = None,
+    default_color: Rgba | Hexa | None = None,
+    w_padding: int = 2,
+    w_full: bool = False,
+    indent: int = 0,
+) -> None:
+    """Will print a box with a colored background, containing a log message.\n
+    --------------------------------------------------------------------------------------
+    *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
+    *   `start` – Something to print before the log box is printed (e.g., `\\n`).
+    *   `end` – Something to print after the log box is printed (e.g., `\\n`).
+    *   `box_bg_color` – The background color of the box<br>
+        (an `S` background style, RGBA, or HEXA color).
+    *   `default_color` – The default text color of the `*values`.
+    *   `w_padding` – The horizontal padding (in chars) to the box content.
+    *   `w_full` – Whether to make the box be the full terminal width or not.
+    *   `indent` – The indentation of the box (in chars).
+    --------------------------------------------------------------------------------------
+    To style the content, pass `StyledText` objects. For more detailed<br>
+    information about styling, see the `ansi` module documentation."""
+
+    if w_padding < 0:
+        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
+    if indent < 0:
+        raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
+
+    default_hexa = str(_color_module.to_hexa(default_color)) if default_color is not None else "#000"
+
+    # If no box BG color is set, use the console foreground color as the box BG (via inversion):
+    bg_style: AnyStyle | _StyleGroup = (
+        (S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa)) if box_bg_color is None else _as_bg_style(box_bg_color)
+    )
+
+    open_seq = StyledText(S.hex(default_hexa) | bg_style).ansi
+    bg_open = StyledText(bg_style).ansi
+    reset = StyledText(S.RESET).ansi
+
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(values)
+
+    spaces_l = " " * indent
+    pady = " " * (Console.width if w_full else max_line_len + (2 * w_padding))
+    pad_w_full = (Console.width - (max_line_len + (2 * w_padding))) if w_full else 0
+
+    box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
+
+    for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
+        right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
+        box_lines.append(f"{spaces_l}{open_seq}{' ' * w_padding}{_persist_style(ansi_line, bg_open)}{right_pad}{reset}")
+
+    box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
+
+    StyledText(start + "\n".join(box_lines)).print(end=end)
+
+
+def log_box_bordered(
+    *values: StyledText | object,
+    start: str = "",
+    end: str = "\n",
+    border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
+    border_style: AnyStyle | _StyleGroup | Rgba | Hexa = S.BR.BLACK,
+    default_color: Rgba | Hexa | None = None,
+    w_padding: int = 1,
+    w_full: bool = False,
+    indent: int = 0,
+    _border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
+) -> None:
+    """Will print a bordered box, containing a log message.\n
+    ---------------------------------------------------------------------------------------------
+    *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
+    *   `start` – Something to print before the log box is printed (e.g., `\\n`).
+    *   `end` – Something to print after the log box is printed (e.g., `\\n`).
+    *   `border_type` – One of the predefined border character sets.
+    *   `border_style` – The style of the border (an `S` style, RGBA, or HEXA color).
+    *   `default_color` – The default text color of the `*values`.
+    *   `w_padding` – The horizontal padding (in chars) to the box content.
+    *   `w_full` – Whether to make the box be the full terminal width or not.
+    *   `indent` – The indentation of the box (in chars).
+    *   `_border_chars` – Define your own border characters set (overwrites `border_type`).
+    ---------------------------------------------------------------------------------------------
+    You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
+    ---------------------------------------------------------------------------------------------
+    To style the content, pass `StyledText` objects. For more detailed<br>
+    information about styling, see the `ansi` module documentation.\n
+    ---------------------------------------------------------------------------------------------
+    The `border_type` can be one of the following:
+    *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
+    *   `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤')`
+    *   `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫')`
+    *   `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣')`\n
+    The order of the characters is always:
+    1.  top-left corner
+    2.  top border
+    3.  top-right corner
+    4.  right border
+    5.  bottom-right corner
+    6.  bottom border
+    7.  bottom-left corner
+    8.  left border
+    9.  left horizontal rule connector
+    10. horizontal rule
+    11. right horizontal rule connector"""
+
+    if w_padding < 0:
+        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
+    if indent < 0:
+        raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
+    if _border_chars is not None:
+        if len(_border_chars) != 11:
+            raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
+        if not all(len(char) == 1 for char in _border_chars):
+            raise ValueError(
+                f"The '_border_chars' parameter must only contain single-character strings, got {_border_chars!r}"
             )
 
-        box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
+    border_open = StyledText(_as_fg_style(border_style)).ansi
+    content_open = StyledText(S.hex(str(_color_module.to_hexa(default_color)))).ansi if default_color is not None else ""
+    reset = StyledText(S.RESET).ansi
 
-        StyledText(start + "\n".join(box_lines)).print(end=end)
+    borders = {
+        "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
+        "rounded": ("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤"),
+        "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
+        "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
+    }
+    border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
 
-    @classmethod
-    def log_box_bordered(
-        cls,
-        *values: StyledText | object,
-        start: str = "",
-        end: str = "\n",
-        border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-        border_style: AnyStyle | _StyleGroup | Rgba | Hexa = S.BR.BLACK,
-        default_color: Rgba | Hexa | None = None,
-        w_padding: int = 1,
-        w_full: bool = False,
-        indent: int = 0,
-        _border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
-    ) -> None:
-        """Will print a bordered box, containing a log message.\n
-        ---------------------------------------------------------------------------------------------
-        *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
-        *   `start` – Something to print before the log box is printed (e.g., `\\n`).
-        *   `end` – Something to print after the log box is printed (e.g., `\\n`).
-        *   `border_type` – One of the predefined border character sets.
-        *   `border_style` – The style of the border (an `S` style, RGBA, or HEXA color).
-        *   `default_color` – The default text color of the `*values`.
-        *   `w_padding` – The horizontal padding (in chars) to the box content.
-        *   `w_full` – Whether to make the box be the full terminal width or not.
-        *   `indent` – The indentation of the box (in chars).
-        *   `_border_chars` – Define your own border characters set (overwrites `border_type`).
-        ---------------------------------------------------------------------------------------------
-        You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
-        ---------------------------------------------------------------------------------------------
-        To style the content, pass `StyledText` objects. For more detailed<br>
-        information about styling, see the `ansi` module documentation.\n
-        ---------------------------------------------------------------------------------------------
-        The `border_type` can be one of the following:
-        *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
-        *   `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤')`
-        *   `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫')`
-        *   `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣')`\n
-        The order of the characters is always:
-        1.  top-left corner
-        2.  top border
-        3.  top-right corner
-        4.  right border
-        5.  bottom-right corner
-        6.  bottom border
-        7.  bottom-left corner
-        8.  left border
-        9.  left horizontal rule connector
-        10. horizontal rule
-        11. right horizontal rule connector"""
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(values, has_rules=True)
 
-        if w_padding < 0:
-            raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
-        if indent < 0:
-            raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
-        if _border_chars is not None:
-            if len(_border_chars) != 11:
-                raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
-            if not all(len(char) == 1 for char in _border_chars):
-                raise ValueError(
-                    f"The '_border_chars' parameter must only contain single-character strings, got {_border_chars!r}"
-                )
+    spaces_l = " " * indent
+    pad_w_full = (Console.width - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
 
-        border_open = StyledText(cls._as_fg_style(border_style)).ansi
-        content_open = StyledText(S.hex(str(Color.to_hexa(default_color)))).ansi if default_color is not None else ""
-        reset = StyledText(S.RESET).ansi
+    border_t_line = border_chars[1] * (
+        Console.width - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding)
+    )
+    border_b_line = border_chars[5] * (
+        Console.width - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding)
+    )
+    h_rule_line = border_chars[9] * (Console.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
 
-        borders = {
-            "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
-            "rounded": ("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤"),
-            "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
-            "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
-        }
-        border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
+    border_l = f"{border_open}{border_chars[7]}{reset}"
+    border_r = f"{border_open}{border_chars[3]}{reset}"
+    border_t = f"{spaces_l}{border_open}{border_chars[0]}{border_t_line}{border_chars[2]}{reset}"
+    border_b = f"{spaces_l}{border_open}{border_chars[6]}{border_b_line}{border_chars[4]}{reset}"
 
-        ansi_lines, plain_lines, max_line_len = cls._prepare_log_box(values, has_rules=True)
+    h_rule = f"{spaces_l}{border_open}{border_chars[8]}{h_rule_line}{border_chars[10]}{reset}"
 
-        spaces_l = " " * indent
-        pad_w_full = (cls.width - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+    box_lines: list[str] = []
+    for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
+        if _PATTERNS.hr.match(plain_line):
+            box_lines.append(h_rule)
+            continue
+        right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
+        box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
-        border_t_line = border_chars[1] * (
-            cls.width - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding)
-        )
-        border_b_line = border_chars[5] * (
-            cls.width - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding)
-        )
-        h_rule_line = border_chars[9] * (cls.width - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
+    StyledText(
+        f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "") + f"{border_b}{reset}"
+    ).print(end=end)
 
-        border_l = f"{border_open}{border_chars[7]}{reset}"
-        border_r = f"{border_open}{border_chars[3]}{reset}"
-        border_t = f"{spaces_l}{border_open}{border_chars[0]}{border_t_line}{border_chars[2]}{reset}"
-        border_b = f"{spaces_l}{border_open}{border_chars[6]}{border_b_line}{border_chars[4]}{reset}"
 
-        h_rule = f"{spaces_l}{border_open}{border_chars[8]}{h_rule_line}{border_chars[10]}{reset}"
+def confirm(
+    prompt: StyledText | object = "Do you want to continue?",
+    /,
+    *,
+    start: str = "",
+    end: str = "",
+    default_color: Rgba | Hexa | None = None,
+    default_is_yes: bool = True,
+) -> bool:
+    """Ask a yes/no question.\n
+    ------------------------------------------------------------------------------------------
+    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `start` – Something to print before the input.
+    *   `end` – Something to print after the input (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt`.
+    *   `default_is_yes` – The default answer if the user just presses enter.
+    ------------------------------------------------------------------------------------------
+    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    information about styling, see the `ansi` module documentation."""
 
-        box_lines: list[str] = []
-        for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
-            if _PATTERNS.hr.match(plain_line):
-                box_lines.append(h_rule)
-                continue
-            right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
-            box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
+    yes_no = f"({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): "
+    head = f"{start}{_to_styled_text(prompt).ansi} "
+    head_seg = S.hex(str(_color_module.to_hexa(default_color)))(head) if default_color is not None else head
 
-        StyledText(
-            f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "") + f"{border_b}{reset}"
-        ).print(end=end)
+    confirmed = input((head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
+        {"", "y", "yes"} if default_is_yes else {"y", "yes"}
+    )
 
-    @classmethod
-    def confirm(
-        cls,
-        prompt: StyledText | object = "Do you want to continue?",
-        /,
-        *,
-        start: str = "",
-        end: str = "",
-        default_color: Rgba | Hexa | None = None,
-        default_is_yes: bool = True,
-    ) -> bool:
-        """Ask a yes/no question.\n
-        ------------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
-        *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g., `\\n`).
-        *   `default_color` – The default text color of the `prompt`.
-        *   `default_is_yes` – The default answer if the user just presses enter.
-        ------------------------------------------------------------------------------------------
-        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
-        information about styling, see the `ansi` module documentation."""
-
-        yes_no = f"({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): "
-        head = f"{start}{_to_styled_text(prompt).ansi} "
-        head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
-
-        confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
-            {"", "y", "yes"} if default_is_yes else {"y", "yes"}
-        )
-
-        if end:
-            StyledText(end).print(end="", flush=True)
-
-        return confirmed
-
-    @classmethod
-    def multiline_input(
-        cls,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        start: str = "",
-        end: str = "\n",
-        default_color: Rgba | Hexa | None = None,
-        show_keybindings: bool = True,
-        input_prefix: str = " ⮡ ",
-        reset_ansi: bool = True,
-    ) -> str:
-        """An input where users can write (and paste) text over multiple lines.\n
-        ------------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
-        *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g., `\\n`).
-        *   `default_color` – The default text color of the `prompt`.
-        *   `show_keybindings` – Whether to show the special keybindings or not.
-        *   `input_prefix` – The prefix of the input line.
-        *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
-        ------------------------------------------------------------------------------------------
-        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
-        information about styling, see the `ansi` module documentation."""
-
-        kb = KeyBindings()
-        kb.add("c-d", eager=True)(cls._multiline_input_submit)
-
-        head = f"{start}{_to_styled_text(prompt).ansi}"
-        head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
-        StyledText(head_seg).print()
-        if show_keybindings:
-            StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
-        input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
-        StyledText(S.RESET if reset_ansi else "").print(end=end[1:] if end.startswith("\n") else end)
-
-        return input_string
-
-    @overload
-    @classmethod
-    def input(
-        cls,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        start: str = "",
-        end: str = "",
-        default_color: Rgba | Hexa | None = None,
-        placeholder: str | None = None,
-        mask_char: str | None = None,
-        min_len: int | None = None,
-        max_len: int | None = None,
-        allowed_chars: str | AllTextChars = CHARS.ALL,
-        allow_paste: bool = True,
-        validator: Callable[[str], str | None] | None = None,
-        default_val: str | None = None,
-        output_type: type[str] = str,
-    ) -> str: ...
-
-    @overload
-    @classmethod
-    def input[T](
-        cls,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        start: str = "",
-        end: str = "",
-        default_color: Rgba | Hexa | None = None,
-        placeholder: str | None = None,
-        mask_char: str | None = None,
-        min_len: int | None = None,
-        max_len: int | None = None,
-        allowed_chars: str | AllTextChars = CHARS.ALL,
-        allow_paste: bool = True,
-        validator: Callable[[str], str | None] | None = None,
-        default_val: T | None = None,
-        output_type: type[T] = ...,
-    ) -> T: ...
-
-    @classmethod
-    def input(
-        cls,
-        prompt: StyledText | object = "",
-        /,
-        *,
-        start: str = "",
-        end: str = "",
-        default_color: Rgba | Hexa | None = None,
-        placeholder: str | None = None,
-        mask_char: str | None = None,
-        min_len: int | None = None,
-        max_len: int | None = None,
-        allowed_chars: str | AllTextChars = CHARS.ALL,
-        allow_paste: bool = True,
-        validator: Callable[[str], str | None] | None = None,
-        default_val: Any = None,
-        output_type: type[Any] = str,
-    ) -> Any:
-        """Acts like a standard Python `input()` a bunch of cool extra features.\n
-        ------------------------------------------------------------------------------------------
-        *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
-        *   `start` – Something to print before the input.
-        *   `end` – Something to print after the input (e.g., `\\n`).
-        *   `default_color` – The default text color of the `prompt`.
-        *   `placeholder` – A placeholder text that is shown when the input is empty.
-        *   `mask_char` – If set, the input will be masked with this character.
-        *   `min_len` – The minimum length of the input (required to submit).
-        *   `max_len` – The maximum length of the input (can't write further if reached).
-        *   `allowed_chars` – A string of characters that are allowed to be inputted<br>
-            (default allows all characters).
-        *   `allow_paste` – Whether to allow pasting text into the input or not.
-        *   `validator` – A function that takes the input string and returns a string error<br>
-            message if invalid, or nothing if valid.
-        *   `default_val` – The default value to return if the input is empty.
-        *   `output_type` – The type (class) to convert the input to before returning it.
-        ------------------------------------------------------------------------------------------
-        To style the `prompt`, pass a `StyledText` object. For more detailed<br>
-        information about styling, see the `ansi` module documentation."""
-
-        if mask_char is not None and len(mask_char) != 1:
-            raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
-        if min_len is not None and min_len < 0:
-            raise ValueError(f"The 'min_len' parameter must be a non-negative integer, got {min_len!r}")
-        if max_len is not None and max_len < 0:
-            raise ValueError(f"The 'max_len' parameter must be a non-negative integer, got {max_len!r}")
-
-        helper = _ConsoleInputHelper(
-            mask_char=mask_char,
-            min_len=min_len,
-            max_len=max_len,
-            allowed_chars=allowed_chars,
-            allow_paste=allow_paste,
-            validator=validator,
-        )
-
-        kb = KeyBindings()
-        kb.add(Keys.Delete)(helper.handle_delete)
-        kb.add(Keys.Backspace)(helper.handle_backspace)
-        kb.add(Keys.ControlA)(helper.handle_control_a)
-        kb.add(Keys.BracketedPaste)(helper.handle_paste)
-        kb.add(Keys.Any)(helper.handle_any)
-
-        custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
-        prompt_ansi = _to_styled_text(prompt).ansi
-        if default_color is not None:
-            prompt_ansi = StyledText(S.hex(str(Color.to_hexa(default_color)))(prompt_ansi)).ansi
-        session: _pt.PromptSession[str] = _pt.PromptSession(
-            message=_pt.formatted_text.ANSI(prompt_ansi),
-            validator=_ConsoleInputValidator(helper.get_text, mask_char=mask_char, min_len=min_len, validator=validator),
-            validate_while_typing=True,
-            key_bindings=kb,
-            bottom_toolbar=helper.bottom_toolbar,
-            placeholder=_pt.formatted_text.ANSI(StyledText((S.ITALIC | S.BR.BLACK)(placeholder)).ansi) if placeholder else "",
-            style=custom_style,
-        )
-        StyledText(start).print(end="", flush=True)
-        session.prompt()
+    if end:
         StyledText(end).print(end="", flush=True)
 
-        if (result_text := helper.get_text()) in {"", None}:
+    return confirmed
+
+
+def multiline_input(
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "\n",
+    default_color: Rgba | Hexa | None = None,
+    show_keybindings: bool = True,
+    input_prefix: str = " ⮡ ",
+    reset_ansi: bool = True,
+) -> str:
+    """An input where users can write (and paste) text over multiple lines.\n
+    ------------------------------------------------------------------------------------------
+    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `start` – Something to print before the input.
+    *   `end` – Something to print after the input (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt`.
+    *   `show_keybindings` – Whether to show the special keybindings or not.
+    *   `input_prefix` – The prefix of the input line.
+    *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
+    ------------------------------------------------------------------------------------------
+    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    information about styling, see the `ansi` module documentation."""
+
+    kb = KeyBindings()
+    kb.add("c-d", eager=True)(_multiline_input_submit)
+
+    head = f"{start}{_to_styled_text(prompt).ansi}"
+    head_seg = S.hex(str(_color_module.to_hexa(default_color)))(head) if default_color is not None else head
+    StyledText(head_seg).print()
+    if show_keybindings:
+        StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
+    input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
+    StyledText(S.RESET if reset_ansi else "").print(end=end[1:] if end.startswith("\n") else end)
+
+    return input_string
+
+
+@overload
+def input(
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "",
+    default_color: Rgba | Hexa | None = None,
+    placeholder: str | None = None,
+    mask_char: str | None = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
+    allowed_chars: str | AllTextChars = CHARS.ALL,
+    allow_paste: bool = True,
+    validator: Callable[[str], str | None] | None = None,
+    default_val: str | None = None,
+    output_type: type[str] = str,
+) -> str: ...
+
+
+@overload
+def input[T](
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "",
+    default_color: Rgba | Hexa | None = None,
+    placeholder: str | None = None,
+    mask_char: str | None = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
+    allowed_chars: str | AllTextChars = CHARS.ALL,
+    allow_paste: bool = True,
+    validator: Callable[[str], str | None] | None = None,
+    default_val: T | None = None,
+    output_type: type[T] = ...,
+) -> T: ...
+
+
+def input(
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "",
+    default_color: Rgba | Hexa | None = None,
+    placeholder: str | None = None,
+    mask_char: str | None = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
+    allowed_chars: str | AllTextChars = CHARS.ALL,
+    allow_paste: bool = True,
+    validator: Callable[[str], str | None] | None = None,
+    default_val: Any = None,
+    output_type: type[Any] = str,
+) -> Any:
+    """Acts like a standard Python `input()` a bunch of cool extra features.\n
+    ------------------------------------------------------------------------------------------
+    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `start` – Something to print before the input.
+    *   `end` – Something to print after the input (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt`.
+    *   `placeholder` – A placeholder text that is shown when the input is empty.
+    *   `mask_char` – If set, the input will be masked with this character.
+    *   `min_len` – The minimum length of the input (required to submit).
+    *   `max_len` – The maximum length of the input (can't write further if reached).
+    *   `allowed_chars` – A string of characters that are allowed to be inputted<br>
+        (default allows all characters).
+    *   `allow_paste` – Whether to allow pasting text into the input or not.
+    *   `validator` – A function that takes the input string and returns a string error<br>
+        message if invalid, or nothing if valid.
+    *   `default_val` – The default value to return if the input is empty.
+    *   `output_type` – The type (class) to convert the input to before returning it.
+    ------------------------------------------------------------------------------------------
+    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    information about styling, see the `ansi` module documentation."""
+
+    if mask_char is not None and len(mask_char) != 1:
+        raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
+    if min_len is not None and min_len < 0:
+        raise ValueError(f"The 'min_len' parameter must be a non-negative integer, got {min_len!r}")
+    if max_len is not None and max_len < 0:
+        raise ValueError(f"The 'max_len' parameter must be a non-negative integer, got {max_len!r}")
+
+    helper = _ConsoleInputHelper(
+        mask_char=mask_char,
+        min_len=min_len,
+        max_len=max_len,
+        allowed_chars=allowed_chars,
+        allow_paste=allow_paste,
+        validator=validator,
+    )
+
+    kb = KeyBindings()
+    kb.add(Keys.Delete)(helper.handle_delete)
+    kb.add(Keys.Backspace)(helper.handle_backspace)
+    kb.add(Keys.ControlA)(helper.handle_control_a)
+    kb.add(Keys.BracketedPaste)(helper.handle_paste)
+    kb.add(Keys.Any)(helper.handle_any)
+
+    custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
+    prompt_ansi = _to_styled_text(prompt).ansi
+    if default_color is not None:
+        prompt_ansi = StyledText(S.hex(str(_color_module.to_hexa(default_color)))(prompt_ansi)).ansi
+    session: _pt.PromptSession[str] = _pt.PromptSession(
+        message=_pt.formatted_text.ANSI(prompt_ansi),
+        validator=_ConsoleInputValidator(helper.get_text, mask_char=mask_char, min_len=min_len, validator=validator),
+        validate_while_typing=True,
+        key_bindings=kb,
+        bottom_toolbar=helper.bottom_toolbar,
+        placeholder=_pt.formatted_text.ANSI(StyledText((S.ITALIC | S.BR.BLACK)(placeholder)).ansi) if placeholder else "",
+        style=custom_style,
+    )
+    StyledText(start).print(end="", flush=True)
+    session.prompt()
+    StyledText(end).print(end="", flush=True)
+
+    if (result_text := helper.get_text()) in {"", None}:
+        if default_val is not None:
+            return default_val
+        result_text = ""
+
+    if output_type is str:
+        return result_text
+
+    else:
+        try:
+            return output_type(result_text)  # type: ignore[call-arg]
+        except (ValueError, TypeError):
             if default_val is not None:
                 return default_val
-            result_text = ""
+            raise
 
-        if output_type is str:
-            return result_text
 
+def _read_single_key() -> None:
+    """Wait for a single key press without requiring elevated privileges.<br>
+    Falls back to reading a line when stdin is not a TTY (e.g., piped input)."""
+
+    if not _sys.stdin.isatty():
+        _sys.stdin.readline()
+        return
+
+    if _sys.platform == "win32":
+        import msvcrt as _msvcrt  # type: ignore[import-not-found]
+
+        _msvcrt.getch()  # type: ignore[attr-defined]
+
+    else:
+        import termios as _termios  # type: ignore[import-not-found]
+        import tty as _tty  # type: ignore[import-not-found]
+
+        fd = _sys.stdin.fileno()
+        old_settings = _termios.tcgetattr(fd)  # type: ignore[attr-defined]
+
+        try:
+            _tty.setraw(fd)  # type: ignore[attr-defined]
+            _sys.stdin.read(1)
+        finally:
+            _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
+
+
+def _resolve_title_colors(title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> tuple[AnyStyle | _StyleGroup, AnyStyle]:
+    """Resolves the log title's background style and its matching foreground style.\n
+    ------------------------------------------------------------------------------------
+    *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
+        RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
+
+    if isinstance(title_bg_color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+        return title_bg_color, S.BLACK
+
+    if _color_module.is_valid_rgba(title_bg_color) or _color_module.is_valid_hexa(title_bg_color):
+        hexa_bg = _color_module.to_hexa(title_bg_color)
+        return S.BG.hex(str(hexa_bg)), S.hex(str(_color_module.text_color_for_on_bg(hexa_bg)))
+
+    raise ValueError(
+        "The 'title_bg_color' parameter must be a valid ANSI background style, "
+        f"RGBA value, or HEXA value, got {title_bg_color!r}"
+    )
+
+
+def _as_bg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+    """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
+
+    if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+        return color
+    if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
+        return S.BG.hex(str(_color_module.to_hexa(color)))
+
+    raise ValueError(
+        f"The 'box_bg_color' parameter must be a valid ANSI background style, RGBA value, or HEXA value, got {color!r}"
+    )
+
+
+def _as_fg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+    """Resolves an `S` style or an RGBA/HEXA color to an `S` foreground style."""
+
+    if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+        return color
+    if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
+        return S.hex(str(_color_module.to_hexa(color)))
+
+    raise ValueError(f"The 'border_style' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
+
+
+def _persist_style(ansi_text: str, style_open: str, /) -> str:
+    """Re-inserts `style_open` right after every ANSI escape sequence in `ansi_text`,<br>
+    so the style keeps applying even across (e.g. full) resets contained in the text."""
+
+    if not style_open or ANSI.CHAR not in ansi_text:
+        return ansi_text
+
+    return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", "\\\\"), ansi_text)
+
+
+def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
+    """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
+
+    for line in clean_prompt.splitlines():
+        lst = _string_module.split_count(line, wrap_len)
+        yield lst if lst else ("",)
+
+
+def _add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:
+    """Adds back the removed parts into the split string parts at their original positions."""
+
+    cumulative_pos = [0]
+    for length in [len(part) for part in split_string]:
+        cumulative_pos.append(cumulative_pos[-1] + length)
+
+    result, offset_adjusts = split_string.copy(), [0] * len(split_string)
+    last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
+
+    for pos, removal in removals:
+        if pos >= total_length:
+            result[last_idx] = result[last_idx] + removal
+            continue
+
+        i = _find_string_part(pos, cumulative_pos)
+        adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
+        parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
+        result[i] = "".join(parts)
+        offset_adjusts[i] += len(removal)
+
+    return result
+
+
+def _render_log_title(text: str, style: _StyleGroup | AnyStyle, /) -> str:
+    """Renders (and caches) the styled log title as an ANSI string.\n
+    ----------------------------------------------------------------------------
+    Since consecutive log calls often reuse the exact same title and style,<br>
+    the rendered string is cached and reused instead of being rebuilt."""
+
+    key = (text, repr(style))
+
+    if (cached := _LOG_TITLE_CACHE.get(key)) is None:
+        cached = StyledText(style(text)).ansi
+        if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:
+            _LOG_TITLE_CACHE[key] = cached
+
+    return cached
+
+
+def _find_string_part(pos: int, cumulative_pos: list[int], /) -> int:
+    """Finds the index of the string part that contains the given position."""
+
+    left, right = 0, len(cumulative_pos) - 1
+
+    while left < right:
+        mid = (left + right) // 2
+
+        if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
+            return mid
+        elif pos < cumulative_pos[mid]:
+            right = mid
         else:
-            try:
-                return output_type(result_text)  # type: ignore[call-arg]
-            except (ValueError, TypeError):
-                if default_val is not None:
-                    return default_val
-                raise
+            left = mid + 1
 
-    @staticmethod
-    def _read_single_key() -> None:
-        """Wait for a single key press without requiring elevated privileges.<br>
-        Falls back to reading a line when stdin is not a TTY (e.g., piped input)."""
+    return left
 
-        if not _sys.stdin.isatty():
-            _sys.stdin.readline()
-            return
 
-        if _sys.platform == "win32":
-            import msvcrt as _msvcrt  # type: ignore[import-not-found]
+def _split_hr_parts(val_str: str, /) -> list[str]:
+    """Splits `val_str` into parts around any `{hr}` markers, keeping each marker as its own part."""
 
-            _msvcrt.getch()  # type: ignore[attr-defined]
+    result_parts: list[str] = []
+    current_pos = 0
 
-        else:
-            import termios as _termios  # type: ignore[import-not-found]
-            import tty as _tty  # type: ignore[import-not-found]
+    for match in _PATTERNS.hr.finditer(val_str):
+        start, end = match.span()
+        should_split_before = start > 0 and val_str[start - 1] != "\n"
+        should_split_after = end < len(val_str) and val_str[end] != "\n"
 
-            fd = _sys.stdin.fileno()
-            old_settings = _termios.tcgetattr(fd)  # type: ignore[attr-defined]
-
-            try:
-                _tty.setraw(fd)  # type: ignore[attr-defined]
-                _sys.stdin.read(1)
-            finally:
-                _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
-
-    @staticmethod
-    def _resolve_title_colors(
-        title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa, /
-    ) -> tuple[AnyStyle | _StyleGroup, AnyStyle]:
-        """Resolves the log title's background style and its matching foreground style.\n
-        ------------------------------------------------------------------------------------
-        *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
-            RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
-
-        if isinstance(title_bg_color, (_Style, _ColorStyle, _Link, _StyleGroup)):
-            return title_bg_color, S.BLACK
-
-        if Color.is_valid_rgba(title_bg_color) or Color.is_valid_hexa(title_bg_color):
-            hexa_bg = Color.to_hexa(title_bg_color)
-            return S.BG.hex(str(hexa_bg)), S.hex(str(Color.text_color_for_on_bg(hexa_bg)))
-
-        raise ValueError(
-            "The 'title_bg_color' parameter must be a valid ANSI background style, "
-            f"RGBA value, or HEXA value, got {title_bg_color!r}"
-        )
-
-    @staticmethod
-    def _as_bg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
-        """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
-
-        if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
-            return color
-        if Color.is_valid_rgba(color) or Color.is_valid_hexa(color):
-            return S.BG.hex(str(Color.to_hexa(color)))
-
-        raise ValueError(
-            f"The 'box_bg_color' parameter must be a valid ANSI background style, RGBA value, or HEXA value, got {color!r}"
-        )
-
-    @staticmethod
-    def _as_fg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
-        """Resolves an `S` style or an RGBA/HEXA color to an `S` foreground style."""
-
-        if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
-            return color
-        if Color.is_valid_rgba(color) or Color.is_valid_hexa(color):
-            return S.hex(str(Color.to_hexa(color)))
-
-        raise ValueError(f"The 'border_style' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
-
-    @staticmethod
-    def _persist_style(ansi_text: str, style_open: str, /) -> str:
-        """Re-inserts `style_open` right after every ANSI escape sequence in `ansi_text`,<br>
-        so the style keeps applying even across (e.g. full) resets contained in the text."""
-
-        if not style_open or ANSI.CHAR not in ansi_text:
-            return ansi_text
-
-        return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", "\\\\"), ansi_text)
-
-    @staticmethod
-    def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
-        """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
-
-        for line in clean_prompt.splitlines():
-            lst = String.split_count(line, wrap_len)
-            yield lst if lst else ("",)
-
-    @classmethod
-    def _add_back_removed_parts(cls, split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:
-        """Adds back the removed parts into the split string parts at their original positions."""
-
-        cumulative_pos = [0]
-        for length in [len(part) for part in split_string]:
-            cumulative_pos.append(cumulative_pos[-1] + length)
-
-        result, offset_adjusts = split_string.copy(), [0] * len(split_string)
-        last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
-
-        for pos, removal in removals:
-            if pos >= total_length:
-                result[last_idx] = result[last_idx] + removal
-                continue
-
-            i = cls._find_string_part(pos, cumulative_pos)
-            adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
-            parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
-            result[i] = "".join(parts)
-            offset_adjusts[i] += len(removal)
-
-        return result
-
-    @staticmethod
-    def _render_log_title(text: str, style: _StyleGroup | AnyStyle, /) -> str:
-        """Renders (and caches) the styled log title as an ANSI string.\n
-        ----------------------------------------------------------------------------
-        Since consecutive log calls often reuse the exact same title and style,<br>
-        the rendered string is cached and reused instead of being rebuilt."""
-
-        key = (text, repr(style))
-
-        if (cached := _LOG_TITLE_CACHE.get(key)) is None:
-            cached = StyledText(style(text)).ansi
-            if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:
-                _LOG_TITLE_CACHE[key] = cached
-
-        return cached
-
-    @staticmethod
-    def _find_string_part(pos: int, cumulative_pos: list[int], /) -> int:
-        """Finds the index of the string part that contains the given position."""
-
-        left, right = 0, len(cumulative_pos) - 1
-
-        while left < right:
-            mid = (left + right) // 2
-
-            if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
-                return mid
-            elif pos < cumulative_pos[mid]:
-                right = mid
-            else:
-                left = mid + 1
-
-        return left
-
-    @staticmethod
-    def _split_hr_parts(val_str: str, /) -> list[str]:
-        """Splits `val_str` into parts around any `{hr}` markers, keeping each marker as its own part."""
-
-        result_parts: list[str] = []
-        current_pos = 0
-
-        for match in _PATTERNS.hr.finditer(val_str):
-            start, end = match.span()
-            should_split_before = start > 0 and val_str[start - 1] != "\n"
-            should_split_after = end < len(val_str) and val_str[end] != "\n"
-
-            if should_split_before:
-                if start > current_pos:
-                    result_parts.append(val_str[current_pos:start])
-                if should_split_after:
-                    result_parts.append(match.group())
-                    current_pos = end
-                else:
-                    current_pos = start
-
-            elif should_split_after:
-                result_parts.append(val_str[current_pos:end])
+        if should_split_before:
+            if start > current_pos:
+                result_parts.append(val_str[current_pos:start])
+            if should_split_after:
+                result_parts.append(match.group())
                 current_pos = end
+            else:
+                current_pos = start
 
-        if current_pos < len(val_str):
-            result_parts.append(val_str[current_pos:])
-        if not result_parts:
-            result_parts.append(val_str)
+        elif should_split_after:
+            result_parts.append(val_str[current_pos:end])
+            current_pos = end
 
-        return result_parts
+    if current_pos < len(val_str):
+        result_parts.append(val_str[current_pos:])
+    if not result_parts:
+        result_parts.append(val_str)
 
-    @staticmethod
-    def _prepare_log_box(
-        values: list[StyledText | object] | tuple[StyledText | object, ...], /, *, has_rules: bool = False
-    ) -> tuple[list[str], list[str], int]:
-        """Prepares the log box content, returning the ANSI lines,<br>
-        their plain-text counterparts, and the maximum visible line length."""
+    return result_parts
 
-        ansi_lines: list[str] = []
-        plain_lines: list[str] = []
 
-        for val in values:
-            if isinstance(val, StyledText):
-                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
-                    ansi_lines.append(ansi_line)
-                    plain_lines.append(plain_line)
-                continue
+def _prepare_log_box(
+    values: list[StyledText | object] | tuple[StyledText | object, ...], /, *, has_rules: bool = False
+) -> tuple[list[str], list[str], int]:
+    """Prepares the log box content, returning the ANSI lines,<br>
+    their plain-text counterparts, and the maximum visible line length."""
 
-            val_str: str = str(val)
-            parts: list[str] = Console._split_hr_parts(val_str) if has_rules else [val_str]
+    ansi_lines: list[str] = []
+    plain_lines: list[str] = []
 
-            for part in parts:
-                for line in part.splitlines():
-                    ansi_lines.append(line)
-                    plain_lines.append(line)
+    for val in values:
+        if isinstance(val, StyledText):
+            for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
+                ansi_lines.append(ansi_line)
+                plain_lines.append(plain_line)
+            continue
 
-        max_line_len: int = max((len(line) for line in plain_lines), default=0)
+        val_str: str = str(val)
+        parts: list[str] = _split_hr_parts(val_str) if has_rules else [val_str]
 
-        return ansi_lines, plain_lines, max_line_len
+        for part in parts:
+            for line in part.splitlines():
+                ansi_lines.append(line)
+                plain_lines.append(line)
 
-    @staticmethod
-    def _multiline_input_submit(event: KeyPressEvent, /) -> None:
-        event.app.exit(result=event.app.current_buffer.document.text)
+    max_line_len: int = max((len(line) for line in plain_lines), default=0)
+
+    return ansi_lines, plain_lines, max_line_len
+
+
+def _multiline_input_submit(event: KeyPressEvent, /) -> None:
+    event.app.exit(result=event.app.current_buffer.document.text)
 
 
 class _ConsoleArgsParseHelper:

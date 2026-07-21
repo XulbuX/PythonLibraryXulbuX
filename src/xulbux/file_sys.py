@@ -1,6 +1,5 @@
 """
-This module provides the `FileSys` class, which includes
-methods to work with the file system and directories.
+This module provides functions to work with the file system and directories.
 """
 
 from .base.decorators import mypyc_attr
@@ -46,128 +45,119 @@ class _FileSysMeta(type):
         return base_path
 
 
-class FileSys(metaclass=_FileSysMeta):
-    """This class provides methods to work with file and directory paths."""
+def extend_path(
+    rel_path: Path | str,
+    /,
+    search_in: Path | str | PathsList | None = None,
+    *,
+    fuzzy_match: bool = False,
+    raise_error: bool = False,
+) -> Path | None:
+    """Tries to resolve and extend a relative path to an absolute path.\n
+    ----------------------------------------------------------------------------------------------
+    *   `rel_path` – The relative path to extend.
+    *   `search_in` – A directory or a list of directories to search in,<br>
+        in addition to the predefined directories (see exact procedure below).
+    *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
+        names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
+    *   `raise_error` – If true, raises a `PathNotFoundError` if<br>
+        the path couldn't be found (otherwise it returns `None`).
+    ----------------------------------------------------------------------------------------------
+    If the `rel_path` couldn't be located in predefined directories,<br>
+    it will be searched in the `search_in` directory/s.\n
+    If the `rel_path` is still not found, it returns `None` or<br>
+    raises a `PathNotFoundError` if `raise_error` is true."""
 
-    @classmethod
-    def extend_path(
-        cls,
-        rel_path: Path | str,
-        /,
-        search_in: Path | str | PathsList | None = None,
-        *,
-        fuzzy_match: bool = False,
-        raise_error: bool = False,
-    ) -> Path | None:
-        """Tries to resolve and extend a relative path to an absolute path.\n
-        ----------------------------------------------------------------------------------------------
-        *   `rel_path` – The relative path to extend.
-        *   `search_in` – A directory or a list of directories to search in,<br>
-            in addition to the predefined directories (see exact procedure below).
-        *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
-            names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
-        *   `raise_error` – If true, raises a `PathNotFoundError` if<br>
-            the path couldn't be found (otherwise it returns `None`).
-        ----------------------------------------------------------------------------------------------
-        If the `rel_path` couldn't be located in predefined directories,<br>
-        it will be searched in the `search_in` directory/s.\n
-        If the `rel_path` is still not found, it returns `None` or<br>
-        raises a `PathNotFoundError` if `raise_error` is true."""
+    search_dirs: list[Path] = []
+    path: Path
 
-        search_dirs: list[Path] = []
-        path: Path
-
-        if isinstance(rel_path, str):
-            if rel_path == "":
-                if raise_error:
-                    raise PathNotFoundError("Given 'rel_path' is an empty string.")
-                return None
-            else:
-                path = Path(rel_path)
-        else:
-            path = rel_path
-
-        if path.is_absolute():
-            return path
-
-        if search_in is not None:
-            if isinstance(search_in, (str, Path)):
-                search_dirs.extend([Path(search_in)])
-            else:
-                search_dirs.extend([Path(path) for path in search_in])
-
-        return _ExtendPathHelper(cls, path, search_dirs=search_dirs, fuzzy_match=fuzzy_match, raise_error=raise_error)()
-
-    @classmethod
-    def extend_or_make_path(
-        cls,
-        rel_path: Path | str,
-        /,
-        search_in: Path | str | list[Path | str] | None = None,
-        *,
-        prefer_script_dir: bool = True,
-        fuzzy_match: bool = False,
-    ) -> Path:
-        """Tries to locate and extend a relative path to an absolute path, and if<br>
-        the `rel_path` couldn't be located, it generates a path, as if it was located.\n
-        ----------------------------------------------------------------------------------------------
-        *   `rel_path` – The relative path to extend or make.
-        *   `search_in` – A directory or a list of directories to search in,<br>
-            in addition to the predefined directories (see exact procedure below).
-        *   `prefer_script_dir` – If true, the script directory is preferred<br>
-            when making a new path (otherwise the CWD is preferred).
-        *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
-            names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
-        ----------------------------------------------------------------------------------------------
-        If the `rel_path` couldn't be located in predefined directories,<br>
-        it will be searched in the `search_in` directory/s.\n
-        If the `rel_path` is still not found, it will makes a path<br>
-        that points to where the `rel_path` would be in the script directory,<br>
-        even though the `rel_path` doesn't exist there.\n
-        If `prefer_script_dir` is false, it will instead make a path<br>
-        that points to where the `rel_path` would be in the CWD."""
-
-        try:
-            return cls.extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()
-
-        except PathNotFoundError:
-            path = Path(str(rel_path))
-            base_dir = cls.script_dir if prefer_script_dir else Path.cwd()
-            return base_dir / path
-
-    @classmethod
-    def remove(cls, path: Path | str, /, *, only_content: bool = False) -> None:
-        """Removes the directory or the directory's content at the specified path.\n
-        ----------------------------------------------------------------------------------------------------------------
-        *   `path` – The path to the directory or file to remove.
-        *   `only_content` – If true, only the content of the directory is removed and the directory itself is kept."""
-
-        if not (path_obj := Path(path)).exists():
+    if isinstance(rel_path, str):
+        if rel_path == "":
+            if raise_error:
+                raise PathNotFoundError("Given 'rel_path' is an empty string.")
             return None
+        else:
+            path = Path(rel_path)
+    else:
+        path = rel_path
 
-        def _remove_item(item: Path) -> None:
-            try:
-                if item.is_file() or item.is_symlink():
-                    item.unlink()
-                elif item.is_dir():
-                    _shutil.rmtree(item)
-            except Exception as exc:
-                raise RuntimeError(f"Failed to delete {item!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
+    if path.is_absolute():
+        return path
 
-        if not only_content:
-            _remove_item(path_obj)
-        elif path_obj.is_dir():
-            for child in path_obj.iterdir():
-                _remove_item(child)
+    if search_in is not None:
+        if isinstance(search_in, (str, Path)):
+            search_dirs.extend([Path(search_in)])
+        else:
+            search_dirs.extend([Path(path) for path in search_in])
+
+    return _ExtendPathHelper(path, search_dirs=search_dirs, fuzzy_match=fuzzy_match, raise_error=raise_error)()
+
+
+def extend_or_make_path(
+    rel_path: Path | str,
+    /,
+    search_in: Path | str | list[Path | str] | None = None,
+    *,
+    prefer_script_dir: bool = True,
+    fuzzy_match: bool = False,
+) -> Path:
+    """Tries to locate and extend a relative path to an absolute path, and if<br>
+    the `rel_path` couldn't be located, it generates a path, as if it was located.\n
+    ----------------------------------------------------------------------------------------------
+    *   `rel_path` – The relative path to extend or make.
+    *   `search_in` – A directory or a list of directories to search in,<br>
+        in addition to the predefined directories (see exact procedure below).
+    *   `prefer_script_dir` – If true, the script directory is preferred<br>
+        when making a new path (otherwise the CWD is preferred).
+    *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
+        names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
+    ----------------------------------------------------------------------------------------------
+    If the `rel_path` couldn't be located in predefined directories,<br>
+    it will be searched in the `search_in` directory/s.\n
+    If the `rel_path` is still not found, it will makes a path<br>
+    that points to where the `rel_path` would be in the script directory,<br>
+    even though the `rel_path` doesn't exist there.\n
+    If `prefer_script_dir` is false, it will instead make a path<br>
+    that points to where the `rel_path` would be in the CWD."""
+
+    try:
+        return extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()
+
+    except PathNotFoundError:
+        path = Path(str(rel_path))
+        base_dir = FileSys.script_dir if prefer_script_dir else Path.cwd()
+        return base_dir / path
+
+
+def remove(path: Path | str, /, *, only_content: bool = False) -> None:
+    """Removes the directory or the directory's content at the specified path.\n
+    ----------------------------------------------------------------------------------------------------------------
+    *   `path` – The path to the directory or file to remove.
+    *   `only_content` – If true, only the content of the directory is removed and the directory itself is kept."""
+
+    if not (path_obj := Path(path)).exists():
+        return None
+
+    def _remove_item(item: Path) -> None:
+        try:
+            if item.is_file() or item.is_symlink():
+                item.unlink()
+            elif item.is_dir():
+                _shutil.rmtree(item)
+        except Exception as exc:
+            raise RuntimeError(f"Failed to delete {item!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
+
+    if not only_content:
+        _remove_item(path_obj)
+    elif path_obj.is_dir():
+        for child in path_obj.iterdir():
+            _remove_item(child)
 
 
 class _ExtendPathHelper:
     """Internal, callable helper class to extend a relative path to an absolute path."""
 
-    def __init__(
-        self, cls: type[FileSys], rel_path: Path, /, search_dirs: list[Path], *, fuzzy_match: bool, raise_error: bool
-    ) -> None:
-        self.cls: type[FileSys] = cls
+    def __init__(self, rel_path: Path, /, search_dirs: list[Path], *, fuzzy_match: bool, raise_error: bool) -> None:
         self.rel_path: Path = rel_path
         self.search_dirs: list[Path] = search_dirs
         self.fuzzy_match: bool = fuzzy_match
@@ -189,7 +179,7 @@ class _ExtendPathHelper:
 
         else:
             # Add predefined search dirs:
-            self.search_dirs.extend([self.cls.cwd, self.cls.home, self.cls.script_dir, Path(_tempfile.gettempdir())])
+            self.search_dirs.extend([FileSys.cwd, FileSys.home, FileSys.script_dir, Path(_tempfile.gettempdir())])
 
         return self.search_in_dirs(expanded_path)
 
