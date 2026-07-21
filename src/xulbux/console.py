@@ -3,7 +3,7 @@ This module provides the `Console`, `ProgressBar`, and `Throbber` classes
 which offer methods for logging and other actions within the terminal.
 """
 
-from .ansi import STYLE_COMPONENT_TT, AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
+from .ansi import AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
@@ -72,11 +72,9 @@ def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> li
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
 
 
-def _to_styled_text(obj: TextLike) -> StyledText:
+def _to_styled_text(obj: object) -> StyledText:
     if isinstance(obj, StyledText):
         return obj
-    if isinstance(obj, STYLE_COMPONENT_TT):
-        return StyledText(cast("TextLike", obj))
     return StyledText(str(obj))
 
 
@@ -475,7 +473,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @classmethod
     def pause_exit(
-        cls, prompt: TextLike = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
+        cls, prompt: object = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
     ) -> None:
         """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
         -----------------------------------------------------------------------------------------------------
@@ -510,7 +508,7 @@ class Console(metaclass=_ConsoleMeta):
     def log(
         cls,
         title: str | None = None,
-        prompt: TextLike = "",
+        prompt: object = "",
         /,
         *,
         start: str = "",
@@ -568,8 +566,7 @@ class Console(metaclass=_ConsoleMeta):
         wrap_len: int = cls.width - (title_len + len(tab))
 
         # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
-        prompt_st = _to_styled_text(prompt)
-        clean_prompt = prompt_st.raw
+        clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
         removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
 
         # Split prompt into lines and then split each line into chunks that fit within the wrap length:
@@ -589,7 +586,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def debug(
         cls,
-        prompt: TextLike = "Point in program reached.",
+        prompt: object = "Point in program reached.",
         /,
         *,
         active: bool = True,
@@ -612,7 +609,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def info(
         cls,
-        prompt: TextLike = "Program running.",
+        prompt: object = "Program running.",
         /,
         *,
         start: str = "",
@@ -632,7 +629,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def done(
         cls,
-        prompt: TextLike = "Program finished.",
+        prompt: object = "Program finished.",
         /,
         *,
         start: str = "",
@@ -652,7 +649,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def warn(
         cls,
-        prompt: TextLike = "Important message.",
+        prompt: object = "Important message.",
         /,
         *,
         start: str = "",
@@ -672,7 +669,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def fail(
         cls,
-        prompt: TextLike = "Program error.",
+        prompt: object = "Program error.",
         /,
         *,
         start: str = "",
@@ -692,7 +689,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def exit(
         cls,
-        prompt: TextLike = "Program ended.",
+        prompt: object = "Program ended.",
         /,
         *,
         start: str = "",
@@ -879,7 +876,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def confirm(
         cls,
-        prompt: TextLike = "Do you want to continue?",
+        prompt: object = "Do you want to continue?",
         /,
         *,
         start: str = "",
@@ -914,7 +911,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def multiline_input(
         cls,
-        prompt: TextLike = "",
+        prompt: object = "",
         /,
         *,
         start: str = "",
@@ -954,7 +951,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: TextLike = "",
+        prompt: object = "",
         /,
         *,
         start: str = "",
@@ -975,7 +972,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input[T](
         cls,
-        prompt: TextLike = "",
+        prompt: object = "",
         /,
         *,
         start: str = "",
@@ -995,7 +992,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: TextLike = "",
+        prompt: object = "",
         /,
         *,
         start: str = "",
@@ -1279,9 +1276,8 @@ class Console(metaclass=_ConsoleMeta):
         plain_lines: list[str] = []
 
         for val in values:
-            if isinstance(val, STYLE_COMPONENT_TT):
-                val_st: StyledText = _to_styled_text(cast("TextLike", val))
-                for ansi_line, plain_line in zip(val_st.ansi.split("\n"), val_st.raw.split("\n"), strict=False):
+            if isinstance(val, StyledText):
+                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
                     ansi_lines.append(ansi_line)
                     plain_lines.append(plain_line)
                 continue
@@ -1939,7 +1935,7 @@ class ProgressBar:
 
         self.chars = chars
 
-    def show_progress(self, current: int, total: int, /, label: TextLike | None = None) -> None:
+    def show_progress(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
         """Show or update the progress bar.\n
         ----------------------------------------------------------------------------------------------
         *   `current` – The current progress value (below `0` or greater than `total` hides the bar).
@@ -1979,7 +1975,7 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, /, label: TextLike | None = None) -> Generator[ProgressUpdater, None, None]:
+    def progress_context(self, total: int, /, label: StyledText | str | None = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         -----------------------------------------------------------------------------------------
         *   `total` – The total value representing 100% progress (must be greater than `0`).
@@ -2017,7 +2013,7 @@ class ProgressBar:
         finally:
             self.hide_progress()
 
-    def _draw_progress_bar(self, current: int, total: int, /, label: TextLike | None = None) -> None:
+    def _draw_progress_bar(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
         if total <= 0 or not self._original_stdout:
             return
 
@@ -2038,7 +2034,7 @@ class ProgressBar:
         self._original_stdout.flush()
 
     def _get_formatted_info_and_bar_width(
-        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: TextLike | None = None
+        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: StyledText | str | None = None
     ) -> tuple[str, int]:
         fmt_parts: list[str] = []
         label_ansi = _to_styled_text(label).ansi if label is not None else ""
@@ -2122,10 +2118,10 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
-    def __init__(self, progress_bar: ProgressBar, total: int, label: TextLike | None, /) -> None:
+    def __init__(self, progress_bar: ProgressBar, total: int, label: StyledText | str | None, /) -> None:
         self.progress_bar: ProgressBar = progress_bar
         self.total: int = total
-        self.current_label: TextLike | None = label
+        self.current_label: StyledText | str | None = label
         self.current_progress: int = 0
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
@@ -2205,7 +2201,7 @@ class Throbber:
     def __init__(
         self,
         *,
-        label: TextLike | None = None,
+        label: StyledText | str | None = None,
         throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
@@ -2219,7 +2215,7 @@ class Throbber:
         """A tuple of strings representing the animation frames."""
         self.interval: float
         """The time in seconds between each animation frame."""
-        self.label: TextLike | None
+        self.label: StyledText | str | None
         """The current label text."""
         self.active: bool = False
         """Whether the throbber is currently active (intercepting stdout) or not."""
@@ -2275,7 +2271,7 @@ class Throbber:
 
         self.interval = interval
 
-    def start(self, label: TextLike | None = None, /) -> None:
+    def start(self, label: StyledText | str | None = None, /) -> None:
         """Start the throbber animation and intercept stdout.\n
         --------------------------------------------------------------
         *   `label` – The label to display alongside the throbber."""
@@ -2305,7 +2301,7 @@ class Throbber:
             self._clear_throbber_line()
             self._stop_intercepting()
 
-    def update_label(self, label: TextLike | None, /) -> None:
+    def update_label(self, label: StyledText | str | None, /) -> None:
         """Update the throbber's label text.\n
         -----------------------------------------
         *   `new_label` – The new label text."""
@@ -2313,7 +2309,7 @@ class Throbber:
         self.label = label
 
     @contextmanager
-    def context(self, label: TextLike | None = None, /) -> Generator[Callable[[TextLike], None], None, None]:
+    def context(self, label: StyledText | str | None = None, /) -> Generator[Callable[[StyledText | str], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
         ------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber.

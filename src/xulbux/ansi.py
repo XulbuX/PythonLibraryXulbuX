@@ -165,7 +165,7 @@ import ctypes as _ctypes
 import os as _os
 import sys as _sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TextIO, cast
+from typing import TYPE_CHECKING, ClassVar, Final, TextIO, cast
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -997,21 +997,6 @@ class StyledText:
 
         # Fallback; coerce unknown objects to str:
         self._ansi_parts.append(str(segment))
-
-
-###################################################### PUBLIC CONSTS #####################################################
-
-STYLE_COMPONENT_TT: Final[
-    tuple[
-        type[StyledText],
-        type[_StyledSequence],
-        type[_Style],
-        type[_ColorStyle],
-        type[_Link],
-        type[_StyleGroup],
-        type[tuple[Any, ...]],
-    ]
-] = (StyledText, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, tuple)
 
 
 #################################################### INTERNAL HELPERS ####################################################
