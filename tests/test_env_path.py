@@ -1,5 +1,7 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 from xulbux.env_path import EnvPath
+import pytest
 
 #
 ###################################################### EnvPath TESTS #####################################################
@@ -17,7 +19,8 @@ def test_get_paths():
     assert isinstance(paths_list[0], Path)
 
 
-def test_add_path():
+def test_add_path(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("builtins.open", MagicMock())
     EnvPath.add_path(base_dir=True)
 
 
@@ -25,6 +28,7 @@ def test_has_path():
     assert EnvPath.has_path(base_dir=True)
 
 
-def test_remove_path():
+def test_remove_path(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("builtins.open", MagicMock())
     EnvPath.remove_path(base_dir=True)
     assert not EnvPath.has_path(base_dir=True)

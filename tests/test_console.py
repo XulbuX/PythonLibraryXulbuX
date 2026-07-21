@@ -5,7 +5,8 @@ import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
 from xulbux import console
-from xulbux.ansi import S
+from xulbux.ansi import S, StyledText
+from xulbux.base.consts import ANSI
 from xulbux.console import Console, ParsedArgData, ParsedArgs, ProgressBar, Throbber
 import pytest
 
@@ -765,6 +766,28 @@ def test_fail(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
     mock_sys_exit.assert_called_once_with(1)
 
 
+def test_console_exception_fallback(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch):
+    mock_sys_exit = MagicMock()
+    monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
+
+    exc = ValueError("Something bad happened")
+    Console.fail(exc)
+
+    captured = capsys.readouterr()
+    assert "FAIL" in captured.out
+    assert "Something bad happened" in captured.out
+    mock_sys_exit.assert_called_once_with(1)
+
+
+def test_console_styled_text_prompt(capsys: pytest.CaptureFixture[str]):
+    Console.log("TEST", StyledText("Styled ", S.BOLD("text")))
+
+    captured = capsys.readouterr()
+    assert "TEST" in captured.out
+    assert "Styled " in captured.out
+    assert f"{ANSI.CHAR}[1mtext{ANSI.CHAR}[22m" in captured.out
+
+
 def test_exit_method(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch):
     mock_sys_exit = MagicMock()
     monkeypatch.setattr("xulbux.console._sys.exit", mock_sys_exit)
@@ -844,6 +867,16 @@ def test_input_creates_prompt_session(mock_prompt_session: tuple[MagicMock, Magi
     assert "bottom_toolbar" in call_kwargs
     assert "style" in call_kwargs
     mock_session.prompt.assert_called_once()
+
+
+def test_input_styled_text_prompt(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
+    mock_session_class, _ = mock_prompt_session
+    Console.input(StyledText("Prompt ", S.RED("styled")))
+
+    assert mock_session_class.called
+    call_kwargs = mock_session_class.call_args[1]
+    assert "message" in call_kwargs
+    assert f"{ANSI.CHAR}[31mstyled{ANSI.CHAR}[39m" in str(call_kwargs["message"].value)
 
 
 def test_input_with_placeholder(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
@@ -1147,6 +1180,24 @@ def test_progressbar_show_progress(mock_stdout: MagicMock):
     assert len(output) > 0
 
 
+@patch("sys.stdout", new_callable=io.StringIO)
+def test_progressbar_styled_text_label(mock_stdout: MagicMock):
+
+    pb = ProgressBar()
+    original = pb._original_stdout
+    pb._original_stdout = mock_stdout
+    try:
+        pb.active = True
+        pb._draw_progress_bar(50, 100, StyledText("Label ", S.BOLD("styled")))
+    finally:
+        pb._original_stdout = original
+
+    output = mock_stdout.getvalue()
+    assert len(output) > 0
+    assert "Label " in output
+    assert f"{ANSI.CHAR}[1mstyled{ANSI.CHAR}[22m" in output
+
+
 def test_progressbar_hide_progress():
     pb = ProgressBar()
     pb.active = True
@@ -1368,6 +1419,15 @@ def test_throbber_update_label():
     throbber = Throbber()
     throbber.update_label("New Label")
     assert throbber.label == "New Label"
+
+
+def test_throbber_update_label_styled_text():
+    throbber = Throbber()
+    lbl = StyledText("Loading ", S.BR.CYAN("stuff"))
+    throbber.update_label(lbl)
+    assert throbber.label is lbl
+    # The formatted throbber string gets evaluated via ANSI representation
+    assert f"{ANSI.CHAR}[96mstuff{ANSI.CHAR}[39m" in lbl.ansi
 
 
 def test_throbber_context_manager():
