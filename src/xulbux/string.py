@@ -3,14 +3,20 @@ This module provides the `String` class, which includes
 various utility methods for string manipulation and conversion.
 """
 
+from .regex import LazyRegex
+
 import ast as _ast
 import json as _json
-import re as _re
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
+import regex as _rx
+
+_PATTERNS = LazyRegex(consecutive_empty_lines=r"(\n\s*){2,}", decompose_default=r"(?<=[a-z])(?=[A-Z])|[\-_]")
 
 
 class String:
     """This class provides various utility methods for string manipulation and conversion."""
+
+    _SPACE_TRANS_CACHE: ClassVar[dict[int, dict[int, str | int | None]]] = {}
 
     @classmethod
     def to_type(cls, string: str, /) -> Any:
@@ -36,22 +42,24 @@ class String:
         if tab_spaces < 0:
             raise ValueError(f"The 'tab_spaces' parameter must be non-negative, got {tab_spaces!r}")
 
-        table: dict[str, str | int | None] = {
-            "\t": " " * tab_spaces,
-            "\u2000": " ",
-            "\u2001": " ",
-            "\u2002": " ",
-            "\u2003": " ",
-            "\u2004": " ",
-            "\u2005": " ",
-            "\u2006": " ",
-            "\u2007": " ",
-            "\u2008": " ",
-            "\u2009": " ",
-            "\u200a": " ",
-        }
+        if tab_spaces not in cls._SPACE_TRANS_CACHE:
+            table: dict[str, str | int | None] = {
+                "\t": " " * tab_spaces,
+                "\u2000": " ",
+                "\u2001": " ",
+                "\u2002": " ",
+                "\u2003": " ",
+                "\u2004": " ",
+                "\u2005": " ",
+                "\u2006": " ",
+                "\u2007": " ",
+                "\u2008": " ",
+                "\u2009": " ",
+                "\u200a": " ",
+            }
+            cls._SPACE_TRANS_CACHE[tab_spaces] = str.maketrans(table)
 
-        return string.translate(str.maketrans(table))
+        return string.translate(cls._SPACE_TRANS_CACHE[tab_spaces])
 
     @classmethod
     def escape(cls, string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
@@ -87,7 +95,7 @@ class String:
         *   `string` – The string to check (or `None`, which is considered empty).
         *   `spaces_are_empty` – If true, strings consisting only of spaces are also considered empty."""
 
-        return bool((string in {"", None}) or (spaces_are_empty and isinstance(string, str) and not string.strip()))
+        return not string or (spaces_are_empty and not string.strip())
 
     @classmethod
     def single_char_repeats(cls, string: str, char: str, /) -> int:
@@ -113,10 +121,12 @@ class String:
         *   `seps` – Additional separators to split the string at.
         *   `lower_all` – If true, all parts will be converted to lowercase."""
 
-        return [
-            (part.lower() if lower_all else part)
-            for part in _re.split(rf"(?<=[a-z])(?=[A-Z])|[{_re.escape(seps)}]", case_string)
-        ]
+        if seps == "-_":
+            parts = _PATTERNS.decompose_default.split(case_string)
+        else:
+            parts = _rx.split(rf"(?<=[a-z])(?=[A-Z])|[{_rx.escape(seps)}]", case_string)
+
+        return [(part.lower() if lower_all else part) for part in parts]
 
     @classmethod
     def to_camel_case(cls, string: str, /, *, upper: bool = True) -> str:
@@ -166,7 +176,7 @@ class String:
         if max_consecutive < 0:
             raise ValueError(f"The 'max_consecutive' parameter must be non-negative, got {max_consecutive!r}")
 
-        return _re.sub(r"(\n\s*){2,}", r"\1" * (max_consecutive + 1), string)
+        return _PATTERNS.consecutive_empty_lines.sub(r"\1" * (max_consecutive + 1), string)
 
     @classmethod
     def split_count(cls, string: str, count: int, /) -> list[str]:

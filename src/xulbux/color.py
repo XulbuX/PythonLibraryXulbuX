@@ -11,8 +11,8 @@ from __future__ import annotations
 from .base.types import AnyHexa, AnyHsla, AnyRgba, Hexa, HexaDict, Hsla, HslaDict, Rgba, RgbaDict
 from .regex import Regex
 
-import re as _re
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
+import regex as _rx
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -915,7 +915,7 @@ class Color:
                     return False
 
             elif isinstance(color, str):
-                return bool(_re.fullmatch(Regex.rgba_str(fix_sep=None, allow_alpha=allow_alpha), color))
+                return bool(_rx.fullmatch(Regex.rgba_str(fix_sep=None, allow_alpha=allow_alpha), color))
 
         except Exception:
             pass
@@ -973,7 +973,7 @@ class Color:
                     return False
 
             elif isinstance(color, str):
-                return bool(_re.fullmatch(Regex.hsla_str(fix_sep=None, allow_alpha=allow_alpha), color))
+                return bool(_rx.fullmatch(Regex.hsla_str(fix_sep=None, allow_alpha=allow_alpha), color))
 
         except Exception:
             pass
@@ -1023,9 +1023,9 @@ class Color:
                     else (color, None)
                 )
                 return (
-                    (bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)), prefix)
+                    (bool(_rx.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color)), prefix)
                     if get_prefix
-                    else bool(_re.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color))
+                    else bool(_rx.fullmatch(Regex.hexa_str(allow_alpha=allow_alpha), color))
                 )
 
         except Exception:
@@ -1144,7 +1144,7 @@ class Color:
         *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
 
         if only_first:
-            if not (match := _re.search(Regex.rgba_str(allow_alpha=True), string)):
+            if not (match := _rx.search(Regex.rgba_str(allow_alpha=True), string)):
                 return None
 
             groups = match.groups()
@@ -1157,7 +1157,7 @@ class Color:
             )
 
         else:
-            if not (matches := _re.findall(Regex.rgba_str(allow_alpha=True), string)):
+            if not (matches := _rx.findall(Regex.rgba_str(allow_alpha=True), string)):
                 return None
 
             return [
@@ -1191,7 +1191,7 @@ class Color:
         *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
 
         if only_first:
-            if not (match := _re.search(Regex.hsla_str(allow_alpha=True), string)):
+            if not (match := _rx.search(Regex.hsla_str(allow_alpha=True), string)):
                 return None
 
             groups = match.groups()
@@ -1204,7 +1204,7 @@ class Color:
             )
 
         else:
-            if not (matches := _re.findall(Regex.hsla_str(allow_alpha=True), string)):
+            if not (matches := _rx.findall(Regex.hsla_str(allow_alpha=True), string)):
                 return None
 
             return [

@@ -128,8 +128,7 @@ class FileSys(metaclass=_FileSysMeta):
         that points to where the `rel_path` would be in the CWD."""
 
         try:
-            result = cls.extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match)
-            return Path() if result is None else result
+            return cls.extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()
 
         except PathNotFoundError:
             path = Path(str(rel_path))
@@ -146,22 +145,20 @@ class FileSys(metaclass=_FileSysMeta):
         if not (path_obj := Path(path)).exists():
             return None
 
+        def _remove_item(item: Path) -> None:
+            try:
+                if item.is_file() or item.is_symlink():
+                    item.unlink()
+                elif item.is_dir():
+                    _shutil.rmtree(item)
+            except Exception as exc:
+                raise RuntimeError(f"Failed to delete {item!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
+
         if not only_content:
-            if path_obj.is_file() or path_obj.is_symlink():
-                path_obj.unlink()
-            elif path_obj.is_dir():
-                _shutil.rmtree(path_obj)
-
+            _remove_item(path_obj)
         elif path_obj.is_dir():
-            for item in path_obj.iterdir():
-                try:
-                    if item.is_file() or item.is_symlink():
-                        item.unlink()
-                    elif item.is_dir():
-                        _shutil.rmtree(item)
-
-                except Exception as exc:
-                    raise RuntimeError(f"Failed to delete {item!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
+            for child in path_obj.iterdir():
+                _remove_item(child)
 
 
 class _ExtendPathHelper:

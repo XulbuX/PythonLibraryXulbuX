@@ -1,10 +1,10 @@
 import ast
 import os
-import re
 import subprocess
 import tomllib
 from pathlib import Path
 import pytest
+import regex as rx
 
 # Define paths relative to this test file `tests/test_version.py`:
 ROOT_DIR = Path(__file__).parent.parent
@@ -42,7 +42,7 @@ def test_version_consistency():
         pytest.skip("Could not determine git branch name")
 
     # Skip if branch name doesn't match release pattern `dev/1.X.Y`:
-    if not (branch_match := re.match(r"^dev/(1\.[0-9]+\.[0-9]+)$", branch_name)):
+    if not (branch_match := rx.match(r"^dev/(1\.[0-9]+\.[0-9]+)$", branch_name)):
         pytest.skip(f"Current branch '{branch_name}' is not a release branch (dev/1.X.Y)")
 
     expected_version = branch_match.group(1)
@@ -50,7 +50,7 @@ def test_version_consistency():
     # Extract version from `__init__.py`:
     with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
-        init_version_match = re.search(r'^__version__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
+        init_version_match = rx.search(r'^__version__(?:[^=]*)?=\s*"([^"]+)"', init_content, rx.MULTILINE)
     init_version = init_version_match.group(1) if init_version_match else None
 
     # Extract version from `pyproject.toml`:
@@ -78,7 +78,7 @@ def test_dependencies_consistency():
     # Extract dependencies from `__init__.py`:
     with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
-    init_deps_match = re.search(r"__dependencies__(?:[^=]*)?=\s*(\[.*?\])", init_content, re.DOTALL)
+    init_deps_match = rx.search(r"__dependencies__(?:[^=]*)?=\s*(\[.*?\])", init_content, rx.DOTALL)
 
     # Extract dependencies from `pyproject.toml`:
     with open(PYPROJECT_PATH, "rb") as file:
@@ -107,7 +107,7 @@ def test_description_consistency():
     # Extract description from `__init__.py`:
     with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
-        init_desc_match = re.search(r'^__description__(?:[^=]*)?=\s*"([^"]+)"', init_content, re.MULTILINE)
+        init_desc_match = rx.search(r'^__description__(?:[^=]*)?=\s*"([^"]+)"', init_content, rx.MULTILINE)
     init_desc = init_desc_match.group(1) if init_desc_match else None
 
     # Extract description from `pyproject.toml`:

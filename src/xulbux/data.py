@@ -6,13 +6,15 @@ methods to work with nested data structures.
 from .ansi import AnyStyle, S, StyledText, _StyleGroup
 from .base.types import DATA_OBJ_TT, INDEX_ITERABLE_TT, IndexIterable
 from .base.types import DataObj as DataObjType
-from .regex import Regex
+from .regex import LazyRegex, Regex
 from .string import String
 
 import base64 as _base64
 import math as _math
-import re as _re
 from typing import Any, Final, Literal, cast, overload
+import regex as _rx
+
+_PATTERNS = LazyRegex(remove_comments_default=r"^((?:(?!>>).)*)>>(?:(?:(?!<<).)*)(?:<<)?(.*?)$")
 
 AnySyntaxStyle = AnyStyle | _StyleGroup
 """Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
@@ -590,21 +592,26 @@ class _DataRemoveCommentsHelper:
         self.comment_end: str = comment_end
         self.comment_sep: str = comment_sep
 
-        self.pattern: _re.Pattern[str] | None = (
-            _re.compile(
-                Regex._clean(
-                    rf"""^(
-                    (?:(?!{_re.escape(comment_start)}).)*
+        self.pattern: _rx.Pattern[str] | None
+
+        if comment_start == ">>" and comment_end == "<<":
+            self.pattern = _PATTERNS.remove_comments_default
+        else:
+            self.pattern = (
+                _rx.compile(
+                    Regex._clean(
+                        rf"""^(
+                            (?:(?!{_rx.escape(comment_start)}).)*
+                        )
+                        {_rx.escape(comment_start)}
+                        (?:(?:(?!{_rx.escape(comment_end)}).)*)
+                        (?:{_rx.escape(comment_end)})?
+                        (.*?)$"""
+                    )
                 )
-                {_re.escape(comment_start)}
-                (?:(?:(?!{_re.escape(comment_end)}).)*)
-                (?:{_re.escape(comment_end)})?
-                (.*?)$"""
-                )
+                if len(comment_end) > 0
+                else None
             )
-            if len(comment_end) > 0
-            else None
-        )
 
     def __call__(self) -> DataObjType:
         return self.remove_nested_comments(self.data)
@@ -763,7 +770,7 @@ class _DataRenderHelper:
 
     def __call__(self) -> StyledText:
         return StyledText(
-            _re.sub(
+            _rx.sub(
                 r"\s+(?=\n)",
                 "",
                 self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0),

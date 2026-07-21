@@ -1,4 +1,3 @@
-import re
 from typing import cast
 from xulbux.regex import LazyRegex, Regex
 import pytest
@@ -192,7 +191,7 @@ def test_regex_outside_strings_custom_pattern():
     """Test outside_strings with custom pattern"""
     pattern = Regex.outside_strings(r"\d+")
     text = 'Number 123 and "string 456" and 789'
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert "123" in matches
     assert "456" not in matches
     assert "789" in matches
@@ -202,7 +201,7 @@ def test_regex_outside_strings_with_special_chars():
     """Test outside_strings with special characters"""
     pattern = Regex.outside_strings(r"\$")
     text = 'Price $100 and "cost $50" and $200'
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) >= 2
 
 
@@ -210,7 +209,7 @@ def test_regex_outside_strings_complex_pattern():
     """Test outside_strings with complex pattern"""
     pattern = Regex.outside_strings(r"[a-z]+")
     text = "word1 \"word2\" word3 'word4' word5"
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) >= 3
     assert any("word" in match for match in matches)
 
@@ -225,7 +224,7 @@ def test_regex_all_except_basic():
     """Test all_except with basic pattern"""
     pattern = Regex.all_except(">")
     text = "Hello > World"
-    match = re.match(pattern, text)
+    match = rx.match(pattern, text)
     assert match is not None
     assert "Hello" in match.group(0)
     assert ">" not in match.group(0)
@@ -235,7 +234,7 @@ def test_regex_all_except_with_ignore():
     """Test all_except with ignore pattern"""
     pattern = Regex.all_except(">", "->")
     text = "Arrow -> here"
-    match = re.match(pattern, text)
+    match = rx.match(pattern, text)
     assert match is not None
     assert len(match.group(0)) > 0
 
@@ -244,7 +243,7 @@ def test_regex_all_except_as_group():
     """Test all_except with is_group option"""
     pattern = Regex.all_except(">", is_group=True)
     text = "Content > more"
-    match = re.match(pattern, text)
+    match = rx.match(pattern, text)
     assert match is not None
     assert match.group(1) is not None
 
@@ -281,7 +280,7 @@ def test_regex_rgba_str_default_separator():
     """Test rgba_str pattern with default comma separator"""
     text = "Color rgba(255, 128, 0) and (100, 200, 50, 0.5)"
     pattern = Regex.rgba_str()
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) > 0
     assert len(matches) >= 2
 
@@ -291,12 +290,12 @@ def test_regex_rgba_str_valid_values():
     pattern = Regex.rgba_str()
     # Valid RGB values in a string:
     text = "Colors: rgba(255, 255, 255, 1.0) and rgb(0, 0, 0) and (128, 128, 128) and plain 255, 128, 0"
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) >= 4, f"Should match all valid colors, got: {matches}"
 
     # Invalid RGB values (out of range) should not match or match partially:
     text_invalid = "Invalid: rgba(256, 128, 0) and rgb(300, 0, 0)"
-    matches_invalid = re.findall(pattern, text_invalid)
+    matches_invalid = rx.findall(pattern, text_invalid)
     # Should either not match or not include the invalid values:
     for match in matches_invalid:
         match_str = str(match)
@@ -327,7 +326,7 @@ def test_regex_hsla_str_default_separator():
     """Test hsla_str pattern with default comma separator"""
     text = "Color hsla(240, 100%, 50%) and (120, 80%, 60%, 0.8)"
     pattern = Regex.hsla_str()
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) > 0
 
 
@@ -339,7 +338,7 @@ def test_regex_hsla_str_valid_values():
         "Colors: hsla(360°, 100%, 50%, 1.0) and hsl(0, 0%, 0%) and (180, 50%, 50%) "
         "and plain 240, 100%, 50% and with degree 120°, 80%, 60%"
     )
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) >= 5, f"Should match all valid colors, got: {matches}"
 
     # Verify that `%` and `°` symbols are not in the captured groups:
@@ -352,7 +351,7 @@ def test_regex_hsla_str_valid_values():
 
     # Invalid HSL values (out of range):
     text_invalid = "Invalid: hsla(361, 100%, 50%) and hsl(240, 101%, 50%)"
-    matches_invalid = re.findall(pattern, text_invalid)
+    matches_invalid = rx.findall(pattern, text_invalid)
     # Should either not match or not include the invalid values:
     for match in matches_invalid:
         match_str = str(match)
@@ -382,7 +381,7 @@ def test_regex_hexa_str_with_alpha():
     """Test hexa_str pattern with alpha channel"""
     pattern = Regex.hexa_str(allow_alpha=True)
     text = "Colors: FF0000 and FF0000FF and F00 and F00F and #ABCDEF and 0xF0F in text"
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) == 6, f"Should match all 6 colors, got: {matches}"
     # Verify all expected colors are captured (group 1 contains the hex value):
     expected = ["FF0000", "FF0000FF", "F00", "F00F", "ABCDEF", "F0F"]
@@ -396,7 +395,7 @@ def test_regex_hexa_str_no_alpha():
 
     # Test valid colors (3 and 6 digit formats):
     text = "Valid colors: FF0000 and F00 and #ABCDEF and 0xABC in the text"
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) == 4, f"Should match all 4 valid colors, got: {matches}"
     # The captured groups should not include prefix:
     for hex_value in matches:
@@ -405,7 +404,7 @@ def test_regex_hexa_str_no_alpha():
 
     # Test that 4-digit and 8-digit formats only partially match (first 3 or 6 chars):
     text_with_alpha = "With alpha: FF0000FF and F00F should only match the non-alpha part"
-    matches_alpha = re.findall(pattern, text_with_alpha)
+    matches_alpha = rx.findall(pattern, text_with_alpha)
     # Should match `FF0000` and `F00` (without the alpha channel):
     assert len(matches_alpha) == 2
     for hex_value in matches_alpha:
@@ -416,7 +415,7 @@ def test_regex_hexa_str_with_prefix():
     """Test hexa_str pattern with optional prefixes"""
     pattern = Regex.hexa_str(allow_alpha=True)
     text = "Mixed: #FF0000 and 0xABCDEF and F00 and #F00F in text"
-    matches = re.findall(pattern, text)
+    matches = rx.findall(pattern, text)
     assert len(matches) == 4, f"Should match all 4 colors, got: {matches}"
 
     # Verify the captured hex values (without prefix):
@@ -447,7 +446,7 @@ def test_regex_rgba_str_without_prefix():
     """Test rgba_str matches plain number format"""
     pattern = Regex.rgba_str()
     text = "255, 128, 0"
-    match = re.search(pattern, text)
+    match = rx.search(pattern, text)
     assert match is not None
 
 
@@ -455,7 +454,7 @@ def test_regex_hsla_str_without_prefix():
     """Test hsla_str matches plain number format"""
     pattern = Regex.hsla_str()
     text = "240, 100%, 50%"
-    match = re.search(pattern, text)
+    match = rx.search(pattern, text)
     assert match is not None
 
 

@@ -5,7 +5,6 @@ to dynamically generate complex regex patterns for common use cases.
 
 from .base.decorators import mypyc_attr
 
-import re as _re
 import regex as _rx
 
 
@@ -140,7 +139,7 @@ class Regex:
         *   `blue` 0-255 (int: blue)
         *   `alpha` 0.0-1.0 (float: opacity)"""
 
-        fix_sep = _re.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
+        fix_sep = _rx.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
 
         rgb_part = rf"""((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
             (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
@@ -183,7 +182,7 @@ class Regex:
         *   `light` 0-100 (int: lightness)
         *   `alpha` 0.0-1.0 (float: opacity)"""
 
-        fix_sep = _re.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
+        fix_sep = _rx.escape(fix_sep) if isinstance(fix_sep, str) else r"[^0-9A-Z]"
 
         hsl_part = rf"""((?:0*(?:360|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])))(?:\s*°)?
             (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?
