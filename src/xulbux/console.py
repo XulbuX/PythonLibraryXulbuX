@@ -72,7 +72,7 @@ def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> li
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
 
 
-def _to_styled_text(obj: object) -> StyledText:
+def _to_styled_text(obj: StyledText | object) -> StyledText:
     if isinstance(obj, StyledText):
         return obj
     return StyledText(str(obj))
@@ -473,7 +473,14 @@ class Console(metaclass=_ConsoleMeta):
 
     @classmethod
     def pause_exit(
-        cls, prompt: object = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
+        cls,
+        prompt: StyledText | object = "",
+        /,
+        *,
+        pause: bool = True,
+        exit: bool = False,
+        exit_code: int = 0,
+        reset_ansi: bool = False,
     ) -> None:
         """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
         -----------------------------------------------------------------------------------------------------
@@ -508,7 +515,7 @@ class Console(metaclass=_ConsoleMeta):
     def log(
         cls,
         title: str | None = None,
-        prompt: object = "",
+        prompt: StyledText | object = "",
         /,
         *,
         start: str = "",
@@ -586,7 +593,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def debug(
         cls,
-        prompt: object = "Point in program reached.",
+        prompt: StyledText | object = "Point in program reached.",
         /,
         *,
         active: bool = True,
@@ -609,7 +616,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def info(
         cls,
-        prompt: object = "Program running.",
+        prompt: StyledText | object = "Program running.",
         /,
         *,
         start: str = "",
@@ -629,7 +636,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def done(
         cls,
-        prompt: object = "Program finished.",
+        prompt: StyledText | object = "Program finished.",
         /,
         *,
         start: str = "",
@@ -649,7 +656,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def warn(
         cls,
-        prompt: object = "Important message.",
+        prompt: StyledText | object = "Important message.",
         /,
         *,
         start: str = "",
@@ -669,7 +676,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def fail(
         cls,
-        prompt: object = "Program error.",
+        prompt: StyledText | object = "Program error.",
         /,
         *,
         start: str = "",
@@ -689,7 +696,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def exit(
         cls,
-        prompt: object = "Program ended.",
+        prompt: StyledText | object = "Program ended.",
         /,
         *,
         start: str = "",
@@ -709,7 +716,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def log_box_filled(
         cls,
-        *values: object,
+        *values: StyledText | object,
         start: str = "",
         end: str = "\n",
         box_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa | None = None,
@@ -770,7 +777,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def log_box_bordered(
         cls,
-        *values: object,
+        *values: StyledText | object,
         start: str = "",
         end: str = "\n",
         border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
@@ -876,7 +883,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def confirm(
         cls,
-        prompt: object = "Do you want to continue?",
+        prompt: StyledText | object = "Do you want to continue?",
         /,
         *,
         start: str = "",
@@ -911,7 +918,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def multiline_input(
         cls,
-        prompt: object = "",
+        prompt: StyledText | object = "",
         /,
         *,
         start: str = "",
@@ -951,7 +958,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: object = "",
+        prompt: StyledText | object = "",
         /,
         *,
         start: str = "",
@@ -972,7 +979,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input[T](
         cls,
-        prompt: object = "",
+        prompt: StyledText | object = "",
         /,
         *,
         start: str = "",
@@ -992,7 +999,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: object = "",
+        prompt: StyledText | object = "",
         /,
         *,
         start: str = "",
@@ -1267,7 +1274,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @staticmethod
     def _prepare_log_box(
-        values: list[object] | tuple[object, ...], /, *, has_rules: bool = False
+        values: list[StyledText | object] | tuple[StyledText | object, ...], /, *, has_rules: bool = False
     ) -> tuple[list[str], list[str], int]:
         """Prepares the log box content, returning the ANSI lines,<br>
         their plain-text counterparts, and the maximum visible line length."""
