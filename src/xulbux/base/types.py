@@ -3,7 +3,10 @@ This module contains all custom type definitions used throughout the library.
 """
 
 from pathlib import Path
-from typing import Any, Literal, NotRequired, Protocol, TypedDict
+from typing import TYPE_CHECKING, Any, Final, Literal, NotRequired, Protocol, TypedDict
+
+if TYPE_CHECKING:
+    from xulbux.ansi import TextLike
 
 ####################################################### Primitives #######################################################
 
@@ -28,25 +31,21 @@ type PathsList = list[Path] | list[str] | list[Path | str]
 type DataObj = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any] | dict[Any, Any]
 """Union of supported data structures used in the `data` module."""
 
-DataObjTT: tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]], type[dict[Any, Any]]] = (
-    list,
-    tuple,
-    set,
-    frozenset,
-    dict,
-)
-"""Tuple of supported data structures used in the `data` module."""
+DATA_OBJ_TT: Final[
+    tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]], type[dict[Any, Any]]]
+] = (list, tuple, set, frozenset, dict)
+"""Type tuple of supported data structures used in the `data` module."""
 
 type IndexIterable = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any]
 """Union of all iterable types that support indexing operations."""
 
-IndexIterableTT: tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]]] = (
+INDEX_ITERABLE_TT: Final[tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]]]] = (
     list,
     tuple,
     set,
     frozenset,
 )
-"""Tuple of all iterable types that support indexing operations."""
+"""Type tuple of all iterable types that support indexing operations."""
 
 
 ######################################################### Colors #########################################################
@@ -183,6 +182,6 @@ class MissingLibsMsgs(TypedDict):
 class ProgressUpdater(Protocol):
     """Protocol for a progress updater function used in terminal progress bars."""
 
-    def __call__(self, current: int | None = None, label: str | None = None) -> None:
+    def __call__(self, current: int | None = None, label: "TextLike | None" = None) -> None:
         """Update the current progress value and/or label."""
         ...

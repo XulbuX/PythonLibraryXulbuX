@@ -50,6 +50,7 @@
     -   All prompts/messages/content now take plain values or `StyledText` objects instead of format-code strings.
     -   `Console.log()`'s `title_bg_color` and `Console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `Console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.
     -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
+*   Renamed the type tuples `DataObjTT` and `IndexIterableTT` to `DATA_OBJ_TT` and `INDEX_ITERABLE_TT`, since they're constants and not actually types.
 *   Added `ANSI.SEQ_PATTERN` (in `xulbux.base.consts`) – a compiled regex that matches any ANSI escape sequence (CSI, OSC, or single-character), used across the library to detect/strip ANSI sequences.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.

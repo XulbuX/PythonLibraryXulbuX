@@ -3,7 +3,7 @@ This module provides the `Console`, `ProgressBar`, and `Throbber` classes
 which offer methods for logging and other actions within the terminal.
 """
 
-from .ansi import AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
+from .ansi import STYLE_COMPONENT_TT, AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
@@ -70,6 +70,14 @@ def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> li
     if isinstance(fmt, (list, tuple)):
         return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
+
+
+def _to_styled_text(obj: TextLike) -> StyledText:
+    if isinstance(obj, StyledText):
+        return obj
+    if isinstance(obj, STYLE_COMPONENT_TT):
+        return StyledText(cast("TextLike", obj))
+    return StyledText(str(obj))
 
 
 class ParsedArgData:
@@ -467,7 +475,7 @@ class Console(metaclass=_ConsoleMeta):
 
     @classmethod
     def pause_exit(
-        cls, prompt: object = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
+        cls, prompt: TextLike = "", /, *, pause: bool = True, exit: bool = False, exit_code: int = 0, reset_ansi: bool = False
     ) -> None:
         """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
         -----------------------------------------------------------------------------------------------------
@@ -477,11 +485,9 @@ class Console(metaclass=_ConsoleMeta):
         *   `exit_code` – The exit code to use when exiting the program.
         *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
 
-        if isinstance(prompt, StyledText):
-            styled = prompt + StyledText(S.RESET) if reset_ansi else prompt
-        else:
-            text = str(prompt)
-            styled = StyledText(text, S.RESET, sep="") if reset_ansi else StyledText(text)
+        styled = _to_styled_text(prompt)
+        if reset_ansi:
+            styled += StyledText(S.RESET)
 
         styled.print(end="", flush=True)
 
@@ -504,7 +510,7 @@ class Console(metaclass=_ConsoleMeta):
     def log(
         cls,
         title: str | None = None,
-        prompt: object = "",
+        prompt: TextLike = "",
         /,
         *,
         start: str = "",
@@ -562,7 +568,7 @@ class Console(metaclass=_ConsoleMeta):
         wrap_len: int = cls.width - (title_len + len(tab))
 
         # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
-        prompt_st = prompt if isinstance(prompt, StyledText) else StyledText(str(prompt))
+        prompt_st = _to_styled_text(prompt)
         clean_prompt = prompt_st.raw
         removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
 
@@ -583,7 +589,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def debug(
         cls,
-        prompt: object = "Point in program reached.",
+        prompt: TextLike = "Point in program reached.",
         /,
         *,
         active: bool = True,
@@ -606,7 +612,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def info(
         cls,
-        prompt: object = "Program running.",
+        prompt: TextLike = "Program running.",
         /,
         *,
         start: str = "",
@@ -626,7 +632,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def done(
         cls,
-        prompt: object = "Program finished.",
+        prompt: TextLike = "Program finished.",
         /,
         *,
         start: str = "",
@@ -646,7 +652,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def warn(
         cls,
-        prompt: object = "Important message.",
+        prompt: TextLike = "Important message.",
         /,
         *,
         start: str = "",
@@ -666,7 +672,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def fail(
         cls,
-        prompt: object = "Program error.",
+        prompt: TextLike = "Program error.",
         /,
         *,
         start: str = "",
@@ -686,7 +692,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def exit(
         cls,
-        prompt: object = "Program ended.",
+        prompt: TextLike = "Program ended.",
         /,
         *,
         start: str = "",
@@ -873,7 +879,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def confirm(
         cls,
-        prompt: object = "Do you want to continue?",
+        prompt: TextLike = "Do you want to continue?",
         /,
         *,
         start: str = "",
@@ -893,7 +899,7 @@ class Console(metaclass=_ConsoleMeta):
         information about styling, see the `ansi` module documentation."""
 
         yes_no = f"({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): "
-        head = f"{start}{prompt.ansi if isinstance(prompt, StyledText) else str(prompt)} "
+        head = f"{start}{_to_styled_text(prompt).ansi} "
         head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
 
         confirmed = cls.input(StyledText(head_seg, S.RESET, S.DIM(yes_no), sep="")).strip().lower() in (
@@ -907,7 +913,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def multiline_input(
         cls,
-        prompt: object = "",
+        prompt: TextLike = "",
         /,
         *,
         start: str = "",
@@ -933,7 +939,7 @@ class Console(metaclass=_ConsoleMeta):
         kb = KeyBindings()
         kb.add("c-d", eager=True)(cls._multiline_input_submit)
 
-        head = f"{start}{prompt.ansi if isinstance(prompt, StyledText) else str(prompt)}"
+        head = f"{start}{_to_styled_text(prompt).ansi}"
         head_seg = S.hex(str(Color.to_hexa(default_color)))(head) if default_color is not None else head
         StyledText(head_seg).print()
         if show_keybindings:
@@ -947,7 +953,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: object = "",
+        prompt: TextLike = "",
         /,
         *,
         start: str = "",
@@ -968,7 +974,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input[T](
         cls,
-        prompt: object = "",
+        prompt: TextLike = "",
         /,
         *,
         start: str = "",
@@ -988,7 +994,7 @@ class Console(metaclass=_ConsoleMeta):
     @classmethod
     def input(
         cls,
-        prompt: object = "",
+        prompt: TextLike = "",
         /,
         *,
         start: str = "",
@@ -1049,7 +1055,7 @@ class Console(metaclass=_ConsoleMeta):
         kb.add(Keys.Any)(helper.handle_any)
 
         custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
-        prompt_ansi = prompt.ansi if isinstance(prompt, StyledText) else StyledText(str(prompt)).ansi
+        prompt_ansi = _to_styled_text(prompt).ansi
         if default_color is not None:
             prompt_ansi = StyledText(S.hex(str(Color.to_hexa(default_color)))(prompt_ansi)).ansi
         session: _pt.PromptSession[str] = _pt.PromptSession(
@@ -1265,28 +1271,29 @@ class Console(metaclass=_ConsoleMeta):
     def _prepare_log_box(
         values: list[object] | tuple[object, ...], /, *, has_rules: bool = False
     ) -> tuple[list[str], list[str], int]:
-        """Prepares the log box content, returning the ANSI lines, their plain-text<br>
-        counterparts, and the maximum visible line length."""
+        """Prepares the log box content, returning the ANSI lines,<br>
+        their plain-text counterparts, and the maximum visible line length."""
 
         ansi_lines: list[str] = []
         plain_lines: list[str] = []
 
         for val in values:
-            if isinstance(val, StyledText):
-                for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
+            if isinstance(val, STYLE_COMPONENT_TT):
+                val_st: StyledText = _to_styled_text(cast("TextLike", val))
+                for ansi_line, plain_line in zip(val_st.ansi.split("\n"), val_st.raw.split("\n"), strict=False):
                     ansi_lines.append(ansi_line)
                     plain_lines.append(plain_line)
                 continue
 
-            val_str = str(val)
-            parts = Console._split_hr_parts(val_str) if has_rules else [val_str]
+            val_str: str = str(val)
+            parts: list[str] = Console._split_hr_parts(val_str) if has_rules else [val_str]
 
             for part in parts:
                 for line in part.splitlines():
                     ansi_lines.append(line)
                     plain_lines.append(line)
 
-        max_line_len = max((len(line) for line in plain_lines), default=0)
+        max_line_len: int = max((len(line) for line in plain_lines), default=0)
 
         return ansi_lines, plain_lines, max_line_len
 
@@ -1931,7 +1938,7 @@ class ProgressBar:
 
         self.chars = chars
 
-    def show_progress(self, current: int, total: int, /, label: str | None = None) -> None:
+    def show_progress(self, current: int, total: int, /, label: TextLike | None = None) -> None:
         """Show or update the progress bar.\n
         ----------------------------------------------------------------------------------------------
         *   `current` – The current progress value (below `0` or greater than `total` hides the bar).
@@ -1971,7 +1978,7 @@ class ProgressBar:
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, /, label: str | None = None) -> Generator[ProgressUpdater, None, None]:
+    def progress_context(self, total: int, /, label: TextLike | None = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         -----------------------------------------------------------------------------------------
         *   `total` – The total value representing 100% progress (must be greater than `0`).
@@ -2009,7 +2016,7 @@ class ProgressBar:
         finally:
             self.hide_progress()
 
-    def _draw_progress_bar(self, current: int, total: int, /, label: str | None = None) -> None:
+    def _draw_progress_bar(self, current: int, total: int, /, label: TextLike | None = None) -> None:
         if total <= 0 or not self._original_stdout:
             return
 
@@ -2030,12 +2037,13 @@ class ProgressBar:
         self._original_stdout.flush()
 
     def _get_formatted_info_and_bar_width(
-        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: str | None = None
+        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: TextLike | None = None
     ) -> tuple[str, int]:
         fmt_parts: list[str] = []
+        label_ansi = _to_styled_text(label).ansi if label is not None else ""
 
         for part in bar_format:
-            fmt_part = _PATTERNS.label.sub(label or "", part)
+            fmt_part = _PATTERNS.label.sub(label_ansi, part)
             fmt_part = _PATTERNS.current.sub(_ProgressBarCurrentReplacer(current), fmt_part)
             fmt_part = _PATTERNS.total.sub(_ProgressBarTotalReplacer(total), fmt_part)
             fmt_part = _PATTERNS.percentage.sub(_ProgressBarPercentageReplacer(percentage), fmt_part)
@@ -2113,10 +2121,10 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
-    def __init__(self, progress_bar: ProgressBar, total: int, label: str | None, /) -> None:
+    def __init__(self, progress_bar: ProgressBar, total: int, label: TextLike | None, /) -> None:
         self.progress_bar: ProgressBar = progress_bar
         self.total: int = total
-        self.current_label: str | None = label
+        self.current_label: TextLike | None = label
         self.current_progress: int = 0
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
@@ -2196,7 +2204,7 @@ class Throbber:
     def __init__(
         self,
         *,
-        label: str | None = None,
+        label: TextLike | None = None,
         throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
@@ -2210,7 +2218,7 @@ class Throbber:
         """A tuple of strings representing the animation frames."""
         self.interval: float
         """The time in seconds between each animation frame."""
-        self.label: str | None
+        self.label: TextLike | None
         """The current label text."""
         self.active: bool = False
         """Whether the throbber is currently active (intercepting stdout) or not."""
@@ -2266,7 +2274,7 @@ class Throbber:
 
         self.interval = interval
 
-    def start(self, label: str | None = None, /) -> None:
+    def start(self, label: TextLike | None = None, /) -> None:
         """Start the throbber animation and intercept stdout.\n
         --------------------------------------------------------------
         *   `label` – The label to display alongside the throbber."""
@@ -2296,7 +2304,7 @@ class Throbber:
             self._clear_throbber_line()
             self._stop_intercepting()
 
-    def update_label(self, label: str | None, /) -> None:
+    def update_label(self, label: TextLike | None, /) -> None:
         """Update the throbber's label text.\n
         -----------------------------------------
         *   `new_label` – The new label text."""
@@ -2304,7 +2312,7 @@ class Throbber:
         self.label = label
 
     @contextmanager
-    def context(self, label: str | None = None, /) -> Generator[Callable[[str], None], None, None]:
+    def context(self, label: TextLike | None = None, /) -> Generator[Callable[[TextLike], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
         ------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber.
@@ -2343,10 +2351,11 @@ class Throbber:
                 self._flush_buffer()
 
                 frame = self.frames[self._frame_index % len(self.frames)] + _ANSI_RESET
+                label_ansi = _to_styled_text(self.label).ansi if self.label is not None else ""
                 formatted = self.sep.join(
                     fmt_part
                     for part in self.throbber_format
-                    if (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(self.label or "", part)))
+                    if (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(label_ansi, part)))
                 )
 
                 self._current_animation_str = formatted

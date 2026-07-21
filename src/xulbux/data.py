@@ -4,8 +4,8 @@ methods to work with nested data structures.
 """
 
 from .ansi import AnyStyle, S, StyledText, _StyleGroup
+from .base.types import DATA_OBJ_TT, INDEX_ITERABLE_TT, IndexIterable
 from .base.types import DataObj as DataObjType
-from .base.types import DataObjTT, IndexIterable, IndexIterableTT
 from .regex import Regex
 from .string import String
 
@@ -75,11 +75,11 @@ class Data:
         if isinstance(data, dict):
             for key, val in data.items():
                 chars_count += len(str(key)) + (
-                    cls.chars_count(cast("DataObjType", val)) if isinstance(val, DataObjTT) else len(str(val))
+                    cls.chars_count(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else len(str(val))
                 )
         else:
             for item in data:
-                chars_count += cls.chars_count(cast("DataObjType", item)) if isinstance(item, DataObjTT) else len(str(item))
+                chars_count += cls.chars_count(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else len(str(item))
 
         return chars_count
 
@@ -91,7 +91,7 @@ class Data:
         if isinstance(data, dict):
             return type(data)(
                 {
-                    key.strip(): (cls.strip(cast("DataObjType", val)) if isinstance(val, DataObjTT) else val.strip())
+                    key.strip(): (cls.strip(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else val.strip())
                     for key, val in data.items()
                 }
             )
@@ -100,7 +100,7 @@ class Data:
             return cast(
                 "DataObj",
                 type(data)(
-                    [cls.strip(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item.strip() for item in data]
+                    [cls.strip(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item.strip() for item in data]
                 ),
             )
 
@@ -115,7 +115,7 @@ class Data:
                 {
                     key: (
                         val
-                        if not isinstance(val, DataObjTT)
+                        if not isinstance(val, DATA_OBJ_TT)
                         else cls.remove_empty_items(cast("DataObjType", val), spaces_are_empty=spaces_are_empty)
                     )
                     for key, val in data.items()
@@ -132,7 +132,7 @@ class Data:
                         for item in [
                             (
                                 item
-                                if not isinstance(item, DataObjTT)
+                                if not isinstance(item, DATA_OBJ_TT)
                                 else cls.remove_empty_items(cast("DataObjType", item), spaces_are_empty=spaces_are_empty)
                             )
                             for item in data
@@ -154,14 +154,14 @@ class Data:
         if isinstance(data, dict):
             return type(data)(
                 {
-                    key: cls.remove_duplicates(cast("DataObjType", val)) if isinstance(val, DataObjTT) else val
+                    key: cls.remove_duplicates(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else val
                     for key, val in data.items()
                 }
             )
 
         elif isinstance(data, (list, tuple)):
             processed: list[Any] = [
-                cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item for item in data
+                cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item for item in data
             ]
 
             try:
@@ -179,7 +179,7 @@ class Data:
         else:
             processed_elements: set[Any] = set()
             for item in data:
-                processed_item = cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DataObjTT) else item
+                processed_item = cls.remove_duplicates(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item
                 processed_elements.add(processed_item)
             return cast("DataObj", type(data)(processed_elements))
 
@@ -398,7 +398,7 @@ class Data:
                 parent = dict_data
                 current_data = dict_data[keys[path_idx]]
 
-            elif isinstance(current_data, IndexIterableTT):
+            elif isinstance(current_data, INDEX_ITERABLE_TT):
                 idx_iterable_data = cast("IndexIterable", current_data)
                 if i == len(path) - 1 and get_key:
                     if parent is None or not isinstance(parent, dict):
@@ -560,7 +560,7 @@ class Data:
                 keys, dict_data = list(dict_data.keys()), dict(dict_data)
                 dict_data[keys[id_path[0]]] = value
                 return dict_data
-            elif isinstance(current_data, IndexIterableTT):
+            elif isinstance(current_data, INDEX_ITERABLE_TT):
                 idx_iterable_data = cast("IndexIterable", current_data)
                 was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
                 idx_iterable_data[id_path[0]] = value
@@ -572,7 +572,7 @@ class Data:
                 keys, dict_data = list(dict_data.keys()), dict(dict_data)
                 dict_data[keys[id_path[0]]] = cls._set_nested_val(dict_data[keys[id_path[0]]], id_path[1:], value)
                 return dict_data
-            elif isinstance(current_data, IndexIterableTT):
+            elif isinstance(current_data, INDEX_ITERABLE_TT):
                 idx_iterable_data = cast("IndexIterable", current_data)
                 was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
                 idx_iterable_data[id_path[0]] = cls._set_nested_val(idx_iterable_data[id_path[0]], id_path[1:], value)
@@ -622,7 +622,7 @@ class _DataRemoveCommentsHelper:
                 if key is not None
             }
 
-        if isinstance(item, IndexIterableTT):
+        if isinstance(item, INDEX_ITERABLE_TT):
             idx_iterable_item = cast("IndexIterable", item)
             processed = [val for val in map(self.remove_nested_comments, idx_iterable_item) if val is not None]
             return type(idx_iterable_item)(processed)
@@ -668,7 +668,7 @@ class _DataGetPathIdHelper:
         if isinstance(self.current_data, dict):
             if (idx := self.process_dict_key(key)) is None:
                 return False
-        elif isinstance(self.current_data, IndexIterableTT):
+        elif isinstance(self.current_data, INDEX_ITERABLE_TT):
             if (idx := self.process_iterable_key(key)) is None:
                 return False
         else:
@@ -779,7 +779,7 @@ class _DataRenderHelper:
         elif current_indent is not None and hasattr(value, "__dict__"):
             return self.format_dict(value.__dict__, current_indent + self.indent)
 
-        elif current_indent is not None and isinstance(value, IndexIterableTT):
+        elif current_indent is not None and isinstance(value, INDEX_ITERABLE_TT):
             return self.format_sequence(cast("IndexIterable", value), current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
