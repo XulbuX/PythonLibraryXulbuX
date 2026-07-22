@@ -16,7 +16,7 @@ Run the following command to only generate the `.pyi` stub files to the project 
 CD into the project root, then run:
 
 ```powershell
-py setup.py --create-stubs
+py setup.py --gen-stubs
 ```
 
 **On Unix:**
@@ -24,7 +24,7 @@ py setup.py --create-stubs
 CD into the project root, activate the `.venv` virtual environment, then run:
 
 ```bash
-python setup.py --create-stubs
+python setup.py --gen-stubs
 ```
 
 ## 2. Full Compile and Install Test

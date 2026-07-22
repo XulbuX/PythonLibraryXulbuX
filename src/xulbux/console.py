@@ -977,8 +977,28 @@ def input[T](
     allowed_chars: str | AllTextChars = CHARS.ALL,
     allow_paste: bool = True,
     validator: Callable[[str], str | None] | None = None,
-    default_val: T | None = None,
+    default_val: T,
     output_type: type[T] = ...,
+) -> T: ...
+
+
+@overload
+def input[T](
+    prompt: StyledText | object = "",
+    /,
+    *,
+    start: str = "",
+    end: str = "",
+    default_color: Rgba | Hexa | None = None,
+    placeholder: str | None = None,
+    mask_char: str | None = None,
+    min_len: int | None = None,
+    max_len: int | None = None,
+    allowed_chars: str | AllTextChars = CHARS.ALL,
+    allow_paste: bool = True,
+    validator: Callable[[str], str | None] | None = None,
+    default_val: T | None = None,
+    output_type: type[T],
 ) -> T: ...
 
 
