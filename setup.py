@@ -224,13 +224,13 @@ class StubGen(ast.NodeTransformer):
 
         # Format the generated stub with Ruff to sort imports and remove unused imports:
         subprocess.run(
-            ["ruff", "check", out_file_abs_str, "--fix", "--select", "I,F401,F841,UP"],
+            [sys.executable, "-m", "ruff", "check", out_file_abs_str, "--fix", "--select", "I,F401,F841,UP"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
         )
         subprocess.run(
-            ["ruff", "format", out_file_abs_str, "--line-length", "9999"],
+            [sys.executable, "-m", "ruff", "format", out_file_abs_str, "--line-length", "9999"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
@@ -243,11 +243,11 @@ class StubGen(ast.NodeTransformer):
             out_file.write_text("# ruff: noqa: E501\n" + content, encoding="utf-8")
 
 
-def create_stubs_for_package() -> None:
-    """Create typing stubs (`.pyi`) for the package.<br>
+def generate_stubs_for_package() -> None:
+    """Generate typing stubs (`.pyi`) for the package.<br>
     Certain files are copied as-is to preserve specific decorators and type hints."""
 
-    print("\nCreating stub files...\n", flush=True)
+    print("\nGenerating stub files...\n", flush=True)
 
     try:
         stub_gen = StubGen()
@@ -275,22 +275,22 @@ def create_stubs_for_package() -> None:
                 copied_count += 1
                 print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
 
-        print("\nStub creation complete.\n", flush=True)
+        print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
 
     except Exception as exc:
-        print(f"[WARNING] Could not create stubs:\n  {'\n  '.join(str(exc).splitlines())}\n", flush=True)
+        print(f"[WARNING] Could not generate stubs:\n  {'\n  '.join(str(exc).splitlines())}\n", flush=True)
 
 
 if __name__ == "__main__":
     # If the user runs the setup script with the `--gen-stubs` flag,
-    # create stub files and exit without building the package:
+    # generate stub files and exit without building the package:
     if "--gen-stubs" in sys.argv:
-        create_stubs_for_package()
+        generate_stubs_for_package()
         sys.exit(0)
 
     ext_modules = []
 
-    # Only compile and create stubs when actually building, not during metadata-only
+    # Only compile and generate stubs when actually building, not during metadata-only
     # phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation:
     _BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
     _is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             ext_modules = mypycify(source_files, opt_level="3")
             print("\nMypyc compilation complete.\n", flush=True)
 
-            create_stubs_for_package()
+            generate_stubs_for_package()
 
         except (ImportError, Exception) as exc:
             print(
