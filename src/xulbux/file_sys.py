@@ -13,32 +13,22 @@ import os as _os
 import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
-from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final
-
-if TYPE_CHECKING:
-    cwd: Path
-    """The path to the current working directory."""
-    home: Path
-    """The path to the user's home directory."""
-    script_dir: Path
-    """The path to the directory of the current script."""
 
 
-def _get_cwd() -> Path:
+def get_cwd() -> Path:
     """The path to the current working directory."""
 
     return Path.cwd()
 
 
-def _get_home() -> Path:
+def get_home() -> Path:
     """The path to the user's home directory."""
 
     return Path.home()
 
 
-def _get_script_dir() -> Path:
+def get_script_dir() -> Path:
     """The path to the directory of the current script."""
 
     if getattr(_sys, "frozen", False):
@@ -134,7 +124,7 @@ def extend_or_make_path(
 
     except PathNotFoundError:
         path = Path(str(rel_path))
-        base_dir = _get_script_dir() if prefer_script_dir else Path.cwd()
+        base_dir = get_script_dir() if prefer_script_dir else Path.cwd()
         return base_dir / path
 
 
@@ -190,7 +180,7 @@ class _ExtendPathHelper:
 
         else:
             # Add predefined search dirs:
-            self.search_dirs.extend([_get_cwd(), _get_home(), _get_script_dir(), Path(_tempfile.gettempdir())])
+            self.search_dirs.extend([get_cwd(), get_home(), get_script_dir(), Path(_tempfile.gettempdir())])
 
         return self.search_in_dirs(expanded_path)
 
@@ -246,12 +236,3 @@ class _ExtendPathHelper:
 
         except Exception:
             return None
-
-
-_META_PROPS: Final[dict[str, Callable[[], Any]]] = {"cwd": _get_cwd, "home": _get_home, "script_dir": _get_script_dir}
-
-
-def __getattr__(name: str) -> "Any":
-    if name in _META_PROPS:
-        return _META_PROPS[name]()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

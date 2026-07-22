@@ -93,7 +93,7 @@ def test_console_height(mock_terminal_size: MagicMock):
 
 
 def test_console_is_tty():
-    result = _console_module.get_is_tty()
+    result = _console_module.is_tty()
     assert isinstance(result, bool)
 
 
@@ -106,7 +106,7 @@ def test_console_size(mock_terminal_size: MagicMock):
 
 
 def test_console_supports_color():
-    result = _console_module.get_supports_color()
+    result = _console_module.supports_color()
     assert isinstance(result, bool)
 
 

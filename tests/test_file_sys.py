@@ -54,19 +54,19 @@ def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> d
 
 
 def test_path_cwd(setup_test_environment: dict[str, Path]):
-    cwd_output = _file_sys_module.cwd
+    cwd_output = _file_sys_module.get_cwd()
     assert isinstance(cwd_output, Path)
     assert str(cwd_output) == str(setup_test_environment["cwd"])
 
 
 def test_path_script_dir(setup_test_environment: dict[str, Path]):
-    script_dir_output = _file_sys_module.script_dir
+    script_dir_output = _file_sys_module.get_script_dir()
     assert isinstance(script_dir_output, Path)
     assert str(script_dir_output) == str(setup_test_environment["script_dir"])
 
 
 def test_path_home():
-    home = _file_sys_module.home
+    home = _file_sys_module.get_home()
     assert isinstance(home, Path)
     assert len(str(home)) > 0
     assert home.exists()

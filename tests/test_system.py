@@ -9,30 +9,30 @@ import pytest
 
 
 def test_system_is_elevated():
-    result = _system_module.get_is_elevated()
+    result = _system_module.is_elevated()
     assert isinstance(result, bool)
 
 
 def test_system_is_win():
-    result = _system_module.get_is_win()
+    result = _system_module.is_win()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Windows")
 
 
 def test_system_is_linux():
-    result = _system_module.get_is_linux()
+    result = _system_module.is_linux()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Linux")
 
 
 def test_system_is_mac():
-    result = _system_module.get_is_mac()
+    result = _system_module.is_mac()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Darwin")
 
 
 def test_system_is_unix():
-    result = _system_module.get_is_unix()
+    result = _system_module.is_unix()
     assert isinstance(result, bool)
     current_system = platform.system()
     expected = current_system in ["Linux", "Darwin"] or "BSD" in current_system

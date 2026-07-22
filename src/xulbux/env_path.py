@@ -83,9 +83,9 @@ def _get(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool
     if cwd:
         if base_dir:
             raise ValueError("Both 'cwd' and 'base_dir' cannot be True at the same time.")
-        return _file_sys_module.cwd
+        return _file_sys_module.get_cwd()
     elif base_dir:
-        return _file_sys_module.script_dir
+        return _file_sys_module.get_script_dir()
 
     if path is None:
         raise ValueError("No path provided.\nPlease provide a 'path' or set either 'cwd' or 'base_dir' to True.")

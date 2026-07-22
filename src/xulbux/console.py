@@ -346,7 +346,7 @@ def get_user() -> str:
     return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
-def get_is_tty() -> bool:
+def is_tty() -> bool:
     """Whether the terminal is connected to a TTY or not."""
 
     return _sys.stdout.isatty()
@@ -362,10 +362,10 @@ def get_encoding() -> str:
         return "utf-8"
 
 
-def get_supports_color() -> bool:
+def supports_color() -> bool:
     """Whether the terminal supports ANSI color codes or not."""
 
-    if not get_is_tty():
+    if not is_tty():
         return False
 
     if _os.name == "nt":

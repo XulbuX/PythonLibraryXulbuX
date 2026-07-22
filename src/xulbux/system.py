@@ -20,7 +20,7 @@ import sys as _sys
 import time as _time
 
 
-def get_is_elevated() -> bool:
+def is_elevated() -> bool:
     """Whether the current process has elevated privileges or not."""
 
     try:
@@ -33,25 +33,25 @@ def get_is_elevated() -> bool:
     return False
 
 
-def get_is_win() -> bool:
+def is_win() -> bool:
     """Whether the current operating system is Windows or not."""
 
     return _platform.system() == "Windows"
 
 
-def get_is_linux() -> bool:
+def is_linux() -> bool:
     """Whether the current operating system is Linux or not."""
 
     return _platform.system() == "Linux"
 
 
-def get_is_mac() -> bool:
+def is_mac() -> bool:
     """Whether the current operating system is macOS or not."""
 
     return _platform.system() == "Darwin"
 
 
-def get_is_unix() -> bool:
+def is_unix() -> bool:
     """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
 
     return _os.name == "posix"
@@ -171,7 +171,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
     Returns `True` if the current process already has elevated privileges and raises<br>
     a `PermissionError` if the user denied the elevation or the elevation failed."""
 
-    if get_is_elevated():
+    if is_elevated():
         return True
 
     args_list = args or []
