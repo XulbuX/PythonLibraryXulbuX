@@ -19,7 +19,7 @@ import regex as _rx
 
 _PATTERNS = LazyRegex(remove_comments_default=r"^((?:(?!>>).)*)>>(?:(?:(?!<<).)*)(?:<<)?(.*?)$")
 
-AnySyntaxStyle = AnyStyle | _StyleGroup
+type AnySyntaxStyle = AnyStyle | _StyleGroup
 """Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
 
 _DEFAULT_SYNTAX_HL: Final[dict[str, AnySyntaxStyle]] = {
