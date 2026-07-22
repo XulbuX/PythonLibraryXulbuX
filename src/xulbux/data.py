@@ -5,7 +5,6 @@ This includes deep merging, nested key access, recursive sorting,
 syntax-highlighted rendering, and data type conversions.
 """
 
-from . import regex as _regex_module
 from . import string as _string_module
 from .ansi import AnyStyle, S, StyledText, _StyleGroup
 from .base.types import DATA_OBJ_TT, INDEX_ITERABLE_TT, IndexIterable
@@ -17,7 +16,7 @@ import math as _math
 from typing import Any, Final, Literal, cast, overload
 import regex as _rx
 
-_PATTERNS = LazyRegex(remove_comments_default=r"^((?:(?!>>).)*)>>(?:(?:(?!<<).)*)(?:<<)?(.*?)$")
+_PATTERNS: Final[LazyRegex] = LazyRegex(remove_comments_default=r"^((?:(?!>>).)*)>>(?:(?:(?!<<).)*)(?:<<)?(.*?)$")
 
 type AnySyntaxStyle = AnyStyle | _StyleGroup
 """Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
@@ -126,25 +125,19 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
         )
 
     else:
+        processed_items = (
+            (
+                item
+                if not isinstance(item, DATA_OBJ_TT)
+                else remove_empty_items(cast("DataObjType", item), spaces_are_empty=spaces_are_empty)
+            )
+            for item in data
+            if not (isinstance(item, (str, type(None))) and _string_module.is_empty(item, spaces_are_empty=spaces_are_empty))
+        )
         return cast(
             "DataObj",
             type(data)(
-                [
-                    item
-                    for item in [
-                        (
-                            item
-                            if not isinstance(item, DATA_OBJ_TT)
-                            else remove_empty_items(cast("DataObjType", item), spaces_are_empty=spaces_are_empty)
-                        )
-                        for item in data
-                        if not (
-                            isinstance(item, (str, type(None)))
-                            and _string_module.is_empty(item, spaces_are_empty=spaces_are_empty)
-                        )
-                    ]
-                    if item not in ([], (), {}, set(), frozenset())
-                ]
+                [item for item in processed_items if not (not item and isinstance(item, (list, tuple, dict, set, frozenset)))]
             ),
         )
 
@@ -589,15 +582,13 @@ class _DataRemoveCommentsHelper:
         else:
             self.pattern = (
                 _rx.compile(
-                    _regex_module._clean(
-                        rf"""^(
+                    rf"""(?x)^(
                             (?:(?!{_rx.escape(comment_start)}).)*
                         )
                         {_rx.escape(comment_start)}
                         (?:(?:(?!{_rx.escape(comment_end)}).)*)
                         (?:{_rx.escape(comment_end)})?
                         (.*?)$"""
-                    )
                 )
                 if len(comment_end) > 0
                 else None

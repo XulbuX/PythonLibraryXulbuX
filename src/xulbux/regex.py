@@ -49,8 +49,7 @@ def brackets(
     s2 = "" if strip_spaces else r"\s*"
 
     if ignore_in_strings:
-        return _clean(
-            rf"""{b1}{s1}({gr}{s2}(?:
+        return rf"""(?x){b1}{s1}({gr}{s2}(?:
                 [^{b1}{b2}"']
                 |"(?:\\.|[^"\\])*"
                 |'(?:\\.|[^'\\])*'
@@ -61,17 +60,14 @@ def brackets(
                     |(?R)
                 )*{b2}
             )*{s2}){s1}{b2}"""
-        )
     else:
-        return _clean(
-            rf"""{b1}{s1}({gr}{s2}(?:
+        return rf"""(?x){b1}{s1}({gr}{s2}(?:
                 [^{b1}{b2}]
                 |{b1}(?:
                     [^{b1}{b2}]
                     |(?R)
                 )*{b2}
             )*{s2}){s1}{b2}"""
-        )
 
 
 def outside_strings(pattern: str = r".*", /) -> str:
@@ -93,12 +89,10 @@ def all_except(disallowed_pattern: str, /, ignore_pattern: str = "", *, is_group
 
     gr = "" if is_group else "?:"
 
-    return _clean(
-        rf"""({gr}
+    return rf"""(?x)({gr}
             (?:(?!{ignore_pattern}).)*
             (?:(?!{outside_strings(disallowed_pattern)}).)*
         )"""
-    )
 
 
 def func_call(func_name: str | None = None, /) -> str:
@@ -143,19 +137,15 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
         (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))"""
 
     if allow_alpha:
-        return _clean(
-            rf"""(?ix)(?:rgb|rgba)?\s*(?:
+        return rf"""(?ix)(?:rgb|rgba)?\s*(?:
                 \(?\s*{rgb_part}
                     (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
                 \s*\)?
             )"""
-        )
     else:
-        return _clean(
-            rf"""(?ix)(?:rgb|rgba)?\s*(?:
+        return rf"""(?ix)(?:rgb|rgba)?\s*(?:
                 \(?\s*{rgb_part}\s*\)?
             )"""
-        )
 
 
 def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
@@ -186,19 +176,15 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
         (?:\s*{fix_sep}\s*)((?:0*(?:100|[1-9][0-9]|[0-9])))(?:\s*%)?"""
 
     if allow_alpha:
-        return _clean(
-            rf"""(?ix)(?:hsl|hsla)?\s*(?:
+        return rf"""(?ix)(?:hsl|hsla)?\s*(?:
                 \(?\s*{hsl_part}
                     (?:(?:\s*{fix_sep}\s*)((?:0*(?:0?\.[0-9]+|1\.0+|[0-9]+\.[0-9]+|[0-9]+))))?
                 \s*\)?
             )"""
-        )
     else:
-        return _clean(
-            rf"""(?ix)(?:hsl|hsla)?\s*(?:
+        return rf"""(?ix)(?:hsl|hsla)?\s*(?:
                 \(?\s*{hsl_part}\s*\)?
             )"""
-        )
 
 
 def hexa_str(*, allow_alpha: bool = True) -> str:
@@ -219,12 +205,6 @@ def hexa_str(*, allow_alpha: bool = True) -> str:
         if allow_alpha
         else r"(?i)(?:#|0x)?([0-9A-F]{6}|[0-9A-F]{3})"
     )
-
-
-def _clean(pattern: str) -> str:
-    """Internal method to make a multiline-string regex pattern into a single-line pattern."""
-
-    return "".join(line.strip() for line in pattern.splitlines()).strip()
 
 
 @mypyc_attr(native_class=False)

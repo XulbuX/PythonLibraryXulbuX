@@ -8,9 +8,60 @@ and stripping ANSI escape sequences.
 from . import data as _data_module
 from . import regex as _regex_module
 from . import string as _string_module
+from .regex import LazyRegex
 
-from typing import Any
+from typing import Any, Final
 import regex as _rx
+
+_JS_PATTERNS: Final[LazyRegex] = LazyRegex(
+    direct_js_patterns=(
+        r"^[\s\n]*(?:\$\([\"'][^\"']+[\"']\)\.[\w]+\([^\)]*\);?|"
+        r"\$\.[a-zA-Z]\w*\([^\)]*\);?|"
+        r"\(\s*function\s*\(\)\s*\{.*\}\s*\)\(\);?|"
+        r"document\.[a-zA-Z]\w*\([^\)]*\);?|"
+        r"window\.[a-zA-Z]\w*\([^\)]*\);?|"
+        r"console\.[a-zA-Z]\w*\([^\)]*\);?)[\s\n]*$"
+    ),
+    arrow_function_patterns=(
+        r"^[\s\n]*(?:\b[\w_]+\s*=\s*\([^\)]*\)\s*=>\s*[^;{]*[;]?|"
+        r"\b[\w_]+\s*=\s*[\w_]+\s*=>\s*[^;{]*[;]?|"
+        r"\(\s*[\w_,\s]+\s*\)\s*=>\s*[^;{]*[;]?|"
+        r"[\w_]+\s*=>\s*[^;{]*[;]?)[\s\n]*$"
+    ),
+    js_indicators_var_let_const=r"(?i)\b(var|let|const)\s+[\w_$]+",
+    js_indicators_jquery_var=r"(?i)\$[\w_$]+\s*=",
+    js_indicators_jquery_call=r"(?i)\$[\w_$]+\s*\(",
+    js_indicators_func_decl=r"(?i)\bfunction\s*[\w_$]*\s*\(",
+    js_indicators_func_assign=r"(?i)[\w_$]+\s*=\s*function\s*\(",
+    js_indicators_arrow_func=r"(?i)\b[\w_$]+\s*=>\s*[\{\(]",
+    js_indicators_iife=r"(?i)\(function\s*\(\)\s*\{",
+    js_indicators_literals=r"(?i)\b(true|false|null|undefined)\b",
+    js_indicators_operators=r"(?i)===|!==|\+\+|--|\|\||&&",
+    js_indicators_new=r"(?i)\bnew\s+[\w_$]+\s*\(",
+    js_indicators_objects=r"(?i)\b(document|window|console|Math|Array|Object|String|Number)\.",
+    js_indicators_async=r"(?i)\basync\s+function|\bawait\b",
+    js_indicators_control=r"(?i)\b(if|for|while|switch)\s*\([^)]*\)\s*\{",
+    js_indicators_try_catch=r"(?i)\btry\s*\{[^}]*\}\s*catch\s*\(",
+    js_indicators_semicolon=r"(?i);[\s\n]*$",
+)
+
+_JS_INDICATOR_SCORES: Final[dict[str, float]] = {
+    "js_indicators_arrow_func": 2.0,
+    "js_indicators_async": 2.0,
+    "js_indicators_control": 1.0,
+    "js_indicators_func_assign": 2.0,
+    "js_indicators_func_decl": 2.0,
+    "js_indicators_iife": 2.0,
+    "js_indicators_jquery_call": 2.0,
+    "js_indicators_jquery_var": 2.0,
+    "js_indicators_literals": 1.0,
+    "js_indicators_new": 1.5,
+    "js_indicators_objects": 2.0,
+    "js_indicators_operators": 1.5,
+    "js_indicators_semicolon": 0.5,
+    "js_indicators_try_catch": 1.5,
+    "js_indicators_var_let_const": 2.0,
+}
 
 
 def add_indent(code: str, indent: int, /) -> str:
@@ -82,52 +133,22 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
     if len(code.strip()) < 3:
         return False
 
-    for fn in funcs:
-        if _rx.match(r"^[\s\n]*" + _rx.escape(fn) + r"\([^\)]*\)[\s\n]*$", code):
+    if funcs:
+        funcs_pattern_direct = r"^[\s\n]*(" + "|".join(_rx.escape(fn) for fn in funcs) + r")\([^\)]*\)[\s\n]*$"
+        if _rx.match(funcs_pattern_direct, code):
             return True
 
-    direct_js_patterns = [
-        r"""^[\s\n]*\$\(["'][^"']+["']\)\.[\w]+\([^\)]*\);?[\s\n]*$""",  # jQuery calls
-        r"^[\s\n]*\$\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # $.ajax(), etc.
-        r"^[\s\n]*\(\s*function\s*\(\)\s*\{.*\}\s*\)\(\);?[\s\n]*$",  # IIFE
-        r"^[\s\n]*document\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # document.getElementById()
-        r"^[\s\n]*window\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # window.alert()
-        r"^[\s\n]*console\.[a-zA-Z]\w*\([^\)]*\);?[\s\n]*$",  # console.log()
-    ]
-    for pattern in direct_js_patterns:
-        if _rx.match(pattern, code):
-            return True
+    if _JS_PATTERNS.direct_js_patterns.match(code):
+        return True
 
-    arrow_function_patterns = [
-        r"^[\s\n]*\b[\w_]+\s*=\s*\([^\)]*\)\s*=>\s*[^;{]*[;]?[\s\n]*$",  # const x = (y) => y*2;
-        r"^[\s\n]*\b[\w_]+\s*=\s*[\w_]+\s*=>\s*[^;{]*[;]?[\s\n]*$",  # const x = y => y*2;
-        r"^[\s\n]*\(\s*[\w_,\s]+\s*\)\s*=>\s*[^;{]*[;]?[\s\n]*$",  # (x) => x*2
-        r"^[\s\n]*[\w_]+\s*=>\s*[^;{]*[;]?[\s\n]*$",  # x => x*2
-    ]
-    for pattern in arrow_function_patterns:
-        if _rx.match(pattern, code):
-            return True
+    if _JS_PATTERNS.arrow_function_patterns.match(code):
+        return True
 
     js_score = 0.0
-    funcs_pattern = r"(" + "|".join(_rx.escape(fn) for fn in funcs) + r")" + _regex_module.brackets("()")
-    js_indicators: list[tuple[str, float]] = [
-        (r"\b(var|let|const)\s+[\w_$]+", 2.0),  # JS variable declarations
-        (r"\$[\w_$]+\s*=", 2.0),  # jQuery-style variables
-        (r"\$[\w_$]+\s*\(", 2.0),  # jQuery function calls
-        (r"\bfunction\s*[\w_$]*\s*\(", 2.0),  # Function declarations
-        (r"[\w_$]+\s*=\s*function\s*\(", 2.0),  # Function assignments
-        (r"\b[\w_$]+\s*=>\s*[\{\(]", 2.0),  # Arrow functions
-        (r"\(function\s*\(\)\s*\{", 2.0),  # IIFE pattern
-        (funcs_pattern, 2.0),  # Custom predefined functions
-        (r"\b(true|false|null|undefined)\b", 1.0),  # JS literals
-        (r"===|!==|\+\+|--|\|\||&&", 1.5),  # JS-specific operators
-        (r"\bnew\s+[\w_$]+\s*\(", 1.5),  # Object instantiation with `new`
-        (r"\b(document|window|console|Math|Array|Object|String|Number)\.", 2.0),  # JS objects
-        (r"\basync\s+function|\bawait\b", 2.0),  # async/await
-        (r"\b(if|for|while|switch)\s*\([^)]*\)\s*\{", 1.0),  # Control structures with braces
-        (r"\btry\s*\{[^}]*\}\s*catch\s*\(", 1.5),  # Try-catch
-        (r";[\s\n]*$", 0.5),  # Semicolon line endings
-    ]
+    if funcs:
+        funcs_pattern2 = r"(" + "|".join(_rx.escape(fn) for fn in funcs) + r")" + _regex_module.brackets("()")
+        if matches := _rx.compile(funcs_pattern2, _rx.IGNORECASE).findall(code):
+            js_score += len(matches) * 2.0
 
     line_endings = [line.strip() for line in code.splitlines() if line.strip()]
     if (semicolon_endings := sum(1 for line in line_endings if line.endswith(";"))) >= 1:
@@ -135,8 +156,8 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
     if (opening_braces := code.count("{")) > 0 and opening_braces == code.count("}"):
         js_score += 1
 
-    for pattern, score in js_indicators:
-        if matches := _rx.compile(pattern, _rx.IGNORECASE).findall(code):
+    for attr, score in _JS_INDICATOR_SCORES.items():
+        if matches := getattr(_JS_PATTERNS, attr).findall(code):
             js_score += len(matches) * score
 
     return js_score >= 2.0

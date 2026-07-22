@@ -26,15 +26,6 @@ from contextlib import contextmanager, suppress
 from io import StringIO
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Final, Literal, TextIO, cast, overload
-
-if TYPE_CHECKING:
-    width: int
-    height: int
-    size: tuple[int, int]
-    user: str
-    is_tty: bool
-    encoding: str
-    supports_color: bool
 import prompt_toolkit as _pt
 import regex as _rx
 from prompt_toolkit.document import Document
@@ -42,6 +33,22 @@ from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
+
+if TYPE_CHECKING:
+    width: int
+    """The terminal width in characters."""
+    height: int
+    """The terminal height in lines."""
+    size: tuple[int, int]
+    """A tuple with the terminal width and height in characters and lines."""
+    user: str
+    """The name of the current user."""
+    is_tty: bool
+    """Whether the terminal is connected to a TTY or not."""
+    encoding: str
+    """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
+    supports_color: bool
+    """Whether the terminal supports ANSI color codes or not."""
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
     hr=r"(?i){hr}",
@@ -230,7 +237,7 @@ class ParsedArgs:
         """Unknown flags found in the command-line arguments<br>
         (args that look like flags but are not defined in the config)."""
 
-    def __len__(self):
+    def __len__(self) -> int:
         """The number of arguments stored in the `ParsedArgs` object."""
 
         return len(vars(self))
@@ -2420,7 +2427,7 @@ class _InterceptedOutput:
         return getattr(self.string_io, name)
 
 
-_META_PROPS = {
+_META_PROPS: Final[dict[str, Callable[[], Any]]] = {
     "width": _get_width,
     "height": _get_height,
     "size": _get_size,

@@ -13,13 +13,17 @@ import os as _os
 import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     cwd: Path
+    """The path to the current working directory."""
     home: Path
+    """The path to the user's home directory."""
     script_dir: Path
+    """The path to the directory of the current script."""
 
 
 def _get_cwd() -> Path:
@@ -157,6 +161,8 @@ def remove(path: Path | str, /, *, only_content: bool = False) -> None:
     elif path_obj.is_dir():
         for child in path_obj.iterdir():
             _remove_item(child)
+    else:
+        raise NotADirectoryError(f"Cannot remove only_content of non-directory {path_obj!r}")
 
 
 class _ExtendPathHelper:
@@ -192,14 +198,10 @@ class _ExtendPathHelper:
     def expand_env_vars(path: Path, /) -> Path:
         """Expand all environment variables in the given path."""
 
-        if "%" not in (str_path := str(path)):
+        if "%" not in (str_path := str(path)) and "$" not in str_path:
             return path
 
-        for i in range(1, len(parts := str_path.split("%")), 2):
-            if parts[i].upper() in _os.environ:
-                parts[i] = _os.environ[parts[i].upper()]
-
-        return Path("".join(parts))
+        return Path(_os.path.expandvars(str_path))
 
     def search_in_dirs(self, path: Path, /) -> Path | None:
         """Search for the path in all configured directories."""
@@ -246,7 +248,7 @@ class _ExtendPathHelper:
             return None
 
 
-_META_PROPS = {"cwd": _get_cwd, "home": _get_home, "script_dir": _get_script_dir}
+_META_PROPS: Final[dict[str, Callable[[], Any]]] = {"cwd": _get_cwd, "home": _get_home, "script_dir": _get_script_dir}
 
 
 def __getattr__(name: str) -> "Any":

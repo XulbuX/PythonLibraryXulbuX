@@ -18,21 +18,34 @@ import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
 import time as _time
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     is_elevated: bool
+    """Whether the current process has elevated privileges or not."""
     is_win: bool
+    """Whether the current operating system is Windows or not."""
     is_linux: bool
+    """Whether the current operating system is Linux or not."""
     is_mac: bool
+    """Whether the current operating system is macOS or not."""
     is_unix: bool
+    """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
     hostname: str
+    """The network hostname of the current machine."""
     username: str
+    """The name of the current user."""
     os_name: str
+    """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
     os_version: str
+    """The version of the operating system."""
     architecture: str
+    """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
     cpu_count: int
+    """The number of CPU cores available."""
     python_version: str
+    """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
 
 
 def _get_is_elevated() -> bool:
@@ -250,8 +263,15 @@ class _SystemRestartHelper:
         else:
             output = _subprocess.check_output(command).decode()
 
-        processes = [line for line in output.splitlines()[skip_lines:] if line.strip()]
-        if len(processes) > 2:  # EXCLUDING PYTHON AND SHELL PROCESSES
+        processes = [
+            line
+            for line in output.splitlines()[skip_lines:]
+            if line.strip()
+            and not any(
+                p in line.lower() for p in ("python", "sh", "bash", "zsh", "cmd", "powershell", "pwsh", "tasklist", "ps")
+            )
+        ]
+        if len(processes) > 0:  # EXCLUDING PYTHON AND SHELL PROCESSES
             raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
 
     def restart_windows(self) -> None:
@@ -320,11 +340,14 @@ class _SystemCheckLibsHelper:
     def find_missing_libs(self) -> list[str]:
         """Find which libraries are missing."""
 
+        import importlib.util
+
         missing: list[str] = []
         for lib in self.lib_names:
             try:
-                __import__(lib)
-            except ImportError:
+                if importlib.util.find_spec(lib) is None:
+                    missing.append(lib)
+            except (ImportError, ValueError, AttributeError):
                 missing.append(lib)
         return missing
 
@@ -350,7 +373,7 @@ class _SystemCheckLibsHelper:
         return None if len(missing) == 0 else missing
 
 
-_META_PROPS = {
+_META_PROPS: Final[dict[str, Callable[[], Any]]] = {
     "is_elevated": _get_is_elevated,
     "is_win": _get_is_win,
     "is_linux": _get_is_linux,

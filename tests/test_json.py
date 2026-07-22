@@ -113,8 +113,8 @@ def test_read_empty_json(tmp_path: Path):
     try:
         data = _json_module.read(str(file_path))
         assert data == {}
-    except ValueError as e:
-        assert "contains no data" in str(e)
+    except ValueError as exc:
+        assert "contains no data" in str(exc)
 
 
 def test_read_comment_only_json(tmp_path: Path):

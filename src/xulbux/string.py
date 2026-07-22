@@ -9,10 +9,10 @@ from .regex import LazyRegex
 
 import ast as _ast
 import json as _json
-from typing import Any, Literal
+from typing import Any, Final, Literal
 import regex as _rx
 
-_PATTERNS = LazyRegex(consecutive_empty_lines=r"(\n\s*){2,}", decompose_default=r"(?<=[a-z])(?=[A-Z])|[\-_]")
+_PATTERNS: Final[LazyRegex] = LazyRegex(consecutive_empty_lines=r"(\n\s*){2,}", decompose_default=r"(?<=[a-z])(?=[A-Z])|[\-_]")
 
 _SPACE_TRANS_CACHE: dict[int, dict[int, str | int | None]] = {}
 
@@ -174,7 +174,7 @@ def remove_consecutive_empty_lines(string: str, /, max_consecutive: int = 0) -> 
     if max_consecutive < 0:
         raise ValueError(f"The 'max_consecutive' parameter must be non-negative, got {max_consecutive!r}")
 
-    return _PATTERNS.consecutive_empty_lines.sub(r"\1" * (max_consecutive + 1), string)
+    return _PATTERNS.consecutive_empty_lines.sub("\n" * (max_consecutive + 1), string)
 
 
 def split_count(string: str, count: int, /) -> list[str]:

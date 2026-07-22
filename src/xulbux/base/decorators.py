@@ -52,7 +52,7 @@ class _SafeDeprecated:
             return arg  # If it's a class or something else, just return it.
 
 
-deprecated = _SafeDeprecated
+deprecated: Final[type[_SafeDeprecated]] = _SafeDeprecated
 
 
 if TYPE_CHECKING:

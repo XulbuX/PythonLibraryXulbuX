@@ -1,4 +1,4 @@
-from typing import Final
+from typing import TYPE_CHECKING, Any, Final
 
 __package_name__: Final[str] = "xulbux"
 __version__: Final[str] = "1.10.0"
@@ -19,12 +19,13 @@ __dependencies__: Final[list[str]] = [
     "typing-extensions>=4.6.0; python_version < '3.13'",
 ]
 
-from . import ansi, code, color, console, data, env_path, file, file_sys, json, regex, string, system
-from .ansi import S, StyledText, Term
-from .color import hexa, hsla, rgba
-from .console import ProgressBar, Throbber
-from .format_codes import FormatCodes
-from .regex import LazyRegex
+if TYPE_CHECKING:
+    from . import ansi, code, color, console, data, env_path, file, file_sys, json, regex, string, system
+    from .ansi import S, StyledText, Term
+    from .color import hexa, hsla, rgba
+    from .console import ProgressBar, Throbber
+    from .format_codes import FormatCodes
+    from .regex import LazyRegex
 
 __all__ = [
     "FormatCodes",
@@ -61,3 +62,35 @@ __all__ = [
     "string",
     "system",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in __all__:
+        import importlib
+
+        # Map specific exported objects to their submodules:
+        _submodules = {
+            "S": "ansi",
+            "StyledText": "ansi",
+            "Term": "ansi",
+            "hexa": "color",
+            "hsla": "color",
+            "rgba": "color",
+            "ProgressBar": "console",
+            "Throbber": "console",
+            "FormatCodes": "format_codes",
+            "LazyRegex": "regex",
+        }
+
+        if name in _submodules:
+            module = importlib.import_module(f".{_submodules[name]}", package=__package__)
+            return getattr(module, name)
+
+        # Otherwise, it must be a top-level module (e.g., `console`, `string`, …).
+        return importlib.import_module(f".{name}", package=__package__)
+
+    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return __all__

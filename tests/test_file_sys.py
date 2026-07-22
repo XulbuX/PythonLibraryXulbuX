@@ -195,10 +195,11 @@ def test_remove(tmp_path: Path):
     assert dir_to_empty.exists()
     assert not list(dir_to_empty.iterdir())
 
-    # Only content on a file (should do nothing):
+    # Only content on a file (should raise error):
     file_path_content = tmp_path / "file_content.txt"
     file_path_content.write_text("content")
     assert file_path_content.exists()
-    _file_sys_module.remove(str(file_path_content), only_content=True)
+    with pytest.raises(NotADirectoryError):
+        _file_sys_module.remove(str(file_path_content), only_content=True)
     assert file_path_content.exists()
     assert file_path_content.read_text() == "content"
