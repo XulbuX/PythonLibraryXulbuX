@@ -25,7 +25,7 @@ from collections.abc import Callable, Generator, KeysView, ValuesView
 from contextlib import contextmanager, suppress
 from io import StringIO
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Final, Literal, TextIO, cast, overload
+from typing import Any, Final, Literal, NoReturn, TextIO, cast, overload
 import prompt_toolkit as _pt
 import regex as _rx
 from prompt_toolkit.document import Document
@@ -33,22 +33,6 @@ from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
-
-if TYPE_CHECKING:
-    width: int
-    """The terminal width in characters."""
-    height: int
-    """The terminal height in lines."""
-    size: tuple[int, int]
-    """A tuple with the terminal width and height in characters and lines."""
-    user: str
-    """The name of the current user."""
-    is_tty: bool
-    """Whether the terminal is connected to a TTY or not."""
-    encoding: str
-    """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
-    supports_color: bool
-    """Whether the terminal supports ANSI color codes or not."""
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
     hr=r"(?i){hr}",
@@ -328,7 +312,7 @@ class ParsedArgs:
                 yield (key, val)
 
 
-def _get_width() -> int:
+def get_width() -> int:
     """The terminal width in characters."""
 
     try:
@@ -337,7 +321,7 @@ def _get_width() -> int:
         return 80
 
 
-def _get_height() -> int:
+def get_height() -> int:
     """The terminal height in lines."""
 
     try:
@@ -346,7 +330,7 @@ def _get_height() -> int:
         return 24
 
 
-def _get_size() -> tuple[int, int]:
+def get_size() -> tuple[int, int]:
     """A tuple with the terminal width and height in characters and lines."""
 
     try:
@@ -356,19 +340,19 @@ def _get_size() -> tuple[int, int]:
         return (80, 24)
 
 
-def _get_user() -> str:
+def get_user() -> str:
     """The name of the current user."""
 
     return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
-def _get_is_tty() -> bool:
+def get_is_tty() -> bool:
     """Whether the terminal is connected to a TTY or not."""
 
     return _sys.stdout.isatty()
 
 
-def _get_encoding() -> str:
+def get_encoding() -> str:
     """The encoding used by the terminal (e.g., `utf-8`, `cp1252`, …)."""
 
     try:
@@ -378,10 +362,10 @@ def _get_encoding() -> str:
         return "utf-8"
 
 
-def _get_supports_color() -> bool:
+def get_supports_color() -> bool:
     """Whether the terminal supports ANSI color codes or not."""
 
-    if not _get_is_tty():
+    if not get_is_tty():
         return False
 
     if _os.name == "nt":
@@ -475,6 +459,30 @@ def get_args(
     return _ConsoleArgsParseHelper(
         arg_parse_configs, skip=skip, flag_value_sep=flag_value_sep, allow_space_value=allow_space_value
     )()
+
+
+@overload
+def pause_exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    pause: bool = ...,
+    exit: Literal[True],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> NoReturn: ...
+
+
+@overload
+def pause_exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    pause: bool = ...,
+    exit: Literal[False] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def pause_exit(
@@ -573,7 +581,7 @@ def log(
     tab: str = " " * (-title_len % tab_size)
 
     # Position where prompt needs to wrap to next line:
-    wrap_len: int = _get_width() - (title_len + len(tab))
+    wrap_len: int = get_width() - (title_len + len(tab))
 
     # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
     clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
@@ -613,7 +621,7 @@ def debug(
 
     if active:
         log("DEBUG", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-        pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+        pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
 
 
 def info(
@@ -632,7 +640,37 @@ def info(
     at the message and exit the program after the message was printed."""
 
     log("INFO", prompt, start=start, end=end, title_bg_color=S.BG.BR.BLUE, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+
+
+@overload
+def done(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[True],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> NoReturn: ...
+
+
+@overload
+def done(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[False] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def done(
@@ -651,7 +689,37 @@ def done(
     at the message and exit the program after the message was printed."""
 
     log("DONE", prompt, start=start, end=end, title_bg_color=S.BG.BR.GREEN, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+
+
+@overload
+def warn(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[True],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> NoReturn: ...
+
+
+@overload
+def warn(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[False] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def warn(
@@ -670,7 +738,37 @@ def warn(
     at the message and exit the program after the message was printed."""
 
     log("WARN", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+
+
+@overload
+def fail(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[True] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> NoReturn: ...
+
+
+@overload
+def fail(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[False],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def fail(
@@ -689,7 +787,37 @@ def fail(
     at the message and exit the program after the message was printed."""
 
     log("FAIL", prompt, start=start, end=end, title_bg_color=S.BG.BR.RED, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+
+
+@overload
+def exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[True] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> NoReturn: ...
+
+
+@overload
+def exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: Literal[False],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def exit(
@@ -708,7 +836,7 @@ def exit(
     at the message and exit the program after the message was printed."""
 
     log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
 
 
 def log_box_filled(
@@ -755,8 +883,8 @@ def log_box_filled(
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(values)
 
     spaces_l = " " * indent
-    pady = " " * (_get_width() if w_full else max_line_len + (2 * w_padding))
-    pad_w_full = (_get_width() - (max_line_len + (2 * w_padding))) if w_full else 0
+    pady = " " * (get_width() if w_full else max_line_len + (2 * w_padding))
+    pad_w_full = (get_width() - (max_line_len + (2 * w_padding))) if w_full else 0
 
     box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
 
@@ -844,11 +972,11 @@ def log_box_bordered(
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(values, has_rules=True)
 
     spaces_l = " " * indent
-    pad_w_full = (_get_width() - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
+    pad_w_full = (get_width() - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
 
-    border_t_line = border_chars[1] * (_get_width() - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))
-    border_b_line = border_chars[5] * (_get_width() - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))
-    h_rule_line = border_chars[9] * (_get_width() - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
+    border_t_line = border_chars[1] * (get_width() - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))
+    border_b_line = border_chars[5] * (get_width() - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))
+    h_rule_line = border_chars[9] * (get_width() - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
 
     border_l = f"{border_open}{border_chars[7]}{reset}"
     border_r = f"{border_open}{border_chars[3]}{reset}"
@@ -2058,7 +2186,7 @@ class ProgressBar:
 
         fmt_str = self.sep.join(fmt_parts)
 
-        bar_space = _get_width() - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
+        bar_space = get_width() - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -2445,20 +2573,3 @@ class _InterceptedOutput:
 
     def __getattr__(self, name: str, /) -> Any:
         return getattr(self.string_io, name)
-
-
-_META_PROPS: Final[dict[str, Callable[[], Any]]] = {
-    "width": _get_width,
-    "height": _get_height,
-    "size": _get_size,
-    "user": _get_user,
-    "is_tty": _get_is_tty,
-    "encoding": _get_encoding,
-    "supports_color": _get_supports_color,
-}
-
-
-def __getattr__(name: str) -> "Any":
-    if name in _META_PROPS:
-        return _META_PROPS[name]()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -2,6 +2,7 @@ import ast
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from setuptools import setup
 
@@ -41,8 +42,117 @@ def clean_project_files(patterns: set[str], message: str) -> None:
 
 
 class StubGen(ast.NodeTransformer):
-    """AST transformer to carefully strip docstrings, function bodies, and overload implementations from<br>
-    Python files while preserving decorators and variable assignments necessary for correct typing semantics."""
+    """An AST transformer that generates `.pyi` stub files by stripping implementations."""
+
+    def __init__(self, shadowed_names: set[str] | None = None) -> None:
+        super().__init__()
+        self.shadowed_names: set[str] = shadowed_names or set()
+
+    @classmethod
+    def generate_stubs(cls, py_files: Iterable[Path]) -> None:
+        """Generate typing stubs (`.pyi`) for the provided Python files.<br>
+        Certain files are copied as-is to preserve specific decorators and type hints."""
+
+        print("\nGenerating stub files...\n", flush=True)
+
+        generated_files: list[Path] = []
+        generated_count: int = 0
+        copied_count: int = 0
+
+        for py_file in py_files:
+            pyi_file: Path = py_file.with_suffix(".pyi")
+            rel_path: Path = py_file.relative_to(PROJECT_SRC.parent)
+
+            # Skip files with no content:
+            if not py_file.read_text("utf-8").strip():
+                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
+                copied_count += 1
+                print(f"  created {rel_path} (copied: empty file)", flush=True)
+                continue
+
+            try:
+                out_file = cls._generate_stub_from(py_file, pyi_file.parent)
+                generated_files.append(out_file.resolve())
+                generated_count += 1
+                print(f"  created {rel_path.with_suffix('.pyi')} (generated)", flush=True)
+
+            except Exception as exc:
+                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
+                copied_count += 1
+                print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
+
+        if generated_files:
+            # Format all generated stubs with Ruff in one call:
+            subprocess.run(
+                [sys.executable, "-m", "ruff", "check", *generated_files, "--fix", "--select", "I,F401,F841,UP"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "format",
+                    *generated_files,
+                    "--line-length",
+                    "9999",
+                    "--config",
+                    "format.skip-magic-trailing-comma=true",
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+
+            # Add `noqa: E501`, but only to files that actually exceed the line-length
+            # limit of 127 characters to prevent `Unused noqa directive` errors:
+            for file in generated_files:
+                content = file.read_text(encoding="utf-8")
+                if any(len(line) > 127 for line in content.splitlines()):
+                    file.write_text("# ruff: noqa: E501\n" + content, encoding="utf-8")
+
+        print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
+
+    @classmethod
+    def _generate_stub_from(cls, source_file: Path, output_dir: Path) -> Path:
+        """Generates a stub file in the specified output directory from the given source file."""
+
+        # Transform the source file content into a stub using the AST transformer:
+        src_code = source_file.read_text("utf-8")
+        tree = ast.parse(src_code)
+
+        shadowed_names = cls._get_type_checking_shadowed_names(tree)
+
+        transformer = cls(shadowed_names=shadowed_names)
+        transformed_tree = transformer.visit(tree)
+        source = ast.unparse(transformed_tree)
+
+        # Write the generated stub content to the output file:
+        out_file = output_dir / source_file.with_suffix(".pyi").name
+        out_file.write_text(source, encoding="utf-8")
+
+        return out_file
+
+    @staticmethod
+    def _get_type_checking_shadowed_names(tree: ast.AST) -> set[str]:
+        shadowed_names: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.If) and (
+                (isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING")
+                or (
+                    isinstance(node.test, ast.Attribute)
+                    and isinstance(node.test.value, ast.Name)
+                    and node.test.value.id == "typing"
+                    and node.test.attr == "TYPE_CHECKING"
+                )
+            ):
+                for subnode in ast.walk(node):
+                    if isinstance(subnode, (ast.ImportFrom, ast.Import)):
+                        for alias in subnode.names:
+                            shadowed_names.add(alias.asname or alias.name)
+        return shadowed_names
 
     def _is_overload_dec(self, dec: ast.expr) -> bool:
         if isinstance(dec, ast.Name) and dec.id == "overload":
@@ -84,6 +194,13 @@ class StubGen(ast.NodeTransformer):
             new_body.append(stmt)
 
         return new_body
+
+    def _strip_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        for i in range(len(node.args.defaults)):
+            node.args.defaults[i] = ast.Constant(value=Ellipsis)
+        for i in range(len(node.args.kw_defaults)):
+            if node.args.kw_defaults[i] is not None:
+                node.args.kw_defaults[i] = ast.Constant(value=Ellipsis)
 
     def visit_Module(self, node: ast.Module) -> ast.Module:
         self.generic_visit(node)
@@ -164,13 +281,6 @@ class StubGen(ast.NodeTransformer):
 
         return node
 
-    def _strip_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        for i in range(len(node.args.defaults)):
-            node.args.defaults[i] = ast.Constant(value=Ellipsis)
-        for i in range(len(node.args.kw_defaults)):
-            if node.args.kw_defaults[i] is not None:
-                node.args.kw_defaults[i] = ast.Constant(value=Ellipsis)
-
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         self.generic_visit(node)
         node.body = [ast.parse("...").body[0]]
@@ -183,7 +293,9 @@ class StubGen(ast.NodeTransformer):
         self._strip_defaults(node)
         return node
 
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AnnAssign:
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AnnAssign | None:
+        if isinstance(node.target, ast.Name) and node.target.id in self.shadowed_names:
+            return None
         self.generic_visit(node)
         node.value = None
         return node
@@ -207,75 +319,18 @@ class StubGen(ast.NodeTransformer):
                 return None
         return node
 
-    @classmethod
-    def generate_stub_from(cls, source_file: Path, output_dir: Path) -> None:
-        """Generates a stub file in the specified output directory from the given source file."""
-
-        # Transform the source file content into a stub using the AST transformer:
-        src_code = source_file.read_text("utf-8")
-        tree = ast.parse(src_code)
-        transformed_tree = cls().visit(tree)
-        source = ast.unparse(transformed_tree)
-
-        # Write the generated stub content to the output file:
-        out_file = output_dir / source_file.with_suffix(".pyi").name
-        out_file.write_text(source, encoding="utf-8")
-        out_file_abs_str = str(out_file.resolve())
-
-        # Format the generated stub with Ruff to sort imports and remove unused imports:
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "check", out_file_abs_str, "--fix", "--select", "I,F401,F841,UP"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "format", out_file_abs_str, "--line-length", "9999"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-
-        # Add `noqa: E501`, but only to files that actually exceed the line-length
-        # limit of 127 characters to prevent `Unused noqa directive` errors:
-        content = out_file.read_text(encoding="utf-8")
-        if any(len(line) > 127 for line in content.splitlines()):
-            out_file.write_text("# ruff: noqa: E501\n" + content, encoding="utf-8")
+    def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
+        self.generic_visit(node)
+        # Unwrap single-element tuples in subscript slices (removes trailing commas like in `Final[A,]`):
+        if isinstance(node.slice, ast.Tuple) and len(node.slice.elts) == 1:
+            node.slice = node.slice.elts[0]
+        return node
 
 
 def generate_stubs_for_package() -> None:
-    """Generate typing stubs (`.pyi`) for the package.<br>
-    Certain files are copied as-is to preserve specific decorators and type hints."""
-
-    print("\nGenerating stub files...\n", flush=True)
-
+    """Generate typing stubs (`.pyi`) for the package."""
     try:
-        stub_gen = StubGen()
-        generated_count: int = 0
-        copied_count: int = 0
-
-        for py_file in PROJECT_SRC.rglob("*.py"):
-            pyi_file: Path = py_file.with_suffix(".pyi")
-            rel_path: Path = py_file.relative_to(PROJECT_SRC.parent)
-
-            # Skip files with no content:
-            if not py_file.read_text("utf-8").strip():
-                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
-                copied_count += 1
-                print(f"  created {rel_path} (copied: empty file)", flush=True)
-                continue
-
-            try:
-                stub_gen.generate_stub_from(py_file, pyi_file.parent)
-                generated_count += 1
-                print(f"  created {rel_path.with_suffix('.pyi')} (generated)", flush=True)
-
-            except Exception as exc:
-                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
-                copied_count += 1
-                print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
-
-        print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
+        StubGen.generate_stubs(PROJECT_SRC.rglob("*.py"))
 
     except Exception as exc:
         print(f"[WARNING] Could not generate stubs:\n  {'\n  '.join(str(exc).splitlines())}\n", flush=True)

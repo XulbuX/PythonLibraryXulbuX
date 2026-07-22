@@ -54,10 +54,13 @@ When the library is installed, the following commands are available in the termi
 
 ## Usage
 
-The library's modules can be imported directly from the `xulbux` package:
+The library's modules can be accessed by importing the `xulbux` package. It is highly recommended to alias the package (e.g., as `xx`) to prevent naming conflicts with common variable names like `data` or `file`:
 
 ```python
-from xulbux import code, color, console, ...
+import xulbux as xx
+
+xx.console.log("Hello, World!")
+xx.data.render({"key": "value"})
 ```
 
 The library's classes can be imported directly from the `xulbux` package:
@@ -179,16 +182,16 @@ from xulbux.base.types import DataObj
 This is what it could look like using this library for a simple but ultra good-looking color converter:
 
 ```python
-from xulbux.base.consts import COLOR, CHARS
-from xulbux.color import hexa
-from xulbux import console
+import xulbux as xx
+from xulbux import S, StyledText, hexa
+from xulbux.base.consts import CHARS, COLOR
 
 
 def main() -> None:
 
     # Let the user enter a hexa color in any hexa format.
-    input_clr = console.input(
-        "[b](Enter a HEXA color in any format) > ",
+    input_clr = xx.console.input(
+        StyledText(S.BOLD("Enter a HEXA color in any format"), " > "),
         start="\n",
         placeholder="#7075FF",
         max_len=7,
@@ -196,47 +199,34 @@ def main() -> None:
     )
 
     # Announce indexing the input color.
-    console.log(
-        "INDEX",
-        "Indexing the input HEXA color...",
-        start="\n",
-        title_bg_color=COLOR.BLUE,
-    )
+    xx.console.log("INDEX", "Indexing the input HEXA color...", start="\n", title_bg_color=COLOR.BLUE)
 
     try:
-        # Try to convert the input string into a `hexa()` object.
+        # Try to initialize the input string as a `hexa()` object.
         hexa_color = hexa(input_clr)
 
     except ValueError:
         # Announce the invalid input color and exit the program.
-        console.fail(
-            "The input HEXA color is invalid.",
-            end="\n\n",
-            exit=True,
-        )
+        xx.console.fail("The input HEXA color is invalid.", end="\n\n", exit=True)
 
     # Announce starting the conversion.
-    console.log(
-        "CONVERT",
-        "Converting the HEXA color into different types...",
-        title_bg_color=COLOR.TANGERINE,
-    )
+    xx.console.log("CONVERT", "Converting the HEXA color into different types...", title_bg_color=COLOR.TANGERINE)
 
     # Convert the hexa color into the two other color styles.
     rgba_color = hexa_color.to_rgba()
     hsla_color = hexa_color.to_hsla()
 
     # Announce the successful conversion.
-    console.done(
-        "Successfully converted color into different types.",
-        end="\n\n",
-    )
+    xx.console.done("Successfully converted color into different types.", end="\n\n")
 
     # Pretty print the color in different formats.
-    console.log_box_bordered(
-        f"[b](HEXA:) [i|white]({hexa_color})",
-        f"[b](RGBA:) [i|white]({rgba_color})",
-        f"[b](HSLA:) [i|white]({hsla_color})",
+    xx.console.log_box_bordered(
+        StyledText(
+            (S.BOLD("HEXA: "), (S.ITALIC | S.BR.WHITE)(str(hexa_color))),
+            (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
+            (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
+            sep="\n",
+        )
     )
 
 

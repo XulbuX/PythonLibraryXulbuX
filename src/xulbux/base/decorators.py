@@ -52,13 +52,13 @@ class _SafeDeprecated:
             return arg  # If it's a class or something else, just return it.
 
 
+deprecated: Final[type[_SafeDeprecated]] = _SafeDeprecated
+
 if TYPE_CHECKING:
     if _sys.version_info >= (3, 13):
         from warnings import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]
     else:
         from typing_extensions import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]
-else:
-    deprecated: Final[type[_SafeDeprecated]] = _SafeDeprecated
 
 
 def _noop_decorator[T](obj: T) -> T:

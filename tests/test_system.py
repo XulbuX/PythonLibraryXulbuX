@@ -9,30 +9,30 @@ import pytest
 
 
 def test_system_is_elevated():
-    result = _system_module.is_elevated
+    result = _system_module.get_is_elevated()
     assert isinstance(result, bool)
 
 
 def test_system_is_win():
-    result = _system_module.is_win
+    result = _system_module.get_is_win()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Windows")
 
 
 def test_system_is_linux():
-    result = _system_module.is_linux
+    result = _system_module.get_is_linux()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Linux")
 
 
 def test_system_is_mac():
-    result = _system_module.is_mac
+    result = _system_module.get_is_mac()
     assert isinstance(result, bool)
     assert result == (platform.system() == "Darwin")
 
 
 def test_system_is_unix():
-    result = _system_module.is_unix
+    result = _system_module.get_is_unix()
     assert isinstance(result, bool)
     current_system = platform.system()
     expected = current_system in ["Linux", "Darwin"] or "BSD" in current_system
@@ -40,44 +40,44 @@ def test_system_is_unix():
 
 
 def test_system_hostname():
-    hostname = _system_module.hostname
+    hostname = _system_module.get_hostname()
     assert isinstance(hostname, str)
     assert hostname != ""
 
 
 def test_system_username():
-    username = _system_module.username
+    username = _system_module.get_username()
     assert isinstance(username, str)
     assert username != ""
 
 
 def test_system_os_info():
     """Test OS name and version properties"""
-    os_name = _system_module.os_name
+    os_name = _system_module.get_os_name()
     assert isinstance(os_name, str)
     assert os_name != ""
     assert os_name in ["Windows", "Linux", "Darwin"] or os_name != ""
 
-    os_version = _system_module.os_version
+    os_version = _system_module.get_os_version()
     assert isinstance(os_version, str)
     assert os_version != ""
 
 
 def test_system_architecture():
-    architecture = _system_module.architecture
+    architecture = _system_module.get_architecture()
     assert isinstance(architecture, str)
     assert architecture != ""
     assert any(arch in architecture.lower() for arch in ["x86", "amd64", "arm", "aarch", "i386", "i686"])
 
 
 def test_system_cpu_count():
-    cpu_count = _system_module.cpu_count
+    cpu_count = _system_module.get_cpu_count()
     assert isinstance(cpu_count, int)
     assert cpu_count >= 1
 
 
 def test_system_python_version():
-    python_version = _system_module.python_version
+    python_version = _system_module.get_python_version()
     assert isinstance(python_version, str)
     assert python_version != ""
     parts = python_version.split(".")

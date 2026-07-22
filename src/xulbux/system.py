@@ -18,37 +18,9 @@ import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
 import time as _time
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Final
-
-if TYPE_CHECKING:
-    is_elevated: bool
-    """Whether the current process has elevated privileges or not."""
-    is_win: bool
-    """Whether the current operating system is Windows or not."""
-    is_linux: bool
-    """Whether the current operating system is Linux or not."""
-    is_mac: bool
-    """Whether the current operating system is macOS or not."""
-    is_unix: bool
-    """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
-    hostname: str
-    """The network hostname of the current machine."""
-    username: str
-    """The name of the current user."""
-    os_name: str
-    """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
-    os_version: str
-    """The version of the operating system."""
-    architecture: str
-    """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
-    cpu_count: int
-    """The number of CPU cores available."""
-    python_version: str
-    """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
 
 
-def _get_is_elevated() -> bool:
+def get_is_elevated() -> bool:
     """Whether the current process has elevated privileges or not."""
 
     try:
@@ -61,31 +33,31 @@ def _get_is_elevated() -> bool:
     return False
 
 
-def _get_is_win() -> bool:
+def get_is_win() -> bool:
     """Whether the current operating system is Windows or not."""
 
     return _platform.system() == "Windows"
 
 
-def _get_is_linux() -> bool:
+def get_is_linux() -> bool:
     """Whether the current operating system is Linux or not."""
 
     return _platform.system() == "Linux"
 
 
-def _get_is_mac() -> bool:
+def get_is_mac() -> bool:
     """Whether the current operating system is macOS or not."""
 
     return _platform.system() == "Darwin"
 
 
-def _get_is_unix() -> bool:
+def get_is_unix() -> bool:
     """Whether the current operating system is a Unix-like OS (Linux, macOS, BSD, …) or not."""
 
     return _os.name == "posix"
 
 
-def _get_hostname() -> str:
+def get_hostname() -> str:
     """The network hostname of the current machine."""
 
     try:
@@ -94,7 +66,7 @@ def _get_hostname() -> str:
         return "unknown"
 
 
-def _get_username() -> str:
+def get_username() -> str:
     """The name of the current user."""
 
     try:
@@ -106,13 +78,13 @@ def _get_username() -> str:
             return "unknown"
 
 
-def _get_os_name() -> str:
+def get_os_name() -> str:
     """The name of the operating system (e.g., `Windows`, `Linux`, …)."""
 
     return _platform.system()
 
 
-def _get_os_version() -> str:
+def get_os_version() -> str:
     """The version of the operating system."""
 
     try:
@@ -121,13 +93,13 @@ def _get_os_version() -> str:
         return "unknown"
 
 
-def _get_architecture() -> str:
+def get_architecture() -> str:
     """The CPU architecture (e.g., `x86_64`, `ARM`, …)."""
 
     return _platform.machine()
 
 
-def _get_cpu_count() -> int:
+def get_cpu_count() -> int:
     """The number of CPU cores available."""
 
     try:
@@ -136,7 +108,7 @@ def _get_cpu_count() -> int:
         return 1
 
 
-def _get_python_version() -> str:
+def get_python_version() -> str:
     """The version string of the currently running Python interpreter (e.g., `3.10.4`)."""
 
     return _platform.python_version()
@@ -199,7 +171,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
     Returns `True` if the current process already has elevated privileges and raises<br>
     a `PermissionError` if the user denied the elevation or the elevation failed."""
 
-    if _get_is_elevated():
+    if get_is_elevated():
         return True
 
     args_list = args or []
@@ -371,25 +343,3 @@ class _SystemCheckLibsHelper:
                 pass
 
         return None if len(missing) == 0 else missing
-
-
-_META_PROPS: Final[dict[str, Callable[[], Any]]] = {
-    "is_elevated": _get_is_elevated,
-    "is_win": _get_is_win,
-    "is_linux": _get_is_linux,
-    "is_mac": _get_is_mac,
-    "is_unix": _get_is_unix,
-    "hostname": _get_hostname,
-    "username": _get_username,
-    "os_name": _get_os_name,
-    "os_version": _get_os_version,
-    "architecture": _get_architecture,
-    "cpu_count": _get_cpu_count,
-    "python_version": _get_python_version,
-}
-
-
-def __getattr__(name: str) -> "Any":
-    if name in _META_PROPS:
-        return _META_PROPS[name]()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

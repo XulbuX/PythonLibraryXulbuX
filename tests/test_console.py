@@ -80,25 +80,25 @@ def test_cls(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_console_encoding():
-    encoding = _console_module.encoding
+    encoding = _console_module.get_encoding()
     assert isinstance(encoding, str)
     assert encoding != ""
     assert encoding.lower() in {"utf-8", "cp1252", "ascii", "latin-1", "iso-8859-1"} or "-" in encoding
 
 
 def test_console_height(mock_terminal_size: MagicMock):
-    height_output = _console_module.height
+    height_output = _console_module.get_height()
     assert isinstance(height_output, int)
     assert height_output == 24
 
 
 def test_console_is_tty():
-    result = _console_module.is_tty
+    result = _console_module.get_is_tty()
     assert isinstance(result, bool)
 
 
 def test_console_size(mock_terminal_size: MagicMock):
-    size_output = _console_module.size
+    size_output = _console_module.get_size()
     assert isinstance(size_output, tuple)
     assert len(size_output) == 2
     assert size_output[0] == 80
@@ -106,18 +106,18 @@ def test_console_size(mock_terminal_size: MagicMock):
 
 
 def test_console_supports_color():
-    result = _console_module.supports_color
+    result = _console_module.get_supports_color()
     assert isinstance(result, bool)
 
 
 def test_console_user():
-    user_output = _console_module.user
+    user_output = _console_module.get_user()
     assert isinstance(user_output, str)
     assert user_output != ""
 
 
 def test_console_width(mock_terminal_size: MagicMock):
-    width_output = _console_module.width
+    width_output = _console_module.get_width()
     assert isinstance(width_output, int)
     assert width_output == 80
 
