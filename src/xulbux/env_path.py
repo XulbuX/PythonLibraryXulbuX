@@ -16,12 +16,8 @@ from typing import Literal, overload
 
 @overload
 def paths(*, as_list: Literal[True]) -> list[Path]: ...
-
-
 @overload
 def paths(*, as_list: Literal[False] = False) -> Path: ...
-
-
 @overload
 def paths(*, as_list: bool = False) -> Path | list[Path]: ...
 

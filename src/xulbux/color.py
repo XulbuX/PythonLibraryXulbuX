@@ -80,10 +80,8 @@ class rgba:
 
     @overload
     def __getitem__(self, index: Literal[0, 1, 2], /) -> int: ...
-
     @overload
     def __getitem__(self, index: Literal[3], /) -> float | None: ...
-
     @overload
     def __getitem__(self, index: int, /) -> int | float | None: ...
 
@@ -355,10 +353,8 @@ class hsla:
 
     @overload
     def __getitem__(self, index: Literal[0, 1, 2], /) -> int: ...
-
     @overload
     def __getitem__(self, index: Literal[3], /) -> float | None: ...
-
     @overload
     def __getitem__(self, index: int, /) -> int | float | None: ...
 
@@ -979,12 +975,8 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
 def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[True]
 ) -> tuple[bool, Literal["#", "0x"] | None]: ...
-
-
 @overload
 def is_valid_hexa(color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> bool: ...
-
-
 @overload
 def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
@@ -1118,12 +1110,8 @@ def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
 
 @overload
 def str_to_rgba(string: str, /, *, only_first: Literal[True]) -> rgba | None: ...
-
-
 @overload
 def str_to_rgba(string: str, /, *, only_first: Literal[False] = False) -> list[rgba] | None: ...
-
-
 @overload
 def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None: ...
 
@@ -1165,12 +1153,8 @@ def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba
 
 @overload
 def str_to_hsla(string: str, /, *, only_first: Literal[True]) -> hsla | None: ...
-
-
 @overload
 def str_to_hsla(string: str, /, *, only_first: Literal[False] = False) -> list[hsla] | None: ...
-
-
 @overload
 def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None: ...
 
@@ -1294,8 +1278,6 @@ def luminance(
     output_type: type[int],
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> int: ...
-
-
 @overload
 def luminance(
     red: int,
@@ -1306,8 +1288,6 @@ def luminance(
     output_type: type[float],
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> float: ...
-
-
 @overload
 def luminance(
     red: int,
@@ -1318,8 +1298,6 @@ def luminance(
     output_type: None = None,
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> int: ...
-
-
 @overload
 def luminance(
     red: int,
@@ -1386,16 +1364,10 @@ def luminance(
 
 @overload
 def text_color_for_on_bg(text_bg_color: rgba, /) -> rgba: ...
-
-
 @overload
 def text_color_for_on_bg(text_bg_color: hexa, /) -> hexa: ...
-
-
 @overload
 def text_color_for_on_bg(text_bg_color: int, /) -> int: ...
-
-
 @overload
 def text_color_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int: ...
 
@@ -1423,12 +1395,8 @@ def text_color_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
 
 @overload
 def adjust_lightness(color: rgba, light_change: float, /) -> rgba: ...
-
-
 @overload
 def adjust_lightness(color: hexa, light_change: float, /) -> hexa: ...
-
-
 @overload
 def adjust_lightness(color: Rgba | Hexa, light_change: float, /) -> rgba | hexa: ...
 
@@ -1463,12 +1431,8 @@ def adjust_lightness(color: Rgba | Hexa, light_change: float, /) -> rgba | hexa:
 
 @overload
 def adjust_saturation(color: rgba, sat_change: float, /) -> rgba: ...
-
-
 @overload
 def adjust_saturation(color: hexa, sat_change: float, /) -> hexa: ...
-
-
 @overload
 def adjust_saturation(color: Rgba | Hexa, sat_change: float, /) -> rgba | hexa: ...
 

@@ -154,10 +154,8 @@ class ParsedArgData:
 
     @overload
     def get(self, index: int, /) -> str | None: ...
-
     @overload
     def get(self, index: int, /, default: None) -> str | None: ...
-
     @overload
     def get(self, index: int, /, default: str) -> str: ...
 
@@ -471,8 +469,6 @@ def pause_exit(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> NoReturn: ...
-
-
 @overload
 def pause_exit(
     prompt: StyledText | object = ...,
@@ -656,8 +652,6 @@ def done(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> NoReturn: ...
-
-
 @overload
 def done(
     prompt: StyledText | object = ...,
@@ -705,8 +699,6 @@ def warn(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> NoReturn: ...
-
-
 @overload
 def warn(
     prompt: StyledText | object = ...,
@@ -754,8 +746,6 @@ def fail(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> NoReturn: ...
-
-
 @overload
 def fail(
     prompt: StyledText | object = ...,
@@ -803,8 +793,6 @@ def exit(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> NoReturn: ...
-
-
 @overload
 def exit(
     prompt: StyledText | object = ...,
@@ -1088,8 +1076,6 @@ def input(
     default_val: str | None = None,
     output_type: type[str] = str,
 ) -> str: ...
-
-
 @overload
 def input[T](
     prompt: StyledText | object = "",
@@ -1108,8 +1094,6 @@ def input[T](
     default_val: T,
     output_type: type[T] = ...,
 ) -> T: ...
-
-
 @overload
 def input[T](
     prompt: StyledText | object = "",
@@ -1607,7 +1591,7 @@ class _ConsoleArgsParseHelper:
                 before_args.append(arg)
 
         if before_args:
-            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=tuple(before_args), exists=True)
+            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=before_args, exists=True)
 
     def _collect_after_arg(self, alias: str, /) -> None:
         """Collect positional `"after"` arguments."""
@@ -1640,7 +1624,7 @@ class _ConsoleArgsParseHelper:
                 after_args.append(arg)
 
         if after_args:
-            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=tuple(after_args), exists=True)
+            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=after_args, exists=True)
 
     @staticmethod
     def _looks_like_flag(arg: str, /) -> bool:
@@ -1700,7 +1684,7 @@ class _ConsoleArgsParseHelper:
                     self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=potential_flag)
 
                     if len(parts) > 1 and (val := parts[1].strip()):
-                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
+                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[val])
 
                     i += 1
                     continue
@@ -1723,7 +1707,7 @@ class _ConsoleArgsParseHelper:
                         and (val := self.args[i + 2]) not in self.arg_lookup
                         and val != self.flag_value_sep
                     ):
-                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(val,))
+                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[val])
                         i += 3
                         continue
                     i += 2
@@ -1731,7 +1715,7 @@ class _ConsoleArgsParseHelper:
 
                 # Check for space-separated value (`--flag value`):
                 if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
-                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=(next_arg,))
+                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[next_arg])
                     i += 2
                     continue
                 # No separator = just a flag without value.

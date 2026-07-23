@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 def read(
     json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[True]
 ) -> tuple[dict[str, Any], dict[str, Any]]: ...
-
-
 @overload
 def read(
     json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[False] = False

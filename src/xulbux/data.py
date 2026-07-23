@@ -290,8 +290,6 @@ def get_path_id(
     comment_end: str = "<<",
     ignore_not_found: bool = False,
 ) -> str | None: ...
-
-
 @overload
 def get_path_id(
     data: DataObjType,
@@ -303,8 +301,6 @@ def get_path_id(
     comment_end: str = "<<",
     ignore_not_found: bool = False,
 ) -> list[str | None]: ...
-
-
 @overload
 def get_path_id(
     data: DataObjType,

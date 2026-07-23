@@ -469,7 +469,6 @@ class FormatCodes:
         get_removals: Literal[True],
         _ignore_linebreaks: bool = False,
     ) -> tuple[str, tuple[tuple[int, str], ...]]: ...
-
     @overload
     @classmethod
     @deprecated(
@@ -485,7 +484,6 @@ class FormatCodes:
         get_removals: Literal[False] = False,
         _ignore_linebreaks: bool = False,
     ) -> str: ...
-
     @overload
     @classmethod
     @deprecated(
@@ -537,7 +535,6 @@ class FormatCodes:
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: Literal[True], _ignore_linebreaks: bool = False
     ) -> tuple[str, tuple[tuple[int, str], ...]]: ...
-
     @overload
     @classmethod
     @deprecated(
@@ -547,7 +544,6 @@ class FormatCodes:
     def remove_ansi(
         cls, ansi_string: str, /, *, get_removals: Literal[False] = False, _ignore_linebreaks: bool = False
     ) -> str: ...
-
     @overload
     @classmethod
     @deprecated(
