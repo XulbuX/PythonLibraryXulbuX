@@ -92,7 +92,7 @@ line-length = 127
 target-version = "py312"
 
 [tool.ruff.format]
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 select = [

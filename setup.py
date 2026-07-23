@@ -1,5 +1,6 @@
 import ast
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Iterable
@@ -65,7 +66,7 @@ class StubGen(ast.NodeTransformer):
 
             # Skip files with no content:
             if not py_file.read_text("utf-8").strip():
-                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
+                pyi_file.write_text("", encoding="utf-8")
                 copied_count += 1
                 print(f"  created {rel_path} (copied: empty file)", flush=True)
                 continue
@@ -84,7 +85,16 @@ class StubGen(ast.NodeTransformer):
         if generated_files:
             # Format all generated stubs with Ruff in one call:
             subprocess.run(
-                [sys.executable, "-m", "ruff", "check", *generated_files, "--fix", "--select", "I,F401,F841,UP"],
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "check",
+                    *generated_files,
+                    "--fix",
+                    "--select",
+                    "I,F401,F841,UP",
+                ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
@@ -129,6 +139,9 @@ class StubGen(ast.NodeTransformer):
         transformed_tree = transformer.visit(tree)
         source = ast.unparse(transformed_tree)
 
+        # Remove all empty lines inserted by `ast.unparse`; Ruff will format it correctly:
+        source = re.sub(r"\n{2,}", r"\n", source)
+
         # Write the generated stub content to the output file:
         out_file = output_dir / source_file.with_suffix(".pyi").name
         out_file.write_text(source, encoding="utf-8")
@@ -152,6 +165,7 @@ class StubGen(ast.NodeTransformer):
                     if isinstance(subnode, (ast.ImportFrom, ast.Import)):
                         for alias in subnode.names:
                             shadowed_names.add(alias.asname or alias.name)
+
         return shadowed_names
 
     def _is_overload_dec(self, dec: ast.expr) -> bool:
@@ -215,6 +229,16 @@ class StubGen(ast.NodeTransformer):
             if not (isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)) and stmt.name == "__getattr__")
         ]
 
+        # Bring all import statements to the top:
+        imports: list[ast.stmt] = []
+        others: list[ast.stmt] = []
+        for stmt in node.body:
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                imports.append(stmt)
+            else:
+                others.append(stmt)
+
+        node.body = imports + others
         return node
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # noqa: C901
@@ -275,7 +299,6 @@ class StubGen(ast.NodeTransformer):
                 other_stmts.append(stmt)
 
         node.body = dunder_vars + other_stmts
-
         if not node.body:
             node.body = [ast.parse("...").body[0]]
 
