@@ -94,6 +94,10 @@ class StubGen(ast.NodeTransformer):
                     "--fix",
                     "--select",
                     "I,F401,F841,UP",
+                    "--config",
+                    "lint.isort.lines-between-types=0",
+                    "--config",
+                    "lint.isort.no-lines-before=['future', 'standard-library', 'third-party', 'first-party', 'local-folder']",
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -340,6 +344,17 @@ class StubGen(ast.NodeTransformer):
             node.names = [n for n in node.names if n.name != "TYPE_CHECKING"]
             if not node.names:
                 return None
+        else:
+            for alias in node.names:
+                if alias.asname is None and alias.name != "*":
+                    alias.asname = alias.name
+        return node
+
+    def visit_Import(self, node: ast.Import):
+        self.generic_visit(node)
+        for alias in node.names:
+            if alias.asname is None and alias.name != "*":
+                alias.asname = alias.name
         return node
 
     def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
