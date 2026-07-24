@@ -63,6 +63,8 @@
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed the `Console.w` and `Console.h` properties to `Console.width` and `Console.height`, to follow the no-single-letter-names convention.
 *   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
+*   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.
+*   Renamed the `throbber_format` param of `Throbber` to simply `format`, since the class is already called `Throbber`.
 *   Removed the `background:` and `bright:` prefixes from the library, so now you can just use the `bg:` and `br:` ones, for consistency.
 *   Removed the `format_linebreaks` param from `Console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
 *   The `Console.get_args()` method no longer treats unknown flags as values but therefore saves them to the new `unknown_flags` property of the returned `ParsedArgs` object.

@@ -1217,17 +1217,17 @@ def test_progressbar_redraw_progress_bar():
 
 def test_progressbar_set_bar_format():
     pb = ProgressBar()
-    pb.set_bar_format(bar_format=["{l}", "[{b}]", "{p}%"], limited_bar_format=["[{b}]"])
-    assert pb.bar_format == ["{l}", "[{b}]", "{p}%"]
-    assert pb.limited_bar_format == ["[{b}]"]
+    pb.set_format(format=["{l}", "[{b}]", "{p}%"], limited_format=["[{b}]"])
+    assert pb.format == ["{l}", "[{b}]", "{p}%"]
+    assert pb.limited_format == ["[{b}]"]
 
 
 def test_progressbar_set_bar_format_invalid():
     pb = ProgressBar()
     with pytest.raises(ValueError, match=r"must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(bar_format=["Progress: {p}%"])
+        pb.set_format(format=["Progress: {p}%"])
     with pytest.raises(ValueError, match=r"must contain the '{bar}' or '{b}' placeholder"):
-        pb.set_bar_format(limited_bar_format=["Progress: {p}%"])
+        pb.set_format(limited_format=["Progress: {p}%"])
 
 
 def test_progressbar_set_chars():
@@ -1374,7 +1374,7 @@ def test_throbber_set_format_invalid():
 def test_throbber_set_format_valid():
     throbber = Throbber()
     throbber.set_format(["{l}", "{a}"])
-    assert throbber.throbber_format == ["{l}", "{a}"]
+    assert throbber.format == ["{l}", "{a}"]
 
 
 def test_throbber_set_frames_invalid():

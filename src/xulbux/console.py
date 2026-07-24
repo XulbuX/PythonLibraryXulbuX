@@ -64,7 +64,7 @@ _DEFAULT_BAR_FORMAT: Final[list[TextLike]] = [
 """Default `ProgressBar` format, styled with the operator-based API."""
 _DEFAULT_LIMITED_BAR_FORMAT: Final[list[TextLike]] = [S.BG.BLACK("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[TextLike]] = ["{l}", (S.BOLD("{a}"), " ")]
+_DEFAULT_THROBBER_FORMAT: Final[list[TextLike]] = [(S.BOLD("{a}"), "{l}")]
 """Default `Throbber` format, styled with the operator-based API."""
 
 
@@ -1923,22 +1923,21 @@ class ProgressBar:
     -------------------------------------------------------------------------------------------------------
     *   `min_width` – The min width of the progress bar in chars.
     *   `max_width` – The max width of the progress bar in chars.
-    *   `bar_format` – The format strings used to render the progress bar, containing placeholders:
+    *   `format` – The format strings used to render the progress bar, containing placeholders:
         -   `{label}` `{l}`
         -   `{bar}` `{b}`
         -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
         -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
         -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
             to specified number of decimal places, e.g., `{p:.1f}`)
-    *   `limited_bar_format` – A simplified format string used when the terminal width is too small<br>
-        for the normal `bar_format`.
+    *   `limited_format` – A simplified format string used when the terminal width is too small<br>
+        for the normal `format`.
     *   `chars` – A tuple of characters ordered from full to empty progress:<br>
         The first character represents completely filled sections.<br>
         Intermediate characters create smooth transitions<br>
         The last character represents empty sections.
     -------------------------------------------------------------------------------------------------------
-    The bar format (also limited) can additionally be styled by embedding ANSI from the operator-based API<br>
-    (e.g., <code>StyledText(S.BG.BLACK("{b}")).ansi</code>).<br>
+    The formats can additionally be styled by embedding ANSI from the operator-based API.<br>
     For more detailed information, see the `ansi` module documentation."""
 
     def __init__(
@@ -1946,8 +1945,8 @@ class ProgressBar:
         *,
         min_width: int = 10,
         max_width: int = 50,
-        bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_BAR_FORMAT,
-        limited_bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_LIMITED_BAR_FORMAT,
+        format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_BAR_FORMAT,
+        limited_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ) -> None:
@@ -1957,9 +1956,9 @@ class ProgressBar:
         """The min width of the progress bar in chars."""
         self.max_width: int
         """The max width of the progress bar in chars."""
-        self.bar_format: list[str]
+        self.format: list[str]
         """The format strings used to render the progress bar (joined by `sep`)."""
-        self.limited_bar_format: list[str]
+        self.limited_format: list[str]
         """The simplified format strings used when the terminal width is too small."""
         self.sep: str
         """The separator string used to join multiple bar-format strings."""
@@ -1967,7 +1966,7 @@ class ProgressBar:
         """A tuple of characters ordered from full to empty progress."""
 
         self.set_width(min_width, max_width)
-        self.set_bar_format(bar_format, limited_bar_format, sep=sep)
+        self.set_format(format, limited_format, sep=sep)
         self.set_chars(chars)
 
         self._buffer: list[str] = []
@@ -1995,47 +1994,46 @@ class ProgressBar:
 
             self.max_width = max(self.min_width, max_width)
 
-    def set_bar_format(
+    def set_format(
         self,
-        bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
-        limited_bar_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
+        format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
+        limited_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
         *,
         sep: str | None = None,
     ) -> None:
         """Set the format string used to render the progress bar.\n
         -------------------------------------------------------------------------------------------------------
-        *   `bar_format` – The format strings used to render the progress bar, containing placeholders:
+        *   `format` – The format strings used to render the progress bar, containing placeholders:
             -   `{label}` `{l}`
             -   `{bar}` `{b}`
             -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
             -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
             -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
                 to specified number of decimal places, e.g., `{p:.1f}`)
-        *   `limited_bar_format` – A simplified format strings used when the terminal width is too small.
+        *   `limited_format` – A simplified format strings used when the terminal width is too small.
         *   `sep` – The separator string used to join multiple format strings.
         -------------------------------------------------------------------------------------------------------
-        The bar format (also limited) can additionally be styled by embedding ANSI from the operator-based API<br>
-        (e.g., <code>StyledText(S.BG.BLACK("{b}")).ansi</code>).<br>
+        The formats can additionally be styled by embedding ANSI from the operator-based API.<br>
         For more detailed information, see the `ansi` module documentation."""
 
-        if bar_format is not None:
-            compiled_bar = _compile_format(bar_format)
+        if format is not None:
+            compiled_bar = _compile_format(format)
             if not any(_PATTERNS.bar.search(part) for part in compiled_bar):
                 raise ValueError(
-                    f"The 'bar_format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {bar_format!r}"
+                    f"The 'format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {format!r}"
                 )
 
-            self.bar_format = compiled_bar
+            self.format = compiled_bar
 
-        if limited_bar_format is not None:
-            compiled_limited = _compile_format(limited_bar_format)
+        if limited_format is not None:
+            compiled_limited = _compile_format(limited_format)
             if not any(_PATTERNS.bar.search(part) for part in compiled_limited):
                 raise ValueError(
-                    "The 'limited_bar_format' parameter value must contain the "
-                    f"'{{bar}}' or '{{b}}' placeholder, got {limited_bar_format!r}"
+                    "The 'limited_format' parameter value must contain the "
+                    f"'{{bar}}' or '{{b}}' placeholder, got {limited_format!r}"
                 )
 
-            self.limited_bar_format = compiled_limited
+            self.limited_format = compiled_limited
 
         if sep is not None:
             self.sep = sep
@@ -2140,14 +2138,14 @@ class ProgressBar:
 
         percentage = min(100, (current / total) * 100)
 
-        formatted, bar_width = self._get_formatted_info_and_bar_width(self.bar_format, current, total, percentage, label)
+        formatted, bar_width = self._get_formatted_info_and_bar_width(self.format, current, total, percentage, label)
         if bar_width < self.min_width:
             formatted, bar_width = self._get_formatted_info_and_bar_width(
-                self.limited_bar_format, current, total, percentage, label
+                self.limited_format, current, total, percentage, label
             )
 
         bar = self._create_bar(current, total, max(1, bar_width)) + _ANSI_RESET
-        progress_text = _PATTERNS.bar.sub(bar, formatted)
+        progress_text = _PATTERNS.bar.sub(bar.replace("\\", r"\\"), formatted)
 
         self._current_progress_str = progress_text
         self._last_line_len = len(progress_text)
@@ -2155,13 +2153,13 @@ class ProgressBar:
         self._original_stdout.flush()
 
     def _get_formatted_info_and_bar_width(
-        self, bar_format: list[str], current: int, total: int, percentage: float, /, label: StyledText | str | None = None
+        self, format: list[str], current: int, total: int, percentage: float, /, label: StyledText | str | None = None
     ) -> tuple[str, int]:
         fmt_parts: list[str] = []
         label_ansi = _to_styled_text(label).ansi if label is not None else ""
 
-        for part in bar_format:
-            fmt_part = _PATTERNS.label.sub(label_ansi, part)
+        for part in format:
+            fmt_part = _PATTERNS.label.sub(label_ansi.replace("\\", r"\\"), part)
             fmt_part = _PATTERNS.current.sub(_ProgressBarCurrentReplacer(current), fmt_part)
             fmt_part = _PATTERNS.total.sub(_ProgressBarTotalReplacer(total), fmt_part)
             fmt_part = _PATTERNS.percentage.sub(_ProgressBarPercentageReplacer(percentage), fmt_part)
@@ -2308,27 +2306,27 @@ class _ProgressBarPercentageReplacer:
 class Throbber:
     """A terminal throbber for indeterminate processes with customizable appearance.<br>
     This class intercepts stdout to allow printing while the animation is active.\n
-    ------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------
     *   `label` – The current label text.
-    *   `throbber_format` – The format string used to render the throbber, containing placeholders:
+    *   `format` – The format string used to render the throbber, containing placeholders:
         -   `{label}` `{l}`
         -   `{animation}` `{a}`
     *   `frames` – A tuple of strings representing the animation frames.
     *   `interval` – The time in seconds between each animation frame.
-    ------------------------------------------------------------------------------------------------
-    The `throbber_format` can additionally be styled by embedding ANSI from the operator-based API<br>
-    (e.g., <code>StyledText(S.BOLD("{a}")).ansi</code>). For more detailed information, see the `ansi` module documentation."""
+    -----------------------------------------------------------------------------------------
+    The format can additionally be styled by embedding ANSI from the operator-based API.<br>
+    For more detailed information, see the `ansi` module documentation."""
 
     def __init__(
         self,
         *,
         label: StyledText | str | None = None,
-        throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
+        format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
     ) -> None:
-        self.throbber_format: list[str]
+        self.format: list[str]
         """The format strings used to render the throbber (joined by `sep`)."""
         self.sep: str
         """The separator string used to join multiple throbber-format strings."""
@@ -2342,7 +2340,7 @@ class Throbber:
         """Whether the throbber is currently active (intercepting stdout) or not."""
 
         self.update_label(label)
-        self.set_format(throbber_format, sep=sep)
+        self.set_format(format, sep=sep)
         self.set_frames(frames)
         self.set_interval(interval)
 
@@ -2354,22 +2352,25 @@ class Throbber:
         self._stop_event: _threading.Event | None = None
         self._animation_thread: _threading.Thread | None = None
 
-    def set_format(self, throbber_format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: str | None = None) -> None:
+    def set_format(self, format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: str | None = None) -> None:
         """Set the format string used to render the throbber.\n
-        -------------------------------------------------------------------------------------------------
-        *   `throbber_format` – The format strings used to render the throbber, containing placeholders:
+        -----------------------------------------------------------------------------------------
+        *   `format` – The format strings used to render the throbber, containing placeholders:
             -   `{label}` `{l}`
             -   `{animation}` `{a}`
-        *   `sep` – The separator string used to join multiple format strings."""
+        *   `sep` – The separator string used to join multiple format strings.
+        -----------------------------------------------------------------------------------------
+        The format can additionally be styled by embedding ANSI from the operator-based API.<br>
+        For more detailed information, see the `ansi` module documentation."""
 
-        compiled_throbber = _compile_format(throbber_format)
+        compiled_throbber = _compile_format(format)
         if not any(_PATTERNS.animation.search(fmt) for fmt in compiled_throbber):
             raise ValueError(
-                "At least one format string in 'throbber_format' must contain the "
-                f"'{{animation}}' or '{{a}}' placeholder, got {throbber_format!r}"
+                "At least one format string in 'format' must contain the "
+                f"'{{animation}}' or '{{a}}' placeholder, got {format!r}"
             )
 
-        self.throbber_format = compiled_throbber
+        self.format = compiled_throbber
         self.sep = sep or self.sep
 
     def set_frames(self, frames: tuple[str, ...], /) -> None:
@@ -2472,8 +2473,12 @@ class Throbber:
                 label_ansi = _to_styled_text(self.label).ansi if self.label is not None else ""
                 formatted = self.sep.join(
                     fmt_part
-                    for part in self.throbber_format
-                    if (fmt_part := _PATTERNS.animation.sub(frame, _PATTERNS.label.sub(label_ansi, part)))
+                    for part in self.format
+                    if (
+                        fmt_part := _PATTERNS.animation.sub(
+                            frame.replace("\\", r"\\"), _PATTERNS.label.sub(label_ansi.replace("\\", r"\\"), part)
+                        )
+                    )
                 )
 
                 self._current_animation_str = formatted
