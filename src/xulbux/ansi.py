@@ -171,6 +171,11 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     import regex as _rx
 
+    if _sys.version_info >= (3, 13):
+        from typing import TypeIs
+    else:
+        from typing_extensions import TypeIs
+
 _terminal_ansi_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
 
@@ -245,15 +250,15 @@ class _StyleGroup:
 
     __slots__: Final[tuple[str, ...]] = ("_codes",)
 
-    def __init__(self, *codes: AnyStyle) -> None:
-        self._codes: tuple[AnyStyle, ...] = codes
+    def __init__(self, *codes: BaseStyle) -> None:
+        self._codes: tuple[BaseStyle, ...] = codes
 
-    def __iter__(self) -> Iterator[AnyStyle]:
+    def __iter__(self) -> Iterator[BaseStyle]:
         """Iterating a `_StyleGroup` yields its individual styles in order."""
 
         return iter(self._codes)
 
-    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this style group with another style or group via `|`."""
 
         if isinstance(other, _StyleGroup):
@@ -261,18 +266,18 @@ class _StyleGroup:
 
         return _StyleGroup(*self._codes, other)
 
-    def __ror__(self, other: AnyStyle) -> _StyleGroup:
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
         """Combines this style group with another style or group via `|`."""
 
         return _StyleGroup(other, *self._codes)
 
-    def __call__(self, *text: StyledSegment) -> _StyledSequence:
+    def __call__(self, *text: RenderSegment) -> _StyledSequence:
         """Applies this style group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
         return _StyledSequence(opens, closes, text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: TextLike) -> _StyledSequence:
+    def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
@@ -315,7 +320,7 @@ class _Style:
     def __hash__(self) -> int:
         return hash(self._value)
 
-    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this style with another code or group via `|`."""
 
         if isinstance(other, _StyleGroup):
@@ -323,12 +328,12 @@ class _Style:
 
         return _StyleGroup(self, other)
 
-    def __ror__(self, other: AnyStyle) -> _StyleGroup:
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
         """Combines this style with another code or group via `|`."""
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: StyledSegment) -> _StyledSequence:
+    def __call__(self, *text: RenderSegment) -> _StyledSequence:
         """Applies this style code to the given text, auto-resetting after."""
 
         try:
@@ -341,7 +346,7 @@ class _Style:
 
         return _StyledSequence(oc[0], oc[1], text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: TextLike) -> _StyledSequence:
+    def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style code to the given text, auto-resetting after."""
 
         try:
@@ -391,7 +396,7 @@ class _ColorStyle:
 
         return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), bg=bg)
 
-    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this color style with another style or group via `|`."""
 
         if isinstance(other, _StyleGroup):
@@ -399,17 +404,17 @@ class _ColorStyle:
 
         return _StyleGroup(self, other)
 
-    def __ror__(self, other: AnyStyle) -> _StyleGroup:
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
         """Combines this color style with another style or group via `|`."""
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: StyledSegment) -> _StyledSequence:
+    def __call__(self, *text: RenderSegment) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
         return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: TextLike) -> _StyledSequence:
+    def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
         return _StyledSequence((self._open_seq,), (self._close_seq,), text)
@@ -434,7 +439,7 @@ class _Link:
         self._open_seq: str = ANSI.SEQ_LINK_OPEN.format(self._url)
         self._close_seq: str = ANSI.SEQ_LINK_CLOSE
 
-    def __or__(self, other: AnyStyle | _StyleGroup) -> _StyleGroup:
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this link style with another style or group via `|`."""
 
         if isinstance(other, _StyleGroup):
@@ -442,17 +447,17 @@ class _Link:
 
         return _StyleGroup(self, other)
 
-    def __ror__(self, other: AnyStyle) -> _StyleGroup:
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
         """Combines this link style with another style or group via `|`."""
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: StyledSegment) -> _StyledSequence:
+    def __call__(self, *text: RenderSegment) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
         return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
-    def __matmul__(self, text: TextLike) -> _StyledSequence:
+    def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
         return _StyledSequence((self._open_seq,), (self._close_seq,), text)
@@ -471,10 +476,10 @@ class _StyledSequence:
 
     __slots__: Final[tuple[str, ...]] = ("_closes", "_opens", "text")
 
-    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: TextLike) -> None:
+    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: Renderable) -> None:
         self._opens: tuple[str, ...] = opens
         self._closes: tuple[str, ...] = closes
-        self.text: TextLike = text
+        self.text: Renderable = text
 
     def __repr__(self) -> str:
         """Returns a string representation of this styled segment, showing its opens and text."""
@@ -482,16 +487,48 @@ class _StyledSequence:
         return f"_StyledSequence(opens={self._opens!r}, text={self.text!r})"
 
 
-######################### PUBLIC TYPES ########################
+##################### PUBLIC TYPE HELPERS #####################
 
-type AnyStyle = _Style | _ColorStyle | _Link
-"""Any single style code, color style, or link style<br>
-that can be combined via `|` and applied to text."""
-type StyledSegment = str | _StyledSequence | AnyStyle | _StyleGroup
+type BaseStyle = _Style | _ColorStyle | _Link
+"""Any single style code, color style, or link style that can be combined via `|` and applied to text."""
+
+
+def is_base_style(obj: object, /) -> TypeIs[BaseStyle]:
+    """Returns true if `obj` is an instance that matches the `BaseStyle` type."""
+
+    return isinstance(obj, (_Style, _ColorStyle, _Link))
+
+
+type AnyStyle = BaseStyle | _StyleGroup
+"""Any single style or group of styles that can be combined via `|` and applied to text."""
+
+
+def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
+    """Returns true if `obj` is an instance that matches the `AnyStyle` type."""
+
+    return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
+
+
+type RenderSegment = str | _StyledSequence | AnyStyle
 """A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
-type TextLike = StyledSegment | tuple[StyledSegment, ...]
-"""Anything that can be styled or rendered.
+
+
+def is_styled_segment(obj: object, /) -> TypeIs[RenderSegment]:
+    """Returns true if `obj` is an instance that matches the `RenderSegment` type."""
+
+    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup))
+
+
+type Renderable = RenderSegment | tuple[RenderSegment, ...]
+"""Anything that can be styled or rendered.<br>
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
+
+
+def is_text_like(obj: object, /) -> TypeIs[Renderable]:
+    """Returns true if `obj` is an instance that matches the `Renderable` type."""
+
+    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, tuple))
+
 
 #
 #################################################### NAMESPACE HELPERS ###################################################
@@ -775,7 +812,7 @@ class StyledText:
 
     __slots__: Final[tuple[str, ...]] = ("_ansi_parts", "ansi")
 
-    def __init__(self, /, *segments: TextLike, sep: str = "") -> None:
+    def __init__(self, /, *segments: Renderable, sep: str = "") -> None:
         self._ansi_parts: list[str] = []
 
         for i, segment in enumerate(segments):
@@ -863,7 +900,7 @@ class StyledText:
 
         return len(self.raw)
 
-    def join(self, iterable: Iterable[TextLike], /) -> StyledText:
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `StyledText` object as the separator.\n
         ----------------------------------------------------------------------------------
         *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects."""
@@ -1056,7 +1093,7 @@ class _BuildOpenClose:
 
         return self._build_result()
 
-    def _process_code(self, code: AnyStyle) -> None:
+    def _process_code(self, code: BaseStyle) -> None:
         if isinstance(code, _Link):
             self.link_url = code._url
         elif isinstance(code, _ColorStyle):

@@ -70,7 +70,7 @@ def escape(string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
         That way, if the string includes the same quotes, they will be escaped."""
 
     string = (
-        string.replace("\\", "\\\\")
+        string.replace("\\", r"\\")
         .replace("\n", "\\n")
         .replace("\r", "\\r")
         .replace("\t", "\\t")
@@ -106,10 +106,8 @@ def single_char_repeats(string: str, char: str, /) -> int:
     if len(char) != 1:
         raise ValueError(f"The 'char' parameter must be a single character, got {char!r}")
 
-    if len(string) == string.count(char):
-        return string.count(char)
-    else:
-        return 0
+    char_count = string.count(char)
+    return char_count if len(string) == char_count else 0
 
 
 def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) -> list[str]:

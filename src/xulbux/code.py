@@ -13,7 +13,13 @@ from .regex import LazyRegex
 from typing import Any, Final
 import regex as _rx
 
-_JS_PATTERNS: Final[LazyRegex] = LazyRegex(
+_PATTERNS: Final[LazyRegex] = LazyRegex(
+    arrow_function_patterns=(
+        r"^[\s\n]*(?:\b[\w_]+\s*=\s*\([^\)]*\)\s*=>\s*[^;{]*[;]?|"
+        r"\b[\w_]+\s*=\s*[\w_]+\s*=>\s*[^;{]*[;]?|"
+        r"\(\s*[\w_,\s]+\s*\)\s*=>\s*[^;{]*[;]?|"
+        r"[\w_]+\s*=>\s*[^;{]*[;]?)[\s\n]*$"
+    ),
     direct_js_patterns=(
         r"^[\s\n]*(?:\$\([\"'][^\"']+[\"']\)\.[\w]+\([^\)]*\);?|"
         r"\$\.[a-zA-Z]\w*\([^\)]*\);?|"
@@ -22,27 +28,22 @@ _JS_PATTERNS: Final[LazyRegex] = LazyRegex(
         r"window\.[a-zA-Z]\w*\([^\)]*\);?|"
         r"console\.[a-zA-Z]\w*\([^\)]*\);?)[\s\n]*$"
     ),
-    arrow_function_patterns=(
-        r"^[\s\n]*(?:\b[\w_]+\s*=\s*\([^\)]*\)\s*=>\s*[^;{]*[;]?|"
-        r"\b[\w_]+\s*=\s*[\w_]+\s*=>\s*[^;{]*[;]?|"
-        r"\(\s*[\w_,\s]+\s*\)\s*=>\s*[^;{]*[;]?|"
-        r"[\w_]+\s*=>\s*[^;{]*[;]?)[\s\n]*$"
-    ),
-    js_indicators_var_let_const=r"(?i)\b(var|let|const)\s+[\w_$]+",
-    js_indicators_jquery_var=r"(?i)\$[\w_$]+\s*=",
-    js_indicators_jquery_call=r"(?i)\$[\w_$]+\s*\(",
-    js_indicators_func_decl=r"(?i)\bfunction\s*[\w_$]*\s*\(",
-    js_indicators_func_assign=r"(?i)[\w_$]+\s*=\s*function\s*\(",
+    func_call=r"(?i)" + _regex_module.func_call(),
     js_indicators_arrow_func=r"(?i)\b[\w_$]+\s*=>\s*[\{\(]",
-    js_indicators_iife=r"(?i)\(function\s*\(\)\s*\{",
-    js_indicators_literals=r"(?i)\b(true|false|null|undefined)\b",
-    js_indicators_operators=r"(?i)===|!==|\+\+|--|\|\||&&",
-    js_indicators_new=r"(?i)\bnew\s+[\w_$]+\s*\(",
-    js_indicators_objects=r"(?i)\b(document|window|console|Math|Array|Object|String|Number)\.",
     js_indicators_async=r"(?i)\basync\s+function|\bawait\b",
     js_indicators_control=r"(?i)\b(if|for|while|switch)\s*\([^)]*\)\s*\{",
-    js_indicators_try_catch=r"(?i)\btry\s*\{[^}]*\}\s*catch\s*\(",
+    js_indicators_func_assign=r"(?i)[\w_$]+\s*=\s*function\s*\(",
+    js_indicators_func_decl=r"(?i)\bfunction\s*[\w_$]*\s*\(",
+    js_indicators_iife=r"(?i)\(function\s*\(\)\s*\{",
+    js_indicators_jquery_call=r"(?i)\$[\w_$]+\s*\(",
+    js_indicators_jquery_var=r"(?i)\$[\w_$]+\s*=",
+    js_indicators_literals=r"(?i)\b(true|false|null|undefined)\b",
+    js_indicators_new=r"(?i)\bnew\s+[\w_$]+\s*\(",
+    js_indicators_objects=r"(?i)\b(document|window|console|Math|Array|Object|String|Number)\.",
+    js_indicators_operators=r"(?i)===|!==|\+\+|--|\|\||&&",
     js_indicators_semicolon=r"(?i);[\s\n]*$",
+    js_indicators_try_catch=r"(?i)\btry\s*\{[^}]*\}\s*catch\s*\(",
+    js_indicators_var_let_const=r"(?i)\b(var|let|const)\s+[\w_$]+",
 )
 
 _JS_INDICATOR_SCORES: Final[dict[str, float]] = {
@@ -117,8 +118,8 @@ def get_func_calls(code: str, /) -> list[list[Any]]:
 
     nested_func_calls: list[list[Any]] = []
 
-    for _, func_attrs in (funcs := _rx.findall(r"(?i)" + _regex_module.func_call(), code)):
-        if nested_calls := _rx.findall(r"(?i)" + _regex_module.func_call(), func_attrs):
+    for _, func_attrs in (funcs := _PATTERNS.func_call.findall(code)):
+        if nested_calls := _PATTERNS.func_call.findall(func_attrs):
             nested_func_calls.extend(nested_calls)
 
     return list(_data_module.remove_duplicates(funcs + nested_func_calls))
@@ -138,10 +139,10 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
         if _rx.match(funcs_pattern_direct, code):
             return True
 
-    if _JS_PATTERNS.direct_js_patterns.match(code):
+    if _PATTERNS.direct_js_patterns.match(code):
         return True
 
-    if _JS_PATTERNS.arrow_function_patterns.match(code):
+    if _PATTERNS.arrow_function_patterns.match(code):
         return True
 
     js_score = 0.0
@@ -157,7 +158,7 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
         js_score += 1
 
     for attr, score in _JS_INDICATOR_SCORES.items():
-        if matches := getattr(_JS_PATTERNS, attr).findall(code):
+        if matches := getattr(_PATTERNS, attr).findall(code):
             js_score += len(matches) * score
 
     return js_score >= 2.0

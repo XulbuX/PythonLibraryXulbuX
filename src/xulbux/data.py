@@ -6,9 +6,9 @@ syntax-highlighted rendering, and data type conversions.
 """
 
 from . import string as _string_module
-from .ansi import AnyStyle, S, StyledText, _StyleGroup
-from .base.types import DATA_OBJ_TT, INDEX_ITERABLE_TT, IndexIterable
+from .ansi import AnyStyle, S, StyledText
 from .base.types import DataObj as DataObjType
+from .base.types import IndexIterable, is_data_obj, is_index_iterable
 from .regex import LazyRegex
 
 import base64 as _base64
@@ -18,10 +18,7 @@ import regex as _rx
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(remove_comments_default=r"^((?:(?!>>).)*)>>(?:(?:(?!<<).)*)(?:<<)?(.*?)$")
 
-type AnySyntaxStyle = AnyStyle | _StyleGroup
-"""Any style attribute (or combined style group) accepted as a `syntax_highlighting` value."""
-
-_DEFAULT_SYNTAX_HL: Final[dict[str, AnySyntaxStyle]] = {
+_DEFAULT_SYNTAX_HL: Final[dict[str, AnyStyle]] = {
     "str": S.BR.BLUE,
     "number": S.BR.MAGENTA,
     "literal": S.MAGENTA,
@@ -77,10 +74,10 @@ def chars_count(data: DataObjType, /) -> int:
 
     if isinstance(data, dict):
         for key, val in data.items():
-            count += len(str(key)) + (chars_count(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else len(str(val)))
+            count += len(str(key)) + (chars_count(val) if is_data_obj(val) else len(str(val)))
     else:
         for item in data:
-            count += chars_count(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else len(str(item))
+            count += chars_count(item) if is_data_obj(item) else len(str(item))
 
     return count
 
@@ -91,17 +88,12 @@ def strip[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     *   `data` – The data structure to strip the items from."""
 
     if isinstance(data, dict):
-        return type(data)(
-            {
-                key.strip(): (strip(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else val.strip())
-                for key, val in data.items()
-            }
-        )
+        return type(data)({key.strip(): (strip(val) if is_data_obj(val) else val.strip()) for key, val in data.items()})
 
     else:
         return cast(
             "DataObj",
-            type(data)([strip(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item.strip() for item in data]),
+            type(data)([strip(item) if is_data_obj(item) else item.strip() for item in data]),
         )
 
 
@@ -114,11 +106,7 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
     if isinstance(data, dict):
         return type(data)(
             {
-                key: (
-                    val
-                    if not isinstance(val, DATA_OBJ_TT)
-                    else remove_empty_items(cast("DataObjType", val), spaces_are_empty=spaces_are_empty)
-                )
+                key: (val if not is_data_obj(val) else remove_empty_items(val, spaces_are_empty=spaces_are_empty))
                 for key, val in data.items()
                 if not _string_module.is_empty(val, spaces_are_empty=spaces_are_empty)
             }
@@ -126,11 +114,7 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
 
     else:
         processed_items = (
-            (
-                item
-                if not isinstance(item, DATA_OBJ_TT)
-                else remove_empty_items(cast("DataObjType", item), spaces_are_empty=spaces_are_empty)
-            )
+            (item if not is_data_obj(item) else remove_empty_items(item, spaces_are_empty=spaces_are_empty))
             for item in data
             if not (isinstance(item, (str, type(None))) and _string_module.is_empty(item, spaces_are_empty=spaces_are_empty))
         )
@@ -148,17 +132,10 @@ def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     *   `data` – The data structure to remove duplicates from."""
 
     if isinstance(data, dict):
-        return type(data)(
-            {
-                key: remove_duplicates(cast("DataObjType", val)) if isinstance(val, DATA_OBJ_TT) else val
-                for key, val in data.items()
-            }
-        )
+        return type(data)({key: remove_duplicates(val) if is_data_obj(val) else val for key, val in data.items()})
 
     elif isinstance(data, (list, tuple)):
-        processed: list[Any] = [
-            remove_duplicates(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item for item in data
-        ]
+        processed: list[Any] = [remove_duplicates(item) if is_data_obj(item) else item for item in data]
 
         try:
             result: list[Any] = list(dict.fromkeys(processed))
@@ -175,7 +152,7 @@ def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     else:
         processed_elements: set[Any] = set()
         for item in data:
-            processed_item = remove_duplicates(cast("DataObjType", item)) if isinstance(item, DATA_OBJ_TT) else item
+            processed_item = remove_duplicates(item) if is_data_obj(item) else item
             processed_elements.add(processed_item)
         return cast("DataObj", type(data)(processed_elements))
 
@@ -385,14 +362,13 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
             parent = dict_data
             current_data = dict_data[keys[path_idx]]
 
-        elif isinstance(current_data, INDEX_ITERABLE_TT):
-            idx_iterable_data = cast("IndexIterable", current_data)
+        elif is_index_iterable(current_data):
             if i == len(path) - 1 and get_key:
                 if parent is None or not isinstance(parent, dict):
                     raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'") from None
-                return next(key for key, value in parent.items() if value is idx_iterable_data)
-            parent = idx_iterable_data
-            current_data = list(idx_iterable_data)[path_idx]  # Convert to list for indexing.
+                return next(key for key, value in parent.items() if value is current_data)
+            parent = current_data
+            current_data = list(current_data)[path_idx]  # Convert to list for indexing.
 
         else:
             raise TypeError(f"Unsupported type '{type(current_data)}' at path '{path[: i + 1]}'")
@@ -430,7 +406,7 @@ def render(
     max_width: int = 127,
     sep: str = ", ",
     as_json: bool = False,
-    syntax_highlighting: dict[str, AnySyntaxStyle] | bool = False,
+    syntax_highlighting: dict[str, AnyStyle] | bool = False,
 ) -> StyledText:
     """Get nicely formatted data structures as a `StyledText` object.\n
     -------------------------------------------------------------------------------------------------------------------
@@ -541,11 +517,10 @@ def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any
             keys, dict_data = list(dict_data.keys()), dict(dict_data)
             dict_data[keys[id_path[0]]] = value
             return dict_data
-        elif isinstance(current_data, INDEX_ITERABLE_TT):
-            idx_iterable_data = cast("IndexIterable", current_data)
-            was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
-            idx_iterable_data[id_path[0]] = value
-            return was_t(idx_iterable_data)
+        elif is_index_iterable(current_data):
+            was_t, current_data = type(current_data), list(current_data)
+            current_data[id_path[0]] = value
+            return was_t(current_data)
 
     else:
         if isinstance(current_data, dict):
@@ -553,11 +528,10 @@ def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any
             keys, dict_data = list(dict_data.keys()), dict(dict_data)
             dict_data[keys[id_path[0]]] = _set_nested_val(dict_data[keys[id_path[0]]], id_path[1:], value)
             return dict_data
-        elif isinstance(current_data, INDEX_ITERABLE_TT):
-            idx_iterable_data = cast("IndexIterable", current_data)
-            was_t, idx_iterable_data = type(idx_iterable_data), list(idx_iterable_data)
-            idx_iterable_data[id_path[0]] = _set_nested_val(idx_iterable_data[id_path[0]], id_path[1:], value)
-            return was_t(idx_iterable_data)
+        elif is_index_iterable(current_data):
+            was_t, current_data = type(current_data), list(current_data)
+            current_data[id_path[0]] = _set_nested_val(current_data[id_path[0]], id_path[1:], value)
+            return was_t(current_data)
 
     return current_data
 
@@ -606,10 +580,9 @@ class _DataRemoveCommentsHelper:
                 if key is not None
             }
 
-        if isinstance(item, INDEX_ITERABLE_TT):
-            idx_iterable_item = cast("IndexIterable", item)
-            processed = [val for val in map(self.remove_nested_comments, idx_iterable_item) if val is not None]
-            return type(idx_iterable_item)(processed)
+        if is_index_iterable(item):
+            processed = [val for val in map(self.remove_nested_comments, item) if val is not None]
+            return type(item)(processed)
 
         if isinstance(item, str):
             if self.pattern:
@@ -652,7 +625,7 @@ class _DataGetPathIdHelper:
         if isinstance(self.current_data, dict):
             if (idx := self.process_dict_key(key)) is None:
                 return False
-        elif isinstance(self.current_data, INDEX_ITERABLE_TT):
+        elif is_index_iterable(self.current_data):
             if (idx := self.process_iterable_key(key)) is None:
                 return False
         else:
@@ -710,7 +683,7 @@ class _DataRenderHelper:
         max_width: int,
         sep: str,
         as_json: bool,
-        syntax_highlighting: dict[str, AnySyntaxStyle] | bool,
+        syntax_highlighting: dict[str, AnyStyle] | bool,
     ) -> None:
         self.data: DataObjType = data
         self.indent: int = indent
@@ -718,7 +691,7 @@ class _DataRenderHelper:
         self.max_width: int = max_width
         self.as_json: bool = as_json
 
-        self.styles: dict[str, AnySyntaxStyle] = _DEFAULT_SYNTAX_HL.copy()
+        self.styles: dict[str, AnyStyle] = _DEFAULT_SYNTAX_HL.copy()
         self.do_syntax_hl: bool = syntax_highlighting not in {None, False}
 
         if self.do_syntax_hl:
@@ -761,8 +734,8 @@ class _DataRenderHelper:
         elif current_indent is not None and hasattr(value, "__dict__"):
             return self.format_dict(value.__dict__, current_indent + self.indent)
 
-        elif current_indent is not None and isinstance(value, INDEX_ITERABLE_TT):
-            return self.format_sequence(cast("IndexIterable", value), current_indent + self.indent)
+        elif current_indent is not None and is_index_iterable(value):
+            return self.format_sequence(value, current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
             obj_dict = serialize_bytes(value)

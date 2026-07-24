@@ -7,7 +7,7 @@ and command-line argument parsing.
 
 from . import color as _color_module
 from . import string as _string_module
-from .ansi import AnyStyle, S, StyledText, TextLike, _ColorStyle, _Link, _Style, _StyleGroup
+from .ansi import AnyStyle, BaseStyle, Renderable, S, StyledText, _StyleGroup, is_any_style
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
@@ -55,20 +55,20 @@ _LOG_TITLE_CACHE_MAX: Final[int] = 256
 _ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
-_DEFAULT_BAR_FORMAT: Final[list[TextLike]] = [
+_DEFAULT_BAR_FORMAT: Final[list[Renderable]] = [
     "{l}",
     S.BG.BLACK("{b}"),
     (S.BOLD("{c:,}"), "/{t:,}"),
     S.DIM("(", S.ITALIC("{p}%"), ")"),
 ]
 """Default `ProgressBar` format, styled with the operator-based API."""
-_DEFAULT_LIMITED_BAR_FORMAT: Final[list[TextLike]] = [S.BG.BLACK("{b}")]
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = [S.BG.BLACK("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[TextLike]] = [(S.BOLD("{a}"), "{l}")]
+_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [(S.BOLD("{a}"), "{l}")]
 """Default `Throbber` format, styled with the operator-based API."""
 
 
-def _compile_format(fmt: list[TextLike] | tuple[TextLike, ...] | TextLike) -> list[str]:
+def _compile_format(fmt: list[Renderable] | tuple[Renderable, ...] | Renderable) -> list[str]:
     if isinstance(fmt, (list, tuple)):
         return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
@@ -116,11 +116,6 @@ class ParsedArgData:
             and self.values == other.values
             and self.flag == other.flag
         )
-
-    def __ne__(self, other: object, /) -> bool:
-        """Check if two `ParsedArgData` objects are not equal by comparing their attributes."""
-
-        return not self.__eq__(other)
 
     def __repr__(self) -> str:
         return (
@@ -251,11 +246,6 @@ class ParsedArgs:
         if not isinstance(other, ParsedArgs):
             return False
         return vars(self) == vars(other) and self.unknown_flags == other.unknown_flags
-
-    def __ne__(self, other: object, /) -> bool:
-        """Check if two `ParsedArgs` objects are not equal by comparing their stored arguments."""
-
-        return not self.__eq__(other)
 
     def __repr__(self) -> str:
         items: list[str] = [f"{key} = " + "\n  ".join(repr(val).splitlines()) for key, val in self.__iter__()]
@@ -527,7 +517,7 @@ def log(
     *,
     start: str = "",
     end: str = "\n",
-    title_bg_color: AnyStyle | Rgba | Hexa | None = None,
+    title_bg_color: BaseStyle | Rgba | Hexa | None = None,
     default_color: Rgba | Hexa | None = None,
     tab_size: int = 8,
     title_px: int = 1,
@@ -558,7 +548,7 @@ def log(
 
     title = "" if title is None else title.strip()
 
-    title_style: _StyleGroup | _Style
+    title_style: AnyStyle
     if title_bg_color is not None:
         bg_style, fg_style = _resolve_title_colors(title_bg_color)
         title_style = S.BOLD | fg_style | bg_style
@@ -831,7 +821,7 @@ def log_box_filled(
     *values: StyledText | object,
     start: str = "",
     end: str = "\n",
-    box_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa | None = None,
+    box_bg_color: AnyStyle | Rgba | Hexa | None = None,
     default_color: Rgba | Hexa | None = None,
     w_padding: int = 2,
     w_full: bool = False,
@@ -860,7 +850,7 @@ def log_box_filled(
     default_hexa = str(_color_module.to_hexa(default_color)) if default_color is not None else "#000"
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-    bg_style: AnyStyle | _StyleGroup = (
+    bg_style: AnyStyle = (
         (S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa)) if box_bg_color is None else _as_bg_style(box_bg_color)
     )
 
@@ -890,7 +880,7 @@ def log_box_bordered(
     start: str = "",
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-    border_style: AnyStyle | _StyleGroup | Rgba | Hexa = S.BR.BLACK,
+    border_style: AnyStyle | Rgba | Hexa = S.BR.BLACK,
     default_color: Rgba | Hexa | None = None,
     w_padding: int = 1,
     w_full: bool = False,
@@ -1242,13 +1232,13 @@ def _read_single_key() -> None:
             _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
 
 
-def _resolve_title_colors(title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> tuple[AnyStyle | _StyleGroup, AnyStyle]:
+def _resolve_title_colors(title_bg_color: AnyStyle | Rgba | Hexa, /) -> tuple[AnyStyle, BaseStyle]:
     """Resolves the log title's background style and its matching foreground style.\n
     ------------------------------------------------------------------------------------
     *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
         RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
 
-    if isinstance(title_bg_color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+    if is_any_style(title_bg_color):
         return title_bg_color, S.BLACK
 
     if _color_module.is_valid_rgba(title_bg_color) or _color_module.is_valid_hexa(title_bg_color):
@@ -1261,10 +1251,10 @@ def _resolve_title_colors(title_bg_color: AnyStyle | _StyleGroup | Rgba | Hexa, 
     )
 
 
-def _as_bg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+def _as_bg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
     """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
 
-    if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+    if is_any_style(color):
         return color
     if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.BG.hex(str(_color_module.to_hexa(color)))
@@ -1274,10 +1264,10 @@ def _as_bg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _
     )
 
 
-def _as_fg_style(color: AnyStyle | _StyleGroup | Rgba | Hexa, /) -> AnyStyle | _StyleGroup:
+def _as_fg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
     """Resolves an `S` style or an RGBA/HEXA color to an `S` foreground style."""
 
-    if isinstance(color, (_Style, _ColorStyle, _Link, _StyleGroup)):
+    if is_any_style(color):
         return color
     if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.hex(str(_color_module.to_hexa(color)))
@@ -1292,7 +1282,7 @@ def _persist_style(ansi_text: str, style_open: str, /) -> str:
     if not style_open or ANSI.CHAR not in ansi_text:
         return ansi_text
 
-    return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", "\\\\"), ansi_text)
+    return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", r"\\"), ansi_text)
 
 
 def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
@@ -1330,7 +1320,7 @@ def _add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, 
     return result
 
 
-def _render_log_title(text: str, style: _StyleGroup | AnyStyle, /) -> str:
+def _render_log_title(text: str, style: _StyleGroup | BaseStyle, /) -> str:
     """Renders (and caches) the styled log title as an ANSI string.\n
     ----------------------------------------------------------------------------
     Since consecutive log calls often reuse the exact same title and style,<br>
@@ -1954,8 +1944,8 @@ class ProgressBar:
         *,
         min_width: int = 10,
         max_width: int = 50,
-        format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_BAR_FORMAT,
-        limited_format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_LIMITED_BAR_FORMAT,
+        format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_BAR_FORMAT,
+        limited_format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ) -> None:
@@ -2005,8 +1995,8 @@ class ProgressBar:
 
     def set_format(
         self,
-        format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
-        limited_format: list[TextLike] | tuple[TextLike, ...] | TextLike | None = None,
+        format: list[Renderable] | tuple[Renderable, ...] | Renderable | None = None,
+        limited_format: list[Renderable] | tuple[Renderable, ...] | Renderable | None = None,
         *,
         sep: str | None = None,
     ) -> None:
@@ -2330,7 +2320,7 @@ class Throbber:
         self,
         *,
         label: StyledText | str | None = None,
-        format: list[TextLike] | tuple[TextLike, ...] | TextLike = _DEFAULT_THROBBER_FORMAT,
+        format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
         interval: float = 0.2,
@@ -2361,7 +2351,7 @@ class Throbber:
         self._stop_event: _threading.Event | None = None
         self._animation_thread: _threading.Thread | None = None
 
-    def set_format(self, format: list[TextLike] | tuple[TextLike, ...] | TextLike, *, sep: str | None = None) -> None:
+    def set_format(self, format: list[Renderable] | tuple[Renderable, ...] | Renderable, *, sep: str | None = None) -> None:
         """Set the format string used to render the throbber.\n
         -----------------------------------------------------------------------------------------
         *   `format` – The format strings used to render the throbber, containing placeholders:

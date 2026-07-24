@@ -4,11 +4,19 @@ Provides custom type definitions and TypeVars used throughout the library.
 Includes type aliases for complex structures and protocol definitions.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Literal, NotRequired, Protocol, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, Protocol, TypedDict, cast
 
 if TYPE_CHECKING:
-    from xulbux.ansi import TextLike
+    import sys
+    from xulbux.ansi import Renderable
+
+    if sys.version_info >= (3, 13):
+        from typing import TypeIs
+    else:
+        from typing_extensions import TypeIs
 
 ####################################################### Primitives #######################################################
 
@@ -30,24 +38,31 @@ type FormattableString = str
 type PathsList = list[Path] | list[str] | list[Path | str]
 """Union of all supported list types for a list of paths."""
 
+
+def is_paths_list(obj: object, /) -> TypeIs[PathsList]:
+    """Returns true if `obj` is an instance that matches the `PathsList` type."""
+
+    return isinstance(obj, list) and all(isinstance(item, (Path, str)) for item in cast("list[Any]", obj))
+
+
 type DataObj = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any] | dict[Any, Any]
 """Union of supported data structures used in the `data` module."""
 
-DATA_OBJ_TT: Final[
-    tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]], type[dict[Any, Any]]]
-] = (list, tuple, set, frozenset, dict)
-"""Type tuple of supported data structures used in the `data` module."""
+
+def is_data_obj(obj: object, /) -> TypeIs[DataObj]:
+    """Returns true if `obj` is an instance that matches the `DataObj` type."""
+
+    return isinstance(obj, (list, tuple, set, frozenset, dict))
+
 
 type IndexIterable = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any]
 """Union of all iterable types that support indexing operations."""
 
-INDEX_ITERABLE_TT: Final[tuple[type[list[Any]], type[tuple[Any, ...]], type[set[Any]], type[frozenset[Any]]]] = (
-    list,
-    tuple,
-    set,
-    frozenset,
-)
-"""Type tuple of all iterable types that support indexing operations."""
+
+def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable]:
+    """Returns true if `obj` is an instance that matches the `IndexIterable` type."""
+
+    return isinstance(obj, (list, tuple, set, frozenset))
 
 
 ######################################################### Colors #########################################################
@@ -184,6 +199,6 @@ class MissingLibsMsgs(TypedDict):
 class ProgressUpdater(Protocol):
     """Protocol for a progress updater function used in terminal progress bars."""
 
-    def __call__(self, current: int | None = None, label: "TextLike | None" = None) -> None:
+    def __call__(self, current: int | None = None, label: Renderable | None = None) -> None:
         """Update the current progress value and/or label."""
         ...

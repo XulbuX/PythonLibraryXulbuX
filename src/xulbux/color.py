@@ -95,11 +95,6 @@ class rgba:
             return False
         return (self.red, self.green, self.blue, self.alpha) == (other.red, other.green, other.blue, other.alpha)
 
-    def __ne__(self, other: object, /) -> bool:
-        """Check if two `rgba` objects are different colors."""
-
-        return not self.__eq__(other)
-
     def __repr__(self) -> str:
         return f"rgba({self.red}, {self.green}, {self.blue}{'' if self.alpha is None else f', {self.alpha}'})"
 
@@ -138,8 +133,7 @@ class rgba:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_hsla().lighten(amount).to_rgba().values()
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        return self.to_hsla().lighten(amount).to_rgba()
 
     def darken(self, amount: float, /) -> rgba:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
@@ -147,8 +141,7 @@ class rgba:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_hsla().darken(amount).to_rgba().values()
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        return self.to_hsla().darken(amount).to_rgba()
 
     def saturate(self, amount: float, /) -> rgba:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -156,8 +149,7 @@ class rgba:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_hsla().saturate(amount).to_rgba().values()
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        return self.to_hsla().saturate(amount).to_rgba()
 
     def desaturate(self, amount: float, /) -> rgba:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -165,22 +157,18 @@ class rgba:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_hsla().desaturate(amount).to_rgba().values()
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        return self.to_hsla().desaturate(amount).to_rgba()
 
     def rotate(self, degrees: int, /) -> rgba:
         """Rotates the colors hue by the specified number of degrees."""
 
-        self.red, self.green, self.blue, self.alpha = self.to_hsla().rotate(degrees).to_rgba().values()
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        return self.to_hsla().rotate(degrees).to_rgba()
 
     def invert(self, *, invert_alpha: bool = False) -> rgba:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
 
-        self.red, self.green, self.blue = 255 - self.red, 255 - self.green, 255 - self.blue
-        if invert_alpha and self.alpha is not None:
-            self.alpha = 1 - self.alpha
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        alpha = (1.0 - self.alpha if self.alpha is not None else None) if invert_alpha else self.alpha
+        return rgba(255 - self.red, 255 - self.green, 255 - self.blue, alpha, _validate=False)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> rgba:
         """Converts the color to grayscale using the luminance formula.\n
@@ -193,8 +181,8 @@ class rgba:
 
         # The `method` param is validated in `luminance()`.
 
-        self.red = self.green = self.blue = int(luminance(self.red, self.green, self.blue, method=method))
-        return rgba(self.red, self.green, self.blue, self.alpha, _validate=False)
+        gray = int(luminance(self.red, self.green, self.blue, method=method))
+        return rgba(gray, gray, gray, self.alpha, _validate=False)
 
     def blend(self, other: Rgba, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> rgba:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
@@ -206,15 +194,17 @@ class rgba:
             -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
         *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
 
+        if not is_valid_rgba(other):
+            raise TypeError(f"The 'other' parameter must be a valid RGBA color, got {type(other)}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
         other_rgba = to_rgba(other)
         ratio *= 2
 
-        self.red = int(max(0, min(255, int((self.red * (2 - ratio)) + (other_rgba.red * ratio) + 0.5))))
-        self.green = int(max(0, min(255, int((self.green * (2 - ratio)) + (other_rgba.green * ratio) + 0.5))))
-        self.blue = int(max(0, min(255, int((self.blue * (2 - ratio)) + (other_rgba.blue * ratio) + 0.5))))
+        red = int(max(0, min(255, int((self.red * (2 - ratio)) + (other_rgba.red * ratio) + 0.5))))
+        green = int(max(0, min(255, int((self.green * (2 - ratio)) + (other_rgba.green * ratio) + 0.5))))
+        blue = int(max(0, min(255, int((self.blue * (2 - ratio)) + (other_rgba.blue * ratio) + 0.5))))
         none_alpha = self.alpha is None and (len(other_rgba) <= 3 or other_rgba[3] is None)
 
         if not none_alpha:
@@ -222,14 +212,14 @@ class rgba:
             other_a: float = cast("float", 1.0 if other_rgba[3] is None else other_rgba[3]) if len(other_rgba) > 3 else 1.0
 
             if additive_alpha:
-                self.alpha = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
+                alpha: float | None = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
             else:
-                self.alpha = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
+                alpha = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
 
         else:
-            self.alpha = None
+            alpha = None
 
-        return rgba(self.red, self.green, self.blue, None if none_alpha else self.alpha, _validate=False)
+        return rgba(red, green, blue, alpha, _validate=False)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
@@ -368,11 +358,6 @@ class hsla:
             return False
         return (self.hue, self.sat, self.light, self.alpha) == (other.hue, other.sat, other.light, other.alpha)
 
-    def __ne__(self, other: object, /) -> bool:
-        """Check if two `hsla` objects are different colors."""
-
-        return not self.__eq__(other)
-
     def __repr__(self) -> str:
         return f"hsla({self.hue}°, {self.sat}%, {self.light}%{'' if self.alpha is None else f', {self.alpha}'})"
 
@@ -412,8 +397,7 @@ class hsla:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.light = int(min(100, self.light + (100 - self.light) * amount))
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return hsla(self.hue, self.sat, int(min(100, self.light + (100 - self.light) * amount)), self.alpha, _validate=False)
 
     def darken(self, amount: float, /) -> hsla:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
@@ -421,8 +405,7 @@ class hsla:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.light = int(max(0, self.light * (1 - amount)))
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return hsla(self.hue, self.sat, int(max(0, self.light * (1 - amount))), self.alpha, _validate=False)
 
     def saturate(self, amount: float, /) -> hsla:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -430,8 +413,7 @@ class hsla:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.sat = int(min(100, self.sat + (100 - self.sat) * amount))
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return hsla(self.hue, int(min(100, self.sat + (100 - self.sat) * amount)), self.light, self.alpha, _validate=False)
 
     def desaturate(self, amount: float, /) -> hsla:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -439,28 +421,23 @@ class hsla:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.sat = int(max(0, self.sat * (1 - amount)))
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return hsla(self.hue, int(max(0, self.sat * (1 - amount))), self.light, self.alpha, _validate=False)
 
     def rotate(self, degrees: int, /) -> hsla:
         """Rotates the colors hue by the specified number of degrees."""
 
-        self.hue = (self.hue + degrees) % 360
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return hsla((self.hue + degrees) % 360, self.sat, self.light, self.alpha, _validate=False)
 
     def invert(self, *, invert_alpha: bool = False) -> hsla:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
 
-        self.hue = (self.hue + 180) % 360
-        self.light = 100 - self.light
-        if invert_alpha and self.alpha is not None:
-            self.alpha = 1 - self.alpha
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        alpha = (1.0 - self.alpha if self.alpha is not None else None) if invert_alpha else self.alpha
+        return hsla((self.hue + 180) % 360, self.sat, 100 - self.light, alpha, _validate=False)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hsla:
         """Converts the color to grayscale using the luminance formula.\n
         -------------------------------------------------------------------------------
-        *   `method` – the luminance calculation method to use:
+        *   `method` – The luminance calculation method to use:
             -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
             -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
             -   `"simple"` simple arithmetic mean (less accurate)
@@ -470,9 +447,8 @@ class hsla:
 
         red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
         light = int(luminance(red, green, blue, output_type=None, method=method))
-
-        self.hue, self.sat, self.light, _ = rgba(light, light, light, _validate=False).to_hsla().values()
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        hue, sat, light_val, _ = rgba(light, light, light, _validate=False).to_hsla().values()
+        return hsla(hue, sat, light_val, self.alpha, _validate=False)
 
     def blend(self, other: Hsla, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hsla:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
@@ -489,10 +465,7 @@ class hsla:
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
-        self.hue, self.sat, self.light, self.alpha = (
-            self.to_rgba().blend(to_rgba(other), ratio, additive_alpha=additive_alpha).to_hsla().values()
-        )
-        return hsla(self.hue, self.sat, self.light, self.alpha, _validate=False)
+        return self.to_rgba().blend(to_rgba(other), ratio, additive_alpha=additive_alpha).to_hsla()
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
@@ -517,9 +490,7 @@ class hsla:
     def with_alpha(self, alpha: float, /) -> hsla:
         """Returns a new color with the specified alpha value."""
 
-        if not isinstance(alpha, float):
-            raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
-        elif not (0.0 <= alpha <= 1.0):
+        if not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         return hsla(self.hue, self.sat, self.light, alpha, _validate=False)
@@ -681,11 +652,6 @@ class hexa:
             return False
         return (self.red, self.green, self.blue, self.alpha) == (other.red, other.green, other.blue, other.alpha)
 
-    def __ne__(self, other: object, /) -> bool:
-        """Check if two `hexa` objects are different colors."""
-
-        return not self.__eq__(other)
-
     def __repr__(self) -> str:
         alpha = "" if self.alpha is None else f"{int(self.alpha * 255):02X}"
         return f"hexa(#{self.red:02X}{self.green:02X}{self.blue:02X}{alpha})"
@@ -742,8 +708,8 @@ class hexa:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).lighten(amount).values()
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).lighten(amount).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def darken(self, amount: float, /) -> hexa:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
@@ -751,8 +717,8 @@ class hexa:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).darken(amount).values()
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).darken(amount).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def saturate(self, amount: float, /) -> hexa:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -760,8 +726,8 @@ class hexa:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).saturate(amount).values()
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).saturate(amount).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def desaturate(self, amount: float, /) -> hexa:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -769,22 +735,20 @@ class hexa:
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).desaturate(amount).values()
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).desaturate(amount).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def rotate(self, degrees: int, /) -> hexa:
         """Rotates the colors hue by the specified number of degrees."""
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).rotate(degrees).values()
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).rotate(degrees).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def invert(self, *, invert_alpha: bool = False) -> hexa:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
 
-        self.red, self.green, self.blue, self.alpha = self.to_rgba(round_alpha=False).invert().values()
-        if invert_alpha and self.alpha is not None:
-            self.alpha = 1 - self.alpha
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).invert(invert_alpha=invert_alpha).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hexa:
         """Converts the color to grayscale using the luminance formula.\n
@@ -797,8 +761,8 @@ class hexa:
 
         # The `method` param is validated in `luminance()`.
 
-        self.red = self.green = self.blue = int(luminance(self.red, self.green, self.blue, method=method))
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        gray = int(luminance(self.red, self.green, self.blue, method=method))
+        return hexa(_red=gray, _green=gray, _blue=gray, _alpha=self.alpha)
 
     def blend(self, other: Hexa, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hexa:
         """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
@@ -815,10 +779,8 @@ class hexa:
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
-        self.red, self.green, self.blue, self.alpha = (
-            self.to_rgba(round_alpha=False).blend(to_rgba(other), ratio, additive_alpha=additive_alpha).values()
-        )
-        return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=self.alpha)
+        r, g, b, a = self.to_rgba(round_alpha=False).blend(to_rgba(other), ratio, additive_alpha=additive_alpha).values()
+        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
@@ -833,7 +795,7 @@ class hexa:
     def is_grayscale(self) -> bool:
         """Returns `True` if the color is grayscale (`saturation == 0`)."""
 
-        return self.to_hsla(round_alpha=False).is_grayscale()
+        return self.red == self.green == self.blue
 
     def is_opaque(self) -> bool:
         """Returns `True` if the color has no transparency (`alpha == 1.0`)."""
@@ -843,9 +805,7 @@ class hexa:
     def with_alpha(self, alpha: float, /) -> hexa:
         """Returns a new color with the specified alpha value."""
 
-        if not isinstance(alpha, float):
-            raise TypeError(f"The 'alpha' parameter must be a float, got {type(alpha)}")
-        elif not (0.0 <= alpha <= 1.0):
+        if not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=alpha)
