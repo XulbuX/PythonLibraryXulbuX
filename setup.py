@@ -213,11 +213,19 @@ class StubGen(ast.NodeTransformer):
 
         return new_body
 
-    def _strip_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        for i in range(len(node.args.defaults)):
-            node.args.defaults[i] = ast.Constant(value=Ellipsis)
-        for i in range(len(node.args.kw_defaults)):
-            if node.args.kw_defaults[i] is not None:
+    def _is_simple_constant(self, node: ast.expr) -> bool:
+        if isinstance(node, ast.Constant):
+            return True
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub) and isinstance(node.operand, ast.Constant):
+            return isinstance(node.operand.value, (int, float, complex))
+        return False
+
+    def _strip_complex_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        for i, default in enumerate(node.args.defaults):
+            if not self._is_simple_constant(default):
+                node.args.defaults[i] = ast.Constant(value=Ellipsis)
+        for i, kw_default in enumerate(node.args.kw_defaults):
+            if kw_default is not None and not self._is_simple_constant(kw_default):
                 node.args.kw_defaults[i] = ast.Constant(value=Ellipsis)
 
     def visit_Module(self, node: ast.Module) -> ast.Module:
@@ -311,13 +319,13 @@ class StubGen(ast.NodeTransformer):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         self.generic_visit(node)
         node.body = [ast.parse("...").body[0]]
-        self._strip_defaults(node)
+        self._strip_complex_defaults(node)
         return node
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
         self.generic_visit(node)
         node.body = [ast.parse("...").body[0]]
-        self._strip_defaults(node)
+        self._strip_complex_defaults(node)
         return node
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AnnAssign | None:
