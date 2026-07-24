@@ -990,8 +990,8 @@ def confirm(
     prompt: StyledText | object = "Do you want to continue?",
     /,
     *,
-    start: str = "",
-    end: str = "",
+    start: StyledText | str = "",
+    end: StyledText | str = "",
     default_color: Rgba | Hexa | None = None,
     default_is_yes: bool = True,
 ) -> bool:
@@ -1006,16 +1006,22 @@ def confirm(
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
-    yes_no = f"({'Y' if default_is_yes else 'y'}/{'n' if default_is_yes else 'N'}): "
-    head = f"{start}{_to_styled_text(prompt).ansi} "
+    yes_no = S.DIM(
+        "(",
+        *(S.BOLD("Y"), S.DIM) if default_is_yes else "y",
+        "/",
+        *(S.BOLD("N"), S.DIM) if not default_is_yes else "n",
+        "): ",
+    )
+    head = f"{_to_styled_text(start)}{_to_styled_text(prompt).ansi} "
     head_seg = S.hex(str(_color_module.to_hexa(default_color)))(head) if default_color is not None else head
 
-    confirmed = input((head_seg, S.RESET, S.DIM(yes_no))).strip().lower() in (
+    confirmed = input(StyledText(head_seg, S.RESET, yes_no).ansi).strip().lower() in (
         {"", "y", "yes"} if default_is_yes else {"y", "yes"}
     )
 
     if end:
-        StyledText(end).print(end="", flush=True)
+        _to_styled_text(end).print(end="", flush=True)
 
     return confirmed
 
