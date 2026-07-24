@@ -1297,6 +1297,9 @@ def _persist_style(ansi_text: str, style_open: str, /) -> str:
 
 def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
     """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
+    if not clean_prompt:
+        yield ("",)
+        return
 
     for line in clean_prompt.splitlines():
         lst = _string_module.split_count(line, wrap_len)
