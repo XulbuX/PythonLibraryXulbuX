@@ -813,14 +813,14 @@ class StyledText:
     __slots__: Final[tuple[str, ...]] = ("_ansi_parts", "ansi")
 
     def __init__(self, /, *segments: Renderable, sep: str = "") -> None:
-        self._ansi_parts: list[str] = []
+        ansi_parts: list[str] = []
 
         for i, segment in enumerate(segments):
             if i > 0 and sep:
-                self._ansi_parts.append(sep)
-            self._render(segment)
+                ansi_parts.append(sep)
+            self._render(segment, ansi_parts)
 
-        self.ansi: str = "".join(self._ansi_parts)
+        self.ansi: str = "".join(ansi_parts)
 
     @property
     def raw(self) -> str:
@@ -857,7 +857,6 @@ class StyledText:
         """Concatenate a `StyledText` object with another `StyledText` object or a plain string."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = self.ansi + (other.ansi if isinstance(other, StyledText) else other)
 
         return result
@@ -866,7 +865,6 @@ class StyledText:
         """Concatenate a plain string with a `StyledText` object from the left."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = other + self.ansi
 
         return result
@@ -881,7 +879,6 @@ class StyledText:
         """Repeat the rendered output `n` times, e.g., `StyledText(S.CYAN("─")) * 40`."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = self.ansi * n
 
         return result
@@ -890,7 +887,6 @@ class StyledText:
         """Repeat the rendered output `n` times, e.g., `40 * StyledText(S.CYAN("─"))`."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = self.ansi * n
 
         return result
@@ -914,7 +910,6 @@ class StyledText:
         *   `fill_char` – The character to use for padding (default is a space)."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = self.ansi + (fill_char * max(0, width - len(self)))
 
         return result
@@ -926,7 +921,6 @@ class StyledText:
         *   `fill_char` – The character to use for padding (default is a space)."""
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = (fill_char * max(0, width - len(self))) + self.ansi
 
         return result
@@ -942,7 +936,6 @@ class StyledText:
         right = padding - left
 
         result = StyledText.__new__(StyledText)
-        result._ansi_parts = []
         result.ansi = (fill_char * left) + self.ansi + (fill_char * right)
 
         return result
@@ -996,44 +989,47 @@ class StyledText:
 
         return _ANSI_SEQ_RX.sub("", ansi_string)
 
-    def _render(self, segment: object) -> None:
+    def _render(self, segment: object, ansi_parts: list[str]) -> None:
         """Internal method to recursively render a `segment`, dispatching by runtime type.\n
-        ------------------------------------------------------------------------------------
-        Strings are emitted as raw text; `_StyledSequence` segments are wrapped in their opening<br>
-        and closing ANSI sequences; `tuple` segments are flattened in order.<br>
-        Bare style objects (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`) emit only<br>
-        their opening sequence with no matching close."""
+        -----------------------------------------------------------------------------------------
+        Strings are emitted as raw text; `_StyledSequence` segments are wrapped in their<br>
+        opening and closing ANSI sequences; `tuple` segments are flattened in order.<br>
+        Bare style objects (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`) emit only their<br>
+        opening sequence with no matching close."""
 
         if isinstance(segment, str):
-            self._ansi_parts.append(segment)
-            return
-        if isinstance(segment, _StyledSequence):
-            for piece in segment._opens:
-                self._ansi_parts.append(piece)
-            self._render(segment.text)
-            for piece in segment._closes:
-                self._ansi_parts.append(piece)
-            return
-        if isinstance(segment, tuple):
-            for tuple_part in cast("tuple[object, ...]", segment):
-                self._render(tuple_part)
-            return
-        if isinstance(segment, _Style):
-            self._ansi_parts.append(f"{ANSI.CHAR}[{int(segment)}m")
-            return
-        if isinstance(segment, _ColorStyle):
-            self._ansi_parts.append(segment._open_seq)
-            return
-        if isinstance(segment, _Link):
-            self._ansi_parts.append(segment._open_seq)
-            return
-        if isinstance(segment, _StyleGroup):
-            for piece in _build_open_close(segment)[0]:
-                self._ansi_parts.append(piece)
+            ansi_parts.append(segment)
             return
 
-        # Fallback; coerce unknown objects to str:
-        self._ansi_parts.append(str(segment))
+        elif isinstance(segment, _StyledSequence):
+            for piece in segment._opens:
+                ansi_parts.append(piece)
+            self._render(segment.text, ansi_parts)
+            for piece in segment._closes:
+                ansi_parts.append(piece)
+            return
+
+        elif isinstance(segment, tuple):
+            for tuple_part in cast("tuple[object, ...]", segment):
+                self._render(tuple_part, ansi_parts)
+            return
+
+        elif isinstance(segment, _Style):
+            ansi_parts.append(f"{ANSI.CHAR}[{int(segment)}m")
+            return
+
+        elif isinstance(segment, (_ColorStyle, _Link)):
+            ansi_parts.append(segment._open_seq)
+            return
+
+        elif isinstance(segment, _StyleGroup):
+            for piece in _build_open_close(segment)[0]:
+                ansi_parts.append(piece)
+            return
+
+        else:
+            # Fallback; coerce unknown objects to str:
+            ansi_parts.append(str(segment))
 
 
 #################################################### INTERNAL HELPERS ####################################################

@@ -1100,14 +1100,14 @@ def test_parsed_args_properties_not_in_iter():
 #################################################### ProgressBar TESTS ###################################################
 
 
-def test_progressbar_clear_progress_line():
+def test_progressbar_clear_intercept_line():
     pb = ProgressBar()
     mock_stdout = MagicMock()
     mock_stdout.write.return_value = 0
     mock_stdout.flush.return_value = None
     pb._original_stdout = mock_stdout
     pb._last_line_len = 20
-    pb._clear_progress_line()
+    pb._clear_intercept_line()
     mock_stdout.write.assert_called_once()
     mock_stdout.flush.assert_called_once()
 
@@ -1170,7 +1170,7 @@ def test_progressbar_init():
 
 def test_progressbar_intercepted_output():
     pb = ProgressBar()
-    intercepted = console._InterceptedOutput(pb)
+    intercepted = console._InterceptedOutput(pb, sys.stdout)
     result = intercepted.write("test content")
     assert result == len("test content")
     assert "test content" in pb._buffer

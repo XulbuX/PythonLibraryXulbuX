@@ -25,6 +25,10 @@ def read(
 def read(
     json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[False] = False
 ) -> dict[str, Any]: ...
+@overload
+def read(
+    json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: bool
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]: ...
 
 
 def read(

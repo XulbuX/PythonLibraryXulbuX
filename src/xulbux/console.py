@@ -23,11 +23,9 @@ import threading as _threading
 import time as _time
 from collections.abc import Callable, Generator, KeysView, ValuesView
 from contextlib import contextmanager, suppress
-from io import StringIO
 from itertools import chain
 from typing import Any, Final, Literal, NoReturn, TextIO, cast, overload
 import prompt_toolkit as _pt
-import regex as _rx
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.keys import Keys
@@ -469,6 +467,16 @@ def pause_exit(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> None: ...
+@overload
+def pause_exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    pause: bool = ...,
+    exit: bool,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def pause_exit(
@@ -588,6 +596,23 @@ def log(
         StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", prompt_segment, sep="").print(end=end)
 
 
+def _log_preset(
+    title: str,
+    prompt: StyledText | object,
+    title_bg_color: BaseStyle | Rgba | Hexa | None,
+    start: str,
+    end: str,
+    default_color: Rgba | Hexa | None,
+    pause: bool,
+    do_exit: bool,
+    exit_code: int,
+    reset_ansi: bool,
+    /,
+) -> None:
+    log(title, prompt, start=start, end=end, title_bg_color=title_bg_color, default_color=default_color)
+    pause_exit("", pause=pause, exit=do_exit, exit_code=exit_code, reset_ansi=reset_ansi)
+
+
 def debug(
     prompt: StyledText | object = "Point in program reached.",
     /,
@@ -606,8 +631,7 @@ def debug(
     If `active` is false, no debug message will be printed."""
 
     if active:
-        log("DEBUG", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-        pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+        _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code, reset_ansi)
 
 
 def info(
@@ -625,8 +649,7 @@ def info(
     """A preset for `log()`: `INFO` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    log("INFO", prompt, start=start, end=end, title_bg_color=S.BG.BR.BLUE, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+    _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit, exit_code, reset_ansi)
 
 
 @overload
@@ -652,6 +675,19 @@ def done(
     default_color: Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
+@overload
+def done(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: bool,
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> None: ...
@@ -672,8 +708,7 @@ def done(
     """A preset for `log()`: `DONE` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    log("DONE", prompt, start=start, end=end, title_bg_color=S.BG.BR.GREEN, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+    _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit, exit_code, reset_ansi)
 
 
 @overload
@@ -702,6 +737,19 @@ def warn(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> None: ...
+@overload
+def warn(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: bool,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def warn(
@@ -719,8 +767,7 @@ def warn(
     """A preset for `log()`: `WARN` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    log("WARN", prompt, start=start, end=end, title_bg_color=S.BG.BR.YELLOW, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+    _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code, reset_ansi)
 
 
 @overload
@@ -749,6 +796,19 @@ def fail(
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> None: ...
+@overload
+def fail(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: bool,
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
 
 
 def fail(
@@ -766,8 +826,7 @@ def fail(
     """A preset for `log()`: `FAIL` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    log("FAIL", prompt, start=start, end=end, title_bg_color=S.BG.BR.RED, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+    _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit, exit_code, reset_ansi)
 
 
 @overload
@@ -793,6 +852,19 @@ def exit(
     default_color: Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False],
+    exit_code: int = ...,
+    reset_ansi: bool = ...,
+) -> None: ...
+@overload
+def exit(
+    prompt: StyledText | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: Rgba | Hexa | None = ...,
+    pause: bool = ...,
+    exit: bool,
     exit_code: int = ...,
     reset_ansi: bool = ...,
 ) -> None: ...
@@ -1917,7 +1989,81 @@ class _ConsoleInputValidator(Validator):
             raise ValidationError(message="", cursor_position=len(document.text))
 
 
-class ProgressBar:
+class _StdoutInterceptorMixin:
+    active: bool
+    _original_stdout: TextIO | None
+    _buffer: list[str]
+    _last_line_len: int
+
+    def _start_intercepting(self) -> None:
+        self.active = True
+        self._original_stdout = cast("TextIO", _sys.stdout)
+        _sys.stdout = _InterceptedOutput(self, self._original_stdout)
+
+    def _stop_intercepting(self) -> None:
+        if self._original_stdout:
+            _sys.stdout = self._original_stdout
+            self._original_stdout = None
+        self.active = False
+        self._buffer.clear()
+        self._last_line_len = 0
+        self._reset_state()
+
+    def _emergency_cleanup(self) -> None:
+        with suppress(Exception):
+            self._stop_intercepting()
+
+    def _clear_intercept_line(self) -> None:
+        if self._last_line_len > 0 and self._original_stdout:
+            self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
+            self._original_stdout.flush()
+
+    def _flush_buffer(self) -> None:
+        if self._buffer and self._original_stdout:
+            self._clear_intercept_line()
+            for content in self._buffer:
+                self._original_stdout.write(content)
+            self._original_stdout.flush()
+            self._buffer.clear()
+
+    def _redraw_display(self) -> None:
+        pass
+
+    def _reset_state(self) -> None:
+        pass
+
+
+@mypyc_attr(native_class=False)
+class _InterceptedOutput:
+    """Custom stdout wrapper that captures output and stores it in the progress bar buffer."""
+
+    def __init__(self, status_indicator: _StdoutInterceptorMixin, original_stdout: TextIO, /) -> None:
+        self.status_indicator: _StdoutInterceptorMixin = status_indicator
+        self.original_stdout: TextIO = original_stdout
+
+    def write(self, content: str, /) -> int:
+        try:
+            if content and content != "\r":
+                self.status_indicator._buffer.append(content)
+            return len(content)
+        except Exception:
+            self.status_indicator._emergency_cleanup()
+            raise
+
+    def flush(self) -> None:
+        try:
+            if self.status_indicator.active and self.status_indicator._buffer:
+                self.status_indicator._flush_buffer()
+                self.status_indicator._redraw_display()
+        except Exception:
+            self.status_indicator._emergency_cleanup()
+            raise
+
+    def __getattr__(self, name: str, /) -> Any:
+        return getattr(self.original_stdout, name)
+
+
+class ProgressBar(_StdoutInterceptorMixin):
     """A terminal progress bar with smooth transitions and customizable appearance.\n
     -------------------------------------------------------------------------------------------------------
     *   `min_width` – The min width of the progress bar in chars.
@@ -2089,7 +2235,7 @@ class ProgressBar:
         """Hide the progress bar and restore normal terminal output."""
 
         if self.active:
-            self._clear_progress_line()
+            self._clear_intercept_line()
             self._stop_intercepting()
 
     @contextmanager
@@ -2159,9 +2305,13 @@ class ProgressBar:
 
         for part in format:
             fmt_part = _PATTERNS.label.sub(label_ansi.replace("\\", r"\\"), part)
-            fmt_part = _PATTERNS.current.sub(_ProgressBarCurrentReplacer(current), fmt_part)
-            fmt_part = _PATTERNS.total.sub(_ProgressBarTotalReplacer(total), fmt_part)
-            fmt_part = _PATTERNS.percentage.sub(_ProgressBarPercentageReplacer(percentage), fmt_part)
+            fmt_part = _PATTERNS.current.sub(
+                lambda m: f"{current:,}".replace(",", m.group(1)) if m.group(1) else str(current), fmt_part
+            )
+            fmt_part = _PATTERNS.total.sub(
+                lambda m: f"{total:,}".replace(",", m.group(1)) if m.group(1) else str(total), fmt_part
+            )
+            fmt_part = _PATTERNS.percentage.sub(lambda m: f"{percentage:.{m.group(1) if m.group(1) else '1'}f}", fmt_part)
             if fmt_part:
                 fmt_parts.append(fmt_part)
 
@@ -2188,39 +2338,9 @@ class ProgressBar:
                 bar.append(self.chars[-1])
         return "".join(bar)
 
-    def _start_intercepting(self) -> None:
-        self.active = True
-        self._original_stdout = _sys.stdout
-        _sys.stdout = _InterceptedOutput(self)
-
-    def _stop_intercepting(self) -> None:
-        if self._original_stdout:
-            _sys.stdout = self._original_stdout
-            self._original_stdout = None
-        self.active = False
-        self._buffer.clear()
-        self._last_line_len = 0
+    def _reset_state(self) -> None:
         self._last_update_time = 0.0
         self._current_progress_str = ""
-
-    def _emergency_cleanup(self) -> None:
-        """Emergency cleanup to restore stdout in case of exceptions."""
-
-        with suppress(Exception):
-            self._stop_intercepting()
-
-    def _clear_progress_line(self) -> None:
-        if self._last_line_len > 0 and self._original_stdout:
-            self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
-            self._original_stdout.flush()
-
-    def _flush_buffer(self) -> None:
-        if self._buffer and self._original_stdout:
-            self._clear_progress_line()
-            for content in self._buffer:
-                self._original_stdout.write(content)
-                self._original_stdout.flush()
-            self._buffer.clear()
 
     def _redraw_display(self) -> None:
         if self._current_progress_str and self._original_stdout:
@@ -2268,41 +2388,7 @@ class _ProgressContextHelper:
         self.progress_bar.show_progress(self.current_progress, self.total, label=self.current_label)
 
 
-class _ProgressBarCurrentReplacer:
-    """Internal, callable class to replace `{current}` placeholder with formatted number."""
-
-    def __init__(self, current: int, /) -> None:
-        self.current: int = current
-
-    def __call__(self, match: _rx.Match[str], /) -> str:
-        if sep := match.group(1):
-            return f"{self.current:,}".replace(",", sep)
-        return str(self.current)
-
-
-class _ProgressBarTotalReplacer:
-    """Internal, callable class to replace `{total}` placeholder with formatted number."""
-
-    def __init__(self, total: int, /) -> None:
-        self.total: int = total
-
-    def __call__(self, match: _rx.Match[str], /) -> str:
-        if sep := match.group(1):
-            return f"{self.total:,}".replace(",", sep)
-        return str(self.total)
-
-
-class _ProgressBarPercentageReplacer:
-    """Internal, callable class to replace `{percentage}` placeholder with formatted float."""
-
-    def __init__(self, percentage: float, /) -> None:
-        self.percentage: float = percentage
-
-    def __call__(self, match: _rx.Match[str], /) -> str:
-        return f"{self.percentage:.{match.group(1) if match.group(1) else '1'}f}"
-
-
-class Throbber:
+class Throbber(_StdoutInterceptorMixin):
     """A terminal throbber for indeterminate processes with customizable appearance.<br>
     This class intercepts stdout to allow printing while the animation is active.\n
     -----------------------------------------------------------------------------------------
@@ -2419,7 +2505,7 @@ class Throbber:
             self._animation_thread = None
             self._frame_index = 0
 
-            self._clear_throbber_line()
+            self._clear_intercept_line()
             self._stop_intercepting()
 
     def update_label(self, label: StyledText | str | None, /) -> None:
@@ -2492,72 +2578,10 @@ class Throbber:
             if self._stop_event:
                 self._stop_event.wait(self.interval)
 
-    def _start_intercepting(self) -> None:
-        self.active = True
-        self._original_stdout = _sys.stdout
-        _sys.stdout = _InterceptedOutput(self)
-
-    def _stop_intercepting(self) -> None:
-        if self._original_stdout:
-            _sys.stdout = self._original_stdout
-            self._original_stdout = None
-        self.active = False
-        self._buffer.clear()
-        self._last_line_len = 0
+    def _reset_state(self) -> None:
         self._current_animation_str = ""
-
-    def _emergency_cleanup(self) -> None:
-        """Emergency cleanup to restore stdout in case of exceptions."""
-
-        with suppress(Exception):
-            self._stop_intercepting()
-
-    def _clear_throbber_line(self) -> None:
-        if self._last_line_len > 0 and self._original_stdout:
-            self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
-            self._original_stdout.flush()
-
-    def _flush_buffer(self) -> None:
-        if self._buffer and self._original_stdout:
-            self._clear_throbber_line()
-            for content in self._buffer:
-                self._original_stdout.write(content)
-                self._original_stdout.flush()
-            self._buffer.clear()
 
     def _redraw_display(self) -> None:
         if self._current_animation_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_animation_str}")
             self._original_stdout.flush()
-
-
-@mypyc_attr(native_class=False)
-class _InterceptedOutput:
-    """Custom StringIO that captures output and stores it in the progress bar buffer."""
-
-    def __init__(self, status_indicator: ProgressBar | Throbber, /) -> None:
-        self.status_indicator: ProgressBar | Throbber = status_indicator
-        self.string_io: StringIO = StringIO()
-
-    def write(self, content: str, /) -> int:
-        self.string_io.write(content)
-        try:
-            if content and content != "\r":
-                self.status_indicator._buffer.append(content)
-            return len(content)
-        except Exception:
-            self.status_indicator._emergency_cleanup()
-            raise
-
-    def flush(self) -> None:
-        self.string_io.flush()
-        try:
-            if self.status_indicator.active and self.status_indicator._buffer:
-                self.status_indicator._flush_buffer()
-                self.status_indicator._redraw_display()
-        except Exception:
-            self.status_indicator._emergency_cleanup()
-            raise
-
-    def __getattr__(self, name: str, /) -> Any:
-        return getattr(self.string_io, name)

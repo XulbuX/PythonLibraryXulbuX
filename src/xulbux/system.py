@@ -14,6 +14,7 @@ import getpass as _getpass
 import multiprocessing as _multiprocessing
 import os as _os
 import platform as _platform
+import shutil as _shutil
 import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
@@ -265,7 +266,10 @@ class _SystemRestartHelper:
         self.check_running_processes(["ps", "-A"], skip_lines=1)
 
         if self.prompt:
-            _subprocess.Popen(["notify-send", "System Restart", str(self.prompt)])
+            if _shutil.which("notify-send"):
+                _subprocess.Popen(["notify-send", "System Restart", str(self.prompt)])
+            else:
+                _console_module.info(f"System Restart: {self.prompt}")
             _time.sleep(self.wait)
 
         try:

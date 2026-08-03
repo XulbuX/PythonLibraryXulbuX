@@ -15,7 +15,7 @@ After making any changes, you must validate them by running the full suite of fo
 CD into the project root, then run:
 
 ```powershell
-ruff format .; if ($?) { ruff check . --fix }; if ($?) { pyright --pythonpath "$(py -c 'import sys; print(sys.executable)')" . }; if ($?) { mypy . }; if ($?) { pytest }
+ruff format .; if ($?) { ruff check . --fix }; if ($?) { pyright --pythonpath "$(py -c 'import sys; print(sys.executable)')" . }; if ($?) { mypy . }; if ($?) { pytest --basetemp .pytest_tmp }
 ```
 
 **On Unix:**
