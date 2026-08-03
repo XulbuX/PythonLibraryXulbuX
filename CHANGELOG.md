@@ -52,6 +52,8 @@
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
 *   `Data.render()` now returns a `StyledText` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
 *   Removed the `Data.print()` method, since `Data.render()` now returns a `StyledText` object, so you can simply call `Data.render(…).print()` instead.
+*   `Data.render(as_json=True)` now natively converts special Python objects into valid JSON strings without creating proprietary special-objects for them, allowing standard lossless serialization compatible across external web APIs.
+*   Removed `serialize_bytes()` and `deserialize_bytes()` from the `data` module, as bytes serialization is now handled natively and transparently.
 *   Migrated the entire `Console` class as well as the `ProgressBar` and `Throbber` classes off the deprecated `format_codes` module and onto the new operator-based styling API:
     -   All prompts/messages/content now accept any object or a `StyledText` object directly, instead of format-code strings.
     -   `Console.log()`'s `title_bg_color` and `Console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `Console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.

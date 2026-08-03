@@ -34,39 +34,6 @@ d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": 
 ####################################################### Data TESTS #######################################################
 
 
-def test_serialize_bytes():
-    utf8_bytes = b"Hello"
-    utf8_bytearray = bytearray(b"World")
-    non_utf8_bytes = b"\x80abc"
-
-    assert _data_module.serialize_bytes(utf8_bytes) == {"bytes": "Hello", "encoding": "utf-8"}
-    assert _data_module.serialize_bytes(utf8_bytearray) == {"bytearray": "World", "encoding": "utf-8"}
-    serialized_non_utf8 = _data_module.serialize_bytes(non_utf8_bytes)
-    assert serialized_non_utf8["encoding"] == "base64"
-    import base64
-
-    assert base64.b64decode(serialized_non_utf8["bytes"]).decode("latin-1") == non_utf8_bytes.decode("latin-1")
-
-
-def test_deserialize_bytes():
-    utf8_serialized_bytes = {"bytes": "Hello", "encoding": "utf-8"}
-    utf8_serialized_bytearray = {"bytearray": "World", "encoding": "utf-8"}
-    import base64
-
-    non_utf8_bytes = b"\x80abc"
-    base64_encoded = base64.b64encode(non_utf8_bytes).decode("utf-8")
-    base64_serialized_bytes = {"bytes": base64_encoded, "encoding": "base64"}
-
-    assert _data_module.deserialize_bytes(utf8_serialized_bytes) == b"Hello"
-    assert _data_module.deserialize_bytes(utf8_serialized_bytearray) == bytearray(b"World")
-    assert _data_module.deserialize_bytes(base64_serialized_bytes) == non_utf8_bytes
-
-    with pytest.raises(ValueError):
-        _data_module.deserialize_bytes({"bytes": "abc", "encoding": "unknown"})
-    with pytest.raises(ValueError):
-        _data_module.deserialize_bytes({"wrong_key": "abc", "encoding": "utf-8"})
-
-
 @pytest.mark.parametrize(
     "input_data, expected_count",
     [
@@ -201,8 +168,16 @@ def test_set_value_by_path_id() -> None:
     "data, indent, compactness, max_width, sep, as_json, expected_str",
     [
         ([1, 2, 3], 4, 1, 80, ", ", False, "[1, 2, 3]"),
-        ({"a": 1, "b": 2}, 4, 1, 80, ", ", False, "{'a': 1, 'b': 2}"),
-        ({"a": [1, 2], "b": {"c": 3}}, 4, 1, 80, ", ", False, "{\n    'a': [1, 2],\n    'b': {'c': 3}\n}"),
+        ((), 4, 1, 80, ", ", False, "()"),
+        ((1,), 4, 1, 80, ", ", False, "(1,)"),
+        ((1, 2), 4, 1, 80, ", ", False, "(1, 2)"),
+        (cast("set[Any]", set()), 4, 1, 80, ", ", False, "set()"),
+        ({1}, 4, 1, 80, ", ", False, "{1}"),
+        ({1, 2}, 4, 1, 80, ", ", False, "{1, 2}"),
+        (cast("frozenset[Any]", frozenset()), 4, 1, 80, ", ", False, "frozenset()"),
+        (frozenset({1, 2}), 4, 1, 80, ", ", False, "frozenset({1, 2})"),
+        ({"a": 1, "b": 2}, 4, 1, 80, ", ", False, '{"a": 1, "b": 2}'),
+        ({"a": [1, 2], "b": {"c": 3}}, 4, 1, 80, ", ", False, '{"a": [1, 2], "b": {"c": 3}}'),
         (
             {"a": [1, 2], "b": {"c": 3}},
             4,
@@ -210,19 +185,21 @@ def test_set_value_by_path_id() -> None:
             80,
             ", ",
             False,
-            "{\n    'a': [\n        1,\n        2\n    ],\n    'b': {\n        'c': 3\n    }\n}",
+            '{\n    "a": [\n        1,\n        2\n    ],\n    "b": {\n        "c": 3\n    }\n}',
         ),
-        ({"a": [1, 2], "b": {"c": 3}}, 4, 2, 80, ", ", False, "{'a': [1, 2], 'b': {'c': 3}}"),
-        ([1, [2, 3]], 2, 1, 80, ", ", False, "[\n  1,\n  [2, 3]\n]"),
-        ({"ultralongkeyname": [1, None, False]}, 4, 1, 20, ", ", False, "{'ultralongkeyname': [1, None, False]}"),
+        ({"a": [1, 2], "b": {"c": 3}}, 4, 2, 80, ", ", False, '{"a": [1, 2], "b": {"c": 3}}'),
+        ([1, [2, 3]], 2, 1, 80, ", ", False, "[1, [2, 3]]"),
+        ({"ultralongkeyname": [1, None, False]}, 4, 1, 20, ", ", False, '{"ultralongkeyname": [1, None, False]}'),
         ([1, 2, 3], 4, 1, 80, "; ", False, "[1; 2; 3]"),
         ({"a": True, "b": None, "c": [1, 2.5]}, 4, 2, 80, ", ", True, '{"a": true, "b": null, "c": [1, 2.5]}'),
-        ({"data": b"hello"}, 2, 0, 80, ", ", True, '{\n  "data": {\n    "bytes": "hello",\n    "encoding": "utf-8"\n  }\n}'),
-        ({"data": b"hello"}, 4, 1, 80, ", ", False, "{'data': bytes('hello', 'utf-8')}"),
+        ({"data": b"hello"}, 2, 0, 80, ", ", True, '{\n  "data": "hello"\n}'),
+        ({"data": b"hello"}, 4, 1, 80, ", ", False, '{"data": bytes("hello", "utf-8")}'),
+        ([1 + 2j], 4, 1, 80, ", ", False, "[complex(1.0, 2.0)]"),
+        ([1 + 2j], 4, 1, 80, ", ", True, '["1+2j"]'),
     ],
 )
 def test_render(
-    data: DataObj, indent: int, compactness: Literal[1, 0, 2], max_width: int, sep: str, as_json: bool, expected_str: str
+    data: DataObj, indent: int, compactness: Literal[0, 1, 2], max_width: int, sep: str, as_json: bool, expected_str: str
 ):
     result = _data_module.render(
         data, indent=indent, compactness=compactness, max_width=max_width, sep=sep, as_json=as_json, syntax_highlighting=False

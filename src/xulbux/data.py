@@ -28,43 +28,6 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, AnyStyle]] = {
 """Default syntax highlighting styles for data structure rendering."""
 
 
-def serialize_bytes(data: bytes | bytearray, /) -> dict[str, str]:
-    """Converts bytes or bytearray to a JSON-compatible format (dictionary) with explicit keys.\n
-    ----------------------------------------------------------------------------------------------
-    *   `data` – The bytes or bytearray to serialize."""
-
-    key = "bytearray" if isinstance(data, bytearray) else "bytes"
-
-    try:
-        return {key: data.decode("utf-8"), "encoding": "utf-8"}
-    except UnicodeDecodeError:
-        pass
-
-    return {key: _base64.b64encode(data).decode("utf-8"), "encoding": "base64"}
-
-
-def deserialize_bytes(obj: dict[str, str], /) -> bytes | bytearray:
-    """Tries to converts a JSON-compatible bytes/bytearray format (dictionary) back to its original type.\n
-    --------------------------------------------------------------------------------------------------------
-    *   `obj` – The dictionary to deserialize.
-    --------------------------------------------------------------------------------------------------------
-    If the serialized object was created with `serialize_bytes()`, it will work.<br>
-    If it fails to decode the data, it will raise a `ValueError`."""
-
-    for key in ("bytes", "bytearray"):
-        if key in obj and "encoding" in obj:
-            if obj["encoding"] == "utf-8":
-                data = obj[key].encode("utf-8")
-            elif obj["encoding"] == "base64":
-                data = _base64.b64decode(obj[key].encode("utf-8"))
-            else:
-                raise ValueError(f"Unknown encoding method '{obj['encoding']}'") from None
-
-            return bytearray(data) if key == "bytearray" else data
-
-    raise ValueError(f"Invalid serialized data:\n  {obj}") from None
-
-
 def chars_count(data: DataObjType, /) -> int:
     """The sum of all the characters amount including the keys in dictionaries.\n
     ------------------------------------------------------------------------------
@@ -421,8 +384,7 @@ def render(
     -------------------------------------------------------------------------------------------------------------------
     There are three different levels of `compactness`:
     *   `0` expands everything possible.
-    *   `1` only expands if there's other lists, tuples or dicts inside of data,<br>
-        or if the data's content is longer than `max_width`.
+    *   `1` expands only when necessary (based element complexity and the `max_width` parameter).
     *   `2` keeps everything collapsed (all on one line).
     -------------------------------------------------------------------------------------------------------------------
     The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
@@ -697,18 +659,17 @@ class _DataRenderHelper:
         if self.do_syntax_hl:
             if syntax_highlighting is True:
                 pass
-
             elif isinstance(syntax_highlighting, dict):
                 self.styles.update({key: val for key, val in syntax_highlighting.items() if key in self.styles})
-                sep = self._hl("punctuation", sep)
-
             else:
                 raise TypeError(f"The 'syntax_highlighting' parameter must be a dict or bool, got {type(syntax_highlighting)}")
+
+            sep = self._hl("punctuation", sep)
 
         self.sep: str = sep
 
         self.punct: dict[str, str] = {
-            char: (self._hl("punctuation", char) if self.do_syntax_hl else char) for char in "'\":)([]{}"
+            char: (self._hl("punctuation", char) if self.do_syntax_hl else char) for char in "'\":)([]{},"
         }
 
     def _hl(self, key: str, text: str, /) -> str:
@@ -738,12 +699,19 @@ class _DataRenderHelper:
             return self.format_sequence(value, current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
-            obj_dict = serialize_bytes(value)
+            try:
+                decoded = value.decode("utf-8")
+                encoding = "utf-8"
+            except UnicodeDecodeError:
+                decoded = _base64.b64encode(value).decode("utf-8")
+                encoding = "base64"
+
             if self.as_json:
-                return self.format_dict(obj_dict, current_indent + self.indent)
-            key = next(iter(obj_dict))
+                return self.format_value(decoded)
+
+            key = "bytearray" if isinstance(value, bytearray) else "bytes"
             type_label = self._hl("type", key) if self.do_syntax_hl else key
-            return type_label + self.format_sequence((obj_dict[key], obj_dict["encoding"]), current_indent + self.indent)
+            return type_label + self.format_sequence((decoded, encoding), current_indent + self.indent)
 
         elif isinstance(value, bool):
             val = str(value).lower() if self.as_json else str(value)
@@ -764,12 +732,38 @@ class _DataRenderHelper:
             return self._hl("literal", val) if self.do_syntax_hl else val
 
         else:
-            if self.as_json:
-                quote, escaped = '"', _string_module.escape(str(value), '"')
-            else:
-                quote, escaped = "'", _string_module.escape(str(value), "'")
+            quote, escaped = '"', _string_module.escape(str(value), '"')
             inner = self._hl("str", escaped) if self.do_syntax_hl else escaped
             return self.punct[quote] + inner + self.punct[quote]
+
+    def get_complexity(self, data: Any, /) -> int:  # noqa: C901
+        """Calculates the complexity of a data structure based on its nested elements."""
+
+        complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
+        if self.as_json:
+            complex_types += (bytes, bytearray)
+
+        if not isinstance(data, complex_types):
+            return 0
+
+        score = 1
+        if isinstance(data, dict):
+            for val in cast("dict[Any, Any]", data).values():
+                score += self.get_complexity(val)
+        elif isinstance(data, list):
+            for item in cast("list[Any]", data):
+                score += self.get_complexity(item)
+        elif isinstance(data, tuple):
+            for item in cast("tuple[Any, ...]", data):
+                score += self.get_complexity(item)
+        elif isinstance(data, set):
+            for item in cast("set[Any]", data):
+                score += self.get_complexity(item)
+        elif isinstance(data, frozenset):
+            for item in cast("frozenset[Any]", data):
+                score += self.get_complexity(item)
+
+        return score
 
     def should_expand(self, seq: IndexIterable, /) -> bool:
         """Determines whether a sequence should be expanded based on its content and the current compactness settings."""
@@ -784,12 +778,9 @@ class _DataRenderHelper:
             complex_types += (bytes, bytearray)
 
         complex_items = sum(1 for item in seq if isinstance(item, complex_types))
+        complexity = sum(self.get_complexity(item) for item in seq)
 
-        return (
-            complex_items > 1
-            or (complex_items == 1 and len(seq) > 1)
-            or chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
-        )
+        return (complex_items > 1 and complexity > 2) or chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
 
     def format_dict(self, data_dict: dict[Any, Any], current_indent: int, /) -> str:
         """Formats a dictionary as a string, applying indentation and compactness rules."""
@@ -817,12 +808,33 @@ class _DataRenderHelper:
         if self.as_json:
             seq = list(seq)
 
-        brackets = (self.punct["["], self.punct["]"]) if isinstance(seq, list) else (self.punct["("], self.punct[")"])
+        if isinstance(seq, list):
+            brackets = (self.punct["["], self.punct["]"])
+            prefix = ""
+            empty = self.punct["["] + self.punct["]"]
+        elif isinstance(seq, set):
+            brackets = (self.punct["{"], self.punct["}"])
+            prefix = ""
+            empty = (self._hl("type", "set") if self.do_syntax_hl else "set") + self.punct["("] + self.punct[")"]
+        elif isinstance(seq, frozenset):
+            brackets = (self.punct["("] + self.punct["{"], self.punct["}"] + self.punct[")"])
+            prefix = self._hl("type", "frozenset") if self.do_syntax_hl else "frozenset"
+            empty = prefix + self.punct["("] + self.punct[")"]
+        else:
+            brackets = (self.punct["("], self.punct[")"])
+            prefix = ""
+            empty = self.punct["("] + self.punct[")"]
 
-        if self.compactness == 2 or not seq or not self.should_expand(seq):
-            return f"{brackets[0]}{self.sep.join(self.format_value(item, current_indent) for item in seq)}{brackets[1]}"
+        if not seq:
+            return empty
+
+        trailing_comma = self.punct[","] if not self.as_json and isinstance(seq, tuple) and len(seq) == 1 else ""
+
+        if self.compactness == 2 or not self.should_expand(seq):
+            items_str = self.sep.join(self.format_value(item, current_indent) for item in seq)
+            return f"{prefix}{brackets[0]}{items_str}{trailing_comma}{brackets[1]}"
 
         items = [self.format_value(item, current_indent) for item in seq]
         formatted_items = f"{self.sep}\n".join(f"{' ' * (current_indent + self.indent)}{item}" for item in items)
 
-        return f"{brackets[0]}\n{formatted_items}\n{' ' * current_indent}{brackets[1]}"
+        return f"{prefix}{brackets[0]}\n{formatted_items}{trailing_comma}\n{' ' * current_indent}{brackets[1]}"
