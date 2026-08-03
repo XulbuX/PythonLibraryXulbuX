@@ -1,7 +1,6 @@
 import xulbux.color as _color_module
 from xulbux.color import hexa, hsla, rgba
 
-#
 ####################################################### Color TESTS ######################################################
 
 

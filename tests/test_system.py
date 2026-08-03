@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 import xulbux.system as _system_module
 import pytest
 
-#
 ###################################################### System TESTS ######################################################
 
 

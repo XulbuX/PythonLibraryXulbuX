@@ -168,10 +168,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final, TextIO, cast
 
 if TYPE_CHECKING:
+    import sys
     from collections.abc import Iterable, Iterator
     import regex as _rx
 
-    if _sys.version_info >= (3, 13):
+    if sys.version_info >= (3, 13):
         from typing import TypeIs
     else:
         from typing_extensions import TypeIs
@@ -239,7 +240,7 @@ _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
 """Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR style.\n
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
-#
+
 ####################################################### CORE TYPES #######################################################
 
 
@@ -530,7 +531,6 @@ def is_text_like(obj: object, /) -> TypeIs[Renderable]:
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, tuple))
 
 
-#
 #################################################### NAMESPACE HELPERS ###################################################
 
 

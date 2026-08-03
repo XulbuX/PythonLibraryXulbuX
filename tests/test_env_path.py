@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 import xulbux.env_path as _env_path_module
 import pytest
 
-#
 ###################################################### EnvPath TESTS #####################################################
 
 

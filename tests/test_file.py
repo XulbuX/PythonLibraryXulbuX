@@ -3,7 +3,6 @@ import xulbux.file as _file_module
 from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
 
-#
 ####################################################### File TESTS #######################################################
 
 

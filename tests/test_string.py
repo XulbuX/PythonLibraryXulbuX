@@ -1,7 +1,6 @@
 import xulbux.string as _string_module
 import pytest
 
-#
 ###################################################### String TESTS ######################################################
 
 

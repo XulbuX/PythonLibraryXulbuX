@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import TypeIs
 
+
 ####################################################### Primitives #######################################################
 
 type Int_0_100 = int

@@ -7,6 +7,7 @@ import pytest
 ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
+
 ############################################## ENTRYPOINT REGISTRATION TESTS #############################################
 
 

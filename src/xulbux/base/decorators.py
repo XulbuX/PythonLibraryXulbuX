@@ -55,7 +55,9 @@ class _SafeDeprecated:
 deprecated: Final[type[_SafeDeprecated]] = _SafeDeprecated
 
 if TYPE_CHECKING:
-    if _sys.version_info >= (3, 13):
+    import sys
+
+    if sys.version_info >= (3, 13):
         from warnings import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]
     else:
         from typing_extensions import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]

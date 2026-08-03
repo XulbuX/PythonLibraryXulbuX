@@ -4,7 +4,6 @@ from xulbux.regex import LazyRegex
 import pytest
 import regex as rx
 
-#
 ####################################################### Regex TESTS ######################################################
 
 

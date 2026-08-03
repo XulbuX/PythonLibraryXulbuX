@@ -7,7 +7,7 @@ import pytest
 
 ESC = ANSI.CHAR
 
-#
+
 ################################################## BARE StyledText TESTS #################################################
 
 
@@ -60,7 +60,6 @@ def test_bare_fmt_inside_nested_styled_call():
     assert result.raw == "abc"
 
 
-#
 ################################################## StyledText CALL TESTS #################################################
 
 
@@ -231,7 +230,6 @@ def test_build_open_close_dedupes_close_codes():
     assert closes == (f"{ESC}[22m",)
 
 
-#
 ################################################### Term OPERATOR TESTS ##################################################
 
 
@@ -258,7 +256,6 @@ def test_term_save_restore_and_title():
     assert Term.title("hi") == f"{ESC}]2;hi\x07"
 
 
-#
 ################################################ StyledText OPERATOR TESTS ###############################################
 
 
