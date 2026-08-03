@@ -941,13 +941,13 @@
 *   Made it possible to escape an <span id="auto-reset-format">auto-reset-format</span> (`[format](Automatically resetting)`) with a slash, so you can still have `()` brackets behind a `[format]`:
 
     ```python
-    FormatCodes.print('[u](Automatically resetting) following text')
+    FormatCodes.print("[u](Automatically resetting) following text")
     ```
 
     prints: <code><u>Automatically resetting</u> following text</code>
 
     ```python
-    FormatCodes.print('[u]/(Automatically resetting) following text')
+    FormatCodes.print("[u]/(Automatically resetting) following text")
     ```
 
     prints: <code><u>(Automatically resetting) following text</u></code>
@@ -993,6 +993,7 @@ $\color{#F90}\Huge\textsf{INITIAL RELEASE!\ 🤩🎉}$<br>
 ```python
 # GENERAL LIBRARY
 import XulbuX as xx
+
 # CUSTOM TYPES
 from XulbuX import rgb, hsl, hexa
 ```
