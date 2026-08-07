@@ -7,7 +7,7 @@ and command-line argument parsing.
 
 from . import color as _color_module
 from . import string as _string_module
-from .ansi import AnyStyle, BaseStyle, Renderable, S, StyledText, _StyleGroup, is_any_style
+from .ansi import AnyStyle, BaseStyle, ColorStyle, Renderable, S, StyledText, _StyleGroup, is_any_style
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
@@ -526,7 +526,7 @@ def log(
     start: str = "",
     end: str = "\n",
     title_bg_color: BaseStyle | Rgba | Hexa | None = None,
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     tab_size: int = 8,
     title_px: int = 1,
     title_mx: int = 2,
@@ -587,7 +587,7 @@ def log(
     # Add back the removed ANSI codes to their original positions in the wrapped prompt:
     wrapped = f"\n{' ' * title_len}{tab}".join(_add_back_removed_parts(prompt_lst, removals))
 
-    prompt_segment = S.hex(str(_color_module.to_hexa(default_color)))(wrapped) if default_color is not None else wrapped
+    prompt_segment = _as_fg_style(default_color)(wrapped) if default_color is not None else wrapped
 
     if title == "":
         StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
@@ -602,7 +602,7 @@ def _log_preset(
     title_bg_color: BaseStyle | Rgba | Hexa | None,
     start: str,
     end: str,
-    default_color: Rgba | Hexa | None,
+    default_color: ColorStyle | Rgba | Hexa | None,
     pause: bool,
     do_exit: bool,
     exit_code: int,
@@ -620,7 +620,7 @@ def debug(
     active: bool = True,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -640,7 +640,7 @@ def info(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -659,7 +659,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -672,7 +672,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -685,7 +685,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -699,7 +699,7 @@ def done(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -718,7 +718,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -731,7 +731,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -744,7 +744,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -758,7 +758,7 @@ def warn(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 1,
@@ -777,7 +777,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -790,7 +790,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -803,7 +803,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -817,7 +817,7 @@ def fail(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 1,
@@ -836,7 +836,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -849,7 +849,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -862,7 +862,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: Rgba | Hexa | None = ...,
+    default_color: ColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -876,7 +876,7 @@ def exit(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 0,
@@ -894,7 +894,7 @@ def log_box_filled(
     start: str = "",
     end: str = "\n",
     box_bg_color: AnyStyle | Rgba | Hexa | None = None,
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     w_padding: int = 2,
     w_full: bool = False,
     indent: int = 0,
@@ -919,14 +919,12 @@ def log_box_filled(
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-    default_hexa = str(_color_module.to_hexa(default_color)) if default_color is not None else "#000"
+    fg_style = _as_fg_style(default_color, fallback="#000")
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-    bg_style: AnyStyle = (
-        (S.RESET_FG | S.INVERSE | S.BG.hex(default_hexa)) if box_bg_color is None else _as_bg_style(box_bg_color)
-    )
+    bg_style: AnyStyle = (S.RESET_FG | S.INVERSE | fg_style) if box_bg_color is None else _as_bg_style(box_bg_color)
 
-    open_seq = StyledText(S.hex(default_hexa) | bg_style).ansi
+    open_seq = StyledText(fg_style | bg_style).ansi
     bg_open = StyledText(bg_style).ansi
     reset = StyledText(S.RESET).ansi
 
@@ -953,7 +951,7 @@ def log_box_bordered(
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
     border_style: AnyStyle | Rgba | Hexa = S.BR.BLACK,
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     w_padding: int = 1,
     w_full: bool = False,
     indent: int = 0,
@@ -1008,7 +1006,7 @@ def log_box_bordered(
             )
 
     border_open = StyledText(_as_fg_style(border_style)).ansi
-    content_open = StyledText(S.hex(str(_color_module.to_hexa(default_color)))).ansi if default_color is not None else ""
+    content_open = StyledText(_as_fg_style(default_color)).ansi if default_color is not None else ""
     reset = StyledText(S.RESET).ansi
 
     borders = {
@@ -1054,7 +1052,7 @@ def confirm(
     *,
     start: StyledText | str = "",
     end: StyledText | str = "",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     default_is_yes: bool = True,
 ) -> bool:
     """Ask a yes/no question.\n
@@ -1076,7 +1074,7 @@ def confirm(
         "): ",
     )
     head = f"{_to_styled_text(start)}{_to_styled_text(prompt).ansi} "
-    head_seg = S.hex(str(_color_module.to_hexa(default_color)))(head) if default_color is not None else head
+    head_seg = _as_fg_style(default_color)(head) if default_color is not None else head
 
     confirmed = input(StyledText(head_seg, S.RESET, yes_no).ansi).strip().lower() in (
         {"", "y", "yes"} if default_is_yes else {"y", "yes"}
@@ -1094,7 +1092,7 @@ def multiline_input(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     show_keybindings: bool = True,
     input_prefix: str = " ⮡ ",
     reset_ansi: bool = True,
@@ -1116,7 +1114,7 @@ def multiline_input(
     kb.add("c-d", eager=True)(_multiline_input_submit)
 
     head = f"{start}{_to_styled_text(prompt).ansi}"
-    head_seg = S.hex(str(_color_module.to_hexa(default_color)))(head) if default_color is not None else head
+    head_seg = _as_fg_style(default_color)(head) if default_color is not None else head
     StyledText(head_seg).print()
     if show_keybindings:
         StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
@@ -1133,7 +1131,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1151,7 +1149,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1169,7 +1167,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1188,7 +1186,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: Rgba | Hexa | None = None,
+    default_color: ColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1246,7 +1244,7 @@ def input(
     custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
     prompt_ansi = _to_styled_text(prompt).ansi
     if default_color is not None:
-        prompt_ansi = StyledText(S.hex(str(_color_module.to_hexa(default_color)))(prompt_ansi)).ansi
+        prompt_ansi = StyledText(_as_fg_style(default_color)(prompt_ansi)).ansi
     session: _pt.PromptSession[str] = _pt.PromptSession(
         message=_pt.formatted_text.ANSI(prompt_ansi),
         validator=_ConsoleInputValidator(helper.get_text, mask_char=mask_char, min_len=min_len, validator=validator),
@@ -1336,15 +1334,17 @@ def _as_bg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
     )
 
 
-def _as_fg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
-    """Resolves an `S` style or an RGBA/HEXA color to an `S` foreground style."""
+def _as_fg_style(color: AnyStyle | Rgba | Hexa | None, /, *, fallback: str = "#000") -> AnyStyle:
+    """Resolves an `S` style, an RGBA/HEXA color, or `None` (returns fallback) to an `S` foreground style."""
 
+    if color is None:
+        return S.hex(fallback)
     if is_any_style(color):
         return color
     if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.hex(str(_color_module.to_hexa(color)))
 
-    raise ValueError(f"The 'border_style' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
+    raise ValueError(f"The 'color' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
 
 
 def _persist_style(ansi_text: str, style_open: str, /) -> str:

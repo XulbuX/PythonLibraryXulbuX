@@ -37,6 +37,7 @@
 *   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
 *   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
 *   Added missing tests and improved general test coverage, particularly for the `console` module.
+*   Functions in the `console` module now natively accept `ColorStyle` types (console colors) for color parameters (e.g., `default_color`).
 *   Corrected and refined type hints across the library for better accuracy.
 
 **BREAKING CHANGES:**

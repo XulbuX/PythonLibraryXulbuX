@@ -492,6 +492,22 @@ class _StyledSequence:
 
 ##################### PUBLIC TYPE HELPERS #####################
 
+type ColorStyle = _Style | _ColorStyle
+"""A single style code representing a color (e.g., `S.RED`, `S.hex("#FFF")`). Excludes non-color styles like `S.BOLD`."""
+
+
+def is_color_style(obj: object, /) -> TypeIs[ColorStyle]:
+    """Returns true if `obj` is an instance that matches the `ColorStyle` type."""
+
+    if isinstance(obj, _ColorStyle):
+        return True
+    elif isinstance(obj, _Style):
+        val = obj._value
+        return (30 <= val <= 37) or (40 <= val <= 47) or (90 <= val <= 97) or (100 <= val <= 107)
+
+    return False
+
+
 type BaseStyle = _Style | _ColorStyle | _Link
 """Any single style code, color style, or link style that can be combined via `|` and applied to text."""
 
