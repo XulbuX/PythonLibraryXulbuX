@@ -165,9 +165,11 @@ import ctypes as _ctypes
 import os as _os
 import sys as _sys
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Final, TextIO, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TextIO, cast, overload
 
 if TYPE_CHECKING:
+    from .color import hexa, rgba
+
     import sys
     from collections.abc import Iterable, Iterator
     import regex as _rx
@@ -510,14 +512,14 @@ def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
     return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
 
 
-type RenderSegment = str | _StyledSequence | AnyStyle
-"""A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
+type RenderSegment = str | _StyledSequence | AnyStyle | StyledText
+"""A single segment: a plain string, a nested styled segment, a bare style object (open-only), or a `StyledText` object."""
 
 
 def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
     """Returns true if `obj` is an instance that matches the `RenderSegment` type."""
 
-    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup))
+    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText))
 
 
 type Renderable = RenderSegment | tuple[RenderSegment, ...]
@@ -528,7 +530,7 @@ Can be passed to a `_Style` call, or as a positional argument to `StyledText(…
 def is_renderable(obj: object, /) -> TypeIs[Renderable]:
     """Returns true if `obj` is an instance that matches the `Renderable` type."""
 
-    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, tuple))
+    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText, tuple))
 
 
 #################################################### NAMESPACE HELPERS ###################################################
@@ -576,19 +578,29 @@ class _BgNS:
     """White background."""
     BR: ClassVar[type[_BgBrNS]] = _BgBrNS
 
+    @overload
     @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle:
-        """24-bit background color from RGB components.\n
-        `S.BG.rgb(0, 0, 0)("text")`"""
+    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
 
-        return _ColorStyle(red, green, blue, bg=True)
+    @overload
+    @staticmethod
+    def rgb(color: rgba, /) -> _ColorStyle: ...
 
     @staticmethod
-    def hex(color: str, /) -> _ColorStyle:
-        """24-bit background color from HEX string.\n
-        `S.BG.hex("#202020")("text")`"""
+    def rgb(*args: Any) -> _ColorStyle:
+        """24-bit background color from RGB components or an `rgba` object.\n
+        `S.BG.rgb(0, 0, 0)("text")` or `S.BG.rgb(my_rgba)("text")`"""
 
-        return _ColorStyle.from_hex(color, bg=True)
+        if len(args) == 3:
+            return _ColorStyle(args[0], args[1], args[2], bg=True)
+        return _ColorStyle(args[0][0], args[0][1], args[0][2], bg=True)
+
+    @staticmethod
+    def hex(color: str | hexa, /) -> _ColorStyle:
+        """24-bit background color from HEX string or `hexa` object.\n
+        `S.BG.hex("#202020")("text")` or `S.BG.hex(my_hexa)("text")`"""
+
+        return _ColorStyle.from_hex(str(color), bg=True)
 
 
 class _BrNS:
@@ -695,19 +707,29 @@ class S:
     BG: ClassVar[type[_BgNS]] = _BgNS
 
     #################### CUSTOM COLORS & LINKS ####################
+    @overload
     @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle:
-        """24-bit foreground color.\n
-        `S.rgb(255, 96, 112)("text")`"""
+    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
 
-        return _ColorStyle(red, green, blue)
+    @overload
+    @staticmethod
+    def rgb(color: rgba, /) -> _ColorStyle: ...
 
     @staticmethod
-    def hex(color: str, /) -> _ColorStyle:
-        """24-bit foreground color from HEX string.\n
-        `S.hex("#FF6070")("text")` or `S.hex("F67")`"""
+    def rgb(*args: Any) -> _ColorStyle:
+        """24-bit foreground color from RGB components or an `rgba` object.\n
+        `S.rgb(255, 96, 112)("text")` or `S.rgb(my_rgba)("text")`"""
 
-        return _ColorStyle.from_hex(color)
+        if len(args) == 3:
+            return _ColorStyle(args[0], args[1], args[2])
+        return _ColorStyle(args[0][0], args[0][1], args[0][2])
+
+    @staticmethod
+    def hex(color: str | hexa, /) -> _ColorStyle:
+        """24-bit foreground color from HEX string or `hexa` object.\n
+        `S.hex("#FF6070")("text")`, `S.hex("F67")`, or `S.hex(my_hexa)("text")`"""
+
+        return _ColorStyle.from_hex(str(color))
 
     @staticmethod
     def link(url: str | Path, /) -> _Link:
@@ -853,26 +875,23 @@ class StyledText:
 
         return tuple(result)
 
-    def __add__(self, other: StyledText | str, /) -> StyledText:
-        """Concatenate a `StyledText` object with another `StyledText` object or a plain string."""
+    def __add__(self, other: Renderable, /) -> StyledText:
+        """Concatenate a `StyledText` object with another renderable object."""
 
-        result = StyledText.__new__(StyledText)
-        result.ansi = self.ansi + (other.ansi if isinstance(other, StyledText) else other)
+        return StyledText(self, other)
 
-        return result
+    def __radd__(self, other: Renderable, /) -> StyledText:
+        """Concatenate another renderable object with a `StyledText` object from the left."""
 
-    def __radd__(self, other: str, /) -> StyledText:
-        """Concatenate a plain string with a `StyledText` object from the left."""
+        return StyledText(other, self)
 
-        result = StyledText.__new__(StyledText)
-        result.ansi = other + self.ansi
+    def __iadd__(self, other: Renderable, /) -> StyledText:
+        """Append another renderable object in place (`+=`)."""
 
-        return result
-
-    def __iadd__(self, other: StyledText | str, /) -> StyledText:
-        """Append another `StyledText` object or a plain string in place (`+=`)."""
-
-        self.ansi += other.ansi if isinstance(other, StyledText) else other
+        if isinstance(other, StyledText):
+            self.ansi += other.ansi
+        else:
+            self.ansi += StyledText(other).ansi
         return self
 
     def __mul__(self, n: int, /) -> StyledText:
@@ -895,6 +914,51 @@ class StyledText:
         """Return the visible character count (ANSI sequences stripped)."""
 
         return len(self.raw)
+
+    def __eq__(self, other: object, /) -> bool:
+        """Check if this `StyledText` instance produces the exact same output as another object.\n
+        If `other` is a string, it is compared against the rendered `ansi` string."""
+
+        if isinstance(other, StyledText):
+            return self.ansi == other.ansi
+        if isinstance(other, str):
+            return self.ansi == other
+        return NotImplemented
+
+    def __bool__(self) -> bool:
+        """Return `True` if this `StyledText` instance contains any visible text, `False` otherwise."""
+
+        return bool(self.raw)
+
+    def __getitem__(self, key: slice, /) -> StyledText:
+        """Return a sliced `StyledText` object containing a subset of the visible characters,<br>
+        while correctly preserving all ANSI styling applied across the entire text."""
+
+        start, stop, step = key.indices(len(self))
+        if step != 1:
+            raise ValueError("StyledText slicing only supports a step of 1")
+
+        new_ansi_parts: list[str] = []
+        raw_idx = 0
+        last_end = 0
+
+        for match in _ANSI_SEQ_RX.finditer(self.ansi):
+            for char in self.ansi[last_end : match.start()]:
+                if start <= raw_idx < stop:
+                    new_ansi_parts.append(char)
+                raw_idx += 1
+
+            new_ansi_parts.append(match.group())
+            last_end = match.end()
+
+        for char in self.ansi[last_end:]:
+            if start <= raw_idx < stop:
+                new_ansi_parts.append(char)
+            raw_idx += 1
+
+        result = StyledText.__new__(StyledText)
+        result.ansi = "".join(new_ansi_parts)
+        return result
 
     def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `StyledText` object as the separator.\n
@@ -999,6 +1063,10 @@ class StyledText:
 
         if isinstance(segment, str):
             ansi_parts.append(segment)
+            return
+
+        elif isinstance(segment, StyledText):
+            ansi_parts.append(segment.ansi)
             return
 
         elif isinstance(segment, _StyledSequence):
