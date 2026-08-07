@@ -514,7 +514,7 @@ type RenderSegment = str | _StyledSequence | AnyStyle
 """A single segment: a plain string, a nested styled segment, or a bare style object (open-only)."""
 
 
-def is_styled_segment(obj: object, /) -> TypeIs[RenderSegment]:
+def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
     """Returns true if `obj` is an instance that matches the `RenderSegment` type."""
 
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup))
@@ -525,7 +525,7 @@ type Renderable = RenderSegment | tuple[RenderSegment, ...]
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
 
 
-def is_text_like(obj: object, /) -> TypeIs[Renderable]:
+def is_renderable(obj: object, /) -> TypeIs[Renderable]:
     """Returns true if `obj` is an instance that matches the `Renderable` type."""
 
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, tuple))
