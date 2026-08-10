@@ -55,14 +55,14 @@ _ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 
 _DEFAULT_BAR_FORMAT: Final[list[Renderable]] = [
     "{l}",
-    (S.BR.CYAN | S.BG.BLACK)("{b}"),
+    (S.BR.MAGENTA | S.BG.BLACK)("{b}"),
     (S.BOLD("{c:,}"), "/{t:,}"),
-    (S.DIM | S.BR.CYAN)("(", S.ITALIC("{p}%"), ")"),
+    (S.DIM | S.BR.MAGENTA)("(", S.ITALIC("{p}%"), ")"),
 ]
 """Default `ProgressBar` format, styled with the operator-based API."""
-_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = ["{l}", (S.BR.CYAN | S.BG.BLACK)("{b}")]
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = ["{l}", (S.BR.MAGENTA | S.BG.BLACK)("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [S.BR.CYAN("{a}"), "{l}"]
+_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [S.BR.MAGENTA("{a}"), "{l}"]
 """Default `Throbber` format, styled with the operator-based API."""
 
 # fmt: off
