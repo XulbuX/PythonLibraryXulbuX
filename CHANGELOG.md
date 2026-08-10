@@ -33,8 +33,9 @@
 *   Improved the performance of `Console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
 *   Improved the performance of `String.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
 *   Improved the performance of `Data.remove_duplicates()` for lists and tuples:<br>
-    Hashable items now deduplicate in $ O(n) $ using `dict.fromkeys()`, with an $ O(n²) $ equality-check fallback only for unhashable items (*lists, dicts, sets*).
+    Hashable items now deduplicate in $ O(n) $ using `dict.fromkeys()`, with an $ O(n^2) $ equality-check fallback only for unhashable items (*lists, dicts, sets*).
 *   The `Console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
+*   Added two ney public constants `FRAMES_STANDARD` and `FRAMES_WINDMILL` to the `console` module, which are usable as `frames` presets for the `Throbber` class.
 *   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
 *   Added missing tests and improved general test coverage, particularly for the `console` module.
 *   Functions in the `console` module now natively accept `ColorStyle` types (console colors) for color parameters (e.g., `default_color`).

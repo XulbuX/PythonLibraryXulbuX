@@ -1359,7 +1359,7 @@ def test_throbber_init_custom():
 def test_throbber_init_defaults():
     throbber = Throbber()
     assert throbber.label is None
-    assert throbber.interval == 0.2
+    assert throbber.interval == 0.08
     assert throbber.active is False
     assert throbber.sep == " "
     assert len(throbber.frames) > 0

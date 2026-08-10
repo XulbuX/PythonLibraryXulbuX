@@ -55,15 +55,22 @@ _ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 
 _DEFAULT_BAR_FORMAT: Final[list[Renderable]] = [
     "{l}",
-    S.BG.BLACK("{b}"),
+    (S.BR.CYAN | S.BG.BLACK)("{b}"),
     (S.BOLD("{c:,}"), "/{t:,}"),
-    S.DIM("(", S.ITALIC("{p}%"), ")"),
+    (S.DIM | S.BR.CYAN)("(", S.ITALIC("{p}%"), ")"),
 ]
 """Default `ProgressBar` format, styled with the operator-based API."""
-_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = [S.BG.BLACK("{b}")]
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = ["{l}", (S.BR.CYAN | S.BG.BLACK)("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [(S.BOLD("{a}"), "{l}")]
+_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [S.BR.CYAN("{a}"), "{l}"]
 """Default `Throbber` format, styled with the operator-based API."""
+
+# fmt: off
+FRAMES_STANDARD: Final[tuple[str, ...]] = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
+"""Throbber `frames` preset: A standard, clean, and modern Braille circular spinner."""
+FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ", "⠼⠁", "⠞⠁", "⠖⠃", "⠓⠃", "⠓⠆", "⠙⠆", "⠹⠄", "⠸⠅", "⠼⠁", "⠴⠃", "⠖⠃", "⠖⠆")  # noqa: E501
+"""Throbber `frames` preset: A wide, dual-character Braille windmill animation."""
+# fmt: on
 
 
 def _compile_format(fmt: list[Renderable] | tuple[Renderable, ...] | Renderable) -> list[str]:
@@ -2089,7 +2096,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         self,
         *,
         min_width: int = 10,
-        max_width: int = 50,
+        max_width: int = 25,
         format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_BAR_FORMAT,
         limited_format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
@@ -2408,8 +2415,8 @@ class Throbber(_StdoutInterceptorMixin):
         label: StyledText | str | None = None,
         format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
-        frames: tuple[str, ...] = ("·  ", "·· ", "···", " ··", "  ·", "  ·", " ··", "···", "·· ", "·  "),
-        interval: float = 0.2,
+        frames: tuple[str, ...] = FRAMES_STANDARD,
+        interval: float = 0.08,
     ) -> None:
         self.format: list[str]
         """The format strings used to render the throbber (joined by `sep`)."""

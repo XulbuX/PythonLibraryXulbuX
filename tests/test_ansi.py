@@ -245,8 +245,10 @@ def test_term_constants():
 def test_term_cursor_movement():
     assert Term.up(3) == f"{ESC}[3A"
     assert Term.down() == f"{ESC}[1B"
-    assert Term.right(5) == f"{ESC}[5C"
     assert Term.left(2) == f"{ESC}[2D"
+    assert Term.right(5) == f"{ESC}[5C"
+    assert Term.prev_line(2) == f"{ESC}[2F"
+    assert Term.next_line() == f"{ESC}[1E"
     assert Term.move(4, 7) == f"{ESC}[4;7H"
 
 

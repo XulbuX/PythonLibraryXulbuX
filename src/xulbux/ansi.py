@@ -793,16 +793,28 @@ class Term:
         return f"{ANSI.CHAR}[{n}B"
 
     @staticmethod
+    def left(n: int = 1, /) -> str:
+        """Move the cursor left by `n` columns."""
+
+        return f"{ANSI.CHAR}[{n}D"
+
+    @staticmethod
     def right(n: int = 1, /) -> str:
         """Move the cursor right by `n` columns."""
 
         return f"{ANSI.CHAR}[{n}C"
 
     @staticmethod
-    def left(n: int = 1, /) -> str:
-        """Move the cursor left by `n` columns."""
+    def prev_line(n: int = 1, /) -> str:
+        """Move the cursor to the beginning of the previous line, `n` lines up."""
 
-        return f"{ANSI.CHAR}[{n}D"
+        return f"{ANSI.CHAR}[{n}F"
+
+    @staticmethod
+    def next_line(n: int = 1, /) -> str:
+        """Move the cursor to the beginning of the next line, `n` lines down."""
+
+        return f"{ANSI.CHAR}[{n}E"
 
     @staticmethod
     def move(row: int, col: int, /) -> str:
