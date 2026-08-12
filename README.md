@@ -30,13 +30,13 @@ It is recommended to install the library within a [virtual environment](https://
 
 To install the library, run:
 
-```shell
+```bash
 pip install xulbux
 ```
 
 To upgrade to the latest available version:
 
-```shell
+```bash
 pip install --upgrade xulbux
 ```
 
