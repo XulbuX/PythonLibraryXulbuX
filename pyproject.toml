@@ -16,8 +16,8 @@ name = "xulbux"
 version = "1.10.0"
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
-authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
-maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
+authors = [{ name = "XulbuX", email = "hi@xul.is" }]
+maintainers = [{ name = "XulbuX", email = "hi@xul.is" }]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12.0"

@@ -8,7 +8,7 @@ __status__: Final[str] = "Production/Stable"
 __url__: Final[str] = "https://github.com/xulbux/python-lib-xulbux"
 
 __author__: Final[str] = "XulbuX"
-__email__: Final[str] = "xulbux.real@gmail.com"
+__email__: Final[str] = "hi@xul.is"
 __license__: Final[str] = "MIT"
 __copyright__: Final[str] = "Copyright (c) 2024 XulbuX"
 
