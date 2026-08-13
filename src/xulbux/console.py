@@ -962,7 +962,7 @@ def log_box_bordered(
     w_padding: int = 1,
     w_full: bool = False,
     indent: int = 0,
-    _border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
+    border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
 ) -> None:
     """Will print a bordered box, containing a log message.\n
     ---------------------------------------------------------------------------------------------
@@ -975,7 +975,7 @@ def log_box_bordered(
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).
-    *   `_border_chars` – Define your own border characters set (overwrites `border_type`).
+    *   `border_chars` – Define your own border characters set (overwrites `border_type`).
     ---------------------------------------------------------------------------------------------
     You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
     ---------------------------------------------------------------------------------------------
@@ -1004,13 +1004,11 @@ def log_box_bordered(
         raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
-    if _border_chars is not None:
-        if len(_border_chars) != 11:
-            raise ValueError(f"The '_border_chars' parameter must contain exactly 11 characters, got {len(_border_chars)}")
-        if not all(len(char) == 1 for char in _border_chars):
-            raise ValueError(
-                f"The '_border_chars' parameter must only contain single-character strings, got {_border_chars!r}"
-            )
+    if border_chars is not None:
+        if len(border_chars) != 11:
+            raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
+        if not all(len(char) == 1 for char in border_chars):
+            raise ValueError(f"The 'border_chars' parameter must only contain single-character strings, got {border_chars!r}")
 
     border_open = StyledText(_as_fg_style(border_style)).ansi
     content_open = StyledText(_as_fg_style(default_color)).ansi if default_color is not None else ""
@@ -1022,7 +1020,7 @@ def log_box_bordered(
         "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
         "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
     }
-    border_chars = borders.get(border_type, borders["standard"]) if _border_chars is None else _border_chars
+    border_chars = borders.get(border_type, borders["standard"]) if border_chars is None else border_chars
 
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(values, has_rules=True)
 

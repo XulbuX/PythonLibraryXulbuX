@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+
+:root {
+  --vp-c-brand-1: oklch(78.5% 0.115 274.713);
+  --vp-c-brand-2: oklch(67.3% 0.182 276.935);
+  --vp-c-brand-3: oklch(58.5% 0.233 277.117);
+}
+
+/* Wide Docs Layout for API columns. */
+body .VPDoc,
+body .VPDoc .container,
+body .VPDoc.has-sidebar .container,
+body .VPDoc .content,
+body .VPDoc.has-sidebar .content,
+body .VPDoc .content-container,
+body .VPDoc.has-sidebar .content-container,
+body .vp-doc,
+body .vp-doc > div {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Ensure the main container doesn't stretch infinitely, but gives plenty of room. */
+body .VPDoc .container {
+  max-width: 1400px !important;
+}
+
+/* API Item Two-Column Layout. */
+.api-item {
+  gap: 2rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  grid-template-columns: 1fr;
+  display: grid;
+  align-items: start;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+@media (min-width: 1024px) {
+  .api-item {
+    grid-template-columns: 400px 1fr;
+  }
+}
+
+.api-signature-col {
+  top: calc(var(--vp-nav-height, 64px) + 2rem);
+  position: sticky;
+}
+
+.api-signature-col > div[class*='language-'] {
+  margin: 0 !important;
+}
+
+.api-docs-col > h3,
+.api-docs-col > h4 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}

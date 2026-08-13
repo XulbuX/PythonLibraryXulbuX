@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "always",
+  "bracketSameLine": true,
+  "bracketSpacing": true,
+  "embeddedLanguageFormatting": "auto",
+  "endOfLine": "lf",
+  "sortImports": { "newlinesBetween": false },
+  "sortPackageJson": { "sortScripts": true },
+  "sortTailwindcss": {
+    "attributes": [":class"],
+    "functions": ["clsx", "cn", "cva"],
+    "stylesheet": ".vitepress/theme/style.css"
+  },
+  "htmlWhitespaceSensitivity": "css",
+  "objectWrap": "collapse",
+  "proseWrap": "preserve",
+  "quoteProps": "as-needed",
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": false,
+  "vueIndentScriptAndStyle": false
+}
