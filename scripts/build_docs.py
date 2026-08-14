@@ -487,7 +487,7 @@ def main() -> None:
     xulbux_dir = SRC_DIR / "xulbux"
 
     for py_file in sorted(xulbux_dir.rglob("*.py")):
-        if py_file.name.startswith("__"):
+        if py_file.name.startswith("_"):
             continue
 
         # Get relative path without extension to build module path:
