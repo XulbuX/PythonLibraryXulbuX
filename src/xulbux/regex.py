@@ -214,7 +214,7 @@ class LazyRegex:
     *   `**patterns` – Keyword arguments where the key is the name of the pattern<br>
         and the value is the regex pattern string to compile.
     ----------------------------------------------------------------------------------
-    #### Example usage:
+    **Example usage:**
     ```python
     PATTERNS = LazyRegex(
         email=r"(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",

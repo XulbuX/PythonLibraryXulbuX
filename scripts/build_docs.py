@@ -142,11 +142,17 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
     return vars_info
 
 
-def _generate_markdown_for_var(name: str, var_info: dict[str, Any], is_class_attr: bool = False) -> str:
+def _generate_markdown_for_var(name: str, var_info: dict[str, Any], is_class_attr: bool = False, class_name: str = "") -> str:
     """Generates Markdown documentation for a given variable or class attribute."""
 
     badge = ' <Badge type="danger" text="deprecated" />' if var_info["dep"] else ""
-    title = f"{'####' if is_class_attr else '###'} `.{name}`" if is_class_attr else f"### `{name}`"
+    if is_class_attr and class_name:
+        title = f'#### <code><span data-class-prefix="{class_name}"></span>.{name}</code>'
+    elif is_class_attr:
+        title = f"#### `.{name}`"
+    else:
+        title = f"### `{name}`"
+
     doc_parts = [process_docstring(var_info["doc"])] if var_info["doc"] else []
 
     return _build_api_markdown_block(title, badge, var_info["sig"], doc_parts)
@@ -418,11 +424,11 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
 
         for item in items_to_doc:
             if item[1] == "var":
-                lines.append(_generate_markdown_for_var(item[2], item[3], is_class_attr=True))
+                lines.append(_generate_markdown_for_var(item[2], item[3], is_class_attr=True, class_name=name))
             else:
                 m_name, m_obj = item[2], item[3]
                 badge = ' <Badge type="danger" text="deprecated" />' if hasattr(m_obj, "__deprecated__") else ""
-                title = f"#### `.{m_name}()`"
+                title = f'#### <code><span data-class-prefix="{name}"></span>.{m_name}()</code>'
                 doc_parts = [process_docstring(m_obj.__doc__)] if m_obj.__doc__ else []
                 lines.append(_build_api_markdown_block(title, badge, get_source_signature(m_obj), doc_parts))
 

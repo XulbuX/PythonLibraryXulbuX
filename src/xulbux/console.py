@@ -393,18 +393,24 @@ def get_args(
         in addition to the separator-based syntax; enabled by default.
     ----------------------------------------------------------------------------------------------------------
     The `arg_parse_configs` dictionary can have the following structures for each item:
+
     1.  Simple set of flags (when no default value is needed):
+
         ```python
         "alias_name": {"-f", "--flag"}
         ```
+
     2.  Dictionary with the`"flags"` set, plus a specified `"default"` value:
+
         ```python
         "alias_name": {
             "flags": {"-f", "--flag"},
             "default": "some_value",
         }
         ```
+
     3.  Positional value collection using the literals `"before"` or `"after"`:
+
         ```python
         # Collect all non-flagged values that appear before the first flag:
         "alias_name": "before"
@@ -412,8 +418,12 @@ def get_args(
         # Collect all non-flagged values that appear after the last flag's value:
         "alias_name": "after"
         ```
-    #### Example usage:
+
+    ----------------------------------------------------------------------------------------------------------
+    **Example usage:**
+
     If you call the `get_args()` method in your script like this:
+
     ```python
     parsed_args = get_args({
         "text_before": "before",   # Positional values before first flag
@@ -425,9 +435,15 @@ def get_args(
         "text_after": "after",     # Positional values after last flag's value
     })
     ```
-    … and execute the script via the command line like this:\n
-    `$ python script.py "Hello" "World" --arg1=42 "Goodbye"`\n
+
+    … and execute the script via the command line like this:
+
+    ```bash
+    python script.py "Hello" "World" --arg1=42 "Goodbye"
+    ```
+
     … the `get_args()` method would return a `ParsedArgs` object with the following structure:
+
     ```python
     ParsedArgs(
         # Found 2 values before the first flag:
@@ -440,6 +456,7 @@ def get_args(
         text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
     )
     ```
+
     ----------------------------------------------------------------------------------------------------------
     NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g., `--flag value`)<br>
     is consumed as that flag's value and is not available as a positional `"after"` argument."""
@@ -2254,8 +2271,8 @@ class ProgressBar(_StdoutInterceptorMixin):
         At least one of these parameters must be provided:
         *   `current` – Update the current progress value.
         *   `label` – Update the progress label.
-
-        #### Example usage:
+        -----------------------------------------------------------------------------------------
+        **Example usage:**
         ```python
         with ProgressBar().progress_context(500, "Loading...") as update_progress:
             update_progress(0)  # Show empty bar at start.
@@ -2524,12 +2541,12 @@ class Throbber(_StdoutInterceptorMixin):
     def context(self, label: StyledText | str | None = None, /) -> Generator[Callable[[StyledText | str], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
         ------------------------------------------------------------------------------------
-        *   `label` – The label to display alongside the throbber.
+        *   `label` – The label to display alongside the throbber.\n
         ------------------------------------------------------------------------------------
         The returned callable accepts a single parameter:
-        *   `new_label` – The new label text.
-
-        #### Example usage:
+        *   `new_label` – The new label text.\n
+        ------------------------------------------------------------------------------------
+        **Example usage:**
         ```python
         with Throbber().context("Starting...") as update_label:
             time.sleep(2)
