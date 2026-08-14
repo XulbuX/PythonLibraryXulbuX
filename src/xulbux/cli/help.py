@@ -12,18 +12,23 @@ from urllib.error import HTTPError
 
 
 def get_latest_version() -> str | None:
-    """Fetches the latest version of the library from PyPI."""
+    """Fetches the latest version of the library from PyPI.\n
+    Raises a `HTTPError` if the request fails.\n
+    Returns `None` if the request succeeds but the version info is not found."""
 
     with _request.urlopen(PACKAGE_META_URL) as response:
         if response.status == 200:
-            return _json.load(response)["info"]["version"]
+            try:
+                return _json.load(response)["info"]["version"]
+            except Exception:
+                return None
         else:
             raise HTTPError(PACKAGE_META_URL, response.status, "Failed to fetch latest version info", response.headers, None)
 
 
 def is_latest_version() -> bool | None:
-    """Checks if the currently installed version of the<br>
-    library is the latest one available on PyPI."""
+    """Checks if the currently installed version of the library is the latest one available on PyPI.\n
+    Returns `None` if the check failed."""
 
     try:
         if (latest := get_latest_version()) in {"", None}:
@@ -39,7 +44,10 @@ def is_latest_version() -> bool | None:
 
 
 PACKAGE_META_URL: Final[str] = "https://pypi.org/pypi/xulbux/json"
+"""URL to fetch the package metadata from PyPI."""
 IS_LATEST_VERSION: bool | None = is_latest_version()
+"""Whether the currently installed version is the latest one<br>
+available on PyPI or not. `None` if the check failed."""
 
 
 @mypyc_attr(native_class=False)
@@ -47,16 +55,27 @@ class H:
     """Styling constants for the CLI help message."""
 
     BORDER: _StyleGroup = S.DIM | S.BR.BLACK
+    """Styling for the borders in the CLI help message."""
     CLS: _Style = S.BR.CYAN
+    """Styling for class names in the CLI help message."""
     CMD: _Style = S.GREEN
+    """Styling for command names in the CLI help message."""
     CONST: _Style = S.BR.BLUE
+    """Styling for constant names in the CLI help message."""
     FN: _Style = S.BR.GREEN
+    """Styling for function names in the CLI help message."""
     HEADING: _StyleGroup = S.BOLD | S.BR.WHITE
+    """Styling for headings in the CLI help message."""
     IMPORT: _Style = S.MAGENTA
+    """Styling for import statements in the CLI help message."""
     LIB: _Style = S.BR.MAGENTA
+    """Styling for library names in the CLI help message."""
     META: _StyleGroup = S.DIM | S.BR.WHITE
+    """Styling for meta information in the CLI help message."""
     PUNCT: _Style = S.BR.BLACK
+    """Styling for punctuation in the CLI help message."""
     TEXT: _Style = S.WHITE
+    """Styling for regular text in the CLI help message."""
 
 
 # fmt: off
@@ -91,12 +110,13 @@ CLI_HELP: Final[StyledText] = StyledText(
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.TEXT("For more information see the GitHub wiki page:    "), H.BORDER("│")),
-    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://github.com/xulbux/python-lib-xulbux/wiki"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
+    (H.BORDER("  │ "), H.TEXT("For more information see the documentation:    "), H.BORDER("│")),
+    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
     sep="\n",
 )
+"""The help message for the CLI command `xulbux-lib` as a `StyledText` object."""
 # fmt: on
 
 

@@ -11,10 +11,18 @@ from typing import TYPE_CHECKING, Any, Final, LiteralString
 
 
 class _SafeDeprecated:
-    """Safe implementation of deprecated that emits warnings at runtime
+    """Safe implementation of deprecated that emits warnings at runtime<br>
     but handles mypyc compiled functions gracefully without crashing.\n
-    Standard PEP 702 decorators crash when applying `__deprecated__` to
-    mypyc `builtin_function_or_method` objects."""
+    --------------------------------------------------------------------------------------------------
+    *   `message` – A string message to display when the deprecated function is called.
+    *   `**kwargs` – Additional keyword arguments to pass to the underlying `warnings.warn` function.
+    --------------------------------------------------------------------------------------------------
+    Example usage:
+    ```python
+    @deprecated("This function is deprecated. Use `new_function()` instead.")
+    def old_function():
+        ...
+    ```"""
 
     __slots__: Final[tuple[str, ...]] = ("kwargs", "message")
 
@@ -74,8 +82,15 @@ def mypyc_attr[T](**kwargs: Any) -> Callable[[T], T]:
     or acts as a no-op decorator when `mypy_extensions` is not installed.\n
     This allows the use of `mypyc` compilation hints for compiling without making
     `mypy_extensions` a required dependency.\n
-    --------------------------------------------------------------------------------------------
-    *   `**kwargs` – Keyword arguments to pass to `mypy_extensions.mypyc_attr` if available."""
+    -------------------------------------------------------------------------------------------
+    *   `**kwargs` – Keyword arguments to pass to `mypy_extensions.mypyc_attr` if available.\n
+    -------------------------------------------------------------------------------------------
+    Example usage:
+    ```python
+    @mypyc_attr(native_class=False)
+    class MyClass:
+        ...
+    ```"""
 
     try:
         from mypy_extensions import mypyc_attr as _mypyc_attr

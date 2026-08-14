@@ -54,8 +54,8 @@ keywords = [
 [project.urls]
 "Bug Reports" = "https://github.com/xulbux/python-lib-xulbux/issues"
 "Changelog" = "https://github.com/xulbux/python-lib-xulbux/blob/main/CHANGELOG.md"
-"Documentation" = "https://github.com/xulbux/python-lib-xulbux/wiki"
-"Homepage" = "https://github.com/xulbux/python-lib-xulbux"
+"Documentation" = "https://xulbux.github.io/python-lib-xulbux/docs"
+"Homepage" = "https://xulbux.github.io/python-lib-xulbux"
 "License" = "https://github.com/xulbux/python-lib-xulbux/blob/main/LICENSE"
 "Source Code" = "https://github.com/xulbux/python-lib-xulbux/tree/main/src"
 "Stats" = "https://clickpy.clickhouse.com/dashboard/xulbux"

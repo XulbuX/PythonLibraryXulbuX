@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "text": "Guide",
+    "items": [
+      { "text": "Getting Started", "link": "/docs/get-started" },
+      { "text": "CLI Commands", "link": "/docs/commands" },
+      { "text": "Modules Overview", "link": "/docs/overview" }
+    ]
+  }
+]

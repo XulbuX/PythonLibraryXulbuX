@@ -5,7 +5,7 @@ __version__: Final[str] = "1.10.0"
 __description__: Final[str] = "A Python library to simplify common programming tasks."
 __status__: Final[str] = "Production/Stable"
 
-__url__: Final[str] = "https://github.com/xulbux/python-lib-xulbux"
+__url__: Final[str] = "https://xulbux.github.io/python-lib-xulbux"
 
 __author__: Final[str] = "XulbuX"
 __email__: Final[str] = "hi@xul.is"

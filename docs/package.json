@@ -17,11 +17,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.2.0",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
-    "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4"
   },

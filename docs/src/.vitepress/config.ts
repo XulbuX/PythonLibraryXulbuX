@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitepress';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url)),
@@ -10,16 +9,18 @@ const dirname = path.dirname(fileURLToPath(import.meta.url)),
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   cleanUrls: true,
-  description: 'Advanced Python Library',
+  description: 'A Python library to simplify common programming tasks.',
+  head: [['link', { href: '/icon.svg', rel: 'icon' }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    logo: '/icon.svg',
     nav: [
       { link: '/', text: 'Home' },
-      { link: sidebar[0]?.items[0]?.link || '/', text: 'API Reference' },
+      { link: sidebar[0]?.items[0]?.link || '/', text: 'Docs' },
     ],
+    outline: [2, 4],
     sidebar,
     socialLinks: [{ icon: 'github', link: 'https://github.com/xulbux/python-lib-xulbux' }],
   },
-  title: 'xulbux',
-  vite: { plugins: [tailwindcss()] },
+  title: 'XulbuX',
 });

@@ -100,27 +100,39 @@ class RgbaDict(TypedDict):
     """Dictionary schema for RGBA color components."""
 
     red: Int_0_255
+    """The red channel in range [0, 255] inclusive."""
     green: Int_0_255
+    """The green channel in range [0, 255] inclusive."""
     blue: Int_0_255
+    """The blue channel in range [0, 255] inclusive."""
     alpha: NotRequired[Float_0_1 | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
 
 class HslaDict(TypedDict):
     """Dictionary schema for HSLA color components."""
 
     hue: Int_0_360
+    """The hue channel in range [0, 360] inclusive."""
     sat: Int_0_100
+    """The saturation channel in range [0, 100] inclusive."""
     light: Int_0_100
+    """The lightness channel in range [0, 100] inclusive."""
     alpha: NotRequired[Float_0_1 | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
 
 class HexaDict(TypedDict):
     """Dictionary schema for HEXA color components."""
 
     red: str
+    """The red channel in range [0, 255] inclusive."""
     green: str
+    """The green channel in range [0, 255] inclusive."""
     blue: str
+    """The blue channel in range [0, 255] inclusive."""
     alpha: NotRequired[str | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
 
 type Rgba = (
@@ -163,16 +175,22 @@ class ArgConfigWithDefault(TypedDict):
     """Configuration schema for a flagged command-line argument that has a specified default value."""
 
     flags: set[str]
+    """Set of flags to recognize for this argument (e.g., `{"-f", "--flag"}`)."""
     default: str
+    """Default value to use if the argument is not provided in the command line."""
 
 
 class ArgData(TypedDict):
     """Schema for the resulting data of parsing a single command-line argument."""
 
     exists: bool
+    """Whether the argument was found or not."""
     is_pos: bool
+    """Whether the argument is a positional argument or not."""
     values: tuple[str, ...]
+    """The tuple of values associated with the argument."""
     flag: str | None
+    """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
 
 type ArgParseConfig = set[str] | ArgConfigWithDefault | Literal["before", "after"]
@@ -194,7 +212,9 @@ class MissingLibsMsgs(TypedDict):
     """Configuration schema for custom messages in `system.check_libs()` when checking library dependencies."""
 
     found_missing: str
+    """Message to display when one or more libraries are missing."""
     should_install: str
+    """Confirmation message to ask the user if they want to install the missing libraries."""
 
 
 class ProgressUpdater(Protocol):
