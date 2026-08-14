@@ -51,7 +51,7 @@ sys.meta_path.insert(0, PyOnlyFinder)
 
 
 def _dedent_source_segment(segment: str, stmt: ast.stmt) -> str:
-    """Restores the first line's indentation and dedents the entire block."""
+    """Restores the first line's indentation and de-dents the entire block."""
 
     if not segment:
         return segment
@@ -71,22 +71,34 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
                 if isinstance(target, ast.Name):
                     last_target = (var_name := target.id)
                     seg = ast.get_source_segment(source_code, stmt)
+                    # Use original formatting via `seg` if available, otherwise fallback to `ast.unparse()`:
                     rep = _dedent_source_segment(seg, stmt) if seg else ast.unparse(stmt)
+
+                    # Truncate large multiline calls (e.g. `StyledText(...)`) by replacing arguments with `...`:
+                    if rep.count("\n") > 3 and isinstance(stmt.value, ast.Call):
+                        stmt.value.args = [ast.Constant(value=Ellipsis)]
+                        stmt.value.keywords = []
+                        rep = ast.unparse(stmt)
+
+                    # Strip `Annotated[..., deprecated(...)]` wrappers, greedily collapsing outer brackets if they exist:
                     rep = re.sub(
                         r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)", r"\1\2\3", rep
                     )
                     vars_info[var_name] = {"sig": rep, "doc": "", "dep": "deprecated" in ast.unparse(stmt)}
 
         elif type(stmt).__name__ == "TypeAlias":
+            # Handle PEP 695 `type Name = ...` aliases:
             if not (var_name := str(getattr(name_node, "id", "")) if (name_node := getattr(stmt, "name", None)) else ""):
                 continue
             last_target = var_name
             seg = ast.get_source_segment(source_code, stmt)
             rep = _dedent_source_segment(seg, stmt) if seg else ast.unparse(stmt)
+            # Strip `Annotated` wrappers from type aliases just like we do for variable assignments:
             rep = re.sub(r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)", r"\1\2\3", rep)
             vars_info[var_name] = {"sig": rep, "doc": "", "dep": False}
 
         elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str):
+            # Treat string literals immediately following a variable assignment as its docstring:
             if last_target and last_target in vars_info:
                 vars_info[last_target]["doc"] = stmt.value.value
                 last_target = None
@@ -145,11 +157,12 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
     """Generates Markdown documentation for a given API path (e.g., `xulbux.console`)."""
 
     try:
+        # Attempt to import the API path as a full module:
         module = importlib.import_module(api_path)
         is_module = True
 
     except ModuleNotFoundError:
-        # Might be a class or function inside a module:
+        # Fallback: check if the path points to a specific class or function inside a module:
         if len(parts := api_path.rsplit(".", 1)) == 2:
             try:
                 module = importlib.import_module(parts[0])
@@ -169,6 +182,7 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
 
         tree = None
         source_code = ""
+        # Parse the AST to extract exact variable definitions and docstrings (which `inspect` cannot see):
         try:
             if source_file := inspect.getsourcefile(module):
                 source_code = Path(source_file).read_text("utf-8")
@@ -176,9 +190,11 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
         except Exception:
             pass
 
+        # Extract module-level variables:
         module_vars = _extract_ast_vars(tree.body, source_code) if tree else {}
         classes_ast: dict[str, dict[str, dict[str, Any]]] = {}
 
+        # Extract class-level variables (attributes):
         if tree:
             for stmt in tree.body:
                 if isinstance(stmt, ast.ClassDef):
@@ -186,6 +202,7 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
 
         for name, var_info in module_vars.items():
             if not name.startswith("_"):
+                # Skip variable aliases for module-defined classes/functions, as they get fully documented below:
                 if (
                     (obj := getattr(module, name, None))
                     and (inspect.isfunction(obj) or inspect.isclass(obj))
@@ -210,7 +227,7 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
 def format_signature_multiline(sig_text: str) -> str:
     """Forces the signature to span multiple lines with one argument per line."""
 
-    # Add a trailing comma if it doesn't exist so Ruff formats it as multiline:
+    # Add a trailing comma if missing to force Ruff to format the signature across multiple lines:
     sig = re.sub(r",?\s*\)\s*(->\s*[^:]+)?\s*:?$", r",) \1:", sig_text)
     # Append a dummy body so the code is syntactically valid for Ruff:
     sig += "\n    pass\n"
@@ -230,20 +247,20 @@ def format_signature_multiline(sig_text: str) -> str:
         if formatted.endswith(":"):
             formatted = formatted[:-1]
 
-        # Put consecutive `/` and `*` on the same line:
+        # Put consecutive `/` and `*` (positional/keyword-only markers) onto the same line:
         formatted = re.sub(r"\n\s*/,\n\s*\*,\n", "\n    /, *,\n", formatted)
-        # Strip `self` and `cls` from the first argument:
+        # Strip `self` and `cls` parameters since they don't need to be in the public docs:
         formatted = re.sub(r"\(\n    (?:self|cls)(?:\s*:[^,]*)?,\n\s*", "(\n    ", formatted)
         # If this leaves a stray `/` as the first argument, remove it:
         formatted = re.sub(r"\(\n    /,\n\s*", "(\n    ", formatted)
 
-        # Remove private arguments:
-        formatted = re.sub(r"\n\s+_[a-zA-Z0-9_]*[^,]*,", "", formatted)
-        # Clean up stray markers if they are left at the end of the arguments list:
+        # Remove internal private arguments (starting with `_`).
+        formatted = re.sub(r"\n\s+_[a-zA-Z0-9_]*[^\n]*", "", formatted)
+        # Clean up stray markers if they are left dangling at the end of the arguments list:
         formatted = re.sub(r"\n(\s*)/,\s*\*,\n\)", r"\n\1/,\n)", formatted)
         formatted = re.sub(r"\n\s*\*,\n\)", "\n)", formatted)
 
-        # Clean up empty parentheses:
+        # Clean up any empty parentheses caused by stripping arguments:
         formatted = formatted.replace("(\n    )", "()")
 
         return formatted
@@ -423,14 +440,14 @@ def main() -> None:
     parser.add_argument("--dev", action="store_true", help="Run VitePress in dev mode")
     args = parser.parse_args()
 
-    # [1] Clean and recreate build directory:
+    # [1] Clean and recreate the build directory to ensure a fresh slate:
     if DOCS_BUILD_DIR.exists():
         shutil.rmtree(DOCS_BUILD_DIR)
 
     shutil.copytree(DOCS_SRC_DIR, DOCS_BUILD_DIR)
     print(f"\nCopied {DOCS_SRC_DIR.name} to {DOCS_BUILD_DIR.name}\n")
 
-    # [2] Auto-discover modules and generate missing markdown files:
+    # [2] Auto-discover all Python modules and generate placeholder markdown files for them:
     sidebar_items: list[dict[str, str]] = []
     xulbux_dir = SRC_DIR / "xulbux"
 
@@ -468,12 +485,12 @@ def main() -> None:
     sidebar_file.write_text(json.dumps(sidebar_data, indent=2), encoding="utf-8")
     print(f"\nGenerated sidebar.json with {len(sidebar_items)} items\n")
 
-    # [3] Process all markdown files:
+    # [3] Process all markdown files, injecting the actual API docs wherever `<!-- API: ... -->` is found:
     for md_file in DOCS_BUILD_DIR.rglob("*.md"):
         if md_file.is_file():
             process_markdown_file(md_file)
 
-    # [4] Run VitePress:
+    # [4] Build or serve the final site using VitePress:
     if not (pnpm_exe := shutil.which("pnpm")):
         print("[ERROR] pnpm is not installed or not in PATH.")
         sys.exit(1)
