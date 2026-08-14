@@ -21,6 +21,9 @@ DOCS_SRC_DIR = DOCS_DIR / "src"
 DOCS_BUILD_DIR = DOCS_DIR / ".build"
 SIDEBAR_REL_PATH = Path(".vitepress") / "sidebar.json"
 
+_DEPRECATED_ANNOTATED_RE = re.compile(r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)")
+"""Pattern to strip `Annotated[…, deprecated(…)]` wrappers if they exist."""
+
 sys.path.insert(0, str(SRC_DIR))
 
 
@@ -48,6 +51,33 @@ class PyOnlyFinder:
 
 
 sys.meta_path.insert(0, PyOnlyFinder)
+
+
+def _get_line_number(obj: Any) -> int:
+    """Safely extracts the source-code line number of a given object."""
+
+    try:
+        return inspect.getsourcelines(obj)[1]
+    except Exception:
+        return getattr(getattr(obj, "__code__", None), "co_firstlineno", 0)
+
+
+def _build_api_markdown_block(title: str, badge: str, signature: str, doc_parts: list[str]) -> str:
+    """Builds a consistent HTML/Markdown block for an API item."""
+
+    lines = [
+        '<div class="api-item">\n\n',
+        f"{title}{badge}\n\n",
+        '<div class="api-signature-col">\n\n',
+        f"```python\n{signature}\n```\n\n",
+        '</div>\n\n<div class="api-docs-col">\n\n',
+    ]
+
+    if doc_parts:
+        lines.append("\n\n".join(doc_parts) + "\n\n")
+    lines.append("</div>\n\n</div>\n\n")
+
+    return "".join(lines)
 
 
 def _dedent_source_segment(segment: str, stmt: ast.stmt) -> str:
@@ -80,11 +110,12 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
                         stmt.value.keywords = []
                         rep = ast.unparse(stmt)
 
-                    # Strip `Annotated[..., deprecated(...)]` wrappers, greedily collapsing outer brackets if they exist:
-                    rep = re.sub(
-                        r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)", r"\1\2\3", rep
-                    )
-                    vars_info[var_name] = {"sig": rep, "doc": "", "dep": "deprecated" in ast.unparse(stmt)}
+                    vars_info[var_name] = {
+                        "sig": _DEPRECATED_ANNOTATED_RE.sub(r"\1\2\3", rep),
+                        "doc": "",
+                        "dep": "deprecated" in ast.unparse(stmt),
+                        "line": getattr(stmt, "lineno", 0),
+                    }
 
         elif type(stmt).__name__ == "TypeAlias":
             # Handle PEP 695 `type Name = ...` aliases:
@@ -93,9 +124,12 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
             last_target = var_name
             seg = ast.get_source_segment(source_code, stmt)
             rep = _dedent_source_segment(seg, stmt) if seg else ast.unparse(stmt)
-            # Strip `Annotated` wrappers from type aliases just like we do for variable assignments:
-            rep = re.sub(r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)", r"\1\2\3", rep)
-            vars_info[var_name] = {"sig": rep, "doc": "", "dep": False}
+            vars_info[var_name] = {
+                "sig": _DEPRECATED_ANNOTATED_RE.sub(r"\1\2\3", rep),
+                "doc": "",
+                "dep": False,
+                "line": getattr(stmt, "lineno", 0),
+            }
 
         elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str):
             # Treat string literals immediately following a variable assignment as its docstring:
@@ -112,17 +146,10 @@ def _generate_markdown_for_var(name: str, var_info: dict[str, Any], is_class_att
     """Generates Markdown documentation for a given variable or class attribute."""
 
     badge = ' <Badge type="danger" text="deprecated" />' if var_info["dep"] else ""
-    lines: list[str] = []
-    lines.append('<div class="api-item">\n')
-    lines.append(f"{'####' if is_class_attr else '###'} `.{name}`{badge}\n" if is_class_attr else f"### `{name}`{badge}\n")
-    lines.append('<div class="api-signature-col">\n')
-    lines.append(f"```python\n{var_info['sig']}\n```\n")
-    lines.append('</div>\n<div class="api-docs-col">\n')
-    if var_info["doc"]:
-        lines.append(process_docstring(var_info["doc"]) + "\n")
-    lines.append("</div>\n</div>\n")
+    title = f"{'####' if is_class_attr else '###'} `.{name}`" if is_class_attr else f"### `{name}`"
+    doc_parts = [process_docstring(var_info["doc"])] if var_info["doc"] else []
 
-    return "\n".join(lines)
+    return _build_api_markdown_block(title, badge, var_info["sig"], doc_parts)
 
 
 def process_docstring(doc: str | None) -> str:
@@ -200,6 +227,8 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
                 if isinstance(stmt, ast.ClassDef):
                     classes_ast[stmt.name] = _extract_ast_vars(stmt.body, source_code)
 
+        items_to_document: list[tuple[int, str, Any, Any]] = []
+
         for name, var_info in module_vars.items():
             if not name.startswith("_"):
                 # Skip variable aliases for module-defined classes/functions, as they get fully documented below:
@@ -209,14 +238,23 @@ def generate_md_for_api(api_path: str) -> str:  # noqa: C901
                     and getattr(obj, "__module__", "") == api_path
                 ):
                     continue
-                lines.append(_generate_markdown_for_var(name, var_info))
+                items_to_document.append((var_info.get("line", 0), "var", name, var_info))
 
         # List functions and classes:
         for name, obj in inspect.getmembers(module):
             if name.startswith("_"):
                 continue
             elif (inspect.isfunction(obj) or inspect.isclass(obj)) and getattr(obj, "__module__", "") == api_path:
-                lines.append(_generate_markdown_for_obj(name, obj, classes_ast.get(name, {})))
+                items_to_document.append((_get_line_number(obj), "obj", name, obj))
+
+        # Sort items by their source-code line number to ensure a logical reading flow:
+        items_to_document.sort(key=lambda x: x[0])
+
+        for item in items_to_document:
+            if item[1] == "var":
+                lines.append(_generate_markdown_for_var(item[2], item[3]))
+            else:
+                lines.append(_generate_markdown_for_obj(item[2], item[3], classes_ast.get(item[2], {})))
 
         return "\n".join(lines)
 
@@ -339,24 +377,12 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
     lines: list[str] = []
 
     if inspect.isfunction(obj):
-        sig_str = get_source_signature(obj)
-        lines.append('<div class="api-item">\n')
-        lines.append(f"### `{name}()`{badge}\n")
-        lines.append('<div class="api-signature-col">\n')
-        lines.append(f"```python\n{sig_str}\n```\n")
-        lines.append('</div>\n<div class="api-docs-col">\n')
-        if obj.__doc__:
-            lines.append(process_docstring(obj.__doc__) + "\n")
-        lines.append("</div>\n</div>\n")
+        title = f"### `{name}()`"
+        doc_parts = [process_docstring(obj.__doc__)] if obj.__doc__ else []
+        lines.append(_build_api_markdown_block(title, badge, get_source_signature(obj), doc_parts))
 
     elif inspect.isclass(obj):
-        sig_str = get_class_signature(obj, name)
-        lines.append('<div class="api-item">\n')
-        lines.append(f"### `{name}`{badge}\n")
-        lines.append('<div class="api-signature-col">\n')
-        lines.append(f"```python\n{sig_str}\n```\n")
-        lines.append('</div>\n<div class="api-docs-col">\n')
-
+        title = f"### `{name}`"
         doc_parts: list[str] = []
 
         if obj.__doc__:
@@ -370,15 +396,14 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
         ):
             doc_parts.append(process_docstring(init_obj.__doc__))
 
-        if doc_parts:
-            lines.append("\n\n".join(doc_parts) + "\n")
+        lines.append(_build_api_markdown_block(title, badge, get_class_signature(obj, name), doc_parts))
 
-        lines.append("</div>\n</div>\n")
+        items_to_doc: list[tuple[int, str, Any, Any]] = []
 
         # Class variables:
         for v_name, v_info in class_vars.items():
             if not v_name.startswith("_"):
-                lines.append(_generate_markdown_for_var(v_name, v_info, is_class_attr=True))
+                items_to_doc.append((v_info.get("line", 0), "var", v_name, v_info))
 
         # Methods:
         for m_name, m_obj in inspect.getmembers(obj):
@@ -386,16 +411,20 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
                 continue
 
             if inspect.isfunction(m_obj) or inspect.ismethod(m_obj):
-                m_sig_str = get_source_signature(m_obj)
+                items_to_doc.append((_get_line_number(m_obj), "meth", m_name, m_obj))
+
+        # Sort items by their source-code line number to ensure a logical reading flow:
+        items_to_doc.sort(key=lambda x: x[0])
+
+        for item in items_to_doc:
+            if item[1] == "var":
+                lines.append(_generate_markdown_for_var(item[2], item[3], is_class_attr=True))
+            else:
+                m_name, m_obj = item[2], item[3]
                 badge = ' <Badge type="danger" text="deprecated" />' if hasattr(m_obj, "__deprecated__") else ""
-                lines.append('<div class="api-item">\n')
-                lines.append(f"#### `.{m_name}()`{badge}\n")
-                lines.append('<div class="api-signature-col">\n')
-                lines.append(f"```python\n{m_sig_str}\n```\n")
-                lines.append('</div>\n<div class="api-docs-col">\n')
-                if m_obj.__doc__:
-                    lines.append(process_docstring(m_obj.__doc__) + "\n")
-                lines.append("</div>\n</div>\n")
+                title = f"#### `.{m_name}()`"
+                doc_parts = [process_docstring(m_obj.__doc__)] if m_obj.__doc__ else []
+                lines.append(_build_api_markdown_block(title, badge, get_source_signature(m_obj), doc_parts))
 
     return "\n".join(lines)
 
