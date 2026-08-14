@@ -111,10 +111,10 @@ def _persistent(path: Path, /, *, remove: bool = False) -> None:
     # Windows:
     if _sys.platform == "win32":
         try:
-            _winreg = __import__("winreg")
-            key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Environment", 0, _winreg.KEY_ALL_ACCESS)
-            _winreg.SetValueEx(key, "PATH", 0, _winreg.REG_EXPAND_SZ, new_path)
-            _winreg.CloseKey(key)
+            winreg = __import__("winreg")
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+            winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, new_path)
+            winreg.CloseKey(key)
 
         except Exception as exc:
             raise RuntimeError(f"Failed to update PATH in registry:\n  {str(exc).replace('\n', '  \n')}") from exc

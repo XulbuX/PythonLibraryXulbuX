@@ -8,7 +8,7 @@ ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 
-############################################## ENTRYPOINT REGISTRATION TESTS #############################################
+# ********************************************** ENTRYPOINT REGISTRATION TESTS *********************************************
 
 
 def test_xulbux_lib_entrypoint_registered():
@@ -20,7 +20,7 @@ def test_xulbux_lib_entrypoint_registered():
     assert scripts["xulbux-lib"] == "xulbux.cli:main"
 
 
-#################################################### xulbux-lib TESTS ####################################################
+# **************************************************** xulbux-lib TESTS ****************************************************
 
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):

@@ -68,7 +68,7 @@ _DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [S.BR.MAGENTA("{a}"), "{l}"]
 # fmt: off
 FRAMES_STANDARD: Final[tuple[str, ...]] = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
 """Throbber `frames` preset: A standard, clean, and modern Braille circular spinner."""
-FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ", "⠼⠁", "⠞⠁", "⠖⠃", "⠓⠃", "⠓⠆", "⠙⠆", "⠹⠄", "⠸⠅", "⠼⠁", "⠴⠃", "⠖⠃", "⠖⠆")  # noqa: E501
+FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ", "⠼⠁", "⠞⠁", "⠖⠃", "⠓⠃", "⠓⠆", "⠙⠆", "⠹⠄", "⠸⠅", "⠼⠁", "⠴⠃", "⠖⠃", "⠖⠆")  # ruff:ignore[line-too-long]
 """Throbber `frames` preset: A wide, dual-character Braille windmill animation."""
 # fmt: on
 
@@ -186,34 +186,32 @@ class ParsedArgs:
     # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
     __slots__: Final[tuple[str, ...]] = ("__dict__", "all_exist", "any_exist", "is_empty", "unknown_flags")
 
-    RESERVED_ALIASES: frozenset[str] = frozenset(
-        {
-            "all_exist",
-            "any_exist",
-            "dict",
-            "existing",
-            "get",
-            "is_empty",
-            "items",
-            "keys",
-            "missing",
-            "unknown_flags",
-            "values",
-        }
-    )
+    RESERVED_ALIASES: frozenset[str] = frozenset({
+        "all_exist",
+        "any_exist",
+        "dict",
+        "existing",
+        "get",
+        "is_empty",
+        "items",
+        "keys",
+        "missing",
+        "unknown_flags",
+        "values",
+    })
     """Alias names that are reserved and cannot be used as argument aliases."""
 
     def __init__(self, unknown_flags: list[str] | None = None, **parsed_args: ParsedArgData) -> None:
         for alias_name, parsed_arg_data in parsed_args.items():
             setattr(self, alias_name, parsed_arg_data)
 
-        _parsed_args = cast("dict[str, ParsedArgData]", vars(self)).values()
+        parsed_arg_values = cast("dict[str, ParsedArgData]", vars(self)).values()
 
-        self.is_empty: Final[bool] = all(not arg.exists and not arg.values for arg in _parsed_args)
+        self.is_empty: Final[bool] = all(not arg.exists and not arg.values for arg in parsed_arg_values)
         """Whether no argument was found and none have any values (not even defaults)."""
-        self.any_exist: Final[bool] = any(arg.exists for arg in _parsed_args)
+        self.any_exist: Final[bool] = any(arg.exists for arg in parsed_arg_values)
         """Whether at least one argument was explicitly found."""
-        self.all_exist: Final[bool] = all(arg.exists for arg in _parsed_args)
+        self.all_exist: Final[bool] = all(arg.exists for arg in parsed_arg_values)
         """Whether all arguments were explicitly found."""
         self.unknown_flags: Final[frozenset[str]] = frozenset() if unknown_flags is None else frozenset(unknown_flags)
         """Unknown flags found in the command-line arguments<br>
@@ -2231,7 +2229,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         # Throttle updates (unless it's the first/final update):
         current_time = _time.time()
         if (
-            not (self._last_update_time == 0.0 or current >= total or current < 0)
+            not (not self._last_update_time or current >= total or current < 0)
             and (current_time - self._last_update_time) < self._min_update_interval
         ):
             return

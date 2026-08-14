@@ -1,4 +1,4 @@
-# ruff: noqa: RUF001
+# ruff:file-ignore[ambiguous-unicode-character-string]
 
 """
 Provides constant values used throughout the library.
@@ -188,7 +188,7 @@ class ANSI:
             ),
         ]
     ] = {
-        ################# SPECIFIC RESETS ##################
+        # ***************** SPECIFIC RESETS ******************
         "_": 0,
         ("_bold", "_b"): 22,
         ("_dim", "_d"): 22,
@@ -200,7 +200,7 @@ class ANSI:
         ("_strikethrough", "_s"): 29,
         ("_color", "_c"): 39,
         ("_background", "_bg"): 49,
-        ################### TEXT STYLES ####################
+        # ******************* TEXT STYLES ********************
         ("bold", "b"): 1,
         ("dim", "d"): 2,
         ("italic", "i"): 3,
@@ -209,7 +209,7 @@ class ANSI:
         ("hidden", "hide", "h"): 8,
         ("strikethrough", "s"): 9,
         ("double-underline", "du"): 21,
-        ################## DEFAULT COLORS ##################
+        # ****************** DEFAULT COLORS ******************
         "black": 30,
         "red": 31,
         "green": 32,
@@ -218,7 +218,7 @@ class ANSI:
         "magenta": 35,
         "cyan": 36,
         "white": 37,
-        ############## BRIGHT DEFAULT COLORS ###############
+        # ************** BRIGHT DEFAULT COLORS ***************
         "br:black": 90,
         "br:red": 91,
         "br:green": 92,
@@ -227,7 +227,7 @@ class ANSI:
         "br:magenta": 95,
         "br:cyan": 96,
         "br:white": 97,
-        ############ DEFAULT BACKGROUND COLORS #############
+        # ************ DEFAULT BACKGROUND COLORS *************
         "bg:black": 40,
         "bg:red": 41,
         "bg:green": 42,
@@ -236,7 +236,7 @@ class ANSI:
         "bg:magenta": 45,
         "bg:cyan": 46,
         "bg:white": 47,
-        ######### BRIGHT DEFAULT BACKGROUND COLORS #########
+        # ********* BRIGHT DEFAULT BACKGROUND COLORS *********
         "bg:br:black": 100,
         "bg:br:red": 101,
         "bg:br:green": 102,

@@ -69,7 +69,7 @@ def __getattr__(name: str) -> Any:
         import importlib
 
         # Map specific exported objects to their submodules:
-        _submodules = {
+        submodules = {
             "S": "ansi",
             "StyledText": "ansi",
             "Term": "ansi",
@@ -82,8 +82,8 @@ def __getattr__(name: str) -> Any:
             "LazyRegex": "regex",
         }
 
-        if name in _submodules:
-            module = importlib.import_module(f".{_submodules[name]}", package=__package__)
+        if name in submodules:
+            module = importlib.import_module(f".{submodules[name]}", package=__package__)
             return getattr(module, name)
 
         # Otherwise, it must be a top-level module (e.g., `console`, `string`, …).

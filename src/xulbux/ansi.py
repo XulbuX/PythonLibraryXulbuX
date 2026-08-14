@@ -243,7 +243,7 @@ _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
 
-####################################################### CORE TYPES #######################################################
+# ******************************************************* CORE TYPES *******************************************************
 
 
 class _StyleGroup:
@@ -490,7 +490,7 @@ class _StyledSequence:
         return f"_StyledSequence(opens={self._opens!r}, text={self.text!r})"
 
 
-##################### PUBLIC TYPE HELPERS #####################
+# ********************* PUBLIC TYPE HELPERS *********************
 
 type ColorStyle = _Style | _ColorStyle
 """A single style code representing a color (e.g., `S.RED`, `S.hex("#FFF")`). Excludes non-color styles like `S.BOLD`."""
@@ -549,7 +549,7 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText, tuple))
 
 
-#################################################### NAMESPACE HELPERS ###################################################
+# **************************************************** NAMESPACE HELPERS ***************************************************
 
 
 class _BgBrNS:
@@ -640,7 +640,7 @@ class _BrNS:
     """Bright white foreground."""
 
 
-####################################################### STYLE ATTRS ######################################################
+# ******************************************************* STYLE ATTRS ******************************************************
 
 
 class S:
@@ -656,11 +656,11 @@ class S:
 
     For a full list of available attributes, see the `ansi` module documentation."""
 
-    ######################### TOTAL RESET #########################
+    # ************************* TOTAL RESET *************************
     RESET: ClassVar[_Style] = _Style(0)
     """Reset all styling to default."""
 
-    ####################### SPECIFIC RESETS #######################
+    # *********************** SPECIFIC RESETS ***********************
     RESET_BOLD: ClassVar[_Style] = _Style(22)
     """Reset bold (also resets dim, as they share the same code)."""
     RESET_DIM: ClassVar[_Style] = _Style(22)
@@ -680,7 +680,7 @@ class S:
     RESET_BG: ClassVar[_Style] = _Style(49)
     """Reset background color."""
 
-    ######################### TEXT STYLES #########################
+    # ************************* TEXT STYLES *************************
     BOLD: ClassVar[_Style] = _Style(1)
     """Bold text.\n
     Note that this is also reset by `RESET_DIM`."""
@@ -700,7 +700,7 @@ class S:
     DOUBLE_UNDERLINE: ClassVar[_Style] = _Style(21)
     """Double underline text."""
 
-    ###################### STANDARD FG COLORS #####################
+    # ********************** STANDARD FG COLORS *********************
     BLACK: ClassVar[_Style] = _Style(30)
     """Black foreground."""
     RED: ClassVar[_Style] = _Style(31)
@@ -718,11 +718,11 @@ class S:
     WHITE: ClassVar[_Style] = _Style(37)
     """White foreground."""
 
-    ######################### NAMESPACES ##########################
+    # ************************* NAMESPACES **************************
     BR: ClassVar[type[_BrNS]] = _BrNS
     BG: ClassVar[type[_BgNS]] = _BgNS
 
-    #################### CUSTOM COLORS & LINKS ####################
+    # ******************** CUSTOM COLORS & LINKS ********************
     @overload
     @staticmethod
     def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
@@ -758,7 +758,7 @@ class S:
         return _Link(url)
 
 
-#################################################### TERMINAL CONTROL ####################################################
+# **************************************************** TERMINAL CONTROL ****************************************************
 
 
 class Term:
@@ -841,7 +841,7 @@ class Term:
         return f"{ANSI.CHAR}[u"
 
 
-####################################################### StyledText #######################################################
+# ******************************************************* StyledText *******************************************************
 
 
 class StyledText:
@@ -1128,7 +1128,7 @@ class StyledText:
             ansi_parts.append(str(segment))
 
 
-#################################################### INTERNAL HELPERS ####################################################
+# **************************************************** INTERNAL HELPERS ****************************************************
 
 
 def _build_open_close(group: _StyleGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:

@@ -50,6 +50,7 @@ import xulbux as xx
 from xulbux import S, StyledText, hexa
 from xulbux.base.consts import CHARS, COLOR
 
+
 def main() -> None:
 
     # Let the user enter a hexa color in any hexa format.
@@ -91,6 +92,7 @@ def main() -> None:
             sep="\n",
         )
     )
+
 
 if __name__ == "__main__":
     main()

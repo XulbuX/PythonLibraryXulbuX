@@ -6,21 +6,21 @@ bg_red = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['bg:red']}{ANSI.END}"
 default = ANSI.SEQ_FG_COLOR.format(255, 255, 255)
 orange = ANSI.SEQ_FG_COLOR.format(255, 136, 119)
 
-bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('bold', 'b')]}{ANSI.END}"
-invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('inverse', 'invert', 'in')]}{ANSI.END}"
-italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('italic', 'i')]}{ANSI.END}"
-underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('underline', 'u')]}{ANSI.END}"
+bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['bold', 'b']}{ANSI.END}"
+invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['inverse', 'invert', 'in']}{ANSI.END}"
+italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['italic', 'i']}{ANSI.END}"
+underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['underline', 'u']}{ANSI.END}"
 
 reset = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_']}{ANSI.END}"
-reset_bg = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_background', '_bg')]}{ANSI.END}"
-reset_bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_bold', '_b')]}{ANSI.END}"
-reset_color = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_color', '_c')]}{ANSI.END}"
-reset_italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_italic', '_i')]}{ANSI.END}"
-reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_inverse', '_invert', '_in')]}{ANSI.END}"
-reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP[('_underline', '_u')]}{ANSI.END}"
+reset_bg = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_background', '_bg']}{ANSI.END}"
+reset_bold = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_bold', '_b']}{ANSI.END}"
+reset_color = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_color', '_c']}{ANSI.END}"
+reset_italic = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_italic', '_i']}{ANSI.END}"
+reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_inverse', '_invert', '_in']}{ANSI.END}"
+reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_underline', '_u']}{ANSI.END}"
 
 
-################################################# Dep. FormatCodes TESTS #################################################
+# ******************************************************* MODULE TESTS *****************************************************
 
 
 def test_to_ansi():

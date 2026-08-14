@@ -1,3 +1,5 @@
+import math
+from typing import cast
 from xulbux.color import hexa, hsla, rgba
 
 
@@ -22,7 +24,7 @@ def assert_hexa_equal(actual: hexa, expected: str):
     assert str(actual) == expected
 
 
-####################################################### rgba TESTS #######################################################
+# ******************************************************* rgba TESTS *******************************************************
 
 
 def test_rgba_return_values():
@@ -72,10 +74,10 @@ def test_rgba_dunder_methods():
     assert len(rgba(100, 150, 200)) == 3
     assert len(rgba(100, 150, 200, 0.5)) == 4
     color = rgba(100, 150, 200, 0.5)
-    assert color[0] == 100
-    assert color[1] == 150
-    assert color[2] == 200
-    assert color[3] == 0.5
+    assert isinstance(color[0], int) and color[0] == 100
+    assert isinstance(color[1], int) and color[1] == 150
+    assert isinstance(color[2], int) and color[2] == 200
+    assert isinstance(color[3], float) and math.isclose(cast("float", color[3]), 0.5)
     assert rgba(100, 150, 200) == rgba(100, 150, 200)
     assert rgba(100, 150, 200) != rgba(200, 100, 150)
     assert str(rgba(100, 150, 200)) == "rgba(100, 150, 200)"
@@ -84,7 +86,7 @@ def test_rgba_dunder_methods():
     assert repr(rgba(100, 150, 200, 0.5)) == "rgba(100, 150, 200, 0.5)"
 
 
-####################################################### hsla TESTS #######################################################
+# ******************************************************* hsla TESTS *******************************************************
 
 
 def test_hsla_return_values():
@@ -134,10 +136,10 @@ def test_hsla_dunder_methods():
     assert len(hsla(210, 50, 60)) == 3
     assert len(hsla(210, 50, 60, 0.5)) == 4
     color = hsla(210, 50, 60, 0.5)
-    assert color[0] == 210
-    assert color[1] == 50
-    assert color[2] == 60
-    assert color[3] == 0.5
+    assert isinstance(color[0], int) and color[0] == 210
+    assert isinstance(color[1], int) and color[1] == 50
+    assert isinstance(color[2], int) and color[2] == 60
+    assert isinstance(color[3], float) and math.isclose(cast("float", color[3]), 0.5)
     assert hsla(210, 50, 60) == hsla(210, 50, 60)
     assert hsla(210, 50, 60) != hsla(210, 60, 50)
     assert str(hsla(210, 50, 60)) == "hsla(210°, 50%, 60%)"
@@ -146,7 +148,7 @@ def test_hsla_dunder_methods():
     assert repr(hsla(210, 50, 60, 0.5)) == "hsla(210°, 50%, 60%, 0.5)"
 
 
-####################################################### hexa TESTS #######################################################
+# ******************************************************* hexa TESTS *******************************************************
 
 
 def test_hexa_return_values():

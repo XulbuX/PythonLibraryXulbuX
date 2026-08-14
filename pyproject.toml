@@ -88,8 +88,10 @@ pythonpath = ["src"]
 testpaths = ["tests/test_*.py"]
 
 [tool.ruff]
+preview = true
 line-length = 127
 target-version = "py312"
+extend-include = ["*.md"]
 
 [tool.ruff.format]
 skip-magic-trailing-comma = false
@@ -108,9 +110,7 @@ select = [
   "UP",  # pyupgrade (upgrades syntax for newer Python versions)
   "W",   # pycodestyle warnings (checks PEP 8 style warnings)
 ]
-ignore = [
-  "RUF002", # Docstring contains ambiguous character.
-]
+ignore = ["ambiguous-unicode-character-docstring"]
 mccabe = { max-complexity = 12 }
 
 [tool.ruff.lint.isort]

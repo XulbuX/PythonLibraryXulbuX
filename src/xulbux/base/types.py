@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         from typing_extensions import TypeIs
 
 
-####################################################### Primitives #######################################################
+# ******************************************************* Primitives *******************************************************
 
 type Int_0_100 = int
 """Integer constrained to the range [0, 100] inclusive."""
@@ -34,7 +34,7 @@ type FormattableString = str
 """String made to be formatted with the `.format()` method."""
 
 
-################################################# Collections & Iterables ################################################
+# ************************************************* Collections & Iterables ************************************************
 
 type PathsList = list[Path] | list[str] | list[Path | str]
 """Union of all supported list types for a list of paths."""
@@ -66,7 +66,7 @@ def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable]:
     return isinstance(obj, (list, tuple, set, frozenset))
 
 
-######################################################### Colors #########################################################
+# ********************************************************* Colors *********************************************************
 
 
 class _RgbaObj(Protocol):
@@ -168,7 +168,7 @@ type AnyHexa = Any
 """Generic type alias for HEXA color values in any format (type checking disabled)."""
 
 
-###################################################### CLI Arguments #####################################################
+# ****************************************************** CLI Arguments *****************************************************
 
 
 class ArgConfigWithDefault(TypedDict):
@@ -199,7 +199,7 @@ type ArgParseConfigs = dict[str, ArgParseConfig]
 """Matches the command-line-parsing configurations of multiple arguments, packed in a dictionary."""
 
 
-################################################### System & Utilities ###################################################
+# *************************************************** System & Utilities ***************************************************
 
 
 class AllTextChars:

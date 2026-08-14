@@ -1,5 +1,6 @@
 import builtins
 import io
+import math
 import os
 import sys
 from typing import Any
@@ -54,7 +55,7 @@ def mock_prompt_session(monkeypatch: pytest.MonkeyPatch):
     return mock_session_class, mock_session
 
 
-###################################################### Console TESTS #####################################################
+# ******************************************************* MODULE TESTS *****************************************************
 
 
 def test_cls(monkeypatch: pytest.MonkeyPatch):
@@ -1097,7 +1098,7 @@ def test_parsed_args_properties_not_in_iter():
     assert len(args) == 1
 
 
-#################################################### ProgressBar TESTS ###################################################
+# **************************************************** ProgressBar TESTS ***************************************************
 
 
 def test_progressbar_clear_intercept_line():
@@ -1321,7 +1322,7 @@ def test_progressbar_styled_text_label(mock_stdout: MagicMock):
     assert f"{ANSI.CHAR}[1mstyled{ANSI.CHAR}[22m" in output
 
 
-##################################################### Throbber TESTS #####################################################
+# ***************************************************** Throbber TESTS *****************************************************
 
 
 def test_throbber_context_manager():
@@ -1352,14 +1353,14 @@ def test_throbber_context_manager_exception():
 def test_throbber_init_custom():
     throbber = Throbber(label="Loading", interval=0.5, sep="-")
     assert throbber.label == "Loading"
-    assert throbber.interval == 0.5
+    assert math.isclose(throbber.interval, 0.5)
     assert throbber.sep == "-"
 
 
 def test_throbber_init_defaults():
     throbber = Throbber()
     assert throbber.label is None
-    assert throbber.interval == 0.08
+    assert math.isclose(throbber.interval, 0.08)
     assert throbber.active is False
     assert throbber.sep == " "
     assert len(throbber.frames) > 0
@@ -1400,7 +1401,7 @@ def test_throbber_set_interval_invalid():
 def test_throbber_set_interval_valid():
     throbber = Throbber()
     throbber.set_interval(1.0)
-    assert throbber.interval == 1.0
+    assert math.isclose(throbber.interval, 1.0)
 
 
 @patch("xulbux.console._threading.Thread")

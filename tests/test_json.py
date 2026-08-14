@@ -1,6 +1,7 @@
 import json
+import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 import xulbux.json as _json_module
 from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
@@ -74,7 +75,7 @@ UPDATE_DATA_END: dict[str, Any] = {
 }
 
 
-####################################################### Json TESTS #######################################################
+# ******************************************************* MODULE TESTS *****************************************************
 
 
 def test_read_simple(tmp_path: Path):
@@ -178,7 +179,8 @@ def test_update_with_comments(tmp_path: Path):
 
     try:
         final_data: dict = _json_module.read(str(file_path))  # type: ignore[assignment]
-        assert final_data["config"]["version"] == 2.0
+        version = cast("float", final_data["config"]["version"])
+        assert isinstance(version, float) and math.isclose(version, 2.0)
         assert final_data["config"]["features"] == ["c", "b"]
         assert final_data["user"] == "Cool Test User"
     except json.JSONDecodeError:

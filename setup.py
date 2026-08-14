@@ -253,7 +253,7 @@ class StubGen(ast.NodeTransformer):
         node.body = imports + others
         return node
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # noqa: C901
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # ruff:ignore[complex-structure]
         existing_vars: set[str] = set()
         for stmt in node.body:
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):

@@ -1,12 +1,13 @@
+import math
 import xulbux.string as _string_module
 import pytest
 
-###################################################### String TESTS ######################################################
+# ******************************************************* MODULE TESTS *****************************************************
 
 
 def test_to_type():
     assert _string_module.to_type("123") == 123
-    assert _string_module.to_type("123.45") == 123.45
+    assert math.isclose(_string_module.to_type("123.45"), 123.45)
     assert _string_module.to_type("True") is True
     assert _string_module.to_type("False") is False
     assert _string_module.to_type("None") is None

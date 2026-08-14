@@ -186,7 +186,7 @@ def process_docstring(doc: str | None) -> str:
     return "\n".join(out)
 
 
-def generate_md_for_api(api_path: str) -> str:  # noqa: C901
+def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
     """Generates Markdown documentation for a given API path (e.g., `xulbux.console`)."""
 
     try:
@@ -373,13 +373,14 @@ def get_class_signature(cls_obj: Any, cls_name: str) -> str:
         return f"class {cls_name}"
 
 
-def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[str, Any]] | None = None) -> str:  # noqa: C901
+def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[str, Any]] | None = None) -> str:  # ruff:ignore[complex-structure]
     """Generates Markdown documentation for a given function or class object."""
 
     if class_vars is None:
         class_vars = {}
 
     badge: str = ' <Badge type="danger" text="deprecated" />' if hasattr(obj, "__deprecated__") else ""
+    doc_parts: list[str] = []
     lines: list[str] = []
 
     if inspect.isfunction(obj):
@@ -389,7 +390,6 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
 
     elif inspect.isclass(obj):
         title = f"### `{name}`"
-        doc_parts: list[str] = []
 
         if obj.__doc__:
             doc_parts.append(process_docstring(obj.__doc__))

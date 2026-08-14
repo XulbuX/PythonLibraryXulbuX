@@ -281,8 +281,8 @@ class rgba(_ColorBase):
     def _rgb_to_hsl(red: int, green: int, blue: int) -> tuple[int, int, int]:
         """Internal method to convert RGB to HSL color space."""
 
-        _red, _green, _blue = red / 255.0, green / 255.0, blue / 255.0
-        max_c, min_c = max(_red, _green, _blue), min(_red, _green, _blue)
+        red_norm, green_norm, blue_norm = red / 255.0, green / 255.0, blue / 255.0
+        max_c, min_c = max(red_norm, green_norm, blue_norm), min(red_norm, green_norm, blue_norm)
         light = (max_c + min_c) / 2
 
         if max_c == min_c:
@@ -292,12 +292,12 @@ class rgba(_ColorBase):
             delta = max_c - min_c
             sat = delta / (1 - abs(2 * light - 1))
 
-            if max_c == _red:
-                hue = ((_green - _blue) / delta) % 6
-            elif max_c == _green:
-                hue = ((_blue - _red) / delta) + 2
+            if max_c == red_norm:
+                hue = ((green_norm - blue_norm) / delta) % 6
+            elif max_c == green_norm:
+                hue = ((blue_norm - red_norm) / delta) + 2
             else:
-                hue = ((_red - _green) / delta) + 4
+                hue = ((red_norm - green_norm) / delta) + 4
 
             hue /= 6
 
@@ -526,18 +526,18 @@ class hsla(_ColorBase):
     def _hsl_to_rgb(cls, hue: int, sat: int, light: int) -> tuple[int, int, int]:
         """Internal method to convert HSL to RGB color space."""
 
-        _hue, _sat, _light = hue / 360, sat / 100, light / 100
+        hue_norm, sat_norm, light_norm = hue / 360, sat / 100, light / 100
 
-        if _sat == 0:
-            red = green = blue = int(_light * 255)
+        if sat_norm == 0:
+            red = green = blue = int(light_norm * 255)
 
         else:
-            chroma_max = _light * (1 + _sat) if _light < 0.5 else _light + _sat - _light * _sat
-            chroma_min = 2 * _light - chroma_max
+            chroma_max = light_norm * (1 + sat_norm) if light_norm < 0.5 else light_norm + sat_norm - light_norm * sat_norm
+            chroma_min = 2 * light_norm - chroma_max
 
-            red = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue + 1 / 3) * 255)
-            green = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue) * 255)
-            blue = round(cls._hue_to_rgb(chroma_min, chroma_max, _hue - 1 / 3) * 255)
+            red = round(cls._hue_to_rgb(chroma_min, chroma_max, hue_norm + 1 / 3) * 255)
+            green = round(cls._hue_to_rgb(chroma_min, chroma_max, hue_norm) * 255)
+            blue = round(cls._hue_to_rgb(chroma_min, chroma_max, hue_norm - 1 / 3) * 255)
 
         return red, green, blue
 

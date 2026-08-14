@@ -693,7 +693,7 @@ class FormatCodes:
         if default_color is None and (cached := _REPLACEMENT_CACHE.get(format_key)) is not None:
             return cached
 
-        _format_key = format_key
+        original_format_key = format_key
         format_key = cls._normalize_key(format_key)  # Normalize key and save original.
 
         # Direct lookup in pre-computed flat table (no O(n) scan over `codes_map`):
@@ -710,7 +710,7 @@ class FormatCodes:
         rgb_match = _PATTERNS.rgb.match(format_key)
         hex_match = _PATTERNS.hex.match(format_key)
 
-        result = _format_key
+        result = original_format_key
         try:
             if rgb_match:
                 is_bg = rgb_match.group(1)
@@ -735,7 +735,7 @@ class FormatCodes:
         if default_color is None:
             if len(_REPLACEMENT_CACHE) >= _REPLACEMENT_CACHE_MAX:
                 _REPLACEMENT_CACHE.clear()
-            _REPLACEMENT_CACHE[_format_key] = result
+            _REPLACEMENT_CACHE[original_format_key] = result
 
         return result
 
@@ -750,7 +750,7 @@ class FormatCodes:
     ) -> str | None:
         """Internal method to get the `default_color` and lighter/darker versions of it as ANSI code."""
 
-        _default_color: tuple[int, int, int] = (default_color[0], default_color[1], default_color[2])
+        _default_color: tuple[int, int, int] = (default_color[0], default_color[1], default_color[2])  # ruff:ignore[used-dummy-variable]
 
         if brightness_steps is None or (format_key and _PATTERNS.bg_opt_default.search(format_key)):
             return (ANSI.SEQ_BG_COLOR if format_key and _PATTERNS.bg_default.search(format_key) else ANSI.SEQ_FG_COLOR).format(
@@ -831,7 +831,7 @@ class _EscapeFormatCodeHelper:
         if self.use_default:
             _formats = _PATTERNS.star_reset_inside.sub(r"\1_|default\2", formats)
         else:
-            _formats = _PATTERNS.star_reset_inside.sub(r"\1_\2", formats)
+            _formats = _PATTERNS.star_reset_inside.sub(r"\1_\2", formats)  # ruff:ignore[used-dummy-variable]
 
         has_link = False
         has_invalid_key = False

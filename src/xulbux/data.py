@@ -67,13 +67,11 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
     *   `spaces_are_empty` – If true, it will count items with only spaces as empty."""
 
     if isinstance(data, dict):
-        return type(data)(
-            {
-                key: (val if not is_data_obj(val) else remove_empty_items(val, spaces_are_empty=spaces_are_empty))
-                for key, val in data.items()
-                if not _string_module.is_empty(val, spaces_are_empty=spaces_are_empty)
-            }
-        )
+        return type(data)({
+            key: (val if not is_data_obj(val) else remove_empty_items(val, spaces_are_empty=spaces_are_empty))
+            for key, val in data.items()
+            if not _string_module.is_empty(val, spaces_are_empty=spaces_are_empty)
+        })
 
     else:
         processed_items = (
@@ -83,9 +81,9 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
         )
         return cast(
             "DataObj",
-            type(data)(
-                [item for item in processed_items if not (not item and isinstance(item, (list, tuple, dict, set, frozenset)))]
-            ),
+            type(data)([
+                item for item in processed_items if not (not item and isinstance(item, (list, tuple, dict, set, frozenset)))
+            ]),
         )
 
 
@@ -736,7 +734,7 @@ class _DataRenderHelper:
             inner = self._hl("str", escaped) if self.do_syntax_hl else escaped
             return self.punct[quote] + inner + self.punct[quote]
 
-    def get_complexity(self, data: Any, /) -> int:  # noqa: C901
+    def get_complexity(self, data: Any, /) -> int:  # ruff:ignore[complex-structure]
         """Calculates the complexity of a data structure based on its nested elements."""
 
         complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)

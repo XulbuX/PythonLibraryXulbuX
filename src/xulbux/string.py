@@ -70,7 +70,8 @@ def escape(string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
         That way, if the string includes the same quotes, they will be escaped."""
 
     string = (
-        string.replace("\\", r"\\")
+        string
+        .replace("\\", r"\\")
         .replace("\n", "\\n")
         .replace("\r", "\\r")
         .replace("\t", "\\t")

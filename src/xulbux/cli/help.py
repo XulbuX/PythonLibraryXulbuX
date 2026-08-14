@@ -1,5 +1,3 @@
-# ruff: noqa: E501
-
 from .. import __version__
 from .. import console as _console_module
 from ..ansi import S, StyledText, _Style, _StyleGroup
@@ -102,16 +100,16 @@ CLI_HELP: Final[StyledText] = StyledText(
     H.HEADING("  Usage:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("LIBRARY CONSTANTS                               ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),  # ruff:ignore[line-too-long]
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Main Classes                                    ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("code"), H.PUNCT(", "), H.CLS("color"), H.PUNCT(", "), H.CLS("console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("code"), H.PUNCT(", "), H.CLS("color"), H.PUNCT(", "), H.CLS("console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),  # ruff:ignore[line-too-long]
     (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("module specific imports                         ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
     (H.BORDER("  │ "), H.TEXT("For more information see the documentation:    "), H.BORDER("│")),
-    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),
+    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),  # ruff:ignore[line-too-long]
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
     sep="\n",
