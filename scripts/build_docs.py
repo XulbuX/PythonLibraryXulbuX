@@ -39,8 +39,9 @@ class PyOnlyFinder:
             if not py_path.exists():
                 return None
 
-        loader = importlib.machinery.SourceFileLoader(fullname, str(py_path))
-        return importlib.util.spec_from_file_location(fullname, str(py_path), loader=loader)
+        return importlib.util.spec_from_file_location(
+            fullname, str(py_path), loader=importlib.machinery.SourceFileLoader(fullname, str(py_path))
+        )
 
 
 sys.meta_path.insert(0, PyOnlyFinder)
@@ -99,6 +100,7 @@ def format_signature_multiline(sig_text: str) -> str:
             input=sig,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=True,
         )
 
