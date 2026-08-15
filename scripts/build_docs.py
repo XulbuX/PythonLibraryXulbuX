@@ -436,7 +436,7 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
     return "\n".join(lines)
 
 
-def process_markdown_file(file_path: Path) -> None:
+def process_markdown_file(src_path: Path, dest_path: Path | None = None) -> None:
     """Processes a Markdown file, replacing API placeholders with generated documentation."""
 
     api_path: str = ""
@@ -446,12 +446,18 @@ def process_markdown_file(file_path: Path) -> None:
         api_path = match.group(1).strip()
         return generate_md_for_api(api_path)
 
-    file_path.write_text(
-        re.compile(r"<!--\s*API:\s*([a-zA-Z0-9_.]+)\s*-->").sub(replacer, file_path.read_text(encoding="utf-8")),
+    out_path = dest_path or src_path
+
+    # If the file was relocated to the `docs` subdirectory during the main build, update the relocated file instead:
+    if dest_path and (relocated := dest_path.parent / "docs" / dest_path.name).exists():
+        out_path = relocated
+
+    out_path.write_text(
+        re.compile(r"<!--\s*API:\s*([a-zA-Z0-9_.]+)\s*-->").sub(replacer, src_path.read_text(encoding="utf-8")),
         encoding="utf-8",
     )
 
-    print(f"  generated {file_path.name}{f' ({api_path})' if api_path else ''}")
+    print(f"  generated {out_path.name}{f' ({api_path})' if api_path else ''}")
 
 
 def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
@@ -474,7 +480,12 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
 def main() -> None:  # ruff:ignore[complex-structure]
     parser = argparse.ArgumentParser(description="Build xulbux documentation.")
     parser.add_argument("--dev", action="store_true", help="Run VitePress in dev mode")
+    parser.add_argument("--process-file", nargs=2, metavar=("SRC", "DEST"), help="Process a single MD file from SRC to DEST")
     args = parser.parse_args()
+
+    if args.process_file:
+        process_markdown_file(Path(args.process_file[0]), Path(args.process_file[1]))
+        return
 
     # [1] Clean and recreate the build directory to ensure a fresh slate:
     if DOCS_BUILD_DIR.exists():

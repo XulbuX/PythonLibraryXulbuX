@@ -8,16 +8,34 @@
     'JetBrains Mono NF', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
 
+  /* Terminal Theme */
+  --term-black: #303134;
+  --term-br-black: #66676a;
+  --term-red: #ff6467;
+  --term-br-red: #ff9597;
+  --term-green: #58f7bd;
+  --term-br-green: #90ffd1;
+  --term-yellow: #ffba75;
+  --term-br-yellow: #ffda96;
+  --term-blue: #7c86ff;
+  --term-br-blue: #94a6ff;
+  --term-magenta: #b196ff;
+  --term-br-magenta: #d3a9fe;
+  --term-cyan: #53eafd;
+  --term-br-cyan: #81f3ff;
+  --term-white: #eaebee;
+  --term-br-white: #fbfcff;
+
   /* Light Theme */
   --vp-c-bg: #ffffff;
-  --vp-c-bg-alt: #f8f8f8;
+  --vp-c-bg-alt: #fafafa;
   --vp-c-bg-elv: #ffffff;
   --vp-c-bg-soft: #f0f0f0;
   --vp-c-border: #ededed;
   --vp-c-divider: #ededed;
   --vp-c-gutter: #ededed;
-  --vp-code-bg: #ededed;
-  --vp-code-block-bg: #f8f8f8;
+  --vp-code-bg: #f0f0f0;
+  --vp-code-block-bg: #fafafa;
 
   --vp-c-text-1: rgba(0 0 0 / 0.88);
   --vp-c-text-2: rgba(0 0 0 / 0.6);
@@ -43,33 +61,61 @@
   --vp-button-sponsor-text: var(--vp-c-text-1);
   --vp-button-sponsor-hover-bg: color-mix(in srgb, var(--vp-c-border), var(--vp-c-bg-soft) 50%);
   --vp-button-sponsor-active-bg: var(--vp-c-border);
+
+  /* Dark Theme*/
+  --dark-vp-c-bg: #101010;
+  --dark-vp-c-bg-alt: #000000;
+  --dark-vp-c-bg-elv: #1a1a1a;
+  --dark-vp-c-bg-soft: #1a1a1a;
+  --dark-vp-c-border: #262626;
+  --dark-vp-c-divider: #262626;
+  --dark-vp-c-gutter: #262626;
+  --dark-vp-code-bg: #262626;
+  --dark-vp-code-block-bg: #000000;
+
+  --dark-vp-c-text-1: rgba(255 255 255 / 0.9);
+  --dark-vp-c-text-2: rgba(255 255 255 / 0.6);
+  --dark-vp-c-text-3: rgba(255 255 255 / 0.38);
+
+  --dark-vp-c-brand-1: color-mix(in srgb, var(--base-brand), white 40%);
+  --dark-vp-c-brand-2: color-mix(in srgb, var(--base-brand), white 20%);
+  --dark-vp-c-brand-3: var(--base-brand);
+
+  --dark-vp-button-brand-bg: var(--dark-vp-c-brand-3);
+  --dark-vp-button-brand-text: #ffffff;
+  --dark-vp-button-brand-hover-bg: color-mix(
+    in srgb,
+    var(--dark-vp-c-brand-2),
+    var(--dark-vp-c-brand-3) 50%
+  );
+  --dark-vp-button-brand-active-bg: var(--dark-vp-c-brand-2);
 }
 
 .dark {
   /* Dark Theme */
-  --vp-c-bg: #0a0a0a;
-  --vp-c-bg-alt: #000000;
-  --vp-c-bg-elv: #161616;
-  --vp-c-bg-soft: #161616;
-  --vp-c-border: #262626;
-  --vp-c-divider: #262626;
-  --vp-c-gutter: #262626;
-  --vp-code-bg: #262626;
-  --vp-code-block-bg: #000000;
+  --vp-c-bg: var(--dark-vp-c-bg);
+  --vp-c-bg-alt: var(--dark-vp-c-bg-alt);
+  --vp-c-bg-elv: var(--dark-vp-c-bg-elv);
+  --vp-c-bg-soft: var(--dark-vp-c-bg-soft);
+  --vp-c-border: var(--dark-vp-c-border);
+  --vp-c-divider: var(--dark-vp-c-divider);
+  --vp-c-gutter: var(--dark-vp-c-gutter);
+  --vp-code-bg: var(--dark-vp-code-bg);
+  --vp-code-block-bg: var(--dark-vp-code-block-bg);
 
-  --vp-c-text-1: rgba(255 255 255 / 0.9);
-  --vp-c-text-2: rgba(255 255 255 / 0.6);
-  --vp-c-text-3: rgba(255 255 255 / 0.38);
+  --vp-c-text-1: var(--dark-vp-c-text-1);
+  --vp-c-text-2: var(--dark-vp-c-text-2);
+  --vp-c-text-3: var(--dark-vp-c-text-3);
 
-  --vp-c-brand-1: color-mix(in srgb, var(--base-brand), white 40%);
-  --vp-c-brand-2: color-mix(in srgb, var(--base-brand), white 20%);
-  --vp-c-brand-3: var(--base-brand);
+  --vp-c-brand-1: var(--dark-vp-c-brand-1);
+  --vp-c-brand-2: var(--dark-vp-c-brand-2);
+  --vp-c-brand-3: var(--dark-vp-c-brand-3);
 
   /* Different color usage for primary buttons in dark mode. */
-  --vp-button-brand-bg: var(--vp-c-brand-3);
-  --vp-button-brand-text: #ffffff;
-  --vp-button-brand-hover-bg: color-mix(in srgb, var(--vp-c-brand-2), var(--vp-c-brand-3) 50%);
-  --vp-button-brand-active-bg: var(--vp-c-brand-2);
+  --vp-button-brand-bg: var(--dark-vp-button-brand-bg);
+  --vp-button-brand-text: var(--dark-vp-button-brand-text);
+  --vp-button-brand-hover-bg: var(--dark-vp-button-brand-hover-bg);
+  --vp-button-brand-active-bg: var(--dark-vp-button-brand-active-bg);
 }
 
 /*********************************************** TYPOGRAPHY & INLINE CODE ***********************************************/
@@ -175,41 +221,6 @@ body .vp-doc > div > .api-item {
   margin: 0 !important;
 }
 
-/************************************************ CODE BLOCKS & VIGNETTE ************************************************/
-
-/* Move scrolling to the `<pre>` so we can overlay a fixed vignette on the wrapper. */
-.vp-doc div[class*='language-'] {
-  position: relative;
-  overflow: hidden !important;
-  border: 1px solid color-mix(in srgb, var(--vp-c-bg), var(--vp-c-border) 60%);
-}
-
-.vp-doc div[class*='language-'] > pre {
-  z-index: 1;
-  position: relative;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-}
-
-/* Fade-out Vignette Effect */
-.vp-doc div[class*='language-']::after {
-  z-index: 2;
-  content: '';
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 8px; /* Leave room so scrollbar is not obscured. */
-  position: absolute;
-  pointer-events: none;
-  box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
-}
-
-/* Ensure copy button and language indicator sit above the vignette. */
-.vp-doc div[class*='language-'] > button.copy,
-.vp-doc div[class*='language-'] > span.lang {
-  z-index: 3 !important;
-}
-
 /****************************************************** SCROLLBARS ******************************************************/
 
 * {
@@ -245,4 +256,231 @@ body .vp-doc > div > .api-item {
   content: attr(data-class-prefix);
   opacity: 0.64;
   font-weight: 500;
+}
+
+/************************************************ CODE BLOCKS & VIGNETTE ************************************************/
+
+/* Move scrolling to the `<pre>` so we can overlay a fixed vignette on the wrapper. */
+.vp-doc div[class*='language-'] {
+  position: relative;
+  overflow: hidden !important;
+  border: 1px solid color-mix(in srgb, var(--vp-c-bg), var(--vp-c-border) 70%);
+}
+
+.vp-doc div[class*='language-'] > pre {
+  z-index: 1;
+  position: relative;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* Fade-out Vignette Effect */
+.vp-doc div[class*='language-']::after {
+  z-index: 2;
+  content: '';
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 8px; /* Leave room so scrollbar is not obscured. */
+  position: absolute;
+  pointer-events: none;
+  box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
+}
+
+/* Ensure copy button and language indicator sit above the vignette. */
+.vp-doc div[class*='language-'] > button.copy,
+.vp-doc div[class*='language-'] > span.lang {
+  z-index: 3 !important;
+}
+
+/* Correct focus ring for code blocks. */
+.vp-doc div[class*='language-']:focus,
+.vp-doc div[class*='language-']:focus-within,
+.vp-doc div[class*='language-'] > pre:focus,
+.vp-doc div[class*='language-'] > pre:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 1px var(--vp-c-text-1) !important;
+}
+
+/**************************************************** TERMINAL STYLES ***************************************************/
+
+/* Merge code block with an adjacent terminal output. */
+.vp-doc div[class*='language-']:has(+ .ext-terminal) {
+  margin-bottom: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom: none !important;
+  clip-path: inset(-30px -30px 0 -30px);
+}
+.vp-doc div[class*='language-'] + .ext-terminal {
+  margin-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  clip-path: inset(0 -30px -30px -30px);
+}
+
+/* Custom brighter background for terminal blocks (always dark). */
+.vp-doc .ext-terminal {
+  --vp-code-lang-color: var(--dark-vp-c-text-3);
+  --vp-code-copy-code-border-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-text-3),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  --vp-code-copy-code-bg: var(--dark-vp-c-divider);
+  --vp-code-copy-code-hover-border-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-text-3),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  --vp-code-copy-code-hover-bg: color-mix(
+    in srgb,
+    var(--dark-vp-c-divider),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  --vp-code-copy-code-active-text: var(--dark-vp-c-text-2);
+  border-color: var(--dark-vp-c-border) !important;
+  border-top-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-border),
+    var(--dark-vp-c-bg-elv) 32%
+  ) !important;
+}
+.vp-doc .ext-terminal,
+.vp-doc .ext-terminal > pre {
+  background-color: var(--dark-vp-c-bg-elv) !important;
+}
+.vp-doc .ext-terminal::after {
+  box-shadow: inset 0 0 16px 8px var(--dark-vp-c-bg-elv) !important;
+}
+
+/* Terminal Output Styles */
+.term {
+  color: var(--dark-vp-c-text-1) !important;
+
+  p {
+    margin: 0 !important;
+    line-height: inherit;
+  }
+
+  .i {
+    font-style: italic;
+  }
+  .b {
+    font-weight: 900;
+  }
+  .u {
+    text-decoration: underline;
+  }
+  .dim {
+    opacity: 0.64;
+  }
+
+  .black {
+    color: var(--term-black) !important;
+  }
+  .br-black {
+    color: var(--term-br-black) !important;
+  }
+  .bg-black {
+    background-color: var(--term-black) !important;
+  }
+  .bg-br-black {
+    background-color: var(--term-br-black) !important;
+  }
+  .red {
+    color: var(--term-red) !important;
+  }
+  .br-red {
+    color: var(--term-br-red) !important;
+  }
+  .bg-red {
+    background-color: var(--term-red) !important;
+  }
+  .bg-br-red {
+    background-color: var(--term-br-red) !important;
+  }
+  .green {
+    color: var(--term-green) !important;
+  }
+  .br-green {
+    color: var(--term-br-green) !important;
+  }
+  .bg-green {
+    background-color: var(--term-green) !important;
+  }
+  .bg-br-green {
+    background-color: var(--term-br-green) !important;
+  }
+  .yellow {
+    color: var(--term-yellow) !important;
+  }
+  .br-yellow {
+    color: var(--term-br-yellow) !important;
+  }
+  .bg-yellow {
+    background-color: var(--term-yellow) !important;
+  }
+  .bg-br-yellow {
+    background-color: var(--term-br-yellow) !important;
+  }
+  .blue {
+    color: var(--term-blue) !important;
+  }
+  .br-blue {
+    color: var(--term-br-blue) !important;
+  }
+  .bg-blue {
+    background-color: var(--term-blue) !important;
+  }
+  .bg-br-blue {
+    background-color: var(--term-br-blue) !important;
+  }
+  .magenta {
+    color: var(--term-magenta) !important;
+  }
+  .br-magenta {
+    color: var(--term-br-magenta) !important;
+  }
+  .bg-magenta {
+    background-color: var(--term-magenta) !important;
+  }
+  .bg-br-magenta {
+    background-color: var(--term-br-magenta) !important;
+  }
+  .cyan {
+    color: var(--term-cyan) !important;
+  }
+  .br-cyan {
+    color: var(--term-br-cyan) !important;
+  }
+  .bg-cyan {
+    background-color: var(--term-cyan) !important;
+  }
+  .bg-br-cyan {
+    background-color: var(--term-br-cyan) !important;
+  }
+  .white {
+    color: var(--term-white) !important;
+  }
+  .br-white {
+    color: var(--term-br-white) !important;
+  }
+  .bg-white {
+    background-color: var(--term-white) !important;
+  }
+  .bg-br-white {
+    background-color: var(--term-br-white) !important;
+  }
+
+  .\#000 {
+    color: #000 !important;
+  }
+  .\#FFF {
+    color: #fff !important;
+  }
+
+  .bg-\#F67 {
+    background-color: #f67 !important;
+  }
 }
