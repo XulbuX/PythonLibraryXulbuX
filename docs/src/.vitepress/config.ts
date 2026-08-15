@@ -39,6 +39,7 @@ export default defineConfig({
   cleanUrls: true,
   description: 'A Python library to simplify common programming tasks.',
   head: [['link', { href: '/icon.svg', rel: 'icon' }]],
+  markdown: { theme: { dark: 'github-dark', light: 'github-light' } },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/icon.svg',

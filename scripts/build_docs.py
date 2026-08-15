@@ -16,6 +16,7 @@ from typing import Any
 # Ensure we can import xulbux:
 ROOT_DIR = Path(__file__).parent.parent.resolve()
 SRC_DIR = ROOT_DIR / "src"
+XUL_DIR = SRC_DIR / "xulbux"
 DOCS_DIR = ROOT_DIR / "docs"
 DOCS_SRC_DIR = DOCS_DIR / "src"
 DOCS_BUILD_DIR = DOCS_DIR / ".build"
@@ -470,7 +471,7 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
     return []
 
 
-def main() -> None:
+def main() -> None:  # ruff:ignore[complex-structure]
     parser = argparse.ArgumentParser(description="Build xulbux documentation.")
     parser.add_argument("--dev", action="store_true", help="Run VitePress in dev mode")
     args = parser.parse_args()
@@ -483,15 +484,16 @@ def main() -> None:
     print(f"\nCopied {DOCS_SRC_DIR.name} to {DOCS_BUILD_DIR.name}\n")
 
     # [2] Auto-discover all Python modules and generate placeholder markdown files for them:
-    sidebar_items: list[dict[str, str]] = []
-    xulbux_dir = SRC_DIR / "xulbux"
+    sidebar_root_items: list[dict[str, Any]] = []
+    sidebar_groups: dict[str, list[dict[str, str]]] = {}
+    sidebar_items: list[dict[str, Any]] = []
 
-    for py_file in sorted(xulbux_dir.rglob("*.py")):
+    for py_file in sorted(XUL_DIR.rglob("*.py")):
         if py_file.name.startswith("_"):
             continue
 
         # Get relative path without extension to build module path:
-        rel_path = py_file.relative_to(xulbux_dir).with_suffix("")
+        rel_path = py_file.relative_to(XUL_DIR).with_suffix("")
         api_path = f"xulbux.{str(rel_path).replace('\\', '/').replace('/', '.')}"
 
         page_slug = py_file.stem.replace("_", "-")
@@ -509,7 +511,19 @@ def main() -> None:
             md_file_path.write_text(f"# {page_title} Module\n\n<!-- API: {api_path} -->\n", encoding="utf-8")
             print(f"  created {md_file_path.name} ({api_path})")
 
-        sidebar_items.append({"text": page_title, "link": f"/docs/{page_slug}"})
+        item = {"text": page_title, "link": f"/docs/{page_slug}"}
+
+        if len(rel_path.parts) > 1:
+            group_name = rel_path.parts[0].title()
+            if group_name not in sidebar_groups:
+                sidebar_groups[group_name] = []
+            sidebar_groups[group_name].append(item)
+        else:
+            sidebar_root_items.append(item)
+
+    for group_name, items in sorted(sidebar_groups.items()):
+        sidebar_items.append({"text": group_name, "collapsed": False, "items": items})
+    sidebar_items.extend(sidebar_root_items)
 
     # Write `sidebar.json`:
     sidebar_data = get_base_sidebar(DOCS_SRC_DIR)
@@ -518,9 +532,9 @@ def main() -> None:
     sidebar_file = DOCS_BUILD_DIR / SIDEBAR_REL_PATH
     sidebar_file.parent.mkdir(parents=True, exist_ok=True)
     sidebar_file.write_text(json.dumps(sidebar_data, indent=2), encoding="utf-8")
-    print(f"\nGenerated sidebar.json with {len(sidebar_items)} items\n")
+    print(f"\nGenerated sidebar.json with {len(sidebar_root_items) + sum(len(i) for i in sidebar_groups.values())} items\n")
 
-    # [3] Process all markdown files, injecting the actual API docs wherever `<!-- API: ... -->` is found:
+    # [3] Process all markdown files, injecting the actual API docs wherever `<!-- API: … -->` is found:
     for md_file in DOCS_BUILD_DIR.rglob("*.md"):
         if md_file.is_file():
             process_markdown_file(md_file)
