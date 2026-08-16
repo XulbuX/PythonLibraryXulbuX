@@ -250,54 +250,79 @@ body .vp-doc > div > .api-item {
   display: none;
 }
 
-/**************************************************** API CLASS NAMES ***************************************************/
+/************************************************ API CLASS NAMES & LINKS ***********************************************/
+
+.api-item h4 code a.class-prefix::before {
+  content: attr(data-class-prefix);
+}
 
 .api-item h4 code a.class-prefix {
   z-index: 0;
   opacity: 0.64;
   font-weight: 500;
   position: relative;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-style: dashed;
+  text-decoration-color: color-mix(in srgb, currentColor 64%, transparent);
   transition:
     opacity 200ms,
-    color 200ms;
-}
-
-.api-item h4 code a.class-prefix::before {
-  content: attr(data-class-prefix);
-}
-.api-item h4 code a.class-prefix::after {
-  z-index: -1;
-  content: '';
-  top: 0;
-  left: -0.15rem;
-  right: -0.15rem;
-  bottom: 0;
-  opacity: 0;
-  border-radius: 4px;
-  position: absolute;
-  pointer-events: none;
-  background-color: var(--vp-button-brand-hover-bg);
-  transition:
-    opacity 200ms,
-    background-color 200ms;
+    color 200ms,
+    text-decoration-color 200ms;
 }
 
 .api-item h4 code a.class-prefix:hover {
   opacity: 1;
-  color: var(--vp-button-brand-text);
+  color: inherit !important;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
 }
-.api-item h4 code a.class-prefix:hover::after {
-  opacity: 1;
-}
-
 .api-item h4 code a.class-prefix:active {
   opacity: 1;
-  color: var(--vp-button-brand-text);
+  color: inherit !important;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
 }
-.api-item h4 code a.class-prefix:active::after {
-  opacity: 1;
-  background-color: var(--vp-button-brand-active-bg);
+
+.vp-doc .api-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-style: dashed;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  transition:
+    color 200ms,
+    text-decoration-color 200ms;
+}
+.vp-doc .api-link:hover {
+  color: inherit !important;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
+}
+
+@keyframes target-flash {
+  0%,
+  20% {
+    color: var(--vp-button-brand-text) !important;
+    background-color: var(--vp-button-brand-hover-bg) !important;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.vp-doc :is(h1, h2, h3, h4, h5, h6).target-highlight > code,
+.vp-doc :is(h1, h2, h3, h4, h5, h6).target-highlight > code * {
+  color: var(--vp-button-brand-text) !important;
+  background-color: var(--vp-button-brand-hover-bg) !important;
+  transition:
+    background-color 200ms,
+    color 200ms;
+}
+
+.vp-doc :is(h1, h2, h3, h4, h5, h6):target > code,
+.vp-doc :is(h1, h2, h3, h4, h5, h6):target > code * {
+  animation: target-flash 1.5s ease-out;
 }
 
 /************************************************ CODE BLOCKS & VIGNETTE ************************************************/

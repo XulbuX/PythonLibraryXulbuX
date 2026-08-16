@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -17,11 +18,16 @@ from typing import Any
 ROOT_DIR = Path(__file__).parent.parent.resolve()
 SRC_DIR = ROOT_DIR / "src"
 XUL_DIR = SRC_DIR / "xulbux"
+
 DOCS_DIR = ROOT_DIR / "docs"
 DOCS_SRC_DIR = DOCS_DIR / "src"
 DOCS_BUILD_DIR = DOCS_DIR / ".build"
+
 SIDEBAR_REL_PATH = Path(".vitepress") / "sidebar.json"
+
+API_LINKS_PATH = DOCS_BUILD_DIR / ".vitepress" / "api-links.json"
 API_OUT_DIR = DOCS_BUILD_DIR / "docs" / "api"
+API_LINKS: dict[str, str] = {}
 
 _DEPRECATED_ANNOTATED_RE = re.compile(r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)")
 """Pattern to strip `Annotated[…, deprecated(…)]` wrappers if they exist."""
@@ -76,19 +82,23 @@ def extract_api_blocks(markdown: str) -> dict[str, str]:
     return blocks
 
 
-def _build_api_markdown_block(title: str, badge: str, signature: str, doc_parts: list[str]) -> str:
+def _build_api_markdown_block(title: str, badge: str, signature: str, doc_parts: list[str], def_name: str = "") -> str:
     """Builds a consistent HTML/Markdown block for an API item."""
 
+    info_str = f' def="{def_name}"' if def_name else ""
     lines = [
         '<div class="api-item">\n\n',
         f"{title}{badge}\n\n",
         '<div class="api-signature-col">\n\n',
-        f"```python\n{signature}\n```\n\n",
+        f"```python{info_str}\n{signature}\n```\n\n",
         '</div>\n\n<div class="api-docs-col">\n\n',
     ]
 
     if doc_parts:
-        lines.append("\n\n".join(doc_parts) + "\n\n")
+        docs_text = "\n\n".join(doc_parts)
+        if def_name:
+            docs_text = re.sub(r"```python(?!\s+def=)[ \t]*\n", f"```python def=\"{def_name}\"\n", docs_text)
+        lines.append(docs_text + "\n\n")
     lines.append("</div>\n\n</div>\n\n")
 
     return "".join(lines)
@@ -171,7 +181,7 @@ def _generate_markdown_for_var(
     badge = ' <Badge type="danger" text="deprecated" />' if var_info["dep"] else ""
     if is_class_attr and class_name:
         title = (
-            f'#### <code><a class="class-prefix" href="#{class_name.lower()}"'
+            f'#### <code><a class="class-prefix" href="#{class_name.lower().replace("_", "-")}"'
             f' data-class-prefix="{class_name}"></a>.{name}</code>'
         )
     elif is_class_attr:
@@ -185,7 +195,7 @@ def _generate_markdown_for_var(
     if block_key in blocks:
         doc_parts.append(blocks[block_key])
 
-    return _build_api_markdown_block(title, badge, var_info["sig"], doc_parts)
+    return _build_api_markdown_block(title, badge, var_info["sig"], doc_parts, def_name=name)
 
 
 def process_docstring(doc: str | None) -> str:
@@ -293,7 +303,10 @@ def generate_md_for_api(api_path: str, blocks: dict[str, str] | None = None) -> 
         # Sort items by their source-code line number to ensure a logical reading flow:
         items_to_document.sort(key=lambda x: x[0])
 
+        url_path = f"/docs/api/{api_path.split('.', 1)[-1]}"
+
         for item in items_to_document:
+            API_LINKS[item[2]] = f"{url_path}#{item[2].lower().replace('_', '-')}"
             if item[1] == "var":
                 lines.append(_generate_markdown_for_var(item[2], item[3], blocks=blocks))
             else:
@@ -431,7 +444,7 @@ def _generate_markdown_for_obj(  # ruff:ignore[complex-structure]
     if inspect.isfunction(obj) or inspect.ismethod(obj):
         if class_name:
             title = (
-                f'#### <code><a class="class-prefix" href="#{class_name.lower()}"'
+                f'#### <code><a class="class-prefix" href="#{class_name.lower().replace("_", "-")}"'
                 f' data-class-prefix="{class_name}"></a>.{name}()</code>'
             )
             block_key = f"{class_name}.{name}"
@@ -444,7 +457,7 @@ def _generate_markdown_for_obj(  # ruff:ignore[complex-structure]
         if block_key in blocks:
             doc_parts.append(blocks[block_key])
 
-        lines.append(_build_api_markdown_block(title, badge, get_source_signature(obj), doc_parts))
+        lines.append(_build_api_markdown_block(title, badge, get_source_signature(obj), doc_parts, def_name=name))
 
     elif inspect.isclass(obj):
         title = f"### `{name}`"
@@ -463,7 +476,7 @@ def _generate_markdown_for_obj(  # ruff:ignore[complex-structure]
         if name in blocks:
             doc_parts.append(blocks[name])
 
-        lines.append(_build_api_markdown_block(title, badge, get_class_signature(obj, name), doc_parts))
+        lines.append(_build_api_markdown_block(title, badge, get_class_signature(obj, name), doc_parts, def_name=name))
 
         items_to_doc: list[tuple[int, str, Any, Any]] = []
 
@@ -545,7 +558,11 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.process_file:
+        if API_LINKS_PATH.exists():
+            with suppress(json.JSONDecodeError):
+                API_LINKS.update(json.loads(API_LINKS_PATH.read_text("utf-8")))
         process_markdown_file(Path(args.process_file[0]), Path(args.process_file[1]))
+        API_LINKS_PATH.write_text(json.dumps(API_LINKS, indent=2), encoding="utf-8")
         return
 
     # [1] Clean and recreate the build directory to ensure a fresh slate:
@@ -597,6 +614,10 @@ def main() -> None:
     sidebar_file.parent.mkdir(parents=True, exist_ok=True)
     sidebar_file.write_text(json.dumps(sidebar_data, indent=2), encoding="utf-8")
     print(f"\nGenerated sidebar.json with {len(sidebar_root_items) + sum(len(i) for i in sidebar_groups.values())} items\n")
+
+    # Write `api-links.json`:
+    API_LINKS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    API_LINKS_PATH.write_text(json.dumps(API_LINKS, indent=2), encoding="utf-8")
 
     # [4] Build or serve the final site using VitePress:
     if not (pnpm_exe := shutil.which("pnpm")):

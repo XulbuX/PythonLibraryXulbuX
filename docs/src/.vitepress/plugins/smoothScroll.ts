@@ -1,4 +1,4 @@
-import { inBrowser } from 'vitepress';
+import { inBrowser, onContentUpdated } from 'vitepress';
 import { ref, onUnmounted } from 'vue';
 
 interface SmoothScrollOptions {
@@ -111,21 +111,53 @@ export function setupSmoothScroll() {
   const { scrollTo } = useSmoothScroll();
 
   if (inBrowser) {
-    document.addEventListener('click', (event) => {
-      const target = (event.target as HTMLElement).closest('a');
-      if (target) {
-        const href = target.getAttribute('href');
-        if (href && href.startsWith('#') && href.length > 1) {
-          const el = document.getElementById(href.slice(1));
+    onContentUpdated(() => {
+      const { hash } = globalThis.location;
+      if (hash && hash.length > 1) {
+        setTimeout(() => {
+          const el = document.getElementById(hash.slice(1));
           if (el) {
-            event.preventDefault();
             const navbar = document.querySelector('.VPNav') as HTMLElement;
             const offset = navbar ? navbar.offsetHeight : 64;
             const padding = 32;
 
-            scrollTo(el, { duration: 500, offset: -(offset + padding) }).then(() => {
-              history.pushState(undefined, '', href);
+            scrollTo(el, { duration: 0, offset: -(offset + padding) }).then(() => {
+              el.classList.add('target-highlight');
+              setTimeout(() => {
+                el.classList.remove('target-highlight');
+              }, 1500);
             });
+          }
+        }, 100);
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement).closest('a');
+      if (target) {
+        const href = target.getAttribute('href');
+        if (href) {
+          try {
+            const url = new URL(href, globalThis.location.href);
+            if (url.pathname === globalThis.location.pathname && url.hash.length > 1) {
+              const el = document.getElementById(url.hash.slice(1));
+              if (el) {
+                event.preventDefault();
+                const navbar = document.querySelector('.VPNav') as HTMLElement;
+                const offset = navbar ? navbar.offsetHeight : 64;
+                const padding = 32;
+
+                scrollTo(el, { duration: 500, offset: -(offset + padding) }).then(() => {
+                  history.pushState(undefined, '', url.hash);
+                  el.classList.add('target-highlight');
+                  setTimeout(() => {
+                    el.classList.remove('target-highlight');
+                  }, 1500);
+                });
+              }
+            }
+          } catch {
+            // Ignore invalid URLs.
           }
         }
       }

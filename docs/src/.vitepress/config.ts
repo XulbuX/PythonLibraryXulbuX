@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitepress';
+import { apiLinkTransformer } from './plugins/apiLinkTransformer';
 import { syncPlugin } from './plugins/syncPlugin';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -12,7 +13,10 @@ export default defineConfig({
   cleanUrls: true,
   description: 'A Python library to simplify common programming tasks.',
   head: [['link', { href: '/icon.svg', rel: 'icon' }]],
-  markdown: { theme: { dark: 'github-dark', light: 'github-light' } },
+  markdown: {
+    codeTransformers: [apiLinkTransformer(dirname)],
+    theme: { dark: 'github-dark', light: 'github-light' },
+  },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/icon.svg',
