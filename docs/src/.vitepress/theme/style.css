@@ -250,12 +250,54 @@ body .vp-doc > div > .api-item {
   display: none;
 }
 
-/************************************************* API CLASS NAMES HACK *************************************************/
+/**************************************************** API CLASS NAMES ***************************************************/
 
-.api-item h4 code span[data-class-prefix]::before {
-  content: attr(data-class-prefix);
+.api-item h4 code a.class-prefix {
+  z-index: 0;
   opacity: 0.64;
   font-weight: 500;
+  position: relative;
+  text-decoration: none;
+  transition:
+    opacity 200ms,
+    color 200ms;
+}
+
+.api-item h4 code a.class-prefix::before {
+  content: attr(data-class-prefix);
+}
+.api-item h4 code a.class-prefix::after {
+  z-index: -1;
+  content: '';
+  top: 0;
+  left: -0.15rem;
+  right: -0.15rem;
+  bottom: 0;
+  opacity: 0;
+  border-radius: 4px;
+  position: absolute;
+  pointer-events: none;
+  background-color: var(--vp-button-brand-hover-bg);
+  transition:
+    opacity 200ms,
+    background-color 200ms;
+}
+
+.api-item h4 code a.class-prefix:hover {
+  opacity: 1;
+  color: var(--vp-button-brand-text);
+}
+.api-item h4 code a.class-prefix:hover::after {
+  opacity: 1;
+}
+
+.api-item h4 code a.class-prefix:active {
+  opacity: 1;
+  color: var(--vp-button-brand-text);
+}
+.api-item h4 code a.class-prefix:active::after {
+  opacity: 1;
+  background-color: var(--vp-button-brand-active-bg);
 }
 
 /************************************************ CODE BLOCKS & VIGNETTE ************************************************/
@@ -299,7 +341,7 @@ body .vp-doc > div > .api-item {
 .vp-doc div[class*='language-'] > pre:focus,
 .vp-doc div[class*='language-'] > pre:focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 1px var(--vp-c-text-1) !important;
+  box-shadow: none !important;
 }
 
 /**************************************************** TERMINAL STYLES ***************************************************/

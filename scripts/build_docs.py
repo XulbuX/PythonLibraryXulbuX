@@ -170,7 +170,10 @@ def _generate_markdown_for_var(
 
     badge = ' <Badge type="danger" text="deprecated" />' if var_info["dep"] else ""
     if is_class_attr and class_name:
-        title = f'#### <code><span data-class-prefix="{class_name}"></span>.{name}</code>'
+        title = (
+            f'#### <code><a class="class-prefix" href="#{class_name.lower()}"'
+            f' data-class-prefix="{class_name}"></a>.{name}</code>'
+        )
     elif is_class_attr:
         title = f"#### `.{name}`"
     else:
@@ -427,7 +430,10 @@ def _generate_markdown_for_obj(  # ruff:ignore[complex-structure]
 
     if inspect.isfunction(obj) or inspect.ismethod(obj):
         if class_name:
-            title = f'#### <code><span data-class-prefix="{class_name}"></span>.{name}()</code>'
+            title = (
+                f'#### <code><a class="class-prefix" href="#{class_name.lower()}"'
+                f' data-class-prefix="{class_name}"></a>.{name}()</code>'
+            )
             block_key = f"{class_name}.{name}"
         else:
             title = f"### `{name}()`"
