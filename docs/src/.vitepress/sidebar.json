@@ -2,9 +2,9 @@
   {
     "text": "Guide",
     "items": [
-      { "text": "Getting Started", "link": "/docs/get-started" },
-      { "text": "CLI Commands", "link": "/docs/commands" },
-      { "text": "Modules Overview", "link": "/docs/overview" }
+      { "text": "Getting Started", "link": "/docs/guide/get-started" },
+      { "text": "CLI Commands", "link": "/docs/guide/commands" },
+      { "text": "Modules Overview", "link": "/docs/guide/overview" }
     ]
   }
 ]

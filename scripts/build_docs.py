@@ -21,6 +21,7 @@ DOCS_DIR = ROOT_DIR / "docs"
 DOCS_SRC_DIR = DOCS_DIR / "src"
 DOCS_BUILD_DIR = DOCS_DIR / ".build"
 SIDEBAR_REL_PATH = Path(".vitepress") / "sidebar.json"
+API_OUT_DIR = DOCS_BUILD_DIR / "docs" / "api"
 
 _DEPRECATED_ANNOTATED_RE = re.compile(r"(\[?)\s*Annotated\[\s*([\s\S]*?)\s*,\s*deprecated\([\s\S]*?\)\s*,?\s*\]\s*(\]?)")
 """Pattern to strip `Annotated[…, deprecated(…)]` wrappers if they exist."""
@@ -61,6 +62,18 @@ def _get_line_number(obj: Any) -> int:
         return inspect.getsourcelines(obj)[1]
     except Exception:
         return getattr(getattr(obj, "__code__", None), "co_firstlineno", 0)
+
+
+def extract_api_blocks(markdown: str) -> dict[str, str]:
+    """Parses a markdown string and extracts tagged manual blocks."""
+
+    blocks: dict[str, str] = {}
+    pattern = re.compile(r"<!--\s*API:\s*<([a-zA-Z0-9_.]+)> \s*-->(.*?)<!--\s*API:\s*</\1>\s*-->", re.DOTALL)
+
+    for match in pattern.finditer(markdown):
+        blocks[match.group(1).strip()] = match.group(2).strip()
+
+    return blocks
 
 
 def _build_api_markdown_block(title: str, badge: str, signature: str, doc_parts: list[str]) -> str:
@@ -143,8 +156,17 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
     return vars_info
 
 
-def _generate_markdown_for_var(name: str, var_info: dict[str, Any], is_class_attr: bool = False, class_name: str = "") -> str:
+def _generate_markdown_for_var(
+    name: str,
+    var_info: dict[str, Any],
+    is_class_attr: bool = False,
+    class_name: str = "",
+    blocks: dict[str, str] | None = None,
+) -> str:
     """Generates Markdown documentation for a given variable or class attribute."""
+
+    if blocks is None:
+        blocks = {}
 
     badge = ' <Badge type="danger" text="deprecated" />' if var_info["dep"] else ""
     if is_class_attr and class_name:
@@ -155,6 +177,10 @@ def _generate_markdown_for_var(name: str, var_info: dict[str, Any], is_class_att
         title = f"### `{name}`"
 
     doc_parts = [process_docstring(var_info["doc"])] if var_info["doc"] else []
+
+    block_key = f"{class_name}.{name}" if class_name else name
+    if block_key in blocks:
+        doc_parts.append(blocks[block_key])
 
     return _build_api_markdown_block(title, badge, var_info["sig"], doc_parts)
 
@@ -187,8 +213,11 @@ def process_docstring(doc: str | None) -> str:
     return "\n".join(out)
 
 
-def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
+def generate_md_for_api(api_path: str, blocks: dict[str, str] | None = None) -> str:  # ruff:ignore[complex-structure]
     """Generates Markdown documentation for a given API path (e.g., `xulbux.console`)."""
+
+    if blocks is None:
+        blocks = {}
 
     try:
         # Attempt to import the API path as a full module:
@@ -201,7 +230,7 @@ def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
             try:
                 module = importlib.import_module(parts[0])
                 is_module = False
-                return _generate_markdown_for_obj(parts[1], getattr(module, parts[1]))
+                return _generate_markdown_for_obj(parts[1], getattr(module, parts[1]), blocks=blocks)
 
             except (ModuleNotFoundError, AttributeError):
                 return f"> **Error**: Could not find API reference for `{api_path}`"
@@ -210,9 +239,13 @@ def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
 
     if is_module:
         lines: list[str] = []
+        lines.append(f"# {api_path.split('.')[-1].replace('_', ' ').title()} Module\n")
 
         if module.__doc__:
             lines.append(process_docstring(module.__doc__) + "\n")
+
+        if "_header" in blocks:
+            lines.append(blocks["_header"] + "\n")
 
         tree = None
         source_code = ""
@@ -259,9 +292,9 @@ def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
 
         for item in items_to_document:
             if item[1] == "var":
-                lines.append(_generate_markdown_for_var(item[2], item[3]))
+                lines.append(_generate_markdown_for_var(item[2], item[3], blocks=blocks))
             else:
-                lines.append(_generate_markdown_for_obj(item[2], item[3], classes_ast.get(item[2], {})))
+                lines.append(_generate_markdown_for_obj(item[2], item[3], classes_ast.get(item[2], {}), blocks=blocks))
 
         return "\n".join(lines)
 
@@ -374,19 +407,37 @@ def get_class_signature(cls_obj: Any, cls_name: str) -> str:
         return f"class {cls_name}"
 
 
-def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[str, Any]] | None = None) -> str:  # ruff:ignore[complex-structure]
-    """Generates Markdown documentation for a given function or class object."""
+def _generate_markdown_for_obj(  # ruff:ignore[complex-structure]
+    name: str,
+    obj: Any,
+    class_vars: dict[str, dict[str, Any]] | None = None,
+    blocks: dict[str, str] | None = None,
+    class_name: str = "",
+) -> str:
+    """Generates Markdown documentation for a given function, class, or method object."""
 
     if class_vars is None:
         class_vars = {}
+    if blocks is None:
+        blocks = {}
 
     badge: str = ' <Badge type="danger" text="deprecated" />' if hasattr(obj, "__deprecated__") else ""
     doc_parts: list[str] = []
     lines: list[str] = []
 
-    if inspect.isfunction(obj):
-        title = f"### `{name}()`"
-        doc_parts = [process_docstring(obj.__doc__)] if obj.__doc__ else []
+    if inspect.isfunction(obj) or inspect.ismethod(obj):
+        if class_name:
+            title = f'#### <code><span data-class-prefix="{class_name}"></span>.{name}()</code>'
+            block_key = f"{class_name}.{name}"
+        else:
+            title = f"### `{name}()`"
+            block_key = name
+
+        if obj.__doc__:
+            doc_parts.append(process_docstring(obj.__doc__))
+        if block_key in blocks:
+            doc_parts.append(blocks[block_key])
+
         lines.append(_build_api_markdown_block(title, badge, get_source_signature(obj), doc_parts))
 
     elif inspect.isclass(obj):
@@ -402,6 +453,9 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
             and process_docstring(init_obj.__doc__) not in process_docstring(obj.__doc__)
         ):
             doc_parts.append(process_docstring(init_obj.__doc__))
+
+        if name in blocks:
+            doc_parts.append(blocks[name])
 
         lines.append(_build_api_markdown_block(title, badge, get_class_signature(obj, name), doc_parts))
 
@@ -425,39 +479,40 @@ def _generate_markdown_for_obj(name: str, obj: Any, class_vars: dict[str, dict[s
 
         for item in items_to_doc:
             if item[1] == "var":
-                lines.append(_generate_markdown_for_var(item[2], item[3], is_class_attr=True, class_name=name))
+                lines.append(_generate_markdown_for_var(item[2], item[3], is_class_attr=True, class_name=name, blocks=blocks))
             else:
-                m_name, m_obj = item[2], item[3]
-                badge = ' <Badge type="danger" text="deprecated" />' if hasattr(m_obj, "__deprecated__") else ""
-                title = f'#### <code><span data-class-prefix="{name}"></span>.{m_name}()</code>'
-                doc_parts = [process_docstring(m_obj.__doc__)] if m_obj.__doc__ else []
-                lines.append(_build_api_markdown_block(title, badge, get_source_signature(m_obj), doc_parts))
+                lines.append(_generate_markdown_for_obj(item[2], item[3], blocks=blocks, class_name=name))
 
     return "\n".join(lines)
 
 
-def process_markdown_file(src_path: Path, dest_path: Path | None = None) -> None:
-    """Processes a Markdown file, replacing API placeholders with generated documentation."""
+def process_markdown_file(src_path: Path, dest_path: Path | None = None, api_path: str | None = None) -> None:
+    """Processes a manual API Markdown file, injecting its blocks into the auto-generated API structure."""
 
-    api_path: str = ""
+    if api_path is None:
+        try:
+            if "api" in src_path.parts:
+                api_idx = src_path.parts.index("api")
+                rel_parts = src_path.parts[api_idx + 1 :]
+                api_path = f"xulbux.{'.'.join(rel_parts)[:-3]}" if src_path.suffix == ".md" else None
+        except ValueError:
+            pass
 
-    def replacer(match: re.Match[str]) -> str:
-        nonlocal api_path
-        api_path = match.group(1).strip()
-        return generate_md_for_api(api_path)
+    if not api_path:
+        # Not an API file; just copy it if a different destination was requested:
+        if dest_path and dest_path != src_path:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_path, dest_path)
+        return
+
+    blocks = extract_api_blocks(src_path.read_text(encoding="utf-8")) if src_path.exists() else {}
+    final_md = generate_md_for_api(api_path, blocks)
 
     out_path = dest_path or src_path
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(final_md, encoding="utf-8")
 
-    # If the file was relocated to the `docs` subdirectory during the main build, update the relocated file instead:
-    if dest_path and (relocated := dest_path.parent / "docs" / dest_path.name).exists():
-        out_path = relocated
-
-    out_path.write_text(
-        re.compile(r"<!--\s*API:\s*([a-zA-Z0-9_.]+)\s*-->").sub(replacer, src_path.read_text(encoding="utf-8")),
-        encoding="utf-8",
-    )
-
-    print(f"  generated {out_path.name}{f' ({api_path})' if api_path else ''}")
+    print(f"  generated {out_path.name} ({api_path})")
 
 
 def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
@@ -477,7 +532,7 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
     return []
 
 
-def main() -> None:  # ruff:ignore[complex-structure]
+def main() -> None:
     parser = argparse.ArgumentParser(description="Build xulbux documentation.")
     parser.add_argument("--dev", action="store_true", help="Run VitePress in dev mode")
     parser.add_argument("--process-file", nargs=2, metavar=("SRC", "DEST"), help="Process a single MD file from SRC to DEST")
@@ -494,7 +549,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     shutil.copytree(DOCS_SRC_DIR, DOCS_BUILD_DIR)
     print(f"\nCopied {DOCS_SRC_DIR.name} to {DOCS_BUILD_DIR.name}\n")
 
-    # [2] Auto-discover all Python modules and generate placeholder markdown files for them:
+    # [2] Auto-discover all Python modules and generate markdown files for them:
     sidebar_root_items: list[dict[str, Any]] = []
     sidebar_groups: dict[str, list[dict[str, str]]] = {}
     sidebar_items: list[dict[str, Any]] = []
@@ -503,26 +558,18 @@ def main() -> None:  # ruff:ignore[complex-structure]
         if py_file.name.startswith("_"):
             continue
 
-        # Get relative path without extension to build module path:
         rel_path = py_file.relative_to(XUL_DIR).with_suffix("")
-        api_path = f"xulbux.{str(rel_path).replace('\\', '/').replace('/', '.')}"
+        flat_module_path = str(rel_path).replace("\\", "/").replace("/", ".")
 
-        page_slug = py_file.stem.replace("_", "-")
+        api_path = f"xulbux.{flat_module_path}"
         page_title = py_file.stem.replace("_", " ").title()
-        md_file_path = DOCS_BUILD_DIR / "docs" / f"{page_slug}.md"
 
-        # If user manually created it in the root of `docs/src`, move it to `docs/`:
-        if (manual_root_md := DOCS_BUILD_DIR / f"{page_slug}.md").exists():
-            md_file_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(manual_root_md), str(md_file_path))
+        md_file_path = API_OUT_DIR / f"{flat_module_path}.md"
+        link_path = f"/docs/api/{flat_module_path}"
 
-        # If manual MD doesn't exist, create it:
-        if not md_file_path.exists():
-            md_file_path.parent.mkdir(parents=True, exist_ok=True)
-            md_file_path.write_text(f"# {page_title} Module\n\n<!-- API: {api_path} -->\n", encoding="utf-8")
-            print(f"  created {md_file_path.name} ({api_path})")
+        process_markdown_file(md_file_path, api_path=api_path)
 
-        item = {"text": page_title, "link": f"/docs/{page_slug}"}
+        item = {"text": page_title, "link": link_path}
 
         if len(rel_path.parts) > 1:
             group_name = rel_path.parts[0].title()
@@ -544,11 +591,6 @@ def main() -> None:  # ruff:ignore[complex-structure]
     sidebar_file.parent.mkdir(parents=True, exist_ok=True)
     sidebar_file.write_text(json.dumps(sidebar_data, indent=2), encoding="utf-8")
     print(f"\nGenerated sidebar.json with {len(sidebar_root_items) + sum(len(i) for i in sidebar_groups.values())} items\n")
-
-    # [3] Process all markdown files, injecting the actual API docs wherever `<!-- API: … -->` is found:
-    for md_file in DOCS_BUILD_DIR.rglob("*.md"):
-        if md_file.is_file():
-            process_markdown_file(md_file)
 
     # [4] Build or serve the final site using VitePress:
     if not (pnpm_exe := shutil.which("pnpm")):

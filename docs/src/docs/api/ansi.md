@@ -1,7 +1,5 @@
-# Ansi Module
 
-This module provides the `StyledText` class together with the `S` and `Term` classes<br>
-for building richly styled terminal output using a typed, operator-based syntax.
+<!-- API: <_header> -->
 
 ---
 
@@ -191,6 +189,4 @@ These are plain strings (or string-returning helpers), so they can be passed dir
 *   `Term.save()`           – Save the current cursor position.
 *   `Term.restore()`        – Restore the previously saved cursor position.
 
----
-
-<!-- API: xulbux.ansi -->
+<!-- API: </_header> -->

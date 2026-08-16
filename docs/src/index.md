@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /docs/get-started
+      link: /docs/guide/get-started
     - theme: alt
       text: View on GitHub
       link: https://github.com/xulbux/python-lib-xulbux
