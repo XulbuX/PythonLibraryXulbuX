@@ -223,7 +223,21 @@ def process_docstring(doc: str | None) -> str:
     if in_code:
         out.append("```")
 
-    return "\n".join(out)
+    processed = "\n".join(out)
+
+    def attached_code_replacer(match: re.Match[str]) -> str:
+        if len(parts := match.group(1).strip().split("```", 1)) == 2:
+            return f'<AttachedCode title="{parts[0].strip().strip(":")}">\n\n{"```" + parts[1]}\n\n</AttachedCode>\n'
+        return match.group(0)
+
+    processed = re.sub(
+        r"<!--\s*DOCS:\s*<AttachedCode>\s*-->(.*?)<!--\s*DOCS:\s*</AttachedCode>\s*-->",
+        attached_code_replacer,
+        processed,
+        flags=re.DOTALL,
+    )
+
+    return processed
 
 
 def generate_md_for_api(api_path: str, blocks: dict[str, str] | None = None) -> str:  # ruff:ignore[complex-structure]

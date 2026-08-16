@@ -17,7 +17,8 @@ class _SafeDeprecated:
     *   `message` – A string message to display when the deprecated function is called.
     *   `**kwargs` – Additional keyword arguments to pass to the underlying `warnings.warn` function.
     --------------------------------------------------------------------------------------------------
-    **Example usage:**
+    #### Example Usage
+
     ```python
     @deprecated("This function is deprecated. Use `new_function()` instead.")
     def old_function():
@@ -85,7 +86,8 @@ def mypyc_attr[T](**kwargs: Any) -> Callable[[T], T]:
     -------------------------------------------------------------------------------------------
     *   `**kwargs` – Keyword arguments to pass to `mypy_extensions.mypyc_attr` if available.\n
     -------------------------------------------------------------------------------------------
-    **Example usage:**
+    #### Example Usage
+
     ```python
     @mypyc_attr(native_class=False)
     class MyClass:

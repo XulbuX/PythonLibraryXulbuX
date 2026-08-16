@@ -119,7 +119,12 @@ def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
 
 
 def remove_comments[DataObj: DataObjType](
-    data: DataObj, /, *, comment_start: str = ">>", comment_end: str = "<<", comment_sep: str = ""
+    data: DataObj,
+    /,
+    *,
+    comment_start: str = ">>",
+    comment_end: str = "<<",
+    comment_sep: str = "",
 ) -> DataObj:
     """Remove comments from a list, tuple or dictionary.\n
     -----------------------------------------------------------------------------------------------------------------
@@ -128,42 +133,49 @@ def remove_comments[DataObj: DataObjType](
     *   `comment_end` – The string that marks the end of a comment inside `data`.
     *   `comment_sep` – The string with which a comment will be replaced, if it is in the middle of a value.
     -----------------------------------------------------------------------------------------------------------------
-    #### Examples:
+    #### Example Usage
+
     ```python
+    import xulbux as xx
+
     data = {
         "key1": [
-            ">> COMMENT IN THE BEGINNING OF THE STRING <<  value1",
-            "value2  >> COMMENT IN THE END OF THE STRING",
-            "val>> COMMENT IN THE MIDDLE OF THE STRING <<ue3",
-            ">> FULL VALUE IS A COMMENT  value4",
+            ">> Comment in the beginning of the string. <<  value1",
+            "value2  >> Comment in the end of the string.",
+            "val>> Comment in the middle of the string. <<ue3",
+            ">> Full value is a comment.  value4",
         ],
-        ">> FULL KEY + ALL ITS VALUES ARE A COMMENT  key2": [
+        ">> Full key + all its values are a comment.  key2": [
             "value",
             "value",
             "value",
         ],
-        "key3": ">> ALL THE KEYS VALUES ARE COMMENTS  value",
+        "key3": ">> All the keys values are comments.  value",
     }
 
-    processed_data = remove_comments(
+    processed_data = xx.data.remove_comments(
         data,
         comment_start=">>",
         comment_end="<<",
         comment_sep="__",
     )
     ```
-    -----------------------------------------------------------------------------------------------------------------
-    For this example, `processed_data` will be:
+
+    <!-- DOCS: <AttachedCode> -->
+    Processed data:
+
     ```python
     {
         "key1": [
             "value1",
             "value2",
-            "val__ue3",
+            "val__ue3"
         ],
-        "key3": None,
+        "key3": None
     }
     ```
+    <!-- DOCS: </AttachedCode> -->
+
     *   For `key1`, all the comments will just be removed, except at `value3` and `value4`:
         -   `value3` The comment is removed and the parts left and right are joined through `comment_sep`.
         -   `value4` The whole value is removed, since the whole value was a comment.
@@ -273,7 +285,9 @@ def get_path_id(
         instead of raising an error.
     -----------------------------------------------------------------------------------------------------
     The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
-    #### In this example:
+
+    #### Example
+
     ```python
     {
         "healthy": {
@@ -282,6 +296,7 @@ def get_path_id(
         }
     }
     ```
+
     … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be<br>
     `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use<br>
     the index of the value, so `healthy->fruit->0`."""
@@ -378,12 +393,12 @@ def render(
     *   `sep` – The separator between items in the data structure.
     *   `as_json` – if true, the output will be in valid JSON format.
     *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles (explained below – section 2)<br>
-        or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting.
+        or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting.\n
     -------------------------------------------------------------------------------------------------------------------
     There are three different levels of `compactness`:
     *   `0` expands everything possible.
     *   `1` expands only when necessary (based element complexity and the `max_width` parameter).
-    *   `2` keeps everything collapsed (all on one line).
+    *   `2` keeps everything collapsed (all on one line).\n
     -------------------------------------------------------------------------------------------------------------------
     The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
     The key's values are the `S` style attributes (or combined style groups) to apply to this data part.<br>
@@ -394,7 +409,7 @@ def render(
     *   `number: S.BR.MAGENTA`
     *   `literal: S.MAGENTA`
     *   `type: S.ITALIC | S.GREEN`
-    *   `punctuation: S.BR.BLACK`
+    *   `punctuation: S.BR.BLACK`\n
     -------------------------------------------------------------------------------------------------------------------
     The returned `StyledText` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)<br>
     and the plain, un-styled text via `.raw`.\n

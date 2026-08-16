@@ -339,6 +339,17 @@ body .vp-doc > div > .api-item {
   position: relative;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+  scrollbar-color: transparent transparent;
+}
+
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-thumb,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-track,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-button:horizontal {
+  display: block !important;
 }
 
 /* Fade-out Vignette Effect */
@@ -369,21 +380,55 @@ body .vp-doc > div > .api-item {
   box-shadow: none !important;
 }
 
-/**************************************************** TERMINAL STYLES ***************************************************/
+/************************************************ ATTACHED CODE/TERMINAL ************************************************/
 
 /* Merge code block with an adjacent terminal output. */
-.vp-doc div[class*='language-']:has(+ .ext-terminal) {
+.vp-doc div[class*='language-']:has(+ .ext-terminal),
+.vp-doc div[class*='language-']:has(+ .ext-attached-code) {
   margin-bottom: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-bottom: none !important;
   clip-path: inset(-30px -30px 0 -30px);
 }
+
 .vp-doc div[class*='language-'] + .ext-terminal {
   margin-top: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   clip-path: inset(0 -30px -30px -30px);
+}
+
+.vp-doc .ext-attached-code {
+  margin-top: 0 !important;
+  position: relative;
+}
+
+/* The inner code block inside AttachedCode. */
+.vp-doc .ext-attached-code > div[class*='language-'] {
+  margin-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-top: 1px solid color-mix(in srgb, var(--vp-c-bg), var(--vp-c-border) 70%) !important;
+  clip-path: inset(0 -30px -30px -30px);
+}
+
+/* Custom Title */
+.vp-doc .ext-attached-code .attached-title {
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  padding: 0 8px;
+  font-size: 12px;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+  background-color: var(--vp-code-block-bg);
 }
 
 /* Custom brighter background for terminal blocks (always dark). */

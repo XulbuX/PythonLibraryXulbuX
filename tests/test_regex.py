@@ -115,9 +115,16 @@ def test_regex_brackets_nested_brackets():
     pattern = _regex_module.brackets("[", "]")
     matches = rx.findall(pattern, text)
     assert matches == ["[outer [inner] content]"]
+
+    matches_overlapped = rx.findall(pattern, text, overlapped=True)
+    assert matches_overlapped == ["[outer [inner] content]", "[inner]"]
+
     pattern = _regex_module.brackets()
     matches = rx.findall(pattern, text)
     assert matches == ["(function(call))"]
+
+    matches_overlapped = rx.findall(pattern, text, overlapped=True)
+    assert matches_overlapped == ["(function(call))", "(call)"]
 
 
 def test_regex_brackets_no_brackets():

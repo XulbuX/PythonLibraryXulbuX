@@ -418,7 +418,7 @@ def get_args(
         ```
 
     ----------------------------------------------------------------------------------------------------------
-    **Example usage:**
+    #### Example Usage
 
     If you call the `get_args()` method in your script like this:
 
@@ -2270,7 +2270,8 @@ class ProgressBar(_StdoutInterceptorMixin):
         *   `current` – Update the current progress value.
         *   `label` – Update the progress label.
         -----------------------------------------------------------------------------------------
-        **Example usage:**
+        #### Example Usage
+
         ```python
         with ProgressBar().progress_context(500, "Loading...") as update_progress:
             update_progress(0)  # Show empty bar at start.
@@ -2544,7 +2545,8 @@ class Throbber(_StdoutInterceptorMixin):
         The returned callable accepts a single parameter:
         *   `new_label` – The new label text.\n
         ------------------------------------------------------------------------------------
-        **Example usage:**
+        #### Example Usage
+
         ```python
         with Throbber().context("Starting...") as update_label:
             time.sleep(2)
