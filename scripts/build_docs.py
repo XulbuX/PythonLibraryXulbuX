@@ -97,7 +97,7 @@ def _build_api_markdown_block(title: str, badge: str, signature: str, doc_parts:
     if doc_parts:
         docs_text = "\n\n".join(doc_parts)
         if def_name:
-            docs_text = re.sub(r"```python(?!\s+def=)[ \t]*\n", f"```python def=\"{def_name}\"\n", docs_text)
+            docs_text = re.sub(r"```python(?!\s+def=)[ \t]*\n", f'```python def="{def_name}"\n', docs_text)
         lines.append(docs_text + "\n\n")
     lines.append("</div>\n\n</div>\n\n")
 
