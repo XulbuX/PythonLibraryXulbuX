@@ -314,15 +314,84 @@ class _StyleGroup:
 
         return f"_StyleGroup{self._codes!r}"
 
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
+        """Join a sequence of segments using the current `_StyleGroup` object as the separator.\n
+        ------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        ------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        (S.BOLD | S.BLUE).join(["A ", " B"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        A <span class="b blue"> B</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(*iterable, sep=StyledText(self).ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyleGroup` object left justified in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        (S.BOLD | S.BLUE).ljust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="b blue">---</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).ljust(width, fill_char)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyleGroup` object right justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        (S.BOLD | S.BLUE).rjust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ----<span class="b blue"></span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).rjust(width, fill_char)
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyleGroup` object centered in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        (S.BOLD | S.BLUE).center(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        --<span class="b blue">-</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).center(width, fill_char)
+
 
 class _Style:
     """A single ANSI style integer.\n
-    ----------------------------------------------------------------------------
+    -------------------------------------------------------------------------------
     Supports two operators:
     *   `|`  combines two or more codes into a `_StyleGroup` → `S.BOLD | S.RED`
-    *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`
-    ----------------------------------------------------------------------------
-    """
+    *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`"""
 
     __slots__: Final[tuple[str, ...]] = ("_oc", "_value")
     _oc: tuple[tuple[str, ...], tuple[str, ...]]
@@ -384,6 +453,77 @@ class _Style:
             self._oc = oc
 
         return _StyledSequence(oc[0], oc[1], text)
+
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
+        """Join a sequence of segments using the current `_Style` object as the separator.\n
+        ------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        ------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED.join(["A ", " B"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        A <span class="red"> B</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(*iterable, sep=StyledText(self).ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Style` object left justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED.ljust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="red">---</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).ljust(width, fill_char)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Style` object right justified in a string of length `width` (visible chars).\n
+        -----------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        -----------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED.rjust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ----<span class="red"></span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).rjust(width, fill_char)
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Style` object centered in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED.center(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        --<span class="red">-</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).center(width, fill_char)
 
 
 class _ColorStyle:
@@ -451,10 +591,81 @@ class _ColorStyle:
 
         return f"_ColorStyle({'bg' if self._bg else 'fg'} {self._red},{self._green},{self._blue})"
 
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
+        """Join a sequence of segments using the current `_ColorStyle` object as the separator.\n
+        -------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        -------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.hex("#F67").join(["A ", " B"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        A <span class="bg-#F67"> B</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(*iterable, sep=StyledText(self).ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_ColorStyle` object left justified in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.hex("#F67").ljust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="bg-#F67">---</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).ljust(width, fill_char)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_ColorStyle` object right justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.hex("#F67").rjust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ----<span class="bg-#F67"></span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).rjust(width, fill_char)
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_ColorStyle` object centered in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.hex("#F67").center(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        --<span class="bg-#F67">-</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).center(width, fill_char)
+
 
 class _Link:
     """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
-    ---------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
     >>> S.link("https://example.com")("click here")
     >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
 
@@ -493,6 +704,77 @@ class _Link:
 
         return f"_Link({self._url!r})"
 
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
+        """Join a sequence of segments using the current `_Link` object as the separator.\n
+        ------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        ------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.link("url").join(["A ", " B"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        A <span> B</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(*iterable, sep=StyledText(self).ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Link` object left justified in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.link("url").ljust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span>---</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).ljust(width, fill_char)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Link` object right justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.link("url").rjust(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ----<span></span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).rjust(width, fill_char)
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_Link` object centered in a string of length `width` (visible chars).\n
+        ---------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ---------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.link("url").center(4, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        --<span>-</span>-
+        </TerminalOutput> -->"""
+
+        return StyledText(self).center(width, fill_char)
+
 
 class _StyledSequence:
     """Pre-computed ANSI open/close sequences applied to text.\n
@@ -511,6 +793,115 @@ class _StyledSequence:
         """Returns a string representation of this styled segment, showing its opens and text."""
 
         return f"_StyledSequence(opens={self._opens!r}, text={self.text!r})"
+
+    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
+        """Join a sequence of segments using the current `_StyledSequence` object as the separator.\n
+        ----------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        ----------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.BR.BLACK(".").join(["file", "txt"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        file<span class="br-black">.</span>txt
+        </TerminalOutput> -->"""
+
+        return StyledText(*iterable, sep=StyledText(self).ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyledSequence` object left justified in a string of length `width` (visible chars).\n
+        --------------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        --------------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED("Failed ").ljust(20, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="red">Failed </span>.............
+        </TerminalOutput> -->"""
+
+        return StyledText(self).ljust(width, fill_char)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyledSequence` object right justified in a string of length `width` (visible chars).\n
+        --------------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        --------------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.GREEN(" Success").rjust(20, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ............<span class="green"> Success</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).rjust(width, fill_char)
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
+        """Return the `_StyledSequence` object centered in a string of length `width` (visible chars).\n
+        -------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        -------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.BOLD(" Title ").center(20, S.BLUE("━")).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="blue">━━━━━━</span><span class="b"> Title </span><span class="blue">━━━━━━━</span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).center(width, fill_char)
+
+    def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
+        """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
+        for ANSI on first use) or to a custom file-like object.\n
+        -----------------------------------------------------------------------------------------
+        *   `end` – The string to append at the end of the output (default `"\\n"`).
+        *   `flush` – Whether to flush the output stream after writing (default `True`).
+        *   `file` – The file-like object to write to (default `sys.stdout`).\n
+        -----------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.YELLOW("Warning!").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="yellow">Warning!</span>
+        </TerminalOutput> -->"""
+
+        StyledText(self).print(end=end, flush=flush, file=file)
+
+    def input(self, /, *, reset_ansi: bool = False) -> str:
+        """Use the rendered ANSI string as an input prompt and return the user's input.\n
+        ----------------------------------------------------------------------------------
+        *   `reset_ansi` – If true, all ANSI styling will be reset after<br>
+            the user confirmed the input and the program continues to run.\n
+        ----------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.BR.BLUE("Enter name: ").input()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="br-blue">Enter name: </span>
+        </TerminalOutput> -->"""
+
+        return StyledText(self).input(reset_ansi=reset_ansi)
 
 
 # ********************* PUBLIC TYPE HELPERS *********************
@@ -787,7 +1178,7 @@ class S:
 class Term:
     """Common ANSI terminal control sequences (cursor, screen, title)<br>
     as plain strings or string-returning static methods.\n
-    ----------------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------
     Values can be passed straight into an `StyledText(…)` call or written to `sys.stdout`."""
 
     CLEAR_LINE: ClassVar[str] = f"{ANSI.CHAR}[2K"
@@ -870,16 +1261,16 @@ class Term:
 class StyledText:
     """Build a styled string from a sequence of segments<br>
     (strings, `_StyledSequence` calls, or raw tuples), joined by `sep`.\n
-    ------------------------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------------------------
     *   `segments` – Any number of segments to render. Each positional argument represents one logical line.
-    *   `sep` – The separator inserted between two adjacent positional arguments (default `""`).
-    ------------------------------------------------------------------------------------------------------
+    *   `sep` – The separator inserted between two adjacent positional arguments (default `""`).\n
+    ---------------------------------------------------------------------------------------------------------
     After construction the instance exposes:
     *   `ansi` – The fully rendered ANSI escape string, ready to be written to a terminal.
     *   `raw` – `ansi` with every ANSI escape sequence stripped; computed on demand.
     *   `code_positions` – A tuple of `(position, sequence)` pairs giving<br>
-        the start offset of every ANSI escape sequence inside `ansi`; computed on demand.
-    ------------------------------------------------------------------------------------------------------
+        the start offset of every ANSI escape sequence inside `ansi`; computed on demand.\n
+    ---------------------------------------------------------------------------------------------------------
     For exact information about how to use the operator syntax,<br>
     see the `ansi` module documentation."""
 
@@ -1013,45 +1404,120 @@ class StyledText:
 
     def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `StyledText` object as the separator.\n
-        ----------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects."""
+        -----------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
+        ------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText(S.BR.BLACK(" | ")).join(["Item 1", S.RED("Item 2"), "Item 3"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        Item 1 <span class="br-black">|</span> <span class="red">Item 2</span> <span class="br-black">|</span> Item 3
+        </TerminalOutput> -->"""
 
         return StyledText(*iterable, sep=self.ansi)
 
-    def ljust(self, width: int, fill_char: str = " ", /) -> StyledText:
+    @staticmethod
+    def _multiply_char(st: StyledText, times: int) -> str:
+        """Helper to multiply the single visible character inside a StyledText by `times`."""
+
+        if times <= 0:
+            return ""
+
+        parts: list[str] = []
+        last_end = 0
+
+        for match in _ANSI_SEQ_RX.finditer(st.ansi):
+            parts.append(st.ansi[last_end : match.start()] * times)
+            parts.append(match.group())
+            last_end = match.end()
+
+        parts.append(st.ansi[last_end:] * times)
+        return "".join(parts)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
         """Return the `StyledText` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------------------
         *   `width` – The total visible width of the resulting string, including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space)."""
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ------------------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText((S.BR.WHITE | S.BG.RED)(" Error ")).ljust(20, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="br-white bg-red"> Error </span>.............
+        </TerminalOutput> -->"""
+
+        if len(fill_st := StyledText(fill_char)) != 1:
+            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
+        elif (padding := max(0, width - len(self))) == 0:
+            return StyledText(self)
 
         result = StyledText.__new__(StyledText)
-        result.ansi = self.ansi + (fill_char * max(0, width - len(self)))
+        result.ansi = self.ansi + StyledText._multiply_char(fill_st, padding)
 
         return result
 
-    def rjust(self, width: int, fill_char: str = " ", /) -> StyledText:
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
         """Return the `StyledText` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------------------
         *   `width` – The total visible width of the resulting string, including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space)."""
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ------------------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText((S.BLACK | S.BG.GREEN)(" OK ")).rjust(20, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ................<span class="black bg-green"> OK </span>
+        </TerminalOutput> -->"""
+
+        if len(fill_st := StyledText(fill_char)) != 1:
+            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
+        elif (padding := max(0, width - len(self))) == 0:
+            return StyledText(self)
 
         result = StyledText.__new__(StyledText)
-        result.ansi = (fill_char * max(0, width - len(self))) + self.ansi
+        result.ansi = StyledText._multiply_char(fill_st, padding) + self.ansi
 
         return result
 
-    def center(self, width: int, fill_char: str = " ", /) -> StyledText:
+    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
         """Return the `StyledText` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------------------
         *   `width` – The total visible width of the resulting string, including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space)."""
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ------------------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText(S.BOLD(" Title ")).center(20, S.BLUE("━")).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="blue">━━━━━━</span><span class="b"> Title </span><span class="blue">━━━━━━━</span>
+        </TerminalOutput> -->"""
+
+        fill_st = StyledText(fill_char)
+        if len(fill_st) != 1:
+            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
 
         padding = max(0, width - len(self))
+        if padding == 0:
+            return StyledText(self)
+
         left = padding // 2
         right = padding - left
 
         result = StyledText.__new__(StyledText)
-        result.ansi = (fill_char * left) + self.ansi + (fill_char * right)
+        result.ansi = StyledText._multiply_char(fill_st, left) + self.ansi + StyledText._multiply_char(fill_st, right)
 
         return result
 
@@ -1072,7 +1538,17 @@ class StyledText:
         -----------------------------------------------------------------------------------------
         *   `end` – The string to append at the end of the output (default `"\\n"`).
         *   `flush` – Whether to flush the output stream after writing (default `True`).
-        *   `file` – The file-like object to write to (default `sys.stdout`)."""
+        *   `file` – The file-like object to write to (default `sys.stdout`).\n
+        -----------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText("Status: ", (S.BLACK | S.BG.GREEN)(" OK ")).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        Status: <span class="black bg-green"> OK </span>
+        </TerminalOutput> -->"""
 
         _config_terminal()
         target = file or _sys.stdout
@@ -1086,7 +1562,17 @@ class StyledText:
         """Use the rendered ANSI string as an input prompt and return the user's input.\n
         ----------------------------------------------------------------------------------
         *   `reset_ansi` – If true, all ANSI styling will be reset after<br>
-            the user confirmed the input and the program continues to run."""
+            the user confirmed the input and the program continues to run.\n
+        ----------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        StyledText(S.MAGENTA("Password: ")).input()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="magenta">Password: </span>
+        </TerminalOutput> -->"""
 
         _config_terminal()
         user_input = input(self.ansi)
@@ -1156,7 +1642,7 @@ class StyledText:
 
 def _build_open_close(group: _StyleGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Internal function to build the opening and closing ANSI sequences for a `_StyleGroup`.\n
-    ------------------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------------------
     Returns a `(opens, closes)` pair of tuples. Multiple opens / closes are emitted<br>
     only when both an OSC 8 hyperlink and SGR codes are present (OSC wraps SGR)."""
 

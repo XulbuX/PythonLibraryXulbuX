@@ -54,22 +54,22 @@ class H:
 
     BORDER: _StyleGroup = S.DIM | S.BR.BLACK
     """Styling for the borders in the CLI help message."""
-    CLS: _Style = S.BR.CYAN
-    """Styling for class names in the CLI help message."""
-    CMD: _Style = S.GREEN
+    CMD: _Style = S.BR.RED
     """Styling for command names in the CLI help message."""
-    CONST: _Style = S.BR.BLUE
+    CONST: _Style = S.MAGENTA
     """Styling for constant names in the CLI help message."""
-    FN: _Style = S.BR.GREEN
-    """Styling for function names in the CLI help message."""
     HEADING: _StyleGroup = S.BOLD | S.BR.WHITE
     """Styling for headings in the CLI help message."""
-    IMPORT: _Style = S.MAGENTA
+    IMPORT: _Style = S.BLUE
     """Styling for import statements in the CLI help message."""
-    LIB: _Style = S.BR.MAGENTA
+    LIB: _Style = S.BR.BLUE
     """Styling for library names in the CLI help message."""
     META: _StyleGroup = S.DIM | S.BR.WHITE
     """Styling for meta information in the CLI help message."""
+    MODULE: _Style = S.BR.MAGENTA
+    """Styling for module names in the CLI help message."""
+    OBJ: _Style = S.BR.CYAN
+    """Styling for object names in the CLI help message."""
     PUNCT: _Style = S.BR.BLACK
     """Styling for punctuation in the CLI help message."""
     TEXT: _Style = S.WHITE
@@ -95,16 +95,17 @@ CLI_HELP: Final[StyledText] = StyledText(
     "",
     H.HEADING("  Commands:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.CMD("xulbux-lib      "), H.TEXT("Show library info and usage       "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.CMD("xulbux-lib     "), H.TEXT("  Show library info and usage      "), H.BORDER("│")),
+    (H.BORDER("  │ "), H.CMD("xulbux-lib ", S.BOLD("ansi")), H.TEXT("  Preview all possible ANSI styles "), H.BORDER("│")),
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Usage:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("LIBRARY CONSTANTS                               ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Library Constants                               ")), H.BORDER("│")),
     (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),  # ruff:ignore[line-too-long]
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Main Classes                                    ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.CLS("code"), H.PUNCT(", "), H.CLS("color"), H.PUNCT(", "), H.CLS("console"), H.PUNCT(", "), H.META("...      "), H.BORDER("│")),  # ruff:ignore[line-too-long]
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("module specific imports                         ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.FN("rgba"), H.PUNCT(", "), H.FN("hsla"), H.PUNCT(", "), H.FN("hexa         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Modules                                         ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.MODULE("ansi"), H.PUNCT(", "), H.MODULE("code"), H.PUNCT(", "), H.MODULE("color"), H.PUNCT(", "), H.META("...         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
+    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Module Specific Imports                         ")), H.BORDER("│")),
+    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.OBJ("rgba"), H.PUNCT(", "), H.OBJ("hsla"), H.PUNCT(", "), H.OBJ("hexa         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
