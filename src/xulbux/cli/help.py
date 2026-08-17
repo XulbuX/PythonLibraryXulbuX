@@ -108,8 +108,8 @@ CLI_HELP: Final[StyledText] = StyledText(
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     H.HEADING("  Documentation:"),
     H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.TEXT("For more information see the documentation:    "), H.BORDER("│")),
-    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("github.com/xulbux/python-lib-xulbux/wiki"), "          ", H.BORDER("│")),  # ruff:ignore[line-too-long]
+    (H.BORDER("  │ "), H.TEXT("For more information see the documentation:       "), H.BORDER("│")),
+    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), "           ", H.BORDER("│")),  # ruff:ignore[line-too-long]
     H.BORDER("  ╰───────────────────────────────────────────────────╯"),
     "",
     sep="\n",
@@ -123,4 +123,4 @@ def show_help() -> None:
     which shows some information about the library."""
 
     CLI_HELP.print()
-    _console_module.pause_exit("  [dim](Press any key to exit...)\n\n", pause=True)
+    _console_module.pause_exit(StyledText("  ", S.DIM("Press any key to exit..."), "\n\n"), pause=True)

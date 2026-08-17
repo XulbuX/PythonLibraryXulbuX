@@ -44,17 +44,11 @@ function updateButtons() {
         leftBtn.classList.add('visible');
         rightBtn.classList.add('visible');
 
-        if (pre.scrollLeft > 0) {
-          leftBtn.classList.remove('disabled');
-        } else {
-          leftBtn.classList.add('disabled');
-        }
-
-        if (pre.scrollLeft < pre.scrollWidth - pre.clientWidth - 1) {
-          rightBtn.classList.remove('disabled');
-        } else {
-          rightBtn.classList.add('disabled');
-        }
+        leftBtn.classList.toggle('disabled', !(pre.scrollLeft > 0));
+        rightBtn.classList.toggle(
+          'disabled',
+          !(pre.scrollLeft < pre.scrollWidth - pre.clientWidth - 1)
+        );
       }
     }
   }
@@ -72,18 +66,13 @@ function handleScroll(event: Event) {
     const rightBtn = container.querySelector('.scroll-btn-right') as HTMLButtonElement | undefined;
 
     if (leftBtn) {
-      if (target.scrollLeft > 0) {
-        leftBtn.classList.remove('disabled');
-      } else {
-        leftBtn.classList.add('disabled');
-      }
+      leftBtn.classList.toggle('disabled', !(target.scrollLeft > 0));
     }
     if (rightBtn) {
-      if (target.scrollLeft < target.scrollWidth - target.clientWidth - 1) {
-        rightBtn.classList.remove('disabled');
-      } else {
-        rightBtn.classList.add('disabled');
-      }
+      rightBtn.classList.toggle(
+        'disabled',
+        !(target.scrollLeft < target.scrollWidth - target.clientWidth - 1)
+      );
     }
   }
 }
