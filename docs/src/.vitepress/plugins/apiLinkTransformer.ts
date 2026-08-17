@@ -20,7 +20,7 @@ function splitTextIntoNodes(
   defName: string | undefined,
   apiLinks: Record<string, string>
 ) {
-  let lastIndex = 0;
+  let lastIdx = 0;
   const newChildren: Record<string, unknown>[] = [];
   let matched = false;
 
@@ -29,8 +29,8 @@ function splitTextIntoNodes(
     if (matchedStr !== defName) {
       matched = true;
       const matchIndex = match.index ?? 0;
-      if (matchIndex > lastIndex) {
-        newChildren.push({ type: 'text', value: text.substring(lastIndex, matchIndex) });
+      if (matchIndex > lastIdx) {
+        newChildren.push({ type: 'text', value: text.substring(lastIdx, matchIndex) });
       }
       newChildren.push({
         children: [{ type: 'text', value: matchedStr }],
@@ -38,17 +38,88 @@ function splitTextIntoNodes(
         tagName: 'a',
         type: 'element',
       });
-      lastIndex = matchIndex + matchedStr.length;
+      lastIdx = matchIndex + matchedStr.length;
     }
   }
 
   if (matched) {
-    if (lastIndex < text.length) {
-      newChildren.push({ type: 'text', value: text.substring(lastIndex) });
+    if (lastIdx < text.length) {
+      newChildren.push({ type: 'text', value: text.substring(lastIdx) });
     }
     return newChildren;
   }
   return undefined;
+}
+
+function isAssignmentOrKwarg(children: HastNode[], startIndex: number): boolean {
+  for (let idx = startIndex + 1; idx < children.length; idx += 1) {
+    const nextChild = children[idx];
+    if (
+      nextChild.type === 'element' &&
+      nextChild.tagName === 'span' &&
+      nextChild.children?.[0]?.type === 'text'
+    ) {
+      const nextText = nextChild.children[0].value ?? '';
+      if (nextText.trim() !== '') {
+        return /^=(?!=)/.test(nextText.trimStart()); // Matches `=` but not `==`, `=>`, `=~`, …
+      }
+    }
+  }
+  return false;
+}
+
+function processTokenSpan(
+  child: HastNode,
+  children: HastNode[],
+  index: number,
+  apiLinksPattern: RegExp,
+  apiLinks: Record<string, string>,
+  defName: string | undefined
+) {
+  if (
+    child.type !== 'element' ||
+    child.tagName !== 'span' ||
+    !child.children ||
+    child.children.length !== 1 ||
+    child.children[0].type !== 'text'
+  ) {
+    return;
+  }
+
+  const text = child.children[0].value ?? '';
+  const trimmed = text.trimStart();
+
+  // [1] Skip if the text token looks like a comment or string:
+  if (trimmed.startsWith('#') || /^r?f?b?["']/i.test(trimmed)) {
+    return;
+  }
+
+  // [2] Skip if it's a kwarg or variable assignment (i.e. followed by `=`):
+  if (isAssignmentOrKwarg(children, index)) {
+    return;
+  }
+
+  const matches = [...text.matchAll(apiLinksPattern)];
+  if (matches.length === 0) {
+    return;
+  }
+
+  if (matches.length === 1 && matches[0][0] === text && text !== defName) {
+    child.children = [
+      {
+        children: [{ type: 'text', value: text }],
+        properties: { class: 'api-link', href: apiLinks[text] },
+        tagName: 'a',
+        type: 'element',
+      },
+    ];
+    return;
+  }
+
+  const newChildren = splitTextIntoNodes(text, matches, defName, apiLinks);
+  if (newChildren) {
+    child.children = newChildren as HastNode[];
+  }
 }
 
 export function apiLinkTransformer(dirname: string) {
@@ -67,14 +138,8 @@ export function apiLinkTransformer(dirname: string) {
   }
 
   return {
-    name: 'api-link-transformer',
-    span(this: { options?: { meta?: Record<string, string> } }, node: HastNode) {
-      if (
-        !apiLinksPattern ||
-        !node.children ||
-        node.children.length !== 1 ||
-        node.children[0].type !== 'text'
-      ) {
+    line(this: { options?: { meta?: Record<string, string> } }, node: HastNode) {
+      if (!apiLinksPattern || !node.children) {
         return;
       }
 
@@ -82,26 +147,17 @@ export function apiLinkTransformer(dirname: string) {
       const defMatch = rawMeta.match(/def="(?<name>[^"]+)"/);
       const defName = defMatch?.groups?.name;
 
-      const text = node.children[0].value ?? '';
-      const matches = [...text.matchAll(apiLinksPattern)];
-
-      if (matches.length === 0) {
-        return;
-      }
-
-      if (matches.length === 1 && matches[0][0] === text && text !== defName) {
-        node.tagName = 'a';
-        node.properties ||= {};
-        node.properties.href = apiLinks[text];
-        const existingClass = node.properties.class || '';
-        node.properties.class = existingClass ? `${existingClass as string} api-link` : 'api-link';
-        return;
-      }
-
-      const newChildren = splitTextIntoNodes(text, matches, defName, apiLinks);
-      if (newChildren) {
-        node.children = newChildren as HastNode[];
+      for (let childIndex = 0; childIndex < node.children.length; childIndex += 1) {
+        processTokenSpan(
+          node.children[childIndex],
+          node.children,
+          childIndex,
+          apiLinksPattern,
+          apiLinks,
+          defName
+        );
       }
     },
+    name: 'api-link-transformer',
   };
 }

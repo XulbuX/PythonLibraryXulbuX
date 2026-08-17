@@ -1,8 +1,10 @@
 import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
+import { setupCodeCopyBehavior } from '../plugins/codeCopyBehavior';
+import { setupCodeScrollButtons } from '../plugins/codeScrollButtons';
 import { setupSmoothScroll } from '../plugins/smoothScroll';
-import TerminalOutput from './components/TerminalOutput.vue';
 import AttachedCode from './components/AttachedCode.vue';
+import TerminalOutput from './components/TerminalOutput.vue';
 // @ts-ignore-next-line
 import './style.css';
 
@@ -14,5 +16,7 @@ export default {
   extends: DefaultTheme,
   setup() {
     setupSmoothScroll();
+    setupCodeScrollButtons();
+    setupCodeCopyBehavior();
   },
 } satisfies Theme;

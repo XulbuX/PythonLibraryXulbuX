@@ -36,6 +36,7 @@
   --vp-c-gutter: #ededed;
   --vp-code-bg: #f0f0f0;
   --vp-code-block-bg: #fafafa;
+  --vp-code-block-selection: color-mix(in srgb, var(--vp-c-text-1) 10%, transparent);
 
   --vp-c-text-1: rgba(0 0 0 / 0.88);
   --vp-c-text-2: rgba(0 0 0 / 0.6);
@@ -72,6 +73,7 @@
   --dark-vp-c-gutter: #262626;
   --dark-vp-code-bg: #262626;
   --dark-vp-code-block-bg: #000000;
+  --dark-vp-code-block-selection: color-mix(in srgb, var(--dark-vp-c-text-1) 18%, transparent);
 
   --dark-vp-c-text-1: rgba(255 255 255 / 0.9);
   --dark-vp-c-text-2: rgba(255 255 255 / 0.6);
@@ -102,6 +104,7 @@
   --vp-c-gutter: var(--dark-vp-c-gutter);
   --vp-code-bg: var(--dark-vp-code-bg);
   --vp-code-block-bg: var(--dark-vp-code-block-bg);
+  --vp-code-block-selection: var(--dark-vp-code-block-selection);
 
   --vp-c-text-1: var(--dark-vp-c-text-1);
   --vp-c-text-2: var(--dark-vp-c-text-2);
@@ -118,7 +121,11 @@
   --vp-button-brand-active-bg: var(--dark-vp-button-brand-active-bg);
 }
 
-/*********************************************** TYPOGRAPHY & INLINE CODE ***********************************************/
+/********************************************** TYPOGRAPHY & GLOBAL STYLES **********************************************/
+
+::selection {
+  background-color: color-mix(in srgb, var(--vp-c-brand-2) 40%, transparent);
+}
 
 /* Custom Inline Code Colors */
 .vp-doc :not(pre, h1, h2, h3, h4, h5, h6, a) > code {
@@ -255,49 +262,36 @@ body .vp-doc > div > .api-item {
 .api-item h4 code a.class-prefix::before {
   content: attr(data-class-prefix);
 }
-
 .api-item h4 code a.class-prefix {
   z-index: 0;
   opacity: 0.64;
   font-weight: 500;
   position: relative;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-style: dashed;
-  text-decoration-color: color-mix(in srgb, currentColor 64%, transparent);
+  text-decoration: none;
+  border-bottom: 0.1rem dashed color-mix(in srgb, currentColor 64%, transparent);
   transition:
     opacity 200ms,
     color 200ms,
-    text-decoration-color 200ms;
+    border-color 200ms;
 }
-
-.api-item h4 code a.class-prefix:hover {
-  opacity: 1;
-  color: inherit !important;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
-}
+.api-item h4 code a.class-prefix:hover,
 .api-item h4 code a.class-prefix:active {
   opacity: 1;
   color: inherit !important;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
+  border-bottom: 0.1rem solid currentColor;
 }
 
 .vp-doc .api-link {
+  text-decoration: none;
   color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-style: dashed;
-  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  border-bottom: 0.1rem dashed color-mix(in srgb, currentColor 40%, transparent);
   transition:
     color 200ms,
-    text-decoration-color 200ms;
+    border-color 200ms;
 }
 .vp-doc .api-link:hover {
   color: inherit !important;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
+  border-bottom: 0.1rem solid currentColor;
 }
 
 @keyframes target-flash {
@@ -327,6 +321,13 @@ body .vp-doc > div > .api-item {
 
 /************************************************ CODE BLOCKS & VIGNETTE ************************************************/
 
+/* Keep syntax highlighting colors in code block selection. */
+.vp-doc div[class*='language-'] pre *::selection,
+.vp-doc div[class*='language-'] pre::selection {
+  color: inherit !important;
+  background-color: var(--vp-code-block-selection);
+}
+
 /* Move scrolling to the `<pre>` so we can overlay a fixed vignette on the wrapper. */
 .vp-doc div[class*='language-'] {
   position: relative;
@@ -342,27 +343,69 @@ body .vp-doc > div > .api-item {
   scrollbar-color: transparent transparent;
 }
 
+/* Hide the scrollbar for code blocks. */
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar,
 .vp-doc div[class*='language-'] > pre::-webkit-scrollbar-thumb,
 .vp-doc div[class*='language-'] > pre::-webkit-scrollbar-track,
-.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-corner {
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-corner,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-button {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
   background: transparent !important;
 }
-
-.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-button:horizontal {
-  display: block !important;
+.vp-doc div[class*='language-'] > pre {
+  scrollbar-width: none !important;
 }
 
 /* Fade-out Vignette Effect */
 .vp-doc div[class*='language-']::after {
-  z-index: 2;
   content: '';
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 8px; /* Leave room so scrollbar is not obscured. */
+  z-index: 2;
+  inset: 0;
   position: absolute;
   pointer-events: none;
   box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
+}
+
+/* Custom Scroll Buttons */
+.vp-doc div[class*='language-'] > .scroll-btn {
+  z-index: 3 !important;
+  top: 12px;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  pointer-events: none;
+  justify-content: center;
+  color: var(--vp-c-text-2);
+  border: 1px solid var(--vp-c-border);
+  background-color: var(--vp-c-bg-soft);
+  transition:
+    opacity 200ms,
+    background-color 200ms,
+    color 200ms;
+}
+
+.vp-doc div[class*='language-']:hover > .scroll-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.vp-doc div[class*='language-'] > .scroll-btn.visible:hover {
+  opacity: 1 !important;
+  color: var(--vp-c-text-1);
+  background-color: var(--vp-c-bg);
+}
+
+.vp-doc div[class*='language-'] > .scroll-btn-left {
+  left: 12px;
+}
+.vp-doc div[class*='language-'] > .scroll-btn-right {
+  right: 56px; /* Offset to sit nicely next to the copy button. */
 }
 
 /* Ensure copy button and language indicator sit above the vignette. */
