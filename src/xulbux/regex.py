@@ -66,7 +66,7 @@ def brackets(
     ------------------------------------------------------------------------------------------
     #### Example Usages
 
-    **Default Brackets:**
+    **Default brackets:**
 
     ```python
     import xulbux as xx
@@ -90,7 +90,7 @@ def brackets(
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Different Brackets:**
+    **Custom brackets:**
 
     ```python
     import xulbux as xx
@@ -112,7 +112,7 @@ def brackets(
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Without Ignoring Strings:**
+    **Without ignoring strings:**
 
     ```python
     import xulbux as xx
@@ -134,7 +134,7 @@ def brackets(
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Without Stripping Spaces:**
+    **Without stripping spaces:**
 
     ```python
     import xulbux as xx
@@ -227,7 +227,7 @@ def all_except(disallowed_pattern: str, /, ignore_pattern: str = "", *, is_group
     ---------------------------------------------------------------------------------------
     #### Example Usages
 
-    **Single Exclusion:**
+    **Single exclusion:**
 
     ```python
     import xulbux as xx
@@ -248,7 +248,7 @@ def all_except(disallowed_pattern: str, /, ignore_pattern: str = "", *, is_group
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Multiple Exclusions:**
+    **Multiple exclusions:**
 
     ```python
     import xulbux as xx
@@ -291,7 +291,7 @@ def func_call(func_name: str | None = None, /) -> str:
     ------------------------------------------------------------------------------------
     #### Example Usages
 
-    **Any Function:**
+    **Any function:**
 
     ```python
     import xulbux as xx
@@ -313,7 +313,7 @@ def func_call(func_name: str | None = None, /) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Specific Function:**
+    **Specific function:**
 
     ```python
     import xulbux as xx
@@ -366,7 +366,7 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ------------------------------------------------------------------------------------
     #### Example Usages
 
-    **Default Pattern:**
+    **Default pattern:**
 
     ```python
     import xulbux as xx
@@ -388,7 +388,7 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **No Alpha Allowed:**
+    **No alpha allowed:**
 
     ```python
     import xulbux as xx
@@ -410,7 +410,7 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Custom Separator:**
+    **Custom separator:**
 
     ```python
     import xulbux as xx
@@ -475,7 +475,7 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ------------------------------------------------------------------------------------
     #### Example Usages
 
-    **Default Pattern:**
+    **Default pattern:**
 
     ```python
     import xulbux as xx
@@ -497,7 +497,7 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **No Alpha Allowed:**
+    **No alpha allowed:**
 
     ```python
     import xulbux as xx
@@ -519,7 +519,7 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **Custom Separator:**
+    **Custom separator:**
 
     ```python
     import xulbux as xx
@@ -576,7 +576,7 @@ def hexa_str(*, allow_alpha: bool = True) -> str:
     -------------------------------------------------------------------------
     #### Example Usages
 
-    **Default Pattern:**
+    **Default pattern:**
 
     ```python
     import xulbux as xx
@@ -600,7 +600,7 @@ def hexa_str(*, allow_alpha: bool = True) -> str:
     ```
     <!-- DOCS: </AttachedCode> -->
 
-    **No Alpha Allowed:**
+    **No alpha allowed:**
 
     ```python
     import xulbux as xx

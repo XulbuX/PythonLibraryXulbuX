@@ -5,19 +5,20 @@
   "bracketSpacing": true,
   "embeddedLanguageFormatting": "auto",
   "endOfLine": "lf",
-  "sortImports": { "newlinesBetween": false },
-  "sortPackageJson": { "sortScripts": true },
-  "sortTailwindcss": {
-    "attributes": [":class"],
-    "functions": ["clsx", "cn", "cva"],
-    "stylesheet": ".vitepress/theme/style.css"
-  },
   "htmlWhitespaceSensitivity": "css",
+  "ignorePatterns": ["src/docs/*"],
   "objectWrap": "collapse",
   "proseWrap": "preserve",
   "quoteProps": "as-needed",
   "semi": true,
   "singleQuote": true,
+  "sortImports": { "newlinesBetween": false },
+  "sortPackageJson": { "sortScripts": true },
+  "sortTailwindcss": {
+    "attributes": [":class"],
+    "functions": ["clsx", "cn", "cva"],
+    "stylesheet": "src/.vitepress/theme/style.css"
+  },
   "tabWidth": 2,
   "trailingComma": "es5",
   "useTabs": false,

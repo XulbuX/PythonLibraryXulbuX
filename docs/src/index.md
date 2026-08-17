@@ -2,9 +2,9 @@
 layout: home
 
 hero:
-  name: "XulbuX"
-  text: "Python Library"
-  tagline: "Simplify common programming tasks."
+  name: 'XulbuX'
+  text: 'Python Library'
+  tagline: 'Simplify common programming tasks.'
   actions:
     - theme: brand
       text: Get Started
@@ -20,5 +20,4 @@ features:
     details: Clean, readable API with comprehensive documentation.
   - title: Lightweight
     details: Zero bloat, lazy-loaded modules, carefully engineered for speed.
-
 ---

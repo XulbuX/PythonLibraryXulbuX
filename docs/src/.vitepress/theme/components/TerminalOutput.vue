@@ -4,32 +4,34 @@
       class="copy"
       :class="{ copied: copied }"
       title="Copy Code"
-      @click.stop="copyText">
-    </button>
+      @click.stop="copyText"></button>
     <span class="lang">terminal</span>
-    <pre class="shiki vp-code" tabindex="0"><code class="term" ref="codeRef"><slot></slot></code></pre>
+    <pre class="shiki vp-code" tabindex="0"><code class="term" ref="codeRef"><slot /></code></pre>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const codeRef = ref<HTMLElement>(),
-  copied = ref(false);
+const codeRef = ref<HTMLElement>();
+const copied = ref(false);
 
 async function copyText() {
   if (!codeRef.value) {
     return;
   }
 
-  let text = codeRef.value.textContent.replace(/\n\n/g, '\n');
-
   try {
-    await navigator.clipboard.writeText(text);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = codeRef.value.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+
+    await navigator.clipboard.writeText(tempDiv.textContent || '');
+
     copied.value = true;
-    setTimeout(() => { copied.value = false; }, 2000);
+    setTimeout(() => (copied.value = false), 2000);
   } catch (error) {
-    console.error("Failed to copy", error);
+    // oxlint-disable-next-line no-console
+    console.error('Failed to copy', error);
   }
 }
 </script>

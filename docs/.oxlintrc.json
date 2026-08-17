@@ -2,7 +2,6 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "categories": {
     "correctness": "error",
-    // "nursery": "off",
     "pedantic": "off",
     "perf": "warn",
     "restriction": "warn",
@@ -11,6 +10,7 @@
   },
   "env": { "builtin": true },
   "globals": {},
+  "ignorePatterns": ["src/docs/*"],
   "plugins": ["eslint", "oxc", "typescript", "unicorn", "vue"],
   "rules": {
     "capitalized-comments": "off",

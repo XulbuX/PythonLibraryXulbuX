@@ -30,4 +30,5 @@ export default defineConfig({
   },
   title: 'XulbuX',
   vite: { plugins: [syncPlugin(dirname)] },
+  vue: { template: { compilerOptions: { whitespace: 'preserve' } } },
 });

@@ -12,31 +12,81 @@ export function syncPlugin(dirname: string) {
       restart: () => void;
     }) {
       const srcDir = path.resolve(dirname, '../../src');
+      const pySrcDir = path.resolve(dirname, '../../../src');
+
       server.watcher.add(srcDir);
+      server.watcher.add(pySrcDir);
+
       server.watcher.on('all', (eventName: string, filePath: string) => {
-        if (filePath.startsWith(srcDir)) {
+        const isPySrc = filePath.startsWith(pySrcDir) && filePath.endsWith('.py');
+        const isDocsSrc = filePath.startsWith(srcDir);
+
+        if (!isPySrc && !isDocsSrc) {
+          return;
+        }
+
+        function runPythonCommand(args: string[], successMsg: string) {
+          function run(commands: string[]) {
+            exec(
+              `${commands[0]} ${args.join(' ')}`,
+              { cwd: path.resolve(dirname, '../../..') },
+              (err, stdout, stderr) => {
+                if (err) {
+                  if (commands.length > 1) {
+                    run(commands.slice(1));
+                  } else {
+                    // oxlint-disable-next-line no-console
+                    console.error(err, stderr);
+                  }
+                } else {
+                  // oxlint-disable-next-line no-console
+                  console.log(`[sync] ${successMsg}: ${path.basename(filePath)}`);
+                  server.restart();
+                }
+              }
+            );
+          }
+          run(['python', 'py', 'python3']);
+        }
+
+        if (isDocsSrc) {
           const dest = filePath.replace(srcDir, path.resolve(dirname, '../'));
           if (eventName === 'add' || eventName === 'change') {
             fs.mkdirSync(path.dirname(dest), { recursive: true });
             if (filePath.endsWith('.md')) {
-              exec(
-                `python scripts/build_docs.py --process-file "${filePath}" "${dest}"`,
-                { cwd: path.resolve(dirname, '../../..') },
-                (err, stdout, stderr) => {
-                  if (err) {
-                    console.error(err, stderr);
-                  } else {
-                    console.log(`[sync] Processed ${path.basename(dest)}`);
-                    server.restart();
-                  }
-                }
+              runPythonCommand(
+                ['docs/build.py', '--process-file', `"${filePath}"`],
+                'Processed MD'
               );
             } else {
               fs.copyFileSync(filePath, dest);
+              if (filePath.endsWith('sidebar.json')) {
+                runPythonCommand(['docs/build.py'], 'Rebuilt docs due to sidebar.json change');
+              }
             }
           } else if (eventName === 'unlink') {
             if (fs.existsSync(dest)) {
               fs.unlinkSync(dest);
+            }
+            if (filePath.endsWith('sidebar.json')) {
+              runPythonCommand(['docs/build.py'], 'Rebuilt docs due to sidebar.json unlink');
+            }
+          }
+        } else if (isPySrc) {
+          const relPyPath = path.relative(pySrcDir, filePath);
+          const parts = relPyPath.split(path.sep);
+          if (
+            parts.length >= 2 &&
+            parts[0] === 'xulbux' &&
+            !parts[parts.length - 1].startsWith('_')
+          ) {
+            if (eventName === 'change') {
+              runPythonCommand(
+                ['docs/build.py', '--process-file', `"${filePath}"`],
+                'Processed Python API'
+              );
+            } else if (eventName === 'add' || eventName === 'unlink') {
+              runPythonCommand(['docs/build.py'], `Rebuilt docs due to Python source ${eventName}`);
             }
           }
         }

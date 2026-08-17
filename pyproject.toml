@@ -91,7 +91,7 @@ testpaths = ["tests/test_*.py"]
 preview = true
 line-length = 127
 target-version = "py312"
-extend-include = ["*.md"]
+extend-exclude = ["*.md"]
 
 [tool.ruff.format]
 skip-magic-trailing-comma = false

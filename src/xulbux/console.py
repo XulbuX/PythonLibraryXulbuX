@@ -1236,7 +1236,27 @@ def input(
     *   `output_type` – The type (class) to convert the input to before returning it.
     ------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
-    information about styling, see the `ansi` module documentation."""
+    information about styling, see the `ansi` module documentation.\n
+    ------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    **Using a custom validator function:**
+
+    ```python
+    import xulbux as xx
+
+
+    def email_validator(user_input: str) -> Optional[str]:
+        if not re.match(r"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}", user_input):
+            return "Enter a valid E-Mail address (example@domain.com)"
+
+
+    user_input = xx.console.input(
+        prompt="E-Mail: ",
+        placeholder="example@domain.com",
+        validator=email_validator,
+    )
+    ```"""
 
     if mask_char is not None and len(mask_char) != 1:
         raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
@@ -2210,7 +2230,13 @@ class ProgressBar(_StdoutInterceptorMixin):
             The first character represents completely filled sections.<br>
             Intermediate characters create smooth transitions.<br>
             The last character represents empty sections.<br>
-            If `None`, uses default Unicode block characters."""
+            If `None`, uses default Unicode block characters.\n
+        -----------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        ProgressBar.set_chars(("█", "▓", "▒", "░", " "))
+        ```"""
 
         if len(chars) < 2:
             raise ValueError(f"The 'chars' parameter must contain at least two characters (full and empty), got {chars!r}")

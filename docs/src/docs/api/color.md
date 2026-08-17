@@ -1,5 +1,5 @@
+<!-- rgba.dict() -->
 
-<!-- API: <rgba.dict> -->
 ```python
 {
     "r": red,
@@ -8,9 +8,10 @@
     "a": alpha,  # Only if the color has an alpha channel.
 }
 ```
-<!-- API: </rgba.dict> -->
 
-<!-- API: <hsla.dict> -->
+
+<!-- hsla.dict() -->
+
 ```python
 {
     "h": hue,
@@ -19,9 +20,10 @@
     "a": alpha,  # Only if the color has an alpha channel.
 }
 ```
-<!-- API: </hsla.dict> -->
 
-<!-- API: <hexa.dict> -->
+
+<!-- hexa.dict() -->
+
 ```python
 {
     "r": red_hexa,
@@ -30,4 +32,3 @@
     "a": alpha,  # Only if the color has an alpha channel.
 }
 ```
-<!-- API: </hexa.dict> -->

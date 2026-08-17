@@ -1,4 +1,4 @@
-@import 'fonts.css';
+@import './fonts.css';
 
 /****************************************************** VARIABLES *******************************************************/
 
@@ -368,12 +368,18 @@ body .vp-doc > div > .api-item {
   box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
 }
 
+/* Ensure copy button and language indicator sit above the vignette. */
+.vp-doc div[class*='language-'] > button.copy,
+.vp-doc div[class*='language-'] > span.lang {
+  z-index: 3 !important;
+}
+
 /* Custom Scroll Buttons */
 .vp-doc div[class*='language-'] > .scroll-btn {
   z-index: 3 !important;
   top: 12px;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   opacity: 0;
   border-radius: 4px;
   cursor: pointer;
@@ -382,13 +388,13 @@ body .vp-doc > div > .api-item {
   align-items: center;
   pointer-events: none;
   justify-content: center;
-  color: var(--vp-c-text-2);
-  border: 1px solid var(--vp-c-border);
-  background-color: var(--vp-c-bg-soft);
+  color: var(--vp-code-copy-code-active-text);
+  border: 1px solid var(--vp-code-copy-code-border-color);
+  background-color: var(--vp-code-copy-code-bg);
   transition:
     opacity 200ms,
-    background-color 200ms,
-    color 200ms;
+    color 200ms,
+    background-color 200ms;
 }
 
 .vp-doc div[class*='language-']:hover > .scroll-btn.visible {
@@ -397,24 +403,32 @@ body .vp-doc > div > .api-item {
 }
 .vp-doc div[class*='language-'] > .scroll-btn.visible:hover {
   opacity: 1 !important;
-  color: var(--vp-c-text-1);
-  background-color: var(--vp-c-bg);
+  border-color: var(--vp-code-copy-code-hover-border-color);
+  background-color: var(--vp-code-copy-code-hover-bg);
 }
 
 .vp-doc div[class*='language-'] > .scroll-btn-left {
   left: 12px;
 }
 .vp-doc div[class*='language-'] > .scroll-btn-right {
-  right: 56px; /* Offset to sit nicely next to the copy button. */
+  left: 36px; /* Next to the left button. */
 }
 
-/* Ensure copy button and language indicator sit above the vignette. */
-.vp-doc div[class*='language-'] > button.copy,
-.vp-doc div[class*='language-'] > span.lang {
-  z-index: 3 !important;
+.vp-doc div[class*='language-']:hover > .scroll-btn.visible.disabled {
+  cursor: default;
+  pointer-events: none !important;
+  color: color-mix(in srgb, var(--vp-code-copy-code-active-text) 40%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--vp-code-copy-code-border-color) 50%,
+    transparent
+  ) !important;
+  background-color: color-mix(in srgb, var(--vp-code-copy-code-bg) 50%, transparent) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
 }
 
-/* Correct focus ring for code blocks. */
+/* Hide focus ring for code blocks. */
 .vp-doc div[class*='language-']:focus,
 .vp-doc div[class*='language-']:focus-within,
 .vp-doc div[class*='language-'] > pre:focus,
@@ -476,7 +490,9 @@ body .vp-doc > div > .api-item {
 
 /* Custom brighter background for terminal blocks (always dark). */
 .vp-doc .ext-terminal {
+  --vp-code-block-selection: var(--dark-vp-code-block-selection);
   --vp-code-lang-color: var(--dark-vp-c-text-3);
+  --vp-code-copy-code-active-text: var(--dark-vp-c-text-2);
   --vp-code-copy-code-border-color: color-mix(
     in srgb,
     var(--dark-vp-c-text-3),
@@ -493,7 +509,6 @@ body .vp-doc > div > .api-item {
     var(--dark-vp-c-divider),
     var(--dark-vp-c-bg-elv) 70%
   );
-  --vp-code-copy-code-active-text: var(--dark-vp-c-text-2);
   border-color: var(--dark-vp-c-border) !important;
   border-top-color: color-mix(
     in srgb,
@@ -512,6 +527,7 @@ body .vp-doc > div > .api-item {
 /* Terminal Output Styles */
 .term {
   color: var(--dark-vp-c-text-1) !important;
+  line-height: 1.3rem !important;
 
   p {
     margin: 0 !important;
