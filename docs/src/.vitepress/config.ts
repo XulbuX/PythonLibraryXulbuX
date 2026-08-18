@@ -17,6 +17,7 @@ export default defineConfig({
     codeTransformers: [apiLinkTransformer(dirname)],
     theme: { dark: 'github-dark', light: 'github-light' },
   },
+  sitemap: { hostname: 'https://xulbux.github.io/python-lib-xulbux/' },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/icon.svg',
@@ -25,6 +26,7 @@ export default defineConfig({
       { link: sidebar[0]?.items[0]?.link || '/', text: 'Docs' },
     ],
     outline: [2, 4],
+    search: { provider: 'local' },
     sidebar,
     socialLinks: [{ icon: 'github', link: 'https://github.com/xulbux/python-lib-xulbux' }],
   },

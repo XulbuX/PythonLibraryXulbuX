@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://xulbux.github.io/python-lib-xulbux/sitemap.xml
