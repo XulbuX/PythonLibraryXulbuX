@@ -7,7 +7,7 @@ Includes type aliases for complex structures and protocol definitions.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, Protocol, TypedDict, cast
+from typing import TYPE_CHECKING, Any, NotRequired, Protocol, TypedDict, cast, overload
 
 if TYPE_CHECKING:
     import sys
@@ -168,37 +168,6 @@ type AnyHexa = Any
 """Generic type alias for HEXA color values in any format (type checking disabled)."""
 
 
-# ****************************************************** CLI Arguments *****************************************************
-
-
-class ArgConfigWithDefault(TypedDict):
-    """Configuration schema for a flagged command-line argument that has a specified default value."""
-
-    flags: set[str]
-    """Set of flags to recognize for this argument (e.g., `{"-f", "--flag"}`)."""
-    default: str
-    """Default value to use if the argument is not provided in the command line."""
-
-
-class ArgData(TypedDict):
-    """Schema for the resulting data of parsing a single command-line argument."""
-
-    exists: bool
-    """Whether the argument was found or not."""
-    is_pos: bool
-    """Whether the argument is a positional argument or not."""
-    values: tuple[str, ...]
-    """The tuple of values associated with the argument."""
-    flag: str | None
-    """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
-
-
-type ArgParseConfig = set[str] | ArgConfigWithDefault | Literal["before", "after"]
-"""Matches the command-line-parsing configuration of a single argument."""
-type ArgParseConfigs = dict[str, ArgParseConfig]
-"""Matches the command-line-parsing configurations of multiple arguments, packed in a dictionary."""
-
-
 # *************************************************** System & Utilities ***************************************************
 
 
@@ -219,6 +188,20 @@ class MissingLibsMsgs(TypedDict):
 
 class ProgressUpdater(Protocol):
     """Protocol for a progress updater function used in terminal progress bars."""
+
+    @overload
+    def __call__(self, current: int) -> None:
+        """Update the current progress value."""
+        ...
+
+    @overload
+    def __call__(self, current: int, label: Renderable) -> None:
+        """Update the current progress value and label."""
+        ...
+
+    @overload
+    def __call__(self, *, label: str) -> None:
+        """Update the progress label only (keyword-only)."""
 
     def __call__(self, current: int | None = None, label: Renderable | None = None) -> None:
         """Update the current progress value and/or label."""

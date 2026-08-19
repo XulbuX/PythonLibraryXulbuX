@@ -67,6 +67,9 @@ xulbux-lib = "xulbux.cli:main"
 exclude = ["^assets/", "^build/"]
 
 [tool.pyright]
+typeCheckingMode = "strict"
+reportDeprecated = "warning"
+reportPrivateUsage = "none"
 include = ["src", "tests"]
 exclude = [
   ".github",
@@ -77,9 +80,6 @@ exclude = [
   "assets",
   "build",
 ]
-reportDeprecated = "none"
-reportPrivateUsage = "none"
-typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
 addopts = "-ra -q"

@@ -618,15 +618,15 @@ def main() -> None:
     # [3] Build or serve the final site using VitePress:
     if not (pnpm_exe := shutil.which("pnpm")):
         print("[ERROR] pnpm is not installed or not in PATH.")
-        sys.exit(1)
+        raise SystemExit(1)
 
     print(f"\nRunning VitePress {'dev' if args.dev else 'build'}...\n")
 
     try:
         subprocess.run([pnpm_exe, "exec", "vitepress", "dev" if args.dev else "build", ".build"], cwd=DOCS_DIR, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"VitePress failed with exit code {e.returncode}\n")
-        sys.exit(e.returncode)
+    except subprocess.CalledProcessError as exc:
+        print(f"VitePress failed with exit code {exc.returncode}\n")
+        raise SystemExit(exc.returncode) from exc
 
 
 if __name__ == "__main__":

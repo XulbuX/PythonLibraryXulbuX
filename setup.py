@@ -387,7 +387,7 @@ if __name__ == "__main__":
     # generate stub files and exit without building the package:
     if "--gen-stubs" in sys.argv:
         generate_stubs_for_package()
-        sys.exit(0)
+        raise SystemExit(0)
 
     ext_modules = []
 

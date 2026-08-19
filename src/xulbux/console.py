@@ -10,7 +10,7 @@ from . import string as _string_module
 from .ansi import AnyStyle, BaseStyle, ColorStyle, Renderable, S, StyledText, is_any_style
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
-from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
+from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba
 from .regex import LazyRegex
 
 import ctypes as _ctypes
@@ -21,10 +21,11 @@ import subprocess as _subprocess
 import sys as _sys
 import threading as _threading
 import time as _time
-from collections.abc import Callable, Generator, KeysView, ValuesView
+from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager, suppress
 from itertools import chain
-from typing import Any, Final, Literal, NoReturn, TextIO, cast, overload
+from pathlib import Path
+from typing import Any, Final, Literal, NoReturn, TextIO, TypedDict, cast, overload
 import prompt_toolkit as _pt
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
@@ -33,6 +34,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
+    flag_prefix=r"^[\W_]+",
     hr=r"(?i){hr}",
     hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",
     hr_r_nl=r"(?i)(?<!\n){hr}(?=\n)",
@@ -85,222 +87,545 @@ def _to_styled_text(obj: StyledText | object) -> StyledText:
     return StyledText(str(obj))
 
 
+class ArgConfigDict(TypedDict):
+    """Configuration dictionary for an argument/flag."""
+
+    flags_or_pos: set[str] | frozenset[str] | Literal["before", "after"]
+    description: str | None
+    expects_value: str | bool
+    choices: Iterable[str] | None
+    required: bool
+
+
 class ParsedArgData:
-    """Represents the result of a parsed command-line argument, containing the attributes listed below.\n
+    """Represents the result of a parsed command-line argument.\n
     ------------------------------------------------------------------------------------------------------------
-    *   `exists` – Whether the argument was found in the command-line arguments or not.
+    *   `exists` – Whether the argument was found in the command-line input or not.
     *   `is_pos` – Whether the argument is a positional `"before"`/`"after"` argument or not.
     *   `values` – The tuple of values associated with the argument.
-    *   `flag` – The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args.
+    *   `flag` – The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args.\n
     ------------------------------------------------------------------------------------------------------------
     When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
 
-    def __init__(self, *, exists: bool, values: list[str], is_pos: bool, flag: str | None = None) -> None:
+    def __init__(
+        self,
+        exists: bool = False,
+        values: tuple[str, ...] = (),
+        is_pos: bool = False,
+        flag: str | None = None,
+    ) -> None:
         self.exists: bool = exists
-        """Whether the argument was found or not."""
-        self.is_pos: bool = is_pos
-        """Whether the argument is a positional argument or not."""
-        self.values: tuple[str, ...] = tuple(values)
+        """Whether the argument was found in the command-line input or not."""
+        self.values: tuple[str, ...] = values
         """The tuple of values associated with the argument."""
+        self.is_pos: bool = is_pos
+        """Whether the argument is a positional `"before"`/`"after"` argument or not."""
         self.flag: str | None = flag
         """The specific flag that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for positional args."""
 
-    def __bool__(self) -> bool:
-        """Whether the argument was found or not (i.e., the `exists` attribute)."""
+    @overload
+    def val(self) -> str | None: ...
+    @overload
+    def val[T](self, cast_type: Callable[[str], T] | type[T]) -> T | None: ...
+    @overload
+    def val[T, D](self, cast_type: Callable[[str], T] | type[T], default: D) -> T | D: ...
 
+    def val(
+        self,
+        cast_type: Callable[[str], Any] | type[Any] = str,
+        default: Any = None,
+    ) -> Any:
+        """Get the parsed value, optionally casting it to a specified type and providing a fallback default.\n
+        ------------------------------------------------------------------------------------------------------------
+        *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
+        *   `default` – The fallback value if `exists` is false, or if there are no values, or if casting fails."""
+
+        if not self.exists:
+            return default
+        elif not self.values:
+            return None
+
+        try:
+            return cast_type(self.values[0])
+        except Exception as exc:
+            raise ValueError(f"Failed to cast value '{self.values[0]}' to {cast_type}") from exc
+
+    @overload
+    def vals(self) -> tuple[str, ...]: ...
+    @overload
+    def vals[T](self, cast_type: Callable[[str], T] | type[T]) -> tuple[T, ...]: ...
+    @overload
+    def vals[T, D](self, cast_type: Callable[[str], T] | type[T], default: D) -> tuple[T, ...] | D: ...
+
+    def vals(
+        self,
+        cast_type: Callable[[str], Any] | type[Any] = str,
+        default: Any = None,
+    ) -> Any:
+        """Get all parsed values, optionally casting them to a specified type and providing a fallback default.\n
+        ----------------------------------------------------------------------------------------------------------
+        *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
+        *   `default` – The fallback value for individual items that fail casting, or if no values exist."""
+
+        if not self.exists:
+            return default
+        elif not self.values:
+            return ()
+
+        current_val: Any = None
+
+        try:
+            return tuple(cast_type(current_val := val) for val in self.values)
+        except Exception as exc:
+            raise ValueError(f"Failed to cast value '{current_val}' to {cast_type}") from exc
+
+    def __bool__(self) -> bool:
         return self.exists
 
-    def __eq__(self, other: object, /) -> bool:
-        """Check if two `ParsedArgData` objects are equal by comparing their attributes."""
-
-        if not isinstance(other, ParsedArgData):
-            return False
-        return (
-            self.exists == other.exists
-            and self.is_pos == other.is_pos
-            and self.values == other.values
-            and self.flag == other.flag
-        )
+    def __str__(self) -> str:
+        if not self.exists:
+            return ""
+        return " ".join(self.values)
 
     def __repr__(self) -> str:
-        return (
-            "ParsedArgData(\n"
-            f"  exists = {self.exists!r},\n"
-            f"  is_pos = {self.is_pos!r},\n"
-            f"  values = {self.values!r},\n"
-            f"  flag = {self.flag!r}\n"
-            ")"
-        )
-
-    def __str__(self) -> str:
-        return self.__repr__()
-
-    def _replace(self, **kwargs: Any) -> "ParsedArgData":
-        """Internal method to return a new `ParsedArgData` with updated attributes."""
-
-        current: dict[str, Any] = {
-            "exists": self.exists,
-            "values": list(self.values),
-            "is_pos": self.is_pos,
-            "flag": self.flag,
-        }
-        current.update(kwargs)
-        return ParsedArgData(**current)
-
-    def dict(self) -> ArgData:
-        """Returns the argument result as a dictionary."""
-
-        return ArgData(exists=self.exists, is_pos=self.is_pos, values=self.values, flag=self.flag)
-
-    @overload
-    def get(self, index: int, /) -> str | None: ...
-    @overload
-    def get(self, index: int, /, default: None) -> str | None: ...
-    @overload
-    def get(self, index: int, /, default: str) -> str: ...
-
-    def get(self, index: int, /, default: str | None = None) -> str | None:
-        """Safely access a value from the `values` list by index.\n
-        -------------------------------------------------------------------
-        *   `index` – The index of the value to access.
-        *   `default` – The fallback value if the index is out of range.
-        -------------------------------------------------------------------
-        Returns the value at `index` if it exists, otherwise `default`."""
-
-        if 0 <= index < len(self.values):
-            return self.values[index]
-        return default
+        return f"ParsedArgData(exists={self.exists}, values={self.values}, is_pos={self.is_pos}, flag={self.flag!r})"
 
 
-@mypyc_attr(native_class=False)
 class ParsedArgs:
-    """Container for parsed command-line arguments, allowing attribute-style access.\n
-    -------------------------------------------------------------------------------------
-    *   `unknown_flags` – A list of all found flags that were not defined in the config.
-    *   `**parsed_args` – A mapping of argument aliases to their corresponding data<br>
-        saved in an `ParsedArgData` object.
-    -------------------------------------------------------------------------------------
-    For example, if an argument `foo` was parsed, it can be accessed via `args.foo`.<br>
-    Each such attribute (e.g., `args.foo`) is an instance of `ParsedArgData`."""
+    """Container for the result of `ArgumentParser.parse()`.\n
+    -------------------------------------------------------------------------------
+    *   `unknown_flags` – Any arguments that were not recognized by the parser."""
 
-    # Keep these attrs out of `__dict__` so that `vars(self)` only contains the `ParsedArgData` instances:
-    __slots__: Final[tuple[str, ...]] = ("__dict__", "all_exist", "any_exist", "is_empty", "unknown_flags")
+    def __init__(self) -> None:
+        self.unknown_flags: list[str] = []
+        """Any arguments that were not recognized by the parser."""
 
-    RESERVED_ALIASES: frozenset[str] = frozenset({
-        "all_exist",
-        "any_exist",
-        "dict",
-        "existing",
-        "get",
-        "is_empty",
-        "items",
-        "keys",
-        "missing",
-        "unknown_flags",
-        "values",
-    })
-    """Alias names that are reserved and cannot be used as argument aliases."""
+        self._args: dict[str, ParsedArgData] = {}
 
-    def __init__(self, unknown_flags: list[str] | None = None, **parsed_args: ParsedArgData) -> None:
-        for alias_name, parsed_arg_data in parsed_args.items():
-            setattr(self, alias_name, parsed_arg_data)
+    def _add_arg(self, alias: str, data: ParsedArgData) -> None:
+        """Internal method to add a parsed argument to the container."""
 
-        parsed_arg_values = cast("dict[str, ParsedArgData]", vars(self)).values()
+        self._args[alias] = data
 
-        self.is_empty: Final[bool] = all(not arg.exists and not arg.values for arg in parsed_arg_values)
-        """Whether no argument was found and none have any values (not even defaults)."""
-        self.any_exist: Final[bool] = any(arg.exists for arg in parsed_arg_values)
-        """Whether at least one argument was explicitly found."""
-        self.all_exist: Final[bool] = all(arg.exists for arg in parsed_arg_values)
-        """Whether all arguments were explicitly found."""
-        self.unknown_flags: Final[frozenset[str]] = frozenset() if unknown_flags is None else frozenset(unknown_flags)
-        """Unknown flags found in the command-line arguments<br>
-        (args that look like flags but are not defined in the config)."""
-
-    def __len__(self) -> int:
-        """The number of arguments stored in the `ParsedArgs` object."""
-
-        return len(vars(self))
-
-    def __contains__(self, key: str, /) -> bool:
-        """Checks if an argument with the given alias exists in the `ParsedArgs` object."""
-
-        return key in vars(self)
-
-    def __bool__(self) -> bool:
-        """Whether the `ParsedArgs` object contains any arguments or unknown flags."""
-
-        return len(self) > 0 or bool(self.unknown_flags)
-
-    def __getattr__(self, name: str, /) -> ParsedArgData:
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute {name}")
-
-    def __getitem__(self, key: str | int, /) -> ParsedArgData:
-        if isinstance(key, int):
-            return list(self.values())[key]
-        return getattr(self, key)
-
-    def __iter__(self) -> Generator[tuple[str, ParsedArgData], None, None]:
-        yield from cast("dict[str, ParsedArgData]", vars(self)).items()
-
-    def __eq__(self, other: object, /) -> bool:
-        """Check if two `ParsedArgs` objects are equal by comparing their stored arguments."""
-
-        if not isinstance(other, ParsedArgs):
-            return False
-        return vars(self) == vars(other) and self.unknown_flags == other.unknown_flags
+    def __getattr__(self, name: str) -> ParsedArgData:
+        try:
+            return self._args[name]
+        except KeyError as exc:
+            raise AttributeError(f"'ParsedArgs' object has no attribute '{name}'") from exc
 
     def __repr__(self) -> str:
-        items: list[str] = [f"{key} = " + "\n  ".join(repr(val).splitlines()) for key, val in self.__iter__()]
+        return f"ParsedArgs(unknown_flags={self.unknown_flags}, args={self._args})"
 
-        if self.unknown_flags:
-            items.append(f"unknown_flags = {self.unknown_flags!r}")
-        elif not items:
-            return "ParsedArgs()"
 
-        return "ParsedArgs(\n  " + ",\n  ".join(items) + "\n)"
+class ArgumentParser:
+    """An advanced command-line argument parser with built-in help generation and validation.\n
+    ------------------------------------------------------------------------------------------------
+    *   `title` – An optional title for the help print (e.g., `"CLI Tool"`).
+    *   `subtitle` – An optional subtitle (e.g., `"A simple command-line utility"`).
+    *   `usage` – An optional explicit usage string. Defaults to `Usage: {cmd} {pos} {opts}`.
+    *   `examples` – A list of tuples `(example_command, description)`.
+    *   `controls` – A list of tuples `(control_key, description)`.
+    *   `epilog` – Optional footer text to append to the help print.
+    *   `help_flags` – A set of flags that trigger the help print (default: `{"-h", "--help"}`)."""
 
-    def __str__(self) -> str:
-        return self.__repr__()
+    def __init__(
+        self,
+        *,
+        title: str | None = None,
+        subtitle: str | None = None,
+        usage: StyledText | str | None = None,
+        examples: list[tuple[str, str]] | None = None,
+        controls: list[tuple[str, str]] | None = None,
+        epilog: StyledText | object | None = None,
+        help_flags: set[str] | frozenset[str] = frozenset({"-h", "--help"}),
+    ) -> None:
 
-    def dict(self) -> dict[str, ArgData]:
-        """Returns the arguments as a dictionary."""
+        self.title: str | None = title
+        """An optional title for the help print (e.g., `"CLI Tool"`)."""
+        self.subtitle: str | None = subtitle
+        """An optional subtitle (e.g., `"A simple command-line utility"`)."""
+        self.usage: StyledText | str | None = usage if isinstance(usage, (StyledText, str)) else None
+        """An optional explicit usage string."""
+        self.examples: list[tuple[str, str]] | None = examples
+        """A list of tuples `(example_command, description)`."""
+        self.controls: list[tuple[str, str]] | None = controls
+        """A list of tuples `(control_key, description)`."""
+        self.epilog: StyledText | object | None = epilog
+        """Optional footer text to append to the help print."""
+        self.help_flags: frozenset[str] = frozenset(help_flags)
+        """A set of flags that trigger the help print."""
 
-        return {key: val.dict() for key, val in self.__iter__()}
+        self._arg_configs: dict[str, ArgConfigDict] = {}
 
-    def get(self, key: str, /, default: Any = None) -> ParsedArgData | Any:
-        """Returns the argument result for the given alias, or `default` if not found."""
+    @overload
+    def add_arg(
+        self,
+        alias: str,
+        flags_or_pos: Literal["before", "after"],
+        /,
+        *,
+        description: str | None = None,
+        expects_value: str = ...,
+        choices: Iterable[str] | None = None,
+        required: bool = False,
+    ) -> None: ...
+    @overload
+    def add_arg(
+        self,
+        alias: str,
+        flags_or_pos: set[str] | frozenset[str],
+        /,
+        *,
+        description: str | None = None,
+        expects_value: str | bool = False,
+        choices: Iterable[str] | None = None,
+        required: bool = False,
+    ) -> None: ...
 
-        return getattr(self, key, default)
+    def add_arg(
+        self,
+        alias: str,
+        flags_or_pos: set[str] | frozenset[str] | Literal["before", "after"],
+        /,
+        *,
+        description: str | None = None,
+        expects_value: str | bool = False,
+        choices: Iterable[str] | None = None,
+        required: bool = False,
+    ) -> None:
+        """Define a new argument/flag to parse.\n
+        ---------------------------------------------------------------------------------------------
+        *   `alias` – The attribute name to access the parsed values in the `ParsedArgs` object.
+        *   `flags_or_pos` – A set of flags (e.g., `{"-f", "--flag"}`),<br>
+            or the literal `"before"` or `"after"` to capture positional values.
+        *   `description` – Help text describing the argument.
+        *   `expects_value` – `False` for a boolean flag, `True` for a value flag (shows `VAL`),<br>
+            or a *str* (e.g., `"PATH"`) for a specific placeholder.
+        *   `choices` – Optional iterable of allowed strings for this argument's value.
+        *   `required` – *bool*, `True` if the argument must be provided."""
 
-    def keys(self) -> KeysView[str]:
-        """Returns the argument aliases as `dict_keys([…])`."""
+        if isinstance(flags_or_pos, str):
+            if flags_or_pos not in ("before", "after"):
+                raise ValueError("Positional argument must be 'before' or 'after'")
+            if isinstance(expects_value, bool) and not expects_value:
+                expects_value = "VAL"
 
-        return vars(self).keys()
+        else:
+            if overlap := set(flags_or_pos).intersection(self.help_flags):
+                raise ValueError(f"Argument flags {overlap} overlap with help flags.")
 
-    def values(self) -> ValuesView[ParsedArgData]:
-        """Returns the argument results as `dict_values([…])`."""
+            for existing_cfg in self._arg_configs.values():
+                if isinstance(existing_cfg["flags_or_pos"], (set, frozenset)) and (
+                    overlap := set(flags_or_pos).intersection(existing_cfg["flags_or_pos"])
+                ):
+                    raise ValueError(f"Argument flags {overlap} overlap with an existing argument.")
 
-        return vars(self).values()
+        self._arg_configs[alias] = {
+            "flags_or_pos": frozenset(flags_or_pos) if isinstance(flags_or_pos, (set, frozenset)) else flags_or_pos,
+            "description": description,
+            "expects_value": expects_value,
+            "choices": choices,
+            "required": required,
+        }
 
-    def items(self) -> Generator[tuple[str, ParsedArgData], None, None]:
-        """Yields tuples of `(alias, ParsedArgData)`."""
+    def _flags_to_st(self, flags: Iterable[str]) -> StyledText:
+        """Internal method to convert a set of flags into a nicely formatted `StyledText` object for help printing."""
 
-        yield from self.__iter__()
+        return StyledText(", ").join(
+            S.BR.BLUE(flag)
+            for flag in sorted(flags, key=lambda flg: (len(flg) - len(_PATTERNS.flag_prefix.sub("", flg)), flg))
+        )
 
-    def existing(self) -> Generator[tuple[str, ParsedArgData], None, None]:
-        """Yields tuples of `(alias, ParsedArgData)` for existing arguments only."""
+    def _add_title_to_help_output(self, output: StyledText, console_width: int) -> None:
+        """Internal method to add the title and subtitle to the help output."""
 
-        for key, val in self.__iter__():
-            if val.exists:
-                yield (key, val)
+        if self.title:
+            output += "▄" * console_width
+            output += (S.INVERSE | S.BG.BLACK)("  ", self.title, f" — {self.subtitle}" if self.subtitle else "", "  ")
+            output += "▀" * console_width
+            output += "\n"
 
-    def missing(self) -> Generator[tuple[str, ParsedArgData], None, None]:
-        """Yields tuples of `(alias, ParsedArgData)` for missing arguments only."""
+    def _add_usage_to_help_output(
+        self, output: StyledText, cmd_name: str, before_pos: str | None, after_pos: str | None
+    ) -> None:
+        """Internal method to add the usage line to the help output."""
 
-        for key, val in self.__iter__():
-            if not val.exists:
-                yield (key, val)
+        pos_parts: list[str] = []
+
+        if before_pos:
+            pos_parts.append(f"<{self._arg_configs[before_pos]['expects_value']}>")
+        if after_pos:
+            pos_parts.append(f"<{self._arg_configs[after_pos]['expects_value']}>")
+
+        pos_str = " ".join(pos_parts) if pos_parts else ""
+        opts_str = (
+            "[options]" if any(isinstance(cfg["flags_or_pos"], (set, frozenset)) for cfg in self._arg_configs.values()) else ""
+        )
+
+        if self.usage is None:
+            output += (S.BOLD("Usage:"), f"{cmd_name} {pos_str} {opts_str}".strip())
+        elif isinstance(self.usage, StyledText):
+            output += self.usage
+        else:
+            output += self.usage.replace("{cmd}", str(cmd_name)).replace("{pos}", pos_str).replace("{opts}", opts_str).strip()
+
+        output += "\n"
+
+    def _add_args_to_help_output(self, output: StyledText, before_pos: str | None, after_pos: str | None) -> None:
+        """Internal method to add the positional arguments section to the help output."""
+
+        if before_pos or after_pos:
+            output += S.BOLD("Arguments:")
+
+            if before_pos:
+                output += (
+                    f"  {self._arg_configs[before_pos]['expects_value']:<7} ",
+                    self._arg_configs[before_pos]["description"] or "",
+                )
+            if after_pos:
+                output += (
+                    f"  {self._arg_configs[after_pos]['expects_value']:<7} ",
+                    self._arg_configs[after_pos]["description"] or "",
+                )
+
+            output += "\n"
+
+    def _add_opts_to_help_output(self, output: StyledText) -> None:
+        """Internal method to add the options section to the help output."""
+
+        opts_list: list[tuple[StyledText, str]] = []
+        has_opts = False
+
+        for _, cfg in self._arg_configs.items():
+            if isinstance(cfg["flags_or_pos"], (set, frozenset)):
+                has_opts = True
+                flag_str = self._flags_to_st(cfg["flags_or_pos"])
+
+                if cfg["expects_value"] is not False:
+                    flag_str += (S.DIM("="), "VAL" if cfg["expects_value"] is True else str(cfg["expects_value"]))
+
+                opts_list.append((flag_str, cfg["description"] or ""))
+
+        if has_opts or self.help_flags:
+            output += S.BOLD("Options:")
+            opts_list.append((self._flags_to_st(self.help_flags), "Show this help message and exit"))
+
+            max_flag_len = max((len(st_flag.raw) for st_flag, _ in opts_list), default=0)
+            for flag_str, desc in opts_list:
+                output += "  "
+                output += flag_str
+                output += " " * (max_flag_len - len(flag_str.raw))
+                output += "    "
+                output += desc
+
+            output += "\n"
+
+    def _add_controls_to_help_output(self, output: StyledText) -> None:
+        """Internal method to add the controls section to the help output."""
+
+        if self.controls:
+            output += S.BOLD("Controls:")
+            max_ctrl_len = max((len(control_key) for control_key, _ in self.controls), default=0)
+
+            for ctrl, desc in self.controls:
+                styled_ctrl = S.BR.RED(S.DIM("+").join(ctrl.split("+")))
+                output += "  "
+                output += styled_ctrl
+                output += " " * (max_ctrl_len - len(ctrl))
+                output += "    "
+                output += desc
+
+            output += "\n"
+
+    def _add_examples_to_help_output(self, output: StyledText, cmd_name: str) -> None:
+        """Internal method to add the examples section to the help output."""
+
+        if self.examples:
+            output += S.BOLD("Examples:")
+
+            for ex, desc in self.examples:
+                output += (f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name)).ansi)}    ", S.DIM("# ", S.ITALIC(desc)))
+
+            output += "\n"
+
+    def print_help(self, error_message: str | None = None) -> None:
+        """Print the generated help screen.\n
+        -------------------------------------------------------------------------------
+        *   `error_message` – An optional error message to print at the top in red."""
+
+        before_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "before"), None)
+        after_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "after"), None)
+
+        cmd_name = Path(_sys.argv[0]).name
+        console_width = get_width()
+        output = StyledText("\n")
+
+        if error_message:
+            output += S.RED(S.BOLD("[ERROR] "), error_message, "\n")
+
+        self._add_title_to_help_output(output, console_width)
+        self._add_usage_to_help_output(output, cmd_name, before_pos, after_pos)
+        self._add_args_to_help_output(output, before_pos, after_pos)
+        self._add_opts_to_help_output(output)
+        self._add_controls_to_help_output(output)
+        self._add_examples_to_help_output(output, cmd_name)
+
+        if self.epilog:
+            output += self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog)
+            output += "\n"
+
+        output.print(flush=True)
+
+    def _build_flag_map(self) -> dict[str, str]:
+        """Internal method to build a mapping of flags to their corresponding argument aliases."""
+
+        flag_map: dict[str, str] = {}
+
+        for alias, cfg in self._arg_configs.items():
+            if isinstance(cfg["flags_or_pos"], (set, frozenset)):
+                for flag in cast("Iterable[str]", cfg["flags_or_pos"]):
+                    flag_map[flag] = alias
+
+        return flag_map
+
+    def _parse_args_loop(
+        self,
+        raw_args: list[str],
+        flag_map: dict[str, str],
+        parsed_data: dict[str, dict[str, Any]],
+        unknown_flags: list[str],
+        positional_values: list[str],
+        flag_value_sep: str | None,
+        allow_space_value: bool,
+    ) -> None:
+        """Internal method to loop through the raw arguments and populate the parsed data."""
+
+        i = 0
+
+        while i < len(raw_args):
+            arg = raw_args[i]
+
+            if flag_value_sep and flag_value_sep in arg:
+                parts = arg.split(flag_value_sep, 1)
+                potential_flag, potential_val = parts[0], parts[1]
+            else:
+                potential_flag, potential_val = arg, None
+
+            if potential_flag in self.help_flags:
+                self.print_help()
+                raise SystemExit(0)
+
+            if potential_flag in flag_map:
+                alias = flag_map[potential_flag]
+                cfg = self._arg_configs[alias]
+                parsed_data[alias]["exists"] = True
+                parsed_data[alias]["flag"] = potential_flag
+
+                if cfg["expects_value"]:
+                    if potential_val is not None:
+                        parsed_data[alias]["values"].append(potential_val)
+                    elif (
+                        allow_space_value
+                        and i + 1 < len(raw_args)
+                        and raw_args[i + 1] not in flag_map
+                        and raw_args[i + 1] not in self.help_flags
+                    ):
+                        parsed_data[alias]["values"].append(raw_args[i + 1])
+                        i += 1
+                    else:
+                        self.print_help(f"Argument '{potential_flag}' requires a value.")
+                        raise SystemExit(1)
+
+            elif arg.startswith("-"):
+                unknown_flags.append(arg)
+            else:
+                positional_values.append(arg)
+
+            i += 1
+
+    def _resolve_positionals(
+        self,
+        parsed_data: dict[str, dict[str, Any]],
+        positional_values: list[str],
+        unknown_flags: list[str],
+    ) -> None:
+        """Internal method to resolve positional arguments and assign them to the appropriate aliases."""
+
+        before_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "before"), None)
+        after_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "after"), None)
+
+        if before_pos and positional_values:
+            parsed_data[before_pos]["exists"] = True
+            parsed_data[before_pos]["values"].append(positional_values.pop(0))
+            parsed_data[before_pos]["is_pos"] = True
+
+        if after_pos and positional_values:
+            parsed_data[after_pos]["exists"] = True
+            parsed_data[after_pos]["values"].extend(positional_values)
+            parsed_data[after_pos]["is_pos"] = True
+            positional_values.clear()
+
+        if positional_values:
+            unknown_flags.extend(positional_values)
+
+    def _validate_parsed_data(self, parsed_data: dict[str, dict[str, Any]]) -> None:
+        """Internal method to validate the parsed data against the argument configurations."""
+
+        for alias, cfg in self._arg_configs.items():
+            if cfg["required"] and not parsed_data[alias]["exists"]:
+                if isinstance(cfg["flags_or_pos"], (set, frozenset)):
+                    flag_str = f" ({'/'.join(cast('Iterable[str]', cfg['flags_or_pos']))})"
+                else:
+                    flag_str = f" (positional {cfg['flags_or_pos']})"
+
+                self.print_help(f"Missing required argument: {alias}{flag_str}")
+                raise SystemExit(1)
+
+            if cfg["choices"] and parsed_data[alias]["exists"]:
+                for val in parsed_data[alias]["values"]:
+                    if val not in cfg["choices"]:
+                        self.print_help(f"Invalid choice '{val}' for argument '{alias}'. Allowed: {', '.join(cfg['choices'])}")
+                        raise SystemExit(1)
+
+    def parse(self, *, skip: int = 0, flag_value_sep: str | None = "=", allow_space_value: bool = True) -> ParsedArgs:
+        """Parse `sys.argv` and return the strongly-typed `ParsedArgs` object.\n
+        ---------------------------------------------------------------------------------------------------
+        *   `skip` – Number of arguments to skip at the start.
+        *   `flag_value_sep` – String separating flag from value (e.g., `"="` for `--foo=bar`).<br>
+            Set to `None` to disable.
+        *   `allow_space_value` – Whether to allow space-separated values for flags (e.g., `--foo bar`).\n
+        ---------------------------------------------------------------------------------------------------
+        Returns the `ParsedArgs` container."""
+
+        raw_args = _sys.argv[1 + skip :]
+        result = ParsedArgs()
+
+        for flag in self.help_flags:
+            if flag in raw_args:
+                self.print_help()
+                raise SystemExit(0)
+
+        flag_map = self._build_flag_map()
+        parsed_data: dict[str, dict[str, Any]] = {
+            alias: {"exists": False, "values": [], "is_pos": False, "flag": None} for alias in self._arg_configs
+        }
+        unknown_flags: list[str] = []
+        positional_values: list[str] = []
+
+        self._parse_args_loop(
+            raw_args, flag_map, parsed_data, unknown_flags, positional_values, flag_value_sep, allow_space_value
+        )
+        self._resolve_positionals(parsed_data, positional_values, unknown_flags)
+        self._validate_parsed_data(parsed_data)
+
+        result.unknown_flags = unknown_flags
+        for alias, data in parsed_data.items():
+            result._add_arg(
+                alias,
+                ParsedArgData(exists=data["exists"], values=tuple(data["values"]), is_pos=data["is_pos"], flag=data["flag"]),
+            )
+
+        return result
 
 
 def get_width() -> int:
@@ -361,112 +686,17 @@ def supports_color() -> bool:
 
     if _os.name == "nt":
         # Check if VT100 mode is enabled on Windows:
-        try:
+        with suppress(Exception):
             kernel32 = _ctypes.windll.kernel32  # type: ignore
             handle = kernel32.GetStdHandle(-11)  # type: ignore
             mode = _ctypes.c_ulong()  # type: ignore
+
             if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # type: ignore
                 return (mode.value & 0x0004) != 0
-        except Exception:
-            pass
 
         return False
 
     return _os.getenv("TERM", "").lower() not in {"", "dumb"}
-
-
-def get_args(
-    arg_parse_configs: ArgParseConfigs, /, *, skip: int = 0, flag_value_sep: str | None = "=", allow_space_value: bool = True
-) -> ParsedArgs:
-    """Will search for the specified args in the command-line arguments
-    and return the results as a special `ParsedArgs` object.\n
-    ----------------------------------------------------------------------------------------------------------
-    *   `arg_parse_configs` – A dictionary where each key is an alias name for the argument<br>
-        and the key's value is the parsing configuration for that argument.
-    *   `skip` – The number of leading command-line arguments to skip before parsing;<br>
-        useful when the first N args are a command/subcommand and not relevant to the caller.
-    *   `flag_value_sep` – The character/s used to separate flags from their values;<br>
-        pass `None` to disable separator-based syntax (e.g., `--flag=value`) entirely.
-    *   `allow_space_value` – Whether to allow space-separated flag values (e.g., `--flag value`)<br>
-        in addition to the separator-based syntax; enabled by default.
-    ----------------------------------------------------------------------------------------------------------
-    The `arg_parse_configs` dictionary can have the following structures for each item:
-
-    1.  Simple set of flags (when no default value is needed):
-
-        ```python
-        "alias_name": {"-f", "--flag"}
-        ```
-
-    2.  Dictionary with the`"flags"` set, plus a specified `"default"` value:
-
-        ```python
-        "alias_name": {
-            "flags": {"-f", "--flag"},
-            "default": "some_value",
-        }
-        ```
-
-    3.  Positional value collection using the literals `"before"` or `"after"`:
-
-        ```python
-        # Collect all non-flagged values that appear before the first flag:
-        "alias_name": "before"
-
-        # Collect all non-flagged values that appear after the last flag's value:
-        "alias_name": "after"
-        ```
-
-    ----------------------------------------------------------------------------------------------------------
-    #### Example Usage
-
-    If you call the `get_args()` method in your script like this:
-
-    ```python
-    parsed_args = get_args({
-        "text_before": "before",   # Positional values before first flag
-        "arg1": {"-A", "--arg1"},  # Normal flags
-        "arg2": {                  # Flags with specified default value
-            "flags": {"-B", "--arg2"},
-            "default": "default value"
-        },
-        "text_after": "after",     # Positional values after last flag's value
-    })
-    ```
-
-    … and execute the script via the command line like this:
-
-    ```bash
-    python script.py "Hello" "World" --arg1=42 "Goodbye"
-    ```
-
-    … the `get_args()` method would return a `ParsedArgs` object with the following structure:
-
-    ```python
-    ParsedArgs(
-        # Found 2 values before the first flag:
-        text_before = ParsedArgData(exists=True, is_pos=True, values=["Hello", "World"], flag=None),
-        # Found one of the specified flags with a value:
-        arg1 = ParsedArgData(exists=True, is_pos=False, values=["42"], flag="--arg1"),
-        # Didn't find any of the specified flags, used the default value:
-        arg2 = ParsedArgData(exists=False, is_pos=False, values=["default value"], flag=None),
-        # Found 1 value after the last flag's value:
-        text_after = ParsedArgData(exists=True, is_pos=True, values=["Goodbye"], flag=None),
-    )
-    ```
-
-    ----------------------------------------------------------------------------------------------------------
-    NOTE: When `allow_space_value` is `True`, a value that directly follows a flag (e.g., `--flag value`)<br>
-    is consumed as that flag's value and is not available as a positional `"after"` argument."""
-
-    if skip < 0:
-        raise ValueError(f"The 'skip' parameter must be a non-negative integer, got {skip!r}")
-    if flag_value_sep is not None and not flag_value_sep:
-        raise ValueError(f"The 'flag_value_sep' parameter must be a non-empty string or None, got {flag_value_sep!r}")
-
-    return _ConsoleArgsParseHelper(
-        arg_parse_configs, skip=skip, flag_value_sep=flag_value_sep, allow_space_value=allow_space_value
-    )()
 
 
 @overload
@@ -527,7 +757,7 @@ def pause_exit(
     if pause:
         _read_single_key()
     if exit:
-        _sys.exit(exit_code)
+        raise SystemExit(exit_code)
 
 
 def cls() -> None:
@@ -908,7 +1138,7 @@ def exit(
     at the message and exit the program after the message was printed."""
 
     log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)  # type: ignore
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
 
 
 def log_box_filled(
@@ -1308,7 +1538,8 @@ def input(
 
     else:
         try:
-            return output_type(result_text)  # type: ignore[call-arg]
+            return output_type(result_text)
+
         except (ValueError, TypeError):
             if default_val is not None:
                 return default_val
@@ -1531,313 +1762,6 @@ def _multiline_input_submit(event: KeyPressEvent, /) -> None:
     event.app.exit(result=event.app.current_buffer.document.text)
 
 
-class _ConsoleArgsParseHelper:
-    """Internal, callable helper class to parse command-line arguments."""
-
-    def __init__(
-        self,
-        arg_parse_configs: ArgParseConfigs,
-        /,
-        *,
-        skip: int = 0,
-        flag_value_sep: str | None,
-        allow_space_value: bool = True,
-    ) -> None:
-        self.arg_parse_configs: ArgParseConfigs = arg_parse_configs
-        self.flag_value_sep: str | None = flag_value_sep
-        self.allow_space_value: bool = allow_space_value
-
-        self.parsed_args: dict[str, ParsedArgData] = {}
-        self.positional_configs: dict[str, str] = {}
-        self.arg_lookup: dict[str, str] = {}
-        self.unknown_flags: list[str] = []
-
-        self.args: list[str] = _sys.argv[1 + skip :]
-        self.args_len: int = len(self.args)
-        self.pos_before_configured: bool = False
-        self.pos_after_configured: bool = False
-        self.first_flag_pos: int | None = None
-        self.last_flag_pos: int | None = None
-
-    def __call__(self) -> ParsedArgs:
-        self.parse_arg_configs()
-        self.find_flag_positions()
-        self.process_flagged_args()
-        self.process_positional_args()
-
-        return ParsedArgs(self.unknown_flags, **self.parsed_args)
-
-    def parse_arg_configs(self) -> None:
-        """Parse the `arg_parse_configs` configuration and build lookup structures."""
-
-        for alias, config in self.arg_parse_configs.items():
-            if not alias.isidentifier():
-                raise ValueError(f"Invalid argument alias '{alias}'.\nAliases must be valid Python identifiers.")
-            elif alias in ParsedArgs.RESERVED_ALIASES:
-                raise ValueError(
-                    f"Invalid argument alias '{alias}'.\n"
-                    f"The following names are reserved and cannot be used as aliases:\n"
-                    f"{', '.join(sorted(ParsedArgs.RESERVED_ALIASES))}"
-                )
-
-            # Parse arg config & build flag lookup for non-positional args.
-            if (flags := self._parse_arg_config(alias, config)) is not None:
-                for flag in flags:
-                    if flag in self.arg_lookup:
-                        raise ValueError(
-                            f"Duplicate flag '{flag}' found. It's assigned to both '{self.arg_lookup[flag]}' and '{alias}'."
-                        )
-                    self.arg_lookup[flag] = alias
-
-    def _parse_arg_config(self, alias: str, config: ArgParseConfig, /) -> set[str] | None:
-        """Parse an individual argument configuration."""
-
-        # Positional argument configuration:
-        if isinstance(config, str):
-            if config == "before":
-                if self.pos_before_configured:
-                    raise ValueError("Only one alias can use the value 'before' for positional argument collection.")
-                self.pos_before_configured = True
-            elif config == "after":
-                if self.pos_after_configured:
-                    raise ValueError("Only one alias can use the value 'after' for positional argument collection.")
-                self.pos_after_configured = True
-            else:
-                raise ValueError(
-                    f"Invalid positional argument type '{config}' under alias '{alias}'.\nMust be either 'before' or 'after'."
-                )
-
-            self.positional_configs[alias] = config
-            self.parsed_args[alias] = ParsedArgData(exists=False, values=[], is_pos=True)
-
-            return None  # No flags to return for positional args.
-
-        # Normal set of flags:
-        elif isinstance(config, set):
-            if not config:
-                raise ValueError(
-                    f"The flag set under alias '{alias}' is empty.\nThe set must contain at least one flag to search for."
-                )
-
-            self.parsed_args[alias] = ParsedArgData(exists=False, values=[], is_pos=False)
-
-            return config
-
-        # Set of flags with specified default value:
-        else:
-            if not config["flags"]:
-                raise ValueError(
-                    f"No flags provided under alias '{alias}'.\n"
-                    "The 'flags'-key set must contain at least one flag to search for."
-                )
-
-            self.parsed_args[alias] = ParsedArgData(exists=False, values=[config["default"]], is_pos=False)
-
-            return config["flags"]
-
-    def find_flag_positions(self) -> None:
-        """Find positions of first and last flags for positional argument collection."""
-
-        i = 0
-        while i < self.args_len:
-            arg = self.args[i]
-
-            # Check for flag with inline separator (`--flag=value`):
-            if (
-                self.flag_value_sep
-                and self.flag_value_sep in arg
-                and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup
-            ):
-                if self.first_flag_pos is None:
-                    self.first_flag_pos = i
-                self.last_flag_pos = i
-                i += 1
-                continue
-
-            # Check for standalone flag:
-            if arg in self.arg_lookup:
-                if self.first_flag_pos is None:
-                    self.first_flag_pos = i
-                self.last_flag_pos = i
-
-                # Check for separator in next tokens (`--flag`, `=`, `value`):
-                if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
-                    if i + 2 < self.args_len:
-                        i += 3  # Skip flag, separator, and value.
-                        continue
-                    else:
-                        i += 2  # Skip flag and separator.
-                        continue
-
-                # Check for space-separated value (`--flag value`):
-                if self.allow_space_value and i + 1 < self.args_len:
-                    next_arg = self.args[i + 1]
-                    if self._is_flag_value(next_arg):
-                        i += 2  # Skip flag and its space-separated value.
-                        continue
-
-            i += 1
-
-    def process_positional_args(self) -> None:
-        """Collect positional `"before"`/`"after"` arguments."""
-
-        for alias, pos_type in self.positional_configs.items():
-            if pos_type == "before":
-                self._collect_before_arg(alias)
-            elif pos_type == "after":
-                self._collect_after_arg(alias)
-            else:
-                raise ValueError(
-                    f"Invalid positional argument type '{pos_type}' for alias '{alias}'.\nMust be either 'before' or 'after'."
-                )
-
-    def _collect_before_arg(self, alias: str, /) -> None:
-        """Collect positional `"before"` arguments."""
-
-        before_args: list[str] = []
-        end_pos: int = self.args_len if self.first_flag_pos is None else self.first_flag_pos
-
-        for i in range(end_pos):
-            if self._is_positional_arg(arg := self.args[i], allow_separator=False):
-                before_args.append(arg)
-
-        if before_args:
-            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=before_args, exists=True)
-
-    def _collect_after_arg(self, alias: str, /) -> None:
-        """Collect positional `"after"` arguments."""
-
-        after_args: list[str] = []
-        start_pos: int = 0 if self.last_flag_pos is None else (self.last_flag_pos + 1)
-
-        # Skip the value after the last flag if it has a separator:
-        if self.last_flag_pos is not None:
-            # Check if last flag has inline value (`--flag=value`):
-            if self.flag_value_sep and self.flag_value_sep in self.args[self.last_flag_pos]:
-                start_pos = self.last_flag_pos + 1  # Value is inline; start after this position.
-            # Check if next token is separator (`--flag`, `=`, `value`):
-            elif self.flag_value_sep and start_pos < self.args_len and self.args[start_pos].strip() == self.flag_value_sep:
-                if start_pos + 1 < self.args_len:
-                    start_pos += 2  # Skip separator and value.
-                else:
-                    start_pos += 1  # Skip separator only.
-            # Check if next token is space-separated value (`--flag value`):
-            elif self.allow_space_value and start_pos < self.args_len and self._is_flag_value(self.args[start_pos]):
-                start_pos += 1  # SKIP SPACE-SEPARATED VALUE
-            # No separator = flag has no value; start collecting from next position.
-
-        for i in range(start_pos, self.args_len):
-            arg = self.args[i]
-            # Don't include flags or separators:
-            if self.flag_value_sep and arg == self.flag_value_sep:
-                continue
-            elif self._is_positional_arg(arg):
-                after_args.append(arg)
-
-        if after_args:
-            self.parsed_args[alias] = self.parsed_args[alias]._replace(values=after_args, exists=True)
-
-    @staticmethod
-    def _looks_like_flag(arg: str, /) -> bool:
-        """Returns `True` if the arg resembles a flag (starts with `--` or `-<letter>`).<br>
-        Arguments that look like negative numbers (e.g., `-42`, `-.5`) are not flags."""
-
-        if arg.startswith("--"):
-            return True
-        return bool(len(arg) >= 2 and arg[0] == "-" and not arg[1].isdigit() and arg[1] != ".")
-
-    def _is_positional_arg(self, arg: str, /, *, allow_separator: bool = True) -> bool:
-        """Check if an argument is positional (not a flag or separator)."""
-
-        if (
-            self.flag_value_sep
-            and self.flag_value_sep in arg
-            and arg.split(self.flag_value_sep, 1)[0].strip() not in self.arg_lookup
-        ):
-            return not self._looks_like_flag(arg.split(self.flag_value_sep, 1)[0].strip())
-
-        if arg not in self.arg_lookup and (allow_separator or not self.flag_value_sep or arg != self.flag_value_sep):
-            return not self._looks_like_flag(arg)
-
-        return False
-
-    def _is_flag_value(self, arg: str, /) -> bool:
-        """Check if an argument can be treated as a space-separated flag value<br>
-        (i.e., it is not a known flag, not the separator, not a `flag=value` token, and does not look like a flag itself)."""
-
-        if arg in self.arg_lookup:
-            return False
-        if self.flag_value_sep and arg.strip() == self.flag_value_sep:
-            return False
-        if (
-            self.flag_value_sep
-            and self.flag_value_sep in arg
-            and arg.split(self.flag_value_sep, 1)[0].strip() in self.arg_lookup
-        ):
-            return False
-        return not self._looks_like_flag(arg)
-
-    def process_flagged_args(self) -> None:
-        """Process flagged arguments."""
-
-        i = 0
-
-        while i < self.args_len:
-            arg = self.args[i]
-
-            # [CASE 1] Flag with inline separator (`--flag=value`):
-            if self.flag_value_sep and self.flag_value_sep in arg:
-                parts = arg.split(self.flag_value_sep, 1)
-                potential_flag = parts[0].strip()
-
-                if potential_flag in self.arg_lookup:
-                    alias = self.arg_lookup[potential_flag]
-                    self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=potential_flag)
-
-                    if len(parts) > 1 and (val := parts[1].strip()):
-                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[val])
-
-                    i += 1
-                    continue
-
-                elif self._looks_like_flag(potential_flag):
-                    # Unknown flag with inline separator (`--unknown=value`):
-                    self.unknown_flags.append(arg)
-                    i += 1
-                    continue
-
-            # [CASE 2] Standalone known flag:
-            if arg in self.arg_lookup:
-                alias = self.arg_lookup[arg]
-                self.parsed_args[alias] = self.parsed_args[alias]._replace(exists=True, flag=arg)
-
-                # Check for separator in next tokens (`--flag`, `=`, `value`):
-                if self.flag_value_sep and i + 1 < self.args_len and self.args[i + 1].strip() == self.flag_value_sep:
-                    if (
-                        i + 2 < self.args_len
-                        and (val := self.args[i + 2]) not in self.arg_lookup
-                        and val != self.flag_value_sep
-                    ):
-                        self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[val])
-                        i += 3
-                        continue
-                    i += 2
-                    continue
-
-                # Check for space-separated value (`--flag value`):
-                if self.allow_space_value and i + 1 < self.args_len and self._is_flag_value(next_arg := self.args[i + 1]):
-                    self.parsed_args[alias] = self.parsed_args[alias]._replace(values=[next_arg])
-                    i += 2
-                    continue
-                # No separator = just a flag without value.
-
-            # [CASE 3] Unknown standalone flag (`--unknown`, `-u`):
-            elif self._looks_like_flag(arg):
-                self.unknown_flags.append(arg)
-
-            i += 1
-
-
 class _ConsoleInputHelper:
     """Helper class to manage input processing and events."""
 
@@ -2042,6 +1966,7 @@ class _StdoutInterceptorMixin:
 
     def _stop_intercepting(self) -> None:
         if self._original_stdout:
+            self._flush_buffer()
             _sys.stdout = self._original_stdout
             self._original_stdout = None
         self.active = False
@@ -2306,7 +2231,7 @@ class ProgressBar(_StdoutInterceptorMixin):
                 # Do some work...
                 update_progress(i)  # Update progress
 
-            update_progress(label="Finalizing...")  # Update label.
+            update_progress("Finalizing...")  # Update label.
 
             for i in range(400, 500):
                 # Do some work...
@@ -2353,12 +2278,14 @@ class ProgressBar(_StdoutInterceptorMixin):
         for part in format:
             fmt_part = _PATTERNS.label.sub(label_ansi.replace("\\", r"\\"), part)
             fmt_part = _PATTERNS.current.sub(
-                lambda m: f"{current:,}".replace(",", m.group(1)) if m.group(1) else str(current), fmt_part
+                lambda match: f"{current:,}".replace(",", match.group(1)) if match.group(1) else str(current), fmt_part
             )
             fmt_part = _PATTERNS.total.sub(
-                lambda m: f"{total:,}".replace(",", m.group(1)) if m.group(1) else str(total), fmt_part
+                lambda match: f"{total:,}".replace(",", match.group(1)) if match.group(1) else str(total), fmt_part
             )
-            fmt_part = _PATTERNS.percentage.sub(lambda m: f"{percentage:.{m.group(1) if m.group(1) else '1'}f}", fmt_part)
+            fmt_part = _PATTERNS.percentage.sub(
+                lambda match: f"{percentage:.{match.group(1) if match.group(1) else '1'}f}", fmt_part
+            )
             if fmt_part:
                 fmt_parts.append(fmt_part)
 

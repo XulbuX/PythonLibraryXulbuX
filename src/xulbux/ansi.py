@@ -1011,7 +1011,6 @@ class _BgNS:
     @overload
     @staticmethod
     def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
-
     @overload
     @staticmethod
     def rgb(color: rgba, /) -> _ColorStyle: ...
@@ -1071,10 +1070,12 @@ class S:
     For a full list of available attributes, see the `ansi` module documentation."""
 
     # ************************* TOTAL RESET *************************
+
     RESET: ClassVar[_Style] = _Style(0)
     """Reset all styling to default."""
 
     # *********************** SPECIFIC RESETS ***********************
+
     RESET_BOLD: ClassVar[_Style] = _Style(22)
     """Reset bold (also resets dim, as they share the same code)."""
     RESET_DIM: ClassVar[_Style] = _Style(22)
@@ -1095,6 +1096,7 @@ class S:
     """Reset background color."""
 
     # ************************* TEXT STYLES *************************
+
     BOLD: ClassVar[_Style] = _Style(1)
     """Bold text.\n
     Note that this is also reset by `RESET_DIM`."""
@@ -1115,6 +1117,7 @@ class S:
     """Double underline text."""
 
     # ********************** STANDARD FG COLORS *********************
+
     BLACK: ClassVar[_Style] = _Style(30)
     """Black foreground."""
     RED: ClassVar[_Style] = _Style(31)
@@ -1133,14 +1136,15 @@ class S:
     """White foreground."""
 
     # ************************* NAMESPACES **************************
+
     BR: ClassVar[type[_BrNS]] = _BrNS
     BG: ClassVar[type[_BgNS]] = _BgNS
 
     # ******************** CUSTOM COLORS & LINKS ********************
+
     @overload
     @staticmethod
     def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
-
     @overload
     @staticmethod
     def rgb(color: rgba, /) -> _ColorStyle: ...

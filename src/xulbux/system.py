@@ -191,7 +191,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
         if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type: ignore
             raise PermissionError("Failed to launch elevated process.") from None
         else:
-            _sys.exit(0)
+            raise SystemExit(0)
 
     # Unix-like (Linux/macOS):
     else:
@@ -205,7 +205,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
         proc.wait()
         if proc.returncode != 0:
             raise PermissionError("Process elevation was denied.") from None
-        _sys.exit(0)
+        raise SystemExit(0)
 
 
 class _SystemRestartHelper:
