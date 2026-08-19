@@ -333,8 +333,10 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
         if isinstance(current_data, dict):
             dict_data = cast("dict[Any, Any]", current_data)
             keys: list[str] = list(dict_data.keys())
+
             if i == len(path) - 1 and get_key:
                 return keys[path_idx]
+
             parent = dict_data
             current_data = dict_data[keys[path_idx]]
 
@@ -342,7 +344,13 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
             if i == len(path) - 1 and get_key:
                 if parent is None or not isinstance(parent, dict):
                     raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'") from None
-                return next(key for key, value in parent.items() if value is current_data)
+
+                for key, value in parent.items():
+                    if value is current_data:
+                        return key
+
+                raise StopIteration
+
             parent = current_data
             current_data = list(current_data)[path_idx]  # Convert to list for indexing.
 
@@ -431,34 +439,44 @@ def render(
     )()
 
 
-def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], current_path: list[str] | None = None) -> bool:
+def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], current_path: list[str] | None = None) -> bool:  # ruff:ignore[complex-structure]
     """Internal method to recursively compare two nested data structures while ignoring specified paths."""
 
     if current_path is None:
         current_path = []
-    if any(current_path == path[: len(current_path)] for path in ignore_paths):
-        return True
+
+    for path in ignore_paths:
+        if current_path == path[: len(current_path)]:
+            return True
 
     if type(data1) is not type(data2):
         return False
 
     if isinstance(data1, dict) and isinstance(data2, dict):
         dict_data1, dict_data2 = cast("dict[Any, Any]", data1), cast("dict[Any, Any]", data2)
+
         if set(dict_data1.keys()) != set(dict_data2.keys()):
             return False
-        return all(
-            _compare_nested(dict_data1[key], dict_data2[key], ignore_paths=ignore_paths, current_path=[*current_path, key])
-            for key in dict_data1
-        )
+
+        for key in dict_data1:
+            if not _compare_nested(
+                dict_data1[key], dict_data2[key], ignore_paths=ignore_paths, current_path=[*current_path, key]
+            ):
+                return False
+
+        return True
 
     elif isinstance(data1, (list, tuple)) and isinstance(data2, (list, tuple)):
         array_data1, array_data2 = cast("IndexIterable", data1), cast("IndexIterable", data2)
+
         if len(array_data1) != len(array_data2):
             return False
-        return all(
-            _compare_nested(item1, item2, ignore_paths=ignore_paths, current_path=[*current_path, str(i)])
-            for i, (item1, item2) in enumerate(zip(array_data1, array_data2, strict=False))
-        )
+
+        for i, (item1, item2) in enumerate(zip(array_data1, array_data2, strict=False)):
+            if not _compare_nested(item1, item2, ignore_paths=ignore_paths, current_path=[*current_path, str(i)]):
+                return False
+
+        return True
 
     elif isinstance(data1, (set, frozenset)):
         return data1 == data2
@@ -556,7 +574,7 @@ class _DataRemoveCommentsHelper:
             }
 
         if is_index_iterable(item):
-            processed = [val for val in map(self.remove_nested_comments, item) if val is not None]
+            processed = [cleaned for val in item if (cleaned := self.remove_nested_comments(val)) is not None]
             return type(item)(processed)
 
         if isinstance(item, str):

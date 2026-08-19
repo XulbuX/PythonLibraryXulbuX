@@ -236,15 +236,24 @@ class _SystemRestartHelper:
         else:
             output = _subprocess.check_output(command).decode()
 
-        processes = [
-            line
-            for line in output.splitlines()[skip_lines:]
-            if line.strip()
-            and not any(
-                proc in line.lower() for proc in {"bash", "cmd", "powershell", "ps", "pwsh", "python", "sh", "tasklist", "zsh"}
-            )
-        ]
-        if len(processes) > 0:  # EXCLUDING PYTHON AND SHELL PROCESSES
+        processes: list[str] = []
+
+        for line in output.splitlines()[skip_lines:]:
+            if not line.strip():
+                continue
+
+            line_lower = line.lower()
+            has_proc = False
+
+            for proc in {"bash", "cmd", "powershell", "ps", "pwsh", "python", "sh", "tasklist", "zsh"}:
+                if proc in line_lower:
+                    has_proc = True
+                    break
+
+            if not has_proc:
+                processes.append(line)
+
+        if len(processes) > 0:  # Excluding Python and shell processes.
             raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
 
     def restart_windows(self) -> None:

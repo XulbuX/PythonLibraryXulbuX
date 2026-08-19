@@ -177,7 +177,7 @@ class ParsedArgData:
         current_val: Any = None
 
         try:
-            return tuple(cast_type(current_val := val) for val in self.values)
+            return tuple([cast_type(current_val := val) for val in self.values])
         except Exception as exc:
             raise ValueError(f"Failed to cast value '{current_val}' to {cast_type}") from exc
 
@@ -338,17 +338,19 @@ class ArgumentParser:
             for flag in sorted(flags, key=lambda flg: (len(flg) - len(_PATTERNS.flag_prefix.sub("", flg)), flg))
         )
 
-    def _add_title_to_help_output(self, output: StyledText, console_width: int) -> None:
+    def _add_title_to_help_output(self, output: list[TextRenderable], console_width: int) -> None:
         """Internal method to add the title and subtitle to the help output."""
 
         if self.title:
-            output += "▄" * console_width
-            output += (S.INVERSE | S.BG.BLACK)("  ", self.title, f" — {self.subtitle}" if self.subtitle else "", "  ")
-            output += "▀" * console_width
-            output += "\n"
+            output.extend([
+                "▄" * console_width,
+                (S.INVERSE | S.BG.BLACK)("  ", self.title, f" — {self.subtitle}" if self.subtitle else "", "  "),
+                "▀" * console_width,
+                "\n",
+            ])
 
     def _add_usage_to_help_output(
-        self, output: StyledText, cmd_name: str, before_pos: str | None, after_pos: str | None
+        self, output: list[TextRenderable], cmd_name: str, before_pos: str | None, after_pos: str | None
     ) -> None:
         """Internal method to add the usage line to the help output."""
 
@@ -360,14 +362,19 @@ class ArgumentParser:
             pos_parts.append(f"<{self._arg_configs[after_pos]['expects_value']}>")
 
         pos_str = " ".join(pos_parts) if pos_parts else ""
-        opts_str = (
-            "[options]" if any(isinstance(cfg["flags_or_pos"], (set, frozenset)) for cfg in self._arg_configs.values()) else ""
-        )
+
+        has_opts = False
+        for cfg in self._arg_configs.values():
+            if isinstance(cfg["flags_or_pos"], (set, frozenset)):
+                has_opts = True
+                break
+
+        opts_str = "[options]" if has_opts else ""
 
         if self.usage is None:
-            output += (S.BOLD("Usage:"), f"{cmd_name} {pos_str} {opts_str}".strip())
+            output.append((S.BOLD("Usage:"), f"{cmd_name} {pos_str} {opts_str}".strip()))
         else:
-            output += (
+            output.append(
                 (self.usage if isinstance(self.usage, StyledText) else StyledText(self.usage))
                 .ansi.replace("{cmd}", str(cmd_name))
                 .replace("{pos}", pos_str)
@@ -375,28 +382,28 @@ class ArgumentParser:
                 .strip()
             )
 
-        output += "\n"
+        output.append("\n")
 
-    def _add_args_to_help_output(self, output: StyledText, before_pos: str | None, after_pos: str | None) -> None:
+    def _add_args_to_help_output(self, output: list[TextRenderable], before_pos: str | None, after_pos: str | None) -> None:
         """Internal method to add the positional arguments section to the help output."""
 
         if before_pos or after_pos:
-            output += S.BOLD("Arguments:")
+            output.append(S.BOLD("Arguments:"))
 
             if before_pos:
-                output += (
+                output.append((
                     f"  {self._arg_configs[before_pos]['expects_value']:<7} ",
                     self._arg_configs[before_pos]["description"] or "",
-                )
+                ))
             if after_pos:
-                output += (
+                output.append((
                     f"  {self._arg_configs[after_pos]['expects_value']:<7} ",
                     self._arg_configs[after_pos]["description"] or "",
-                )
+                ))
 
-            output += "\n"
+            output.append("\n")
 
-    def _add_opts_to_help_output(self, output: StyledText) -> None:
+    def _add_opts_to_help_output(self, output: list[TextRenderable]) -> None:
         """Internal method to add the options section to the help output."""
 
         opts_list: list[tuple[StyledText, str]] = []
@@ -413,61 +420,62 @@ class ArgumentParser:
                 opts_list.append((flag_str, cfg["description"] or ""))
 
         if has_opts or self.help_flags:
-            output += S.BOLD("Options:")
+            output.append(S.BOLD("Options:"))
             opts_list.append((self._flags_to_st(self.help_flags), "Show this help message and exit"))
 
-            max_flag_len = max((len(st_flag.raw) for st_flag, _ in opts_list), default=0)
+            max_flag_len = max([len(st_flag.raw) for st_flag, _ in opts_list], default=0)
             for flag_str, desc in opts_list:
-                output += "  "
-                output += flag_str
-                output += " " * (max_flag_len - len(flag_str.raw))
-                output += "    "
-                output += desc
+                output.extend(["  ", flag_str, " " * (max_flag_len - len(flag_str.raw)), "    ", desc])
 
-            output += "\n"
+            output.append("\n")
 
-    def _add_controls_to_help_output(self, output: StyledText) -> None:
+    def _add_controls_to_help_output(self, output: list[TextRenderable]) -> None:
         """Internal method to add the controls section to the help output."""
 
         if self.controls:
-            output += S.BOLD("Controls:")
-            max_ctrl_len = max((len(control_key) for control_key, _ in self.controls), default=0)
+            output.append(S.BOLD("Controls:"))
+            max_ctrl_len = max([len(control_key) for control_key, _ in self.controls], default=0)
 
             for ctrl, desc in self.controls:
                 styled_ctrl = S.BR.RED(S.DIM("+").join(ctrl.split("+")))
-                output += "  "
-                output += styled_ctrl
-                output += " " * (max_ctrl_len - len(ctrl))
-                output += "    "
-                output += desc
+                output.extend(["  ", styled_ctrl, " " * (max_ctrl_len - len(ctrl)), "    ", desc])
 
-            output += "\n"
+            output.append("\n")
 
-    def _add_examples_to_help_output(self, output: StyledText, cmd_name: str) -> None:
+    def _add_examples_to_help_output(self, output: list[TextRenderable], cmd_name: str) -> None:
         """Internal method to add the examples section to the help output."""
 
         if self.examples:
-            output += S.BOLD("Examples:")
+            output.append(S.BOLD("Examples:"))
 
             for ex, desc in self.examples:
-                output += (f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name)).ansi)}    ", S.DIM("# ", S.ITALIC(desc)))
+                output.append((
+                    f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name)).ansi)}    ",
+                    S.DIM("# ", S.ITALIC(desc)),
+                ))
 
-            output += "\n"
+            output.append("\n")
 
     def print_help(self, error_message: str | None = None) -> None:
         """Print the generated help screen.\n
         -------------------------------------------------------------------------------
         *   `error_message` – An optional error message to print at the top in red."""
 
-        before_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "before"), None)
-        after_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "after"), None)
+        before_pos: str | None = None
+        after_pos: str | None = None
+
+        for alias, cfg in self._arg_configs.items():
+            if cfg["flags_or_pos"] == "before":
+                before_pos = alias
+            elif cfg["flags_or_pos"] == "after":
+                after_pos = alias
 
         cmd_name = Path(_sys.argv[0]).name
         console_width = get_width()
-        output = StyledText("\n")
+        output: list[TextRenderable] = ["\n"]
 
         if error_message:
-            output += S.RED(S.BOLD("[ERROR] "), error_message, "\n")
+            output.extend([S.RED(S.BOLD("[ERROR] ")), error_message, "\n"])
 
         self._add_title_to_help_output(output, console_width)
         self._add_usage_to_help_output(output, cmd_name, before_pos, after_pos)
@@ -477,10 +485,10 @@ class ArgumentParser:
         self._add_examples_to_help_output(output, cmd_name)
 
         if self.epilog:
-            output += self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog)
-            output += "\n"
+            output.append(self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog))
+            output.append("\n")
 
-        output.print(flush=True)
+        StyledText(*output).print(flush=True)
 
     def _build_flag_map(self) -> dict[str, str]:
         """Internal method to build a mapping of flags to their corresponding argument aliases."""
@@ -557,8 +565,13 @@ class ArgumentParser:
     ) -> None:
         """Internal method to resolve positional arguments and assign them to the appropriate aliases."""
 
-        before_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "before"), None)
-        after_pos = next((alias for alias, cfg in self._arg_configs.items() if cfg["flags_or_pos"] == "after"), None)
+        before_pos = None
+        after_pos = None
+        for alias, cfg in self._arg_configs.items():
+            if cfg["flags_or_pos"] == "before":
+                before_pos = alias
+            elif cfg["flags_or_pos"] == "after":
+                after_pos = alias
 
         if before_pos and positional_values:
             parsed_data[before_pos]["exists"] = True
@@ -837,7 +850,7 @@ def log(
 
     # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
     clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
-    removals = tuple((pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions)
+    removals = tuple([(pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions])
 
     # Split prompt into lines and then split each line into chunks that fit within the wrap length:
     prompt_lst: list[str] = list(chain.from_iterable(_process_lines(clean_prompt, wrap_len)))
@@ -1258,8 +1271,11 @@ def log_box_bordered(
     if border_chars is not None:
         if len(border_chars) != 11:
             raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
-        if not all(len(char) == 1 for char in border_chars):
-            raise ValueError(f"The 'border_chars' parameter must only contain single-character strings, got {border_chars!r}")
+        for char in border_chars:
+            if len(char) != 1:
+                raise ValueError(
+                    f"The 'border_chars' parameter must only contain single-character strings, got {border_chars!r}"
+                )
 
     border_open = StyledText(_as_fg_style(border_style)).ansi
     content_open = StyledText(_as_fg_style(default_color)).ansi if default_color is not None else ""
@@ -1760,7 +1776,7 @@ def _prepare_log_box(
                 ansi_lines.append(line)
                 plain_lines.append(line)
 
-    max_line_len: int = max((len(line) for line in plain_lines), default=0)
+    max_line_len = max([len(line) for line in plain_lines], default=0)
 
     return ansi_lines, plain_lines, max_line_len
 
@@ -1845,7 +1861,8 @@ class _ConsoleInputHelper:
         if not text:
             return "", removed_chars
 
-        processed_text = "".join(char for char in text if ord(char) >= 32)
+        processed_text = "".join([char for char in text if ord(char) >= 32])
+
         if self.allowed_chars is not CHARS.ALL:
             filtered_text = ""
             for char in processed_text:
@@ -2135,7 +2152,12 @@ class ProgressBar(_StdoutInterceptorMixin):
 
         if format is not None:
             compiled_bar = _compile_format(format)
-            if not any(_PATTERNS.bar.search(part) for part in compiled_bar):
+            has_bar = False
+            for part in compiled_bar:
+                if _PATTERNS.bar.search(part):
+                    has_bar = True
+                    break
+            if not has_bar:
                 raise ValueError(
                     f"The 'format' parameter value must contain the '{{bar}}' or '{{b}}' placeholder, got {format!r}"
                 )
@@ -2144,7 +2166,14 @@ class ProgressBar(_StdoutInterceptorMixin):
 
         if limited_format is not None:
             compiled_limited = _compile_format(limited_format)
-            if not any(_PATTERNS.bar.search(part) for part in compiled_limited):
+            has_limited = False
+
+            for part in compiled_limited:
+                if _PATTERNS.bar.search(part):
+                    has_limited = True
+                    break
+
+            if not has_limited:
                 raise ValueError(
                     "The 'limited_format' parameter value must contain the "
                     f"'{{bar}}' or '{{b}}' placeholder, got {limited_format!r}"
@@ -2172,8 +2201,10 @@ class ProgressBar(_StdoutInterceptorMixin):
 
         if len(chars) < 2:
             raise ValueError(f"The 'chars' parameter must contain at least two characters (full and empty), got {chars!r}")
-        elif not all(len(char) == 1 for char in chars):
-            raise ValueError(f"All elements of 'chars' must be single-character strings, got {chars!r}")
+        else:
+            for char in chars:
+                if len(char) != 1:
+                    raise ValueError(f"All elements of 'chars' must be single-character strings, got {chars!r}")
 
         self.chars = chars
 
@@ -2432,7 +2463,14 @@ class Throbber(_StdoutInterceptorMixin):
         For more detailed information, see the `ansi` module documentation."""
 
         compiled_throbber = _compile_format(format)
-        if not any(_PATTERNS.animation.search(fmt) for fmt in compiled_throbber):
+        has_animation = False
+
+        for fmt in compiled_throbber:
+            if _PATTERNS.animation.search(fmt):
+                has_animation = True
+                break
+
+        if not has_animation:
             raise ValueError(
                 "At least one format string in 'format' must contain the "
                 f"'{{animation}}' or '{{a}}' placeholder, got {format!r}"

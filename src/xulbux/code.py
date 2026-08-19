@@ -74,7 +74,7 @@ def add_indent(code: str, indent: int, /) -> str:
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be non-negative, got {indent!r}")
 
-    return "\n".join(" " * indent + line for line in code.splitlines())
+    return "\n".join([" " * indent + line for line in code.splitlines()])
 
 
 def get_tab_spaces(code: str, /) -> int:
@@ -135,7 +135,7 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
         return False
 
     if funcs:
-        funcs_pattern_direct = r"^[\s\n]*(" + "|".join(_rx.escape(fn) for fn in funcs) + r")\([^\)]*\)[\s\n]*$"
+        funcs_pattern_direct = r"^[\s\n]*(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")\([^\)]*\)[\s\n]*$"
         if _rx.match(funcs_pattern_direct, code):
             return True
 
@@ -147,12 +147,12 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
 
     js_score = 0.0
     if funcs:
-        funcs_pattern2 = r"(" + "|".join(_rx.escape(fn) for fn in funcs) + r")" + _regex_module.brackets("()")
+        funcs_pattern2 = r"(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")" + _regex_module.brackets("()")
         if matches := _rx.compile(funcs_pattern2, _rx.IGNORECASE).findall(code):
             js_score += len(matches) * 2.0
 
     line_endings = [line.strip() for line in code.splitlines() if line.strip()]
-    if (semicolon_endings := sum(1 for line in line_endings if line.endswith(";"))) >= 1:
+    if (semicolon_endings := sum([1 for line in line_endings if line.endswith(";")])) >= 1:  # ruff:ignore[unnecessary-comprehension-in-call]
         js_score += min(semicolon_endings, 2)
     if (opening_braces := code.count("{")) > 0 and opening_braces == code.count("}"):
         js_score += 1

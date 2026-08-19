@@ -106,7 +106,7 @@ def _persistent(path: Path, /, *, remove: bool = False) -> None:
 
     # Convert to strings only for setting the environment variable:
     path_strings = [str(path) for path in current_paths]
-    _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys(filter(bool, path_strings)))
+    _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys([path for path in path_strings if path]))
 
     # Windows:
     if _sys.platform == "win32":

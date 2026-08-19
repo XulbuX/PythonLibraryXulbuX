@@ -17,9 +17,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-_SRGB_LINEAR_LUT: tuple[float, ...] = tuple(
-    (c / 255.0 / 12.92) if (c / 255.0 <= 0.03928) else (((c / 255.0 + 0.055) / 1.055) ** 2.4) for c in range(256)
-)
+_SRGB_LINEAR_LUT: tuple[float, ...] = tuple([
+    (ch / 255.0 / 12.92) if (ch / 255.0 <= 0.03928) else (((ch / 255.0 + 0.055) / 1.055) ** 2.4) for ch in range(256)
+])
 
 
 class _ColorBase:
@@ -83,7 +83,7 @@ class rgba(_ColorBase):
             self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
             return
 
-        if not all((0 <= ch <= 255) for ch in (red, green, blue)):
+        if not (0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255):
             raise ValueError(
                 "The 'red', 'green' and 'blue' parameters must be integers "
                 f"in range [0, 255] inclusive, got {red=!r} {green=!r} {blue=!r}"
@@ -348,7 +348,7 @@ class hsla(_ColorBase):
 
         if not (0 <= hue <= 360):
             raise ValueError(f"The 'hue' parameter must be in range [0, 360] inclusive, got {hue!r}")
-        if not all((0 <= ch <= 100) for ch in (sat, light)):
+        if not (0 <= sat <= 100 and 0 <= light <= 100):
             raise ValueError(f"The 'sat' and 'light' parameters must be in range [0, 100] inclusive, got {sat=!r} {light=!r}")
         if alpha is not None and not (0.0 <= alpha <= 1.0):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
@@ -604,8 +604,8 @@ class hexa(_ColorBase):
         self.alpha: float | None
         """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
 
-        if all(ch is not None for ch in (_red, _green, _blue)):
-            self.red, self.green, self.blue, self.alpha = cast("int", _red), cast("int", _green), cast("int", _blue), _alpha
+        if _red is not None and _green is not None and _blue is not None:
+            self.red, self.green, self.blue, self.alpha = _red, _green, _blue, _alpha
             return
 
         if isinstance(color, hexa):
@@ -729,8 +729,8 @@ class hexa(_ColorBase):
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        r, g, b, a = self.to_rgba(round_alpha=False).lighten(amount).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).lighten(amount).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def darken(self, amount: float, /) -> hexa:
         """Decreases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
@@ -738,8 +738,8 @@ class hexa(_ColorBase):
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        r, g, b, a = self.to_rgba(round_alpha=False).darken(amount).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).darken(amount).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def saturate(self, amount: float, /) -> hexa:
         """Increases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -747,8 +747,8 @@ class hexa(_ColorBase):
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        r, g, b, a = self.to_rgba(round_alpha=False).saturate(amount).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).saturate(amount).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def desaturate(self, amount: float, /) -> hexa:
         """Decreases the colors saturation by the specified amount in range [0.0, 1.0] inclusive."""
@@ -756,20 +756,20 @@ class hexa(_ColorBase):
         if not (0.0 <= amount <= 1.0):
             raise ValueError(f"The 'amount' parameter must be in range [0.0, 1.0] inclusive, got {amount!r}")
 
-        r, g, b, a = self.to_rgba(round_alpha=False).desaturate(amount).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).desaturate(amount).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def rotate(self, degrees: int, /) -> hexa:
         """Rotates the colors hue by the specified number of degrees."""
 
-        r, g, b, a = self.to_rgba(round_alpha=False).rotate(degrees).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).rotate(degrees).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def invert(self, *, invert_alpha: bool = False) -> hexa:
         """Inverts the color by rotating hue by 180 degrees and inverting lightness."""
 
-        r, g, b, a = self.to_rgba(round_alpha=False).invert(invert_alpha=invert_alpha).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = self.to_rgba(round_alpha=False).invert(invert_alpha=invert_alpha).values()
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hexa:
         """Converts the color to grayscale using the luminance formula.\n
@@ -800,8 +800,10 @@ class hexa(_ColorBase):
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
-        r, g, b, a = self.to_rgba(round_alpha=False).blend(to_rgba(other), ratio, additive_alpha=additive_alpha).values()
-        return hexa(_red=r, _green=g, _blue=b, _alpha=a)
+        red, green, blue, alpha = (
+            self.to_rgba(round_alpha=False).blend(to_rgba(other), ratio, additive_alpha=additive_alpha).values()
+        )
+        return hexa(_red=red, _green=green, _blue=blue, _alpha=alpha)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50%`)."""
@@ -846,7 +848,7 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
         if (
             allow_alpha
             and len(color_seq) == 4
-            and all(isinstance(val, int) for val in color_seq[:3])
+            and (isinstance(color_seq[0], int) and isinstance(color_seq[1], int) and isinstance(color_seq[2], int))
             and isinstance(color_seq[3], (float, type(None)))
         ):
             return (
@@ -855,7 +857,9 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
                 and 0 <= color_seq[2] <= 255
                 and (color_seq[3] is None or 0 <= color_seq[3] <= 1)
             )
-        elif len(color_seq) == 3 and all(isinstance(val, int) for val in color_seq):
+        elif len(color_seq) == 3 and (
+            isinstance(color_seq[0], int) and isinstance(color_seq[1], int) and isinstance(color_seq[2], int)
+        ):
             return 0 <= color_seq[0] <= 255 and 0 <= color_seq[1] <= 255 and 0 <= color_seq[2] <= 255
         else:
             return False
@@ -865,7 +869,11 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
         if (
             allow_alpha
             and len(color_dict) == 4
-            and all(isinstance(color_dict.get(ch), int) for ch in ("red", "green", "blue"))
+            and (
+                isinstance(color_dict.get("red"), int)
+                and isinstance(color_dict.get("green"), int)
+                and isinstance(color_dict.get("blue"), int)
+            )
             and isinstance(color_dict.get("alpha", "no alpha"), (float, type(None)))
         ):
             return (
@@ -874,7 +882,11 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
                 and 0 <= color_dict["blue"] <= 255
                 and (color_dict["alpha"] is None or 0 <= color_dict["alpha"] <= 1)
             )
-        elif len(color_dict) == 3 and all(isinstance(color_dict.get(ch), int) for ch in ("red", "green", "blue")):
+        elif len(color_dict) == 3 and (
+            isinstance(color_dict.get("red"), int)
+            and isinstance(color_dict.get("green"), int)
+            and isinstance(color_dict.get("blue"), int)
+        ):
             return 0 <= color_dict["red"] <= 255 and 0 <= color_dict["green"] <= 255 and 0 <= color_dict["blue"] <= 255
         else:
             return False
@@ -898,7 +910,7 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
         if (
             allow_alpha
             and len(color_seq) == 4
-            and all(isinstance(val, int) for val in color_seq[:3])
+            and (isinstance(color_seq[0], int) and isinstance(color_seq[1], int) and isinstance(color_seq[2], int))
             and isinstance(color_seq[3], (float, type(None)))
         ):
             return (
@@ -907,7 +919,9 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
                 and 0 <= color_seq[2] <= 100
                 and (color_seq[3] is None or 0 <= color_seq[3] <= 1)
             )
-        elif len(color_seq) == 3 and all(isinstance(val, int) for val in color_seq):
+        elif len(color_seq) == 3 and (
+            isinstance(color_seq[0], int) and isinstance(color_seq[1], int) and isinstance(color_seq[2], int)
+        ):
             return 0 <= color_seq[0] <= 360 and 0 <= color_seq[1] <= 100 and 0 <= color_seq[2] <= 100
         else:
             return False
@@ -917,7 +931,11 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
         if (
             allow_alpha
             and len(color_dict) == 4
-            and all(isinstance(color_dict.get(ch), int) for ch in ("hue", "sat", "light"))
+            and (
+                isinstance(color_dict.get("hue"), int)
+                and isinstance(color_dict.get("sat"), int)
+                and isinstance(color_dict.get("light"), int)
+            )
             and isinstance(color_dict.get("alpha", "no alpha"), (float, type(None)))
         ):
             return (
@@ -926,7 +944,11 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
                 and 0 <= color_dict["light"] <= 100
                 and (color_dict["alpha"] is None or 0 <= color_dict["alpha"] <= 1)
             )
-        elif len(color_dict) == 3 and all(isinstance(color_dict.get(ch), int) for ch in ("hue", "sat", "light")):
+        elif len(color_dict) == 3 and (
+            isinstance(color_dict.get("hue"), int)
+            and isinstance(color_dict.get("sat"), int)
+            and isinstance(color_dict.get("light"), int)
+        ):
             return 0 <= color_dict["hue"] <= 360 and 0 <= color_dict["sat"] <= 100 and 0 <= color_dict["light"] <= 100
         else:
             return False
@@ -1168,7 +1190,7 @@ def rgba_to_hex_int(red: int, green: int, blue: int, alpha: float | None = None,
     as a completely different color, when initializing it as a `hexa()` color or changing it<br>
     back to RGBA using `hex_int_to_rgba()`."""
 
-    if not all((0 <= ch <= 255) for ch in (red, green, blue)):
+    if not (0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255):
         raise ValueError(
             f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
         )
@@ -1293,7 +1315,7 @@ def luminance(
         -   `"simple"` simple arithmetic mean (less accurate)
         -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-    if not all(0 <= ch <= 255 for ch in (red, green, blue)):
+    if not (0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255):
         raise ValueError(
             f"The 'red', 'green' and 'blue' parameters must be integers in [0, 255], got {red=!r} {green=!r} {blue=!r}"
         )

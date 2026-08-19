@@ -226,7 +226,7 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     bg_default=r"(?i)" + _PREFIX_RX["bg"] + r"\s*default",
     modifier=(
         r"(?i)^((?:BG\s*:)?)\s*("
-        + "|".join([f"{_rx.escape(m)}+" for m in _DEFAULT_COLOR_MODS["lighten"] + _DEFAULT_COLOR_MODS["darken"]])
+        + "|".join([f"{_rx.escape(modifier)}+" for modifier in _DEFAULT_COLOR_MODS["lighten"] + _DEFAULT_COLOR_MODS["darken"]])
         + r")$"
     ),
     rgb=r"(?i)^\s*(" + _PREFIX_RX["bg"] + r")?\s*(?:rgb|rgba)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*$",
@@ -243,8 +243,8 @@ def _build_ansi_flat() -> dict[str, str]:
     for map_key, code in ANSI.CODES_MAP.items():
         ansi_str = _ANSI_SEQ_1.format(code)
         if isinstance(map_key, tuple):
-            for k in map_key:
-                flat[k] = ansi_str
+            for key in map_key:
+                flat[key] = ansi_str
         else:
             flat[map_key] = ansi_str
 

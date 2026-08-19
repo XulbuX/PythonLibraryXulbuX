@@ -1339,7 +1339,7 @@ class StyledText:
         """A tuple of `(position, sequence)` pairs giving the<br>
         start offset of every ANSI escape sequence inside `ansi`."""
 
-        return tuple((match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi))
+        return tuple([(match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi)])
 
     @property
     def raw_code_positions(self) -> tuple[tuple[int, str], ...]:
