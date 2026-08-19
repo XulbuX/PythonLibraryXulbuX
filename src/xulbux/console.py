@@ -7,7 +7,7 @@ and command-line argument parsing.
 
 from . import color as _color_module
 from . import string as _string_module
-from .ansi import AnyStyle, BaseStyle, ColorStyle, Renderable, S, StyledText, _StyleGroup, is_any_style
+from .ansi import AnyStyle, BaseStyle, ColorStyle, Renderable, S, StyledText, is_any_style
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ArgData, ArgParseConfig, ArgParseConfigs, Hexa, ProgressUpdater, Rgba
@@ -1432,7 +1432,7 @@ def _add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, 
     return result
 
 
-def _render_log_title(text: str, style: _StyleGroup | BaseStyle, /) -> str:
+def _render_log_title(text: str, style: AnyStyle, /) -> str:
     """Renders (and caches) the styled log title as an ANSI string.\n
     ----------------------------------------------------------------------------
     Since consecutive log calls often reuse the exact same title and style,<br>
