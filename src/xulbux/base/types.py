@@ -43,7 +43,14 @@ type PathsList = list[Path] | list[str] | list[Path | str]
 def is_paths_list(obj: object, /) -> TypeIs[PathsList]:
     """Returns true if `obj` is an instance that matches the `PathsList` type."""
 
-    return isinstance(obj, list) and all(isinstance(item, (Path, str)) for item in cast("list[Any]", obj))
+    if isinstance(obj, list):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("list[object]", obj):  # ruff: ignore[reimplemented-builtin]
+            if not isinstance(item, (Path, str)):
+                return False
+        return True
+
+    return False
 
 
 type DataObj = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any] | dict[Any, Any]

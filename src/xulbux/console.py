@@ -7,7 +7,7 @@ and command-line argument parsing.
 
 from . import color as _color_module
 from . import string as _string_module
-from .ansi import AnyStyle, BaseStyle, ColorStyle, Renderable, S, StyledText, is_any_style
+from .ansi import AnyStyle, BaseStyle, ColorStyle, S, StyledText, TextRenderable, is_any_style, is_text_renderable
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba
@@ -55,16 +55,16 @@ _LOG_TITLE_CACHE_MAX: Final[int] = 256
 _ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
-_DEFAULT_BAR_FORMAT: Final[list[Renderable]] = [
+_DEFAULT_BAR_FORMAT: Final[list[TextRenderable]] = [
     "{l}",
     (S.BR.MAGENTA | S.BG.BLACK)("{b}"),
     (S.BOLD("{c:,}"), "/{t:,}"),
     (S.DIM | S.BR.MAGENTA)("(", S.ITALIC("{p}%"), ")"),
 ]
 """Default `ProgressBar` format, styled with the operator-based API."""
-_DEFAULT_LIMITED_BAR_FORMAT: Final[list[Renderable]] = ["{l}", (S.BR.MAGENTA | S.BG.BLACK)("{b}")]
+_DEFAULT_LIMITED_BAR_FORMAT: Final[list[TextRenderable]] = ["{l}", (S.BR.MAGENTA | S.BG.BLACK)("{b}")]
 """Default simplified `ProgressBar` format used when the terminal is too narrow."""
-_DEFAULT_THROBBER_FORMAT: Final[list[Renderable]] = [S.BR.MAGENTA("{a}"), "{l}"]
+_DEFAULT_THROBBER_FORMAT: Final[list[TextRenderable]] = [S.BR.MAGENTA("{a}"), "{l}"]
 """Default `Throbber` format, styled with the operator-based API."""
 
 # fmt: off
@@ -75,15 +75,17 @@ FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ",
 # fmt: on
 
 
-def _compile_format(fmt: list[Renderable] | tuple[Renderable, ...] | Renderable) -> list[str]:
+def _compile_format(fmt: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable) -> list[str]:
     if isinstance(fmt, (list, tuple)):
         return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
 
 
-def _to_styled_text(obj: StyledText | object) -> StyledText:
+def _to_styled_text(obj: TextRenderable | object) -> StyledText:
     if isinstance(obj, StyledText):
         return obj
+    if is_text_renderable(obj):
+        return StyledText(*obj) if isinstance(obj, tuple) else StyledText(obj)
     return StyledText(str(obj))
 
 
@@ -233,10 +235,10 @@ class ArgumentParser:
         *,
         title: str | None = None,
         subtitle: str | None = None,
-        usage: StyledText | str | None = None,
-        examples: list[tuple[str, str]] | None = None,
-        controls: list[tuple[str, str]] | None = None,
-        epilog: StyledText | object | None = None,
+        usage: TextRenderable | str | None = None,
+        examples: list[tuple[str, TextRenderable]] | None = None,
+        controls: list[tuple[str, TextRenderable]] | None = None,
+        epilog: TextRenderable | object | None = None,
         help_flags: set[str] | frozenset[str] = frozenset({"-h", "--help"}),
     ) -> None:
 
@@ -244,13 +246,13 @@ class ArgumentParser:
         """An optional title for the help print (e.g., `"CLI Tool"`)."""
         self.subtitle: str | None = subtitle
         """An optional subtitle (e.g., `"A simple command-line utility"`)."""
-        self.usage: StyledText | str | None = usage if isinstance(usage, (StyledText, str)) else None
+        self.usage: TextRenderable | str | None = usage
         """An optional explicit usage string."""
-        self.examples: list[tuple[str, str]] | None = examples
+        self.examples: list[tuple[str, TextRenderable]] | None = examples
         """A list of tuples `(example_command, description)`."""
-        self.controls: list[tuple[str, str]] | None = controls
+        self.controls: list[tuple[str, TextRenderable]] | None = controls
         """A list of tuples `(control_key, description)`."""
-        self.epilog: StyledText | object | None = epilog
+        self.epilog: TextRenderable | object | None = epilog
         """Optional footer text to append to the help print."""
         self.help_flags: frozenset[str] = frozenset(help_flags)
         """A set of flags that trigger the help print."""
@@ -364,10 +366,14 @@ class ArgumentParser:
 
         if self.usage is None:
             output += (S.BOLD("Usage:"), f"{cmd_name} {pos_str} {opts_str}".strip())
-        elif isinstance(self.usage, StyledText):
-            output += self.usage
         else:
-            output += self.usage.replace("{cmd}", str(cmd_name)).replace("{pos}", pos_str).replace("{opts}", opts_str).strip()
+            output += (
+                (self.usage if isinstance(self.usage, StyledText) else StyledText(self.usage))
+                .ansi.replace("{cmd}", str(cmd_name))
+                .replace("{pos}", pos_str)
+                .replace("{opts}", opts_str)
+                .strip()
+            )
 
         output += "\n"
 
@@ -701,7 +707,7 @@ def supports_color() -> bool:
 
 @overload
 def pause_exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     pause: bool = ...,
@@ -711,7 +717,7 @@ def pause_exit(
 ) -> NoReturn: ...
 @overload
 def pause_exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     pause: bool = ...,
@@ -721,7 +727,7 @@ def pause_exit(
 ) -> None: ...
 @overload
 def pause_exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     pause: bool = ...,
@@ -732,7 +738,7 @@ def pause_exit(
 
 
 def pause_exit(
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     pause: bool = True,
@@ -772,7 +778,7 @@ def cls() -> None:
 
 def log(
     title: str | None = None,
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -850,7 +856,7 @@ def log(
 
 def _log_preset(
     title: str,
-    prompt: StyledText | object,
+    prompt: TextRenderable | object,
     title_bg_color: BaseStyle | Rgba | Hexa | None,
     start: str,
     end: str,
@@ -866,7 +872,7 @@ def _log_preset(
 
 
 def debug(
-    prompt: StyledText | object = "Point in program reached.",
+    prompt: TextRenderable | object = "Point in program reached.",
     /,
     *,
     active: bool = True,
@@ -887,7 +893,7 @@ def debug(
 
 
 def info(
-    prompt: StyledText | object = "Program running.",
+    prompt: TextRenderable | object = "Program running.",
     /,
     *,
     start: str = "",
@@ -906,7 +912,7 @@ def info(
 
 @overload
 def done(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -919,7 +925,7 @@ def done(
 ) -> NoReturn: ...
 @overload
 def done(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -932,7 +938,7 @@ def done(
 ) -> None: ...
 @overload
 def done(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -946,7 +952,7 @@ def done(
 
 
 def done(
-    prompt: StyledText | object = "Program finished.",
+    prompt: TextRenderable | object = "Program finished.",
     /,
     *,
     start: str = "",
@@ -965,7 +971,7 @@ def done(
 
 @overload
 def warn(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -978,7 +984,7 @@ def warn(
 ) -> NoReturn: ...
 @overload
 def warn(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -991,7 +997,7 @@ def warn(
 ) -> None: ...
 @overload
 def warn(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1005,7 +1011,7 @@ def warn(
 
 
 def warn(
-    prompt: StyledText | object = "Important message.",
+    prompt: TextRenderable | object = "Important message.",
     /,
     *,
     start: str = "",
@@ -1024,7 +1030,7 @@ def warn(
 
 @overload
 def fail(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1037,7 +1043,7 @@ def fail(
 ) -> NoReturn: ...
 @overload
 def fail(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1050,7 +1056,7 @@ def fail(
 ) -> None: ...
 @overload
 def fail(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1064,7 +1070,7 @@ def fail(
 
 
 def fail(
-    prompt: StyledText | object = "Program error.",
+    prompt: TextRenderable | object = "Program error.",
     /,
     *,
     start: str = "",
@@ -1083,7 +1089,7 @@ def fail(
 
 @overload
 def exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1096,7 +1102,7 @@ def exit(
 ) -> NoReturn: ...
 @overload
 def exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1109,7 +1115,7 @@ def exit(
 ) -> None: ...
 @overload
 def exit(
-    prompt: StyledText | object = ...,
+    prompt: TextRenderable | object = ...,
     /,
     *,
     start: str = ...,
@@ -1123,7 +1129,7 @@ def exit(
 
 
 def exit(
-    prompt: StyledText | object = "Program ended.",
+    prompt: TextRenderable | object = "Program ended.",
     /,
     *,
     start: str = "",
@@ -1142,7 +1148,7 @@ def exit(
 
 
 def log_box_filled(
-    *values: StyledText | object,
+    *values: TextRenderable | object,
     start: str = "",
     end: str = "\n",
     box_bg_color: AnyStyle | Rgba | Hexa | None = None,
@@ -1198,7 +1204,7 @@ def log_box_filled(
 
 
 def log_box_bordered(
-    *values: StyledText | object,
+    *values: TextRenderable | object,
     start: str = "",
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
@@ -1297,7 +1303,7 @@ def log_box_bordered(
 
 
 def confirm(
-    prompt: StyledText | object = "Do you want to continue?",
+    prompt: TextRenderable | object = "Do you want to continue?",
     /,
     *,
     start: StyledText | str = "",
@@ -1337,7 +1343,7 @@ def confirm(
 
 
 def multiline_input(
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -1376,7 +1382,7 @@ def multiline_input(
 
 @overload
 def input(
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -1394,7 +1400,7 @@ def input(
 ) -> str: ...
 @overload
 def input[T](
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -1412,7 +1418,7 @@ def input[T](
 ) -> T: ...
 @overload
 def input[T](
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -1431,7 +1437,7 @@ def input[T](
 
 
 def input(
-    prompt: StyledText | object = "",
+    prompt: TextRenderable | object = "",
     /,
     *,
     start: str = "",
@@ -1730,7 +1736,7 @@ def _split_hr_parts(val_str: str, /) -> list[str]:
 
 
 def _prepare_log_box(
-    values: list[StyledText | object] | tuple[StyledText | object, ...], /, *, has_rules: bool = False
+    values: list[TextRenderable | object] | tuple[TextRenderable | object, ...], /, *, has_rules: bool = False
 ) -> tuple[list[str], list[str], int]:
     """Prepares the log box content, returning the ANSI lines,<br>
     their plain-text counterparts, and the maximum visible line length."""
@@ -1739,8 +1745,9 @@ def _prepare_log_box(
     plain_lines: list[str] = []
 
     for val in values:
-        if isinstance(val, StyledText):
-            for ansi_line, plain_line in zip(val.ansi.split("\n"), val.raw.split("\n"), strict=False):
+        if is_text_renderable(val) and not isinstance(val, str):
+            st = val if isinstance(val, StyledText) else (StyledText(*val) if isinstance(val, tuple) else StyledText(val))
+            for ansi_line, plain_line in zip(st.ansi.split("\n"), st.raw.split("\n"), strict=False):
                 ansi_lines.append(ansi_line)
                 plain_lines.append(plain_line)
             continue
@@ -2055,8 +2062,8 @@ class ProgressBar(_StdoutInterceptorMixin):
         *,
         min_width: int = 10,
         max_width: int = 25,
-        format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_BAR_FORMAT,
-        limited_format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_LIMITED_BAR_FORMAT,
+        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_BAR_FORMAT,
+        limited_format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ) -> None:
@@ -2106,8 +2113,8 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def set_format(
         self,
-        format: list[Renderable] | tuple[Renderable, ...] | Renderable | None = None,
-        limited_format: list[Renderable] | tuple[Renderable, ...] | Renderable | None = None,
+        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable | None = None,
+        limited_format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable | None = None,
         *,
         sep: str | None = None,
     ) -> None:
@@ -2380,7 +2387,7 @@ class Throbber(_StdoutInterceptorMixin):
         self,
         *,
         label: StyledText | str | None = None,
-        format: list[Renderable] | tuple[Renderable, ...] | Renderable = _DEFAULT_THROBBER_FORMAT,
+        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = FRAMES_STANDARD,
         interval: float = 0.08,
@@ -2411,7 +2418,9 @@ class Throbber(_StdoutInterceptorMixin):
         self._stop_event: _threading.Event | None = None
         self._animation_thread: _threading.Thread | None = None
 
-    def set_format(self, format: list[Renderable] | tuple[Renderable, ...] | Renderable, *, sep: str | None = None) -> None:
+    def set_format(
+        self, format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable, *, sep: str | None = None
+    ) -> None:
         """Set the format string used to render the throbber.\n
         -----------------------------------------------------------------------------------------
         *   `format` – The format strings used to render the throbber, containing placeholders:

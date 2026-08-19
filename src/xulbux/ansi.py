@@ -297,11 +297,11 @@ class _StyleGroup:
 
         return _StyleGroup(other, *self._codes)
 
-    def __call__(self, *text: RenderSegment) -> _StyledSequence:
+    def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this style group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
-        return _StyledSequence(opens, closes, text[0] if len(text) == 1 else text)
+        return _StyledSequence(opens, closes, cast("Renderable", text[0] if len(text) == 1 else text))
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style group to the given text, auto-resetting after."""
@@ -428,7 +428,7 @@ class _Style:
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: RenderSegment) -> _StyledSequence:
+    def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this style code to the given text, auto-resetting after."""
 
         try:
@@ -439,7 +439,7 @@ class _Style:
             oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
             self._oc = oc
 
-        return _StyledSequence(oc[0], oc[1], text[0] if len(text) == 1 else text)
+        return _StyledSequence(oc[0], oc[1], cast("Renderable", text[0] if len(text) == 1 else text))
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style code to the given text, auto-resetting after."""
@@ -575,10 +575,10 @@ class _ColorStyle:
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: RenderSegment) -> _StyledSequence:
+    def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), cast("Renderable", text[0] if len(text) == 1 else text))
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
@@ -689,10 +689,10 @@ class _Link:
 
         return _StyleGroup(other, self)
 
-    def __call__(self, *text: RenderSegment) -> _StyledSequence:
+    def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
+        return _StyledSequence((self._open_seq,), (self._close_seq,), cast("Renderable", text[0] if len(text) == 1 else text))
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
@@ -942,6 +942,16 @@ def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
     return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
 
 
+type TextSegment = str | _StyledSequence | StyledText
+"""A single segment that contains actual text: a plain string, a nested styled segment, or a `StyledText` object."""
+
+
+def is_text_segment(obj: object, /) -> TypeIs[TextSegment]:
+    """Returns true if `obj` is an instance that matches the `TextSegment` type."""
+
+    return isinstance(obj, (str, _StyledSequence, StyledText))
+
+
 type RenderSegment = str | _StyledSequence | AnyStyle | StyledText
 """A single segment: a plain string, a nested styled segment, a bare style object (open-only), or a `StyledText` object."""
 
@@ -952,6 +962,26 @@ def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText))
 
 
+type TextRenderable = TextSegment | tuple[TextSegment, ...]
+"""Anything that contains actual textual content to be rendered, strictly excluding bare styles.<br>
+Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
+
+
+def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
+    """Returns true if `obj` is an instance that matches the `TextRenderable` type."""
+
+    if isinstance(obj, (str, _StyledSequence, StyledText)):
+        return True
+    elif isinstance(obj, tuple):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("tuple[object, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+            if not isinstance(item, (str, _StyledSequence, StyledText)):
+                return False
+        return True
+
+    return False
+
+
 type Renderable = RenderSegment | tuple[RenderSegment, ...]
 """Anything that can be styled or rendered.<br>
 Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
@@ -960,7 +990,15 @@ Can be passed to a `_Style` call, or as a positional argument to `StyledText(…
 def is_renderable(obj: object, /) -> TypeIs[Renderable]:
     """Returns true if `obj` is an instance that matches the `Renderable` type."""
 
-    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText, tuple))
+    if isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
+        return True
+    if isinstance(obj, tuple):
+        for item in cast("tuple[object, ...]", obj):
+            if not isinstance(item, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
+                return False
+        return True
+
+    return False
 
 
 # **************************************************** NAMESPACE HELPERS ***************************************************
