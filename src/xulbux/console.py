@@ -305,7 +305,7 @@ class ArgumentParser:
         *   `required` – *bool*, `True` if the argument must be provided."""
 
         if isinstance(flags_or_pos, str):
-            if flags_or_pos not in ("before", "after"):
+            if flags_or_pos not in {"before", "after"}:
                 raise ValueError("Positional argument must be 'before' or 'after'")
             if isinstance(expects_value, bool) and not expects_value:
                 expects_value = "VAL"

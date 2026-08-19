@@ -241,7 +241,7 @@ class _SystemRestartHelper:
             for line in output.splitlines()[skip_lines:]
             if line.strip()
             and not any(
-                p in line.lower() for p in ("python", "sh", "bash", "zsh", "cmd", "powershell", "pwsh", "tasklist", "ps")
+                proc in line.lower() for proc in {"bash", "cmd", "powershell", "ps", "pwsh", "python", "sh", "tasklist", "zsh"}
             )
         ]
         if len(processes) > 0:  # EXCLUDING PYTHON AND SHELL PROCESSES

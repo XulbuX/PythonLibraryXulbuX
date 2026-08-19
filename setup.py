@@ -178,7 +178,7 @@ class StubGen(ast.NodeTransformer):
         return bool(
             isinstance(dec, ast.Attribute)
             and isinstance(dec.value, ast.Name)
-            and dec.value.id in ("typing", "typing_extensions")
+            and dec.value.id in {"typing", "typing_extensions"}
             and dec.attr == "overload"
         )
 
@@ -348,7 +348,7 @@ class StubGen(ast.NodeTransformer):
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
         self.generic_visit(node)
-        if node.module in ("typing", "typing_extensions"):
+        if node.module in {"typing", "typing_extensions"}:
             node.names = [n for n in node.names if n.name != "TYPE_CHECKING"]
             if not node.names:
                 return None
