@@ -76,16 +76,22 @@ FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ",
 
 
 def _compile_format(fmt: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable) -> list[str]:
+    """Internal function to compile a format specification into a list of ANSI strings."""
+
     if isinstance(fmt, (list, tuple)):
         return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
+
     return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
 
 
 def _to_styled_text(obj: TextRenderable | object) -> StyledText:
+    """Internal function to convert an object into a `StyledText` instance."""
+
     if isinstance(obj, StyledText):
         return obj
-    if is_text_renderable(obj):
+    elif is_text_renderable(obj):
         return StyledText(*obj) if isinstance(obj, tuple) else StyledText(obj)
+
     return StyledText(str(obj))
 
 

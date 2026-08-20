@@ -1,6 +1,6 @@
 @import './fonts.css';
 
-/****************************************************** VARIABLES *******************************************************/
+/********************************************************* VARIABLES *********************************************************/
 
 :root {
   --vp-layout-max-width: 100dvw;
@@ -121,7 +121,7 @@
   --vp-button-brand-active-bg: var(--dark-vp-button-brand-active-bg);
 }
 
-/********************************************** TYPOGRAPHY & GLOBAL STYLES **********************************************/
+/************************************************* TYPOGRAPHY & GLOBAL STYLES ************************************************/
 
 ::selection {
   background-color: color-mix(in srgb, var(--vp-c-brand-2) 40%, transparent);
@@ -149,7 +149,7 @@ pre,
   font-variant-ligatures: normal !important;
 }
 
-/***************************************************** GLOBAL LAYOUT ****************************************************/
+/******************************************************* GLOBAL LAYOUT *******************************************************/
 
 /* Wide Docs Layout for API Columns */
 body .VPDoc,
@@ -179,7 +179,7 @@ body .vp-doc > div > .api-item {
   margin-right: auto !important;
 }
 
-/**************************************************** API GRID SYSTEM ***************************************************/
+/****************************************************** API GRID SYSTEM ******************************************************/
 
 /* API Item Two-Column Layout */
 .api-item {
@@ -228,7 +228,7 @@ body .vp-doc > div > .api-item {
   margin: 0 !important;
 }
 
-/****************************************************** SCROLLBARS ******************************************************/
+/********************************************************* SCROLLBARS ********************************************************/
 
 * {
   scrollbar-width: thin;
@@ -257,7 +257,7 @@ body .vp-doc > div > .api-item {
   display: none;
 }
 
-/************************************************ API CLASS NAMES & LINKS ***********************************************/
+/************************************************** API CLASS NAMES & LINKS **************************************************/
 
 .api-item h4 code a.class-prefix::before {
   content: attr(data-class-prefix);
@@ -319,7 +319,7 @@ body .vp-doc > div > .api-item {
   animation: target-flash 1.5s ease-out;
 }
 
-/************************************************ CODE BLOCKS & VIGNETTE ************************************************/
+/*************************************************** CODE BLOCKS & VIGNETTE **************************************************/
 
 /* Keep syntax highlighting colors in code block selection. */
 .vp-doc div[class*='language-'] pre *::selection,
@@ -437,7 +437,7 @@ body .vp-doc > div > .api-item {
   box-shadow: none !important;
 }
 
-/************************************************ ATTACHED CODE/TERMINAL ************************************************/
+/*************************************************** ATTACHED CODE/TERMINAL **************************************************/
 
 /* Merge code block with an adjacent terminal output. */
 .vp-doc div[class*='language-']:has(+ .ext-terminal),

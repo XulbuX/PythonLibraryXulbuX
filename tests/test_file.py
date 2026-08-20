@@ -3,7 +3,7 @@ import xulbux.file as _file_module
 from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 @pytest.mark.parametrize(

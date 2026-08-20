@@ -53,7 +53,7 @@ def mock_prompt_session(monkeypatch: pytest.MonkeyPatch):
     return mock_session_class, mock_session
 
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 def test_cls(monkeypatch: pytest.MonkeyPatch):
@@ -719,7 +719,7 @@ def test_argument_parser_overlapping_flags():
         parser.add_arg("test2", {"-t"})
 
 
-# **************************************************** ProgressBar TESTS ***************************************************
+# ***************************************************** ProgressBar TESTS *****************************************************
 
 
 def test_progressbar_clear_intercept_line():
@@ -943,7 +943,7 @@ def test_progressbar_styled_text_label(mock_stdout: MagicMock):
     assert f"{ANSI.CHAR}[1mstyled{ANSI.CHAR}[22m" in output
 
 
-# ***************************************************** Throbber TESTS *****************************************************
+# ****************************************************** Throbber TESTS *******************************************************
 
 
 def test_throbber_context_manager():
@@ -1055,9 +1055,7 @@ def test_throbber_stop(mock_event: MagicMock, mock_thread: MagicMock):
     mock_animation_thread = MagicMock()
     mock_animation_thread.join.return_value = None
     throbber._animation_thread = mock_animation_thread
-
     throbber.stop()
-
     assert throbber.active is False
     mock_stop_event.set.assert_called_once()
     mock_animation_thread.join.assert_called_once()
@@ -1074,5 +1072,5 @@ def test_throbber_update_label_styled_text():
     lbl = StyledText("Loading ", S.BR.CYAN("stuff"))
     throbber.update_label(lbl)
     assert throbber.label is lbl
-    # The formatted throbber string gets evaluated via ANSI representation
+    # The formatted throbber string gets evaluated via ANSI representation:
     assert f"{ANSI.CHAR}[96mstuff{ANSI.CHAR}[39m" in lbl.ansi

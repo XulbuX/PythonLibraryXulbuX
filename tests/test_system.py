@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import xulbux.system as _system_module
 import pytest
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 def test_system_is_elevated():

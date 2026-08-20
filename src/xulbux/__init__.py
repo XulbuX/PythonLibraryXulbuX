@@ -23,11 +23,12 @@ if TYPE_CHECKING:
     from . import ansi, code, color, console, data, env_path, file, file_sys, json, regex, string, system
     from .ansi import S, StyledText, Term
     from .color import hexa, hsla, rgba
-    from .console import ProgressBar, Throbber
+    from .console import ArgumentParser, ProgressBar, Throbber
     from .format_codes import FormatCodes
     from .regex import LazyRegex
 
 __all__ = [
+    "ArgumentParser",
     "FormatCodes",
     "LazyRegex",
     "ProgressBar",
@@ -76,6 +77,7 @@ def __getattr__(name: str) -> Any:
             "hexa": "color",
             "hsla": "color",
             "rgba": "color",
+            "ArgumentParser": "console",
             "ProgressBar": "console",
             "Throbber": "console",
             "FormatCodes": "format_codes",

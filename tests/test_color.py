@@ -1,7 +1,7 @@
 import xulbux.color as _color_module
 from xulbux.color import hexa, hsla, rgba
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 def test_rgba_to_hex_int_and_back():

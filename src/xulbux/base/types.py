@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         from typing_extensions import TypeIs
 
 
-# ******************************************************* Primitives *******************************************************
+# ******************************************************** PRIMITIVES *********************************************************
 
 type Int_0_100 = int
 """Integer constrained to the range [0, 100] inclusive."""
@@ -34,7 +34,7 @@ type FormattableString = str
 """String made to be formatted with the `.format()` method."""
 
 
-# ************************************************* Collections & Iterables ************************************************
+# ************************************************** COLLECTIONS & ITERABLES **************************************************
 
 type PathsList = list[Path] | list[str] | list[Path | str]
 """Union of all supported list types for a list of paths."""
@@ -73,7 +73,7 @@ def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable]:
     return isinstance(obj, (list, tuple, set, frozenset))
 
 
-# ********************************************************* Colors *********************************************************
+# ********************************************************** COLORS ***********************************************************
 
 
 class _RgbaObj(Protocol):
@@ -175,7 +175,7 @@ type AnyHexa = Any
 """Generic type alias for HEXA color values in any format (type checking disabled)."""
 
 
-# *************************************************** System & Utilities ***************************************************
+# **************************************************** SYSTEM & UTILITIES *****************************************************
 
 
 class AllTextChars:

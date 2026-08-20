@@ -20,7 +20,7 @@ reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_inverse', '_invert', '
 reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_underline', '_u']}{ANSI.END}"
 
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 def test_to_ansi():

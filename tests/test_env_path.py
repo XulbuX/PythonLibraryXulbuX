@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import xulbux.env_path as _env_path_module
 import pytest
 
-# ******************************************************* MODULE TESTS *****************************************************
+# ******************************************************* MODULE TESTS ********************************************************
 
 
 def test_get_paths():

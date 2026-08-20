@@ -31,7 +31,7 @@ def get_current_branch() -> str | None:
         return None
 
 
-# ************************************************ VERSION CONSISTENCY TEST ************************************************
+# ************************************************* VERSION CONSISTENCY TEST **************************************************
 
 
 def test_version_consistency():
@@ -70,7 +70,7 @@ def test_version_consistency():
     )
 
 
-# ********************************************** DEPENDENCIES CONSISTENCY TEST *********************************************
+# *********************************************** DEPENDENCIES CONSISTENCY TEST ***********************************************
 
 
 def test_dependencies_consistency():
@@ -99,7 +99,7 @@ def test_dependencies_consistency():
     )
 
 
-# ********************************************** DESCRIPTION CONSISTENCY TEST **********************************************
+# *********************************************** DESCRIPTION CONSISTENCY TEST ************************************************
 
 
 def test_description_consistency():
