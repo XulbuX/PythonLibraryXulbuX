@@ -99,10 +99,10 @@ class ArgConfigDict(TypedDict):
     """Configuration dictionary for an argument/flag."""
 
     flags_or_pos: set[str] | frozenset[str] | Literal["before", "after"]
-    description: str | None
     expects_value: str | bool
     choices: Iterable[str] | None
     required: bool
+    description: TextRenderable | None
 
 
 class ParsedArgData:
@@ -134,7 +134,9 @@ class ParsedArgData:
     @overload
     def val(self) -> str | None: ...
     @overload
-    def val[T](self, cast_type: Callable[[str], T] | type[T]) -> T | None: ...
+    def val[D](self, *, default: D) -> str | D: ...
+    @overload
+    def val[T](self, cast_type: Callable[[str], T] | type[T], default: None = None) -> T | None: ...
     @overload
     def val[T, D](self, cast_type: Callable[[str], T] | type[T], default: D) -> T | D: ...
 
@@ -144,14 +146,14 @@ class ParsedArgData:
         default: Any = None,
     ) -> Any:
         """Get the parsed value, optionally casting it to a specified type and providing a fallback default.\n
-        ------------------------------------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------------------------
         *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
-        *   `default` – The fallback value if `exists` is false, or if there are no values, or if casting fails."""
+        *   `default` – The fallback value if `exists` is false or if no values exist.\n
+        -------------------------------------------------------------------------------------------------------
+        Raises a `ValueError` if the value cannot be cast to the specified type."""
 
-        if not self.exists:
+        if not self.exists or not self.values:
             return default
-        elif not self.values:
-            return None
 
         try:
             return cast_type(self.values[0])
@@ -161,24 +163,26 @@ class ParsedArgData:
     @overload
     def vals(self) -> tuple[str, ...]: ...
     @overload
-    def vals[T](self, cast_type: Callable[[str], T] | type[T]) -> tuple[T, ...]: ...
+    def vals[D](self, *, default: D) -> tuple[str, ...] | D: ...
+    @overload
+    def vals[T](self, cast_type: Callable[[str], T] | type[T], default: tuple[()] = ()) -> tuple[T, ...]: ...
     @overload
     def vals[T, D](self, cast_type: Callable[[str], T] | type[T], default: D) -> tuple[T, ...] | D: ...
 
     def vals(
         self,
         cast_type: Callable[[str], Any] | type[Any] = str,
-        default: Any = None,
+        default: Any = (),
     ) -> Any:
         """Get all parsed values, optionally casting them to a specified type and providing a fallback default.\n
         ----------------------------------------------------------------------------------------------------------
         *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
-        *   `default` – The fallback value for individual items that fail casting, or if no values exist."""
+        *   `default` – The fallback value if `exists` is false or if no values exist.\n
+        ----------------------------------------------------------------------------------------------------------
+        Raises a `ValueError` if any value cannot be cast to the specified type."""
 
-        if not self.exists:
+        if not self.exists or not self.values:
             return default
-        elif not self.values:
-            return ()
 
         current_val: Any = None
 
@@ -227,12 +231,15 @@ class ParsedArgs:
 
 class ArgumentParser:
     """An advanced command-line argument parser with built-in help generation and validation.\n
-    ------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------
     *   `title` – An optional title for the help print (e.g., `"CLI Tool"`).
     *   `subtitle` – An optional subtitle (e.g., `"A simple command-line utility"`).
-    *   `usage` – An optional explicit usage string. Defaults to `Usage: {cmd} {pos} {opts}`.
+    *   `usage` – An optional explicit usage string, containing placeholders:
+        -   `{cmd}` – The command name (e.g., `cli-tool`).
+        -   `{pos_before}` – The `"before"` positional argument placeholder (e.g., `<input>`).
+        -   `{opts}` – The options placeholder (`[options]`).
+        -   `{pos_after}` – The `"after"` positional argument placeholder (e.g., `<output>`).
     *   `examples` – A list of tuples `(example_command, description)`.
-    *   `controls` – A list of tuples `(control_key, description)`.
     *   `epilog` – Optional footer text to append to the help print.
     *   `help_flags` – A set of flags that trigger the help print (default: `{"-h", "--help"}`)."""
 
@@ -242,8 +249,8 @@ class ArgumentParser:
         title: str | None = None,
         subtitle: str | None = None,
         usage: TextRenderable | str | None = None,
-        examples: list[tuple[str, TextRenderable]] | None = None,
         controls: list[tuple[str, TextRenderable]] | None = None,
+        examples: list[tuple[str, TextRenderable]] | None = None,
         epilog: TextRenderable | object | None = None,
         help_flags: set[str] | frozenset[str] = frozenset({"-h", "--help"}),
     ) -> None:
@@ -254,10 +261,10 @@ class ArgumentParser:
         """An optional subtitle (e.g., `"A simple command-line utility"`)."""
         self.usage: TextRenderable | str | None = usage
         """An optional explicit usage string."""
-        self.examples: list[tuple[str, TextRenderable]] | None = examples
-        """A list of tuples `(example_command, description)`."""
         self.controls: list[tuple[str, TextRenderable]] | None = controls
         """A list of tuples `(control_key, description)`."""
+        self.examples: list[tuple[str, TextRenderable]] | None = examples
+        """A list of tuples `(example_command, description)`."""
         self.epilog: TextRenderable | object | None = epilog
         """Optional footer text to append to the help print."""
         self.help_flags: frozenset[str] = frozenset(help_flags)
@@ -272,10 +279,10 @@ class ArgumentParser:
         flags_or_pos: Literal["before", "after"],
         /,
         *,
-        description: str | None = None,
         expects_value: str = ...,
         choices: Iterable[str] | None = None,
         required: bool = False,
+        description: TextRenderable | None = None,
     ) -> None: ...
     @overload
     def add_arg(
@@ -284,10 +291,10 @@ class ArgumentParser:
         flags_or_pos: set[str] | frozenset[str],
         /,
         *,
-        description: str | None = None,
         expects_value: str | bool = False,
         choices: Iterable[str] | None = None,
         required: bool = False,
+        description: TextRenderable | None = None,
     ) -> None: ...
 
     def add_arg(
@@ -296,10 +303,10 @@ class ArgumentParser:
         flags_or_pos: set[str] | frozenset[str] | Literal["before", "after"],
         /,
         *,
-        description: str | None = None,
         expects_value: str | bool = False,
         choices: Iterable[str] | None = None,
         required: bool = False,
+        description: TextRenderable | None = None,
     ) -> None:
         """Define a new argument/flag to parse.\n
         ---------------------------------------------------------------------------------------------
@@ -308,7 +315,7 @@ class ArgumentParser:
             or the literal `"before"` or `"after"` to capture positional values.
         *   `description` – Help text describing the argument.
         *   `expects_value` – `False` for a boolean flag, `True` for a value flag (shows `VAL`),<br>
-            or a *str* (e.g., `"PATH"`) for a specific placeholder.
+            or a string (e.g., `"PATH"`) for a specific placeholder.
         *   `choices` – Optional iterable of allowed strings for this argument's value.
         *   `required` – *bool*, `True` if the argument must be provided."""
 
@@ -330,10 +337,10 @@ class ArgumentParser:
 
         self._arg_configs[alias] = {
             "flags_or_pos": frozenset(flags_or_pos) if isinstance(flags_or_pos, (set, frozenset)) else flags_or_pos,
-            "description": description,
             "expects_value": expects_value,
             "choices": choices,
             "required": required,
+            "description": description,
         }
 
     def _flags_to_st(self, flags: Iterable[str]) -> StyledText:
@@ -348,107 +355,103 @@ class ArgumentParser:
         """Internal method to add the title and subtitle to the help output."""
 
         if self.title:
-            output.extend([
-                "▄" * console_width,
-                (S.INVERSE | S.BG.BLACK)("  ", self.title, f" — {self.subtitle}" if self.subtitle else "", "  "),
-                "▀" * console_width,
-                "\n",
-            ])
+            title: TextRenderable
+            box_w: int
+
+            if self.subtitle:
+                title = (S.BOLD(self.title), f" — {self.subtitle}")
+                box_w = len(self.title) + len(self.subtitle) + 7
+            else:
+                title = S.BOLD(self.title)
+                box_w = len(self.title) + 4
+
+            output.extend(["▄" * box_w, (S.INVERSE | S.BG.BLACK)("  ", title, "  "), "▀" * box_w, ""])
 
     def _add_usage_to_help_output(
-        self, output: list[TextRenderable], cmd_name: str, before_pos: str | None, after_pos: str | None
+        self,
+        output: list[TextRenderable],
+        cmd_st: StyledText,
+        before_pos_st: StyledText,
+        after_pos_st: StyledText,
+        opts_st: StyledText,
     ) -> None:
         """Internal method to add the usage line to the help output."""
 
-        pos_parts: list[str] = []
-
-        if before_pos:
-            pos_parts.append(f"<{self._arg_configs[before_pos]['expects_value']}>")
-        if after_pos:
-            pos_parts.append(f"<{self._arg_configs[after_pos]['expects_value']}>")
-
-        pos_str = " ".join(pos_parts) if pos_parts else ""
-
-        has_opts = False
-        for cfg in self._arg_configs.values():
-            if isinstance(cfg["flags_or_pos"], (set, frozenset)):
-                has_opts = True
-                break
-
-        opts_str = "[options]" if has_opts else ""
-
         if self.usage is None:
-            output.append((S.BOLD("Usage:"), f"{cmd_name} {pos_str} {opts_str}".strip()))
+            output.append(StyledText(" ").join((S.BOLD("Usage:"), cmd_st, before_pos_st, opts_st, after_pos_st)))
         else:
             output.append(
                 (self.usage if isinstance(self.usage, StyledText) else StyledText(self.usage))
-                .ansi.replace("{cmd}", str(cmd_name))
-                .replace("{pos}", pos_str)
-                .replace("{opts}", opts_str)
-                .strip()
+                .ansi.replace("{cmd}", cmd_st.ansi)
+                .replace("{pos_before}", before_pos_st.ansi)
+                .replace("{opts}", opts_st.ansi)
+                .replace("{pos_after}", after_pos_st.ansi)
             )
 
-        output.append("\n")
+        output.append("")
 
-    def _add_args_to_help_output(self, output: list[TextRenderable], before_pos: str | None, after_pos: str | None) -> None:
+    def _add_args_to_help_output(
+        self,
+        output: list[TextRenderable],
+        before_pos: str | None,
+        after_pos: str | None,
+        pos_before_st: StyledText,
+        pos_after_st: StyledText,
+    ) -> None:
         """Internal method to add the positional arguments section to the help output."""
 
         if before_pos or after_pos:
             output.append(S.BOLD("Arguments:"))
 
             if before_pos:
-                output.append((
-                    f"  {self._arg_configs[before_pos]['expects_value']:<7} ",
-                    self._arg_configs[before_pos]["description"] or "",
-                ))
+                output.append((f"  {pos_before_st.ansi} ", self._arg_configs[before_pos]["description"] or ""))
             if after_pos:
-                output.append((
-                    f"  {self._arg_configs[after_pos]['expects_value']:<7} ",
-                    self._arg_configs[after_pos]["description"] or "",
-                ))
+                output.append((f"  {pos_after_st.ansi} ", self._arg_configs[after_pos]["description"] or ""))
 
-            output.append("\n")
+            output.append("")
 
-    def _add_opts_to_help_output(self, output: list[TextRenderable]) -> None:
+    def _add_opts_to_help_output(self, output: list[TextRenderable], has_opts: bool) -> None:
         """Internal method to add the options section to the help output."""
 
-        opts_list: list[tuple[StyledText, str]] = []
-        has_opts = False
+        if not has_opts and not self.help_flags:
+            return
+
+        output.append(S.BOLD("Options:"))
+
+        opts_list: list[tuple[StyledText, TextRenderable]] = []
+        opts_list.append((self._flags_to_st(self.help_flags), "Show this help message and exit"))
 
         for _, cfg in self._arg_configs.items():
             if isinstance(cfg["flags_or_pos"], (set, frozenset)):
-                has_opts = True
-                flag_str = self._flags_to_st(cfg["flags_or_pos"])
+                flag_st = self._flags_to_st(cfg["flags_or_pos"])
 
                 if cfg["expects_value"] is not False:
-                    flag_str += (S.DIM("="), "VAL" if cfg["expects_value"] is True else str(cfg["expects_value"]))
+                    flag_st += S.BR.BLUE(S.DIM("="), "VAL" if cfg["expects_value"] is True else str(cfg["expects_value"]))
 
-                opts_list.append((flag_str, cfg["description"] or ""))
+                opts_list.append((flag_st, cfg["description"] or ""))
 
-        if has_opts or self.help_flags:
-            output.append(S.BOLD("Options:"))
-            opts_list.append((self._flags_to_st(self.help_flags), "Show this help message and exit"))
+        max_flag_len = max([len(flag_st.raw) for flag_st, _ in opts_list], default=0)
 
-            max_flag_len = max([len(st_flag.raw) for st_flag, _ in opts_list], default=0)
-            for flag_str, desc in opts_list:
-                output.extend(["  ", flag_str, " " * (max_flag_len - len(flag_str.raw)), "    ", desc])
+        for flag_st, desc in opts_list:
+            output.append(("  ", flag_st, " " * (max_flag_len - len(flag_st.raw)), "    ", desc))
 
-            output.append("\n")
+        output.append("")
 
     def _add_controls_to_help_output(self, output: list[TextRenderable]) -> None:
         """Internal method to add the controls section to the help output."""
 
         if self.controls:
             output.append(S.BOLD("Controls:"))
+
             max_ctrl_len = max([len(control_key) for control_key, _ in self.controls], default=0)
 
             for ctrl, desc in self.controls:
                 styled_ctrl = S.BR.RED(S.DIM("+").join(ctrl.split("+")))
-                output.extend(["  ", styled_ctrl, " " * (max_ctrl_len - len(ctrl)), "    ", desc])
+                output.append(("  ", styled_ctrl, " " * (max_ctrl_len - len(ctrl)), "    ", desc))
 
-            output.append("\n")
+            output.append("")
 
-    def _add_examples_to_help_output(self, output: list[TextRenderable], cmd_name: str) -> None:
+    def _add_examples_to_help_output(self, output: list[TextRenderable], cmd_name_ext: tuple[str, str]) -> None:
         """Internal method to add the examples section to the help output."""
 
         if self.examples:
@@ -456,11 +459,11 @@ class ArgumentParser:
 
             for ex, desc in self.examples:
                 output.append((
-                    f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name)).ansi)}    ",
+                    f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name_ext[0])).ansi)}    ",
                     S.DIM("# ", S.ITALIC(desc)),
                 ))
 
-            output.append("\n")
+            output.append("")
 
     def print_help(self, error_message: str | None = None) -> None:
         """Print the generated help screen.\n
@@ -476,25 +479,38 @@ class ArgumentParser:
             elif cfg["flags_or_pos"] == "after":
                 after_pos = alias
 
-        cmd_name = Path(_sys.argv[0]).name
+        cmd_exe = Path(_sys.argv[0])
+        cmd_name_ext: tuple[str, str] = (cmd_exe.stem, cmd_exe.suffix)
+
+        has_opts = False
+        for cfg in self._arg_configs.values():
+            if isinstance(cfg["flags_or_pos"], (set, frozenset)):
+                has_opts = True
+                break
+
+        cmd_st = StyledText(S.BR.GREEN(cmd_name_ext[0], S.DIM(cmd_name_ext[1]) if cmd_name_ext[1] else ""))
+        before_pos_st = StyledText(S.BR.CYAN(f"<{before_pos}>") if before_pos else "")
+        after_pos_st = StyledText(S.BR.CYAN(f"<{after_pos}>") if after_pos else "")
+        opts_st = StyledText(S.BR.BLUE("[options]") if has_opts else "")
+
         console_width = get_width()
-        output: list[TextRenderable] = ["\n"]
+        output: list[TextRenderable] = [""]
 
         if error_message:
-            output.extend([S.RED(S.BOLD("[ERROR] ")), error_message, "\n"])
+            output.extend([S.RED(S.BOLD("[ERROR] ")), error_message, ""])
 
         self._add_title_to_help_output(output, console_width)
-        self._add_usage_to_help_output(output, cmd_name, before_pos, after_pos)
-        self._add_args_to_help_output(output, before_pos, after_pos)
-        self._add_opts_to_help_output(output)
+        self._add_usage_to_help_output(output, cmd_st, before_pos_st, after_pos_st, opts_st)
+        self._add_args_to_help_output(output, before_pos, after_pos, before_pos_st, after_pos_st)
+        self._add_opts_to_help_output(output, has_opts)
         self._add_controls_to_help_output(output)
-        self._add_examples_to_help_output(output, cmd_name)
+        self._add_examples_to_help_output(output, cmd_name_ext)
 
         if self.epilog:
             output.append(self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog))
-            output.append("\n")
+            output.append("")
 
-        StyledText(*output).print(flush=True)
+        StyledText(*output, sep="\n").print(flush=True)
 
     def _build_flag_map(self) -> dict[str, str]:
         """Internal method to build a mapping of flags to their corresponding argument aliases."""

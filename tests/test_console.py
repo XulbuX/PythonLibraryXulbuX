@@ -573,6 +573,14 @@ def test_parsed_arg_data():
     assert str(data) == "10 20 invalid"
     assert data.val() == "10"
     assert data.val(int) == 10
+    assert data.val(default="fallback") == "10"
+    assert data.val(cast_type=int, default=0) == 10
+
+    valid_data = ParsedArgData(exists=True, values=("10", "20", "30"))
+    assert valid_data.vals() == ("10", "20", "30")
+    assert valid_data.vals(int) == (10, 20, 30)
+    assert valid_data.vals(default=()) == ("10", "20", "30")
+    assert valid_data.vals(cast_type=int, default=()) == (10, 20, 30)
 
     # Test fallback default when casting fails
     with pytest.raises(ValueError, match="Failed to cast value 'invalid' to"):
@@ -580,8 +588,28 @@ def test_parsed_arg_data():
 
     # Test fallback default when not existing
     empty_data = ParsedArgData(exists=False)
+    assert empty_data.val() is None
+    assert empty_data.val(default="") == ""
+    assert empty_data.val(int) is None
     assert empty_data.val(int, default=42) == 42
+    assert empty_data.val(cast_type=int, default=42) == 42
+
+    assert empty_data.vals() == ()
+    assert empty_data.vals(default=None) is None
+    assert empty_data.vals(default=()) == ()
+    assert empty_data.vals(int) == ()
+    assert empty_data.vals(int, default=None) is None
     assert empty_data.vals(int, default=42) == 42
+    assert empty_data.vals(cast_type=int, default=()) == ()
+
+    # Test existing flag with no values
+    flag_only_data = ParsedArgData(exists=True, values=())
+    assert flag_only_data.val() is None
+    assert flag_only_data.val(default="") == ""
+    assert flag_only_data.val(default="fallback") == "fallback"
+    assert flag_only_data.vals() == ()
+    assert flag_only_data.vals(default=None) is None
+    assert flag_only_data.vals(default=()) == ()
 
 
 def test_parsed_args_dunder_methods():

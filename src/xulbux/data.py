@@ -467,7 +467,7 @@ def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], cu
         return True
 
     elif isinstance(data1, (list, tuple)) and isinstance(data2, (list, tuple)):
-        array_data1, array_data2 = cast("IndexIterable", data1), cast("IndexIterable", data2)
+        array_data1, array_data2 = cast("IndexIterable[Any]", data1), cast("IndexIterable[Any]", data2)
 
         if len(array_data1) != len(array_data2):
             return False
@@ -796,7 +796,7 @@ class _DataRenderHelper:
 
         return score
 
-    def should_expand(self, seq: IndexIterable, /) -> bool:
+    def should_expand(self, seq: IndexIterable[Any], /) -> bool:
         """Determines whether a sequence should be expanded based on its content and the current compactness settings."""
 
         if self.compactness == 0:
@@ -833,7 +833,7 @@ class _DataRenderHelper:
 
         return self.punct["{"] + "\n" + f"{self.sep}\n".join(items) + f"\n{' ' * current_indent}" + self.punct["}"]
 
-    def format_sequence(self, seq: IndexIterable, current_indent: int, /) -> str:
+    def format_sequence(self, seq: IndexIterable[Any], current_indent: int, /) -> str:
         """Formats a list or tuple as a string, applying indentation and compactness rules."""
 
         if self.as_json:

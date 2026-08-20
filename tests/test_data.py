@@ -1,7 +1,7 @@
 from typing import Any, Literal, cast
 import xulbux.data as _data_module
 from xulbux.ansi import StyledText
-from xulbux.base.types import DataObj
+from xulbux.base.types import DataObj, IndexIterable, is_data_obj, is_index_iterable
 import pytest
 
 # Don't change this data!
@@ -208,3 +208,38 @@ def test_render(
     normalized_result = "\n".join(line.rstrip() for line in result.raw.splitlines())
     normalized_expected = "\n".join(line.rstrip() for line in expected_str.splitlines())
     assert normalized_result == normalized_expected
+
+
+def test_is_data_obj_and_is_index_iterable():
+    # Test `is_data_obj`:
+    assert is_data_obj([1, 2, 3]) is True
+    assert is_data_obj((1, 2, 3)) is True
+    assert is_data_obj({1, 2, 3}) is True
+    assert is_data_obj(frozenset([1, 2, 3])) is True
+    assert is_data_obj({"a": 1}) is True
+    assert is_data_obj("string") is False
+    assert is_data_obj(123) is False
+
+    # Test `is_index_iterable`:
+    assert is_index_iterable([1, 2, 3]) is True
+    assert is_index_iterable((1, 2, 3)) is True
+    assert is_index_iterable({1, 2, 3}) is True
+    assert is_index_iterable(frozenset([1, 2, 3])) is True
+    assert is_index_iterable({"a": 1}) is False
+    assert is_index_iterable("string") is False
+
+    # Test `is_index_iterable` with `item_type`:
+    assert is_index_iterable([1, 2, 3], int) is True
+    assert is_index_iterable([1, 2, "3"], int) is False
+    assert is_index_iterable(["a", "b", "c"], str) is True
+    assert is_index_iterable(["a", 1, "c"], str) is False
+    assert is_index_iterable(["a", 1, 2.5], (str, int, float)) is True
+    assert is_index_iterable(["a", 1, None], (str, int)) is False
+    assert is_index_iterable([], int) is True
+    assert is_index_iterable("string", str) is False
+
+    # Parameterized typing usage:
+    str_list: IndexIterable[str] = ["a", "b", "c"]
+    int_tuple: IndexIterable[int] = (1, 2, 3)
+    assert len(str_list) == 3
+    assert len(int_tuple) == 3

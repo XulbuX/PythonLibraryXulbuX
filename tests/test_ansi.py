@@ -1,7 +1,7 @@
 import io
 import sys
 from pathlib import Path
-from xulbux.ansi import S, StyledText, Term, _build_open_close, _StyleGroup
+from xulbux.ansi import S, StyledText, Term, _build_open_close, _StyleGroup, is_renderable, is_text_renderable
 from xulbux.base.consts import ANSI
 import pytest
 
@@ -395,3 +395,27 @@ def test_print_with_file():
     buf = io.StringIO()
     StyledText(S.RED("hi")).print(file=buf, end="")
     assert buf.getvalue() == f"{ESC}[31mhi{ESC}[39m"
+
+
+def test_type_guards_and_nested_renderables():
+    # Plain text and styled sequences:
+    assert is_text_renderable("hello") is True
+    assert is_text_renderable(S.RED("hello")) is True
+    assert is_text_renderable(StyledText("hello")) is True
+    assert is_text_renderable(S.RED) is False  # Bare style is not a `TextRenderable`.
+    assert is_renderable(S.RED) is True  # Bare style is a `Renderable`.
+
+    # Nested tuples:
+    nested_text = ("a", (S.RED("b"), ("c", StyledText("d"))))
+    assert is_text_renderable(nested_text) is True
+    assert is_renderable(nested_text) is True
+
+    # Bare style in nested tuple:
+    nested_with_bare_style = ("a", (S.RED, "b"))
+    assert is_text_renderable(nested_with_bare_style) is False
+    assert is_renderable(nested_with_bare_style) is True
+
+    # Rendering nested tuples with `StyledText`:
+    rendered = StyledText(nested_text)
+    assert rendered.raw == "abcd"
+    assert rendered.ansi == f"a{ESC}[31mb{ESC}[39mcd"

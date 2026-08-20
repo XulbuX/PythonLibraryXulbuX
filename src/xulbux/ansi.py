@@ -301,7 +301,7 @@ class _StyleGroup:
         """Applies this style group to the given text, auto-resetting after."""
 
         opens, closes = _build_open_close(self)
-        return _StyledSequence(opens, closes, cast("Renderable", text[0] if len(text) == 1 else text))
+        return _StyledSequence(opens, closes, text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style group to the given text, auto-resetting after."""
@@ -439,7 +439,7 @@ class _Style:
             oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
             self._oc = oc
 
-        return _StyledSequence(oc[0], oc[1], cast("Renderable", text[0] if len(text) == 1 else text))
+        return _StyledSequence(oc[0], oc[1], text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this style code to the given text, auto-resetting after."""
@@ -578,7 +578,7 @@ class _ColorStyle:
     def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq,), (self._close_seq,), cast("Renderable", text[0] if len(text) == 1 else text))
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this color style to the given text, auto-resetting after."""
@@ -692,7 +692,7 @@ class _Link:
     def __call__(self, *text: Renderable) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
 
-        return _StyledSequence((self._open_seq,), (self._close_seq,), cast("Renderable", text[0] if len(text) == 1 else text))
+        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
 
     def __matmul__(self, text: Renderable) -> _StyledSequence:
         """Applies this link style to the given text, auto-resetting after."""
@@ -962,9 +962,9 @@ def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
     return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText))
 
 
-type TextRenderable = TextSegment | tuple[TextSegment, ...]
+type TextRenderable = TextSegment | tuple[TextRenderable, ...]
 """Anything that contains actual textual content to be rendered, strictly excluding bare styles.<br>
-Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
+Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`. Can be arbitrarily nested in tuples."""
 
 
 def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
@@ -975,16 +975,16 @@ def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
         for item in cast("tuple[object, ...]", obj):  # ruff: ignore[reimplemented-builtin]
-            if not isinstance(item, (str, _StyledSequence, StyledText)):
+            if not is_text_renderable(item):
                 return False
         return True
 
     return False
 
 
-type Renderable = RenderSegment | tuple[RenderSegment, ...]
+type Renderable = RenderSegment | tuple[Renderable, ...]
 """Anything that can be styled or rendered.<br>
-Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`."""
+Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`. Can be arbitrarily nested in tuples."""
 
 
 def is_renderable(obj: object, /) -> TypeIs[Renderable]:
@@ -992,9 +992,10 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 
     if isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
         return True
-    if isinstance(obj, tuple):
-        for item in cast("tuple[object, ...]", obj):
-            if not isinstance(item, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
+    elif isinstance(obj, tuple):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("tuple[object, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+            if not is_renderable(item):
                 return False
         return True
 

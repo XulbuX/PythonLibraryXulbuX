@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, NotRequired, Protocol, TypedDict, cast, o
 
 if TYPE_CHECKING:
     import sys
+    from collections.abc import Iterable
     from xulbux.ansi import Renderable
 
     if sys.version_info >= (3, 13):
@@ -63,14 +64,36 @@ def is_data_obj(obj: object, /) -> TypeIs[DataObj]:
     return isinstance(obj, (list, tuple, set, frozenset, dict))
 
 
-type IndexIterable = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any]
+type IndexIterable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
 """Union of all iterable types that support indexing operations."""
 
 
-def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable]:
-    """Returns true if `obj` is an instance that matches the `IndexIterable` type."""
+@overload
+def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable[Any]]: ...
+@overload
+def is_index_iterable[T](obj: object, item_type: type[T] | tuple[type[T], ...], /) -> TypeIs[IndexIterable[T]]: ...
+@overload
+def is_index_iterable(obj: object, item_type: None, /) -> TypeIs[IndexIterable[Any]]: ...
 
-    return isinstance(obj, (list, tuple, set, frozenset))
+
+def is_index_iterable(obj: object, item_type: type[Any] | tuple[type[Any], ...] | None = None, /) -> bool:
+    """Returns true if `obj` is an instance that matches the `IndexIterable` type,<br>
+    optionally checking if all contained elements are instances of `item_type`.\n
+    -------------------------------------------------------------------------------------------------
+    *   `obj` – The object to check.
+    *   `item_type` – An optional type or tuple of types to check each contained element against."""
+
+    if not isinstance(obj, (list, tuple, set, frozenset)):
+        return False
+    elif item_type is None:
+        return True
+
+    # Don't use `all()` as for-loop is more performant:
+    for item in cast("Iterable[object]", obj):  # ruff: ignore[reimplemented-builtin]
+        if not isinstance(item, item_type):
+            return False
+
+    return True
 
 
 # ********************************************************** COLORS ***********************************************************
@@ -207,7 +230,7 @@ class ProgressUpdater(Protocol):
         ...
 
     @overload
-    def __call__(self, *, label: str) -> None:
+    def __call__(self, *, label: Renderable) -> None:
         """Update the progress label only (keyword-only)."""
 
     def __call__(self, current: int | None = None, label: Renderable | None = None) -> None:
