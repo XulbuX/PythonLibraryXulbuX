@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 
 def get_latest_version() -> str | None:
     """Fetches the latest version of the library from PyPI.\n
-    -----------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Raises a `HTTPError` if the request fails.<br>
     Returns `None` if the request succeeds but the version info is not found."""
 
@@ -27,7 +27,7 @@ def get_latest_version() -> str | None:
 
 def is_latest_version() -> bool | None:
     """Checks if the currently installed version of the library is the latest one available on PyPI.\n
-    ---------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Returns `None` if the check failed."""
 
     try:

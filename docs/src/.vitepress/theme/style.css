@@ -529,11 +529,6 @@ body .vp-doc > div > .api-item {
   color: var(--dark-vp-c-text-1) !important;
   line-height: 1.3rem !important;
 
-  p {
-    margin: 0 !important;
-    line-height: inherit;
-  }
-
   .i {
     font-style: italic;
   }

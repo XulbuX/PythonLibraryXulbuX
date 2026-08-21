@@ -19,7 +19,7 @@ _SPACE_TRANS_CACHE: dict[int, dict[int, str | int | None]] = {}
 
 def to_type(string: str, /) -> Any:
     """Will convert a string to the found type, including complex nested structures.\n
-    -----------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to convert."""
 
     try:
@@ -33,7 +33,7 @@ def to_type(string: str, /) -> Any:
 
 def normalize_spaces(string: str, /, tab_spaces: int = 4) -> str:
     """Replaces all special space characters with normal spaces.\n
-    ------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to normalize.
     *   `tab_spaces` – Number of spaces to replace tab chars with."""
 
@@ -62,9 +62,10 @@ def normalize_spaces(string: str, /, tab_spaces: int = 4) -> str:
 
 def escape(string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
     """Escapes Python's special characters (e.g., `\\n`, `\\t`, …) and quotes inside the string.\n
-    -------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to escape.
-    *   `str_quotes` – The type of quotes the string will be put inside of (or `None` to not escape quotes):<br>
+    *   `str_quotes` – The type of quotes the string will be put inside of
+        (or `None` to not escape quotes):<br>
         Can be either `"` or `'` and should match the quotes, the string will be put inside of.<br>
         So if your string will be `"string"`, `str_quotes` should be `"`.<br>
         That way, if the string includes the same quotes, they will be escaped."""
@@ -90,7 +91,7 @@ def escape(string: str, /, str_quotes: Literal["'", '"'] | None = None) -> str:
 
 def is_empty(string: str | None, /, *, spaces_are_empty: bool = False) -> bool:
     """Returns `True` if the string is considered empty and `False` otherwise.\n
-    --------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to check (or `None`, which is considered empty).
     *   `spaces_are_empty` – If true, strings consisting only of spaces are also considered empty."""
 
@@ -98,9 +99,10 @@ def is_empty(string: str | None, /, *, spaces_are_empty: bool = False) -> bool:
 
 
 def single_char_repeats(string: str, char: str, /) -> int:
-    """*   If the string consists of only the same `char`, it returns the number of times it is present.<br>
+    """*   If the string consists of only the same `char`,
+        it returns the number of times it is present.<br>
     *   If the string is empty or doesn't consist of only the same character, it returns `0`.\n
-    ---------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to check.
     *   `char` – The character to check for repetition."""
 
@@ -113,7 +115,7 @@ def single_char_repeats(string: str, char: str, /) -> int:
 
 def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) -> list[str]:
     """Will decompose the string (any type of casing, also mixed) into parts.\n
-    ----------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `case_string` – The string to decompose.
     *   `seps` – Additional separators to split the string at.
     *   `lower_all` – If true, all parts will be converted to lowercase."""
@@ -128,7 +130,7 @@ def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) 
 
 def to_camel_case(string: str, /, *, upper: bool = True) -> str:
     """Will convert the string of any type of casing to CamelCase.\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to convert.
     *   `upper` – If true, it will convert to UpperCamelCase, otherwise to lowerCamelCase."""
 
@@ -139,7 +141,7 @@ def to_camel_case(string: str, /, *, upper: bool = True) -> str:
 
 def to_delimited_case(string: str, /, delimiter: str = "_", *, screaming: bool = False) -> str:
     """Will convert the string of any type of casing to delimited case.\n
-    -----------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to convert.
     *   `delimiter` – The delimiter to use between parts.
     *   `screaming` – Whether to convert all parts to uppercase."""
@@ -149,7 +151,7 @@ def to_delimited_case(string: str, /, delimiter: str = "_", *, screaming: bool =
 
 def get_lines(string: str, /, *, remove_empty_lines: bool = False) -> list[str]:
     """Will split the string into lines.\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to split.
     *   `remove_empty_lines` – If true, it will remove all empty lines from the result."""
 
@@ -163,7 +165,7 @@ def get_lines(string: str, /, *, remove_empty_lines: bool = False) -> list[str]:
 
 def remove_consecutive_empty_lines(string: str, /, max_consecutive: int = 0) -> str:
     """Will remove consecutive empty lines from the string.\n
-    ---------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to process.
     *   `max_consecutive` – The maximum number of allowed consecutive empty lines:<br>
         -   If `0`, it will remove all consecutive empty lines.
@@ -178,7 +180,7 @@ def remove_consecutive_empty_lines(string: str, /, max_consecutive: int = 0) -> 
 
 def split_count(string: str, count: int, /) -> list[str]:
     """Will split the string every `count` characters.\n
-    -----------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to split.
     *   `count` – The number of characters per part."""
 

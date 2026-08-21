@@ -24,7 +24,7 @@ def paths(*, as_list: bool = False) -> Path | list[Path]: ...
 
 def paths(*, as_list: bool = False) -> Path | list[Path]:
     """Get the PATH environment variable.\n
-    ---------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `as_list` – If true, returns the paths as a list of `Path`s; otherwise, as a single `Path`."""
 
     paths_str = _os.environ.get("PATH", "")
@@ -37,7 +37,7 @@ def paths(*, as_list: bool = False) -> Path | list[Path]:
 
 def has_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> bool:
     """Check if a path is present in the PATH environment variable.\n
-    ---------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `path` – The path to check for.
     *   `cwd` – If true, uses the current working directory as the path.
     *   `base_dir` – If true, uses the script's base directory as the path."""
@@ -47,7 +47,7 @@ def has_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: 
 
 def add_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
     """Add a path to the PATH environment variable.\n
-    ---------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `path` – The path to add.
     *   `cwd` – If true, uses the current working directory as the path.
     *   `base_dir` – If true, uses the script's base directory as the path."""
@@ -60,7 +60,7 @@ def add_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: 
 
 def remove_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
     """Remove a path from the PATH environment variable.\n
-    ---------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `path` – The path to remove.
     *   `cwd` – If true, uses the current working directory as the path.
     *   `base_dir` – If true, uses the script's base directory as the path."""
@@ -73,7 +73,7 @@ def remove_path(path: Path | str | None = None, /, *, cwd: bool = False, base_di
 
 def _get(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> Path:
     """Internal method to get the normalized `path`, CWD path or script directory path.\n
-    --------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Raise an error if no path is provided and neither `cwd` or `base_dir` is true."""
 
     if cwd:

@@ -30,7 +30,7 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, AnyStyle]] = {
 
 def chars_count(data: DataObjType, /) -> int:
     """The sum of all the characters amount including the keys in dictionaries.\n
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to count the characters from."""
 
     count = 0
@@ -47,7 +47,7 @@ def chars_count(data: DataObjType, /) -> int:
 
 def strip[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     """Removes leading and trailing whitespaces from the data structure's items.\n
-    -------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to strip the items from."""
 
     if isinstance(data, dict):
@@ -62,7 +62,7 @@ def strip[DataObj: DataObjType](data: DataObj, /) -> DataObj:
 
 def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_empty: bool = False) -> DataObj:
     """Removes empty items from the data structure.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to remove empty items from.
     *   `spaces_are_empty` – If true, it will count items with only spaces as empty."""
 
@@ -90,7 +90,7 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
 
 def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     """Removes all duplicates from the data structure.\n
-    --------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to remove duplicates from."""
 
     if isinstance(data, dict):
@@ -128,12 +128,13 @@ def remove_comments[DataObj: DataObjType](
     comment_sep: str = "",
 ) -> DataObj:
     """Remove comments from a list, tuple or dictionary.\n
-    -----------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – List, tuple or dictionary, where the comments should get removed from.
     *   `comment_start` – The string that marks the start of a comment inside `data`.
     *   `comment_end` – The string that marks the end of a comment inside `data`.
-    *   `comment_sep` – The string with which a comment will be replaced, if it is in the middle of a value.
-    -----------------------------------------------------------------------------------------------------------------
+    *   `comment_sep` – The string with which a comment will be replaced,
+        if it is in the middle of a value.\n
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python
@@ -178,10 +179,12 @@ def remove_comments[DataObj: DataObjType](
     <!-- DOCS: </AttachedCode> -->
 
     *   For `key1`, all the comments will just be removed, except at `value3` and `value4`:
-        -   `value3` The comment is removed and the parts left and right are joined through `comment_sep`.
+        -   `value3` The comment is removed and the parts
+            left and right are joined through `comment_sep`.
         -   `value4` The whole value is removed, since the whole value was a comment.
     *   For `key2`, the key, including its whole values will be removed.
-    *   For `key3`, since all its values are just comments, the key will still exist, but with a value of `None`."""
+    *   For `key3`, since all its values are just comments,
+        the key will still exist, but with a value of `None`."""
 
     if not comment_start:
         raise ValueError(f"The 'comment_start' parameter must be a non-empty string, got {comment_start!r}") from None
@@ -204,7 +207,7 @@ def is_equal(
 ) -> bool:
     """Compares two structures and returns `True` if they are equal and `False` otherwise.\n
     ⇾ Will not detect, if a key-name has changed, only if removed or added.\n
-    ---------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data1` – The first data structure to compare.
     *   `data2` – The second data structure to compare.
     *   `ignore_paths` – A path or list of paths to key/s and item/s to ignore during comparison:<br>
@@ -212,8 +215,8 @@ def is_equal(
         to correctly recognize the keys in the `ignore_paths`.
     *   `path_sep` – The separator between the keys/indexes in the `ignore_paths`.
     *   `comment_start` – The string that marks the start of a comment inside `data1` and `data2`.
-    *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.
-    ---------------------------------------------------------------------------------------------------
+    *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.\n
+    ----------------------------------------------------------------------------------------------------
     The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
     `get_path_id()`. See its documentation for more details."""
 
@@ -276,15 +279,16 @@ def get_path_id(
     ignore_not_found: bool = False,
 ) -> str | list[str | None] | None:
     """Generates a unique ID based on the path to a specific value within a nested data structure.\n
-    -----------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The list, tuple, or dictionary, which the id should be generated for.
-    *   `value_paths` – A path or list of paths to the value/s to generate the id for (explained below).
+    *   `value_paths` – A path or list of paths to the value/s
+        to generate the id for (explained below).
     *   `path_sep` – The separator between the keys/indexes in the `value_paths`.
     *   `comment_start` – The string that marks the start of a comment inside `data`.
     *   `comment_end` – The string that marks the end of a comment inside `data`.
-    *   `ignore_not_found` – If true, the function will return `None` if the value is not found<br>
-        instead of raising an error.
-    -----------------------------------------------------------------------------------------------------
+    *   `ignore_not_found` – If true, the function will return `None`<br>
+        if the value is not found instead of raising an error.\n
+    ----------------------------------------------------------------------------------------------------
     The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
 
     #### Example
@@ -321,10 +325,11 @@ def get_path_id(
 def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = False) -> Any:
     """Retrieves the value from `data` using the provided `path_id`,<br>
     as long as the data structure hasn't changed since creating the path ID.\n
-    -----------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The list, tuple, or dictionary to retrieve the value from.
     *   `path_id` – The path ID to the value to retrieve, created before using `get_path_id()`.
-    *   `get_key` – If true and the final item is in a dict, it returns the key instead of the value."""
+    *   `get_key` – If true and the final item is in a dict,
+        it returns the key instead of the value."""
 
     parent: DataObjType | None = None
     path = _sep_path_id(path_id)
@@ -364,7 +369,7 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
 def set_value_by_path_id[DataObj: DataObjType](data: DataObj, update_values: dict[str, Any], /) -> DataObj:
     """Updates the value/s from `update_values` in the `data`, as long as the<br>
     data structure hasn't changed since creating the path ID to that value.\n
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The list, tuple, or dictionary to update the value/s in.
     *   `update_values` – A dictionary where keys are path IDs<br>
         and values are the new values to insert, for example:
@@ -394,23 +399,25 @@ def render(
     syntax_highlighting: dict[str, AnyStyle] | bool = False,
 ) -> StyledText:
     """Get nicely formatted data structures as a `StyledText` object.\n
-    -------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to format.
     *   `indent` – The amount of spaces to use for indentation.
     *   `compactness` – The level of compactness for the output (explained below – section 1).
     *   `max_width` – The maximum width of a line before expanding (only used if `compactness` is `1`).
     *   `sep` – The separator between items in the data structure.
     *   `as_json` – if true, the output will be in valid JSON format.
-    *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles (explained below – section 2)<br>
-        or `True` to apply default syntax highlighting styles or `False`/`None` to disable syntax highlighting.\n
-    -------------------------------------------------------------------------------------------------------------------
+    *   `syntax_highlighting` – A dictionary defining the syntax highlighting styles
+        (explained below – section 2) or `True` to apply default syntax highlighting styles<br>
+        or `False`/`None` to disable syntax highlighting.\n
+    ----------------------------------------------------------------------------------------------------
     There are three different levels of `compactness`:
     *   `0` expands everything possible.
     *   `1` expands only when necessary (based element complexity and the `max_width` parameter).
     *   `2` keeps everything collapsed (all on one line).\n
-    -------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     The `syntax_highlighting` dictionary has 5 keys for each part of the data.<br>
-    The key's values are the `S` style attributes (or combined style groups) to apply to this data part.<br>
+    The key's values are the `S` style attributes (or combined style groups)
+    to apply to this data part.<br>
     The styling can be changed by simply adding the key with the new value<br>
     inside the `syntax_highlighting` dictionary.\n
     The keys with their default values are:
@@ -419,7 +426,7 @@ def render(
     *   `literal: S.MAGENTA`
     *   `type: S.ITALIC | S.GREEN`
     *   `punctuation: S.BR.BLACK`\n
-    -------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     The returned `StyledText` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)<br>
     and the plain, un-styled text via `.raw`.\n
     For more detailed information about styling, see the `ansi` module documentation."""

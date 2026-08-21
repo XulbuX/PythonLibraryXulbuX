@@ -35,15 +35,15 @@ def read(
     json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: bool = False
 ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
     """Read JSON files, ignoring comments.\n
-    --------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `json_file` – The path (relative or absolute) to the JSON file to read.
     *   `comment_start` – The string that indicates the start of a comment.
     *   `comment_end` – The string that indicates the end of a comment.
-    *   `return_original` – If true, the original JSON data is returned additionally:<br>
+    *   `return_original` – If true, the original JSON data is returned additionally:
         ```python
         (processed_json, original_json)
-        ```
-    --------------------------------------------------------------------------------------
+        ```\n
+    ----------------------------------------------------------------------------------------------------
     For more detailed information about the comment handling,<br>
     see the `_data_module.remove_comments()` method documentation."""
 
@@ -69,15 +69,15 @@ def create(
     json_file: Path | str, data: dict[str, Any], /, *, indent: int = 2, compactness: Literal[0, 1, 2] = 1, force: bool = False
 ) -> Path:
     """Create a nicely formatted JSON file from a dictionary.\n
-    ------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `json_file` – The path (relative or absolute) to the JSON file to create.
     *   `data` – The dictionary data to write to the JSON file.
     *   `indent` – The amount of spaces to use for indentation.
     *   `compactness` – Can be `0`, `1` or `2` and indicates how compact<br>
         the data should be formatted (see `_data_module.render()` for more info).
     *   `force` – If true, will overwrite existing files<br>
-        without throwing an error (errors explained below).
-    ------------------------------------------------------------------------------
+        without throwing an error (errors explained below).\n
+    ----------------------------------------------------------------------------------------------------
     The method will throw a `FileExistsError` if a file with the same<br>
     name already exists and a `SameContentFileExistsError` if a file<br>
     with the same name and same content already exists."""
@@ -106,17 +106,17 @@ def update(
 ) -> None:
     """Update single/multiple values inside JSON files,<br>
     without needing to know the rest of the data.\n
-    -----------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `json_file` – The path (relative or absolute) to the JSON file to update.
     *   `update_values` – A dictionary with the paths to the values to update<br>
         and the new values to set (see explanation below – section 2).
     *   `comment_start` – The string that indicates the start of a comment.
     *   `comment_end` – The string that indicates the end of a comment.
-    *   `path_sep` – The separator used inside the value-paths in `update_values`.
-    -----------------------------------------------------------------------------------
+    *   `path_sep` – The separator used inside the value-paths in `update_values`.\n
+    ----------------------------------------------------------------------------------------------------
     For more detailed information about the comment handling,<br>
     see the `_data_module.remove_comments()` method documentation.\n
-    -----------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     The `update_values` is a dictionary, where the keys are the paths<br>
     to the data to update, and the values are the new values to set.\n
     For example for this JSON data:

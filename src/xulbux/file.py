@@ -15,7 +15,7 @@ def rename_extension(
     file_path: Path | str, new_extension: str, /, *, full_extension: bool = False, camel_case_filename: bool = False
 ) -> Path:
     """Rename the extension of a file.\n
-    -----------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `file_path` – The path to the file whose extension should be changed.
     *   `new_extension` – The new extension for the file (with or without dot).
     *   `full_extension` – Whether to replace the full extension (e.g., `.tar.gz`)<br>
@@ -44,12 +44,12 @@ def rename_extension(
 
 def create(file_path: Path | str, content: str = "", /, *, force: bool = False) -> Path:
     """Create a file with ot without content.\n
-    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `file_path` – The path where the file should be created.
     *   `content` – The content to write into the file.
     *   `force` – If true, will overwrite existing files without<br>
-        throwing an error (errors explained below).
-    ----------------------------------------------------------------------
+        throwing an error (errors explained below).\n
+    ----------------------------------------------------------------------------------------------------
     The method will throw a `FileExistsError` if a file with the same<br>
     name already exists and a `SameContentFileExistsError` if a file<br>
     with the same name and same content already exists."""

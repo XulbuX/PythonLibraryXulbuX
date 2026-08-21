@@ -53,15 +53,15 @@ def extend_path(
     raise_error: bool = False,
 ) -> Path | None:
     """Tries to resolve and extend a relative path to an absolute path.\n
-    ----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `rel_path` – The relative path to extend.
     *   `search_in` – A directory or a list of directories to search in,<br>
         in addition to the predefined directories (see exact procedure below).
     *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
         names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
     *   `raise_error` – If true, raises a `PathNotFoundError` if<br>
-        the path couldn't be found (otherwise it returns `None`).
-    ----------------------------------------------------------------------------------------------
+        the path couldn't be found (otherwise it returns `None`).\n
+    ----------------------------------------------------------------------------------------------------
     If the `rel_path` couldn't be located in predefined directories,<br>
     it will be searched in the `search_in` directory/s.\n
     If the `rel_path` is still not found, it returns `None` or<br>
@@ -102,15 +102,15 @@ def extend_or_make_path(
 ) -> Path:
     """Tries to locate and extend a relative path to an absolute path, and if<br>
     the `rel_path` couldn't be located, it generates a path, as if it was located.\n
-    ----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `rel_path` – The relative path to extend or make.
     *   `search_in` – A directory or a list of directories to search in,<br>
         in addition to the predefined directories (see exact procedure below).
     *   `prefer_script_dir` – If true, the script directory is preferred<br>
         when making a new path (otherwise the CWD is preferred).
     *   `fuzzy_match` – If true, it will try to find the closest matching file/folder<br>
-        names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.
-    ----------------------------------------------------------------------------------------------
+        names in the `search_in` directories, allowing for typos in `rel_path` and `search_in`.\n
+    ----------------------------------------------------------------------------------------------------
     If the `rel_path` couldn't be located in predefined directories,<br>
     it will be searched in the `search_in` directory/s.\n
     If the `rel_path` is still not found, it will makes a path<br>
@@ -130,9 +130,10 @@ def extend_or_make_path(
 
 def remove(path: Path | str, /, *, only_content: bool = False) -> None:
     """Removes the directory or the directory's content at the specified path.\n
-    ----------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `path` – The path to the directory or file to remove.
-    *   `only_content` – If true, only the content of the directory is removed and the directory itself is kept."""
+    *   `only_content` – If true, only the content of the directory<br>
+        is removed and the directory itself is kept."""
 
     if not (path_obj := Path(path)).exists():
         return None

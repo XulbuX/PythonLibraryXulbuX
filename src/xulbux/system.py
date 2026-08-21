@@ -117,10 +117,11 @@ def get_python_version() -> str:
 
 def restart(prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
     """Restarts the system with some advanced options\n
-    -----------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `prompt` – The message to be displayed in the systems restart notification.
     *   `wait` – The time to wait until restarting in seconds.
-    *   `continue_program` – Whether to continue the current Python program after calling this function.
+    *   `continue_program` – Whether to continue the current Python program
+        after calling this function.
     *   `force` – Whether to force a restart even if other processes are still running."""
 
     if wait < 0:
@@ -138,15 +139,18 @@ def check_libs(
     confirm_install: bool = True,
 ) -> list[str] | None:
     """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
-    -------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `lib_names` – A list of library names to check.
-    *   `install_missing` – Whether to directly missing libraries will be installed automatically using pip.
+    *   `install_missing` – Whether to directly missing libraries
+        will be installed automatically using pip.
     *   `missing_libs_msgs` – Two messages:
         -   The first one is displayed when missing libraries are found.
         -   The second one is the confirmation message before installing missing libraries.
-    *   `confirm_install` – Whether the user will be asked for confirmation before installing missing libraries.
-    -------------------------------------------------------------------------------------------------------------
-    If some libraries are missing or they could not be installed, their names will be returned as a list.<br>
+    *   `confirm_install` – Whether the user will be asked
+        for confirmation before installing missing libraries.
+    ----------------------------------------------------------------------------------------------------
+    If some libraries are missing or they could not be installed,
+    their names will be returned as a list.<br>
     If all libraries are installed (or were installed successfully), `None` will be returned."""
 
     if missing_libs_msgs is None:
@@ -161,14 +165,14 @@ def check_libs(
 
 def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool:
     """Attempts to start a new process with elevated privileges.\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `win_title` – The window title of the elevated process (only on Windows).
     *   `args` – A list of additional arguments to be passed to the elevated process.
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     After the elevated process started, the original process will exit.\n
     This means, that this method has to be run at the beginning of the program or<br>
     or else the program has to continue in a new window after elevation.\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Returns `True` if the current process already has elevated privileges and raises<br>
     a `PermissionError` if the user denied the elevation or the elevation failed."""
 

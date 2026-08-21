@@ -143,13 +143,15 @@ class ArgConfigDict(TypedDict):
 
 class ParsedArgData:
     """Represents the result of a parsed command-line argument or option.\n
-    ------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `exists` – Whether the argument or option was found in the command-line input or not.
     *   `is_arg` – Whether the value was provided as a positional argument.
     *   `values` – The tuple of values associated with the argument or option.
-    *   `opt` – The specific option that was found (e.g., `-v`, `-vv`, `-vvv`), or `None` for arguments.\n
-    ------------------------------------------------------------------------------------------------------------
-    When the `ParsedArgData` instance is accessed as a boolean it will correspond to the `exists` attribute."""
+    *   `opt` – The specific option that was found (e.g., `-v`, `-vv`, `-vvv`),
+        or `None` for arguments.\n
+    ----------------------------------------------------------------------------------------------------
+    When the `ParsedArgData` instance is accessed as a boolean
+    it will correspond to the `exists` attribute."""
 
     def __init__(
         self,
@@ -187,11 +189,12 @@ class ParsedArgData:
         cast_type: Callable[[str], Any] | type[Any] = str,
         default: Any = None,
     ) -> Any:
-        """Get the parsed value, optionally casting it to a specified type and providing a fallback default.\n
-        -------------------------------------------------------------------------------------------------------
+        """Get the parsed value, optionally casting it
+        to a specified type and providing a fallback default.\n
+        ----------------------------------------------------------------------------------------------------
         *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
         *   `default` – The fallback value if `exists` is false or if no values exist.\n
-        -------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         Raises a `ValueError` if the value cannot be cast to the specified type."""
 
         if not self.exists or not self.values:
@@ -216,11 +219,12 @@ class ParsedArgData:
         cast_type: Callable[[str], Any] | type[Any] = str,
         default: Any = (),
     ) -> Any:
-        """Get all parsed values, optionally casting them to a specified type and providing a fallback default.\n
-        ----------------------------------------------------------------------------------------------------------
+        """Get all parsed values, optionally casting them
+        to a specified type and providing a fallback default.\n
+        ----------------------------------------------------------------------------------------------------
         *   `cast_type` – The type to cast to (e.g., `int`, `Path`, …).
         *   `default` – The fallback value if `exists` is false or if no values exist.\n
-        ----------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         Raises a `ValueError` if any value cannot be cast to the specified type."""
 
         if not self.exists or not self.values:
@@ -272,7 +276,7 @@ class ParsedArgs:
 
 class ArgumentParser:
     """An advanced command-line argument parser with built-in help generation and validation.\n
-    -------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `title` – An optional title for the help print (e.g., `"CLI Tool"`).
     *   `subtitle` – An optional subtitle (e.g., `"A simple command-line utility"`).
     *   `usage` – An optional explicit usage string, containing placeholders:
@@ -480,9 +484,11 @@ class ArgumentParser:
         help: TextRenderable | None = None,
     ) -> None:
         """Define a new argument or option to parse.\n
-        --------------------------------------------------------------------------------------------------------------
-        *   `opts_or_name` – An argument name (e.g., `"input_file"`), or a set of options (e.g., `{"-f", "--file"}`).
-        *   `alias` – Optional explicit attribute name on `ParsedArgs` for options (auto-deduced if omitted).
+        ----------------------------------------------------------------------------------------------------
+        *   `opts_or_name` – An argument name (e.g., `"input_file"`),
+            or a set of options (e.g., `{"-f", "--file"}`).
+        *   `alias` – Optional explicit attribute name on `ParsedArgs`
+            for options (auto-deduced if omitted).
         *   `expects_value` – `False` for a boolean option, or a string placeholder (e.g., `"PATH"`).<br>
             Append `?` (e.g., `"PATH?"` or `"VAL?"`) to make the expected value optional.
         *   `nargs` – Arguments value count: integer ≥ 1, `"?"` (0 or 1), `"*"` (≥ 0), or `"+"` (≥ 1).
@@ -515,7 +521,8 @@ class ArgumentParser:
         return sorted(opts, key=lambda opt: (len(opt) - len(_PATTERNS.cli_opt_prefix.sub("", opt)), opt))
 
     def _opts_to_st(self, opts: Iterable[str]) -> StyledText:
-        """Internal method to convert a set of options into a nicely formatted `StyledText` object for help printing."""
+        """Internal method to convert a set of options into a<br>
+        nicely formatted `StyledText` object for help printing."""
 
         return StyledText(", ").join([S.BR.BLUE(opt) for opt in self._sort_opts(opts)])
 
@@ -1001,11 +1008,13 @@ class ArgumentParser:
 
     def parse(self, *, skip: int = 0, opt_value_sep: str | None = "=", allow_space_value: bool = True) -> ParsedArgs:
         """Parse `sys.argv` and return the strongly-typed `ParsedArgs` object.\n
-        -------------------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `skip` – Number of arguments to skip at the start.
-        *   `opt_value_sep` – String separating option from value (e.g., `"="` for `--foo=bar`). Set to `None` to disable.
-        *   `allow_space_value` – Whether to allow space-separated values for options (e.g., `--foo bar`).\n
-        -------------------------------------------------------------------------------------------------------------------
+        *   `opt_value_sep` – String separating option from value (e.g., `"="` for `--foo=bar`).
+            Set to `None` to disable.
+        *   `allow_space_value` – Whether to allow space-separated values
+            for options (e.g., `--foo bar`).\n
+        ----------------------------------------------------------------------------------------------------
         Returns the `ParsedArgs` container."""
 
         raw_args = _sys.argv[1 + skip :]
@@ -1149,10 +1158,11 @@ def pause_exit(
     reset_ansi: bool = False,
 ) -> None:
     """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
-    -----------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `prompt` – The message to print before pausing/exiting (any object, or a `StyledText` object).
     *   `pause` – Whether to pause and wait for a key press after printing the prompt.
-    *   `exit` – Whether to exit the program after printing the prompt (and pausing if `pause` is true).
+    *   `exit` – Whether to exit the program after printing
+        the prompt (and pausing if `pause` is true).
     *   `exit_code` – The exit code to use when exiting the program.
     *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
 
@@ -1192,7 +1202,7 @@ def log(
     title_mx: int = 2,
 ) -> None:
     """Prints a nicely formatted log message.\n
-    ----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
     *   `prompt` – The log message (any object, or a `StyledText` object for styled output).
     *   `start` – Something to print before the log is printed.
@@ -1202,8 +1212,8 @@ def log(
     *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
     *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
     *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
-    *   `title_mx` – The horizontal margin (in chars) to the title.
-    ----------------------------------------------------------------------------------------------
+    *   `title_mx` – The horizontal margin (in chars) to the title.\n
+    ----------------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
@@ -1556,7 +1566,7 @@ def log_box_filled(
     indent: int = 0,
 ) -> None:
     """Will print a box with a colored background, containing a log message.\n
-    --------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
@@ -1565,8 +1575,8 @@ def log_box_filled(
     *   `default_color` – The default text color of the `*values`.
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
-    *   `indent` – The indentation of the box (in chars).
-    --------------------------------------------------------------------------------------
+    *   `indent` – The indentation of the box (in chars).\n
+    ----------------------------------------------------------------------------------------------------
     To style the content, pass `StyledText` objects. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
@@ -1614,7 +1624,7 @@ def log_box_bordered(
     border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
 ) -> None:
     """Will print a bordered box, containing a log message.\n
-    ---------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
@@ -1624,13 +1634,13 @@ def log_box_bordered(
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).
-    *   `border_chars` – Define your own border characters set (overwrites `border_type`).
-    ---------------------------------------------------------------------------------------------
+    *   `border_chars` – Define your own border characters set (overwrites `border_type`).\n
+    ----------------------------------------------------------------------------------------------------
     You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
-    ---------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     To style the content, pass `StyledText` objects. For more detailed<br>
     information about styling, see the `ansi` module documentation.\n
-    ---------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     The `border_type` can be one of the following:
     *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
     *   `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤')`
@@ -1713,13 +1723,13 @@ def confirm(
     default_is_yes: bool = True,
 ) -> bool:
     """Ask a yes/no question.\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt`.
-    *   `default_is_yes` – The default answer if the user just presses enter.
-    ------------------------------------------------------------------------------------------
+    *   `default_is_yes` – The default answer if the user just presses enter.\n
+    ----------------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
@@ -1855,7 +1865,7 @@ def input(
     output_type: type[Any] = str,
 ) -> Any:
     """Acts like a standard Python `input()` a bunch of cool extra features.\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
@@ -1870,11 +1880,11 @@ def input(
     *   `validator` – A function that takes the input string and returns a string error<br>
         message if invalid, or nothing if valid.
     *   `default_val` – The default value to return if the input is empty.
-    *   `output_type` – The type (class) to convert the input to before returning it.
-    ------------------------------------------------------------------------------------------
+    *   `output_type` – The type (class) to convert the input to before returning it.\n
+    ----------------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
     information about styling, see the `ansi` module documentation.\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     **Using a custom validator function:**
@@ -1982,7 +1992,7 @@ def _read_single_key() -> None:
 
 def _resolve_title_colors(title_bg_color: AnyStyle | Rgba | Hexa, /) -> tuple[AnyStyle, BaseStyle]:
     """Resolves the log title's background style and its matching foreground style.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
         RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
 
@@ -2037,7 +2047,7 @@ def _persist_style(ansi_text: str, style_open: str, /) -> str:
 
 def _render_log_title(text: str, style: AnyStyle, /) -> str:
     """Renders (and caches) the styled log title as an ANSI string.\n
-    ----------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Since consecutive log calls often reuse the exact same title and style,<br>
     the rendered string is cached and reused instead of being rebuilt."""
 
@@ -2386,14 +2396,16 @@ class _InterceptedOutput:
 
 class ProgressBar(_StdoutInterceptorMixin):
     """A terminal progress bar with smooth transitions and customizable appearance.\n
-    -------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `min_width` – The min width of the progress bar in chars.
     *   `max_width` – The max width of the progress bar in chars.
     *   `format` – The format strings used to render the progress bar, containing placeholders:
         -   `{label}` `{l}`
         -   `{bar}` `{b}`
-        -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
-        -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
+        -   `{current}` `{c}`
+            (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
+        -   `{total}` `{t}`
+            (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
         -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
             to specified number of decimal places, e.g., `{p:.1f}`)
     *   `limited_format` – A simplified format string used when the terminal width is too small<br>
@@ -2401,8 +2413,8 @@ class ProgressBar(_StdoutInterceptorMixin):
     *   `chars` – A tuple of characters ordered from full to empty progress:<br>
         The first character represents completely filled sections.<br>
         Intermediate characters create smooth transitions<br>
-        The last character represents empty sections.
-    -------------------------------------------------------------------------------------------------------
+        The last character represents empty sections.\n
+    ----------------------------------------------------------------------------------------------------
     The formats can additionally be styled by embedding ANSI from the operator-based API.<br>
     For more detailed information, see the `ansi` module documentation."""
 
@@ -2444,7 +2456,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def set_width(self, min_width: int | None = None, max_width: int | None = None) -> None:
         """Set the width of the progress bar.\n
-        -----------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `min_width` – The min width of the progress bar in chars.
         *   `max_width` – The max width of the progress bar in chars."""
 
@@ -2468,17 +2480,19 @@ class ProgressBar(_StdoutInterceptorMixin):
         sep: str | None = None,
     ) -> None:
         """Set the format string used to render the progress bar.\n
-        -------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `format` – The format strings used to render the progress bar, containing placeholders:
             -   `{label}` `{l}`
             -   `{bar}` `{b}`
-            -   `{current}` `{c}` (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
-            -   `{total}` `{t}` (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
+            -   `{current}` `{c}`
+                (optional `:<char>` format specifier for thousands separator, e.g., `{c:,}`)
+            -   `{total}` `{t}`
+                (optional `:<char>` format specifier for thousands separator, e.g., `{t:,}`)
             -   `{percentage}` `{percent}` `{p}` (optional `:.<num>f` format specifier to round<br>
                 to specified number of decimal places, e.g., `{p:.1f}`)
         *   `limited_format` – A simplified format strings used when the terminal width is too small.
-        *   `sep` – The separator string used to join multiple format strings.
-        -------------------------------------------------------------------------------------------------------
+        *   `sep` – The separator string used to join multiple format strings.\n
+        ----------------------------------------------------------------------------------------------------
         The formats can additionally be styled by embedding ANSI from the operator-based API.<br>
         For more detailed information, see the `ansi` module documentation."""
 
@@ -2518,13 +2532,13 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def set_chars(self, chars: tuple[str, ...], /) -> None:
         """Set the characters used to render the progress bar.\n
-        -----------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `chars` – A tuple of characters ordered from full to empty progress:<br>
             The first character represents completely filled sections.<br>
             Intermediate characters create smooth transitions.<br>
             The last character represents empty sections.<br>
             If `None`, uses default Unicode block characters.\n
-        -----------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         #### Example Usage
 
         ```python
@@ -2542,7 +2556,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def show_progress(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
         """Show or update the progress bar.\n
-        ----------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `current` – The current progress value (below `0` or greater than `total` hides the bar).
         *   `total` – The total value representing 100% progress (must be greater than `0`).
         *   `label` – An optional label which is inserted at the `{label}` or `{l}` placeholder."""
@@ -2582,15 +2596,15 @@ class ProgressBar(_StdoutInterceptorMixin):
     @contextmanager
     def progress_context(self, total: int, /, label: StyledText | str | None = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
-        -----------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `total` – The total value representing 100% progress (must be greater than `0`).
-        *   `label` – An optional label which is inserted at the `{label}` or `{l}` placeholder.
-        -----------------------------------------------------------------------------------------
+        *   `label` – An optional label which is inserted at the `{label}` or `{l}` placeholder.\n
+        ----------------------------------------------------------------------------------------------------
         The returned callable accepts keyword arguments.<br>
         At least one of these parameters must be provided:
         *   `current` – Update the current progress value.
-        *   `label` – Update the progress label.
-        -----------------------------------------------------------------------------------------
+        *   `label` – Update the progress label.\n
+        ----------------------------------------------------------------------------------------------------
         #### Example Usage
 
         ```python
@@ -2694,7 +2708,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
 class _ProgressContextHelper:
     """Internal, callable helper class to update the progress bar's current value and/or label.\n
-    ------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `current` – The current progress value.
     *   `label` – The progress label.
     *   `type_checking` – Whether to check the parameters' types:<br>
@@ -2735,14 +2749,14 @@ class _ProgressContextHelper:
 class Throbber(_StdoutInterceptorMixin):
     """A terminal throbber for indeterminate processes with customizable appearance.<br>
     This class intercepts stdout to allow printing while the animation is active.\n
-    -----------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `label` – The current label text.
     *   `format` – The format string used to render the throbber, containing placeholders:
         -   `{label}` `{l}`
         -   `{animation}` `{a}`
     *   `frames` – A tuple of strings representing the animation frames.
-    *   `interval` – The time in seconds between each animation frame.
-    -----------------------------------------------------------------------------------------
+    *   `interval` – The time in seconds between each animation frame.\n
+    ----------------------------------------------------------------------------------------------------
     The format can additionally be styled by embedding ANSI from the operator-based API.<br>
     For more detailed information, see the `ansi` module documentation."""
 
@@ -2785,12 +2799,12 @@ class Throbber(_StdoutInterceptorMixin):
         self, format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable, *, sep: str | None = None
     ) -> None:
         """Set the format string used to render the throbber.\n
-        -----------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `format` – The format strings used to render the throbber, containing placeholders:
             -   `{label}` `{l}`
             -   `{animation}` `{a}`
-        *   `sep` – The separator string used to join multiple format strings.
-        -----------------------------------------------------------------------------------------
+        *   `sep` – The separator string used to join multiple format strings.\n
+        ----------------------------------------------------------------------------------------------------
         The format can additionally be styled by embedding ANSI from the operator-based API.<br>
         For more detailed information, see the `ansi` module documentation."""
 
@@ -2813,7 +2827,7 @@ class Throbber(_StdoutInterceptorMixin):
 
     def set_frames(self, frames: tuple[str, ...], /) -> None:
         """Set the frames used for the throbber animation.\n
-        ------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `frames` – A tuple of strings representing the animation frames."""
 
         if len(frames) < 2:
@@ -2823,7 +2837,7 @@ class Throbber(_StdoutInterceptorMixin):
 
     def set_interval(self, interval: int | float, /) -> None:
         """Set the time interval between each animation frame.\n
-        ----------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `interval` – The time in seconds between each animation frame."""
 
         if interval <= 0:
@@ -2833,7 +2847,7 @@ class Throbber(_StdoutInterceptorMixin):
 
     def start(self, label: StyledText | str | None = None, /) -> None:
         """Start the throbber animation and intercept stdout.\n
-        --------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber."""
 
         if self.active:
@@ -2863,7 +2877,7 @@ class Throbber(_StdoutInterceptorMixin):
 
     def update_label(self, label: StyledText | str | None, /) -> None:
         """Update the throbber's label text.\n
-        -----------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `new_label` – The new label text."""
 
         self.label = label
@@ -2871,12 +2885,12 @@ class Throbber(_StdoutInterceptorMixin):
     @contextmanager
     def context(self, label: StyledText | str | None = None, /) -> Generator[Callable[[StyledText | str], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
-        ------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber.\n
-        ------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         The returned callable accepts a single parameter:
         *   `new_label` – The new label text.\n
-        ------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         #### Example Usage
 
         ```python

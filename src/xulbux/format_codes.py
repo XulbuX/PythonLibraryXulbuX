@@ -6,12 +6,13 @@ that relies on the string-based bracket-syntax (`"[b](Hello)"`) keep working
 until they are migrated to the new operator API. It will be removed in a
 future release.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 This module provides the `FormatCodes` class, which includes methods to print and work with strings that
 contain special formatting codes, which are then converted to ANSI codes for pretty terminal output.
 
---------------------------------------------------------------------------------------------------------------------
+---
+
 ### The Easy Formatting
 
 First, let's take a look at a small example of what a highly styled
@@ -23,7 +24,8 @@ This here is just unformatted text. [b|u|br:blue](Next we have text that is brig
 
 How all of this exactly works is explained in the sections below. 🠫
 
---------------------------------------------------------------------------------------------------------------------
+---
+
 #### Formatting Codes and Keys
 
 In this module, you can apply styles and colors using simple formatting codes.
@@ -37,7 +39,8 @@ they can also be put in a single pair of brackets, separated by pipes (e.g., `[x
 
 A list of all possible formatting keys can be found under all possible formatting keys.
 
---------------------------------------------------------------------------------------------------------------------
+---
+
 #### Auto Resetting Formatting Codes
 
 Certain formatting can automatically be reset, behind a certain
@@ -59,7 +62,8 @@ you can put a `\\` or `/` between them and the formatting code:
 [cyan]This is cyan text, [u]/(which is underlined now.) And now it is still underlined and cyan.
 ```
 
---------------------------------------------------------------------------------------------------------------------
+---
+
 #### All possible Formatting Keys
 
 *   RGB colors:
@@ -153,7 +157,8 @@ you can put a `\\` or `/` between them and the formatting code:
     -   `[link:file:///path/to/file.txt](open file)`
     -   `[link:https://example.com|br:blue](click here)`
 
---------------------------------------------------------------------------------------------------------------------
+---
+
 #### Additional Formatting Codes when a `default_color` is set
 
 1.  `[*]` resets everything, just like `[_]`, but the text color will remain in `default_color`
@@ -292,14 +297,15 @@ class FormatCodes:
         flush: bool = True,
     ) -> None:
         """A print function, whose print `values` can be formatted using formatting codes.\n
-        -----------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `values` – The values to print.
         *   `default_color` – The default text color to use if no other text color was applied.
-        *   `brightness_steps` – The amount to increase/decrease default-color brightness per modifier code.
+        *   `brightness_steps` – The amount to increase/decrease default-color brightness
+            per modifier code.
         *   `sep` – The separator to use between multiple values.
         *   `end` – The string to append at the end of the printed values.
-        *   `flush` – Whether to flush the output buffer after printing.
-        -----------------------------------------------------------------------------------------------------
+        *   `flush` – Whether to flush the output buffer after printing.\n
+        ----------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,<br>
         see the `ansi` module documentation."""
 
@@ -324,13 +330,14 @@ class FormatCodes:
         reset_ansi: bool = False,
     ) -> str:
         """An input, whose `prompt` can be formatted using formatting codes.\n
-        ------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `prompt` – The prompt to show to the user.
         *   `default_color` – The default text color to use if no other text color was applied.
-        *   `brightness_steps` – The amount to increase/decrease default-color brightness per modifier code.
-        *   `reset_ansi` – If true, all ANSI formatting will be reset, after the user confirmed the input<br>
-            and the program continues to run.
-        ------------------------------------------------------------------------------------------------------
+        *   `brightness_steps` – The amount to increase/decrease default-color brightness
+            per modifier code.
+        *   `reset_ansi` – If true, all ANSI formatting will be reset,<br>
+            after the user confirmed the input and the program continues to run.\n
+        ----------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,<br>
         see the `ansi` module documentation."""
 
@@ -358,14 +365,15 @@ class FormatCodes:
         _validate_default: bool = True,
     ) -> str:
         """Convert the formatting codes inside a string to ANSI formatting.\n
-        -----------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `string` – The string that contains the formatting codes to convert.
         *   `default_color` – The default text color to use if no other text color was applied.
-        *   `brightness_steps` – The amount to increase/decrease default-color brightness per modifier code.
+        *   `brightness_steps` – The amount to increase/decrease default-color brightness
+            per modifier code.
         *   `_default_start` – Whether to start the string with the `default_color` ANSI code, if set.
         *   `_validate_default` – Whether to validate the `default_color` before use<br>
-            (expects valid RGBA color or None, if not validated).
-        -----------------------------------------------------------------------------------------------------
+            (expects valid RGBA color or None, if not validated).\n
+        ----------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,<br>
         see the `ansi` module documentation."""
 
@@ -424,11 +432,11 @@ class FormatCodes:
     ) -> str:
         """Escapes all valid formatting codes in the string, so they are visible when output<br>
         to the terminal using `FormatCodes.print()`. Invalid formatting codes remain unchanged.\n
-        -----------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `string` – The string that contains the formatting codes to escape.
         *   `default_color` – The default text color to use if no other text color was applied.
-        *   `_escape_char` – The character to use to escape formatting codes (`/` or `\\`).
-        -----------------------------------------------------------------------------------------
+        *   `_escape_char` – The character to use to escape formatting codes (`/` or `\\`).\n
+        ----------------------------------------------------------------------------------------------------
         For exact information about how to use special formatting codes,<br>
         see the `ansi` module documentation."""
 
@@ -449,7 +457,7 @@ class FormatCodes:
     )
     def escape_ansi(cls, ansi_string: str, /) -> str:
         """Escapes all ANSI codes in the string, so they are visible when output to the terminal.\n
-        --------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `ansi_string` – The string that contains the ANSI codes to escape."""
 
         return ansi_string.replace(ANSI.CHAR, ANSI.CHAR_ESCAPED)
@@ -515,11 +523,12 @@ class FormatCodes:
         _ignore_linebreaks: bool = False,
     ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all formatting codes from the string with optional tracking of removed codes.\n
-        -----------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `string` – The string that contains the formatting codes to remove.
         *   `default_color` – The default text color to use if no other text color was applied.
-        *   `get_removals` – If true, additionally to the cleaned string, a list of tuples will be returned,<br>
-            where each tuple contains the position of the removed formatting code and the removed formatting code.
+        *   `get_removals` – If true, additionally to the cleaned string,<br>
+            a list of tuples will be returned, where each tuple contains the position<br>
+            of the removed formatting code and the removed formatting code.
         *   `_ignore_linebreaks` – Whether to ignore line breaks for the removal positions."""
 
         return cls.remove_ansi(
@@ -563,10 +572,11 @@ class FormatCodes:
         cls, ansi_string: str, /, *, get_removals: bool = False, _ignore_linebreaks: bool = False
     ) -> str | tuple[str, tuple[tuple[int, str], ...]]:
         """Removes all ANSI codes from the string with optional tracking of removed codes.\n
-        ---------------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `ansi_string` – The string that contains the ANSI codes to remove.
-        *   `get_removals` – If true, additionally to the cleaned string, a list of tuples will be returned,<br>
-            where each tuple contains the position of the removed ansi code and the removed ansi code.
+        *   `get_removals` – If true, additionally to the cleaned string,<br>
+            a list of tuples will be returned, where each tuple contains<br>
+            the position of the removed ansi code and the removed ansi code.
         *   `_ignore_linebreaks` – Whether to ignore line breaks for the removal positions."""
 
         if get_removals:
@@ -586,9 +596,11 @@ class FormatCodes:
 
     @classmethod
     def _config_terminal(cls) -> None:
-        """Internal method which configures the terminal to be able to interpret and render ANSI formatting.\n
-        -------------------------------------------------------------------------------------------------------
-        This method will only do something the first time it's called. Subsequent calls will do nothing."""
+        """Internal method which configures the terminal
+        to be able to interpret and render ANSI formatting.\n
+        ----------------------------------------------------------------------------------------------------
+        This method will only do something the first time it's called.
+        Subsequent calls will do nothing."""
 
         global _TERMINAL_ANSI_CONFIGURED
         if not _TERMINAL_ANSI_CONFIGURED:

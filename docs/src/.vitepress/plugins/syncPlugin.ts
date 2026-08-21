@@ -25,7 +25,7 @@ export function syncPlugin(dirname: string) {
           return;
         }
 
-        function runPythonCommand(args: string[], successMsg: string) {
+        function runPythonCommand(args: string[], successMsg: string, restartServer = false) {
           function run(commands: string[]) {
             exec(
               `${commands[0]} ${args.join(' ')}`,
@@ -41,7 +41,9 @@ export function syncPlugin(dirname: string) {
                 } else {
                   // oxlint-disable-next-line no-console
                   console.log(`[sync] ${successMsg}: ${path.basename(filePath)}`);
-                  server.restart();
+                  if (restartServer) {
+                    server.restart();
+                  }
                 }
               }
             );
@@ -56,12 +58,17 @@ export function syncPlugin(dirname: string) {
             if (filePath.endsWith('.md')) {
               runPythonCommand(
                 ['docs/build.py', '--process-file', `"${filePath}"`],
-                'Processed MD'
+                'Processed MD',
+                false
               );
             } else {
               fs.copyFileSync(filePath, dest);
               if (filePath.endsWith('sidebar.json')) {
-                runPythonCommand(['docs/build.py'], 'Rebuilt docs due to sidebar.json change');
+                runPythonCommand(
+                  ['docs/build.py'],
+                  'Rebuilt docs due to sidebar.json change',
+                  true
+                );
               }
             }
           } else if (eventName === 'unlink') {
@@ -69,7 +76,9 @@ export function syncPlugin(dirname: string) {
               fs.unlinkSync(dest);
             }
             if (filePath.endsWith('sidebar.json')) {
-              runPythonCommand(['docs/build.py'], 'Rebuilt docs due to sidebar.json unlink');
+              runPythonCommand(['docs/build.py'], 'Rebuilt docs due to sidebar.json unlink', true);
+            } else if (filePath.endsWith('.md')) {
+              runPythonCommand(['docs/build.py'], 'Rebuilt docs due to MD unlink', true);
             }
           }
         } else if (isPySrc) {
@@ -83,10 +92,15 @@ export function syncPlugin(dirname: string) {
             if (eventName === 'change') {
               runPythonCommand(
                 ['docs/build.py', '--process-file', `"${filePath}"`],
-                'Processed Python API'
+                'Processed Python API',
+                false
               );
             } else if (eventName === 'add' || eventName === 'unlink') {
-              runPythonCommand(['docs/build.py'], `Rebuilt docs due to Python source ${eventName}`);
+              runPythonCommand(
+                ['docs/build.py'],
+                `Rebuilt docs due to Python source ${eventName}`,
+                true
+              );
             }
           }
         }

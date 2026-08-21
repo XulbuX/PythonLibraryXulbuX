@@ -4,7 +4,7 @@ from xulbux.ansi import StyledText
 from xulbux.base.types import DataObj, IndexIterable, is_data_obj, is_index_iterable
 import pytest
 
-# Don't change this data!
+# Don't change this data:
 d_comments: dict[str, Any] = {
     "key1": [
         ">> Comment in the beginning of the string. <<  value1",

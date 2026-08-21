@@ -10,6 +10,7 @@ import pytest
 @pytest.fixture
 def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
     """Sets up a controlled environment for path tests."""
+
     mock_cwd = tmp_path / "mock_cwd"
     mock_script_dir = tmp_path / "mock_script_dir"
     mock_home = tmp_path / "mock_home"

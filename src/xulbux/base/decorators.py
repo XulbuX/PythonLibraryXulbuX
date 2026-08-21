@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING, Any, Final, LiteralString
 class _SafeDeprecated:
     """Safe implementation of deprecated that emits warnings at runtime<br>
     but handles mypyc compiled functions gracefully without crashing.\n
-    --------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `message` – A string message to display when the deprecated function is called.
-    *   `**kwargs` – Additional keyword arguments to pass to the underlying `warnings.warn` function.
-    --------------------------------------------------------------------------------------------------
+    *   `**kwargs` – Additional keyword arguments to pass to the underlying `warnings.warn` function.\n
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python
@@ -79,13 +79,12 @@ def _noop_decorator[T](obj: T) -> T:
 
 
 def mypyc_attr[T](**kwargs: Any) -> Callable[[T], T]:
-    """A custom decorator that wraps `mypy_extensions.mypyc_attr` when available,<br>
-    or acts as a no-op decorator when `mypy_extensions` is not installed.\n
-    This allows the use of `mypyc` compilation hints for compiling without making
-    `mypy_extensions` a required dependency.\n
-    -------------------------------------------------------------------------------------------
+    """A custom decorator that wraps `mypy_extensions.mypyc_attr` when available, or acts as a<br>
+    no-op decorator when `mypy_extensions` is not installed. This allows the use of `mypyc`<br>
+    compilation hints for compiling without making `mypy_extensions` a required dependency.\n
+    ----------------------------------------------------------------------------------------------------
     *   `**kwargs` – Keyword arguments to pass to `mypy_extensions.mypyc_attr` if available.\n
-    -------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python

@@ -12,13 +12,13 @@ import regex as _rx
 
 def quotes() -> str:
     """Matches pairs of quotes. (strings)\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Will create two named groups:
     *   `quote` – The quote type (single or double).
     *   `string` – Everything inside the found quote pair.\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     **Attention:** Requires non-standard library `regex`, not standard library `re`!\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python
@@ -54,16 +54,16 @@ def brackets(
     ignore_in_strings: bool = True,
 ) -> str:
     """Matches everything inside pairs of brackets, including other nested brackets.\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `bracket1` – The opening bracket (e.g., `(`, `{`, `[`, …).
     *   `bracket2` – The closing bracket (e.g., `)`, `}`, `]`, …).
     *   `is_group` – Whether to create a capturing group for the content inside the brackets.
     *   `strip_spaces` – Whether to strip spaces from the bracket content or not.
     *   `ignore_in_strings` – Whether to ignore closing brackets that are inside
         strings/quotes (e.g., `'…)…'` or `"…)…"`).\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     **Attention:** Requires non-standard library `regex`, not standard library `re`!\n
-    ------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Default brackets:**
@@ -186,9 +186,9 @@ def brackets(
 
 def outside_strings(pattern: str = r".*", /) -> str:
     """Matches the `pattern` only when it is not found inside a string (`'…'` or `"…"`).\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `pattern` – The pattern to match outside of strings/quotes.\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python
@@ -217,14 +217,14 @@ def outside_strings(pattern: str = r".*", /) -> str:
 def all_except(disallowed_pattern: str, /, ignore_pattern: str = "", *, is_group: bool = False) -> str:
     """Matches everything up to the `disallowed_pattern`, unless the<br>
     `disallowed_pattern` is found inside a string/quotes (`'…'` or `"…"`).\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `disallowed_pattern` – The pattern that is not allowed to be matched.
     *   `ignore_pattern` – A pattern that, if found, will make the regex ignore the<br>
         `disallowed_pattern` (even if it contains the `disallowed_pattern` inside it):<br>
         For example if `disallowed_pattern` is `>` and `ignore_pattern` is `->`,<br>
         the `->`-arrows will be allowed, even though they have `>` in them.
     *   `is_group` – Whether to create a capturing group for the matched content.\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Single exclusion:**
@@ -279,16 +279,16 @@ def all_except(disallowed_pattern: str, /, ignore_pattern: str = "", *, is_group
 
 def func_call(func_name: str | None = None, /) -> str:
     """Match a function call in code, including its arguments.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `func_name` – The name of the function to match.
         If `None`, it will match any function call.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Will create two groups:
     1.  The function name (or any function name if `func_name` is `None`).
     2.  Everything inside the function call's parentheses (the arguments).\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     **Attention:** Requires non-standard library `regex`, not standard library `re`!\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Any function:**
@@ -342,12 +342,12 @@ def func_call(func_name: str | None = None, /) -> str:
 
 def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     """Matches an RGBA color inside a string.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `fix_sep` – The fixed separator between the RGBA values (e.g., `,`, `;` …):<br>
         If set to nothing or `None`, any char that is not a letter or number<br>
         can be used to separate the RGBA values, including just a space.
     *   `allow_alpha` – Whether to include the alpha channel in the match.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Valid Formats
 
     With `fix_sep = ','`, the RGBA color can be in the formats:
@@ -363,7 +363,7 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     *   `green` 0-255 (int: green)
     *   `blue` 0-255 (int: blue)
     *   `alpha` 0.0-1.0 (float: opacity)\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Default pattern:**
@@ -451,12 +451,12 @@ def rgba_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
 
 def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     """Matches a HSLA color inside a string.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `fix_sep` – The fixed separator between the HSLA values (e.g., `,`, `;` …):<br>
         If set to nothing or `None`, any char that is not a letter or number<br>
         can be used to separate the HSLA values, including just a space.
     *   `allow_alpha` – Whether to include the alpha channel in the match.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Valid Formats
 
     With `fix_sep = ','`, the HSLA color can be in the formats:
@@ -472,7 +472,7 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
     *   `sat` 0-100 (int: saturation)
     *   `light` 0-100 (int: lightness)
     *   `alpha` 0.0-1.0 (float: opacity)\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Default pattern:**
@@ -560,9 +560,9 @@ def hsla_str(fix_sep: str | None = ",", *, allow_alpha: bool = True) -> str:
 
 def hexa_str(*, allow_alpha: bool = True) -> str:
     """Matches a HEXA color inside a string.\n
-    -------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `allow_alpha` – Whether to include the alpha channel in the match.\n
-    -------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Valid Formats
 
     The HEXA color can be in the formats (prefix `#`, `0x` or no prefix):
@@ -573,7 +573,7 @@ def hexa_str(*, allow_alpha: bool = True) -> str:
 
     #### Valid Ranges
     Every channel from 0-9 and A-F (case insensitive)\n
-    -------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usages
 
     **Default pattern:**
@@ -634,12 +634,12 @@ def hexa_str(*, allow_alpha: bool = True) -> str:
 @mypyc_attr(native_class=False)
 class LazyRegex:
     """A class that lazily compiles and caches regex patterns on first access.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `**patterns` – Keyword arguments where the key is the name of the pattern<br>
         and the value is the regex pattern string to compile.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     **Attention:** Requires non-standard library `regex`, not standard library `re`!\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python

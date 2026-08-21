@@ -67,7 +67,7 @@ _JS_INDICATOR_SCORES: Final[dict[str, float]] = {
 
 def add_indent(code: str, indent: int, /) -> str:
     """Adds `indent` spaces at the beginning of each line.\n
-    -----------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `code` – The code to indent.
     *   `indent` – The amount of spaces to add at the beginning of each line."""
 
@@ -79,7 +79,7 @@ def add_indent(code: str, indent: int, /) -> str:
 
 def get_tab_spaces(code: str, /) -> int:
     """Will try to get the amount of spaces used for indentation.\n
-    ----------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze."""
 
     indents = [len(line) - len(line.lstrip()) for line in _string_module.get_lines(code, remove_empty_lines=True)]
@@ -88,7 +88,7 @@ def get_tab_spaces(code: str, /) -> int:
 
 def change_tab_size(code: str, new_tab_size: int, /, *, remove_empty_lines: bool = False) -> str:
     """Replaces all tabs with `new_tab_size` spaces.\n
-    -----------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `code` – The code to modify the tab size of.
     *   `new_tab_size` – The new amount of spaces per tab.
     *   `remove_empty_lines` – If true, empty lines will be removed in the process."""
@@ -113,7 +113,7 @@ def change_tab_size(code: str, new_tab_size: int, /, *, remove_empty_lines: bool
 
 def get_func_calls(code: str, /) -> list[list[Any]]:
     """Will try to get all function calls and return them as a list.\n
-    -------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze."""
 
     nested_func_calls: list[list[Any]] = []
@@ -127,7 +127,7 @@ def get_func_calls(code: str, /) -> list[list[Any]]:
 
 def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "$t", "$lang"})) -> bool:
     """Will check if the code is very likely to be JavaScript.\n
-    ---------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze.
     *   `funcs` – A list of custom function names to check for."""
 

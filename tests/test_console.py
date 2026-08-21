@@ -280,6 +280,7 @@ def test_warn(capsys: pytest.CaptureFixture[str]):
 
 def test_input_bottom_toolbar_function(mock_prompt_session: tuple[MagicMock, MagicMock], capsys: pytest.CaptureFixture[str]):
     """Test that bottom toolbar function is set up."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -299,6 +300,7 @@ def test_input_bottom_toolbar_function(mock_prompt_session: tuple[MagicMock, Mag
 
 def test_input_creates_prompt_session(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that _console_module.input creates a PromptSession with correct parameters."""
+
     mock_session_class, mock_session = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -316,6 +318,7 @@ def test_input_creates_prompt_session(mock_prompt_session: tuple[MagicMock, Magi
 
 def test_input_custom_style_object(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that a custom Style object is created."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -330,6 +333,7 @@ def test_input_custom_style_object(mock_prompt_session: tuple[MagicMock, MagicMo
 
 def test_input_default_val_handling(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that default_val parameter is properly handled."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", default_val="default_value")
@@ -339,6 +343,7 @@ def test_input_default_val_handling(mock_prompt_session: tuple[MagicMock, MagicM
 
 def test_input_disable_paste(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that allow_paste=False is handled."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", allow_paste=False)
@@ -351,6 +356,7 @@ def test_input_disable_paste(mock_prompt_session: tuple[MagicMock, MagicMock], m
 
 def test_input_key_bindings_setup(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that key bindings are properly set up."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -365,6 +371,7 @@ def test_input_key_bindings_setup(mock_prompt_session: tuple[MagicMock, MagicMoc
 
 def test_input_mask_char_single_character(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that mask_char works with single characters."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter password: ", mask_char="*")
@@ -374,6 +381,7 @@ def test_input_mask_char_single_character(mock_prompt_session: tuple[MagicMock, 
 
 def test_input_message_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that the prompt message is properly formatted."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("[b]Bold prompt:[_b] ", default_color="#ABC")
@@ -386,6 +394,7 @@ def test_input_message_formatting(mock_prompt_session: tuple[MagicMock, MagicMoc
 
 def test_input_output_type_int(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that output_type parameter is handled for int conversion."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter number: ", output_type=int, default_val=42)
@@ -395,6 +404,7 @@ def test_input_output_type_int(mock_prompt_session: tuple[MagicMock, MagicMock],
 
 def test_input_style_configuration(mock_prompt_session: tuple[MagicMock, MagicMock], capsys: pytest.CaptureFixture[str]):
     """Test that custom style is applied."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -416,9 +426,11 @@ def test_input_styled_text_prompt(mock_prompt_session: tuple[MagicMock, MagicMoc
 
 
 def test_input_validate_while_typing_enabled(
-    mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock
+    mock_prompt_session: tuple[MagicMock, MagicMock],
+    mock_formatcodes_print: MagicMock,
 ):
     """Test that validate_while_typing is enabled."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -431,6 +443,7 @@ def test_input_validate_while_typing_enabled(
 
 def test_input_validator_class_creation(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that InputValidator class is properly instantiated."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", min_len=5)
@@ -445,6 +458,7 @@ def test_input_validator_class_creation(mock_prompt_session: tuple[MagicMock, Ma
 
 def test_input_with_allowed_chars(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that allowed_chars parameter is handled."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter digits only: ", allowed_chars="0123456789")
@@ -457,6 +471,7 @@ def test_input_with_allowed_chars(mock_prompt_session: tuple[MagicMock, MagicMoc
 
 def test_input_with_length_constraints(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that min_len and max_len are properly handled."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", min_len=3, max_len=10)
@@ -470,6 +485,7 @@ def test_input_with_length_constraints(mock_prompt_session: tuple[MagicMock, Mag
 
 def test_input_with_placeholder(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that placeholder is correctly passed to PromptSession."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", placeholder="Type here...")
@@ -482,6 +498,7 @@ def test_input_with_placeholder(mock_prompt_session: tuple[MagicMock, MagicMock]
 
 def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, MagicMock], capsys: pytest.CaptureFixture[str]):
     """Test that start and end parameters trigger `StyledText.print` calls."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ", start="[green]", end="[_c]")
@@ -494,6 +511,7 @@ def test_input_with_start_end_formatting(mock_prompt_session: tuple[MagicMock, M
 
 def test_input_with_validator_function(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that a custom validator function is properly handled."""
+
     mock_session_class, _ = mock_prompt_session
 
     def email_validator(text: str) -> str | None:
@@ -512,6 +530,7 @@ def test_input_with_validator_function(mock_prompt_session: tuple[MagicMock, Mag
 
 def test_input_without_placeholder(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):
     """Test that placeholder is empty when not provided."""
+
     mock_session_class, _ = mock_prompt_session
 
     _console_module.input("Enter text: ")
@@ -1056,7 +1075,8 @@ def test_argument_parser_help_cross_section_alignment(capsys: pytest.CaptureFixt
 
 
 def test_argument_parser_examples_syntax_highlighting_and_alignment(
-    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setattr("xulbux.console.get_width", lambda: 120)
 

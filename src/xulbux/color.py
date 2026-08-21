@@ -43,13 +43,13 @@ class _ColorBase:
 
 class rgba(_ColorBase):
     """An RGB/RGBA color object that includes a bunch of methods to manipulate the color.\n
-    ----------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `red` – The red channel in range [0, 255] inclusive.
     *   `green` – The green channel in range [0, 255] inclusive.
     *   `blue` – The blue channel in range [0, 255] inclusive.
     *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive<br>
-        or `None` if the color has no alpha channel.
-    ----------------------------------------------------------------------------------------
+        or `None` if the color has no alpha channel.\n
+    ----------------------------------------------------------------------------------------------------
     Includes methods:
     *   `to_hsla()` to convert to HSL color
     *   `to_hexa()` to convert to HEX color
@@ -200,7 +200,7 @@ class rgba(_ColorBase):
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> rgba:
         """Converts the color to grayscale using the luminance formula.\n
-        -------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `method` – The luminance calculation method to use:
             -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
             -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
@@ -213,13 +213,16 @@ class rgba(_ColorBase):
         return rgba(gray, gray, gray, self.alpha, _validate=False)
 
     def blend(self, other: Rgba, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> rgba:
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
-        ----------------------------------------------------------------------------------------------------------
+        """Blends the current color with another color
+        using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------
         *   `other` – The other RGBA color to blend with.
         *   `ratio` – The blend ratio between the two colors:
-            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.0` it means 100% of the current color
+                and 0% of the `other` color (2:0 mixture).
             -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
-            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color
+                and 100% of the `other` color (0:2 mixture).
         *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
 
         if not is_valid_rgba(other):
@@ -306,13 +309,13 @@ class rgba(_ColorBase):
 
 class hsla(_ColorBase):
     """A HSL/HSLA color object that includes a bunch of methods to manipulate the color.\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `hue` – The hue channel in range [0, 360] inclusive.
     *   `sat` – The saturation channel in range [0, 100] inclusive.
     *   `light` – The lightness channel in range [0, 100] inclusive.
     *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive<br>
-        or `None` if the color has no alpha channel.
-    ---------------------------------------------------------------------------------------
+        or `None` if the color has no alpha channel.\n
+    ----------------------------------------------------------------------------------------------------
     Includes methods:
     *   `to_rgba()` to convert to RGB color
     *   `to_hexa()` to convert to HEX color
@@ -463,7 +466,7 @@ class hsla(_ColorBase):
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hsla:
         """Converts the color to grayscale using the luminance formula.\n
-        -------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `method` – The luminance calculation method to use:
             -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
             -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
@@ -478,13 +481,16 @@ class hsla(_ColorBase):
         return hsla(hue, sat, light_val, self.alpha, _validate=False)
 
     def blend(self, other: Hsla, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hsla:
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
-        ----------------------------------------------------------------------------------------------------------
+        """Blends the current color with another color
+        using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------
         *   `other` – The other HSLA color to blend with.
         *   `ratio` – The blend ratio between the two colors:
-            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.0` it means 100% of the current color
+                and 0% of the `other` color (2:0 mixture).
             -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
-            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color
+                and 100% of the `other` color (0:2 mixture).
         *   `additive_alpha` – whether to blend the alpha channels additively or not."""
 
         if not is_valid_hsla(other):
@@ -559,13 +565,13 @@ class hsla(_ColorBase):
 
 class hexa(_ColorBase):
     """A HEXA color object that includes a bunch of methods to manipulate the color.\n
-    ----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The HEXA color string (prefix optional) or HEX integer, that can be in formats:
         -   `RGB` short format without alpha (only for strings)
         -   `RGBA` short format with alpha (only for strings)
         -   `RRGGBB` long format without alpha (for strings and HEX integers)
-        -   `RRGGBBAA` long format with alpha (for strings and HEX integers)
-    ----------------------------------------------------------------------------------------------
+        -   `RRGGBBAA` long format with alpha (for strings and HEX integers)\n
+    ----------------------------------------------------------------------------------------------------
     Includes methods:
     *   `to_rgba()` to convert to RGB color
     *   `to_hsla()` to convert to HSL color
@@ -773,7 +779,7 @@ class hexa(_ColorBase):
 
     def grayscale(self, *, method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2") -> hexa:
         """Converts the color to grayscale using the luminance formula.\n
-        -------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
         *   `method` – The luminance calculation method to use:
             -   `"wcag2"` WCAG 2.0 standard (default and most accurate for perception)
             -   `"wcag3"` draft WCAG 3.0 standard with improved coefficients
@@ -786,13 +792,16 @@ class hexa(_ColorBase):
         return hexa(_red=gray, _green=gray, _blue=gray, _alpha=self.alpha)
 
     def blend(self, other: Hexa, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hexa:
-        """Blends the current color with another color using the specified ratio in range [0.0, 1.0] inclusive.\n
-        ----------------------------------------------------------------------------------------------------------
+        """Blends the current color with another color
+        using the specified ratio in range [0.0, 1.0] inclusive.\n
+        ----------------------------------------------------------------------------------------------------
         *   `other` – The other HEXA color to blend with.
         *   `ratio` – The blend ratio between the two colors:
-            -   If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (2:0 mixture).
+            -   If `ratio` is `0.0` it means 100% of the current color
+                and 0% of the `other` color (2:0 mixture).
             -   If `ratio` is `0.5` it means 50% of both colors (1:1 mixture).
-            -   If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:2 mixture).
+            -   If `ratio` is `1.0` it means 0% of the current color
+                and 100% of the `other` color (0:2 mixture).
         *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
 
         if not is_valid_hexa(other):
@@ -836,7 +845,7 @@ class hexa(_ColorBase):
 
 def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
     """Check if the given color is a valid RGBA color.\n
-    --------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
     *   `allow_alpha` – Whether to allow alpha channel in the color."""
 
@@ -898,7 +907,7 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
 
 def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
     """Check if the given color is a valid HSLA color.\n
-    --------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
     *   `allow_alpha` – Whether to allow alpha channel in the color."""
 
@@ -974,10 +983,11 @@ def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
 ) -> bool | tuple[bool, Literal["#", "0x"] | None]:
     """Check if the given color is a valid HEXA color.\n
-    ------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
     *   `allow_alpha` – Whether to allow alpha channel in the color.
-    *   `get_prefix` – If true, the prefix used in the color (if any) is returned along with validity."""
+    *   `get_prefix` – If true, the prefix used in the color (if any)
+        is returned along with validity."""
 
     if isinstance(color, hexa):
         return (True, "#") if get_prefix else True
@@ -1001,7 +1011,7 @@ def is_valid_hexa(
 
 def is_valid(color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True) -> bool:
     """Check if the given color is a valid RGBA, HSLA or HEXA color.\n
-    --------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
     *   `allow_alpha` – Whether to allow alpha channel in the color."""
 
@@ -1014,7 +1024,7 @@ def is_valid(color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True)
 
 def has_alpha(color: Rgba | Hsla | Hexa, /) -> bool:
     """Check if the given color has an alpha channel.\n
-    ----------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format)."""
 
     if isinstance(color, (rgba, hsla, hexa)):
@@ -1045,7 +1055,7 @@ def has_alpha(color: Rgba | Hsla | Hexa, /) -> bool:
 
 def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
     """Will try to convert any color type to a color of type RGBA.\n
-    ------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
     if isinstance(color, (hsla, hexa)):
@@ -1062,7 +1072,7 @@ def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
 
 def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
     """Will try to convert any color type to a color of type HSLA.\n
-    ------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
     if isinstance(color, (rgba, hexa)):
@@ -1079,7 +1089,7 @@ def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
 
 def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
     """Will try to convert any color type to a color of type HEXA.\n
-    ------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
     if isinstance(color, (rgba, hsla)):
@@ -1104,9 +1114,10 @@ def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba
 
 def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None:
     """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.\n
-    ------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to search for RGBA colors.
-    *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
+    *   `only_first` – If true, only the first found color will be returned,
+        otherwise a list of all found colors."""
 
     if only_first:
         if not (match := _rx.search(_regex_module.rgba_str(allow_alpha=True), string)):
@@ -1147,9 +1158,10 @@ def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla
 
 def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None:
     """Will try to recognize HSLA colors inside a string and output the found ones as HSLA objects.\n
-    ------------------------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `string` – The string to search for HSLA colors.
-    *   `only_first` – If true, only the first found color will be returned, otherwise a list of all found colors."""
+    *   `only_first` – If true, only the first found color will be returned,
+        otherwise a list of all found colors."""
 
     if only_first:
         if not (match := _rx.search(_regex_module.hsla_str(allow_alpha=True), string)):
@@ -1182,11 +1194,11 @@ def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla
 
 def rgba_to_hex_int(red: int, green: int, blue: int, alpha: float | None = None, /, *, preserve_original: bool = False) -> int:
     """Convert RGBA channels to a HEXA integer (alpha is optional).\n
-    -----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `red`, `green`, `blue` – The red, green, and blue channels in range [0, 255] inclusive.
     *   `alpha` – The alpha channel in range [0.0, 1.0] inclusive or `None` if not set.
-    *   `preserve_original` – Whether to preserve the original color exactly (explained below).
-    -----------------------------------------------------------------------------------------------
+    *   `preserve_original` – Whether to preserve the original color exactly (explained below).\n
+    ----------------------------------------------------------------------------------------------------
     To preserve leading zeros, the function will add a `1` at the beginning,<br>
     if the HEX integer would start with a `0`.\n
     This could affect the color a little bit, but will make sure, that it won't be interpreted<br>
@@ -1219,10 +1231,10 @@ def rgba_to_hex_int(red: int, green: int, blue: int, alpha: float | None = None,
 
 def hex_int_to_rgba(hex_int: int, /, *, preserve_original: bool = False) -> rgba:
     """Convert a HEX integer to RGBA channels.\n
-    -----------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `hex_int` – The HEX integer to convert.
-    *   `preserve_original` – Whether to preserve the original color exactly (explained below).
-    -----------------------------------------------------------------------------------------------
+    *   `preserve_original` – Whether to preserve the original color exactly (explained below).\n
+    ----------------------------------------------------------------------------------------------------
     If the red channel is `1` after conversion, it will be set to `0`, because when converting<br>
     from RGBA to a HEX integer, the first `0` will be set to `1` to preserve leading zeros.\n
     This is the correction, so the color doesn't even look slightly different."""
@@ -1306,7 +1318,7 @@ def luminance(
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> int | float:
     """Calculates the relative luminance of a color according to various standards.\n
-    -------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `red`, `green`, `blue` – The red, green and blue channels in range [0, 255] inclusive.
     *   `output_type` – The range of the returned luminance value:
         -   `int` returns integer in range [0, 100] inclusive.
@@ -1355,7 +1367,7 @@ def text_color_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int: ..
 
 def text_color_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
     """Returns either black or white text color for optimal contrast on the given background color.\n
-    --------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `text_bg_color` – The background color (can be in RGBA or HEXA format)."""
 
     was_hexa, was_int = is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
@@ -1384,7 +1396,7 @@ def adjust_lightness(color: Rgba | Hexa, light_change: float, /) -> rgba | hexa:
 
 def adjust_lightness(color: Rgba | Hexa, light_change: float, /) -> rgba | hexa:
     """In- or decrease the lightness of the input color.\n
-    ---------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to adjust (can be in RGBA or HEXA format).
     *   `light_change` – The amount to change the lightness by,<br>
         in range `-1.0` (darken by 100%) and `1.0` (lighten by 100%)."""
@@ -1420,7 +1432,7 @@ def adjust_saturation(color: Rgba | Hexa, sat_change: float, /) -> rgba | hexa: 
 
 def adjust_saturation(color: Rgba | Hexa, sat_change: float, /) -> rgba | hexa:
     """In- or decrease the saturation of the input color.\n
-    --------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `color` – The color to adjust (can be in RGBA or HEXA format).
     *   `sat_change` – The amount to change the saturation by,<br>
         in range `-1.0` (saturate by 100%) and `1.0` (desaturate by 100%)."""

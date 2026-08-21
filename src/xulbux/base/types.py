@@ -79,7 +79,7 @@ def is_index_iterable(obj: object, item_type: None, /) -> TypeIs[IndexIterable[A
 def is_index_iterable(obj: object, item_type: type[Any] | tuple[type[Any], ...] | None = None, /) -> bool:
     """Returns true if `obj` is an instance that matches the `IndexIterable` type,<br>
     optionally checking if all contained elements are instances of `item_type`.\n
-    -------------------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     *   `obj` – The object to check.
     *   `item_type` – An optional type or tuple of types to check each contained element against."""
 

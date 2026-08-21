@@ -13,6 +13,7 @@ PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 def test_xulbux_lib_entrypoint_registered():
     """Verifies that the `xulbux-lib` script is registered in pyproject.toml pointing to the CLI main()."""
+
     with open(PYPROJECT_PATH, "rb") as file:
         pyproject_data = tomllib.load(file)
     scripts = pyproject_data.get("project", {}).get("scripts", {})
@@ -25,6 +26,7 @@ def test_xulbux_lib_entrypoint_registered():
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """show_help() must print the ANSI help banner to stdout."""
+
     monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     show_help()
@@ -35,6 +37,7 @@ def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest
 
 def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """The help banner must contain the installed package version."""
+
     from xulbux import __version__
 
     monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
@@ -47,6 +50,7 @@ def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pyt
 
 def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
     """show_help() must call `console.pause_exit` to wait for a key press before exiting."""
+
     mock_pause_exit = MagicMock()
     monkeypatch.setattr("xulbux.console.pause_exit", mock_pause_exit)
 
@@ -60,6 +64,7 @@ def test_show_help_calls_pause_exit(monkeypatch: pytest.MonkeyPatch):
 
 def test_show_help_does_not_raise(monkeypatch: pytest.MonkeyPatch):
     """show_help() must complete without errors."""
+
     monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 
     show_help()  # Must not raise.

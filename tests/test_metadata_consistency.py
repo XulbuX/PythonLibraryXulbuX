@@ -6,27 +6,30 @@ from pathlib import Path
 import pytest
 import regex as rx
 
-# Define paths relative to this test file `tests/test_version.py`:
+# Define paths relative to this test file `tests/test_metadata_consistency.py`:
 ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 
 
 def get_current_branch() -> str | None:
-    # Check GitHub Actions environment variables first.
-    # `GITHUB_HEAD_REF` is set for pull requests (source branch):
-    if branch := os.environ.get("GITHUB_HEAD_REF"):
-        return branch
-    # `GITHUB_REF_NAME` is set for pushes (branch name):
-    if branch := os.environ.get("GITHUB_REF_NAME"):
+    """Returns the current git branch name, or `None` if it cannot be determined."""
+
+    # Check GitHub Actions environment variables first:
+    if branch := os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME"):
         return branch
 
     # Fallback to Git command for local dev:
     try:
         result = subprocess.run(
-            ["git", "branch", "--show-current"], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True
+            ["git", "branch", "--show-current"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return result.stdout.strip() or None
+
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
 
@@ -35,8 +38,9 @@ def get_current_branch() -> str | None:
 
 
 def test_version_consistency():
-    """Verifies that the version numbers in `pyproject.toml` and `__init__.py`
+    """Verifies that the version numbers in `pyproject.toml` and `__init__.py`<br>
     match the version specified in the current release branch name (`dev/X.Y.Z`)."""
+
     # Skip if we can't determine the branch (detached head or not a git repo):
     if not (branch_name := get_current_branch()):
         pytest.skip("Could not determine git branch name")
@@ -75,6 +79,7 @@ def test_version_consistency():
 
 def test_dependencies_consistency():
     """Verifies that dependencies in `pyproject.toml` match `__dependencies__` in `__init__.py`."""
+
     # Extract dependencies from `__init__.py`:
     with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
@@ -104,6 +109,7 @@ def test_dependencies_consistency():
 
 def test_description_consistency():
     """Verifies that the description in `pyproject.toml` matches `__description__` in `__init__.py`."""
+
     # Extract description from `__init__.py`:
     with open(INIT_PATH, encoding="utf-8") as file:
         init_content = file.read()
