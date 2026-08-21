@@ -85,7 +85,7 @@ def test_extend(setup_test_environment: dict[str, Path]):
 
     # Empty path:
     assert _file_sys_module.extend_path("") is None
-    with pytest.raises(PathNotFoundError, match=r"Given 'rel_path' is an empty string\."):
+    with pytest.raises(PathNotFoundError, match=r"Given 'rel_path' is an empty string"):
         _file_sys_module.extend_path("", raise_error=True)
 
     # Found in standard locations:
@@ -107,7 +107,7 @@ def test_extend(setup_test_environment: dict[str, Path]):
     # Not found:
     assert _file_sys_module.extend_path("non_existent_file.xyz") is None
     with pytest.raises(
-        PathNotFoundError, match=r"Path [A-Za-z]*Path\('non_existent_file\.xyz'\) not found in specified directories\."
+        PathNotFoundError, match=r"Path [A-Za-z]*Path\('non_existent_file\.xyz'\) not found in specified directories"
     ):
         _file_sys_module.extend_path("non_existent_file.xyz", raise_error=True)
 

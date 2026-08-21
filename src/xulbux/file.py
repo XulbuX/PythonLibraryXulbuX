@@ -60,8 +60,8 @@ def create(file_path: Path | str, content: str = "", /, *, force: bool = False) 
         with open(path, encoding="utf-8") as existing_file:
             existing_content = existing_file.read()
             if existing_content == content:
-                raise SameContentFileExistsError("Already created this file. (nothing changed)")
-        raise FileExistsError("File already exists.")
+                raise SameContentFileExistsError("Already created this file (nothing changed)")
+        raise FileExistsError("File already exists")
 
     with open(path, "w", encoding="utf-8") as file:
         file.write(content)

@@ -1418,6 +1418,7 @@ class StyledText:
             self.ansi += other.ansi
         else:
             self.ansi += StyledText(other).ansi
+
         return self
 
     def __mul__(self, n: int, /) -> StyledText:

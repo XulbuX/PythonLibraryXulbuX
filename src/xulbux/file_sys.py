@@ -40,7 +40,7 @@ def get_script_dir() -> Path:
         elif hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None:
             base_path = Path(main_module.__spec__.origin).resolve().parent
         else:
-            raise RuntimeError("Can only get base directory if accessed from a file.")
+            raise RuntimeError("Can only get base directory if accessed from a file")
     return base_path
 
 
@@ -73,7 +73,7 @@ def extend_path(
     if isinstance(rel_path, str):
         if rel_path == "":
             if raise_error:
-                raise PathNotFoundError("Given 'rel_path' is an empty string.")
+                raise PathNotFoundError("Given 'rel_path' is an empty string")
             return None
         else:
             path = Path(rel_path)
@@ -203,7 +203,7 @@ class _ExtendPathHelper:
                 return match
 
         if self.raise_error:
-            raise PathNotFoundError(f"Path {self.rel_path!r} not found in specified directories.")
+            raise PathNotFoundError(f"Path {self.rel_path!r} not found in specified directories")
 
         return None
 

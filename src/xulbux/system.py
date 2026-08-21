@@ -189,7 +189,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
             args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
         if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type: ignore
-            raise PermissionError("Failed to launch elevated process.") from None
+            raise PermissionError("Failed to launch elevated process") from None
         else:
             raise SystemExit(0)
 
@@ -204,7 +204,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
         proc = _subprocess.Popen(cmd)
         proc.wait()
         if proc.returncode != 0:
-            raise PermissionError("Process elevation was denied.") from None
+            raise PermissionError("Process elevation was denied") from None
         raise SystemExit(0)
 
 
@@ -223,7 +223,7 @@ class _SystemRestartHelper:
         elif system in {"linux", "darwin"}:
             self.restart_posix()
         else:
-            raise NotImplementedError(f"Restart not implemented for '{system}' systems.")
+            raise NotImplementedError(f"Restart not implemented for '{system}' systems")
 
     def check_running_processes(self, command: str | list[str], /, skip_lines: int = 0) -> None:
         """Check if processes are running and raise error if force is False."""
@@ -254,7 +254,7 @@ class _SystemRestartHelper:
                 processes.append(line)
 
         if len(processes) > 0:  # Excluding Python and shell processes.
-            raise RuntimeError("Processes are still running.\nTo restart anyway set parameter 'force' to True.")
+            raise RuntimeError("Processes are still running\nTo restart anyway set parameter 'force' to True")
 
     def restart_windows(self) -> None:
         """Handle Windows system restart."""
@@ -284,9 +284,7 @@ class _SystemRestartHelper:
         try:
             _subprocess.run(["sudo", "shutdown", "-r", "now"])
         except _subprocess.CalledProcessError:
-            raise PermissionError(
-                "Failed to restart: insufficient privileges.\nEnsure sudo permissions are granted."
-            ) from None
+            raise PermissionError("Failed to restart: insufficient privileges\nEnsure sudo permissions are granted") from None
 
         if self.continue_program:
             self.wait_for_restart()

@@ -309,14 +309,14 @@ def test_add_does_not_mutate_operands():
 def test_iadd_mutates_in_place():
     x = StyledText("Hello")
     original_id = id(x)
-    x += StyledText(", world!")
+    x += ", world!"
     assert x.ansi == "Hello, world!"
     assert id(x) == original_id
 
 
 def test_iadd_preserves_ansi_sequences():
     x = StyledText(S.CYAN("a"))
-    x += StyledText(S.DIM("b"))
+    x += S.DIM("b")
     assert x.ansi == f"{ESC}[36ma{ESC}[39m{ESC}[2mb{ESC}[22m"
 
 

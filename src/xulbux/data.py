@@ -497,7 +497,7 @@ def _sep_path_id(path_id: str, /) -> list[int]:
             if id_part_len_int > 0 and (len(path_id_parts) % id_part_len_int == 0):
                 return [int(path_id_parts[i : i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
 
-    raise ValueError(f"Path ID '{path_id}' is an invalid format.") from None
+    raise ValueError(f"Path ID '{path_id}' is an invalid format") from None
 
 
 def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any:
@@ -635,7 +635,7 @@ class _DataGetPathIdHelper:
         if key.isdigit():
             if self.ignore_not_found:
                 return None
-            raise TypeError(f"Key '{key}' is invalid for a dict type.")
+            raise TypeError(f"Key '{key}' is invalid for a dict type")
 
         try:
             idx = list(self.current_data.keys()).index(key)
@@ -644,7 +644,7 @@ class _DataGetPathIdHelper:
         except (ValueError, KeyError):
             if self.ignore_not_found:
                 return None
-            raise KeyError(f"Key '{key}' not found in dict.") from None
+            raise KeyError(f"Key '{key}' not found in dict") from None
 
     def process_iterable_key(self, key: str, /) -> int | None:
         """Process a key for iterable data. Returns the index or `None` if not found."""

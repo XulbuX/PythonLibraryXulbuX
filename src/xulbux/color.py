@@ -119,7 +119,7 @@ class rgba(_ColorBase):
         elif (index == 3 or index == -1) and self.alpha is not None:
             return self.alpha
 
-        raise IndexError("Rgba index out of range.")
+        raise IndexError("Rgba index out of range")
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `rgba` objects are the same color."""
@@ -381,7 +381,7 @@ class hsla(_ColorBase):
         elif (index == 3 or index == -1) and self.alpha is not None:
             return self.alpha
 
-        raise IndexError("Hsla index out of range.")
+        raise IndexError("Hsla index out of range")
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `hsla` objects are the same color."""
@@ -609,7 +609,7 @@ class hexa(_ColorBase):
             return
 
         if isinstance(color, hexa):
-            raise ValueError("Color is already a hexa() color object.")
+            raise ValueError("Color is already a hexa() color object")
 
         elif isinstance(color, str):
             if color.startswith("#"):
@@ -646,7 +646,7 @@ class hexa(_ColorBase):
                     int(color[6:8], 16) / 255.0,
                 )
             else:
-                raise ValueError(f"Invalid HEXA color string '{color}'. Must be in formats RGB, RGBA, RRGGBB or RRGGBBAA.")
+                raise ValueError(f"Invalid HEXA color string '{color}'. Must be in formats RGB, RGBA, RRGGBB or RRGGBBAA")
 
         elif isinstance(color, int):
             self.red, self.green, self.blue, self.alpha = hex_int_to_rgba(color).values()
@@ -669,7 +669,7 @@ class hexa(_ColorBase):
         elif (index == 3 or index == -1) and self.alpha is not None:
             return f"{int(self.alpha * 255):02X}"
 
-        raise IndexError("Hexa index out of range.")
+        raise IndexError("Hexa index out of range")
 
     def __eq__(self, other: object, /) -> bool:
         """Check if two `hexa` objects are the same color."""
@@ -1056,7 +1056,8 @@ def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
         return hexa(cast("str | int", color)).to_rgba()
     elif is_valid_rgba(color):
         return _parse_rgba(cast("Rgba", color))
-    raise ValueError(f"Could not convert color {color!r} to RGBA.")
+
+    raise ValueError(f"Could not convert color {color!r} to RGBA")
 
 
 def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
@@ -1072,7 +1073,8 @@ def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
         return hexa(cast("str | int", color)).to_hsla()
     elif is_valid_hsla(color):
         return _parse_hsla(cast("Hsla", color))
-    raise ValueError(f"Could not convert color {color!r} to HSLA.")
+
+    raise ValueError(f"Could not convert color {color!r} to HSLA")
 
 
 def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
@@ -1088,6 +1090,7 @@ def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
         return _parse_hsla(cast("Hsla", color)).to_hexa()
     elif is_valid_hexa(color):
         return color if isinstance(color, hexa) else hexa(cast("str | int", color))
+
     raise ValueError(f"Could not convert color {color!r} to HEXA")
 
 
@@ -1248,7 +1251,7 @@ def hex_int_to_rgba(hex_int: int, /, *, preserve_original: bool = False) -> rgba
         )
 
     else:
-        raise ValueError(f"Could not convert HEX integer 0x{hex_int:X} to RGBA color.")
+        raise ValueError(f"Could not convert HEX integer 0x{hex_int:X} to RGBA color")
 
 
 @overload

@@ -134,7 +134,7 @@ def test_restart_unsupported_system(mock_subprocess: MagicMock, mock_platform: M
     """Test restart on unsupported system"""
     mock_platform.return_value = "Unknown"
     mock_subprocess.return_value = b"some output"
-    with pytest.raises(NotImplementedError, match=r"Restart not implemented for 'unknown' systems\."):
+    with pytest.raises(NotImplementedError, match=r"Restart not implemented for 'unknown' systems"):
         _system_module.restart()
 
 
