@@ -13,7 +13,7 @@ requires = [
 
 [project]
 name = "xulbux"
-version = "1.10.0"
+version = "2.0.0"
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
 authors = [{ name = "XulbuX", email = "hi@xul.is" }]

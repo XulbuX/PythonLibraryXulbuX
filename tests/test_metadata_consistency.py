@@ -36,14 +36,14 @@ def get_current_branch() -> str | None:
 
 def test_version_consistency():
     """Verifies that the version numbers in `pyproject.toml` and `__init__.py`
-    match the version specified in the current release branch name (`dev/1.X.Y`)."""
+    match the version specified in the current release branch name (`dev/X.Y.Z`)."""
     # Skip if we can't determine the branch (detached head or not a git repo):
     if not (branch_name := get_current_branch()):
         pytest.skip("Could not determine git branch name")
 
-    # Skip if branch name doesn't match release pattern `dev/1.X.Y`:
-    if not (branch_match := rx.match(r"^dev/(1\.[0-9]+\.[0-9]+)$", branch_name)):
-        pytest.skip(f"Current branch '{branch_name}' is not a release branch (dev/1.X.Y)")
+    # Skip if branch name doesn't match release pattern `dev/X.Y.Z`:
+    if not (branch_match := rx.match(r"^dev/([0-9]+\.[0-9]+\.[0-9]+)$", branch_name)):
+        pytest.skip(f"Current branch '{branch_name}' is not a release branch (dev/X.Y.Z)")
 
     expected_version = branch_match.group(1)
 

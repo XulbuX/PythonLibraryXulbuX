@@ -4,12 +4,12 @@
 # py -m pip install "/path/to/python-lib-xulbux" --no-deps --no-cache-dir --force-reinstall -vv
 
 # To create a new release, tag a commit with the following format:
-# git tag v1.X.Y
-# git push origin v1.X.Y
+# git tag vX.Y.Z
+# git push origin vX.Y.Z
 
-# If the tag `v1.X.Y` already exists, run the following commands first:
-# git tag -d v1.X.Y
-# git push origin :refs/tags/v1.X.Y
+# If the tag `vX.Y.Z` already exists, run the following commands first:
+# git tag -d vX.Y.Z
+# git push origin :refs/tags/vX.Y.Z
 
 name: Build and Publish
 permissions:

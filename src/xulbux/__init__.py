@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Final
 
 __package_name__: Final[str] = "xulbux"
-__version__: Final[str] = "1.10.0"
+__version__: Final[str] = "2.0.0"
 __description__: Final[str] = "A Python library to simplify common programming tasks."
 __status__: Final[str] = "Production/Stable"
 
