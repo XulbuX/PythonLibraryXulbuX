@@ -116,7 +116,7 @@ def _extract_ast_vars(body: list[ast.stmt], source_code: str) -> dict[str, dict[
                     # Use original formatting via `seg` if available, otherwise fallback to `ast.unparse()`:
                     rep = _dedent_source_segment(seg, stmt) if seg else ast.unparse(stmt)
 
-                    # Truncate large multiline calls (e.g. `StyledText(...)`) by replacing arguments with `...`:
+                    # Truncate large multiline calls (e.g., `StyledText(...)`) by replacing arguments with `...`:
                     if rep.count("\n") > 3 and isinstance(stmt.value, ast.Call):
                         stmt.value.args = [ast.Constant(value=Ellipsis)]
                         stmt.value.keywords = []

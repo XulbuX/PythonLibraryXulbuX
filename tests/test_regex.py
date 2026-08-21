@@ -95,10 +95,10 @@ def test_regex_brackets_round_brackets():
 
 def test_regex_brackets_square_brackets():
     """Test brackets pattern with square brackets"""
-    text = "Array access [index] and [another_index]"
+    text = "Array access [index] and [another_idx]"
     pattern = _regex_module.brackets("[", "]")
     matches = rx.findall(pattern, text)
-    assert matches == ["[index]", "[another_index]"]
+    assert matches == ["[index]", "[another_idx]"]
 
 
 def test_regex_brackets_curly_brackets():

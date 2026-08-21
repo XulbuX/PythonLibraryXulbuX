@@ -187,6 +187,7 @@ from .base.consts import ANSI
 import ctypes as _ctypes
 import os as _os
 import sys as _sys
+import textwrap as _textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TextIO, cast, overload
 
@@ -385,6 +386,14 @@ class _StyleGroup:
 
         return StyledText(self).center(width, fill_char)
 
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `_StyleGroup` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        return StyledText(self).wrap(width)
+
 
 class _Style:
     """A single ANSI style integer.\n
@@ -525,6 +534,14 @@ class _Style:
 
         return StyledText(self).center(width, fill_char)
 
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `_Style` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        return StyledText(self).wrap(width)
+
 
 class _ColorStyle:
     """A 24-bit true-color style – foreground or background.\n
@@ -662,6 +679,14 @@ class _ColorStyle:
 
         return StyledText(self).center(width, fill_char)
 
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `_ColorStyle` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        return StyledText(self).wrap(width)
+
 
 class _Link:
     """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
@@ -775,6 +800,14 @@ class _Link:
 
         return StyledText(self).center(width, fill_char)
 
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `_Link` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        return StyledText(self).wrap(width)
+
 
 class _StyledSequence:
     """Pre-computed ANSI open/close sequences applied to text.\n
@@ -864,6 +897,14 @@ class _StyledSequence:
         </TerminalOutput> -->"""
 
         return StyledText(self).center(width, fill_char)
+
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `_StyledSequence` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        return StyledText(self).wrap(width)
 
     def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
         """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
@@ -1563,6 +1604,47 @@ class StyledText:
         result.ansi = StyledText._multiply_char(fill_st, left) + self.ansi + StyledText._multiply_char(fill_st, right)
 
         return result
+
+    def wrap(self, width: int, /) -> list[StyledText]:
+        """Wrap the `StyledText` object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        -----------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line.\n
+        -----------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        for line in StyledText(S.RED("A very long red error message")).wrap(10):
+            line.print()
+        ```"""
+
+        if width <= 0 or len(self) <= width:
+            return [StyledText(self)]
+
+        lines: list[StyledText] = []
+        current_pos = 0
+
+        for paragraph in self.raw.split("\n"):
+            if not paragraph:
+                lines.append(StyledText(""))
+                current_pos += 1
+                continue
+
+            para_offset = 0
+
+            for chunk in _textwrap.wrap(paragraph, width=width):
+                if (chunk_start := paragraph.find(chunk, para_offset)) == -1:
+                    chunk_start = para_offset
+
+                slice_start = current_pos + chunk_start
+                slice_end = slice_start + len(chunk)
+
+                lines.append(self[slice_start:slice_end])
+                para_offset = chunk_start + len(chunk)
+
+            current_pos += len(paragraph) + 1
+
+        return lines or [StyledText(self)]
 
     def __str__(self) -> str:
         """Stringifying a `StyledText` instance yields its rendered<br>

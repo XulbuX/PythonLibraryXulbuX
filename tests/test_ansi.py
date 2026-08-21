@@ -419,3 +419,56 @@ def test_type_guards_and_nested_renderables():
     rendered = StyledText(nested_text)
     assert rendered.raw == "abcd"
     assert rendered.ansi == f"a{ESC}[31mb{ESC}[39mcd"
+
+
+def test_styled_text_wrap_basic():
+    st = StyledText("hello world foo bar")
+    wrapped = st.wrap(11)
+    assert [line.raw for line in wrapped] == ["hello world", "foo bar"]
+    assert isinstance(wrapped[0], StyledText)
+    assert isinstance(wrapped[1], StyledText)
+
+
+def test_styled_sequence_wrap_preserves_styles():
+    seq = S.RED("hello world foo bar")
+    wrapped = seq.wrap(11)
+    assert [line.raw for line in wrapped] == ["hello world", "foo bar"]
+    assert f"{ESC}[31mhello world{ESC}[39m" == wrapped[0].ansi
+    assert f"{ESC}[31mfoo bar{ESC}[39m" == wrapped[1].ansi
+
+
+def test_style_group_wrap_preserves_combined_styles():
+    grp = (S.BOLD | S.GREEN)("first long line second long line")
+    wrapped = grp.wrap(15)
+    assert [line.raw for line in wrapped] == ["first long line", "second long", "line"]
+    for line in wrapped:
+        assert f"{ESC}[1;32m" in line.ansi
+        assert f"{ESC}[22;39m" in line.ansi
+
+
+def test_wrap_nested_styles():
+    st = StyledText("Start ", S.DIM("(dimmed notes here)"), " end")
+    wrapped = st.wrap(12)
+    assert [line.raw for line in wrapped] == ["Start", "(dimmed", "notes here)", "end"]
+    # Check that dim style is present in the lines containing dimmed text:
+    dim_seq = StyledText(S.DIM).ansi
+    assert dim_seq in wrapped[1].ansi
+    assert dim_seq in wrapped[2].ansi
+
+
+def test_wrap_with_paragraphs_and_empty_lines():
+    st = StyledText("Paragraph 1 word wrap\n\nParagraph 2 word wrap")
+    wrapped = st.wrap(15)
+    assert [line.raw for line in wrapped] == ["Paragraph 1", "word wrap", "", "Paragraph 2", "word wrap"]
+
+
+def test_wrap_no_op_when_shorter_or_invalid_width():
+    st = StyledText(S.CYAN("Short text"))
+    assert len(st.wrap(20)) == 1
+    assert st.wrap(20)[0].ansi == st.ansi
+
+    assert len(st.wrap(0)) == 1
+    assert st.wrap(0)[0].ansi == st.ansi
+
+    assert len(st.wrap(-5)) == 1
+    assert st.wrap(-5)[0].ansi == st.ansi

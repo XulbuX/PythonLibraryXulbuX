@@ -28,8 +28,7 @@ def rename_extension(
 
     if full_extension:
         try:
-            first_dot_index = filename_with_ext.index(".")
-            filename = filename_with_ext[:first_dot_index]
+            filename = filename_with_ext[: filename_with_ext.index(".")]
         except ValueError:
             filename = filename_with_ext
     else:

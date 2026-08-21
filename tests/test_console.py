@@ -221,6 +221,20 @@ def test_log_no_title(capsys: pytest.CaptureFixture[str]):
     assert "Just a message" in captured.out
 
 
+def test_log_word_wrap_and_style_preservation(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("xulbux.console.get_width", lambda: 40)
+
+    prompt = ("This is a very long log message with ", S.BR.RED("bright red text"), " and more normal words.")
+    _console_module.log("INFO", prompt)
+
+    captured = capsys.readouterr()
+    lines = captured.out.splitlines()
+    assert len(lines) > 1
+
+    red_seq = StyledText(S.BR.RED).ansi
+    assert any(red_seq in line for line in lines)
+
+
 def test_pause_exit_pause_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     mock_read_key = MagicMock()
     monkeypatch.setattr("xulbux.console._read_single_key", mock_read_key)
@@ -745,6 +759,131 @@ def test_argument_parser_overlapping_flags():
     parser.add_arg("test1", {"-t", "--test"})
     with pytest.raises(ValueError, match="overlap with an existing argument"):
         parser.add_arg("test2", {"-t"})
+
+
+def test_argument_parser_help_cross_section_alignment(capsys: pytest.CaptureFixture[str]):
+    parser = ArgumentParser(
+        title="Tree Generator",
+        subtitle="Quickly generate directory trees",
+        controls=[("Ctrl+C", "Cancel and exit")],
+    )
+    parser.add_arg("base_dir", "before", description="Base directory to generate tree from")
+    parser.add_arg("interactive", {"-I", "--interactive"}, description="Prompt for interactive tree settings")
+    parser.add_arg("ignore", {"-i", "--ignore"}, expects_value="S", description="Directories to ignore")
+
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    lines = [StyledText(line).raw for line in captured.out.splitlines()]
+
+    arg_line = next(line for line in lines if "Base directory to generate tree from" in line)
+    opt_line = next(line for line in lines if "Prompt for interactive tree settings" in line)
+    ctrl_line = next(line for line in lines if "Cancel and exit" in line)
+
+    arg_col = arg_line.index("Base directory to generate tree from")
+    opt_col = opt_line.index("Prompt for interactive tree settings")
+    ctrl_col = ctrl_line.index("Cancel and exit")
+
+    assert arg_col == opt_col == ctrl_col
+
+
+def test_argument_parser_examples_syntax_highlighting_and_alignment(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("xulbux.console.get_width", lambda: 120)
+
+    parser = ArgumentParser(
+        title="App",
+        examples=[
+            ("{cmd} -I", "Short example"),
+            ('{cmd} -i "/path/with spaces | dir" --auto-ignore=1', "Long example with flag value"),
+            ('{cmd} --recurse "/some/pos/path"', "Boolean flag followed by positional argument"),
+        ],
+    )
+    parser.add_arg("ignore", {"-i", "--ignore"}, expects_value="S", description="Directories to ignore")
+    parser.add_arg("auto_ignore", {"-a", "--auto-ignore"}, expects_value="N", description="Auto-ignore mode")
+    parser.add_arg("recurse", {"-r", "--recurse"}, expects_value=False, description="Recurse subdirectories")
+    parser.add_arg("interactive", {"-I", "--interactive"}, expects_value=False, description="Interactive mode")
+
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    raw_lines = [StyledText(line).raw for line in captured.out.splitlines()]
+
+    example_line1 = next(line for line in raw_lines if "Short example" in line)
+    example_line2 = next(line for line in raw_lines if "Long example with flag value" in line)
+    example_line3 = next(line for line in raw_lines if "Boolean flag followed by positional argument" in line)
+
+    col1 = example_line1.index("# Short example")
+    col2 = example_line2.index("# Long example with flag value")
+    col3 = example_line3.index("# Boolean flag followed by positional argument")
+
+    assert col1 == col2 == col3
+
+    ansi_lines = captured.out.splitlines()
+    ansi_line2 = next(line for line in ansi_lines if "Long example with flag value" in line)
+    ansi_line3 = next(line for line in ansi_lines if "Boolean flag followed by positional argument" in line)
+
+    cyan_seq = StyledText(S.BR.CYAN).ansi
+    assert cyan_seq in ansi_line3
+    blue_seq = StyledText(S.BR.BLUE).ansi
+    assert blue_seq in ansi_line2
+    assert blue_seq in ansi_line3
+    green_seq = StyledText(S.BR.GREEN).ansi
+    assert green_seq in ansi_line2
+    assert green_seq in ansi_line3
+
+
+def test_argument_parser_reactive_narrow_width_layout(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("xulbux.console.get_width", lambda: 60)
+
+    parser = ArgumentParser(
+        title="Tree Generator",
+        subtitle="Quickly generate advanced and good looking directory trees",
+        examples=[
+            ("{cmd} -I", "Prompt for interactive settings"),
+            ('{cmd} -i "/abs/to/dir1 | rel/to/dir2 | dir3"', "Ignore specified directories"),
+        ],
+    )
+    parser.add_arg(
+        "base_dir",
+        "before",
+        description=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
+    )
+    parser.add_arg(
+        "ignore",
+        {"-i", "--ignore"},
+        expects_value="S",
+        description=("Directories to ignore ", S.DIM("(directory paths/names, separated by |)")),
+    )
+
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    raw_lines = [StyledText(line).raw for line in captured.out.splitlines()]
+    ansi_lines = captured.out.splitlines()
+
+    # [1] Title box should be full width (60 chars):
+    box_top = next(line for line in raw_lines if line.startswith("▄"))
+    assert len(box_top) == 60
+
+    # [2] Subtitle should be on its own line in the box (not following `—`):
+    assert any("Quickly generate" in line for line in raw_lines)
+    assert not any("Tree Generator — Quickly generate" in line for line in raw_lines)
+
+    # [3] Examples should switch to stacked layout (comment line on top of command line):
+    comment_idx = next(i for i, line in enumerate(raw_lines) if "# Prompt for interactive settings" in line)
+    cmd_idx = next(i for i, line in enumerate(raw_lines) if "-I" in line and "#" not in line)
+    assert comment_idx < cmd_idx
+
+    # [4] Long descriptions in Options should wrap and continuation lines should be indented:
+    continuation_line = next(line for line in raw_lines if "paths/names, separated by |)" in line)
+    assert continuation_line.startswith(" ")
+
+    # [5] Styling (e.g., dim sequence) in wrapped descriptions should be preserved:
+    dim_seq = StyledText(S.DIM).ansi
+    ansi_continuation = next(line for line in ansi_lines if "paths/names, separated by |)" in line)
+    assert dim_seq in ansi_continuation
 
 
 # ***************************************************** ProgressBar TESTS *****************************************************

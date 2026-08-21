@@ -74,11 +74,12 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
         })
 
     else:
-        processed_items = (
+        processed_items = [
             (item if not is_data_obj(item) else remove_empty_items(item, spaces_are_empty=spaces_are_empty))
             for item in data
             if not (isinstance(item, (str, type(None))) and _string_module.is_empty(item, spaces_are_empty=spaces_are_empty))
-        )
+        ]
+
         return cast(
             "DataObj",
             type(data)([

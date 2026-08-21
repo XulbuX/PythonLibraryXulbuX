@@ -6,8 +6,17 @@ and command-line argument parsing.
 """
 
 from . import color as _color_module
-from . import string as _string_module
-from .ansi import AnyStyle, BaseStyle, ColorStyle, S, StyledText, TextRenderable, is_any_style, is_text_renderable
+from .ansi import (
+    AnyStyle,
+    BaseStyle,
+    ColorStyle,
+    S,
+    StyledText,
+    TextRenderable,
+    _StyledSequence,
+    is_any_style,
+    is_text_renderable,
+)
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba
@@ -23,7 +32,6 @@ import threading as _threading
 import time as _time
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager, suppress
-from itertools import chain
 from pathlib import Path
 from typing import Any, Final, Literal, NoReturn, TextIO, TypedDict, cast, overload
 import prompt_toolkit as _pt
@@ -34,17 +42,18 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 
 _PATTERNS: Final[LazyRegex] = LazyRegex(
-    flag_prefix=r"^[\W_]+",
+    animation=r"(?i){(?:animation|a)}",
+    bar=r"(?i){(?:bar|b)}",
+    cli_flag_prefix=r"^[\W_]+",
+    cli_token=r"""--?[^\s=]+=(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s]+)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s]+""",
+    current=r"(?i){(?:current|c)(?::(.))?}",
     hr=r"(?i){hr}",
+    hr_l_nl=r"(?i)(?<=\n){hr}(?!\n)",
     hr_no_nl=r"(?i)(?<!\n){hr}(?!\n)",
     hr_r_nl=r"(?i)(?<!\n){hr}(?=\n)",
-    hr_l_nl=r"(?i)(?<=\n){hr}(?!\n)",
     label=r"(?i){(?:label|l)}",
-    bar=r"(?i){(?:bar|b)}",
-    current=r"(?i){(?:current|c)(?::(.))?}",
-    total=r"(?i){(?:total|t)(?::(.))?}",
     percentage=r"(?i){(?:percentage|percent|p)(?::\.([0-9])+f)?}",
-    animation=r"(?i){(?:animation|a)}",
+    total=r"(?i){(?:total|t)(?::(.))?}",
 )
 
 _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
@@ -93,6 +102,12 @@ def _to_styled_text(obj: TextRenderable | object) -> StyledText:
         return StyledText(*obj) if isinstance(obj, tuple) else StyledText(obj)
 
     return StyledText(str(obj))
+
+
+def _wrap_text(obj: TextRenderable | object, width: int) -> list[StyledText]:
+    """Internal helper to word-wrap a string or `StyledText` while preserving ANSI styles and line breaks."""
+
+    return _to_styled_text(obj).wrap(width)
 
 
 class ArgConfigDict(TypedDict):
@@ -346,26 +361,44 @@ class ArgumentParser:
     def _flags_to_st(self, flags: Iterable[str]) -> StyledText:
         """Internal method to convert a set of flags into a nicely formatted `StyledText` object for help printing."""
 
-        return StyledText(", ").join(
+        return StyledText(", ").join([
             S.BR.BLUE(flag)
-            for flag in sorted(flags, key=lambda flg: (len(flg) - len(_PATTERNS.flag_prefix.sub("", flg)), flg))
-        )
+            for flag in sorted(flags, key=lambda flg: (len(flg) - len(_PATTERNS.cli_flag_prefix.sub("", flg)), flg))
+        ])
 
     def _add_title_to_help_output(self, output: list[TextRenderable], console_width: int) -> None:
         """Internal method to add the title and subtitle to the help output."""
 
-        if self.title:
-            title: TextRenderable
-            box_w: int
+        if not self.title:
+            return
+
+        if (len(self.title) + (len(self.subtitle) + 3 if self.subtitle else 0) + 4) <= console_width:
+            title_renderable: TextRenderable
+            box_width: int
 
             if self.subtitle:
-                title = (S.BOLD(self.title), f" — {self.subtitle}")
-                box_w = len(self.title) + len(self.subtitle) + 7
+                title_renderable = (S.BOLD(self.title), f" — {self.subtitle}")
+                box_width = len(self.title) + len(self.subtitle) + 7
             else:
-                title = S.BOLD(self.title)
-                box_w = len(self.title) + 4
+                title_renderable = S.BOLD(self.title)
+                box_width = len(self.title) + 4
 
-            output.extend(["▄" * box_w, (S.INVERSE | S.BG.BLACK)("  ", title, "  "), "▀" * box_w, ""])
+            output.extend(["▄" * box_width, (S.INVERSE | S.BG.BLACK)("  ", title_renderable, "  "), "▀" * box_width, ""])
+
+        else:
+            inner_width = max(console_width - 2, 1)
+            output.append("▄" * console_width)
+
+            for title_line in _wrap_text(S.BOLD(self.title), inner_width):
+                output.append((S.INVERSE | S.BG.BLACK)(" ", title_line, " " * max(0, inner_width - len(title_line)), " "))
+
+            if self.subtitle:
+                for subtitle_line in _wrap_text(self.subtitle, inner_width):
+                    output.append(
+                        (S.INVERSE | S.BG.BLACK)(" ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), " ")
+                    )
+
+            output.extend(["▀" * console_width, ""])
 
     def _add_usage_to_help_output(
         self,
@@ -390,36 +423,33 @@ class ArgumentParser:
 
         output.append("")
 
-    def _add_args_to_help_output(
+    def _get_args_help_items(
         self,
-        output: list[TextRenderable],
         before_pos: str | None,
         after_pos: str | None,
         pos_before_st: StyledText,
         pos_after_st: StyledText,
-    ) -> None:
-        """Internal method to add the positional arguments section to the help output."""
+    ) -> list[tuple[StyledText, TextRenderable]]:
+        """Internal method to collect help items for positional arguments."""
 
-        if before_pos or after_pos:
-            output.append(S.BOLD("Arguments:"))
+        args_items: list[tuple[StyledText, TextRenderable]] = []
 
-            if before_pos:
-                output.append((f"  {pos_before_st.ansi} ", self._arg_configs[before_pos]["description"] or ""))
-            if after_pos:
-                output.append((f"  {pos_after_st.ansi} ", self._arg_configs[after_pos]["description"] or ""))
+        if before_pos:
+            args_items.append((pos_before_st, self._arg_configs[before_pos]["description"] or ""))
+        if after_pos:
+            args_items.append((pos_after_st, self._arg_configs[after_pos]["description"] or ""))
 
-            output.append("")
+        return args_items
 
-    def _add_opts_to_help_output(self, output: list[TextRenderable], has_opts: bool) -> None:
-        """Internal method to add the options section to the help output."""
+    def _get_opts_help_items(self, has_opts: bool) -> list[tuple[StyledText, TextRenderable]]:
+        """Internal method to collect help items for options."""
 
         if not has_opts and not self.help_flags:
-            return
+            return []
 
-        output.append(S.BOLD("Options:"))
-
-        opts_list: list[tuple[StyledText, TextRenderable]] = []
-        opts_list.append((self._flags_to_st(self.help_flags), "Show this help message and exit"))
+        opts_items: list[tuple[StyledText, TextRenderable]] = [
+            (self._flags_to_st(self.help_flags), "Show this help message and exit")
+        ]
 
         for _, cfg in self._arg_configs.items():
             if isinstance(cfg["flags_or_pos"], (set, frozenset)):
@@ -428,42 +458,134 @@ class ArgumentParser:
                 if cfg["expects_value"] is not False:
                     flag_st += S.BR.BLUE(S.DIM("="), "VAL" if cfg["expects_value"] is True else str(cfg["expects_value"]))
 
-                opts_list.append((flag_st, cfg["description"] or ""))
+                opts_items.append((flag_st, cfg["description"] or ""))
 
-        max_flag_len = max([len(flag_st.raw) for flag_st, _ in opts_list], default=0)
+        return opts_items
 
-        for flag_st, desc in opts_list:
-            output.append(("  ", flag_st, " " * (max_flag_len - len(flag_st.raw)), "    ", desc))
+    def _get_controls_help_items(self) -> list[tuple[StyledText, TextRenderable]]:
+        """Internal method to collect help items for controls."""
+
+        if not self.controls:
+            return []
+
+        controls_items: list[tuple[StyledText, TextRenderable]] = []
+
+        for control, desc in self.controls:
+            controls_items.append((StyledText(S.BR.RED(S.DIM("+").join(control.split("+")))), desc))
+
+        return controls_items
+
+    def _add_section_to_help_output(
+        self,
+        output: list[TextRenderable],
+        title: str,
+        items: list[tuple[StyledText, TextRenderable]],
+        max_col_width: int,
+        console_width: int,
+    ) -> None:
+        """Internal method to add a section with aligned items to the help output."""
+
+        if not items:
+            return
+
+        output.append(S.BOLD(title))
+
+        desc_col = max_col_width + 6
+        desc_width = max(console_width - desc_col, 10)
+
+        for left_st, desc in items:
+            if not desc:
+                output.append(("  ", left_st))
+                continue
+
+            wrapped_lines = _wrap_text(desc, desc_width)
+
+            output.append(("  ", left_st, " " * (max_col_width - len(left_st.raw) + 4), wrapped_lines[0]))
+            for continuation_line in wrapped_lines[1:]:
+                output.append((" " * desc_col, continuation_line))
 
         output.append("")
 
-    def _add_controls_to_help_output(self, output: list[TextRenderable]) -> None:
-        """Internal method to add the controls section to the help output."""
+    def _highlight_example(self, example_cmd: str, cmd_name: str) -> StyledText:
+        """Internal method to syntax-highlight the left command part of an example."""
 
-        if self.controls:
-            output.append(S.BOLD("Controls:"))
+        value_flags: set[str] = set()
+        for arg_config in self._arg_configs.values():
+            if isinstance(arg_config["flags_or_pos"], (set, frozenset)) and arg_config["expects_value"] is not False:
+                for flag in arg_config["flags_or_pos"]:
+                    value_flags.add(flag)
 
-            max_ctrl_len = max([len(control_key) for control_key, _ in self.controls], default=0)
+        parts: list[str] = []
+        last_idx: int = 0
+        expecting_value: bool = False
 
-            for ctrl, desc in self.controls:
-                styled_ctrl = S.BR.RED(S.DIM("+").join(ctrl.split("+")))
-                output.append(("  ", styled_ctrl, " " * (max_ctrl_len - len(ctrl)), "    ", desc))
+        for match in _PATTERNS.cli_token.finditer(example_cmd):
+            parts.append(example_cmd[last_idx : match.start()])
 
-            output.append("")
+            if (token := match.group(0)).startswith("{cmd}"):
+                suffix = token[5:]
+                parts.append(StyledText(S.BR.GREEN(cmd_name), S.DIM(suffix) if suffix else "").ansi)
+                expecting_value = False
+            elif token.startswith("-"):
+                parts.append(StyledText(S.BR.BLUE(token)).ansi)
+                expecting_value = False if "=" in token else token in value_flags
+            elif expecting_value:
+                parts.append(StyledText(S.BR.BLUE(token)).ansi)
+                expecting_value = False
+            else:
+                parts.append(StyledText(S.BR.CYAN(token)).ansi)
 
-    def _add_examples_to_help_output(self, output: list[TextRenderable], cmd_name_ext: tuple[str, str]) -> None:
+            last_idx = match.end()
+
+        parts.append(example_cmd[last_idx:])
+        result = StyledText.__new__(StyledText)
+        result.ansi = "".join(parts)
+
+        return result
+
+    def _add_examples_to_help_output(
+        self,
+        output: list[TextRenderable],
+        cmd_name_ext: tuple[str, str],
+        console_width: int,
+    ) -> None:
         """Internal method to add the examples section to the help output."""
 
-        if self.examples:
-            output.append(S.BOLD("Examples:"))
+        if not self.examples:
+            return
 
-            for ex, desc in self.examples:
+        output.append(S.BOLD("Examples:"))
+
+        highlighted_examples: list[tuple[StyledText, TextRenderable]] = [
+            (self._highlight_example(example_cmd, cmd_name_ext[0]), description) for example_cmd, description in self.examples
+        ]
+        max_example_len = max([len(cmd_st.raw) for cmd_st, _ in highlighted_examples], default=0)
+
+        fits_wide = True
+        for _, desc in highlighted_examples:
+            desc_raw_len = 2 + len(desc if isinstance(desc, str) else StyledText(desc).raw)
+            line_len = 2 + max_example_len + 4 + desc_raw_len
+
+            if line_len > console_width:
+                fits_wide = False
+                break
+
+        if fits_wide:
+            for cmd_st, desc in highlighted_examples:
                 output.append((
-                    f"  {ex.replace('{cmd}', StyledText(S.BR.GREEN(cmd_name_ext[0])).ansi)}    ",
+                    "  ",
+                    cmd_st,
+                    " " * (max_example_len - len(cmd_st.raw) + 4),
                     S.DIM("# ", S.ITALIC(desc)),
                 ))
 
-            output.append("")
+        else:
+            for cmd_st, desc in highlighted_examples:
+                for desc_line in _wrap_text(desc, max(console_width - 4, 10)):
+                    output.append(("  ", S.DIM("# ", S.ITALIC(desc_line))))
+                output.append(("  ", cmd_st))
+
+        output.append("")
 
     def print_help(self, error_message: str | None = None) -> None:
         """Print the generated help screen.\n
@@ -493,18 +615,27 @@ class ArgumentParser:
         after_pos_st = StyledText(S.BR.CYAN(f"<{after_pos}>") if after_pos else "")
         opts_st = StyledText(S.BR.BLUE("[options]") if has_opts else "")
 
+        args_items = self._get_args_help_items(before_pos, after_pos, before_pos_st, after_pos_st)
+        opts_items = self._get_opts_help_items(has_opts)
+        controls_items = self._get_controls_help_items()
+
+        max_col_width = max(
+            [len(left_st.raw) for left_st, _ in (*args_items, *opts_items, *controls_items)],
+            default=0,
+        )
+
         console_width = get_width()
         output: list[TextRenderable] = [""]
 
         if error_message:
-            output.extend([S.RED(S.BOLD("[ERROR] ")), error_message, ""])
+            output.extend([(S.RED(S.BOLD("[ERROR] "), error_message)), ""])
 
         self._add_title_to_help_output(output, console_width)
         self._add_usage_to_help_output(output, cmd_st, before_pos_st, after_pos_st, opts_st)
-        self._add_args_to_help_output(output, before_pos, after_pos, before_pos_st, after_pos_st)
-        self._add_opts_to_help_output(output, has_opts)
-        self._add_controls_to_help_output(output)
-        self._add_examples_to_help_output(output, cmd_name_ext)
+        self._add_section_to_help_output(output, "Arguments:", args_items, max_col_width, console_width)
+        self._add_section_to_help_output(output, "Options:", opts_items, max_col_width, console_width)
+        self._add_section_to_help_output(output, "Controls:", controls_items, max_col_width, console_width)
+        self._add_examples_to_help_output(output, cmd_name_ext, console_width)
 
         if self.epilog:
             output.append(self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog))
@@ -870,23 +1001,19 @@ def log(
     # Position where prompt needs to wrap to next line:
     wrap_len: int = get_width() - (title_len + len(tab))
 
-    # Get the prompt's plain text and its ANSI codes with their (linebreak-independent) positions:
-    clean_prompt = (prompt_st := _to_styled_text(prompt)).raw
-    removals = tuple([(pos - clean_prompt.count("\n", 0, pos), seq) for pos, seq in prompt_st.raw_code_positions])
+    # Convert the prompt to styled text and apply the optional default color:
+    prompt_st: _StyledSequence | StyledText = _to_styled_text(prompt)
+    if default_color is not None:
+        prompt_st = _as_fg_style(default_color)(prompt_st)
 
-    # Split prompt into lines and then split each line into chunks that fit within the wrap length:
-    prompt_lst: list[str] = list(chain.from_iterable(_process_lines(clean_prompt, wrap_len)))
-
-    # Add back the removed ANSI codes to their original positions in the wrapped prompt:
-    wrapped = f"\n{' ' * title_len}{tab}".join(_add_back_removed_parts(prompt_lst, removals))
-
-    prompt_segment = _as_fg_style(default_color)(wrapped) if default_color is not None else wrapped
+    # Wrap prompt text to the next line with proper indentation after the title and tab:
+    joined_prompt = StyledText(f"\n{' ' * title_len + tab}").join(prompt_st.wrap(wrap_len))
 
     if title == "":
-        StyledText(f"{start}{mx}", prompt_segment, sep="").print(end=end)
+        StyledText(f"{start}{mx}", joined_prompt, sep="").print(end=end)
     else:
         title_ansi = _render_log_title(f"{px}{title}{px}", title_style)
-        StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", prompt_segment, sep="").print(end=end)
+        StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", joined_prompt, sep="").print(end=end)
 
 
 def _log_preset(
@@ -1672,41 +1799,6 @@ def _persist_style(ansi_text: str, style_open: str, /) -> str:
     return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", r"\\"), ansi_text)
 
 
-def _process_lines(clean_prompt: str, wrap_len: int) -> Generator[tuple[Literal[""]] | list[str], Any, None]:
-    """Splits the clean prompt into lines and then splits each line into chunks that fit within the wrap length."""
-    if not clean_prompt:
-        yield ("",)
-        return
-
-    for line in clean_prompt.splitlines():
-        lst = _string_module.split_count(line, wrap_len)
-        yield lst if lst else ("",)
-
-
-def _add_back_removed_parts(split_string: list[str], removals: tuple[tuple[int, str], ...], /) -> list[str]:
-    """Adds back the removed parts into the split string parts at their original positions."""
-
-    cumulative_pos = [0]
-    for length in [len(part) for part in split_string]:
-        cumulative_pos.append(cumulative_pos[-1] + length)
-
-    result, offset_adjusts = split_string.copy(), [0] * len(split_string)
-    last_idx, total_length = len(split_string) - 1, cumulative_pos[-1]
-
-    for pos, removal in removals:
-        if pos >= total_length:
-            result[last_idx] = result[last_idx] + removal
-            continue
-
-        i = _find_string_part(pos, cumulative_pos)
-        adjusted_pos = (pos - cumulative_pos[i]) + offset_adjusts[i]
-        parts = [result[i][:adjusted_pos], removal, result[i][adjusted_pos:]]
-        result[i] = "".join(parts)
-        offset_adjusts[i] += len(removal)
-
-    return result
-
-
 def _render_log_title(text: str, style: AnyStyle, /) -> str:
     """Renders (and caches) the styled log title as an ANSI string.\n
     ----------------------------------------------------------------------------
@@ -1721,24 +1813,6 @@ def _render_log_title(text: str, style: AnyStyle, /) -> str:
             _LOG_TITLE_CACHE[key] = cached
 
     return cached
-
-
-def _find_string_part(pos: int, cumulative_pos: list[int], /) -> int:
-    """Finds the index of the string part that contains the given position."""
-
-    left, right = 0, len(cumulative_pos) - 1
-
-    while left < right:
-        mid = (left + right) // 2
-
-        if cumulative_pos[mid] <= pos < cumulative_pos[mid + 1]:
-            return mid
-        elif pos < cumulative_pos[mid]:
-            right = mid
-        else:
-            left = mid + 1
-
-    return left
 
 
 def _split_hr_parts(val_str: str, /) -> list[str]:
@@ -2467,7 +2541,7 @@ class Throbber(_StdoutInterceptorMixin):
         self._original_stdout: TextIO | None = None
         self._current_animation_str: str = ""
         self._last_line_len: int = 0
-        self._frame_index: int = 0
+        self._frame_idx: int = 0
         self._stop_event: _threading.Event | None = None
         self._animation_thread: _threading.Thread | None = None
 
@@ -2546,7 +2620,7 @@ class Throbber(_StdoutInterceptorMixin):
 
             self._stop_event = None
             self._animation_thread = None
-            self._frame_index = 0
+            self._frame_idx = 0
 
             self._clear_intercept_line()
             self._stop_intercepting()
@@ -2590,7 +2664,7 @@ class Throbber(_StdoutInterceptorMixin):
     def _animation_loop(self) -> None:
         """The internal thread target that runs the animation loop."""
 
-        self._frame_index = 0
+        self._frame_idx = 0
         while self._stop_event and not self._stop_event.is_set():
             try:
                 if not self.active or not self._original_stdout:
@@ -2598,7 +2672,7 @@ class Throbber(_StdoutInterceptorMixin):
 
                 self._flush_buffer()
 
-                frame = self.frames[self._frame_index % len(self.frames)] + _ANSI_RESET
+                frame = self.frames[self._frame_idx % len(self.frames)] + _ANSI_RESET
                 label_ansi = _to_styled_text(self.label).ansi if self.label is not None else ""
                 formatted = self.sep.join(
                     fmt_part
@@ -2613,7 +2687,7 @@ class Throbber(_StdoutInterceptorMixin):
                 self._current_animation_str = formatted
                 self._last_line_len = len(formatted)
                 self._redraw_display()
-                self._frame_index += 1
+                self._frame_idx += 1
 
             except Exception:
                 self._emergency_cleanup()
