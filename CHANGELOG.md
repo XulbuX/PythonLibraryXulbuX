@@ -15,9 +15,9 @@
 # <br><b>Changelog</b><br>
 
 
-<span id="v1-10-0" />
+<span id="v2-0-0" /><span id="v2" />
 
-## … `v1.10.0` Big Update 🚀
+## … `v2.0` Major Release 💎
 
 *   Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
 *   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
@@ -976,11 +976,10 @@
     2.  No backslash escaping in f-strings.
 
 
-<span id="release" /><span id="v1-0-0" />
+<span id="release" /><span id="v1-0-0" /><span id="v1" />
 
-## 14.10.2024 `v1.0.0`
+## 14.10.2024 `v1.0` Initial Release 💎
 
-$\color{#F90}\Huge\textsf{INITIAL RELEASE!\ 🤩🎉}$<br>
 **At initial release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
 
 ```python
