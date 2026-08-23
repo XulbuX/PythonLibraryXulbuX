@@ -675,21 +675,21 @@ def test_argument_parser_alias_validation(monkeypatch: pytest.MonkeyPatch):
 
     # Aliases starting with underscore are rejected:
     with pytest.raises(ValueError, match="The 'alias' parameter cannot start with an underscore"):
-        parser.add_arg({"-p"}, "_private")
+        parser.add_opt({"-p"}, "_private")
 
     with pytest.raises(ValueError, match="The argument name cannot start with an underscore"):
         parser.add_arg("_private_pos")
 
     # Common names like title, controls, parse are fully allowed and work without collisions:
-    parser.add_arg({"-t", "--title"}, expects_value="TITLE")
-    parser.add_arg({"-c", "--controls"}, expects_value="CTRL")
-    parser.add_arg({"-p", "--parse"}, expects_value=False)
+    parser.add_opt({"-t", "--title"}, expects_value="TITLE")
+    parser.add_opt({"-c", "--controls"}, expects_value="CTRL")
+    parser.add_opt({"-p", "--parse"}, expects_value=False)
 
     with pytest.raises(ValueError, match="overlap with existing argument"):
-        parser.add_arg({"-t"}, "other_title")
+        parser.add_opt({"-t"}, "other_title")
 
     with pytest.raises(ValueError, match="is already defined on this 'ArgumentParser'"):
-        parser.add_arg({"-t2", "--title2"}, "title")
+        parser.add_opt({"-t2", "--title2"}, "title")
 
     monkeypatch.setattr(sys, "argv", ["script.py", "-t=AppTitle", "-c=CtrlKey", "-p"])
     parsed = parser.parse()
@@ -702,8 +702,8 @@ def test_argument_parser_alias_validation(monkeypatch: pytest.MonkeyPatch):
 def test_argument_parser_basic(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "-f=token", "-d"])
     parser = ArgumentParser()
-    parser.add_arg({"-f", "--file"}, expects_value="VAL")
-    parser.add_arg({"-d"}, expects_value=False)
+    parser.add_opt({"-f", "--file"}, expects_value="VAL")
+    parser.add_opt({"-d"}, expects_value=False)
 
     args = parser.parse()
     assert args.file.exists is True
@@ -717,10 +717,10 @@ def test_argument_parser_basic(monkeypatch: pytest.MonkeyPatch):
 
 def test_argument_parser_alias_deduction():
     parser = ArgumentParser()
-    parser.add_arg({"-f", "--file"}, expects_value="VAL")
-    parser.add_arg({"-o", "--to-file"}, expects_value="PATH")
-    parser.add_arg({"-v", "--verbose"})
-    parser.add_arg({"-a", "-b", "--custom-flag"}, "my_custom_alias")
+    parser.add_opt({"-f", "--file"}, expects_value="VAL")
+    parser.add_opt({"-o", "--to-file"}, expects_value="PATH")
+    parser.add_opt({"-v", "--verbose"})
+    parser.add_opt({"-a", "-b", "--custom-flag"}, "my_custom_alias")
 
     assert "file" in parser._arg_configs
     assert "to_file" in parser._arg_configs
@@ -731,10 +731,10 @@ def test_argument_parser_alias_deduction():
 def test_argument_parser_opt_pattern_validation():
     parser = ArgumentParser()
     with pytest.raises(ValueError, match="contains invalid option 'not a flag'"):
-        parser.add_arg({"not a flag"})
+        parser.add_opt({"not a flag"})
 
     with pytest.raises(ValueError, match="The 'opts' parameter cannot be empty"):
-        parser.add_arg(set())
+        parser.add_opt(set())
 
     # Positional argument cannot start with prefix chars:
     with pytest.raises(ValueError, match="cannot start with prefix char"):
@@ -744,9 +744,9 @@ def test_argument_parser_opt_pattern_validation():
 def test_argument_parser_custom_prefix_chars(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "/q", "+O=2", "/debug", "input.txt"])
     parser = ArgumentParser(prefix_chars="-/+")
-    parser.add_arg({"/q", "/quiet"})
-    parser.add_arg({"+O"}, "opt", expects_value="VAL")
-    parser.add_arg({"/debug"})
+    parser.add_opt({"/q", "/quiet"})
+    parser.add_opt({"+O"}, "opt", expects_value="VAL")
+    parser.add_opt({"/debug"})
     parser.add_arg("target_file")
 
     args = parser.parse()
@@ -760,7 +760,7 @@ def test_argument_parser_positionals(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "pre1", "-f", "file.txt", "post1", "post2"])
     parser = ArgumentParser()
     parser.add_arg("before")
-    parser.add_arg({"-f", "--file"}, expects_value="VAL")
+    parser.add_opt({"-f", "--file"}, expects_value="VAL")
     parser.add_arg("after", nargs="+")
 
     args = parser.parse()
@@ -780,7 +780,7 @@ def test_argument_parser_multi_positionals(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "#ff0000", "#00ff00", "#0000ff", "-o", "gradient.png"])
     parser = ArgumentParser()
     parser.add_arg("color_points", nargs="+", help="Color stops")
-    parser.add_arg({"-o", "--output"}, expects_value="PATH", help="Output file")
+    parser.add_opt({"-o", "--output"}, expects_value="PATH", help="Output file")
 
     args = parser.parse()
     assert args.color_points.exists is True
@@ -801,10 +801,50 @@ def test_argument_parser_positional_nargs_options(monkeypatch: pytest.MonkeyPatc
     assert args.extras.vals() == ("extra1", "extra2")
 
 
+def test_argument_parser_optional_fixed_nargs(monkeypatch: pytest.MonkeyPatch):
+    parser = ArgumentParser()
+    parser.add_arg("coords", nargs=2, required=False)
+    parser.add_arg("extras", nargs="*")
+
+    # 0 tokens provided:
+    monkeypatch.setattr(sys, "argv", ["script.py"])
+    args_empty = parser.parse()
+    assert args_empty.coords.exists is False
+    assert args_empty.coords.values == ()
+    assert args_empty.extras.exists is False
+
+    # 2 tokens provided:
+    monkeypatch.setattr(sys, "argv", ["script.py", "10", "20", "extra1"])
+    args_two = parser.parse()
+    assert args_two.coords.exists is True
+    assert args_two.coords.vals() == ("10", "20")
+    assert args_two.extras.vals() == ("extra1",)
+
+    # 1 token provided (incomplete):
+    monkeypatch.setattr(sys, "argv", ["script.py", "10"])
+    with pytest.raises(SystemExit):
+        parser.parse()
+
+    # Optional fixed nargs with subsequent required positional argument:
+    parser2 = ArgumentParser()
+    parser2.add_arg("coords", nargs=2, required=False)
+    parser2.add_arg("file")
+
+    monkeypatch.setattr(sys, "argv", ["script.py", "main.py"])
+    args_sub1 = parser2.parse()
+    assert args_sub1.coords.exists is False
+    assert args_sub1.file.val() == "main.py"
+
+    monkeypatch.setattr(sys, "argv", ["script.py", "10", "20", "main.py"])
+    args_sub2 = parser2.parse()
+    assert args_sub2.coords.vals() == ("10", "20")
+    assert args_sub2.file.val() == "main.py"
+
+
 def test_argument_parser_required_missing(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py"])
     parser = ArgumentParser()
-    parser.add_arg({"-r", "--req"}, required=True)
+    parser.add_opt({"-r", "--req"}, required=True)
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -819,7 +859,7 @@ def test_argument_parser_required_missing(monkeypatch: pytest.MonkeyPatch, capsy
 def test_argument_parser_required_positional_missing(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py"])
     parser = ArgumentParser()
-    parser.add_arg("input_file", required=True)
+    parser.add_arg("input_file")
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -832,7 +872,7 @@ def test_argument_parser_required_positional_missing(monkeypatch: pytest.MonkeyP
 def test_argument_parser_invalid_choice(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "-m=invalid"])
     parser = ArgumentParser()
-    parser.add_arg({"-m", "--mode"}, expects_value="VAL", choices=["test", "prod"])
+    parser.add_opt({"-m", "--mode"}, expects_value="VAL", choices=["test", "prod"])
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -847,7 +887,7 @@ def test_argument_parser_invalid_choice(monkeypatch: pytest.MonkeyPatch, capsys:
 def test_argument_parser_help_flag(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "--help"])
     parser = ArgumentParser(title="MyCLI", epilog="Footer text")
-    parser.add_arg({"-m", "--mode"}, expects_value="MODE", help="The mode to run")
+    parser.add_opt({"-m", "--mode"}, expects_value="MODE", help="The mode to run")
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -862,7 +902,7 @@ def test_argument_parser_help_flag(monkeypatch: pytest.MonkeyPatch, capsys: pyte
 def test_argument_parser_unknown_flags(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "--known", "--unknown1"])
     parser = ArgumentParser()
-    parser.add_arg({"--known"}, expects_value=False)
+    parser.add_opt({"--known"}, expects_value=False)
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -889,7 +929,7 @@ def test_argument_parser_unexpected_positional(monkeypatch: pytest.MonkeyPatch, 
 def test_argument_parser_flag_missing_value(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "-f"])
     parser = ArgumentParser()
-    parser.add_arg({"-f"}, "file", expects_value="VAL")
+    parser.add_opt({"-f"}, "file", expects_value="VAL")
 
     with pytest.raises(SystemExit) as exc:
         parser.parse()
@@ -903,7 +943,7 @@ def test_argument_parser_flag_missing_value(monkeypatch: pytest.MonkeyPatch, cap
 def test_argument_parser_custom_sep(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "--msg::hello"])
     parser = ArgumentParser()
-    parser.add_arg({"--msg"}, "msg", expects_value="VAL")
+    parser.add_opt({"--msg"}, "msg", expects_value="VAL")
 
     args = parser.parse(opt_value_sep="::")
     assert args.msg.val() == "hello"
@@ -912,7 +952,7 @@ def test_argument_parser_custom_sep(monkeypatch: pytest.MonkeyPatch):
 def test_argument_parser_allow_space_value(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "-m", "hello"])
     parser = ArgumentParser()
-    parser.add_arg({"-m"}, "msg", expects_value="VAL")
+    parser.add_opt({"-m"}, "msg", expects_value="VAL")
 
     # By default `allow_space_value` is true:
     args1 = parser.parse()
@@ -926,8 +966,8 @@ def test_argument_parser_allow_space_value(monkeypatch: pytest.MonkeyPatch):
 def test_argument_parser_flag_value_starting_with_dash(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "-o", "-my-output.txt", "-c", "-5"])
     parser = ArgumentParser()
-    parser.add_arg({"-o"}, "output", expects_value="VAL")
-    parser.add_arg({"-c"}, "count", expects_value="VAL")
+    parser.add_opt({"-o"}, "output", expects_value="VAL")
+    parser.add_opt({"-c"}, "count", expects_value="VAL")
 
     args = parser.parse()
     assert args.output.val() == "-my-output.txt"
@@ -938,7 +978,7 @@ def test_argument_parser_negative_numbers_as_positionals(monkeypatch: pytest.Mon
     monkeypatch.setattr(sys, "argv", ["script.py", "-10", "-d", "-3.14"])
     parser = ArgumentParser()
     parser.add_arg("pre")
-    parser.add_arg({"-d"}, "debug", expects_value=False)
+    parser.add_opt({"-d"}, "debug", expects_value=False)
     parser.add_arg("post")
 
     args = parser.parse()
@@ -950,7 +990,7 @@ def test_argument_parser_negative_numbers_as_positionals(monkeypatch: pytest.Mon
 def test_argument_parser_bare_double_dash_delimiter(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(sys, "argv", ["script.py", "--known", "--", "-not-a-flag", "--also-pos"])
     parser = ArgumentParser()
-    parser.add_arg({"--known"}, "known", expects_value=False)
+    parser.add_opt({"--known"}, "known", expects_value=False)
     parser.add_arg("files", nargs="*")
 
     args = parser.parse()
@@ -961,8 +1001,8 @@ def test_argument_parser_bare_double_dash_delimiter(monkeypatch: pytest.MonkeyPa
 def test_argument_parser_interspersed_unknown_flag(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "--bool", "--unknown", "--known"])
     parser = ArgumentParser()
-    parser.add_arg({"--bool"}, "bool", expects_value=False)
-    parser.add_arg({"--known"}, "known", expects_value=False)
+    parser.add_opt({"--bool"}, "bool", expects_value=False)
+    parser.add_opt({"--known"}, "known", expects_value=False)
     parser.add_arg("files", nargs="*")
 
     with pytest.raises(SystemExit) as exc:
@@ -977,7 +1017,7 @@ def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
     # Attached value:
     monkeypatch.setattr(sys, "argv", ["script.py", "-f=custom.log"])
     parser1 = ArgumentParser()
-    parser1.add_arg({"-f", "--to-file"}, expects_value="PATH?")
+    parser1.add_opt({"-f", "--to-file"}, expects_value="PATH?")
     args1 = parser1.parse()
     assert args1.to_file.exists is True
     assert args1.to_file.val() == "custom.log"
@@ -985,7 +1025,7 @@ def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
     # Space-separated value:
     monkeypatch.setattr(sys, "argv", ["script.py", "--to-file", "other.log"])
     parser2 = ArgumentParser()
-    parser2.add_arg({"-f", "--to-file"}, expects_value="PATH?")
+    parser2.add_opt({"-f", "--to-file"}, expects_value="PATH?")
     args2 = parser2.parse()
     assert args2.to_file.exists is True
     assert args2.to_file.val() == "other.log"
@@ -993,7 +1033,7 @@ def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
     # Bare flag at end (no value):
     monkeypatch.setattr(sys, "argv", ["script.py", "-f"])
     parser3 = ArgumentParser()
-    parser3.add_arg({"-f", "--to-file"}, expects_value="PATH?")
+    parser3.add_opt({"-f", "--to-file"}, expects_value="PATH?")
     args3 = parser3.parse()
     assert args3.to_file.exists is True
     assert args3.to_file.val() is None
@@ -1003,8 +1043,8 @@ def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
     # Bare flag followed by another flag:
     monkeypatch.setattr(sys, "argv", ["script.py", "-f", "-v"])
     parser4 = ArgumentParser()
-    parser4.add_arg({"-f", "--to-file"}, expects_value="PATH?")
-    parser4.add_arg({"-v", "--verbose"}, expects_value=False)
+    parser4.add_opt({"-f", "--to-file"}, expects_value="PATH?")
+    parser4.add_opt({"-v", "--verbose"}, expects_value=False)
     args4 = parser4.parse()
     assert args4.to_file.exists is True
     assert args4.to_file.val() is None
@@ -1013,7 +1053,7 @@ def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
 
 def test_argument_parser_optional_value_help_print(capsys: pytest.CaptureFixture[str]):
     parser = ArgumentParser()
-    parser.add_arg({"-f", "--to-file"}, expects_value="PATH?", help="Write to file")
+    parser.add_opt({"-f", "--to-file"}, expects_value="PATH?", help="Write to file")
     parser.print_help()
 
     captured = capsys.readouterr()
@@ -1021,31 +1061,59 @@ def test_argument_parser_optional_value_help_print(capsys: pytest.CaptureFixture
     assert "-f, --to-file=PATH?" in clean_out
 
     # Check ANSI formatting of `?`:
-    italic_blue_question = StyledText((S.ITALIC | S.BLUE)("?")).ansi
-    assert italic_blue_question in captured.out
+    bold_blue_question = StyledText((S.BOLD | S.BLUE)("?")).ansi
+    assert bold_blue_question in captured.out
+
+
+def test_argument_parser_args_help_formatting(capsys: pytest.CaptureFixture[str]):
+    parser = ArgumentParser()
+    parser.add_arg("req_single", help="Required single")
+    parser.add_arg("opt_single", required=False, help="Optional single")
+    parser.add_arg("req_multi", nargs=3, help="Required 3")
+    parser.add_arg("opt_multi", nargs=2, required=False, help="Optional 2")
+    parser.add_arg("req_plus", nargs="+", help="Required 1+")
+    parser.add_arg("opt_plus", nargs="+", required=False, help="Optional 1+")
+    parser.add_arg("opt_star", nargs="*", help="Optional 0+")
+    parser.add_arg("opt_q", nargs="?", help="Optional 0 or 1")
+    parser.add_arg("req_q", nargs="?", required=True, help="Required 0 or 1")
+
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    clean_out = StyledText(captured.out).raw
+
+    assert "<req_single>" in clean_out
+    assert "[opt_single]" in clean_out
+    assert "<req_multi [3]>" in clean_out
+    assert "[opt_multi [2]]" in clean_out
+    assert "<req_plus...>" in clean_out
+    assert "[opt_plus...]" in clean_out
+    assert "[opt_star...]" in clean_out
+    assert "[opt_q]" in clean_out
+    assert "<req_q>" in clean_out
 
 
 def test_argument_parser_invalid_expects_value():
     parser = ArgumentParser()
     with pytest.raises(ValueError, match="The 'expects_value' parameter must be False or a string"):
         # `True` is not allowed, must be a string placeholder or `False`:
-        parser.add_arg({"-f"}, expects_value=True)  # type: ignore[arg-type]
+        parser.add_opt({"-f"}, expects_value=True)  # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match="The 'expects_value' parameter must be False or a string"):
-        parser.add_arg({"-f"}, expects_value="Hi!")
+        parser.add_opt({"-f"}, expects_value="Hi!")
 
     with pytest.raises(ValueError, match="The 'expects_value' parameter must be False or a string"):
-        parser.add_arg({"-f"}, expects_value="")
+        parser.add_opt({"-f"}, expects_value="")
 
 
 def test_argument_parser_overlapping_flags():
     parser = ArgumentParser(help_opts={"-h"})
     with pytest.raises(ValueError, match="overlap with help options"):
-        parser.add_arg({"-h"})
+        parser.add_opt({"-h"})
 
-    parser.add_arg({"-t", "--test"})
+    parser.add_opt({"-t", "--test"})
     with pytest.raises(ValueError, match="overlap with existing argument"):
-        parser.add_arg({"-t"})
+        parser.add_opt({"-t"})
 
 
 def test_argument_parser_help_cross_section_alignment(capsys: pytest.CaptureFixture[str]):
@@ -1055,8 +1123,8 @@ def test_argument_parser_help_cross_section_alignment(capsys: pytest.CaptureFixt
         controls=[("Ctrl+C", "Cancel and exit")],
     )
     parser.add_arg("base_dir", help="Base directory to generate tree from")
-    parser.add_arg({"-I", "--interactive"}, help="Prompt for interactive tree settings")
-    parser.add_arg({"-i", "--ignore"}, expects_value="S", help="Directories to ignore")
+    parser.add_opt({"-I", "--interactive"}, help="Prompt for interactive tree settings")
+    parser.add_opt({"-i", "--ignore"}, expects_value="S", help="Directories to ignore")
 
     parser.print_help()
 
@@ -1088,10 +1156,10 @@ def test_argument_parser_examples_syntax_highlighting_and_alignment(
             ('{cmd} --recurse "/some/pos/path"', "Boolean flag followed by positional argument"),
         ],
     )
-    parser.add_arg({"-i", "--ignore"}, expects_value="S", help="Directories to ignore")
-    parser.add_arg({"-a", "--auto-ignore"}, expects_value="N", help="Auto-ignore mode")
-    parser.add_arg({"-r", "--recurse"}, expects_value=False, help="Recurse subdirectories")
-    parser.add_arg({"-I", "--interactive"}, expects_value=False, help="Interactive mode")
+    parser.add_opt({"-i", "--ignore"}, expects_value="S", help="Directories to ignore")
+    parser.add_opt({"-a", "--auto-ignore"}, expects_value="N", help="Auto-ignore mode")
+    parser.add_opt({"-r", "--recurse"}, expects_value=False, help="Recurse subdirectories")
+    parser.add_opt({"-I", "--interactive"}, expects_value=False, help="Interactive mode")
 
     parser.print_help()
 
@@ -1137,7 +1205,7 @@ def test_argument_parser_reactive_narrow_width_layout(capsys: pytest.CaptureFixt
         "base_dir",
         help=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
     )
-    parser.add_arg(
+    parser.add_opt(
         {"-i", "--ignore"},
         expects_value="S",
         help=("Directories to ignore ", S.DIM("(directory paths/names, separated by |)")),

@@ -336,21 +336,25 @@ class ArgumentParser:
         self._arg_configs: dict[str, ArgConfigDict] = {}
         self._args_order: list[str] = []
 
-    def _add_argument(
+    def add_arg(
         self,
         name: str,
-        alias: str | None,
+        /,
         *,
-        nargs: int | Literal["?", "*", "+"],
-        choices: Iterable[str] | None,
-        required: bool | None,
-        help: TextRenderable | None,
+        nargs: int | Literal["?", "*", "+"] = 1,
+        choices: Iterable[str] | None = None,
+        required: bool | None = None,
+        help: TextRenderable | None = None,
     ) -> None:
-        """Internal method to register a positional argument."""
+        """Define a new positional argument to parse.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `name` – The argument name (e.g., `"input_file"`).
+        *   `nargs` – Arguments value count: integer ≥ 1, `"?"` (0 or 1), `"*"` (≥ 0), or `"+"` (≥ 1).
+        *   `choices` – Optional iterable of allowed strings for this argument's value.
+        *   `required` – Whether the argument must be provided (auto-deduced from `nargs` if omitted).
+        *   `help` – Help text describing the argument."""
 
-        if alias is not None:
-            raise ValueError(f"Argument {name!r} cannot have a separate 'alias' parameter")
-        elif name.startswith("_"):
+        if name.startswith("_"):
             raise ValueError(f"The argument name cannot start with an underscore, got {name!r}")
 
         for char in self.prefix_chars:
@@ -366,8 +370,6 @@ class ArgumentParser:
         elif nargs not in {"?", "*", "+"}:
             raise ValueError(f"The 'nargs' parameter must be an integer >= 1 or one of '?', '*', '+', got {nargs!r}")
 
-        is_required = (nargs not in {"?", "*"}) if required is None else required
-
         self._arg_configs[name] = {
             "is_arg": True,
             "opts": None,
@@ -375,22 +377,31 @@ class ArgumentParser:
             "expects_value": None,
             "optional_value": False,
             "choices": choices,
-            "required": is_required,
+            "required": (nargs not in {"?", "*"}) if required is None else required,
             "help": help,
         }
         self._args_order.append(name)
 
-    def _add_option(
+    def add_opt(
         self,
         opts: set[str] | frozenset[str],
-        alias: str | None,
+        alias: str | None = None,
+        /,
         *,
-        expects_value: str | Literal[False],
-        choices: Iterable[str] | None,
-        required: bool | None,
-        help: TextRenderable | None,
+        expects_value: str | Literal[False] = False,
+        choices: Iterable[str] | None = None,
+        required: bool = False,
+        help: TextRenderable | None = None,
     ) -> None:
-        """Internal method to register a flagged option."""
+        """Define a new flagged option to parse.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `opts` – A set of option strings (e.g., `{"-f", "--file"}`).
+        *   `alias` – Optional explicit attribute name on `ParsedArgs` (auto-deduced if omitted).
+        *   `expects_value` – `False` for a boolean option, or a string placeholder (e.g., `"PATH"`).<br>
+            Append `?` (e.g., `"PATH?"` or `"VAL?"`) to make the expected value optional.
+        *   `choices` – Optional iterable of allowed strings for this option's value.
+        *   `required` – Whether the option must be provided.
+        *   `help` – Help text describing the option."""
 
         if len(opts) == 0:
             raise ValueError("The 'opts' parameter cannot be empty")
@@ -443,77 +454,9 @@ class ArgumentParser:
             "expects_value": placeholder,
             "optional_value": optional_value,
             "choices": choices,
-            "required": False if required is None else required,
+            "required": required,
             "help": help,
         }
-
-    @overload
-    def add_arg(
-        self,
-        name: str,
-        /,
-        *,
-        nargs: int | Literal["?", "*", "+"] = 1,
-        choices: Iterable[str] | None = None,
-        required: bool | None = None,
-        help: TextRenderable | None = None,
-    ) -> None: ...
-    @overload
-    def add_arg(
-        self,
-        opts: set[str] | frozenset[str],
-        alias: str | None = None,
-        /,
-        *,
-        expects_value: str | Literal[False] = False,
-        choices: Iterable[str] | None = None,
-        required: bool = False,
-        help: TextRenderable | None = None,
-    ) -> None: ...
-
-    def add_arg(
-        self,
-        opts_or_name: str | set[str] | frozenset[str],
-        alias: str | None = None,
-        /,
-        *,
-        expects_value: str | Literal[False] = False,
-        nargs: int | Literal["?", "*", "+"] = 1,
-        choices: Iterable[str] | None = None,
-        required: bool | None = None,
-        help: TextRenderable | None = None,
-    ) -> None:
-        """Define a new argument or option to parse.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `opts_or_name` – An argument name (e.g., `"input_file"`),
-            or a set of options (e.g., `{"-f", "--file"}`).
-        *   `alias` – Optional explicit attribute name on `ParsedArgs`
-            for options (auto-deduced if omitted).
-        *   `expects_value` – `False` for a boolean option, or a string placeholder (e.g., `"PATH"`).<br>
-            Append `?` (e.g., `"PATH?"` or `"VAL?"`) to make the expected value optional.
-        *   `nargs` – Arguments value count: integer ≥ 1, `"?"` (0 or 1), `"*"` (≥ 0), or `"+"` (≥ 1).
-        *   `choices` – Optional iterable of allowed strings for this argument or option's value.
-        *   `required` – *bool*, whether the argument or option must be provided.
-        *   `help` – Help text describing the argument or option."""
-
-        if isinstance(opts_or_name, str):
-            self._add_argument(
-                opts_or_name,
-                alias,
-                nargs=nargs,
-                choices=choices,
-                required=required,
-                help=help,
-            )
-        else:
-            self._add_option(
-                opts_or_name,
-                alias,
-                expects_value=expects_value,
-                choices=choices,
-                required=required,
-                help=help,
-            )
 
     def _sort_opts(self, opts: Iterable[str]) -> list[str]:
         """Internal method to sort a set of options for help printing."""
@@ -537,30 +480,29 @@ class ArgumentParser:
         if not self.title:
             return
 
-        if (len(self.title) + (len(self.subtitle) + 3 if self.subtitle else 0) + 4) <= console_width:
-            title_renderable: TextRenderable
-            box_width: int
+        if ((title_length := len(self.title) + (len(self.subtitle) + 3 if self.subtitle else 0)) + 4) <= console_width:
+            title_renderable: TextRenderable = (
+                (S.BOLD(self.title), f" — {self.subtitle}") if self.subtitle else S.BOLD(self.title)
+            )
 
-            if self.subtitle:
-                title_renderable = (S.BOLD(self.title), f" — {self.subtitle}")
-                box_width = len(self.title) + len(self.subtitle) + 7
-            else:
-                title_renderable = S.BOLD(self.title)
-                box_width = len(self.title) + 4
-
-            output.extend(["▄" * box_width, (S.INVERSE | S.BG.BLACK)("  ", title_renderable, "  "), "▀" * box_width, ""])
+            output.extend([
+                "▄" * console_width,
+                (S.INVERSE | S.BG.BLACK)("  ", title_renderable, " " * (console_width - 2 - title_length)),
+                "▀" * console_width,
+                "",
+            ])
 
         else:
-            inner_width = max(console_width - 2, 1)
+            inner_width = max(console_width - 4, 1)
             output.append("▄" * console_width)
 
             for title_line in _wrap_text(S.BOLD(self.title), inner_width):
-                output.append((S.INVERSE | S.BG.BLACK)(" ", title_line, " " * max(0, inner_width - len(title_line)), " "))
+                output.append((S.INVERSE | S.BG.BLACK)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
 
             if self.subtitle:
                 for subtitle_line in _wrap_text(self.subtitle, inner_width):
                     output.append(
-                        (S.INVERSE | S.BG.BLACK)(" ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), " ")
+                        (S.INVERSE | S.BG.BLACK)("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  ")
                     )
 
             output.extend(["▀" * console_width, ""])
@@ -601,20 +543,17 @@ class ArgumentParser:
 
         for name in self._args_order:
             cfg = self._arg_configs[name]
+            l_br, r_br = ("<", ">") if cfg["required"] else ("[", "]")
 
             match nargs := cfg["nargs"]:
-                case "?":
-                    label = f"[{name}]"
-                case "*":
-                    label = f"[{name}...]"
-                case "+":
-                    label = f"<{name}...>"
+                case "*" | "+":
+                    label_st = StyledText(S.BR.CYAN(f"{l_br}{name}...{r_br}"))
                 case int(n) if n > 1:
-                    label = f"<{name} [{nargs}]>"
+                    label_st = StyledText(S.BR.CYAN(l_br, name, " "), S.DIM(f"[{nargs}]"), S.BR.CYAN(r_br))
                 case _:
-                    label = f"<{name}>"
+                    label_st = StyledText(S.BR.CYAN(f"{l_br}{name}{r_br}"))
 
-            args_items.append((StyledText(S.BR.CYAN(label)), cfg["help"] or ""))
+            args_items.append((label_st, cfg["help"] or ""))
 
         return args_items
 
@@ -634,7 +573,7 @@ class ArgumentParser:
 
                 if cfg["expects_value"] is not None:
                     if cfg["optional_value"]:
-                        opt_st += (S.BR.BLUE(S.DIM("="), cfg["expects_value"]), (S.ITALIC | S.BLUE)("?"))
+                        opt_st += (S.BR.BLUE(S.DIM("="), cfg["expects_value"]), (S.BOLD | S.BLUE)("?"))
                     else:
                         opt_st += S.BR.BLUE(S.DIM("="), cfg["expects_value"])
 
@@ -904,11 +843,12 @@ class ArgumentParser:
         total = 0
         for next_name in self._args_order[arg_idx + 1 :]:
             sub_cfg = self._arg_configs[next_name]
-            sub_nargs = sub_cfg["nargs"]
-            if isinstance(sub_nargs, int):
-                total += sub_nargs
-            elif sub_nargs == "+":
-                total += 1
+            if sub_cfg["required"]:
+                sub_nargs = sub_cfg["nargs"]
+                if isinstance(sub_nargs, int):
+                    total += sub_nargs
+                elif sub_nargs == "+":
+                    total += 1
 
         return total
 
@@ -927,43 +867,33 @@ class ArgumentParser:
         nargs = cfg["nargs"]
 
         if isinstance(nargs, int):
-            if token_idx + nargs <= num_tokens:
-                values = arg_tokens[token_idx : token_idx + nargs]
-                token_idx += nargs
-                parsed_data[name]["values"] = values
+            if available >= nargs and token_idx + nargs <= num_tokens:
+                parsed_data[name]["values"] = arg_tokens[token_idx : token_idx + nargs]
                 parsed_data[name]["exists"] = True
-            else:
-                values = arg_tokens[token_idx:num_tokens]
-                token_idx = num_tokens
-                parsed_data[name]["values"] = values
-                parsed_data[name]["exists"] = bool(values)
-                if cfg["required"]:
-                    self._error(f"Missing required argument: '{name}'")
 
-        elif nargs == "?":
-            if available > 0:
-                parsed_data[name]["values"] = [arg_tokens[token_idx]]
-                parsed_data[name]["exists"] = True
-                token_idx += 1
-            else:
+                return token_idx + nargs
+
+            if not cfg["required"] and available == 0:
                 parsed_data[name]["values"] = []
                 parsed_data[name]["exists"] = False
 
-        elif nargs == "*":
-            values = arg_tokens[token_idx : token_idx + available]
-            token_idx += available
-            parsed_data[name]["values"] = values
-            parsed_data[name]["exists"] = bool(values)
+                return token_idx
 
-        elif nargs == "+":
-            if available < 1:
+            self._error(f"Missing required argument: '{name}'")
+
+        if (count := min(available, 1) if nargs == "?" else available) < 1:
+            parsed_data[name]["values"] = []
+            parsed_data[name]["exists"] = False
+
+            if cfg["required"]:
                 self._error(f"Missing required argument: '{name}'")
-            values = arg_tokens[token_idx : token_idx + available]
-            token_idx += available
-            parsed_data[name]["values"] = values
-            parsed_data[name]["exists"] = True
 
-        return token_idx
+            return token_idx
+
+        parsed_data[name]["values"] = arg_tokens[token_idx : token_idx + count]
+        parsed_data[name]["exists"] = True
+
+        return token_idx + count
 
     def _resolve_args(
         self,
@@ -982,10 +912,10 @@ class ArgumentParser:
         token_idx = 0
 
         for arg_idx, name in enumerate(self._args_order):
-            cfg = self._arg_configs[name]
-            remaining_min = self._calculate_remaining_min(arg_idx)
-            available = max(0, num_tokens - token_idx - remaining_min)
-            token_idx = self._consume_arg(name, cfg, arg_tokens, token_idx, available, num_tokens, parsed_data)
+            available = max(0, num_tokens - token_idx - self._calculate_remaining_min(arg_idx))
+            token_idx = self._consume_arg(
+                name, self._arg_configs[name], arg_tokens, token_idx, available, num_tokens, parsed_data
+            )
 
         if token_idx < num_tokens:
             self._error(f"Unrecognized argument: '{arg_tokens[token_idx]}'")

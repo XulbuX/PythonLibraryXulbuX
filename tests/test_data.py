@@ -210,7 +210,7 @@ def test_render(
     assert normalized_result == normalized_expected
 
 
-def test_is_data_obj_and_is_index_iterable():
+def test_is_data_obj_and_is_index_iterable() -> None:
     # Test `is_data_obj`:
     assert is_data_obj([1, 2, 3]) is True
     assert is_data_obj((1, 2, 3)) is True
