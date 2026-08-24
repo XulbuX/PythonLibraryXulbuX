@@ -14,7 +14,7 @@ import pytest
 @pytest.fixture
 def mock_terminal_size(monkeypatch: pytest.MonkeyPatch):
 
-    def mock_get_terminal_size():
+    def mock_get_terminal_size(fd: int | None = None) -> os.terminal_size:
         return os.terminal_size((80, 24))
 
     monkeypatch.setattr("xulbux.console._os.get_terminal_size", mock_get_terminal_size)
@@ -851,7 +851,8 @@ def test_argument_parser_required_missing(monkeypatch: pytest.MonkeyPatch, capsy
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Missing required option: req" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Missing required option 'req' (-r, --req)" in clean_out
     assert "Run with --help for usage and available options." in clean_out
     assert "Options:" not in clean_out
 
@@ -866,7 +867,8 @@ def test_argument_parser_required_positional_missing(monkeypatch: pytest.MonkeyP
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Missing required argument: 'input_file'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Missing required argument 'input_file'" in clean_out
 
 
 def test_argument_parser_invalid_choice(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
@@ -879,7 +881,8 @@ def test_argument_parser_invalid_choice(monkeypatch: pytest.MonkeyPatch, capsys:
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Invalid choice 'invalid' for 'mode'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Invalid choice 'invalid' for 'mode' (-m, --mode)\nAllowed: test, prod" in clean_out
     assert "Run with --help for usage and available options." in clean_out
     assert "Options:" not in clean_out
 
@@ -909,7 +912,8 @@ def test_argument_parser_unknown_flags(monkeypatch: pytest.MonkeyPatch, capsys: 
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Unrecognized option: '--unknown1'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Unrecognized option: '--unknown1'" in clean_out
     assert "Run with --help for usage and available options." in clean_out
 
 
@@ -922,7 +926,8 @@ def test_argument_parser_unexpected_positional(monkeypatch: pytest.MonkeyPatch, 
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Unrecognized argument: 'extra_arg'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Unrecognized argument: 'extra_arg'" in clean_out
     assert "Run with --help for usage and available options." in clean_out
 
 
@@ -936,7 +941,8 @@ def test_argument_parser_flag_missing_value(monkeypatch: pytest.MonkeyPatch, cap
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Option '-f' requires a value" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Option '-f' requires a value (expected <VAL>)" in clean_out
     assert "Run with --help for usage and available options." in clean_out
 
 
@@ -1031,7 +1037,8 @@ def test_argument_parser_interspersed_unknown_flag(monkeypatch: pytest.MonkeyPat
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Unrecognized option: '--unknown'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Unrecognized option: '--unknown'" in clean_out
 
 
 def test_argument_parser_optional_value_flag(monkeypatch: pytest.MonkeyPatch):
@@ -1342,7 +1349,30 @@ def test_argument_parser_non_intermixed_unrecognized_option_before_pos(
     assert exc.value.code == 1
 
     clean_out = StyledText(capsys.readouterr().out).raw
-    assert "[ERROR] Unrecognized option: '--invalid-flag'" in clean_out
+    assert "script ERROR" in clean_out
+    assert "Unrecognized option: '--invalid-flag'" in clean_out
+
+
+def test_argument_parser_error_box_formatting(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
+    monkeypatch.setattr(sys, "argv", ["my_tool.py"])
+    parser = ArgumentParser(title="MyTool")
+    parser.add_opt({"-f", "--file"}, required=True)
+
+    with pytest.raises(SystemExit) as exc:
+        parser.parse()
+    assert exc.value.code == 1
+
+    captured = capsys.readouterr()
+    clean_out = StyledText(captured.out).raw
+
+    assert "▄" in clean_out
+    assert "▀" in clean_out
+    assert "MyTool ERROR" in clean_out
+    assert "Missing required option 'file' (-f, --file)" in clean_out
+    assert "Run with --help for usage and available options." in clean_out
+
+    red_seq = StyledText(S.BR.RED).ansi
+    assert red_seq in captured.out
 
 
 def test_argument_parser_parse_intermixed_override(monkeypatch: pytest.MonkeyPatch):

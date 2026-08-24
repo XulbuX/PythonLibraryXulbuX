@@ -16,6 +16,7 @@ from .ansi import (
     TextRenderable,
     _StyledSequence,
     is_any_style,
+    is_fg_color_style,
     is_text_renderable,
 )
 from .base.consts import ANSI, CHARS
@@ -492,40 +493,58 @@ class ArgumentParser:
 
         return self._sort_opts(opts)[-1].lstrip(self.prefix_chars).replace("-", "_")
 
-    def _add_title_to_help_output(self, output: list[Renderable], console_width: int) -> None:
-        """Internal method to add the title and subtitle to the help output."""
+    def _add_title_box_to_output(
+        self,
+        output: list[Renderable],
+        console_width: int,
+        *,
+        title: TextRenderable | object | None = None,
+        subtitle: TextRenderable | object | None = None,
+        inline_subtitle: bool = True,
+        box_color: FgColorStyle | None = None,
+    ) -> None:
+        """Internal method to add a title and subtitle banner box to the output."""
 
-        if not self.title:
+        title_obj = self.title if title is None else title
+        sub_obj = self.subtitle if subtitle is None else subtitle
+
+        if not title_obj and not sub_obj:
             return
 
-        box_st: AnyStyle = S.RESET
+        title_st = _to_styled_text(title_obj) if title_obj else None
+        sub_st = _to_styled_text(sub_obj) if sub_obj else None
 
-        if ((title_length := len(self.title) + (len(self.subtitle) + 3 if self.subtitle else 0)) + 4) <= console_width:
-            title_renderable: Renderable = (S.BOLD(self.title), f" — {self.subtitle}") if self.subtitle else S.BOLD(self.title)
+        inner_width = max(console_width - 4, 1)
+        single_line_len = (len(title_st.raw) if title_st else 0) + (len(sub_st.raw) + 3 if sub_st else 0)
+
+        box_st: AnyStyle = box_color if is_fg_color_style(box_color) else S.RESET
+
+        if inline_subtitle and title_st and ((single_line_len + 4) <= console_width):
+            title_renderable: Renderable = (S.BOLD(title_st), " — ", sub_st) if sub_st else S.BOLD(title_st)
 
             output.extend([
                 box_st("▄" * console_width),
-                (box_st | S.INVERSE)("  ", title_renderable, " " * (console_width - 2 - title_length)),
+                (box_st | S.INVERSE)("  ", title_renderable, " " * (console_width - 2 - single_line_len)),
                 box_st("▀" * console_width),
                 "",
             ])
 
         else:
-            inner_width = max(console_width - 4, 1)
             output.append(box_st("▄" * console_width))
 
-            for title_line in _wrap_text(S.BOLD(self.title), inner_width):
-                output.append((box_st | S.INVERSE)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
+            if title_st:
+                for title_line in _wrap_text(S.BOLD(title_st), inner_width):
+                    output.append((box_st | S.INVERSE)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
 
-            if self.subtitle:
-                for subtitle_line in _wrap_text(self.subtitle, inner_width):
+            if sub_st:
+                for subtitle_line in _wrap_text(sub_st, inner_width):
                     output.append(
                         (box_st | S.INVERSE)("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  ")
                     )
 
             output.extend([box_st("▀" * console_width), ""])
 
-    def _add_usage_to_help_output(
+    def _add_usage_to_output(
         self,
         output: list[Renderable],
         cmd_st: StyledText,
@@ -616,7 +635,7 @@ class ArgumentParser:
 
         return controls_items
 
-    def _add_section_to_help_output(
+    def _add_section_to_output(
         self,
         output: list[Renderable],
         title: str,
@@ -728,7 +747,7 @@ class ArgumentParser:
 
         return result
 
-    def _add_examples_to_help_output(
+    def _add_examples_to_output(
         self,
         output: list[Renderable],
         cmd_name_ext: tuple[str, str],
@@ -795,17 +814,17 @@ class ArgumentParser:
         console_width = get_width()
         output: list[Renderable] = [""]
 
-        self._add_title_to_help_output(output, console_width)
+        self._add_title_box_to_output(output, console_width)
 
         if self.notice is not None:
             output.append(_to_styled_text(self.notice))
             output.append("")
 
-        self._add_usage_to_help_output(output, cmd_st, args_st, opts_st)
-        self._add_section_to_help_output(output, "Arguments:", args_items, max_col_width, console_width)
-        self._add_section_to_help_output(output, "Options:", opts_items, max_col_width, console_width)
-        self._add_section_to_help_output(output, "Controls:", controls_items, max_col_width, console_width)
-        self._add_examples_to_help_output(output, cmd_name_ext, console_width)
+        self._add_usage_to_output(output, cmd_st, args_st, opts_st)
+        self._add_section_to_output(output, "Arguments:", args_items, max_col_width, console_width)
+        self._add_section_to_output(output, "Options:", opts_items, max_col_width, console_width)
+        self._add_section_to_output(output, "Controls:", controls_items, max_col_width, console_width)
+        self._add_examples_to_output(output, cmd_name_ext, console_width)
 
         if self.epilog is not None:
             output.append(_to_styled_text(self.epilog))
@@ -813,20 +832,29 @@ class ArgumentParser:
 
         StyledText(*output, "", sep="\n").print(flush=True)
 
-    def _error(self, message: str) -> NoReturn:
-        """Internal method to print an error message with a help notice and exit with code 1."""
+    def _error(self, message: TextRenderable | object, exit_code: int = 1) -> NoReturn:
+        """Internal method to print an error message with a help notice and exit the program."""
+
+        title = self.title or (Path(_sys.argv[0]).stem if _sys.argv and _sys.argv[0] else "")
+
+        console_width = get_width()
+        output: list[Renderable] = [""]
+
+        self._add_title_box_to_output(
+            output,
+            console_width,
+            title=f"{title} ERROR" if title else "ERROR",
+            subtitle=_to_styled_text(message),
+            inline_subtitle=False,
+            box_color=S.BR.RED,
+        )
 
         help_opt_st = S.BR.BLUE(self._sort_opts(self.help_opts)[-1] if self.help_opts else "--help")
+        output.append(S.DIM("  Run with ", help_opt_st, " for usage and available options."))
 
-        StyledText(
-            "",
-            (S.RED(S.BOLD("[ERROR] "), message)),
-            (S.DIM("Run with ", help_opt_st, " for usage and available options.")),
-            "",
-            sep="\n",
-        ).print(flush=True)
+        StyledText(*output, "\n", sep="\n").print(flush=True)
 
-        raise SystemExit(1)
+        raise SystemExit(exit_code)
 
     def _build_opt_map(self) -> dict[str, str]:
         """Internal method to build a mapping of options to their corresponding argument aliases."""
@@ -875,7 +903,18 @@ class ArgumentParser:
             return i + 1
 
         if not cfg["optional_value"]:
-            self._error(f"Option '{potential_opt}' requires a value")
+            opt_details: list[Renderable] = [f"Option '{potential_opt}' requires a value"]
+            extra: list[str] = []
+
+            if cfg["expects_value"]:
+                extra.append(f"expected <{cfg['expects_value']}>")
+            if cfg["choices"]:
+                extra.append(f"choices: {', '.join(cfg['choices'])}")
+
+            if extra:
+                opt_details.append(S.DIM(f" ({'; '.join(extra)})"))
+
+            self._error(StyledText(*opt_details))
 
         return i
 
@@ -975,14 +1014,22 @@ class ArgumentParser:
 
                 return token_idx
 
-            self._error(f"Missing required argument: '{name}'")
+            arg_details: list[Renderable] = [f"Missing required argument '{name}'"]
+            if cfg["choices"]:
+                arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
+
+            self._error(StyledText(*arg_details))
 
         if (count := min(available, 1) if nargs == "?" else available) < 1:
             parsed_data[name]["values"] = []
             parsed_data[name]["exists"] = False
 
             if cfg["required"]:
-                self._error(f"Missing required argument: '{name}'")
+                arg_details_req: list[Renderable] = [f"Missing required argument '{name}'"]
+                if cfg["choices"]:
+                    arg_details_req.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
+
+                self._error(StyledText(*arg_details_req))
 
             return token_idx
 
@@ -1022,15 +1069,29 @@ class ArgumentParser:
         for alias, cfg in self._arg_configs.items():
             if cfg["required"] and not parsed_data[alias]["exists"]:
                 if cfg["is_arg"]:
-                    self._error(f"Missing required argument: '{alias}'")
+                    arg_details: list[Renderable] = [f"Missing required argument '{alias}'"]
+                    if cfg["choices"]:
+                        arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
+
+                    self._error(StyledText(*arg_details))
+
                 else:
-                    opt_str = f" ({'/'.join(cast('Iterable[str]', cfg['opts']))})"
-                    self._error(f"Missing required option: {alias}{opt_str}")
+                    self._error(
+                        StyledText(
+                            f"Missing required option '{alias}'",
+                            S.DIM(f" ({', '.join(self._sort_opts(cast('Iterable[str]', cfg['opts'])))})"),
+                        )
+                    )
 
             if cfg["choices"] and parsed_data[alias]["exists"]:
                 for val in parsed_data[alias]["values"]:
                     if val not in cfg["choices"]:
-                        self._error(f"Invalid choice '{val}' for '{alias}'. Allowed: {', '.join(cfg['choices'])}")
+                        choice_details: list[Renderable] = [f"Invalid choice '{val}' for '{alias}'"]
+                        if cfg["opts"] is not None:
+                            choice_details.append(S.DIM(f" ({', '.join(self._sort_opts(cfg['opts']))})"))
+                        choice_details.append(f"\nAllowed: {', '.join(cfg['choices'])}")
+
+                        self._error(StyledText(*choice_details))
 
     def parse(
         self,
