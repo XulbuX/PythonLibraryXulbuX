@@ -189,7 +189,7 @@ import os as _os
 import sys as _sys
 import textwrap as _textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TextIO, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Self, TextIO, cast, overload
 
 if TYPE_CHECKING:
     from .color import hexa, rgba
@@ -275,7 +275,7 @@ class _StyleGroup:
     ----------------------------------------------------------------------------------------------------
     Supports further `|` chaining and `()` application."""
 
-    __slots__: Final[tuple[str, ...]] = ("_codes",)
+    __slots__: tuple[str, ...] = ("_codes",)
 
     def __init__(self, *codes: BaseStyle) -> None:
         self._codes: tuple[BaseStyle, ...] = codes
@@ -410,7 +410,7 @@ class _Style:
     *   `|`  combines two or more codes into a `_StyleGroup` → `S.BOLD | S.RED`
     *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`"""
 
-    __slots__: Final[tuple[str, ...]] = ("_oc", "_value")
+    __slots__: tuple[str, ...] = ("_oc", "_value")
     _oc: tuple[tuple[str, ...], tuple[str, ...]]
 
     def __init__(self, value: int, /) -> None:
@@ -425,8 +425,9 @@ class _Style:
     def __eq__(self, other: object) -> bool:
         if isinstance(other, int):
             return self._value == other
-        if isinstance(other, _Style):
+        elif isinstance(other, _Style):
             return self._value == other._value
+
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -551,6 +552,18 @@ class _Style:
         return StyledText(self).wrap(width)
 
 
+class _FgStyle(_Style):
+    """A single ANSI foreground color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+
+class _BgStyle(_Style):
+    """A single ANSI background color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+
 class _ColorStyle:
     """A 24-bit true-color style – foreground or background.\n
     ----------------------------------------------------------------------------------------------------
@@ -559,7 +572,7 @@ class _ColorStyle:
     >>> S.hex("#FF6070")("text")                # Hex FG color
     >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
 
-    __slots__: Final[tuple[str, ...]] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
+    __slots__: tuple[str, ...] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
         self._red: int = red
@@ -577,13 +590,16 @@ class _ColorStyle:
             self._close_seq = f"{ANSI.CHAR}[{S.RESET_FG}m"
 
     @classmethod
-    def from_hex(cls, color: str, /, *, bg: bool = False) -> _ColorStyle:
-        """Create a `_ColorStyle` from a HEX color string (e.g., `#FF6070` or `F67`)."""
+    def from_hex(cls: type[Self], color: str, /, *, bg: bool | None = None) -> Self:
+        """Create a color style from a HEX color string (e.g., `#FF6070` or `F67`)."""
 
         if (hex_str := color.strip().lstrip("#")).lower().startswith("0x"):
             hex_str = hex_str[2:]
         if len(hex_str) == 3:
             hex_str = hex_str[0] * 2 + hex_str[1] * 2 + hex_str[2] * 2
+
+        if bg is None:
+            return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
 
         return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), bg=bg)
 
@@ -706,13 +722,28 @@ class _ColorStyle:
         return StyledText(self).wrap(width)
 
 
+class _FgColorStyle(_ColorStyle):
+    """A 24-bit true-color foreground style."""
+
+    __slots__: tuple[str, ...] = ()
+
+
+class _BgColorStyle(_ColorStyle):
+    """A 24-bit true-color background style."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = True) -> None:
+        super().__init__(red, green, blue, bg=bg)
+
+
 class _Link:
     """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
     ----------------------------------------------------------------------------------------------------
     >>> S.link("https://example.com")("click here")
     >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
 
-    __slots__: Final[tuple[str, ...]] = ("_close_seq", "_open_seq", "_url")
+    __slots__: tuple[str, ...] = ("_close_seq", "_open_seq", "_url")
 
     def __init__(self, url: str | Path, /) -> None:
         self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
@@ -841,7 +872,7 @@ class _StyledSequence:
     The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
     `text` may be a plain `str`, a nested `_StyledSequence`, or a tuple of mixed segments."""
 
-    __slots__: Final[tuple[str, ...]] = ("_closes", "_opens", "text")
+    __slots__: tuple[str, ...] = ("_closes", "_opens", "text")
 
     def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: Renderable) -> None:
         self._opens: tuple[str, ...] = opens
@@ -975,20 +1006,57 @@ class _StyledSequence:
 
 # ********************* PUBLIC TYPE HELPERS *********************
 
-type ColorStyle = _Style | _ColorStyle
-"""A single style code representing a color (e.g., `S.RED`, `S.hex("#FFF")`). Excludes non-color styles like `S.BOLD`."""
+type FgColorStyle = _FgStyle | _FgColorStyle
+"""A single foreground color style code (e.g., `S.RED`, `S.BR.BLUE`, `S.hex("#FFF")`).<br>
+Excludes background colors and non-color styles like `S.BOLD`."""
+
+
+def is_fg_color_style(obj: object, /) -> TypeIs[FgColorStyle]:
+    """Returns true if `obj` is an instance that matches the `FgColorStyle` type."""
+
+    if isinstance(obj, (_FgColorStyle, _FgStyle)):
+        return True
+
+    elif isinstance(obj, _Style):
+        value = obj._value
+        return (30 <= value <= 37) or (90 <= value <= 97)
+
+    elif isinstance(obj, _ColorStyle):
+        return not obj._bg
+
+    return False
+
+
+type BgColorStyle = _BgStyle | _BgColorStyle
+"""A single background color style code (e.g., `S.BG.RED`, `S.BG.BR.BLUE`, `S.BG.hex("#67F")`).<br>
+Excludes foreground colors and non-color styles like `S.BOLD`."""
+
+
+def is_bg_color_style(obj: object, /) -> TypeIs[BgColorStyle]:
+    """Returns true if `obj` is an instance that matches the `BgColorStyle` type."""
+
+    if isinstance(obj, (_BgColorStyle, _BgStyle)):
+        return True
+
+    elif isinstance(obj, _Style):
+        value = obj._value
+        return (40 <= value <= 47) or (100 <= value <= 107)
+
+    elif isinstance(obj, _ColorStyle):
+        return obj._bg
+
+    return False
+
+
+type ColorStyle = FgColorStyle | BgColorStyle
+"""Any single foreground or background color style code (e.g., `S.RED`, `S.BG.BLUE`, `S.hex("#67F")`).<br>
+Excludes non-color styles like `S.BOLD`."""
 
 
 def is_color_style(obj: object, /) -> TypeIs[ColorStyle]:
     """Returns true if `obj` is an instance that matches the `ColorStyle` type."""
 
-    if isinstance(obj, _ColorStyle):
-        return True
-    elif isinstance(obj, _Style):
-        val = obj._value
-        return (30 <= val <= 37) or (40 <= val <= 47) or (90 <= val <= 97) or (100 <= val <= 107)
-
-    return False
+    return is_fg_color_style(obj) or is_bg_color_style(obj)
 
 
 type BaseStyle = _Style | _ColorStyle | _Link
@@ -1041,6 +1109,7 @@ def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
 
     if isinstance(obj, (str, _StyledSequence, StyledText)):
         return True
+
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
         for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
@@ -1061,6 +1130,7 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 
     if isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
         return True
+
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
         for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
@@ -1077,87 +1147,88 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 class _BgBrNS:
     """Namespace for bright background colors, reachable as `S.BG.BR.*`."""
 
-    BLACK: ClassVar[_Style] = _Style(100)
+    BLACK: ClassVar[_BgStyle] = _BgStyle(100)
     """Bright black background."""
-    RED: ClassVar[_Style] = _Style(101)
+    RED: ClassVar[_BgStyle] = _BgStyle(101)
     """Bright red background."""
-    GREEN: ClassVar[_Style] = _Style(102)
+    GREEN: ClassVar[_BgStyle] = _BgStyle(102)
     """Bright green background."""
-    YELLOW: ClassVar[_Style] = _Style(103)
+    YELLOW: ClassVar[_BgStyle] = _BgStyle(103)
     """Bright yellow background."""
-    BLUE: ClassVar[_Style] = _Style(104)
+    BLUE: ClassVar[_BgStyle] = _BgStyle(104)
     """Bright blue background."""
-    MAGENTA: ClassVar[_Style] = _Style(105)
+    MAGENTA: ClassVar[_BgStyle] = _BgStyle(105)
     """Bright magenta background."""
-    CYAN: ClassVar[_Style] = _Style(106)
+    CYAN: ClassVar[_BgStyle] = _BgStyle(106)
     """Bright cyan background."""
-    WHITE: ClassVar[_Style] = _Style(107)
+    WHITE: ClassVar[_BgStyle] = _BgStyle(107)
     """Bright white background."""
 
 
 class _BgNS:
     """Namespace for background colors, reachable as `S.BG.*`."""
 
-    BLACK: ClassVar[_Style] = _Style(40)
+    BLACK: ClassVar[_BgStyle] = _BgStyle(40)
     """Black background."""
-    RED: ClassVar[_Style] = _Style(41)
+    RED: ClassVar[_BgStyle] = _BgStyle(41)
     """Red background."""
-    GREEN: ClassVar[_Style] = _Style(42)
+    GREEN: ClassVar[_BgStyle] = _BgStyle(42)
     """Green background."""
-    YELLOW: ClassVar[_Style] = _Style(43)
+    YELLOW: ClassVar[_BgStyle] = _BgStyle(43)
     """Yellow background."""
-    BLUE: ClassVar[_Style] = _Style(44)
+    BLUE: ClassVar[_BgStyle] = _BgStyle(44)
     """Blue background."""
-    MAGENTA: ClassVar[_Style] = _Style(45)
+    MAGENTA: ClassVar[_BgStyle] = _BgStyle(45)
     """Magenta background."""
-    CYAN: ClassVar[_Style] = _Style(46)
+    CYAN: ClassVar[_BgStyle] = _BgStyle(46)
     """Cyan background."""
-    WHITE: ClassVar[_Style] = _Style(47)
+    WHITE: ClassVar[_BgStyle] = _BgStyle(47)
     """White background."""
     BR: ClassVar[type[_BgBrNS]] = _BgBrNS
 
     @overload
     @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
+    def rgb(red: int, green: int, blue: int, /) -> _BgColorStyle: ...
     @overload
     @staticmethod
-    def rgb(color: rgba, /) -> _ColorStyle: ...
+    def rgb(color: rgba, /) -> _BgColorStyle: ...
 
     @staticmethod
-    def rgb(*args: Any) -> _ColorStyle:
+    def rgb(*args: Any) -> _BgColorStyle:
         """24-bit background color from RGB components or an `rgba` object.\n
         `S.BG.rgb(0, 0, 0)("text")` or `S.BG.rgb(my_rgba)("text")`"""
 
         if len(args) == 3:
-            return _ColorStyle(args[0], args[1], args[2], bg=True)
-        return _ColorStyle(args[0][0], args[0][1], args[0][2], bg=True)
+            return _BgColorStyle(args[0], args[1], args[2], bg=True)
+
+        return _BgColorStyle(args[0][0], args[0][1], args[0][2], bg=True)
 
     @staticmethod
-    def hex(color: str | hexa, /) -> _ColorStyle:
+    def hex(color: str | hexa, /) -> _BgColorStyle:
         """24-bit background color from HEX string or `hexa` object.\n
         `S.BG.hex("#202020")("text")` or `S.BG.hex(my_hexa)("text")`"""
 
-        return _ColorStyle.from_hex(str(color), bg=True)
+        return _BgColorStyle.from_hex(str(color))
 
 
 class _BrNS:
     """Namespace for bright foreground colors, reachable as `S.BR.*`."""
 
-    BLACK: ClassVar[_Style] = _Style(90)
+    BLACK: ClassVar[_FgStyle] = _FgStyle(90)
     """Bright black foreground."""
-    RED: ClassVar[_Style] = _Style(91)
+    RED: ClassVar[_FgStyle] = _FgStyle(91)
     """Bright red foreground."""
-    GREEN: ClassVar[_Style] = _Style(92)
+    GREEN: ClassVar[_FgStyle] = _FgStyle(92)
     """Bright green foreground."""
-    YELLOW: ClassVar[_Style] = _Style(93)
+    YELLOW: ClassVar[_FgStyle] = _FgStyle(93)
     """Bright yellow foreground."""
-    BLUE: ClassVar[_Style] = _Style(94)
+    BLUE: ClassVar[_FgStyle] = _FgStyle(94)
     """Bright blue foreground."""
-    MAGENTA: ClassVar[_Style] = _Style(95)
+    MAGENTA: ClassVar[_FgStyle] = _FgStyle(95)
     """Bright magenta foreground."""
-    CYAN: ClassVar[_Style] = _Style(96)
+    CYAN: ClassVar[_FgStyle] = _FgStyle(96)
     """Bright cyan foreground."""
-    WHITE: ClassVar[_Style] = _Style(97)
+    WHITE: ClassVar[_FgStyle] = _FgStyle(97)
     """Bright white foreground."""
 
 
@@ -1226,21 +1297,21 @@ class S:
 
     # ********************** STANDARD FG COLORS *********************
 
-    BLACK: ClassVar[_Style] = _Style(30)
+    BLACK: ClassVar[_FgStyle] = _FgStyle(30)
     """Black foreground."""
-    RED: ClassVar[_Style] = _Style(31)
+    RED: ClassVar[_FgStyle] = _FgStyle(31)
     """Red foreground."""
-    GREEN: ClassVar[_Style] = _Style(32)
+    GREEN: ClassVar[_FgStyle] = _FgStyle(32)
     """Green foreground."""
-    YELLOW: ClassVar[_Style] = _Style(33)
+    YELLOW: ClassVar[_FgStyle] = _FgStyle(33)
     """Yellow foreground."""
-    BLUE: ClassVar[_Style] = _Style(34)
+    BLUE: ClassVar[_FgStyle] = _FgStyle(34)
     """Blue foreground."""
-    MAGENTA: ClassVar[_Style] = _Style(35)
+    MAGENTA: ClassVar[_FgStyle] = _FgStyle(35)
     """Magenta foreground."""
-    CYAN: ClassVar[_Style] = _Style(36)
+    CYAN: ClassVar[_FgStyle] = _FgStyle(36)
     """Cyan foreground."""
-    WHITE: ClassVar[_Style] = _Style(37)
+    WHITE: ClassVar[_FgStyle] = _FgStyle(37)
     """White foreground."""
 
     # ************************* NAMESPACES **************************
@@ -1252,26 +1323,27 @@ class S:
 
     @overload
     @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _ColorStyle: ...
+    def rgb(red: int, green: int, blue: int, /) -> _FgColorStyle: ...
     @overload
     @staticmethod
-    def rgb(color: rgba, /) -> _ColorStyle: ...
+    def rgb(color: rgba, /) -> _FgColorStyle: ...
 
     @staticmethod
-    def rgb(*args: Any) -> _ColorStyle:
+    def rgb(*args: Any) -> _FgColorStyle:
         """24-bit foreground color from RGB components or an `rgba` object.\n
         `S.rgb(255, 96, 112)("text")` or `S.rgb(my_rgba)("text")`"""
 
         if len(args) == 3:
-            return _ColorStyle(args[0], args[1], args[2])
-        return _ColorStyle(args[0][0], args[0][1], args[0][2])
+            return _FgColorStyle(args[0], args[1], args[2])
+
+        return _FgColorStyle(args[0][0], args[0][1], args[0][2])
 
     @staticmethod
-    def hex(color: str | hexa, /) -> _ColorStyle:
+    def hex(color: str | hexa, /) -> _FgColorStyle:
         """24-bit foreground color from HEX string or `hexa` object.\n
         `S.hex("#FF6070")("text")`, `S.hex("F67")`, or `S.hex(my_hexa)("text")`"""
 
-        return _ColorStyle.from_hex(str(color))
+        return _FgColorStyle.from_hex(str(color))
 
     @staticmethod
     def link(url: str | Path, /) -> _Link:
@@ -1387,7 +1459,7 @@ class StyledText:
     For exact information about how to use the operator syntax,<br>
     see the `ansi` module documentation."""
 
-    __slots__: Final[tuple[str, ...]] = ("_ansi_parts", "ansi")
+    __slots__: tuple[str, ...] = ("_ansi_parts", "ansi")
 
     def __init__(self, /, *segments: Renderable, sep: str = "") -> None:
         ansi_parts: list[str] = []

@@ -25,7 +25,7 @@ class _SafeDeprecated:
         ...
     ```"""
 
-    __slots__: Final[tuple[str, ...]] = ("kwargs", "message")
+    __slots__: tuple[str, ...] = ("kwargs", "message")
 
     def __init__(self, message: LiteralString, **kwargs: Any) -> None:
         self.message: LiteralString = message

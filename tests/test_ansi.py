@@ -1,7 +1,24 @@
 import io
 import sys
 from pathlib import Path
-from xulbux.ansi import S, StyledText, Term, _build_open_close, _StyleGroup, is_renderable, is_text_renderable
+from xulbux.ansi import (
+    S,
+    StyledText,
+    Term,
+    _BgColorStyle,
+    _BgStyle,
+    _build_open_close,
+    _ColorStyle,
+    _FgColorStyle,
+    _FgStyle,
+    _Style,
+    _StyleGroup,
+    is_bg_color_style,
+    is_color_style,
+    is_fg_color_style,
+    is_renderable,
+    is_text_renderable,
+)
 from xulbux.base.consts import ANSI
 import pytest
 
@@ -419,6 +436,85 @@ def test_type_guards_and_nested_renderables():
     rendered = StyledText(nested_text)
     assert rendered.raw == "abcd"
     assert rendered.ansi == f"a{ESC}[31mb{ESC}[39mcd"
+
+
+def test_color_style_type_guards_and_subclasses():
+    # FG standard and bright:
+    assert isinstance(S.RED, _FgStyle)
+    assert isinstance(S.RED, _Style)
+    assert not isinstance(S.RED, _BgStyle)
+    assert is_fg_color_style(S.RED) is True
+    assert is_bg_color_style(S.RED) is False
+    assert is_color_style(S.RED) is True
+
+    assert isinstance(S.BR.BLUE, _FgStyle)
+    assert is_fg_color_style(S.BR.BLUE) is True
+    assert is_bg_color_style(S.BR.BLUE) is False
+    assert is_color_style(S.BR.BLUE) is True
+
+    # BG standard and bright:
+    assert isinstance(S.BG.RED, _BgStyle)
+    assert isinstance(S.BG.RED, _Style)
+    assert not isinstance(S.BG.RED, _FgStyle)
+    assert is_fg_color_style(S.BG.RED) is False
+    assert is_bg_color_style(S.BG.RED) is True
+    assert is_color_style(S.BG.RED) is True
+
+    assert isinstance(S.BG.BR.BLUE, _BgStyle)
+    assert is_fg_color_style(S.BG.BR.BLUE) is False
+    assert is_bg_color_style(S.BG.BR.BLUE) is True
+    assert is_color_style(S.BG.BR.BLUE) is True
+
+    # 24-bit True-Color FG:
+    fg_hex = S.hex("#FF6070")
+    assert isinstance(fg_hex, _FgColorStyle)
+    assert isinstance(fg_hex, _ColorStyle)
+    assert not isinstance(fg_hex, _BgColorStyle)
+    assert is_fg_color_style(fg_hex) is True
+    assert is_bg_color_style(fg_hex) is False
+    assert is_color_style(fg_hex) is True
+
+    fg_rgb = S.rgb(255, 96, 112)
+    assert isinstance(fg_rgb, _FgColorStyle)
+    assert is_fg_color_style(fg_rgb) is True
+    assert is_bg_color_style(fg_rgb) is False
+    assert is_color_style(fg_rgb) is True
+
+    # 24-bit True-Color BG:
+    bg_hex = S.BG.hex("#FF6070")
+    assert isinstance(bg_hex, _BgColorStyle)
+    assert isinstance(bg_hex, _ColorStyle)
+    assert not isinstance(bg_hex, _FgColorStyle)
+    assert is_fg_color_style(bg_hex) is False
+    assert is_bg_color_style(bg_hex) is True
+    assert is_color_style(bg_hex) is True
+
+    bg_rgb = S.BG.rgb(0, 0, 0)
+    assert isinstance(bg_rgb, _BgColorStyle)
+    assert is_fg_color_style(bg_rgb) is False
+    assert is_bg_color_style(bg_rgb) is True
+    assert is_color_style(bg_rgb) is True
+
+    # Non-color styles:
+    assert is_fg_color_style(S.BOLD) is False
+    assert is_bg_color_style(S.BOLD) is False
+    assert is_color_style(S.BOLD) is False
+
+    assert is_fg_color_style(S.DIM) is False
+    assert is_bg_color_style(S.DIM) is False
+    assert is_color_style(S.DIM) is False
+
+    assert is_fg_color_style(S.RESET) is False
+    assert is_bg_color_style(S.RESET) is False
+    assert is_color_style(S.RESET) is False
+
+    # Non-style objects:
+    assert is_fg_color_style("red") is False
+    assert is_bg_color_style("red") is False
+    assert is_color_style("red") is False
+    assert is_fg_color_style(123) is False
+    assert is_bg_color_style(123) is False
+    assert is_color_style(123) is False
 
 
 def test_styled_text_wrap_basic():

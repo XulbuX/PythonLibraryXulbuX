@@ -9,7 +9,8 @@ from . import color as _color_module
 from .ansi import (
     AnyStyle,
     BaseStyle,
-    ColorStyle,
+    FgColorStyle,
+    Renderable,
     S,
     StyledText,
     TextRenderable,
@@ -288,6 +289,7 @@ class ArgumentParser:
         can be a single key string or an iterable of strings (e.g., `("WASD", "⏶⏴⏷⏵")`).
     *   `examples` – A list of tuples `(example_command, comment)`.
     *   `epilog` – Optional footer text to append to the help print.
+    *   `accent_color` – Optional accent color for the help print (e.g., `S.BR.MAGENTA`).
     *   `prefix_chars` – Characters that prefix options (default: `"-"`).
     *   `intermixed` – Whether options and positional arguments can be intermixed (default: `True`).
     *   `help_opts` – A set of options that trigger the help print (default: `{"-h", "--help"}`)."""
@@ -483,42 +485,42 @@ class ArgumentParser:
 
         return self._sort_opts(opts)[-1].lstrip(self.prefix_chars).replace("-", "_")
 
-    def _add_title_to_help_output(self, output: list[TextRenderable], console_width: int) -> None:
+    def _add_title_to_help_output(self, output: list[Renderable], console_width: int) -> None:
         """Internal method to add the title and subtitle to the help output."""
 
         if not self.title:
             return
 
+        box_st: AnyStyle = S.RESET
+
         if ((title_length := len(self.title) + (len(self.subtitle) + 3 if self.subtitle else 0)) + 4) <= console_width:
-            title_renderable: TextRenderable = (
-                (S.BOLD(self.title), f" — {self.subtitle}") if self.subtitle else S.BOLD(self.title)
-            )
+            title_renderable: Renderable = (S.BOLD(self.title), f" — {self.subtitle}") if self.subtitle else S.BOLD(self.title)
 
             output.extend([
-                "▄" * console_width,
-                (S.INVERSE | S.BG.BLACK)("  ", title_renderable, " " * (console_width - 2 - title_length)),
-                "▀" * console_width,
+                box_st("▄" * console_width),
+                (box_st | S.INVERSE)("  ", title_renderable, " " * (console_width - 2 - title_length)),
+                box_st("▀" * console_width),
                 "",
             ])
 
         else:
             inner_width = max(console_width - 4, 1)
-            output.append("▄" * console_width)
+            output.append(box_st("▄" * console_width))
 
             for title_line in _wrap_text(S.BOLD(self.title), inner_width):
-                output.append((S.INVERSE | S.BG.BLACK)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
+                output.append((box_st | S.INVERSE)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
 
             if self.subtitle:
                 for subtitle_line in _wrap_text(self.subtitle, inner_width):
                     output.append(
-                        (S.INVERSE | S.BG.BLACK)("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  ")
+                        (box_st | S.INVERSE)("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  ")
                     )
 
-            output.extend(["▀" * console_width, ""])
+            output.extend([box_st("▀" * console_width), ""])
 
     def _add_usage_to_help_output(
         self,
-        output: list[TextRenderable],
+        output: list[Renderable],
         cmd_st: StyledText,
         args_st: StyledText,
         opts_st: StyledText,
@@ -526,7 +528,7 @@ class ArgumentParser:
         """Internal method to add the usage line to the help output."""
 
         if self.usage is None:
-            usage_parts: list[_StyledSequence | StyledText] = [S.BOLD("Usage:"), cmd_st]
+            usage_parts: list[Renderable | StyledText] = [(S.RESET, S.BOLD("Usage:")), cmd_st]
 
             if args_st.raw:
                 usage_parts.append(args_st)
@@ -545,10 +547,10 @@ class ArgumentParser:
 
         output.append("")
 
-    def _get_args_help_items(self) -> list[tuple[StyledText, TextRenderable]]:
+    def _get_args_help_items(self) -> list[tuple[StyledText, Renderable]]:
         """Internal method to collect help items for positional arguments."""
 
-        args_items: list[tuple[StyledText, TextRenderable]] = []
+        args_items: list[tuple[StyledText, Renderable]] = []
 
         for name in self._args_order:
             cfg = self._arg_configs[name]
@@ -566,13 +568,13 @@ class ArgumentParser:
 
         return args_items
 
-    def _get_opts_help_items(self, has_opts: bool) -> list[tuple[StyledText, TextRenderable]]:
+    def _get_opts_help_items(self, has_opts: bool) -> list[tuple[StyledText, Renderable]]:
         """Internal method to collect help items for options."""
 
         if not has_opts and not self.help_opts:
             return []
 
-        opts_items: list[tuple[StyledText, TextRenderable]] = [
+        opts_items: list[tuple[StyledText, Renderable]] = [
             (self._opts_to_st(self.help_opts), "Show this help message and exit")
         ]
 
@@ -590,13 +592,13 @@ class ArgumentParser:
 
         return opts_items
 
-    def _get_controls_help_items(self) -> list[tuple[StyledText, TextRenderable]]:
+    def _get_controls_help_items(self) -> list[tuple[StyledText, Renderable]]:
         """Internal method to collect help items for controls."""
 
         if not self.controls:
             return []
 
-        controls_items: list[tuple[StyledText, TextRenderable]] = []
+        controls_items: list[tuple[StyledText, Renderable]] = []
 
         for control, help in self.controls:
             key_list = [control] if isinstance(control, str) else list(control)
@@ -607,9 +609,9 @@ class ArgumentParser:
 
     def _add_section_to_help_output(
         self,
-        output: list[TextRenderable],
+        output: list[Renderable],
         title: str,
-        items: list[tuple[StyledText, TextRenderable]],
+        items: list[tuple[StyledText, Renderable]],
         max_col_width: int,
         console_width: int,
     ) -> None:
@@ -618,7 +620,7 @@ class ArgumentParser:
         if not items:
             return
 
-        output.append(S.BOLD(title))
+        output.append((S.RESET, S.BOLD(title)))
 
         desc_col = max_col_width + 6
         desc_width = max(console_width - desc_col, 10)
@@ -719,7 +721,7 @@ class ArgumentParser:
 
     def _add_examples_to_help_output(
         self,
-        output: list[TextRenderable],
+        output: list[Renderable],
         cmd_name_ext: tuple[str, str],
         console_width: int,
     ) -> None:
@@ -728,9 +730,9 @@ class ArgumentParser:
         if not self.examples:
             return
 
-        output.append(S.BOLD("Examples:"))
+        output.append((S.RESET, S.BOLD("Examples:")))
 
-        highlighted_examples: list[tuple[StyledText, TextRenderable]] = [
+        highlighted_examples: list[tuple[StyledText, Renderable]] = [
             (self._highlight_example(example_cmd, cmd_name_ext[0]), comment) for example_cmd, comment in self.examples
         ]
         max_example_len = max([len(cmd_st.raw) for cmd_st, _ in highlighted_examples], default=0)
@@ -782,7 +784,7 @@ class ArgumentParser:
         )
 
         console_width = get_width()
-        output: list[TextRenderable] = [""]
+        output: list[Renderable] = [""]
 
         self._add_title_to_help_output(output, console_width)
 
@@ -1216,7 +1218,7 @@ def log(
     start: str = "",
     end: str = "\n",
     title_bg_color: BaseStyle | Rgba | Hexa | None = None,
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     tab_size: int = 8,
     title_px: int = 1,
     title_mx: int = 2,
@@ -1288,7 +1290,7 @@ def _log_preset(
     title_bg_color: BaseStyle | Rgba | Hexa | None,
     start: str,
     end: str,
-    default_color: ColorStyle | Rgba | Hexa | None,
+    default_color: FgColorStyle | Rgba | Hexa | None,
     pause: bool,
     do_exit: bool,
     exit_code: int,
@@ -1305,7 +1307,7 @@ def debug(
     active: bool = True,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1324,7 +1326,7 @@ def info(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1342,7 +1344,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -1354,7 +1356,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -1366,7 +1368,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1379,7 +1381,7 @@ def done(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1397,7 +1399,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -1409,7 +1411,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -1421,7 +1423,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1434,7 +1436,7 @@ def warn(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 1,
@@ -1452,7 +1454,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -1464,7 +1466,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -1476,7 +1478,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1489,7 +1491,7 @@ def fail(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 1,
@@ -1507,7 +1509,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -1519,7 +1521,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -1531,7 +1533,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: ColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | Rgba | Hexa | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1544,7 +1546,7 @@ def exit(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 0,
@@ -1561,7 +1563,7 @@ def log_box_filled(
     start: str = "",
     end: str = "\n",
     box_bg_color: AnyStyle | Rgba | Hexa | None = None,
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     w_padding: int = 2,
     w_full: bool = False,
     indent: int = 0,
@@ -1620,7 +1622,7 @@ def log_box_bordered(
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
     border_style: AnyStyle | Rgba | Hexa = S.BR.BLACK,
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     w_padding: int = 1,
     w_full: bool = False,
     indent: int = 0,
@@ -1724,7 +1726,7 @@ def confirm(
     *,
     start: StyledText | str = "",
     end: StyledText | str = "",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     default_is_yes: bool = True,
 ) -> bool:
     """Ask a yes/no question.\n
@@ -1764,7 +1766,7 @@ def multiline_input(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     show_keybindings: bool = True,
     input_prefix: str = " ⮡ ",
     reset_ansi: bool = True,
@@ -1803,7 +1805,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1821,7 +1823,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1839,7 +1841,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1858,7 +1860,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: ColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | Rgba | Hexa | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
