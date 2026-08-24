@@ -711,7 +711,7 @@ class _DataRenderHelper:
     def _hl(self, key: str, text: str, /) -> str:
         """Applies the syntax-highlighting style registered for `key` to `text`, returning the rendered ANSI string."""
 
-        return str(StyledText(self.styles[key](text)))
+        return StyledText(self.styles[key](text)).ansi
 
     def __call__(self) -> StyledText:
         return StyledText(

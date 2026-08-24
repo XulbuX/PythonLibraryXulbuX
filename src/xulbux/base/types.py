@@ -190,13 +190,6 @@ type Hsla = (
 type Hexa = str | int | _HexaObj
 """Matches all supported HEXA color value formats."""
 
-type AnyRgba = Any
-"""Generic type alias for RGBA color values in any format (type checking disabled)."""
-type AnyHsla = Any
-"""Generic type alias for HSLA color values in any format (type checking disabled)."""
-type AnyHexa = Any
-"""Generic type alias for HEXA color values in any format (type checking disabled)."""
-
 
 # **************************************************** SYSTEM & UTILITIES *****************************************************
 

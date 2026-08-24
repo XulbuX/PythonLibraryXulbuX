@@ -315,6 +315,14 @@ class _StyleGroup:
 
         return f"_StyleGroup{self._codes!r}"
 
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_StyleGroup` with identical style codes in identical order."""
+
+        if isinstance(other, _StyleGroup):
+            return self._codes == other._codes
+
+        return False
+
     def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `_StyleGroup` object as the separator.\n
         ----------------------------------------------------------------------------------------------------
@@ -608,6 +616,16 @@ class _ColorStyle:
 
         return f"_ColorStyle({'bg' if self._bg else 'fg'} {self._red},{self._green},{self._blue})"
 
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_ColorStyle` with identical RGB values and background flag."""
+
+        if isinstance(other, _ColorStyle):
+            return (
+                self._red == other._red and self._green == other._green and self._blue == other._blue and self._bg == other._bg
+            )
+
+        return False
+
     def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `_ColorStyle` object as the separator.\n
         ----------------------------------------------------------------------------------------------------
@@ -728,6 +746,14 @@ class _Link:
         """Returns a string representation of this link style, showing the URL it points to."""
 
         return f"_Link({self._url!r})"
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_Link` pointing to the same URL."""
+
+        if isinstance(other, _Link):
+            return self._url == other._url
+
+        return False
 
     def join(self, iterable: Iterable[Renderable], /) -> StyledText:
         """Join a sequence of segments using the current `_Link` object as the separator.\n

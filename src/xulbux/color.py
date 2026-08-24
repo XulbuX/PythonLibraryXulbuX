@@ -8,7 +8,7 @@ for interpolating, lightening, darkening, and blending colors.
 from __future__ import annotations
 
 from . import regex as _regex_module
-from .base.types import AnyHexa, AnyHsla, AnyRgba, Hexa, HexaDict, Hsla, HslaDict, Rgba, RgbaDict
+from .base.types import Hexa, HexaDict, Hsla, HslaDict, Rgba, RgbaDict
 
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 import regex as _rx
@@ -232,7 +232,7 @@ class rgba(_ColorBase):
         *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
 
         if not is_valid_rgba(other):
-            raise TypeError(f"The 'other' parameter must be a valid RGBA color, got {type(other)}")
+            raise TypeError(f"The 'other' parameter must be a valid RGBA color, got {other!r}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
@@ -500,7 +500,7 @@ class hsla(_ColorBase):
         *   `additive_alpha` – whether to blend the alpha channels additively or not."""
 
         if not is_valid_hsla(other):
-            raise TypeError(f"The 'other' parameter must be a valid HSLA color, got {type(other)}")
+            raise TypeError(f"The 'other' parameter must be a valid HSLA color, got {other!r}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
@@ -825,7 +825,7 @@ class hexa(_ColorBase):
         *   `additive_alpha` – Whether to blend the alpha channels additively or not."""
 
         if not is_valid_hexa(other):
-            raise TypeError(f"The 'other' parameter must be a valid HEXA color, got {type(other)}")
+            raise TypeError(f"The 'other' parameter must be a valid HEXA color, got {other!r}")
         if not (0.0 <= ratio <= 1.0):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
@@ -863,7 +863,7 @@ class hexa(_ColorBase):
         return self.to_hsla(round_alpha=False).complementary().to_hexa()
 
 
-def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> TypeIs[Rgba]:
+def is_valid_rgba(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Rgba]:
     """Check if the given color is a valid RGBA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -925,7 +925,7 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> TypeIs[Rgba
     return False
 
 
-def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> TypeIs[Hsla]:
+def is_valid_hsla(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Hsla]:
     """Check if the given color is a valid HSLA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -989,18 +989,18 @@ def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> TypeIs[Hsla
 
 @overload
 def is_valid_hexa(
-    color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[True]
+    color: object, /, *, allow_alpha: bool = True, get_prefix: Literal[True]
 ) -> tuple[bool, Literal["#", "0x"] | None]: ...
 @overload
-def is_valid_hexa(color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> TypeIs[Hexa]: ...
+def is_valid_hexa(color: object, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> TypeIs[Hexa]: ...
 @overload
 def is_valid_hexa(
-    color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
+    color: object, /, *, allow_alpha: bool = True, get_prefix: bool = False
 ) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]: ...
 
 
 def is_valid_hexa(
-    color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
+    color: object, /, *, allow_alpha: bool = True, get_prefix: bool = False
 ) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]:
     """Check if the given color is a valid HEXA color.\n
     ----------------------------------------------------------------------------------------------------
@@ -1029,7 +1029,7 @@ def is_valid_hexa(
     return (False, None) if get_prefix else False
 
 
-def is_valid(color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True) -> TypeIs[Rgba | Hsla | Hexa]:
+def is_valid(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Rgba | Hsla | Hexa]:
     """Check if the given color is a valid RGBA, HSLA or HEXA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -1087,7 +1087,7 @@ def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
     elif is_valid_rgba(color):
         return _parse_rgba(color)
 
-    raise ValueError(f"Could not convert color {color!r} to RGBA")
+    raise ValueError(f"Could not convert color {color!r} to RGBA\nMust be a valid RGBA, HSLA, or HEXA color")
 
 
 def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
@@ -1104,7 +1104,7 @@ def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
     elif is_valid_hsla(color):
         return _parse_hsla(color)
 
-    raise ValueError(f"Could not convert color {color!r} to HSLA")
+    raise ValueError(f"Could not convert color {color!r} to HSLA\nMust be a valid RGBA, HSLA, or HEXA color")
 
 
 def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
@@ -1121,7 +1121,7 @@ def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
     elif is_valid_hexa(color):
         return color if isinstance(color, hexa) else hexa(color)
 
-    raise ValueError(f"Could not convert color {color!r} to HEXA")
+    raise ValueError(f"Could not convert color {color!r} to HEXA\nMust be a valid RGBA, HSLA, or HEXA color")
 
 
 @overload

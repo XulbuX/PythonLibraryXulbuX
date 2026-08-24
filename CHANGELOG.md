@@ -55,6 +55,7 @@
     -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
 *   Replaced the type tuples `DataObjTT` and `IndexIterableTT`, meant for `isinstance` checks, with `is_data_obj()` and `is_index_iterable()` functions, which are more explicit and easier to read.
 *   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
+*   Removed the `AnyRgba`, `AnyHsla` and `AnyHexa` type aliases as you should simply use the types `object` or `Any` for the same effect.
 *   Added new `is_paths_list()` function to check if an object is an instance that matches the `PathsList` type.
 *   Added `ANSI.SEQ_PATTERN` (in `xulbux.base.consts`) – a compiled regex that matches any ANSI escape sequence (CSI, OSC, or single-character), used across the library to detect/strip ANSI sequences.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
@@ -64,6 +65,7 @@
 *   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.
 *   Renamed the `throbber_format` param of `Throbber` to simply `format`, since the class is already called `Throbber`.
 *   Removed the `format_linebreaks` param from `console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
+*   Removed the `reset_ansi` from all funcs where you can simply add a `S.RESET` at the end of your string to achieve the same effect.
 
 
 <span id="v1-9-7" />

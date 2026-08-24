@@ -107,7 +107,7 @@ def _to_styled_text(obj: TextRenderable | object) -> StyledText:
 
 
 def _wrap_text(obj: TextRenderable | object, width: int) -> list[StyledText]:
-    """Internal helper to word-wrap a string or `StyledText` while preserving ANSI styles and line breaks."""
+    """Internal helper to word-wrap a string or `StyledText` while preserving styles and line breaks."""
 
     return _to_styled_text(obj).wrap(width)
 
@@ -1153,7 +1153,6 @@ def pause_exit(
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> NoReturn: ...
 @overload
 def pause_exit(
@@ -1163,7 +1162,6 @@ def pause_exit(
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 @overload
 def pause_exit(
@@ -1173,7 +1171,6 @@ def pause_exit(
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 
 
@@ -1184,7 +1181,6 @@ def pause_exit(
     pause: bool = True,
     exit: bool = False,
     exit_code: int = 0,
-    reset_ansi: bool = False,
 ) -> None:
     """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
     ----------------------------------------------------------------------------------------------------
@@ -1192,14 +1188,9 @@ def pause_exit(
     *   `pause` – Whether to pause and wait for a key press after printing the prompt.
     *   `exit` – Whether to exit the program after printing
         the prompt (and pausing if `pause` is true).
-    *   `exit_code` – The exit code to use when exiting the program.
-    *   `reset_ansi` – Whether to reset the ANSI formatting after printing the prompt."""
+    *   `exit_code` – The exit code to use when exiting the program."""
 
-    styled = _to_styled_text(prompt)
-    if reset_ansi:
-        styled += S.RESET
-
-    styled.print(end="", flush=True)
+    _to_styled_text(prompt).print(end="", flush=True)
 
     if pause:
         _read_single_key()
@@ -1279,7 +1270,7 @@ def log(
     # Convert the prompt to styled text and apply the optional default color:
     prompt_st: _StyledSequence | StyledText = _to_styled_text(prompt)
     if default_color is not None:
-        prompt_st = _as_fg_style(default_color)(prompt_st)
+        prompt_st = _as_fg_style(default_color, param_name="default_color")(prompt_st)
 
     # Wrap prompt text to the next line with proper indentation after the title and tab:
     joined_prompt = StyledText(f"\n{' ' * title_len + tab}").join(prompt_st.wrap(wrap_len))
@@ -1301,11 +1292,10 @@ def _log_preset(
     pause: bool,
     do_exit: bool,
     exit_code: int,
-    reset_ansi: bool,
     /,
 ) -> None:
     log(title, prompt, start=start, end=end, title_bg_color=title_bg_color, default_color=default_color)
-    pause_exit("", pause=pause, exit=do_exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=do_exit, exit_code=exit_code)
 
 
 def debug(
@@ -1319,14 +1309,13 @@ def debug(
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `DEBUG` log message with the options to pause<br>
     at the message and exit the program after the message was printed.\n
     If `active` is false, no debug message will be printed."""
 
     if active:
-        _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code, reset_ansi)
+        _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
 
 
 def info(
@@ -1339,12 +1328,11 @@ def info(
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `INFO` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit, exit_code, reset_ansi)
+    _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit, exit_code)
 
 
 @overload
@@ -1358,7 +1346,6 @@ def done(
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> NoReturn: ...
 @overload
 def done(
@@ -1371,7 +1358,6 @@ def done(
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 @overload
 def done(
@@ -1384,7 +1370,6 @@ def done(
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 
 
@@ -1398,12 +1383,11 @@ def done(
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `DONE` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit, exit_code, reset_ansi)
+    _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit, exit_code)
 
 
 @overload
@@ -1417,7 +1401,6 @@ def warn(
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> NoReturn: ...
 @overload
 def warn(
@@ -1430,7 +1413,6 @@ def warn(
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 @overload
 def warn(
@@ -1443,7 +1425,6 @@ def warn(
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 
 
@@ -1457,12 +1438,11 @@ def warn(
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 1,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `WARN` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code, reset_ansi)
+    _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
 
 
 @overload
@@ -1476,7 +1456,6 @@ def fail(
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> NoReturn: ...
 @overload
 def fail(
@@ -1489,7 +1468,6 @@ def fail(
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 @overload
 def fail(
@@ -1502,7 +1480,6 @@ def fail(
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 
 
@@ -1516,12 +1493,11 @@ def fail(
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 1,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `FAIL` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit, exit_code, reset_ansi)
+    _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit, exit_code)
 
 
 @overload
@@ -1535,7 +1511,6 @@ def exit(
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> NoReturn: ...
 @overload
 def exit(
@@ -1548,7 +1523,6 @@ def exit(
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 @overload
 def exit(
@@ -1561,7 +1535,6 @@ def exit(
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
-    reset_ansi: bool = ...,
 ) -> None: ...
 
 
@@ -1575,13 +1548,12 @@ def exit(
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 0,
-    reset_ansi: bool = True,
 ) -> None:
     """A preset for `log()`: `EXIT` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
     log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code, reset_ansi=reset_ansi)
+    pause_exit("", pause=pause, exit=exit, exit_code=exit_code)
 
 
 def log_box_filled(
@@ -1614,10 +1586,12 @@ def log_box_filled(
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-    fg_style = _as_fg_style(default_color, fallback="#000")
+    fg_style = _as_fg_style(default_color, fallback="#000", param_name="default_color")
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-    bg_style: AnyStyle = (S.RESET_FG | S.INVERSE | fg_style) if box_bg_color is None else _as_bg_style(box_bg_color)
+    bg_style: AnyStyle = (
+        (S.RESET_FG | S.INVERSE | fg_style) if box_bg_color is None else _as_bg_style(box_bg_color, param_name="box_bg_color")
+    )
 
     open_seq = StyledText(fg_style | bg_style).ansi
     bg_open = StyledText(bg_style).ansi
@@ -1701,8 +1675,10 @@ def log_box_bordered(
                     f"The 'border_chars' parameter must only contain single-character strings, got {border_chars!r}"
                 )
 
-    border_open = StyledText(_as_fg_style(border_style)).ansi
-    content_open = StyledText(_as_fg_style(default_color)).ansi if default_color is not None else ""
+    border_open = StyledText(_as_fg_style(border_style, param_name="border_style")).ansi
+    content_open = (
+        StyledText(_as_fg_style(default_color, param_name="default_color")).ansi if default_color is not None else ""
+    )
     reset = StyledText(S.RESET).ansi
 
     borders = {
@@ -1770,7 +1746,7 @@ def confirm(
         "): ",
     )
     head = f"{_to_styled_text(start)}{_to_styled_text(prompt).ansi} "
-    head_seg = _as_fg_style(default_color)(head) if default_color is not None else head
+    head_seg = _as_fg_style(default_color, param_name="default_color")(head) if default_color is not None else head
 
     confirmed = input(StyledText(head_seg, S.RESET, yes_no).ansi).strip().lower() in (
         {"", "y", "yes"} if default_is_yes else {"y", "yes"}
@@ -1801,7 +1777,7 @@ def multiline_input(
     *   `default_color` – The default text color of the `prompt`.
     *   `show_keybindings` – Whether to show the special keybindings or not.
     *   `input_prefix` – The prefix of the input line.
-    *   `reset_ansi` – Whether to reset the ANSI codes after the input or not.
+    *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input.\n
     ------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `StyledText` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
@@ -1810,7 +1786,7 @@ def multiline_input(
     kb.add("c-d", eager=True)(_multiline_input_submit)
 
     head = f"{start}{_to_styled_text(prompt).ansi}"
-    head_seg = _as_fg_style(default_color)(head) if default_color is not None else head
+    head_seg = _as_fg_style(default_color, param_name="default_color")(head) if default_color is not None else head
     StyledText(head_seg).print()
     if show_keybindings:
         StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
@@ -1958,9 +1934,11 @@ def input(
     kb.add(Keys.Any)(helper.handle_any)
 
     custom_style = Style.from_dict({"bottom-toolbar": "noreverse"})
+
     prompt_ansi = _to_styled_text(prompt).ansi
     if default_color is not None:
-        prompt_ansi = StyledText(_as_fg_style(default_color)(prompt_ansi)).ansi
+        prompt_ansi = StyledText(_as_fg_style(default_color, param_name="default_color")(prompt_ansi)).ansi
+
     session: _pt.PromptSession[str] = _pt.PromptSession(
         message=_pt.formatted_text.ANSI(prompt_ansi),
         validator=_ConsoleInputValidator(helper.get_text, mask_char=mask_char, min_len=min_len, validator=validator),
@@ -1970,6 +1948,7 @@ def input(
         placeholder=_pt.formatted_text.ANSI(StyledText((S.ITALIC | S.BR.BLACK)(placeholder)).ansi) if placeholder else "",
         style=custom_style,
     )
+
     StyledText(start).print(end="", flush=True)
     session.prompt()
     StyledText(end).print(end="", flush=True)
@@ -2019,7 +1998,7 @@ def _read_single_key() -> None:
             _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type: ignore[attr-defined]
 
 
-def _resolve_title_colors(title_bg_color: AnyStyle | Rgba | Hexa, /) -> tuple[AnyStyle, BaseStyle]:
+def _resolve_title_colors(title_bg_color: object, /) -> tuple[AnyStyle, BaseStyle]:
     """Resolves the log title's background style and its matching foreground style.\n
     ----------------------------------------------------------------------------------------------------
     *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
@@ -2033,12 +2012,12 @@ def _resolve_title_colors(title_bg_color: AnyStyle | Rgba | Hexa, /) -> tuple[An
         return S.BG.hex(str(hexa_bg)), S.hex(str(_color_module.text_color_for_on_bg(hexa_bg)))
 
     raise ValueError(
-        "The 'title_bg_color' parameter must be a valid ANSI background style, "
-        f"RGBA value, or HEXA value, got {title_bg_color!r}"
+        "The 'title_bg_color' parameter must be a valid background style (e.g., 'S.BG.BLUE'), "
+        f"RGBA color, or HEXA color, got {title_bg_color!r}"
     )
 
 
-def _as_bg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
+def _as_bg_style(color: object, /, *, param_name: str = "box_bg_color") -> AnyStyle:
     """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
 
     if is_any_style(color):
@@ -2047,11 +2026,12 @@ def _as_bg_style(color: AnyStyle | Rgba | Hexa, /) -> AnyStyle:
         return S.BG.hex(str(_color_module.to_hexa(color)))
 
     raise ValueError(
-        f"The 'box_bg_color' parameter must be a valid ANSI background style, RGBA value, or HEXA value, got {color!r}"
+        f"The {param_name!r} parameter must be a valid background style (e.g., 'S.BG.BLUE'), "
+        f"RGBA color, or HEXA color, got {color!r}"
     )
 
 
-def _as_fg_style(color: AnyStyle | Rgba | Hexa | None, /, *, fallback: str = "#000") -> AnyStyle:
+def _as_fg_style(color: object, /, *, fallback: str = "#000", param_name: str = "color") -> AnyStyle:
     """Resolves an `S` style, an RGBA/HEXA color, or `None` (returns fallback) to an `S` foreground style."""
 
     if color is None:
@@ -2061,7 +2041,10 @@ def _as_fg_style(color: AnyStyle | Rgba | Hexa | None, /, *, fallback: str = "#0
     if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.hex(str(_color_module.to_hexa(color)))
 
-    raise ValueError(f"The 'color' parameter must be a valid ANSI style, RGBA value, or HEXA value, got {color!r}")
+    raise ValueError(
+        f"The {param_name!r} parameter must be a valid style (e.g., 'S.DIM | S.BR.BLUE'), "
+        f"RGBA color, or HEXA color, got {color!r}"
+    )
 
 
 def _persist_style(ansi_text: str, style_open: str, /) -> str:
