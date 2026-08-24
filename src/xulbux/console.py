@@ -279,6 +279,7 @@ class ArgumentParser:
     ----------------------------------------------------------------------------------------------------
     *   `title` – An optional title for the help print (e.g., `"CLI Tool"`).
     *   `subtitle` – An optional subtitle (e.g., `"A simple command-line utility"`).
+    *   `notice` – Optional notice or warning text to display right after the title.
     *   `usage` – An optional explicit usage string, containing placeholders:
         -   `{cmd}` – The command name (e.g., `cli-tool`).
         -   `{args}` – The arguments placeholder (`<input> [output...]`).
@@ -287,6 +288,7 @@ class ArgumentParser:
     *   `examples` – A list of tuples `(example_command, comment)`.
     *   `epilog` – Optional footer text to append to the help print.
     *   `prefix_chars` – Characters that prefix options (default: `"-"`).
+    *   `intermixed` – Whether options and positional arguments can be intermixed (default: `True`).
     *   `help_opts` – A set of options that trigger the help print (default: `{"-h", "--help"}`)."""
 
     def __init__(
@@ -294,11 +296,13 @@ class ArgumentParser:
         *,
         title: str | None = None,
         subtitle: str | None = None,
+        notice: TextRenderable | object | None = None,
         usage: TextRenderable | str | None = None,
         controls: list[tuple[str, TextRenderable]] | None = None,
         examples: list[tuple[str, TextRenderable]] | None = None,
         epilog: TextRenderable | object | None = None,
         prefix_chars: str = "-",
+        intermixed: bool = True,
         help_opts: set[str] | frozenset[str] = frozenset({"-h", "--help"}),
     ) -> None:
 
@@ -309,6 +313,8 @@ class ArgumentParser:
         """An optional title for the help print (e.g., `"CLI Tool"`)."""
         self.subtitle: str | None = subtitle
         """An optional subtitle (e.g., `"A simple command-line utility"`)."""
+        self.notice: TextRenderable | object | None = notice
+        """Optional notice or warning text to display after the title."""
         self.usage: TextRenderable | str | None = usage
         """An optional explicit usage string."""
         self.controls: list[tuple[str, TextRenderable]] | None = controls
@@ -319,6 +325,8 @@ class ArgumentParser:
         """Optional footer text to append to the help print."""
         self.prefix_chars: str = prefix_chars
         """Characters that prefix options (e.g., `"-"`, `"-/"`)."""
+        self.intermixed: bool = intermixed
+        """Whether options and positional arguments can be intermixed."""
 
         escaped_prefixes = "".join([_re.escape(char) for char in prefix_chars])
         self._opt_pattern: _re.Pattern[str] = _re.compile(rf"^[{escaped_prefixes}]{{1,2}}(?:\?|[\w][\w\-]*)$")
@@ -625,6 +633,59 @@ class ArgumentParser:
 
         output.append("")
 
+    def _highlight_token(
+        self,
+        token: str,
+        cmd_name: str,
+        all_opts: set[str],
+        value_opts: set[str],
+        state: list[bool],
+    ) -> str:
+        """Internal helper to syntax-highlight a single CLI token."""
+
+        # state: [expecting_value, seen_pos, saw_double_dash]
+
+        if token.startswith("{cmd}"):
+            suffix = token[5:]
+            state[0] = False
+            return StyledText(S.BR.GREEN(cmd_name), S.DIM(suffix) if suffix else "").ansi
+
+        if token == "--":
+            state[0] = False
+            state[2] = True
+            return StyledText(S.BR.BLUE(token)).ansi
+
+        if state[2] or state[0]:
+            is_opt_val = state[0]
+            state[0] = False
+            return StyledText(S.BR.BLUE(token) if is_opt_val else S.BR.CYAN(token)).ansi
+
+        if "=" in token:
+            opt_prefix = token.split("=", 1)[0]
+            if opt_prefix in all_opts or ((self.intermixed or not state[1]) and self._opt_pattern.fullmatch(opt_prefix)):
+                return StyledText(S.BR.BLUE(token)).ansi
+            state[1] = True
+            return StyledText(S.BR.CYAN(token)).ansi
+
+        if token in all_opts:
+            if not self.intermixed and state[1]:
+                return StyledText(S.BR.CYAN(token)).ansi
+            if token in value_opts:
+                state[0] = True
+            return StyledText(S.BR.BLUE(token)).ansi
+
+        if _is_number(token):
+            state[1] = True
+            return StyledText(S.BR.CYAN(token)).ansi
+
+        if self._opt_pattern.fullmatch(token):
+            if not self.intermixed and state[1]:
+                return StyledText(S.BR.CYAN(token)).ansi
+            return StyledText(S.BR.BLUE(token)).ansi
+
+        state[1] = True
+        return StyledText(S.BR.CYAN(token)).ansi
+
     def _highlight_example(self, example_cmd: str, cmd_name: str) -> StyledText:
         """Internal method to syntax-highlight the left command part of an example."""
 
@@ -640,24 +701,11 @@ class ArgumentParser:
 
         parts: list[str] = []
         last_idx: int = 0
-        expecting_value: bool = False
+        state: list[bool] = [False, False, False]
 
         for match in _PATTERNS.cli_token.finditer(example_cmd):
             parts.append(example_cmd[last_idx : match.start()])
-
-            if (token := match.group(0)).startswith("{cmd}"):
-                suffix = token[5:]
-                parts.append(StyledText(S.BR.GREEN(cmd_name), S.DIM(suffix) if suffix else "").ansi)
-                expecting_value = False
-            elif (opt_prefix := token.split("=", 1)[0]) in all_opts or self._opt_pattern.fullmatch(token):
-                parts.append(StyledText(S.BR.BLUE(token)).ansi)
-                expecting_value = False if "=" in token else opt_prefix in value_opts
-            elif expecting_value:
-                parts.append(StyledText(S.BR.BLUE(token)).ansi)
-                expecting_value = False
-            else:
-                parts.append(StyledText(S.BR.CYAN(token)).ansi)
-
+            parts.append(self._highlight_token(match.group(0), cmd_name, all_opts, value_opts, state))
             last_idx = match.end()
 
         parts.append(example_cmd[last_idx:])
@@ -734,14 +782,19 @@ class ArgumentParser:
         output: list[TextRenderable] = [""]
 
         self._add_title_to_help_output(output, console_width)
+
+        if self.notice is not None:
+            output.append(_to_styled_text(self.notice))
+            output.append("")
+
         self._add_usage_to_help_output(output, cmd_st, args_st, opts_st)
         self._add_section_to_help_output(output, "Arguments:", args_items, max_col_width, console_width)
         self._add_section_to_help_output(output, "Options:", opts_items, max_col_width, console_width)
         self._add_section_to_help_output(output, "Controls:", controls_items, max_col_width, console_width)
         self._add_examples_to_help_output(output, cmd_name_ext, console_width)
 
-        if self.epilog:
-            output.append(self.epilog if isinstance(self.epilog, StyledText) else str(self.epilog))
+        if self.epilog is not None:
+            output.append(_to_styled_text(self.epilog))
             output.append("")
 
         StyledText(*output, sep="\n").print(flush=True)
@@ -773,6 +826,45 @@ class ArgumentParser:
 
         return opt_map
 
+    def _consume_opt(
+        self,
+        raw_args: list[str],
+        i: int,
+        potential_opt: str,
+        potential_val: str | None,
+        alias: str,
+        opt_map: dict[str, str],
+        parsed_data: dict[str, dict[str, Any]],
+        allow_space_value: bool,
+    ) -> int:
+        """Internal helper to consume an option and its value during argument parsing."""
+
+        cfg = self._arg_configs[alias]
+        parsed_data[alias]["exists"] = True
+        parsed_data[alias]["opt"] = potential_opt
+
+        if cfg["expects_value"] is None:
+            return i
+
+        if potential_val is not None:
+            parsed_data[alias]["values"].append(potential_val)
+            return i
+
+        if (
+            allow_space_value
+            and i + 1 < len(raw_args)
+            and raw_args[i + 1] not in opt_map
+            and raw_args[i + 1] not in self.help_opts
+            and raw_args[i + 1] != "--"
+        ):
+            parsed_data[alias]["values"].append(raw_args[i + 1])
+            return i + 1
+
+        if not cfg["optional_value"]:
+            self._error(f"Option '{potential_opt}' requires a value")
+
+        return i
+
     def _parse_args_loop(
         self,
         raw_args: list[str],
@@ -781,6 +873,7 @@ class ArgumentParser:
         arg_tokens: list[str],
         opt_value_sep: str | None,
         allow_space_value: bool,
+        intermixed: bool,
     ) -> None:
         """Internal method to loop through the raw arguments and populate the parsed data."""
 
@@ -804,36 +897,25 @@ class ArgumentParser:
                 raise SystemExit(0)
 
             if potential_opt in opt_map:
-                alias = opt_map[potential_opt]
-                cfg = self._arg_configs[alias]
-                parsed_data[alias]["exists"] = True
-                parsed_data[alias]["opt"] = potential_opt
+                i = self._consume_opt(
+                    raw_args,
+                    i,
+                    potential_opt,
+                    potential_val,
+                    opt_map[potential_opt],
+                    opt_map,
+                    parsed_data,
+                    allow_space_value,
+                )
 
-                if cfg["expects_value"] is not None:
-                    if potential_val is not None:
-                        parsed_data[alias]["values"].append(potential_val)
-                    elif (
-                        allow_space_value
-                        and i + 1 < len(raw_args)
-                        and raw_args[i + 1] not in opt_map
-                        and raw_args[i + 1] not in self.help_opts
-                        and raw_args[i + 1] != "--"
-                    ):
-                        parsed_data[alias]["values"].append(raw_args[i + 1])
-                        i += 1
-                    elif cfg["optional_value"]:
-                        pass
-                    else:
-                        self._error(f"Option '{potential_opt}' requires a value")
-
-            elif _is_number(arg):
+            elif _is_number(arg) or not self._opt_pattern.fullmatch(potential_opt):
+                if not intermixed:
+                    arg_tokens.extend(raw_args[i:])
+                    break
                 arg_tokens.append(arg)
-
-            elif self._opt_pattern.fullmatch(potential_opt):
-                self._error(f"Unrecognized option: '{potential_opt}'")
 
             else:
-                arg_tokens.append(arg)
+                self._error(f"Unrecognized option: '{potential_opt}'")
 
             i += 1
 
@@ -936,24 +1018,28 @@ class ArgumentParser:
                     if val not in cfg["choices"]:
                         self._error(f"Invalid choice '{val}' for '{alias}'. Allowed: {', '.join(cfg['choices'])}")
 
-    def parse(self, *, skip: int = 0, opt_value_sep: str | None = "=", allow_space_value: bool = True) -> ParsedArgs:
+    def parse(
+        self,
+        *,
+        skip: int = 0,
+        opt_value_sep: str | None = "=",
+        allow_space_value: bool = True,
+        intermixed: bool | None = None,
+    ) -> ParsedArgs:
         """Parse `sys.argv` and return the strongly-typed `ParsedArgs` object.\n
         ----------------------------------------------------------------------------------------------------
         *   `skip` – Number of arguments to skip at the start.
         *   `opt_value_sep` – String separating option from value (e.g., `"="` for `--foo=bar`).
             Set to `None` to disable.
         *   `allow_space_value` – Whether to allow space-separated values
-            for options (e.g., `--foo bar`).\n
+            for options (e.g., `--foo bar`).
+        *   `intermixed` – Whether options and positional arguments can be intermixed<br>
+            (defaults to `self.intermixed` if not specified).\n
         ----------------------------------------------------------------------------------------------------
         Returns the `ParsedArgs` container."""
 
         raw_args = _sys.argv[1 + skip :]
         result = ParsedArgs()
-
-        for opt in self.help_opts:
-            if opt in raw_args:
-                self.print_help()
-                raise SystemExit(0)
 
         opt_map = self._build_opt_map()
         parsed_data: dict[str, dict[str, Any]] = {
@@ -962,7 +1048,17 @@ class ArgumentParser:
         }
         arg_tokens: list[str] = []
 
-        self._parse_args_loop(raw_args, opt_map, parsed_data, arg_tokens, opt_value_sep, allow_space_value)
+        should_intermix = self.intermixed if intermixed is None else intermixed
+
+        self._parse_args_loop(
+            raw_args,
+            opt_map,
+            parsed_data,
+            arg_tokens,
+            opt_value_sep,
+            allow_space_value,
+            should_intermix,
+        )
         self._resolve_args(parsed_data, arg_tokens)
         self._validate_parsed_data(parsed_data)
 

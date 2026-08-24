@@ -1240,6 +1240,110 @@ def test_argument_parser_reactive_narrow_width_layout(capsys: pytest.CaptureFixt
     assert dim_seq in ansi_continuation
 
 
+def test_argument_parser_notice(capsys: pytest.CaptureFixture[str]):
+    parser = ArgumentParser(
+        title="MyTool",
+        notice=(S.BOLD | S.BR.YELLOW)("Warning: This is a test notice."),
+    )
+    parser.add_arg("cmd")
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    raw_lines = [StyledText(line).raw for line in captured.out.splitlines()]
+
+    assert any("Warning: This is a test notice." in line for line in raw_lines)
+    notice_idx = next(i for i, line in enumerate(raw_lines) if "Warning: This is a test notice." in line)
+    usage_idx = next(i for i, line in enumerate(raw_lines) if "Usage:" in line)
+    assert notice_idx < usage_idx
+
+
+def test_argument_parser_non_intermixed(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(sys, "argv", ["xc.py", "--no-meta", "ls", "-la", "--sort=time"])
+    parser = ArgumentParser(intermixed=False)
+    parser.add_arg("command", nargs="+")
+    parser.add_opt({"-nm", "--no-meta"})
+    parser.add_opt({"-a", "--ansi"})
+
+    args = parser.parse()
+    assert args.no_meta.exists is True
+    assert args.ansi.exists is False
+    assert args.command.vals() == ("ls", "-la", "--sort=time")
+
+
+def test_argument_parser_non_intermixed_unrecognized_option_before_pos(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.setattr(sys, "argv", ["script.py", "--invalid-flag", "command"])
+    parser = ArgumentParser(intermixed=False)
+    parser.add_arg("command")
+
+    with pytest.raises(SystemExit) as exc:
+        parser.parse()
+    assert exc.value.code == 1
+
+    clean_out = StyledText(capsys.readouterr().out).raw
+    assert "[ERROR] Unrecognized option: '--invalid-flag'" in clean_out
+
+
+def test_argument_parser_parse_intermixed_override(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(sys, "argv", ["script.py", "pos1", "-v", "pos2"])
+    parser = ArgumentParser(intermixed=True)
+    parser.add_arg("args", nargs="+")
+    parser.add_opt({"-v", "--verbose"})
+
+    # With default `intermixed=True`:
+    args_intermixed = parser.parse()
+    assert args_intermixed.verbose.exists is True
+    assert args_intermixed.args.vals() == ("pos1", "pos2")
+
+    # Overridden with intermixed=False in `parse()`:
+    args_non_intermixed = parser.parse(intermixed=False)
+    assert args_non_intermixed.verbose.exists is False
+    assert args_non_intermixed.args.vals() == ("pos1", "-v", "pos2")
+
+
+def test_argument_parser_subcommand_help_flag_non_intermixed(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(sys, "argv", ["xc.py", "pytest", "-h"])
+    parser = ArgumentParser(intermixed=False)
+    parser.add_arg("command", nargs="+")
+    parser.add_opt({"-nc", "--no-command"})
+
+    args = parser.parse()
+    assert args.command.vals() == ("pytest", "-h")
+
+
+def test_argument_parser_non_intermixed_examples_highlighting(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr("xulbux.console.get_width", lambda: 120)
+
+    parser = ArgumentParser(
+        title="XC",
+        examples=[
+            ("{cmd} --only ls -la", "Run and copy ls -la output only"),
+        ],
+        intermixed=False,
+    )
+    parser.add_arg("command", nargs="+")
+    parser.add_opt({"-o", "--only"})
+    parser.add_opt({"-a", "--ansi"})
+
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    ansi_line = next(line for line in captured.out.splitlines() if "ls -la" in line)
+
+    blue_seq = StyledText(S.BR.BLUE).ansi
+    cyan_seq = StyledText(S.BR.CYAN).ansi
+
+    # `--only` should be blue, but `ls` and `-la` must be cyan (parsed as positional arguments):
+    assert f"{blue_seq}--only" in ansi_line
+    assert f"{cyan_seq}ls" in ansi_line
+    assert f"{cyan_seq}-la" in ansi_line
+
+
 # ***************************************************** ProgressBar TESTS *****************************************************
 
 
