@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NotRequired, Protocol, TypedDict, cast, overload
 
 if TYPE_CHECKING:
+    import sys
     from collections.abc import Iterable
-    from sys import version_info as _vi
     from xulbux.ansi import Renderable
 
-    if _vi >= (3, 13):
+    if sys.version_info >= (3, 13):
         from typing import TypeIs
     else:
         from typing_extensions import TypeIs

@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, Any, Literal, cast, overload
 import regex as _rx
 
 if TYPE_CHECKING:
+    import sys
     from collections.abc import Iterator
-    from sys import version_info as _vi
 
-    if _vi >= (3, 13):
+    if sys.version_info >= (3, 13):
         from typing import TypeIs
     else:
         from typing_extensions import TypeIs

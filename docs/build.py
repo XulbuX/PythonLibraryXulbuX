@@ -537,7 +537,7 @@ def _process_single_file(file_path: Path) -> None:
     elif DOCS_SRC_DIR in file_path.parents:
         dest_path = DOCS_BUILD_DIR / file_path.relative_to(DOCS_SRC_DIR)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.copy(dest_path)
+        shutil.copy2(file_path, dest_path)
 
         print(f"  copied {dest_path.name}")
 
@@ -549,7 +549,7 @@ def _build_all_api_docs() -> None:
     if DOCS_BUILD_DIR.exists():
         shutil.rmtree(DOCS_BUILD_DIR)
 
-    DOCS_SRC_DIR.copy(DOCS_BUILD_DIR)
+    shutil.copytree(DOCS_SRC_DIR, DOCS_BUILD_DIR)
     print(f"\nCopied {DOCS_SRC_DIR.name} to {DOCS_BUILD_DIR.name}\n")
 
     # [2] Auto-discover all Python modules and generate markdown files for them:
