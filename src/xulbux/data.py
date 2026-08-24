@@ -8,7 +8,7 @@ syntax-highlighted rendering, and data type conversions.
 from . import string as _string_module
 from .ansi import AnyStyle, S, StyledText
 from .base.types import DataObj as DataObjType
-from .base.types import IndexIterable, is_data_obj, is_index_iterable
+from .base.types import SeqOrSet, is_data_obj, is_seq_or_set
 from .regex import LazyRegex
 
 import base64 as _base64
@@ -80,12 +80,9 @@ def remove_empty_items[DataObj: DataObjType](data: DataObj, /, *, spaces_are_emp
             if not (isinstance(item, (str, type(None))) and _string_module.is_empty(item, spaces_are_empty=spaces_are_empty))
         ]
 
-        return cast(
-            "DataObj",
-            type(data)([
-                item for item in processed_items if not (not item and isinstance(item, (list, tuple, dict, set, frozenset)))
-            ]),
-        )
+        return type(data)([
+            item for item in processed_items if not (not item and isinstance(item, (list, tuple, dict, set, frozenset)))
+        ])
 
 
 def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
@@ -109,14 +106,14 @@ def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
                 if item not in result:
                     result.append(item)
 
-        return cast("DataObj", type(data)(result))
+        return type(data)(result)
 
     else:
         processed_elements: set[Any] = set()
         for item in data:
             processed_item = remove_duplicates(item) if is_data_obj(item) else item
             processed_elements.add(processed_item)
-        return cast("DataObj", type(data)(processed_elements))
+        return type(data)(processed_elements)
 
 
 def remove_comments[DataObj: DataObjType](
@@ -346,7 +343,7 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
             parent = dict_data
             current_data = dict_data[keys[path_idx]]
 
-        elif is_index_iterable(current_data):
+        elif is_seq_or_set(current_data):
             if i == len(path) - 1 and get_key:
                 if parent is None or not isinstance(parent, dict):
                     raise ValueError(f"Cannot get key from a non-dict parent at path '{path[: i + 1]}'") from None
@@ -475,7 +472,7 @@ def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], cu
         return True
 
     elif isinstance(data1, (list, tuple)) and isinstance(data2, (list, tuple)):
-        array_data1, array_data2 = cast("IndexIterable[Any]", data1), cast("IndexIterable[Any]", data2)
+        array_data1, array_data2 = cast("SeqOrSet[Any]", data1), cast("SeqOrSet[Any]", data2)
 
         if len(array_data1) != len(array_data2):
             return False
@@ -518,7 +515,7 @@ def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any
             keys, dict_data = list(dict_data.keys()), dict(dict_data)
             dict_data[keys[id_path[0]]] = value
             return dict_data
-        elif is_index_iterable(current_data):
+        elif is_seq_or_set(current_data):
             was_t, current_data = type(current_data), list(current_data)
             current_data[id_path[0]] = value
             return was_t(current_data)
@@ -529,7 +526,7 @@ def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any
             keys, dict_data = list(dict_data.keys()), dict(dict_data)
             dict_data[keys[id_path[0]]] = _set_nested_val(dict_data[keys[id_path[0]]], id_path[1:], value)
             return dict_data
-        elif is_index_iterable(current_data):
+        elif is_seq_or_set(current_data):
             was_t, current_data = type(current_data), list(current_data)
             current_data[id_path[0]] = _set_nested_val(current_data[id_path[0]], id_path[1:], value)
             return was_t(current_data)
@@ -581,7 +578,7 @@ class _DataRemoveCommentsHelper:
                 if key is not None
             }
 
-        if is_index_iterable(item):
+        if is_seq_or_set(item):
             processed = [cleaned for val in item if (cleaned := self.remove_nested_comments(val)) is not None]
             return type(item)(processed)
 
@@ -626,7 +623,7 @@ class _DataGetPathIdHelper:
         if isinstance(self.current_data, dict):
             if (idx := self.process_dict_key(key)) is None:
                 return False
-        elif is_index_iterable(self.current_data):
+        elif is_seq_or_set(self.current_data):
             if (idx := self.process_iterable_key(key)) is None:
                 return False
         else:
@@ -734,7 +731,7 @@ class _DataRenderHelper:
         elif current_indent is not None and hasattr(value, "__dict__"):
             return self.format_dict(value.__dict__, current_indent + self.indent)
 
-        elif current_indent is not None and is_index_iterable(value):
+        elif current_indent is not None and is_seq_or_set(value):
             return self.format_sequence(value, current_indent + self.indent)
 
         elif current_indent is not None and isinstance(value, (bytes, bytearray)):
@@ -804,7 +801,7 @@ class _DataRenderHelper:
 
         return score
 
-    def should_expand(self, seq: IndexIterable[Any], /) -> bool:
+    def should_expand(self, seq: SeqOrSet[Any], /) -> bool:
         """Determines whether a sequence should be expanded based on its content and the current compactness settings."""
 
         if self.compactness == 0:
@@ -841,7 +838,7 @@ class _DataRenderHelper:
 
         return self.punct["{"] + "\n" + f"{self.sep}\n".join(items) + f"\n{' ' * current_indent}" + self.punct["}"]
 
-    def format_sequence(self, seq: IndexIterable[Any], current_indent: int, /) -> str:
+    def format_sequence(self, seq: SeqOrSet[Any], current_indent: int, /) -> str:
         """Formats a list or tuple as a string, applying indentation and compactness rules."""
 
         if self.as_json:

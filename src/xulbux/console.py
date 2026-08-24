@@ -19,7 +19,7 @@ from .ansi import (
 )
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
-from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba
+from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba, SeqOrSet
 from .regex import LazyRegex
 
 import ctypes as _ctypes
@@ -31,7 +31,7 @@ import subprocess as _subprocess
 import sys as _sys
 import threading as _threading
 import time as _time
-from collections.abc import Callable, Generator, Iterable
+from collections.abc import Callable, Generator, Iterable, Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import Any, Final, Literal, NoReturn, TextIO, TypedDict, cast, overload
@@ -284,7 +284,8 @@ class ArgumentParser:
         -   `{cmd}` – The command name (e.g., `cli-tool`).
         -   `{args}` – The arguments placeholder (`<input> [output...]`).
         -   `{opts}` – The options placeholder (`[options]`).
-    *   `controls` – A list of tuples `(control_key, help)`.
+    *   `controls` – A sequence of tuples `(control_key, help)`, where `control_key`<br>
+        can be a single key string or an iterable of strings (e.g., `("WASD", "⏶⏴⏷⏵")`).
     *   `examples` – A list of tuples `(example_command, comment)`.
     *   `epilog` – Optional footer text to append to the help print.
     *   `prefix_chars` – Characters that prefix options (default: `"-"`).
@@ -298,12 +299,12 @@ class ArgumentParser:
         subtitle: str | None = None,
         notice: TextRenderable | object | None = None,
         usage: TextRenderable | str | None = None,
-        controls: list[tuple[str, TextRenderable]] | None = None,
-        examples: list[tuple[str, TextRenderable]] | None = None,
+        controls: Sequence[tuple[str | SeqOrSet[str], TextRenderable]] | None = None,
+        examples: Sequence[tuple[str, TextRenderable]] | None = None,
         epilog: TextRenderable | object | None = None,
         prefix_chars: str = "-",
         intermixed: bool = True,
-        help_opts: set[str] | frozenset[str] = frozenset({"-h", "--help"}),
+        help_opts: SeqOrSet[str] = frozenset({"-h", "--help"}),
     ) -> None:
 
         if not prefix_chars:
@@ -317,10 +318,10 @@ class ArgumentParser:
         """Optional notice or warning text to display after the title."""
         self.usage: TextRenderable | str | None = usage
         """An optional explicit usage string."""
-        self.controls: list[tuple[str, TextRenderable]] | None = controls
-        """A list of tuples `(control_key, help)`."""
-        self.examples: list[tuple[str, TextRenderable]] | None = examples
-        """A list of tuples `(example_command, comment)`."""
+        self.controls: Sequence[tuple[str | SeqOrSet[str], TextRenderable]] | None = controls
+        """A sequence of tuples `(control_key, help)`."""
+        self.examples: Sequence[tuple[str, TextRenderable]] | None = examples
+        """A sequence of tuples `(example_command, comment)`."""
         self.epilog: TextRenderable | object | None = epilog
         """Optional footer text to append to the help print."""
         self.prefix_chars: str = prefix_chars
@@ -392,7 +393,7 @@ class ArgumentParser:
 
     def add_opt(
         self,
-        opts: set[str] | frozenset[str],
+        opts: SeqOrSet[str],
         alias: str | None = None,
         /,
         *,
@@ -403,7 +404,7 @@ class ArgumentParser:
     ) -> None:
         """Define a new flagged option to parse.\n
         ----------------------------------------------------------------------------------------------------
-        *   `opts` – A set of option strings (e.g., `{"-f", "--file"}`).
+        *   `opts` – A collection of option strings (e.g., `{"-f", "--file"}`).
         *   `alias` – Optional explicit attribute name on `ParsedArgs` (auto-deduced if omitted).
         *   `expects_value` – `False` for a boolean option, or a string placeholder (e.g., `"PATH"`).<br>
             Append `?` (e.g., `"PATH?"` or `"VAL?"`) to make the expected value optional.
@@ -598,7 +599,9 @@ class ArgumentParser:
         controls_items: list[tuple[StyledText, TextRenderable]] = []
 
         for control, help in self.controls:
-            controls_items.append((StyledText(S.BR.RED(S.DIM("+").join(control.split("+")))), help))
+            key_list = [control] if isinstance(control, str) else list(control)
+            formatted_keys = [StyledText(S.BR.RED(S.DIM("+").join(k.split("+")))) for k in key_list]
+            controls_items.append((StyledText(", ").join(formatted_keys), help))
 
         return controls_items
 
@@ -2556,10 +2559,10 @@ class ProgressBar(_StdoutInterceptorMixin):
         if sep is not None:
             self.sep = sep
 
-    def set_chars(self, chars: tuple[str, ...], /) -> None:
+    def set_chars(self, chars: SeqOrSet[str], /) -> None:
         """Set the characters used to render the progress bar.\n
         ----------------------------------------------------------------------------------------------------
-        *   `chars` – A tuple of characters ordered from full to empty progress:<br>
+        *   `chars` – A collection of characters ordered from full to empty progress:<br>
             The first character represents completely filled sections.<br>
             Intermediate characters create smooth transitions.<br>
             The last character represents empty sections.<br>
@@ -2571,14 +2574,14 @@ class ProgressBar(_StdoutInterceptorMixin):
         ProgressBar.set_chars(("█", "▓", "▒", "░", " "))
         ```"""
 
-        if len(chars) < 2:
-            raise ValueError(f"The 'chars' parameter must contain at least two characters (full and empty), got {chars!r}")
-        else:
-            for char in chars:
-                if len(char) != 1:
-                    raise ValueError(f"All elements of 'chars' must be single-character strings, got {chars!r}")
+        if len(chars_tuple := tuple(chars)) < 2:
+            raise ValueError(f"The 'chars' parameter must contain at least two characters, got {chars!r}")
 
-        self.chars = chars
+        for char in chars_tuple:
+            if len(char) != 1:
+                raise ValueError(f"All elements in 'chars' must be single-character strings, got {char!r}")
+
+        self.chars = chars_tuple
 
     def show_progress(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
         """Show or update the progress bar.\n
@@ -2851,15 +2854,15 @@ class Throbber(_StdoutInterceptorMixin):
         self.format = compiled_throbber
         self.sep = sep or self.sep
 
-    def set_frames(self, frames: tuple[str, ...], /) -> None:
+    def set_frames(self, frames: SeqOrSet[str], /) -> None:
         """Set the frames used for the throbber animation.\n
         ----------------------------------------------------------------------------------------------------
-        *   `frames` – A tuple of strings representing the animation frames."""
+        *   `frames` – A collection of strings representing the animation frames."""
 
-        if len(frames) < 2:
+        if len(frames_tuple := tuple(frames)) < 2:
             raise ValueError(f"The 'frames' parameter must contain at least two frames, got {frames!r}")
 
-        self.frames = frames
+        self.frames = frames_tuple
 
     def set_interval(self, interval: int | float, /) -> None:
         """Set the time interval between each animation frame.\n

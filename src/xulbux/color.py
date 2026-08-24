@@ -15,6 +15,12 @@ import regex as _rx
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from sys import version_info as _vi
+
+    if _vi >= (3, 13):
+        from typing import TypeIs
+    else:
+        from typing_extensions import TypeIs
 
 
 _SRGB_LINEAR_LUT: tuple[float, ...] = tuple([
@@ -593,7 +599,7 @@ class hexa(_ColorBase):
 
     def __init__(
         self,
-        color: str | int | None = None,
+        color: Hexa | None = None,
         /,
         *,
         _red: int | None = None,
@@ -615,7 +621,7 @@ class hexa(_ColorBase):
             return
 
         if isinstance(color, hexa):
-            raise ValueError("Color is already a hexa() color object")
+            self.red, self.green, self.blue, self.alpha = color.red, color.green, color.blue, color.alpha
 
         elif isinstance(color, str):
             if color.startswith("#"):
@@ -652,10 +658,24 @@ class hexa(_ColorBase):
                     int(color[6:8], 16) / 255.0,
                 )
             else:
-                raise ValueError(f"Invalid HEXA color string '{color}'. Must be in formats RGB, RGBA, RRGGBB or RRGGBBAA")
+                raise ValueError(f"Invalid HEXA color string '{color}'\nMust be in formats RGB, RGBA, RRGGBB or RRGGBBAA")
 
         elif isinstance(color, int):
             self.red, self.green, self.blue, self.alpha = hex_int_to_rgba(color).values()
+
+        elif color is not None and hasattr(color, "red") and hasattr(color, "green") and hasattr(color, "blue"):
+            self.red, self.green, self.blue, self.alpha = (
+                int(color.red),
+                int(color.green),
+                int(color.blue),
+                getattr(color, "alpha", None),
+            )
+
+        else:
+            raise ValueError(
+                f"Could initialize hexa() color object from {color!r}\n"
+                "Must be a HEXA string, HEX integer, or an object with 'red', 'green', 'blue', and optionally 'alpha' attrs"
+            )
 
     def __iter__(self) -> Iterator[str]:
         yield f"{self.red:02X}"
@@ -843,7 +863,7 @@ class hexa(_ColorBase):
         return self.to_hsla(round_alpha=False).complementary().to_hexa()
 
 
-def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
+def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> TypeIs[Rgba]:
     """Check if the given color is a valid RGBA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -905,7 +925,7 @@ def is_valid_rgba(color: AnyRgba, /, *, allow_alpha: bool = True) -> bool:
     return False
 
 
-def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> bool:
+def is_valid_hsla(color: AnyHsla, /, *, allow_alpha: bool = True) -> TypeIs[Hsla]:
     """Check if the given color is a valid HSLA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -972,16 +992,16 @@ def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[True]
 ) -> tuple[bool, Literal["#", "0x"] | None]: ...
 @overload
-def is_valid_hexa(color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> bool: ...
+def is_valid_hexa(color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> TypeIs[Hexa]: ...
 @overload
 def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
-) -> bool | tuple[bool, Literal["#", "0x"] | None]: ...
+) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]: ...
 
 
 def is_valid_hexa(
     color: AnyHexa, /, *, allow_alpha: bool = True, get_prefix: bool = False
-) -> bool | tuple[bool, Literal["#", "0x"] | None]:
+) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]:
     """Check if the given color is a valid HEXA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -993,8 +1013,8 @@ def is_valid_hexa(
         return (True, "#") if get_prefix else True
 
     elif isinstance(color, int):
-        is_valid = 0x000000 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
-        return (is_valid, "0x") if get_prefix else is_valid
+        is_valid_int = 0x000000 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
+        return (is_valid_int, "0x") if get_prefix else is_valid_int
 
     elif isinstance(color, str):
         prefix: Literal["#", "0x"] | None
@@ -1009,7 +1029,7 @@ def is_valid_hexa(
     return (False, None) if get_prefix else False
 
 
-def is_valid(color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True) -> bool:
+def is_valid(color: AnyRgba | AnyHsla | AnyHexa, /, *, allow_alpha: bool = True) -> TypeIs[Rgba | Hsla | Hexa]:
     """Check if the given color is a valid RGBA, HSLA or HEXA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -1061,11 +1081,11 @@ def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
     if isinstance(color, (hsla, hexa)):
         return color.to_rgba()
     elif is_valid_hsla(color):
-        return _parse_hsla(cast("Hsla", color)).to_rgba()
+        return _parse_hsla(color).to_rgba()
     elif is_valid_hexa(color):
-        return hexa(cast("str | int", color)).to_rgba()
+        return hexa(color).to_rgba()
     elif is_valid_rgba(color):
-        return _parse_rgba(cast("Rgba", color))
+        return _parse_rgba(color)
 
     raise ValueError(f"Could not convert color {color!r} to RGBA")
 
@@ -1078,11 +1098,11 @@ def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
     if isinstance(color, (rgba, hexa)):
         return color.to_hsla()
     elif is_valid_rgba(color):
-        return _parse_rgba(cast("Rgba", color)).to_hsla()
+        return _parse_rgba(color).to_hsla()
     elif is_valid_hexa(color):
-        return hexa(cast("str | int", color)).to_hsla()
+        return hexa(color).to_hsla()
     elif is_valid_hsla(color):
-        return _parse_hsla(cast("Hsla", color))
+        return _parse_hsla(color)
 
     raise ValueError(f"Could not convert color {color!r} to HSLA")
 
@@ -1095,11 +1115,11 @@ def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
     if isinstance(color, (rgba, hsla)):
         return color.to_hexa()
     elif is_valid_rgba(color):
-        return _parse_rgba(cast("Rgba", color)).to_hexa()
+        return _parse_rgba(color).to_hexa()
     elif is_valid_hsla(color):
-        return _parse_hsla(cast("Hsla", color)).to_hexa()
+        return _parse_hsla(color).to_hexa()
     elif is_valid_hexa(color):
-        return color if isinstance(color, hexa) else hexa(cast("str | int", color))
+        return color if isinstance(color, hexa) else hexa(color)
 
     raise ValueError(f"Could not convert color {color!r} to HEXA")
 

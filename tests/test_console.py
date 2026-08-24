@@ -1142,6 +1142,41 @@ def test_argument_parser_help_cross_section_alignment(capsys: pytest.CaptureFixt
     assert arg_col == opt_col == ctrl_col
 
 
+def test_argument_parser_controls_multiple_keybinds(capsys: pytest.CaptureFixture[str]):
+    parser = ArgumentParser(
+        title="Game",
+        controls=[
+            (("WASD", "⏶⏴⏷⏵"), "Move the player"),
+            (["Ctrl+C", "Ctrl+D"], "Exit the game"),
+            ("Enter", "Start game"),
+        ],
+    )
+    parser.print_help()
+
+    captured = capsys.readouterr()
+    raw_lines = [StyledText(line).raw for line in captured.out.splitlines()]
+    ansi_lines = captured.out.splitlines()
+
+    assert any("WASD, ⏶⏴⏷⏵" in line for line in raw_lines)
+    assert any("Ctrl+C, Ctrl+D" in line for line in raw_lines)
+
+    move_line = next(line for line in ansi_lines if "Move the player" in line)
+    exit_line = next(line for line in ansi_lines if "Exit the game" in line)
+
+    red_seq = StyledText(S.BR.RED).ansi
+    dim_seq = StyledText(S.DIM).ansi
+
+    assert f"{red_seq}WASD" in move_line
+    assert f"{red_seq}⏶⏴⏷⏵" in move_line
+    assert ", " in move_line
+
+    assert f"{red_seq}Ctrl" in exit_line
+    assert f"{dim_seq}+" in exit_line
+    assert "C" in exit_line
+    assert "D" in exit_line
+    assert ", " in exit_line
+
+
 def test_argument_parser_examples_syntax_highlighting_and_alignment(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
@@ -1483,6 +1518,9 @@ def test_progressbar_set_chars():
     pb.set_chars(custom_chars)
     assert pb.chars == custom_chars
 
+    pb.set_chars(["█", " "])
+    assert pb.chars == ("█", " ")
+
 
 def test_progressbar_set_chars_invalid():
     pb = ProgressBar()
@@ -1634,6 +1672,9 @@ def test_throbber_set_frames_valid():
     throbber = Throbber()
     throbber.set_frames(("a", "b"))
     assert throbber.frames == ("a", "b")
+
+    throbber.set_frames(["x", "y", "z"])
+    assert throbber.frames == ("x", "y", "z")
 
 
 def test_throbber_set_interval_invalid():

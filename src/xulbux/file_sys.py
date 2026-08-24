@@ -95,7 +95,7 @@ def extend_path(
 def extend_or_make_path(
     rel_path: Path | str,
     /,
-    search_in: Path | str | list[Path | str] | None = None,
+    search_in: Path | str | PathsList | None = None,
     *,
     prefer_script_dir: bool = True,
     fuzzy_match: bool = False,

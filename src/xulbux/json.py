@@ -11,10 +11,7 @@ from . import file_sys as _file_sys_module
 
 import json as _json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast, overload
-
-if TYPE_CHECKING:
-    from .base.types import DataObj
+from typing import Any, Literal, cast, overload
 
 
 @overload
@@ -148,7 +145,7 @@ def update(
     update: dict[str, Any] = {}
     for val_path, new_val in update_values.items():
         try:
-            if (path_id := _data_module.get_path_id(cast("DataObj", processed_data), val_path, path_sep=path_sep)) is not None:
+            if (path_id := _data_module.get_path_id(processed_data, val_path, path_sep=path_sep)) is not None:
                 update[path_id] = new_val
             else:
                 data = _create_nested_path(data, val_path.split(path_sep), new_val)
@@ -173,8 +170,7 @@ def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: A
                 current[key] = value
 
             elif isinstance(current, list) and key.isdigit():
-                idx = int(key)
-                while len(cast("list[Any]", current)) <= idx:
+                while len(cast("list[Any]", current)) <= (idx := int(key)):
                     cast("list[Any]", current).append(None)
                 current[idx] = value
 
@@ -189,8 +185,7 @@ def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: A
                 current = cast("dict[str, Any]", current)[key]  # type: ignore[unnecessary-cast]
 
             elif isinstance(current, list) and key.isdigit():
-                idx = int(key)
-                while len(cast("list[Any]", current)) <= idx:
+                while len(cast("list[Any]", current)) <= (idx := int(key)):
                     cast("list[Any]", current).append(None)
                 if current[idx] is None:
                     current[idx] = [] if next_key.isdigit() else {}

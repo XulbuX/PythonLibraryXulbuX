@@ -1017,7 +1017,7 @@ def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
         return True
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[object, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
             if not is_text_renderable(item):
                 return False
         return True
@@ -1037,7 +1037,7 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
         return True
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[object, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
             if not is_renderable(item):
                 return False
         return True

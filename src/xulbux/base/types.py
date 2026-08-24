@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NotRequired, Protocol, TypedDict, cast, overload
 
 if TYPE_CHECKING:
-    import sys
     from collections.abc import Iterable
+    from sys import version_info as _vi
     from xulbux.ansi import Renderable
 
-    if sys.version_info >= (3, 13):
+    if _vi >= (3, 13):
         from typing import TypeIs
     else:
         from typing_extensions import TypeIs
@@ -37,16 +37,16 @@ type FormattableString = str
 
 # ************************************************** COLLECTIONS & ITERABLES **************************************************
 
-type PathsList = list[Path] | list[str] | list[Path | str]
-"""Union of all supported list types for a list of paths."""
+type PathsList = list[Path] | list[str] | list[Path | str] | tuple[Path, ...] | tuple[str, ...] | tuple[Path | str, ...]
+"""Union of all supported collection types for paths."""
 
 
 def is_paths_list(obj: object, /) -> TypeIs[PathsList]:
     """Returns true if `obj` is an instance that matches the `PathsList` type."""
 
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("list[object]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("list[Any] | tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
             if not isinstance(item, (Path, str)):
                 return False
         return True
@@ -64,20 +64,20 @@ def is_data_obj(obj: object, /) -> TypeIs[DataObj]:
     return isinstance(obj, (list, tuple, set, frozenset, dict))
 
 
-type IndexIterable[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
-"""Union of all iterable types that support indexing operations."""
+type SeqOrSet[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
+"""Union of all built-in sequence and set types (`list`, `tuple`, `set`, `frozenset`)."""
 
 
 @overload
-def is_index_iterable(obj: object, /) -> TypeIs[IndexIterable[Any]]: ...
+def is_seq_or_set(obj: object, /) -> TypeIs[SeqOrSet[Any]]: ...
 @overload
-def is_index_iterable[T](obj: object, item_type: type[T] | tuple[type[T], ...], /) -> TypeIs[IndexIterable[T]]: ...
+def is_seq_or_set[T](obj: object, item_type: type[T] | tuple[type[T], ...], /) -> TypeIs[SeqOrSet[T]]: ...
 @overload
-def is_index_iterable(obj: object, item_type: None, /) -> TypeIs[IndexIterable[Any]]: ...
+def is_seq_or_set(obj: object, item_type: None, /) -> TypeIs[SeqOrSet[Any]]: ...
 
 
-def is_index_iterable(obj: object, item_type: type[Any] | tuple[type[Any], ...] | None = None, /) -> bool:
-    """Returns true if `obj` is an instance that matches the `IndexIterable` type,<br>
+def is_seq_or_set(obj: object, item_type: type[Any] | tuple[type[Any], ...] | None = None, /) -> bool:
+    """Returns true if `obj` is an instance that matches the `SeqOrSet` type,<br>
     optionally checking if all contained elements are instances of `item_type`.\n
     ----------------------------------------------------------------------------------------------------
     *   `obj` – The object to check.
@@ -89,7 +89,7 @@ def is_index_iterable(obj: object, item_type: type[Any] | tuple[type[Any], ...] 
         return True
 
     # Don't use `all()` as for-loop is more performant:
-    for item in cast("Iterable[object]", obj):  # ruff: ignore[reimplemented-builtin]
+    for item in cast("Iterable[Any]", obj):  # ruff: ignore[reimplemented-builtin]
         if not isinstance(item, item_type):
             return False
 

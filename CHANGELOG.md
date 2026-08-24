@@ -54,6 +54,7 @@
     -   `console.log()`'s `title_bg_color` and `console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.
     -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
 *   Replaced the type tuples `DataObjTT` and `IndexIterableTT`, meant for `isinstance` checks, with `is_data_obj()` and `is_index_iterable()` functions, which are more explicit and easier to read.
+*   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
 *   Added new `is_paths_list()` function to check if an object is an instance that matches the `PathsList` type.
 *   Added `ANSI.SEQ_PATTERN` (in `xulbux.base.consts`) – a compiled regex that matches any ANSI escape sequence (CSI, OSC, or single-character), used across the library to detect/strip ANSI sequences.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
