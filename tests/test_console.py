@@ -940,13 +940,34 @@ def test_argument_parser_flag_missing_value(monkeypatch: pytest.MonkeyPatch, cap
     assert "Run with --help for usage and available options." in clean_out
 
 
-def test_argument_parser_custom_sep(monkeypatch: pytest.MonkeyPatch):
+def test_argument_parser_custom_sep(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     monkeypatch.setattr(sys, "argv", ["script.py", "--msg::hello"])
     parser = ArgumentParser()
     parser.add_opt({"--msg"}, "msg", expects_value="VAL")
 
     args = parser.parse(opt_value_sep="::")
     assert args.msg.val() == "hello"
+
+    # Custom sep configured on `ArgumentParser`:
+    parser2 = ArgumentParser(opt_value_sep="::")
+    parser2.add_opt({"--msg"}, "msg", expects_value="VAL", help="Message option")
+    parser2.print_help()
+
+    out2 = capsys.readouterr().out
+    clean2 = StyledText(out2).raw
+    assert "--msg::VAL" in clean2
+
+    args2 = parser2.parse()
+    assert args2.msg.val() == "hello"
+
+    # None sep configured on `ArgumentParser` (space-separated only):
+    parser3 = ArgumentParser(opt_value_sep=None)
+    parser3.add_opt({"--msg"}, "msg", expects_value="VAL", help="Message option")
+    parser3.print_help()
+
+    out3 = capsys.readouterr().out
+    clean3 = StyledText(out3).raw
+    assert "--msg VAL" in clean3
 
 
 def test_argument_parser_allow_space_value(monkeypatch: pytest.MonkeyPatch):
@@ -1223,6 +1244,9 @@ def test_argument_parser_examples_syntax_highlighting_and_alignment(
     green_seq = StyledText(S.BR.GREEN).ansi
     assert green_seq in ansi_line2
     assert green_seq in ansi_line3
+
+    expected_flag_st = StyledText(S.BR.BLUE("--auto-ignore", S.DIM("="), "1")).ansi
+    assert expected_flag_st in ansi_line2
 
 
 def test_argument_parser_reactive_narrow_width_layout(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch):

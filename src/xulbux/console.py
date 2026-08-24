@@ -67,6 +67,9 @@ _LOG_TITLE_CACHE_MAX: Final[int] = 256
 _ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
+_OPT_SEP_DEFAULT: Final[object] = object()
+"""Sentinel object used as default for `opt_value_sep` in `ArgumentParser.parse()`."""
+
 _DEFAULT_BAR_FORMAT: Final[list[TextRenderable]] = [
     "{l}",
     (S.BR.MAGENTA | S.BG.BLACK)("{b}"),
@@ -291,6 +294,7 @@ class ArgumentParser:
     *   `epilog` – Optional footer text to append to the help print.
     *   `accent_color` – Optional accent color for the help print (e.g., `S.BR.MAGENTA`).
     *   `prefix_chars` – Characters that prefix options (default: `"-"`).
+    *   `opt_value_sep` – String separating option from value (default: `"="`).
     *   `intermixed` – Whether options and positional arguments can be intermixed (default: `True`).
     *   `help_opts` – A set of options that trigger the help print (default: `{"-h", "--help"}`)."""
 
@@ -305,6 +309,7 @@ class ArgumentParser:
         examples: Sequence[tuple[str, TextRenderable]] | None = None,
         epilog: TextRenderable | object | None = None,
         prefix_chars: str = "-",
+        opt_value_sep: str | None = "=",
         intermixed: bool = True,
         help_opts: SeqOrSet[str] = frozenset({"-h", "--help"}),
     ) -> None:
@@ -328,6 +333,8 @@ class ArgumentParser:
         """Optional footer text to append to the help print."""
         self.prefix_chars: str = prefix_chars
         """Characters that prefix options (e.g., `"-"`, `"-/"`)."""
+        self.opt_value_sep: str | None = opt_value_sep
+        """String separating an option from its value (e.g., `"="`)."""
         self.intermixed: bool = intermixed
         """Whether options and positional arguments can be intermixed."""
 
@@ -578,15 +585,17 @@ class ArgumentParser:
             (self._opts_to_st(self.help_opts), "Show this help message and exit")
         ]
 
+        sep_st: Renderable = S.DIM(self.opt_value_sep) if self.opt_value_sep else " "
+
         for _, cfg in self._arg_configs.items():
             if cfg["opts"] is not None:
                 opt_st = self._opts_to_st(cfg["opts"])
 
                 if cfg["expects_value"] is not None:
                     if cfg["optional_value"]:
-                        opt_st += (S.BR.BLUE(S.DIM("="), cfg["expects_value"]), (S.BOLD | S.BLUE)("?"))
+                        opt_st += (S.BR.BLUE(sep_st, cfg["expects_value"]), (S.BOLD | S.BLUE)("?"))
                     else:
-                        opt_st += S.BR.BLUE(S.DIM("="), cfg["expects_value"])
+                        opt_st += S.BR.BLUE(sep_st, cfg["expects_value"])
 
                 opts_items.append((opt_st, cfg["help"] or ""))
 
@@ -665,10 +674,10 @@ class ArgumentParser:
             state[0] = False
             return StyledText(S.BR.BLUE(token) if is_opt_val else S.BR.CYAN(token)).ansi
 
-        if "=" in token:
-            opt_prefix = token.split("=", 1)[0]
+        if self.opt_value_sep and self.opt_value_sep in token:
+            opt_prefix, opt_val = token.split(self.opt_value_sep, 1)
             if opt_prefix in all_opts or ((self.intermixed or not state[1]) and self._opt_pattern.fullmatch(opt_prefix)):
-                return StyledText(S.BR.BLUE(token)).ansi
+                return StyledText(S.BR.BLUE(opt_prefix, S.DIM(self.opt_value_sep), opt_val)).ansi
             state[1] = True
             return StyledText(S.BR.CYAN(token)).ansi
 
@@ -802,7 +811,7 @@ class ArgumentParser:
             output.append(_to_styled_text(self.epilog))
             output.append("")
 
-        StyledText(*output, sep="\n").print(flush=True)
+        StyledText(*output, "", sep="\n").print(flush=True)
 
     def _error(self, message: str) -> NoReturn:
         """Internal method to print an error message with a help notice and exit with code 1."""
@@ -1027,15 +1036,15 @@ class ArgumentParser:
         self,
         *,
         skip: int = 0,
-        opt_value_sep: str | None = "=",
+        opt_value_sep: str | object | None = _OPT_SEP_DEFAULT,
         allow_space_value: bool = True,
         intermixed: bool | None = None,
     ) -> ParsedArgs:
         """Parse `sys.argv` and return the strongly-typed `ParsedArgs` object.\n
         ----------------------------------------------------------------------------------------------------
         *   `skip` – Number of arguments to skip at the start.
-        *   `opt_value_sep` – String separating option from value (e.g., `"="` for `--foo=bar`).
-            Set to `None` to disable.
+        *   `opt_value_sep` – String separating option from value (e.g., `"="` for `--foo=bar`).<br>
+            Defaults to `self.opt_value_sep` if omitted. Set to `None` to disable.
         *   `allow_space_value` – Whether to allow space-separated values
             for options (e.g., `--foo bar`).
         *   `intermixed` – Whether options and positional arguments can be intermixed<br>
@@ -1054,13 +1063,14 @@ class ArgumentParser:
         arg_tokens: list[str] = []
 
         should_intermix = self.intermixed if intermixed is None else intermixed
+        resolved_opt_sep = self.opt_value_sep if opt_value_sep is _OPT_SEP_DEFAULT else cast("str | None", opt_value_sep)
 
         self._parse_args_loop(
             raw_args,
             opt_map,
             parsed_data,
             arg_tokens,
-            opt_value_sep,
+            resolved_opt_sep,
             allow_space_value,
             should_intermix,
         )
