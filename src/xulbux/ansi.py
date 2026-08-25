@@ -402,6 +402,30 @@ class _StyleGroup:
 
         return StyledText(self).wrap(width)
 
+    def to_bg(self) -> _StyleGroup:
+        """Convert all foreground color styles in this group to background color styles."""
+
+        converted_codes: list[BaseStyle] = []
+        for code in self._codes:
+            if isinstance(code, (_FgStyle, _FgColorStyle)):
+                converted_codes.append(code.to_bg())
+            else:
+                converted_codes.append(code)
+
+        return _StyleGroup(*converted_codes)
+
+    def to_fg(self) -> _StyleGroup:
+        """Convert all background color styles in this group to foreground color styles."""
+
+        converted_codes: list[BaseStyle] = []
+        for code in self._codes:
+            if isinstance(code, (_BgStyle, _BgColorStyle)):
+                converted_codes.append(code.to_fg())
+            else:
+                converted_codes.append(code)
+
+        return _StyleGroup(*converted_codes)
+
 
 class _Style:
     """A single ANSI style integer.\n
@@ -557,11 +581,21 @@ class _FgStyle(_Style):
 
     __slots__: tuple[str, ...] = ()
 
+    def to_bg(self) -> _BgStyle:
+        """Convert to the corresponding background color style."""
+
+        return _BgStyle(self._value + 10)
+
 
 class _BgStyle(_Style):
     """A single ANSI background color code."""
 
     __slots__: tuple[str, ...] = ()
+
+    def to_fg(self) -> _FgStyle:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgStyle(self._value - 10)
 
 
 class _ColorStyle:
@@ -727,6 +761,11 @@ class _FgColorStyle(_ColorStyle):
 
     __slots__: tuple[str, ...] = ()
 
+    def to_bg(self) -> _BgColorStyle:
+        """Convert to the corresponding background color style."""
+
+        return _BgColorStyle(self._red, self._green, self._blue)
+
 
 class _BgColorStyle(_ColorStyle):
     """A 24-bit true-color background style."""
@@ -735,6 +774,11 @@ class _BgColorStyle(_ColorStyle):
 
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = True) -> None:
         super().__init__(red, green, blue, bg=bg)
+
+    def to_fg(self) -> _FgColorStyle:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgColorStyle(self._red, self._green, self._blue)
 
 
 class _Link:
@@ -1725,7 +1769,7 @@ class StyledText:
             line.print()
         ```"""
 
-        if width <= 0 or len(self) <= width:
+        if width <= 0 or ("\n" not in self.raw and len(self) <= width):
             return [StyledText(self)]
 
         lines: list[StyledText] = []
@@ -1737,9 +1781,14 @@ class StyledText:
                 current_pos += 1
                 continue
 
+            if not (wrapped_chunks := _textwrap.wrap(paragraph, width=width)):
+                lines.append(self[current_pos : current_pos + len(paragraph)])
+                current_pos += len(paragraph) + 1
+                continue
+
             para_offset = 0
 
-            for chunk in _textwrap.wrap(paragraph, width=width):
+            for chunk in wrapped_chunks:
                 if (chunk_start := paragraph.find(chunk, para_offset)) == -1:
                     chunk_start = para_offset
 

@@ -516,33 +516,33 @@ class ArgumentParser:
 
         inner_width = max(console_width - 4, 1)
         single_line_len = (len(title_st.raw) if title_st else 0) + (len(sub_st.raw) + 3 if sub_st else 0)
+        has_newlines = ("\n" in title_st.raw if title_st else False) or ("\n" in sub_st.raw if sub_st else False)
 
-        box_st: AnyStyle = box_color if is_fg_color_style(box_color) else S.RESET
+        box_bg_st: AnyStyle = (S.hex("000") | box_color.to_bg()) if is_fg_color_style(box_color) else (S.RESET | S.INVERSE)
+        box_fg_st: AnyStyle = box_color if is_fg_color_style(box_color) else S.RESET
 
-        if inline_subtitle and title_st and ((single_line_len + 4) <= console_width):
+        if inline_subtitle and title_st and not has_newlines and ((single_line_len + 4) <= console_width):
             title_renderable: Renderable = (S.BOLD(title_st), " — ", sub_st) if sub_st else S.BOLD(title_st)
 
             output.extend([
-                box_st("▄" * console_width),
-                (box_st | S.INVERSE)("  ", title_renderable, " " * (console_width - 2 - single_line_len)),
-                box_st("▀" * console_width),
+                box_fg_st("▄" * console_width),
+                box_bg_st("  ", title_renderable, " " * (console_width - 2 - single_line_len)),
+                box_fg_st("▀" * console_width),
                 "",
             ])
 
         else:
-            output.append(box_st("▄" * console_width))
+            output.append(box_fg_st("▄" * console_width))
 
             if title_st:
                 for title_line in _wrap_text(S.BOLD(title_st), inner_width):
-                    output.append((box_st | S.INVERSE)("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
+                    output.append(box_bg_st("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
 
             if sub_st:
                 for subtitle_line in _wrap_text(sub_st, inner_width):
-                    output.append(
-                        (box_st | S.INVERSE)("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  ")
-                    )
+                    output.append(box_bg_st("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  "))
 
-            output.extend([box_st("▀" * console_width), ""])
+            output.extend([box_fg_st("▀" * console_width), ""])
 
     def _add_usage_to_output(
         self,

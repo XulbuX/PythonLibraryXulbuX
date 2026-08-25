@@ -882,7 +882,8 @@ def test_argument_parser_invalid_choice(monkeypatch: pytest.MonkeyPatch, capsys:
 
     clean_out = StyledText(capsys.readouterr().out).raw
     assert "script ERROR" in clean_out
-    assert "Invalid choice 'invalid' for 'mode' (-m, --mode)\nAllowed: test, prod" in clean_out
+    assert "Invalid choice 'invalid' for 'mode' (-m, --mode)" in clean_out
+    assert "Allowed: test, prod" in clean_out
     assert "Run with --help for usage and available options." in clean_out
     assert "Options:" not in clean_out
 
