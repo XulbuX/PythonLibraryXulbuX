@@ -89,7 +89,7 @@ def test_extend_path_absolute_no_drive():
         file_sys.extend_path("foo")
 
 
-def test_find_path_is_file(tmp_path):
+def test_find_path_is_file(tmp_path: Path):
     f = tmp_path / "test.txt"
     f.touch()
     res = file_sys._ExtendPathHelper(Path("test.txt/extra"), search_dirs=[tmp_path], fuzzy_match=True, raise_error=False)()

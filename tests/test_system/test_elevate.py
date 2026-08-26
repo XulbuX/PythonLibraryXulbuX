@@ -8,7 +8,7 @@ def test_elevate_already_elevated():
         assert _system_module.elevate() is True
 
 
-def test_elevate_windows_success(monkeypatch):
+def test_elevate_windows_success(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
@@ -24,7 +24,7 @@ def test_elevate_windows_success(monkeypatch):
         assert "--arg1 val1" in args_passed
 
 
-def test_elevate_windows_no_title(monkeypatch):
+def test_elevate_windows_no_title(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
@@ -38,7 +38,7 @@ def test_elevate_windows_no_title(monkeypatch):
         assert "SetConsoleTitleW" not in args_passed
 
 
-def test_elevate_windows_failure(monkeypatch):
+def test_elevate_windows_failure(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
@@ -48,7 +48,7 @@ def test_elevate_windows_failure(monkeypatch):
         _system_module.elevate()
 
 
-def test_elevate_posix_success(monkeypatch):
+def test_elevate_posix_success(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "posix")
     with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
         mock_proc = MagicMock()
@@ -67,7 +67,7 @@ def test_elevate_posix_success(monkeypatch):
         assert "--arg2" in cmd_passed
 
 
-def test_elevate_posix_no_title(monkeypatch):
+def test_elevate_posix_no_title(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "posix")
     with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
         mock_proc = MagicMock()
@@ -82,7 +82,7 @@ def test_elevate_posix_no_title(monkeypatch):
         assert "--description" not in cmd_passed
 
 
-def test_elevate_posix_failure(monkeypatch):
+def test_elevate_posix_failure(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "posix")
     with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
         mock_proc = MagicMock()

@@ -1,5 +1,5 @@
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import xulbux.system as _system_module
 import pytest
 
@@ -19,7 +19,7 @@ def test_restart_unsupported_system():
 
 @patch("xulbux.system._subprocess.check_output")
 @patch("xulbux.system._subprocess.run")
-def test_restart_windows_no_prompt(mock_run, mock_check_output):
+def test_restart_windows_no_prompt(mock_run: MagicMock, mock_check_output: MagicMock):
     with patch("platform.system", return_value="Windows"):
         mock_check_output.return_value = b"Header1\nHeader2\nHeader3\n"
         _system_module.restart()
@@ -28,7 +28,7 @@ def test_restart_windows_no_prompt(mock_run, mock_check_output):
 
 @patch("xulbux.system._subprocess.check_output")
 @patch("xulbux.system._subprocess.run")
-def test_restart_windows_with_prompt_and_wait(mock_run, mock_check_output):
+def test_restart_windows_with_prompt_and_wait(mock_run: MagicMock, mock_check_output: MagicMock):
     with patch("platform.system", return_value="Windows"):
         mock_check_output.return_value = b"Header1\nHeader2\nHeader3\npython.exe\n"
         with patch("time.sleep") as mock_sleep, patch("builtins.print") as mock_print:
@@ -39,7 +39,7 @@ def test_restart_windows_with_prompt_and_wait(mock_run, mock_check_output):
 
 
 @patch("xulbux.system._subprocess.check_output")
-def test_restart_windows_processes_running(mock_check_output):
+def test_restart_windows_processes_running(mock_check_output: MagicMock):
     with patch("platform.system", return_value="Windows"):
         # Not a python or shell process
         mock_check_output.return_value = b"1\n2\n3\nchrome.exe\n"
@@ -49,7 +49,7 @@ def test_restart_windows_processes_running(mock_check_output):
 
 @patch("xulbux.system._subprocess.check_output")
 @patch("xulbux.system._subprocess.run")
-def test_restart_windows_force(mock_run, mock_check_output):
+def test_restart_windows_force(mock_run: MagicMock, mock_check_output: MagicMock):
     with patch("platform.system", return_value="Windows"):
         _system_module.restart(force=True)
         mock_check_output.assert_not_called()
@@ -60,7 +60,9 @@ def test_restart_windows_force(mock_run, mock_check_output):
 @patch("xulbux.system._subprocess.run")
 @patch("xulbux.system._subprocess.Popen")
 @patch("xulbux.system._shutil.which", return_value=True)
-def test_restart_posix_with_prompt_notify_send(mock_which, mock_popen, mock_run, mock_check_output):
+def test_restart_posix_with_prompt_notify_send(
+    mock_which: MagicMock, mock_popen: MagicMock, mock_run: MagicMock, mock_check_output: MagicMock
+):
     with patch("platform.system", return_value="Linux"):
         mock_check_output.return_value = b"PID TTY TIME CMD\n 1234 ? 00:00:00 bash\n"
         with patch("time.sleep"):
@@ -72,7 +74,7 @@ def test_restart_posix_with_prompt_notify_send(mock_which, mock_popen, mock_run,
 @patch("xulbux.system._subprocess.check_output")
 @patch("xulbux.system._subprocess.run")
 @patch("xulbux.system._shutil.which", return_value=False)
-def test_restart_posix_with_prompt_no_notify_send(mock_which, mock_run, mock_check_output):
+def test_restart_posix_with_prompt_no_notify_send(mock_which: MagicMock, mock_run: MagicMock, mock_check_output: MagicMock):
     with patch("platform.system", return_value="Darwin"):
         mock_check_output.return_value = b"PID TTY TIME CMD\n 1234 ? 00:00:00 zsh\n"
         with patch("time.sleep"), patch("xulbux.console.info") as mock_info, patch("builtins.print") as mock_print:
@@ -84,7 +86,7 @@ def test_restart_posix_with_prompt_no_notify_send(mock_which, mock_run, mock_che
 
 @patch("xulbux.system._subprocess.check_output")
 @patch("xulbux.system._subprocess.run")
-def test_restart_posix_run_error(mock_run, mock_check_output):
+def test_restart_posix_run_error(mock_run: MagicMock, mock_check_output: MagicMock):
     with patch("platform.system", return_value="Linux"):
         mock_check_output.return_value = b"PID TTY TIME CMD\n"
         mock_run.side_effect = subprocess.CalledProcessError(1, "sudo")

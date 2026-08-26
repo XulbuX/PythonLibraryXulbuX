@@ -8,7 +8,7 @@ def test_hsla_init():
     assert color1.hue == 180
     assert color1.sat == 50
     assert color1.light == 50
-    assert math.isclose(color1.alpha, 0.5)
+    assert math.isclose(color1.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
     color2 = hsla(180, 50, 50)
     assert color2.alpha is None
@@ -50,8 +50,8 @@ def test_hsla_getitem():
     assert c1[-3] == 180
 
     color2 = hsla(180, 50, 50, 0.5)
-    assert math.isclose(color2[3], 0.5)
-    assert math.isclose(color2[-1], 0.5)
+    assert math.isclose(color2[3], 0.5)  # pyright:ignore[reportArgumentType]
+    assert math.isclose(color2[-1], 0.5)  # pyright:ignore[reportArgumentType]
     assert color2[-4] == 180
 
     with pytest.raises(IndexError):
@@ -83,11 +83,11 @@ def test_hsla_conversions():
     color1 = hsla(0, 100, 50, 0.5)
     rgba_c = color1.to_rgba()
     assert rgba_c.red == 255
-    assert math.isclose(rgba_c.alpha, 0.5)
+    assert math.isclose(rgba_c.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
     hexa_c = color1.to_hexa()
     assert hexa_c.red == 255
-    assert math.isclose(hexa_c.alpha, 0.5)
+    assert math.isclose(hexa_c.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
 
 def test_hsla_lighten_darken():
@@ -127,10 +127,10 @@ def test_hsla_invert():
     inv1 = color1.invert()
     assert inv1.hue == 180
     assert inv1.light == 80
-    assert math.isclose(inv1.alpha, 0.2)
+    assert math.isclose(inv1.alpha, 0.2)  # pyright:ignore[reportArgumentType]
 
     inv2 = color1.invert(invert_alpha=True)
-    assert math.isclose(inv2.alpha, 0.8)
+    assert math.isclose(inv2.alpha, 0.8)  # pyright:ignore[reportArgumentType]
 
 
 def test_hsla_grayscale():
@@ -166,7 +166,7 @@ def test_hsla_is_dark_light_grayscale():
 def test_hsla_with_alpha():
     color1 = hsla(0, 0, 0)
     color_alpha = color1.with_alpha(0.5)
-    assert math.isclose(color_alpha.alpha, 0.5)
+    assert math.isclose(color_alpha.alpha, 0.5)  # pyright:ignore[reportArgumentType]
     with pytest.raises(ValueError):
         color1.with_alpha(1.5)
 

@@ -30,8 +30,8 @@ def test_term_methods():
     assert isinstance(Term.title("hi"), str)
 
     assert isinstance(Term.save(), str)
-    assert isinstance(Term.alt_screen, str) if hasattr(Term, "alt_screen") else True
-    assert isinstance(Term.hide_cursor, str) if hasattr(Term, "hide_cursor") else True
+    assert isinstance(Term.alt_screen, str) if hasattr(Term, "alt_screen") else True  # pyright:ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    assert isinstance(Term.hide_cursor, str) if hasattr(Term, "hide_cursor") else True  # pyright:ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
 def test_styledtext_cache_reset():

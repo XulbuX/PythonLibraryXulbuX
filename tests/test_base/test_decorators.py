@@ -1,4 +1,5 @@
 import sys
+import typing
 from typing import Any
 from unittest.mock import patch
 from xulbux.base.decorators import _noop_decorator, deprecated, mypyc_attr
@@ -38,7 +39,7 @@ def test_deprecated_mypyc_wrapper():
     # Test when _dep fails because it can't set attributes on the arg (e.g. MyPyC func)
     class CExtFunc:
         # Simulate a C extension / MyPyC function that rejects arbitrary attributes
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args: typing.Any, **kwargs: typing.Any):
             return "called"
 
         def __setattr__(self, name: str, value: Any) -> None:

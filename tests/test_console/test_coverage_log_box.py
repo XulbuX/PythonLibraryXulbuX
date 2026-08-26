@@ -16,7 +16,7 @@ def test_log_box_bordered_errors():
         log_box_bordered("msg", indent=-1)
 
     with pytest.raises(ValueError, match="contain exactly 11"):
-        log_box_bordered("msg", border_chars=("a",))
+        log_box_bordered("msg", border_chars=("a",))  # pyright:ignore[reportArgumentType]
 
     with pytest.raises(ValueError, match="single-char"):
         log_box_bordered("msg", border_chars=("a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "aa"))

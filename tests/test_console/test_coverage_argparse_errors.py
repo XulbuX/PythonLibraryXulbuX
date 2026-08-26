@@ -32,7 +32,7 @@ def test_argparser_add_arg_invalid_nargs():
     with pytest.raises(ValueError, match="must be an integer >= 1"):
         parser.add_arg("foo1", nargs=0)
     with pytest.raises(ValueError, match="must be an integer >= 1 or one of"):
-        parser.add_arg("foo2", nargs="invalid")
+        parser.add_arg("foo2", nargs="invalid")  # pyright:ignore[reportArgumentType]
 
 
 def test_argparser_add_opt_empty_opts():

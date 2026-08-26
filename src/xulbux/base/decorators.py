@@ -33,10 +33,10 @@ class _SafeDeprecated:
 
     def __call__(self, arg: Any, /) -> Any:
         if _sys.version_info >= (3, 13):
-            from warnings import deprecated as _dep  # type: ignore[attr-defined]
+            from warnings import deprecated as _dep  # type:ignore[attr-defined]
         else:
             try:
-                from typing_extensions import deprecated as _dep  # type: ignore[attr-defined]
+                from typing_extensions import deprecated as _dep  # type:ignore[attr-defined]
             except ImportError:
                 from contextlib import suppress
 
@@ -67,9 +67,9 @@ if TYPE_CHECKING:
     import sys
 
     if sys.version_info >= (3, 13):
-        from warnings import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]
+        from warnings import deprecated as deprecated  # type:ignore[assignment, attr-defined, no-redef]
     else:
-        from typing_extensions import deprecated as deprecated  # type: ignore[assignment, attr-defined, no-redef]
+        from typing_extensions import deprecated as deprecated  # type:ignore[assignment, attr-defined, no-redef]
 
 
 def _noop_decorator[T](obj: T) -> T:

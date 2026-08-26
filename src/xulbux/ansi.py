@@ -1942,11 +1942,11 @@ def _config_terminal() -> None:
 
     if _os.name == "nt":
         try:
-            kernel32 = _ctypes.windll.kernel32  # type: ignore
-            handle = kernel32.GetStdHandle(-11)  # type: ignore
-            mode = _ctypes.c_ulong()  # type: ignore
-            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type: ignore
-            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type: ignore
+            kernel32 = _ctypes.windll.kernel32  # type:ignore
+            handle = kernel32.GetStdHandle(-11)  # type:ignore
+            mode = _ctypes.c_ulong()  # type:ignore
+            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type:ignore
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type:ignore
         except Exception:
             pass
 

@@ -182,7 +182,7 @@ def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: A
             if isinstance(current, dict):
                 if key not in current:
                     current[key] = [] if next_key.isdigit() else {}
-                current = cast("dict[str, Any]", current)[key]  # type: ignore[unnecessary-cast]
+                current = cast("dict[str, Any]", current)[key]  # type:ignore[unnecessary-cast]
 
             elif isinstance(current, list) and key.isdigit():
                 while len(cast("list[Any]", current)) <= (idx := int(key)):

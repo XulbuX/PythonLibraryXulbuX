@@ -29,7 +29,7 @@ def test_check_libs_decline_install():
 def test_check_libs_custom_missing_msgs():
     msgs = {"found_missing": "Missing:", "should_install": "Install?"}
     with patch("xulbux.console.confirm", return_value=False) as mock_confirm:
-        result = _system_module.check_libs(["nonexistent_module_12345"], install_missing=True, missing_libs_msgs=msgs)
+        result = _system_module.check_libs(["nonexistent_module_12345"], install_missing=True, missing_libs_msgs=msgs)  # pyright:ignore[reportArgumentType]
         assert result == ["nonexistent_module_12345"]
         mock_confirm.assert_called_once_with("Install?", end="\n")
 

@@ -8,8 +8,8 @@ def test_missing_7():
     assert is_renderable(("a", "b"))
 
     # 1248, 1383: rgb / bg.rgb with tuples
-    assert S.rgb((1, 2, 3))._red == 1
-    assert S.BG.rgb((1, 2, 3))._red == 1
+    assert S.rgb((1, 2, 3))._red == 1  # pyright:ignore[reportArgumentType]
+    assert S.BG.rgb((1, 2, 3))._red == 1  # pyright:ignore[reportArgumentType]
     pass
 
     # 1808: __str__

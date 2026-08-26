@@ -1,9 +1,10 @@
 import contextlib
 import io
 from xulbux.console import ArgumentParser
+import pytest
 
 
-def test_argparser_help_styles(monkeypatch):
+def test_argparser_help_styles(monkeypatch: pytest.MonkeyPatch):
 
     # We need to capture stdout
     parser1 = ArgumentParser(

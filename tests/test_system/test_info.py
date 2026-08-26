@@ -1,8 +1,9 @@
 from unittest.mock import patch
 import xulbux.system as _system_module
+import pytest
 
 
-def test_system_is_elevated_windows(monkeypatch):
+def test_system_is_elevated_windows(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with patch("xulbux.system._ctypes") as mock_ctypes:
         mock_ctypes.windll.shell32.IsUserAnAdmin.return_value = 1
@@ -15,7 +16,7 @@ def test_system_is_elevated_windows(monkeypatch):
         assert _system_module.is_elevated() is False
 
 
-def test_system_is_elevated_posix(monkeypatch):
+def test_system_is_elevated_posix(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "posix")
     with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.return_value = 0
@@ -28,7 +29,7 @@ def test_system_is_elevated_posix(monkeypatch):
         assert _system_module.is_elevated() is False
 
 
-def test_system_is_elevated_unknown(monkeypatch):
+def test_system_is_elevated_unknown(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "java")
     assert _system_module.is_elevated() is False
 
@@ -54,7 +55,7 @@ def test_system_is_mac():
         assert _system_module.is_mac() is False
 
 
-def test_system_is_unix(monkeypatch):
+def test_system_is_unix(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "posix")
     assert _system_module.is_unix() is True
 

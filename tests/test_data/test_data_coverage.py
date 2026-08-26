@@ -76,7 +76,7 @@ def test_get_path_id_exceptions():
 def test_get_value_by_path_id_exceptions():
     path_id = get_path_id([[1]], "0->0")
     with pytest.raises(ValueError):
-        get_value_by_path_id([[1]], path_id, get_key=True)
+        get_value_by_path_id([[1]], path_id, get_key=True)  # pyright:ignore[reportArgumentType]
 
     with pytest.raises(TypeError):
         get_value_by_path_id({"a": 1}, "1>02")
@@ -94,20 +94,20 @@ def test_render_exceptions():
     with pytest.raises(ValueError):
         render({}, max_width=0)
     with pytest.raises(TypeError):
-        render({}, syntax_highlighting="invalid")
+        render({}, syntax_highlighting="invalid")  # pyright:ignore[reportArgumentType]
 
 
 def test_render_syntax_highlighting_dict():
     # Pass a valid lambda that returns StyledText
-    res = render({"a": 1}, syntax_highlighting={"number": lambda x: StyledText(x)})
+    res = render({"a": 1}, syntax_highlighting={"number": lambda x: StyledText(x)})  # pyright:ignore[reportArgumentType, reportUnknownArgumentType, reportUnknownLambdaType]
     assert res is not None
 
 
 def test_render_format_value():
-    assert render(b"\xff", as_json=False).ansi != ""
-    assert render(b"\xff", as_json=True).ansi != ""
-    assert render(1 + 2j, as_json=False).ansi != ""
-    assert render(1 + 2j, as_json=True).ansi != ""
+    assert render(b"\xff", as_json=False).ansi != ""  # pyright:ignore[reportArgumentType]
+    assert render(b"\xff", as_json=True).ansi != ""  # pyright:ignore[reportArgumentType]
+    assert render(1 + 2j, as_json=False).ansi != ""  # pyright:ignore[reportArgumentType]
+    assert render(1 + 2j, as_json=True).ansi != ""  # pyright:ignore[reportArgumentType]
     assert render(frozenset([1, 2])).ansi != ""
 
 
@@ -123,14 +123,14 @@ def test_sep_path_id_invalid():
 def test_data_get_value_stop_iteration():
     from xulbux.data import get_path_id, get_value_by_path_id
 
-    class BadDict(dict):
-        def items(self):
-            return []
+    class BadDict(dict):  # pyright:ignore[reportMissingTypeArgument]
+        def items(self):  # pyright:ignore[reportIncompatibleMethodOverride, reportUnknownParameterType]
+            return []  # pyright:ignore[reportUnknownVariableType]
 
     data = BadDict({"a": [1]})
     path_id = get_path_id({"a": [1]}, "a->0")
     with pytest.raises(StopIteration):
-        get_value_by_path_id(data, path_id, get_key=True)
+        get_value_by_path_id(data, path_id, get_key=True)  # pyright:ignore[reportArgumentType]
 
 
 def test_render_more_coverage():
@@ -166,7 +166,7 @@ def test_should_expand_compactness_2():
 def test_set_nested_val_primitive():
     from xulbux.data import _set_nested_val
 
-    res = _set_nested_val(1, ["0", "0"], 2)
+    res = _set_nested_val(1, ["0", "0"], 2)  # pyright:ignore[reportArgumentType]
     assert res == 1
 
 

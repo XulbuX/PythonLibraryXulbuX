@@ -12,7 +12,7 @@ import sys
 import textwrap
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # Ensure we can import xulbux:
 ROOT_DIR = Path(__file__).parent.parent.resolve()
@@ -506,7 +506,7 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
         try:
             parsed = json.loads(src_content)
             if isinstance(parsed, list):
-                return parsed  # type: ignore
+                return cast("list[Any]", parsed)
         except json.JSONDecodeError:
             pass
 

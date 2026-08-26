@@ -9,7 +9,7 @@ def test_rgba_init():
     assert color1.red == 255
     assert color1.green == 128
     assert color1.blue == 0
-    assert math.isclose(color1.alpha, 0.5)
+    assert math.isclose(color1.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
     color2 = rgba(255, 128, 0)
     assert color2.alpha is None
@@ -17,7 +17,7 @@ def test_rgba_init():
     # Validation bypassing
     color3 = rgba(300, 300, 300, 2.0, _validate=False)
     assert color3.red == 300
-    assert math.isclose(color3.alpha, 2.0)
+    assert math.isclose(color3.alpha, 2.0)  # pyright:ignore[reportArgumentType]
 
     with pytest.raises(ValueError, match="must be integers in range"):
         rgba(-1, 0, 0)
@@ -56,8 +56,8 @@ def test_rgba_getitem():
     assert c1[-3] == 255
 
     color2 = rgba(255, 128, 0, 0.5)
-    assert math.isclose(color2[3], 0.5)
-    assert math.isclose(color2[-1], 0.5)
+    assert math.isclose(color2[3], 0.5)  # pyright:ignore[reportArgumentType]
+    assert math.isclose(color2[-1], 0.5)  # pyright:ignore[reportArgumentType]
     assert color2[-4] == 255
 
     with pytest.raises(IndexError):
@@ -91,11 +91,11 @@ def test_rgba_conversions():
     assert hsla_c.hue == 0
     assert hsla_c.sat == 100
     assert hsla_c.light == 50
-    assert math.isclose(hsla_c.alpha, 0.5)
+    assert math.isclose(hsla_c.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
     hexa_c = color1.to_hexa()
     assert hexa_c.red == 255
-    assert math.isclose(hexa_c.alpha, 0.5)
+    assert math.isclose(hexa_c.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
 
 def test_rgba_lighten_darken():
@@ -136,10 +136,10 @@ def test_rgba_invert():
     assert inv1.red == 0
     assert inv1.green == 127
     assert inv1.blue == 255
-    assert math.isclose(inv1.alpha, 0.2)
+    assert math.isclose(inv1.alpha, 0.2)  # pyright:ignore[reportArgumentType]
 
     inv2 = color1.invert(invert_alpha=True)
-    assert math.isclose(inv2.alpha, 0.8)
+    assert math.isclose(inv2.alpha, 0.8)  # pyright:ignore[reportArgumentType]
 
 
 def test_rgba_grayscale():
@@ -164,7 +164,7 @@ def test_rgba_blend():
 
     # test additive alpha
     blend2 = c1.blend(color2, 0.5, additive_alpha=True)
-    assert math.isclose(blend2.alpha, 1.0)
+    assert math.isclose(blend2.alpha, 1.0)  # pyright:ignore[reportArgumentType]
 
     # test none alpha
     b3 = rgba(255, 0, 0).blend(rgba(0, 0, 255), 0.5)
@@ -181,7 +181,7 @@ def test_rgba_is_dark_light_grayscale():
 def test_rgba_with_alpha():
     color1 = rgba(255, 0, 0)
     color_alpha = color1.with_alpha(0.5)
-    assert math.isclose(color_alpha.alpha, 0.5)
+    assert math.isclose(color_alpha.alpha, 0.5)  # pyright:ignore[reportArgumentType]
     with pytest.raises(ValueError):
         color1.with_alpha(1.5)
 

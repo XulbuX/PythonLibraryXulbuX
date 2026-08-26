@@ -1,3 +1,4 @@
+import typing
 from pathlib import Path
 from xulbux.base.types import ProgressUpdater, is_paths_list
 
@@ -15,8 +16,8 @@ def test_is_paths_list():
 
 def test_progress_updater_protocol():
     class DummyUpdater(ProgressUpdater):
-        def __call__(self, current=None, label=None):
-            super().__call__(current=current, label=label)
+        def __call__(self, current: typing.Any = None, label: typing.Any = None):  # pyright:ignore[reportIncompatibleMethodOverride]
+            super().__call__(current=current, label=label)  # type:ignore[safe-super] # pyright:ignore[reportAbstractUsage, reportArgumentType]
 
     updater = DummyUpdater()
     updater(current=1)

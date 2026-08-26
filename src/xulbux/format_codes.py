@@ -608,14 +608,14 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # Enable VT100 mode on Windows:
-                    kernel32 = _ctypes.windll.kernel32  # type: ignore
-                    handle = kernel32.GetStdHandle(-11)  # type: ignore
-                    mode = _ctypes.c_ulong()  # type: ignore
-                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type: ignore
-                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type: ignore
+                    kernel32 = _ctypes.windll.kernel32  # type:ignore
+                    handle = kernel32.GetStdHandle(-11)  # type:ignore
+                    mode = _ctypes.c_ulong()  # type:ignore
+                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type:ignore
+                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type:ignore
                 except Exception:
                     pass
-            _TERMINAL_ANSI_CONFIGURED = True  # type: ignore[assignment]
+            _TERMINAL_ANSI_CONFIGURED = True  # type:ignore[assignment]
 
     @classmethod
     def _no_bracket_fast_path(
@@ -946,7 +946,7 @@ class _ReplaceKeysHelper:
         if self.formats_escaped:
             return f"[{self.original_formats}]({self.auto_reset_txt})"
 
-        link_url = _PATTERNS.link.match(link_key).group(1)  # type: ignore[union-attr]
+        link_url = _PATTERNS.link.match(link_key).group(1)  # type:ignore[union-attr]
         display = self.auto_reset_txt
 
         if other_keys := [key for key in all_keys if key != link_key]:

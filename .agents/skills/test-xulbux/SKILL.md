@@ -36,4 +36,4 @@ pytest -q --disable-warnings
 - **Check the Report:** The coverage report (`Missing` column) lists exact line numbers that were not executed during testing.
 - **Write Targeted Tests:** Add tests specifically designed to trigger those unexecuted lines (e.g. testing specific edge cases, error raises, or `if/else` branches).
 - **Fix Underlying Bugs:** If you discover that the reason a line isn't covered or a test is failing is due to an actual bug in the code, **fix the bug in the code**. Do NOT write a test that expects incorrect behavior just to satisfy coverage.
-- **No Pragmas unless Necessary:** Do not use `# pragma: no cover` to bypass coverage unless absolutely technically necessary (e.g. OS-specific code that cannot be mocked, or defensive type checking blocks already ignored in `pyproject.toml`).
+- **No Pragmas unless Necessary:** Do not use `# pragma:no-cover` to bypass coverage unless absolutely technically necessary (e.g. OS-specific code that cannot be mocked, or defensive type checking blocks already ignored in `pyproject.toml`).

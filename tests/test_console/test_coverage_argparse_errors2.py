@@ -3,7 +3,7 @@ from xulbux.console import ArgumentParser
 import pytest
 
 
-def test_argparse_missing_opt_value(monkeypatch):
+def test_argparse_missing_opt_value(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_opt(["-x"], expects_value="X")
     monkeypatch.setattr(sys, "argv", ["prog", "-x"])
@@ -11,7 +11,7 @@ def test_argparse_missing_opt_value(monkeypatch):
         parser.parse()
 
 
-def test_argparse_missing_opt_value_with_choices(monkeypatch):
+def test_argparse_missing_opt_value_with_choices(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_opt(["-x"], expects_value="X", choices=["a", "b"])
     monkeypatch.setattr(sys, "argv", ["prog", "-x", "-h"])  # Next token is help_opt
@@ -19,7 +19,7 @@ def test_argparse_missing_opt_value_with_choices(monkeypatch):
         parser.parse()
 
 
-def test_argparse_missing_required_arg(monkeypatch):
+def test_argparse_missing_required_arg(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_arg("arg1", required=True)
     monkeypatch.setattr(sys, "argv", ["prog"])
@@ -27,7 +27,7 @@ def test_argparse_missing_required_arg(monkeypatch):
         parser.parse()
 
 
-def test_argparse_missing_required_arg_choices(monkeypatch):
+def test_argparse_missing_required_arg_choices(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_arg("arg1", required=True, choices=["a"])
     monkeypatch.setattr(sys, "argv", ["prog"])
@@ -35,7 +35,7 @@ def test_argparse_missing_required_arg_choices(monkeypatch):
         parser.parse()
 
 
-def test_argparse_missing_required_opt(monkeypatch):
+def test_argparse_missing_required_opt(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_opt(["-x"], required=True)
     monkeypatch.setattr(sys, "argv", ["prog"])
@@ -43,7 +43,7 @@ def test_argparse_missing_required_opt(monkeypatch):
         parser.parse()
 
 
-def test_argparse_invalid_choice_opt(monkeypatch):
+def test_argparse_invalid_choice_opt(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_opt(["-x"], expects_value="X", choices=["a"])
     monkeypatch.setattr(sys, "argv", ["prog", "-x=b"])
@@ -51,7 +51,7 @@ def test_argparse_invalid_choice_opt(monkeypatch):
         parser.parse()
 
 
-def test_argparse_unrecognized_arg(monkeypatch):
+def test_argparse_unrecognized_arg(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_arg("arg1", nargs=1)
     monkeypatch.setattr(sys, "argv", ["prog", "val1", "val2"])
@@ -59,14 +59,14 @@ def test_argparse_unrecognized_arg(monkeypatch):
         parser.parse()
 
 
-def test_argparse_unrecognized_opt(monkeypatch):
+def test_argparse_unrecognized_opt(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     monkeypatch.setattr(sys, "argv", ["prog", "-z"])
     with pytest.raises(SystemExit):
         parser.parse()
 
 
-def test_argparse_plus_nargs_minimum(monkeypatch):
+def test_argparse_plus_nargs_minimum(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_arg("arg1", nargs="+")
     parser.add_arg("arg2", nargs=1)
@@ -76,7 +76,7 @@ def test_argparse_plus_nargs_minimum(monkeypatch):
     assert res.arg2.values == ("val2",)
 
 
-def test_argparse_no_args_but_extra(monkeypatch):
+def test_argparse_no_args_but_extra(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     monkeypatch.setattr(sys, "argv", ["prog", "extra"])
     with pytest.raises(SystemExit):

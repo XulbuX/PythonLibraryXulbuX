@@ -7,7 +7,7 @@ def test_compile_format_not_tuple_not_string():
             return "dummy"
 
     # To hit line 100: "return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]"
-    assert _compile_format(Dummy()) == ["dummy"]
+    assert _compile_format(Dummy()) == ["dummy"]  # pyright:ignore[reportArgumentType]
 
 
 def test_is_number():

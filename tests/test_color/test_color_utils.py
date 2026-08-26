@@ -174,13 +174,13 @@ def test_str_to_rgba():
 
     color2 = _color_module.str_to_rgba("rgba(255,0,0,1)", only_first=True)
     assert isinstance(color2, rgba)
-    assert math.isclose(color2.alpha, 1.0)
+    assert math.isclose(color2.alpha, 1.0)  # pyright:ignore[reportArgumentType]
 
     colors = _color_module.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
-    assert len(colors) == 3
-    assert colors[0].values() == (255, 0, 0, None)
-    assert colors[1].values() == (0, 255, 0, 0.5)
-    assert math.isclose(colors[2].alpha, 1.0)
+    assert len(colors) == 3  # pyright:ignore[reportArgumentType]
+    assert colors[0].values() == (255, 0, 0, None)  # pyright:ignore[reportOptionalSubscript, reportUnknownMemberType]
+    assert colors[1].values() == (0, 255, 0, 0.5)  # pyright:ignore[reportOptionalSubscript, reportUnknownMemberType]
+    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType, reportOptionalSubscript, reportUnknownMemberType]
     assert _color_module.str_to_rgba("No colors here") is None
     assert _color_module.str_to_rgba("No colors here", only_first=True) is None
 
@@ -190,11 +190,11 @@ def test_str_to_hsla():
     assert isinstance(color, hsla)
     color2 = _color_module.str_to_hsla("hsla(180, 50%, 50%, 1)", only_first=True)
     assert isinstance(color2, hsla)
-    assert math.isclose(color2.alpha, 1.0)
+    assert math.isclose(color2.alpha, 1.0)  # pyright:ignore[reportArgumentType]
 
     colors = _color_module.str_to_hsla("hsl(0, 100%, 50%) hsla(120, 100%, 50%, 0.5) hsla(0,0%,0%,1)")
-    assert len(colors) == 3
-    assert math.isclose(colors[2].alpha, 1.0)
+    assert len(colors) == 3  # pyright:ignore[reportArgumentType]
+    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType, reportOptionalSubscript, reportUnknownMemberType]
     assert _color_module.str_to_hsla("No colors here") is None
     assert _color_module.str_to_hsla("No colors here", only_first=True) is None
 
@@ -271,29 +271,29 @@ def test_adjust_saturation():
 
 def test_parse_rgba_internal():
     assert _color_module._parse_rgba((255, 0, 0)).red == 255
-    assert math.isclose(_color_module._parse_rgba((255, 0, 0, 0.5)).alpha, 0.5)
+    assert math.isclose(_color_module._parse_rgba((255, 0, 0, 0.5)).alpha, 0.5)  # pyright:ignore[reportArgumentType]
     assert _color_module._parse_rgba({"red": 255, "green": 0, "blue": 0}).red == 255
-    assert math.isclose(_color_module._parse_rgba({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}).alpha, 0.5)
+    assert math.isclose(_color_module._parse_rgba({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}).alpha, 0.5)  # pyright:ignore[reportArgumentType]
     assert _color_module._parse_rgba(rgba(255, 0, 0)).red == 255
     assert _color_module._parse_rgba("rgb(255, 0, 0)").red == 255
     with pytest.raises(ValueError):
         _color_module._parse_rgba("invalid")
     with pytest.raises(ValueError):
-        _color_module._parse_rgba((255, 0))
+        _color_module._parse_rgba((255, 0))  # pyright:ignore[reportArgumentType]
     with pytest.raises(ValueError):
-        _color_module._parse_rgba({"red": 255})
+        _color_module._parse_rgba({"red": 255})  # pyright:ignore[reportArgumentType]
 
 
 def test_parse_hsla_internal():
     assert _color_module._parse_hsla((180, 50, 50)).hue == 180
-    assert math.isclose(_color_module._parse_hsla((180, 50, 50, 0.5)).alpha, 0.5)
+    assert math.isclose(_color_module._parse_hsla((180, 50, 50, 0.5)).alpha, 0.5)  # pyright:ignore[reportArgumentType]
     assert _color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50}).hue == 180
-    assert math.isclose(_color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}).alpha, 0.5)
+    assert math.isclose(_color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}).alpha, 0.5)  # pyright:ignore[reportArgumentType]
     assert _color_module._parse_hsla(hsla(180, 50, 50)).hue == 180
     assert _color_module._parse_hsla("hsl(180, 50%, 50%)").hue == 180
     with pytest.raises(ValueError):
         _color_module._parse_hsla("invalid")
     with pytest.raises(ValueError):
-        _color_module._parse_hsla((180, 50))
+        _color_module._parse_hsla((180, 50))  # pyright:ignore[reportArgumentType]
     with pytest.raises(ValueError):
-        _color_module._parse_hsla({"hue": 180})
+        _color_module._parse_hsla({"hue": 180})  # pyright:ignore[reportArgumentType]

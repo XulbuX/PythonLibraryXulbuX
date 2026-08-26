@@ -34,9 +34,9 @@ def test_hexa_init():
         blue = 0
         alpha = 0.5
 
-    color6 = hexa(MockColor())
+    color6 = hexa(MockColor())  # pyright:ignore[reportArgumentType]
     assert color6.red == 255
-    assert math.isclose(color6.alpha, 0.5)
+    assert math.isclose(color6.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
     # invalid strings
     with pytest.raises(ValueError, match="Invalid HEXA color string"):
@@ -149,7 +149,7 @@ def test_hexa_invert():
     assert inv1.blue == 255
 
     inv2 = color1.invert(invert_alpha=True)
-    assert math.isclose(inv2.alpha, 0.8)
+    assert math.isclose(inv2.alpha, 0.8)  # pyright:ignore[reportArgumentType]
 
 
 def test_hexa_grayscale():
@@ -184,7 +184,7 @@ def test_hexa_is_dark_light_grayscale():
 def test_hexa_with_alpha():
     color1 = hexa("#FF0000")
     color_alpha = color1.with_alpha(0.5)
-    assert math.isclose(color_alpha.alpha, 0.5)
+    assert math.isclose(color_alpha.alpha, 0.5)  # pyright:ignore[reportArgumentType]
     with pytest.raises(ValueError):
         color1.with_alpha(1.5)
 

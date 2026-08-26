@@ -8,4 +8,4 @@ def test_matmul_fallback():
     style = DummyStyle(123)
     # This should trigger AttributeError and set _oc
     res = style @ "hello"
-    assert "hello" in res.text
+    assert "hello" in res.text  # pyright:ignore[reportOperatorIssue]

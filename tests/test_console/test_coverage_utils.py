@@ -1,11 +1,12 @@
 import os
 import shutil
 import sys
+import typing
 from xulbux.console import cls, debug, done, fail, get_encoding, get_height, get_size, info, log, warn
 import pytest
 
 
-def test_get_height(monkeypatch):
+def test_get_height(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(os, "get_terminal_size", lambda: os.terminal_size((80, 50)))
     assert get_height() == 50
 
@@ -16,7 +17,7 @@ def test_get_height(monkeypatch):
     assert get_height() == 24
 
 
-def test_get_size(monkeypatch):
+def test_get_size(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(os, "get_terminal_size", lambda: os.terminal_size((100, 40)))
     assert get_size() == (100, 40)
 
@@ -27,7 +28,7 @@ def test_get_size(monkeypatch):
     assert get_size() == (80, 24)
 
 
-def test_get_encoding(monkeypatch):
+def test_get_encoding(monkeypatch: pytest.MonkeyPatch):
     class FakeStdout:
         @property
         def encoding(self):
@@ -43,15 +44,15 @@ def test_get_encoding(monkeypatch):
     assert get_encoding() == "utf-8"
 
 
-def test_cls_clear(monkeypatch):
-    def fake_which(cmd):
-        return cmd == "clear"
+def test_cls_clear(monkeypatch: pytest.MonkeyPatch):
+    def fake_which(cmd: typing.Any):
+        return cmd == "clear"  # pyright:ignore[reportUnknownVariableType]
 
-    monkeypatch.setattr(shutil, "which", fake_which)
+    monkeypatch.setattr(shutil, "which", fake_which)  # pyright:ignore[reportUnknownArgumentType]
     called = []
     import subprocess
 
-    monkeypatch.setattr(subprocess, "run", lambda args: called.append(args))
+    monkeypatch.setattr(subprocess, "run", lambda args: called.append(args))  # pyright:ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
     cls()
     assert called == [["clear"]]
 

@@ -178,7 +178,7 @@ def test_update_with_comments(tmp_path: Path):
     _json_module.update(str(file_path), COMMENT_UPDATE_VALUES)
 
     try:
-        final_data: dict = _json_module.read(str(file_path))
+        final_data: dict = _json_module.read(str(file_path))  # pyright:ignore[reportMissingTypeArgument]
         version = cast("float", final_data["config"]["version"])
         assert isinstance(version, float) and math.isclose(version, 2.0)
         assert final_data["config"]["features"] == ["c", "b"]
