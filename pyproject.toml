@@ -90,7 +90,7 @@ reportPrivateUsage = "none"
 include = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100 --basetemp=.pytest_tmp"
+addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100 --basetemp=.pytest_tmp2"
 minversion = "7.0"
 pythonpath = ["src"]
 testpaths = ["tests"]
