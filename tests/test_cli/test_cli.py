@@ -1,6 +1,7 @@
 import tomllib
 from pathlib import Path
 from unittest.mock import MagicMock
+from xulbux import __version__
 from xulbux.cli.help import show_help
 import pytest
 
@@ -31,8 +32,6 @@ def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest
 
 def test_show_help_contains_version(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """The help banner must contain the installed package version."""
-
-    from xulbux import __version__
 
     monkeypatch.setattr("xulbux.console._read_single_key", MagicMock())
 

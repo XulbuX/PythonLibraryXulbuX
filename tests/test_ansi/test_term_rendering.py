@@ -34,20 +34,20 @@ def test_term_methods():
     assert isinstance(Term.hide_cursor, str) if hasattr(Term, "hide_cursor") else True  # pyright:ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
-def test_styledtext_cache_reset():
+def test_StyledText_cache_reset():
     st = StyledText("a")
     _ = st.ansi  # Cache it.
     # Nothing to do for property caching check directly, just call it multiple times:
 
 
-def test_colorstyle_from_hex():
+def test_ColorStyle_from_hex():
     c1_st = _ColorStyle.from_hex("0xFF0000")
     assert c1_st._red == 255
     c2_st = _ColorStyle.from_hex("0x00FF00", bg=True)
     assert c2_st._bg
 
 
-def test_more_styledtext():
+def test_more_StyledText():
     # `StyledText.__eq__` other is not `str` or `StyledText`:
     st = StyledText("a")
     assert st != 1

@@ -1,5 +1,7 @@
 from xulbux.ansi import StyledText
 from xulbux.data import (
+    _DataRenderHelper,
+    _set_nested_val,
     get_path_id,
     get_value_by_path_id,
     is_equal,
@@ -121,7 +123,6 @@ def test_sep_path_id_invalid():
 
 
 def test_data_get_value_stop_iteration():
-    from xulbux.data import get_path_id, get_value_by_path_id
 
     class BadDict(dict):  # pyright:ignore[reportMissingTypeArgument]
         def items(self):  # pyright:ignore[reportIncompatibleMethodOverride, reportUnknownParameterType]
@@ -134,7 +135,6 @@ def test_data_get_value_stop_iteration():
 
 
 def test_render_more_coverage():
-    from xulbux.data import render
 
     # Line 701: `syntax_highlighting` is `True`:
     render({"a": 1}, syntax_highlighting=True)
@@ -157,20 +157,17 @@ def test_render_more_coverage():
 
 
 def test_should_expand_compactness_2():
-    from xulbux.data import _DataRenderHelper
 
     helper = _DataRenderHelper([1], indent=0, compactness=2, max_width=10, sep=",", as_json=False, syntax_highlighting=False)
     assert helper.should_expand([1]) is False
 
 
 def test_set_nested_val_primitive():
-    from xulbux.data import _set_nested_val
 
     res = _set_nested_val(1, ["0", "0"], 2)  # pyright:ignore[reportArgumentType]
     assert res == 1
 
 
 def test_path_id_resolver_else():
-    from xulbux.data import get_path_id
 
     assert str(get_path_id({"a": 1}, "a->b", ignore_not_found=True)) == "1>0"

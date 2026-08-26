@@ -37,40 +37,40 @@ def test_bg_style_to_fg():
 
 
 def test_fg_color_style_to_bg():
-    fg_rgb = S.rgb(255, 96, 112)
-    bg_rgb = fg_rgb.to_bg()
-    assert isinstance(bg_rgb, _BgColorStyle)
-    assert bg_rgb == S.BG.rgb(255, 96, 112)
-    assert hasattr(fg_rgb, "to_fg") is False
+    rgb_fg_st = S.rgb(255, 96, 112)
+    rgb_bg_st = rgb_fg_st.to_bg()
+    assert isinstance(rgb_bg_st, _BgColorStyle)
+    assert rgb_bg_st == S.BG.rgb(255, 96, 112)
+    assert hasattr(rgb_fg_st, "to_fg") is False
 
-    fg_hex = S.hex("#FF6070")
-    bg_hex = fg_hex.to_bg()
-    assert isinstance(bg_hex, _BgColorStyle)
-    assert bg_hex == S.BG.hex("#FF6070")
-    assert hasattr(fg_hex, "to_fg") is False
+    hex_fg_st = S.hex("#FF6070")
+    hex_bg_st = hex_fg_st.to_bg()
+    assert isinstance(hex_bg_st, _BgColorStyle)
+    assert hex_bg_st == S.BG.hex("#FF6070")
+    assert hasattr(hex_fg_st, "to_fg") is False
 
 
 def test_bg_color_style_to_fg():
-    bg_rgb = S.BG.rgb(255, 96, 112)
-    fg_rgb = bg_rgb.to_fg()
-    assert isinstance(fg_rgb, _FgColorStyle)
-    assert fg_rgb == S.rgb(255, 96, 112)
-    assert hasattr(bg_rgb, "to_bg") is False
+    rgb_bg_st = S.BG.rgb(255, 96, 112)
+    rgb_fg_st = rgb_bg_st.to_fg()
+    assert isinstance(rgb_fg_st, _FgColorStyle)
+    assert rgb_fg_st == S.rgb(255, 96, 112)
+    assert hasattr(rgb_bg_st, "to_bg") is False
 
-    bg_hex = S.BG.hex("#FF6070")
-    fg_hex = bg_hex.to_fg()
-    assert isinstance(fg_hex, _FgColorStyle)
-    assert fg_hex == S.hex("#FF6070")
-    assert hasattr(bg_hex, "to_bg") is False
+    hex_bg_st = S.BG.hex("#FF6070")
+    hex_fg_st = hex_bg_st.to_fg()
+    assert isinstance(hex_fg_st, _FgColorStyle)
+    assert hex_fg_st == S.hex("#FF6070")
+    assert hasattr(hex_bg_st, "to_bg") is False
 
 
 def test_style_group_to_bg_and_to_fg():
-    fg_group = S.BOLD | S.RED
-    bg_group = fg_group.to_bg()
-    assert bg_group == (S.BOLD | S.BG.RED)
-    assert bg_group.to_fg() == (S.BOLD | S.RED)
+    g_fg_st = S.BOLD | S.RED
+    g_bg_st = g_fg_st.to_bg()
+    assert g_bg_st == (S.BOLD | S.BG.RED)
+    assert g_bg_st.to_fg() == (S.BOLD | S.RED)
 
-    complex_group = S.BOLD | S.ITALIC | S.rgb(10, 20, 30)
-    bg_complex = complex_group.to_bg()
-    assert bg_complex == (S.BOLD | S.ITALIC | S.BG.rgb(10, 20, 30))
-    assert bg_complex.to_fg() == complex_group
+    complex_g_st = S.BOLD | S.ITALIC | S.rgb(10, 20, 30)
+    complex_bg_st = complex_g_st.to_bg()
+    assert complex_bg_st == (S.BOLD | S.ITALIC | S.BG.rgb(10, 20, 30))
+    assert complex_bg_st.to_fg() == complex_g_st

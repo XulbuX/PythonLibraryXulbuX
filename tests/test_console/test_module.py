@@ -6,12 +6,10 @@ from xulbux.base.consts import ANSI
 import pytest
 
 
-def test_cls(monkeypatch: pytest.MonkeyPatch):
+def test_cls(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock):
     mock_shutil = MagicMock()
-    mock_subprocess_run = MagicMock()
     mock_print = MagicMock()
     monkeypatch.setattr("xulbux.console._shutil.which", mock_shutil)
-    monkeypatch.setattr("xulbux.console._subprocess.run", mock_subprocess_run)
     monkeypatch.setattr(builtins, "print", mock_print)
 
     mock_shutil.side_effect = lambda cmd: "/bin/cls" if cmd == "cls" else None  # pyright:ignore[reportUnknownLambdaType]

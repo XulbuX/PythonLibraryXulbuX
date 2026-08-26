@@ -146,7 +146,6 @@ def test_create_force_false_exists(tmp_path: Path):
 
 
 def test_create_force_false_same_content(tmp_path: Path):
-    from pathlib import Path
 
     file_path = _json_module.create(f"{tmp_path}/existing_same.json", SIMPLE_DATA, force=False)
     assert isinstance(file_path, Path)

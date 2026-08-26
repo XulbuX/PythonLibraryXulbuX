@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from xulbux import env_path
@@ -32,36 +31,41 @@ def test_get_cwd():
         assert env_path._get(cwd=True) == Path(".")
 
 
-def test_persistent_windows_success():
+def test_persistent_windows_success(mock_os_windows: None):
     mock_winreg = MagicMock()
-    with patch("sys.platform", "win32"), patch.dict("sys.modules", {"winreg": mock_winreg}):
+    with patch.dict("sys.modules", {"winreg": mock_winreg}):
         env_path._persistent(Path("test"))
 
-def test_persistent_windows_error():
+
+def test_persistent_windows_error(mock_os_windows: None):
     mock_winreg = MagicMock()
     mock_winreg.OpenKey.side_effect = Exception("mocked error")
-    with patch("sys.platform", "win32"), patch.dict("sys.modules", {"winreg": mock_winreg}), pytest.raises(RuntimeError):
+    with patch.dict("sys.modules", {"winreg": mock_winreg}), pytest.raises(RuntimeError):
         env_path._persistent(Path("test"))
 
 
-def test_persistent_unix():
-    with patch("sys.platform", "linux"), patch("pathlib.Path.home") as mock_home:
-        mock_home.return_value = Path("/fake/home")
-        with patch("pathlib.Path.exists", return_value=True), patch("builtins.open") as mock_open:
+def test_persistent_unix(mock_os_linux: None, mock_subprocess_run: MagicMock):
+    with patch("xulbux.env_path.Path.home") as mock_home:
+        mock_home.return_value = MagicMock()
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch("builtins.open") as mock_open,
+            patch("xulbux.env_path.Path", return_value=MagicMock()),
+        ):
             mock_file = MagicMock()
             mock_file.read.return_value = "export PATH=old"
             mock_open.return_value.__enter__.return_value = mock_file
-            with patch("subprocess.run"):
-                env_path._persistent(Path("new_path"))
-                env_path._persistent(Path("new_path"), remove=True)
+            mock_path = MagicMock()
+            env_path._persistent(mock_path)
+            env_path._persistent(mock_path, remove=True)
 
 
-def test_persistent_add_existing():
+def test_persistent_add_existing(mock_os_linux: None, mock_subprocess_run: MagicMock):
     with (
-        patch("sys.platform", "linux"),
-        patch("subprocess.run"),
         patch("builtins.open"),
         patch("pathlib.Path.exists", return_value=True),
+        patch("xulbux.env_path.Path.home", return_value=MagicMock()),
+        patch("xulbux.env_path.Path", return_value=MagicMock()),
     ):
         current = env_path.paths(as_list=True)
         if current:

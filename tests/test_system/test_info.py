@@ -1,30 +1,41 @@
-from unittest.mock import patch
+from collections.abc import Callable
+from unittest.mock import MagicMock, patch
 import xulbux.system as _system_module
 import pytest
 
 
-def test_system_is_elevated_windows(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "nt")
-    with patch("xulbux.system._ctypes") as mock_ctypes:
-        mock_ctypes.windll.shell32.IsUserAnAdmin.return_value = 1
-        assert _system_module.is_elevated() is True
-
-        mock_ctypes.windll.shell32.IsUserAnAdmin.return_value = 0
-        assert _system_module.is_elevated() is False
-
-        mock_ctypes.windll.shell32.IsUserAnAdmin.side_effect = Exception("test")
-        assert _system_module.is_elevated() is False
+def test_system_is_elevated_windows_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+    mock_ctypes = mock_ctypes_windll()
+    mock_ctypes.shell32.IsUserAnAdmin.return_value = 1
+    assert _system_module.is_elevated() is True
 
 
-def test_system_is_elevated_posix(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "posix")
+def test_system_is_elevated_windows_not_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+    mock_ctypes = mock_ctypes_windll()
+    mock_ctypes.shell32.IsUserAnAdmin.return_value = 0
+    assert _system_module.is_elevated() is False
+
+
+def test_system_is_elevated_windows_exception(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+    mock_ctypes = mock_ctypes_windll()
+    mock_ctypes.shell32.IsUserAnAdmin.side_effect = Exception("test")
+    assert _system_module.is_elevated() is False
+
+
+def test_system_is_elevated_posix_root(mock_os_linux: None):
     with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.return_value = 0
         assert _system_module.is_elevated() is True
 
+
+def test_system_is_elevated_posix_not_root(mock_os_linux: None):
+    with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.return_value = 1000
         assert _system_module.is_elevated() is False
 
+
+def test_system_is_elevated_posix_exception(mock_os_linux: None):
+    with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.side_effect = Exception("test")
         assert _system_module.is_elevated() is False
 
@@ -34,32 +45,35 @@ def test_system_is_elevated_unknown(monkeypatch: pytest.MonkeyPatch):
     assert _system_module.is_elevated() is False
 
 
-def test_system_is_win():
-    with patch("platform.system", return_value="Windows"):
-        assert _system_module.is_win() is True
-    with patch("platform.system", return_value="Linux"):
-        assert _system_module.is_win() is False
+def test_system_is_win_true(mock_os_windows: None):
+    assert _system_module.is_win() is True
 
 
-def test_system_is_linux():
-    with patch("platform.system", return_value="Linux"):
-        assert _system_module.is_linux() is True
-    with patch("platform.system", return_value="Windows"):
-        assert _system_module.is_linux() is False
+def test_system_is_win_false(mock_os_linux: None):
+    assert _system_module.is_win() is False
 
 
-def test_system_is_mac():
-    with patch("platform.system", return_value="Darwin"):
-        assert _system_module.is_mac() is True
-    with patch("platform.system", return_value="Windows"):
-        assert _system_module.is_mac() is False
+def test_system_is_linux_true(mock_os_linux: None):
+    assert _system_module.is_linux() is True
 
 
-def test_system_is_unix(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "posix")
+def test_system_is_linux_false(mock_os_windows: None):
+    assert _system_module.is_linux() is False
+
+
+def test_system_is_mac_true(mock_os_darwin: None):
+    assert _system_module.is_mac() is True
+
+
+def test_system_is_mac_false(mock_os_windows: None):
+    assert _system_module.is_mac() is False
+
+
+def test_system_is_unix_true(mock_os_linux: None):
     assert _system_module.is_unix() is True
 
-    monkeypatch.setattr(_system_module._os, "name", "nt")
+
+def test_system_is_unix_false(mock_os_windows: None):
     assert _system_module.is_unix() is False
 
 

@@ -207,34 +207,34 @@ def test_color_style_type_guards_and_subclasses():
     assert is_color_style(S.BG.BR.BLUE) is True
 
     # 24-bit True-Color FG:
-    fg_hex = S.hex("#FF6070")
-    assert isinstance(fg_hex, _FgColorStyle)
-    assert isinstance(fg_hex, _ColorStyle)
-    assert not isinstance(fg_hex, _BgColorStyle)
-    assert is_fg_color_style(fg_hex) is True
-    assert is_bg_color_style(fg_hex) is False
-    assert is_color_style(fg_hex) is True
+    hex_fg_st = S.hex("#FF6070")
+    assert isinstance(hex_fg_st, _FgColorStyle)
+    assert isinstance(hex_fg_st, _ColorStyle)
+    assert not isinstance(hex_fg_st, _BgColorStyle)
+    assert is_fg_color_style(hex_fg_st) is True
+    assert is_bg_color_style(hex_fg_st) is False
+    assert is_color_style(hex_fg_st) is True
 
-    fg_rgb = S.rgb(255, 96, 112)
-    assert isinstance(fg_rgb, _FgColorStyle)
-    assert is_fg_color_style(fg_rgb) is True
-    assert is_bg_color_style(fg_rgb) is False
-    assert is_color_style(fg_rgb) is True
+    rgb_fg_st = S.rgb(255, 96, 112)
+    assert isinstance(rgb_fg_st, _FgColorStyle)
+    assert is_fg_color_style(rgb_fg_st) is True
+    assert is_bg_color_style(rgb_fg_st) is False
+    assert is_color_style(rgb_fg_st) is True
 
     # 24-bit True-Color BG:
-    bg_hex = S.BG.hex("#FF6070")
-    assert isinstance(bg_hex, _BgColorStyle)
-    assert isinstance(bg_hex, _ColorStyle)
-    assert not isinstance(bg_hex, _FgColorStyle)
-    assert is_fg_color_style(bg_hex) is False
-    assert is_bg_color_style(bg_hex) is True
-    assert is_color_style(bg_hex) is True
+    hex_bg_st = S.BG.hex("#FF6070")
+    assert isinstance(hex_bg_st, _BgColorStyle)
+    assert isinstance(hex_bg_st, _ColorStyle)
+    assert not isinstance(hex_bg_st, _FgColorStyle)
+    assert is_fg_color_style(hex_bg_st) is False
+    assert is_bg_color_style(hex_bg_st) is True
+    assert is_color_style(hex_bg_st) is True
 
-    bg_rgb = S.BG.rgb(0, 0, 0)
-    assert isinstance(bg_rgb, _BgColorStyle)
-    assert is_fg_color_style(bg_rgb) is False
-    assert is_bg_color_style(bg_rgb) is True
-    assert is_color_style(bg_rgb) is True
+    rgb_bg_st = S.BG.rgb(0, 0, 0)
+    assert isinstance(rgb_bg_st, _BgColorStyle)
+    assert is_fg_color_style(rgb_bg_st) is False
+    assert is_bg_color_style(rgb_bg_st) is True
+    assert is_color_style(rgb_bg_st) is True
 
     # Non-color styles:
     assert is_fg_color_style(S.BOLD) is False
@@ -267,16 +267,16 @@ def test_styled_text_wrap_basic():
 
 
 def test_styled_sequence_wrap_preserves_styles():
-    seq = S.RED("hello world foo bar")
-    wrapped = seq.wrap(11)
+    seq_st = S.RED("hello world foo bar")
+    wrapped = seq_st.wrap(11)
     assert [line.raw for line in wrapped] == ["hello world", "foo bar"]
     assert f"{ESC}[31mhello world{ESC}[39m" == wrapped[0].ansi
     assert f"{ESC}[31mfoo bar{ESC}[39m" == wrapped[1].ansi
 
 
 def test_style_group_wrap_preserves_combined_styles():
-    grp = (S.BOLD | S.GREEN)("first long line second long line")
-    wrapped = grp.wrap(15)
+    g_st = (S.BOLD | S.GREEN)("first long line second long line")
+    wrapped = g_st.wrap(15)
     assert [line.raw for line in wrapped] == ["first long line", "second long", "line"]
     for line in wrapped:
         assert f"{ESC}[1;32m" in line.ansi
@@ -288,9 +288,9 @@ def test_wrap_nested_styles():
     wrapped = st.wrap(12)
     assert [line.raw for line in wrapped] == ["Start", "(dimmed", "notes here)", "end"]
     # Check that dim style is present in the lines containing dimmed text:
-    dim_seq = StyledText(S.DIM).ansi
-    assert dim_seq in wrapped[1].ansi
-    assert dim_seq in wrapped[2].ansi
+    dim_seq_st = StyledText(S.DIM).ansi
+    assert dim_seq_st in wrapped[1].ansi
+    assert dim_seq_st in wrapped[2].ansi
 
 
 def test_wrap_with_paragraphs_and_empty_lines():

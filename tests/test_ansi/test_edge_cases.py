@@ -1,32 +1,32 @@
 from xulbux.ansi import S, StyledText, _ColorStyle, _StyleGroup
 
 
-def test_stylegroup_missing():
+def test_StyleGroup_missing():
     # `__or__`, `__ror__`:
-    g1 = S.BOLD | S.RED
-    g2 = S.ITALIC | S.BLUE
-    assert isinstance(g1 | g2, _StyleGroup)
-    assert len((g1 | g2)._codes) == 4
+    g1_st = S.BOLD | S.RED
+    g2_st = S.ITALIC | S.BLUE
+    assert isinstance(g1_st | g2_st, _StyleGroup)
+    assert len((g1_st | g2_st)._codes) == 4
 
     # `__ror__` with `BaseStyle`:
-    assert isinstance(S.ITALIC | g1, _StyleGroup)
+    assert isinstance(S.ITALIC | g1_st, _StyleGroup)
 
     # `__matmul__`:
-    assert (g1 @ "text").text == "text"
+    assert (g1_st @ "text").text == "text"
 
-    # `__eq__` `False`:
-    assert g1 != S.BOLD
+    # `__eq__`:
+    assert g1_st != S.BOLD
 
     # Format methods:
-    assert isinstance(g1.join(["a", "b"]), StyledText)
-    assert isinstance(g1.ljust(4, "-"), StyledText)
-    assert isinstance(g1.rjust(4, "-"), StyledText)
-    assert isinstance(g1.center(4, "-"), StyledText)
-    assert isinstance(g1.wrap(10), list)
+    assert isinstance(g1_st.join(["a", "b"]), StyledText)
+    assert isinstance(g1_st.ljust(4, "-"), StyledText)
+    assert isinstance(g1_st.rjust(4, "-"), StyledText)
+    assert isinstance(g1_st.center(4, "-"), StyledText)
+    assert isinstance(g1_st.wrap(10), list)
 
 
 def test_style_missing():
-    # `__eq__` false:
+    # `__eq__`:
     assert S.BOLD != "bold"
 
     # `__hash__`:
@@ -46,7 +46,7 @@ def test_style_missing():
     assert isinstance(S.BOLD.wrap(10), list)
 
 
-def test_colorstyle_missing():
+def test_ColorStyle_missing():
     # `from_hex`:
     c1_st = S.hex("#FF0000")
     c2_st = S.hex("F00")
@@ -59,7 +59,7 @@ def test_colorstyle_missing():
     assert isinstance(c1_st | S.BOLD, _StyleGroup)
     assert isinstance(S.BOLD | c1_st, _StyleGroup)
 
-    # `__eq__` false:
+    # `__eq__`:
     assert c1_st != "red"
 
     # Format methods:
@@ -99,7 +99,7 @@ def test_s_missing():
     assert S.link("url")._url == "url"
 
 
-def test_styledtext_missing():
+def test_StyledText_missing():
     st1 = StyledText("a")
     st2 = StyledText("b")
 

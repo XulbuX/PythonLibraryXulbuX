@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 import xulbux.system as _system_module
 import pytest
@@ -8,49 +9,42 @@ def test_elevate_already_elevated():
         assert _system_module.elevate() is True
 
 
-def test_elevate_windows_success(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "nt")
-    with (
-        patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=42))))) as mock_ctypes,
-    ):
+def test_elevate_windows_success(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+    with patch("xulbux.system.is_elevated", return_value=False):
+        mock_windll = mock_ctypes_windll(42)
         with pytest.raises(SystemExit) as exc_info:
             _system_module.elevate(win_title="My Title", args=["--arg1", "val1"])
         assert exc_info.value.code == 0
 
-        mock_ctypes.windll.shell32.ShellExecuteW.assert_called_once()
-        args_passed = mock_ctypes.windll.shell32.ShellExecuteW.call_args[0][3]
+        mock_windll.shell32.ShellExecuteW.assert_called_once()
+        args_passed = mock_windll.shell32.ShellExecuteW.call_args[0][3]
         assert "My Title" in args_passed
         assert "--arg1 val1" in args_passed
 
 
-def test_elevate_windows_no_title(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "nt")
-    with (
-        patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=42))))) as mock_ctypes,
-    ):
+def test_elevate_windows_no_title(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+    with patch("xulbux.system.is_elevated", return_value=False):
+        mock_windll = mock_ctypes_windll(42)
         with pytest.raises(SystemExit):
             _system_module.elevate()
 
-        mock_ctypes.windll.shell32.ShellExecuteW.assert_called_once()
-        args_passed = mock_ctypes.windll.shell32.ShellExecuteW.call_args[0][3]
+        mock_windll.shell32.ShellExecuteW.assert_called_once()
+        args_passed = mock_windll.shell32.ShellExecuteW.call_args[0][3]
         assert "SetConsoleTitleW" not in args_passed
 
 
-def test_elevate_windows_failure(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "nt")
+def test_elevate_windows_failure(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
     with (
         patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=5))))),
         pytest.raises(PermissionError, match="Failed to launch elevated process"),
     ):
+        mock_ctypes_windll(5)
         _system_module.elevate()
 
 
-def test_elevate_posix_success(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "posix")
-    with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
+def test_elevate_posix_success(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+    mock_popen = mock_subprocess_popen
+    with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 0
         mock_popen.return_value = mock_proc
@@ -67,9 +61,9 @@ def test_elevate_posix_success(monkeypatch: pytest.MonkeyPatch):
         assert "--arg2" in cmd_passed
 
 
-def test_elevate_posix_no_title(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "posix")
-    with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
+def test_elevate_posix_no_title(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+    mock_popen = mock_subprocess_popen
+    with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 0
         mock_popen.return_value = mock_proc
@@ -82,9 +76,9 @@ def test_elevate_posix_no_title(monkeypatch: pytest.MonkeyPatch):
         assert "--description" not in cmd_passed
 
 
-def test_elevate_posix_failure(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(_system_module._os, "name", "posix")
-    with patch("xulbux.system.is_elevated", return_value=False), patch("xulbux.system._subprocess.Popen") as mock_popen:
+def test_elevate_posix_failure(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+    mock_popen = mock_subprocess_popen
+    with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 1
         mock_popen.return_value = mock_proc

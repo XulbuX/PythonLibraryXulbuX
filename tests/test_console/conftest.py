@@ -1,6 +1,7 @@
 import builtins
 import os
 from unittest.mock import MagicMock
+import xulbux.format_codes
 import pytest
 
 
@@ -17,7 +18,6 @@ def mock_terminal_size(monkeypatch: pytest.MonkeyPatch):
 def mock_formatcodes_print(monkeypatch: pytest.MonkeyPatch):
     mock = MagicMock()
     # Patch in the original module where it is defined:
-    import xulbux.format_codes
 
     monkeypatch.setattr(xulbux.format_codes.FormatCodes, "print", mock)
     return mock

@@ -1,7 +1,7 @@
 import os
-import shutil
 import sys
-import typing
+from typing import Any
+from unittest.mock import MagicMock
 from xulbux.console import cls, debug, done, fail, get_encoding, get_height, get_size, info, log, warn
 import pytest
 
@@ -44,17 +44,13 @@ def test_get_encoding(monkeypatch: pytest.MonkeyPatch):
     assert get_encoding() == "utf-8"
 
 
-def test_cls_clear(monkeypatch: pytest.MonkeyPatch):
-    def fake_which(cmd: typing.Any):
+def test_cls_clear(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock):
+    def fake_which(cmd: Any):
         return cmd == "clear"  # pyright:ignore[reportUnknownVariableType]
 
     monkeypatch.setattr("xulbux.console._shutil.which", fake_which)  # pyright:ignore[reportUnknownArgumentType]
-    called = []
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda args: called.append(args))  # pyright:ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
     cls()
-    assert called == [["clear"]]
+    mock_subprocess_run.assert_called_with(["clear"])
 
 
 def test_log_value_errors():

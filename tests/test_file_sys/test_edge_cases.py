@@ -2,8 +2,9 @@ import contextlib
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, PropertyMock, patch
 from xulbux import file_sys
+from xulbux.file_sys import _ExtendPathHelper
 import pytest
 
 
@@ -80,7 +81,6 @@ def test_extend_path_absolute():
 
 
 def test_extend_path_absolute_no_drive():
-    from unittest.mock import PropertyMock
 
     with (
         patch("pathlib.Path.is_absolute", return_value=True),
@@ -103,9 +103,6 @@ def test_get_closest_match_exception():
 
 
 def test_find_path_no_drive_absolute():
-    from pathlib import Path
-    from unittest.mock import PropertyMock
-    from xulbux.file_sys import _ExtendPathHelper
 
     with (
         patch("pathlib.Path.is_absolute", return_value=True),
@@ -115,17 +112,15 @@ def test_find_path_no_drive_absolute():
         with contextlib.suppress(Exception):
             helper()
 
+
 def test_extend_path_helper_windows_drive():
-    from unittest.mock import patch, MagicMock
-    from xulbux.file_sys import _ExtendPathHelper
-    from pathlib import Path
-    
+
     mock_path = MagicMock()
     mock_path.is_absolute.return_value = True
     mock_path.drive = "C:"
     mock_path.parts = ["C:\\", "foo"]
-    
-    with patch("xulbux.file_sys.Path", side_effect=lambda *args: mock_path if not args else Path(*args)) as mock_Path:
+
+    with patch("xulbux.file_sys.Path", side_effect=lambda *args: mock_path if not args else Path(*args)):  # pyright:ignore[reportUnknownLambdaType,reportUnknownArgumentType]
         helper = _ExtendPathHelper(mock_path, [], fuzzy_match=False, raise_error=False)
         helper()
         assert len(helper.search_dirs) > 0
