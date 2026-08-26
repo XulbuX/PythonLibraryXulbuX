@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from xulbux.cli.help import show_help
 import pytest
 
-ROOT_DIR = Path(__file__).parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 

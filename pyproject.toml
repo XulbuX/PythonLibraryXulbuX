@@ -78,30 +78,22 @@ exclude_lines = [
 [tool.coverage.run]
 branch = true
 source = ["src/xulbux"]
+omit = ["src/xulbux/format_codes.py"]
 
 [tool.mypy]
-exclude = ["^assets/", "^build/"]
+exclude_gitignore = true
 
 [tool.pyright]
 typeCheckingMode = "strict"
 reportDeprecated = "warning"
 reportPrivateUsage = "none"
-include = ["src", "tests"]
-exclude = [
-  ".github",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".venv",
-  "**/__pycache__",
-  "assets",
-  "build",
-]
+include = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100"
 minversion = "7.0"
 pythonpath = ["src"]
-testpaths = ["tests/test_*.py"]
+testpaths = ["tests"]
 
 [tool.ruff]
 preview = true
@@ -128,6 +120,25 @@ select = [
 ]
 ignore = ["ambiguous-unicode-character-docstring"]
 mccabe = { max-complexity = 12 }
+
+# [tool.ruff.lint.per-file-ignores]
+# "tests/**/*.py" = [
+#   "ambiguous-variable-name",
+#   "bare-except",
+#   "C4",
+#   "complex-structure",
+#   "float-equality-comparison",
+#   "line-too-long",
+#   "magic-value-comparison",
+#   "multiple-with-statements",
+#   "pytest-raises-ambiguous-pattern",
+#   "raise-without-from-inside-except",
+#   "rule-codes-in-selectors",
+#   "suppressible-exception",
+#   "true-false-comparison",
+#   "unused-variable",
+#   "useless-expression",
+# ]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false

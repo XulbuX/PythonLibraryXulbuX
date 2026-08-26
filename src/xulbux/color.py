@@ -98,7 +98,7 @@ class rgba(_ColorBase):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         self.red, self.green, self.blue = red, green, blue
-        self.alpha = None if alpha is None else (1.0 if alpha > 1.0 else float(alpha))
+        self.alpha = None if alpha is None else float(alpha)
 
     def __iter__(self) -> Iterator[int | float | None]:
         yield self.red
@@ -237,11 +237,10 @@ class rgba(_ColorBase):
             raise ValueError(f"The 'ratio' parameter must be in range [0.0, 1.0] inclusive, got {ratio!r}")
 
         other_rgba = to_rgba(other)
-        ratio *= 2
 
-        red = int(max(0, min(255, int((self.red * (2 - ratio)) + (other_rgba.red * ratio) + 0.5))))
-        green = int(max(0, min(255, int((self.green * (2 - ratio)) + (other_rgba.green * ratio) + 0.5))))
-        blue = int(max(0, min(255, int((self.blue * (2 - ratio)) + (other_rgba.blue * ratio) + 0.5))))
+        red = int(max(0, min(255, int((self.red * (1 - ratio)) + (other_rgba.red * ratio) + 0.5))))
+        green = int(max(0, min(255, int((self.green * (1 - ratio)) + (other_rgba.green * ratio) + 0.5))))
+        blue = int(max(0, min(255, int((self.blue * (1 - ratio)) + (other_rgba.blue * ratio) + 0.5))))
         none_alpha = self.alpha is None and (len(other_rgba) <= 3 or other_rgba[3] is None)
 
         if not none_alpha:
@@ -249,9 +248,11 @@ class rgba(_ColorBase):
             other_a: float = cast("float", 1.0 if other_rgba[3] is None else other_rgba[3]) if len(other_rgba) > 3 else 1.0
 
             if additive_alpha:
-                alpha: float | None = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
+                # Additive blend calculation
+                ratio2 = ratio * 2
+                alpha = max(0.0, min(1.0, (self_a * (2 - ratio2)) + (other_a * ratio2)))
             else:
-                alpha = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
+                alpha = max(0.0, min(1.0, (self_a * (1 - ratio)) + (other_a * ratio)))
 
         else:
             alpha = None
@@ -363,7 +364,7 @@ class hsla(_ColorBase):
             raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
 
         self.hue, self.sat, self.light = hue, sat, light
-        self.alpha = None if alpha is None else (1.0 if alpha > 1.0 else float(alpha))
+        self.alpha = None if alpha is None else float(alpha)
 
     def __iter__(self) -> Iterator[int | float | None]:
         yield self.hue
@@ -1057,11 +1058,12 @@ def has_alpha(color: Rgba | Hsla | Hexa, /) -> bool:
             elif color.startswith("0x"):
                 color = color[2:]
             return len(color) == 4 or len(color) == 8
-        if isinstance(color, int):
-            hex_length = len(f"{color:X}")
-            return hex_length == 4 or hex_length == 8
 
-    elif isinstance(color, str):
+        # It must be an int if it's a valid hexa and not a string (hexa object handled above)
+        hex_length = len(f"{cast('int', color):X}")
+        return hex_length == 4 or hex_length == 8
+
+    if isinstance(color, str):
         if parsed_rgba := str_to_rgba(color, only_first=True):
             return parsed_rgba.has_alpha()
         if parsed_hsla := str_to_hsla(color, only_first=True):
@@ -1272,7 +1274,7 @@ def hex_int_to_rgba(hex_int: int, /, *, preserve_original: bool = False) -> rgba
             _validate=False,
         )
 
-    elif len(hex_str) <= 8:
+    else:
         hex_str = hex_str.zfill(8)
         return rgba(
             red if (red := int(hex_str[0:2], 16)) != 1 or preserve_original else 0,
@@ -1281,9 +1283,6 @@ def hex_int_to_rgba(hex_int: int, /, *, preserve_original: bool = False) -> rgba
             int(hex_str[6:8], 16) / 255.0,
             _validate=False,
         )
-
-    else:
-        raise ValueError(f"Could not convert HEX integer 0x{hex_int:X} to RGBA color")
 
 
 @overload
@@ -1494,9 +1493,16 @@ def _parse_rgba(color: Rgba, /) -> rgba:
 
     elif isinstance(color, dict):
         dict_color = cast("dict[str, Any]", color)
-        return rgba(
-            int(dict_color["red"]), int(dict_color["green"]), int(dict_color["blue"]), dict_color.get("alpha"), _validate=False
-        )
+        try:
+            return rgba(
+                int(dict_color["red"]),
+                int(dict_color["green"]),
+                int(dict_color["blue"]),
+                dict_color.get("alpha"),
+                _validate=False,
+            )
+        except (KeyError, ValueError):
+            raise ValueError(f"Could not parse RGBA color: {color!r}") from None
 
     elif isinstance(color, str) and (parsed := str_to_rgba(color, only_first=True)):
         return parsed
@@ -1520,9 +1526,16 @@ def _parse_hsla(color: Hsla, /) -> hsla:
 
     elif isinstance(color, dict):
         dict_color = cast("dict[str, Any]", color)
-        return hsla(
-            int(dict_color["hue"]), int(dict_color["sat"]), int(dict_color["light"]), dict_color.get("alpha"), _validate=False
-        )
+        try:
+            return hsla(
+                int(dict_color["hue"]),
+                int(dict_color["sat"]),
+                int(dict_color["light"]),
+                dict_color.get("alpha"),
+                _validate=False,
+            )
+        except (KeyError, ValueError):
+            raise ValueError(f"Could not parse HSLA color: {color!r}") from None
 
     elif isinstance(color, str) and (parsed := str_to_hsla(color, only_first=True)):
         return parsed

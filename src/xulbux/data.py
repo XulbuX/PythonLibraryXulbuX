@@ -451,7 +451,7 @@ def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], cu
         current_path = []
 
     for path in ignore_paths:
-        if current_path == path[: len(current_path)]:
+        if current_path[: len(path)] == path:
             return True
 
     if type(data1) is not type(data2):
@@ -653,10 +653,15 @@ class _DataGetPathIdHelper:
     def process_iterable_key(self, key: str, /) -> int | None:
         """Process a key for iterable data. Returns the index or `None` if not found."""
 
+        idx = -1
         try:
             idx = int(key)
             self.current_data = list(self.current_data)[idx]
             return idx
+        except IndexError:
+            if self.ignore_not_found:
+                return None
+            raise IndexError(f"Index {idx} out of range") from None
         except ValueError:
             try:
                 idx = list(self.current_data).index(key)
@@ -690,7 +695,7 @@ class _DataRenderHelper:
         self.as_json: bool = as_json
 
         self.styles: dict[str, AnyStyle] = _DEFAULT_SYNTAX_HL.copy()
-        self.do_syntax_hl: bool = syntax_highlighting not in {None, False}
+        self.do_syntax_hl: bool = syntax_highlighting not in (None, False)
 
         if self.do_syntax_hl:
             if syntax_highlighting is True:
@@ -714,13 +719,14 @@ class _DataRenderHelper:
         return StyledText(self.styles[key](text)).ansi
 
     def __call__(self) -> StyledText:
-        return StyledText(
-            _rx.sub(
-                r"\s+(?=\n)",
-                "",
-                self.format_dict(self.data, 0) if isinstance(self.data, dict) else self.format_sequence(self.data, 0),
-            )
-        )
+        if isinstance(self.data, dict):
+            formatted = self.format_dict(self.data, 0)
+        elif is_seq_or_set(self.data):
+            formatted = self.format_sequence(self.data, 0)
+        else:
+            formatted = self.format_value(self.data, None)
+
+        return StyledText(_rx.sub(r"\s+(?=\n)", "", formatted))
 
     def format_value(self, value: Any, /, current_indent: int | None = None) -> str:
         """Formats a single value based on its type and the current indentation level."""

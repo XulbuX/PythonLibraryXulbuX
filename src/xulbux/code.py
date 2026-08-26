@@ -147,7 +147,7 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
 
     js_score = 0.0
     if funcs:
-        funcs_pattern2 = r"(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")" + _regex_module.brackets("()")
+        funcs_pattern2 = r"(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")" + _regex_module.brackets()
         if matches := _rx.compile(funcs_pattern2, _rx.IGNORECASE).findall(code):
             js_score += len(matches) * 2.0
 

@@ -29,6 +29,7 @@ import pytest
         (Path("some") / "dir" / "file_name.config.yaml", ".json", True, True, str(Path("some") / "dir" / "FileName.json")),
         ("nodotfile", ".txt", False, True, "nodotfile.txt"),
         ("no_dot_file", ".txt", True, True, "NoDotFile.txt"),
+        ("missing_dot.txt", "md", False, False, "missing_dot.md"),
     ],
 )
 def test_rename_extension(

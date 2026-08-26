@@ -9,13 +9,14 @@ This library is compiled using **MyPyC**. Therefore, **EVERYTHING** must be meti
 ## 2. Validation & Testing
 
 After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved.
+**CRITICAL:** Test coverage must always remain at exactly 100%. If you write new code, you must write tests for it. If you find bugs while testing, fix the bugs rather than writing tests that succeed on incorrect behavior. Use the `test-xulbux` skill for testing guidelines.
 
 **On Windows:**
 
 CD into the project root, then run:
 
 ```powershell
-ruff format .; if ($?) { ruff check . --fix }; if ($?) { pyright --pythonpath "$(py -c 'import sys; print(sys.executable)')" . }; if ($?) { mypy . }; if ($?) { pytest --basetemp .pytest_tmp }
+ruff format .; if ($?) { ruff check . --fix }; if ($?) { pyright --pythonpath "$(py -c 'import sys; print(sys.executable)')" . }; if ($?) { mypy . }; if ($?) { pytest --basetemp .pytest_tmp -q --disable-warnings }
 ```
 
 **On Unix:**
@@ -23,7 +24,7 @@ ruff format .; if ($?) { ruff check . --fix }; if ($?) { pyright --pythonpath "$
 CD into the project root, activate the `.venv` virtual environment, then run:
 
 ```bash
-ruff format . && ruff check . --fix && pyright . && mypy . && pytest
+ruff format . && ruff check . --fix && pyright . && mypy . && pytest -q --disable-warnings
 ```
 
 ## 3. Ask, Don't Assume
