@@ -1,22 +1,23 @@
+import math
 from xulbux.color import rgba
 import pytest
 
 
 def test_rgba_init():
     # Valid
-    c = rgba(255, 128, 0, 0.5)
-    assert c.red == 255
-    assert c.green == 128
-    assert c.blue == 0
-    assert c.alpha == 0.5
+    color1 = rgba(255, 128, 0, 0.5)
+    assert color1.red == 255
+    assert color1.green == 128
+    assert color1.blue == 0
+    assert math.isclose(color1.alpha, 0.5)
 
-    c2 = rgba(255, 128, 0)
-    assert c2.alpha is None
+    color2 = rgba(255, 128, 0)
+    assert color2.alpha is None
 
     # Validation bypassing
-    c3 = rgba(300, 300, 300, 2.0, _validate=False)
-    assert c3.red == 300
-    assert c3.alpha == 2.0
+    color3 = rgba(300, 300, 300, 2.0, _validate=False)
+    assert color3.red == 300
+    assert math.isclose(color3.alpha, 2.0)
 
     with pytest.raises(ValueError, match="must be integers in range"):
         rgba(-1, 0, 0)
@@ -54,15 +55,15 @@ def test_rgba_getitem():
     assert c1[-2] == 128
     assert c1[-3] == 255
 
-    c2 = rgba(255, 128, 0, 0.5)
-    assert c2[3] == 0.5
-    assert c2[-1] == 0.5
-    assert c2[-4] == 255
+    color2 = rgba(255, 128, 0, 0.5)
+    assert math.isclose(color2[3], 0.5)
+    assert math.isclose(color2[-1], 0.5)
+    assert color2[-4] == 255
 
     with pytest.raises(IndexError):
         c1[3]
     with pytest.raises(IndexError):
-        c2[4]
+        color2[4]
 
 
 def test_rgba_eq():
@@ -85,85 +86,85 @@ def test_rgba_values():
 
 
 def test_rgba_conversions():
-    c = rgba(255, 0, 0, 0.5)
-    hsla_c = c.to_hsla()
+    color1 = rgba(255, 0, 0, 0.5)
+    hsla_c = color1.to_hsla()
     assert hsla_c.hue == 0
     assert hsla_c.sat == 100
     assert hsla_c.light == 50
-    assert hsla_c.alpha == 0.5
+    assert math.isclose(hsla_c.alpha, 0.5)
 
-    hexa_c = c.to_hexa()
+    hexa_c = color1.to_hexa()
     assert hexa_c.red == 255
-    assert hexa_c.alpha == 0.5
+    assert math.isclose(hexa_c.alpha, 0.5)
 
 
 def test_rgba_lighten_darken():
-    c = rgba(128, 128, 128)
-    l = c.lighten(0.5)
-    assert l.red > 128
+    color1 = rgba(128, 128, 128)
+    lightened1 = color1.lighten(0.5)
+    assert lightened1.red > 128
     with pytest.raises(ValueError):
-        c.lighten(1.5)
+        color1.lighten(1.5)
 
-    d = c.darken(0.5)
-    assert d.red < 128
+    darkened1 = color1.darken(0.5)
+    assert darkened1.red < 128
     with pytest.raises(ValueError):
-        c.darken(-0.5)
+        color1.darken(-0.5)
 
 
 def test_rgba_saturate_desaturate():
-    c = rgba(128, 100, 100)
-    s = c.saturate(0.5)
-    assert s.to_hsla().sat > c.to_hsla().sat
+    color1 = rgba(128, 100, 100)
+    saturated1 = color1.saturate(0.5)
+    assert saturated1.to_hsla().sat > color1.to_hsla().sat
     with pytest.raises(ValueError):
-        c.saturate(-0.1)
+        color1.saturate(-0.1)
 
-    ds = c.desaturate(0.5)
-    assert ds.to_hsla().sat < c.to_hsla().sat
+    ds = color1.desaturate(0.5)
+    assert ds.to_hsla().sat < color1.to_hsla().sat
     with pytest.raises(ValueError):
-        c.desaturate(2.0)
+        color1.desaturate(2.0)
 
 
 def test_rgba_rotate():
-    c = rgba(255, 0, 0)
-    r = c.rotate(180)
-    assert r.to_hsla().hue == 180
+    color1 = rgba(255, 0, 0)
+    rotated1 = color1.rotate(180)
+    assert rotated1.to_hsla().hue == 180
 
 
 def test_rgba_invert():
-    c = rgba(255, 128, 0, 0.2)
-    inv = c.invert()
-    assert inv.red == 0
-    assert inv.green == 127
-    assert inv.blue == 255
-    assert inv.alpha == 0.2
+    color1 = rgba(255, 128, 0, 0.2)
+    inv1 = color1.invert()
+    assert inv1.red == 0
+    assert inv1.green == 127
+    assert inv1.blue == 255
+    assert math.isclose(inv1.alpha, 0.2)
 
-    inv2 = c.invert(invert_alpha=True)
-    assert inv2.alpha == 0.8
+    inv2 = color1.invert(invert_alpha=True)
+    assert math.isclose(inv2.alpha, 0.8)
 
 
 def test_rgba_grayscale():
-    c = rgba(255, 128, 0)
-    g = c.grayscale()
-    assert g.red == g.green == g.blue
+    color1 = rgba(255, 128, 0)
+    gray1 = color1.grayscale()
+    assert gray1.red == gray1.green == gray1.blue
 
 
 def test_rgba_blend():
     c1 = rgba(255, 0, 0, 0.5)
-    c2 = rgba(0, 0, 255, 0.5)
-    b = c1.blend(c2, 0.5)
-    assert b.red == 128
-    assert b.blue == 128
-    assert b.green == 0
+    color2 = rgba(0, 0, 255, 0.5)
+    blend1 = c1.blend(color2, 0.5)
+    assert blend1.red == 128
+    assert blend1.blue == 128
+    assert blend1.green == 0
 
     with pytest.raises(ValueError):
-        c1.blend(c2, 1.5)
+        c1.blend(color2, 1.5)
 
     with pytest.raises(TypeError):
-        c1.blend("invalid", 0.5)  # type: ignore
+        c1.blend("invalid", 0.5)
 
     # test additive alpha
-    b2 = c1.blend(c2, 0.5, additive_alpha=True)
-    assert b2.alpha == 1.0
+    blend2 = c1.blend(color2, 0.5, additive_alpha=True)
+    assert math.isclose(blend2.alpha, 1.0)
 
     # test none alpha
     b3 = rgba(255, 0, 0).blend(rgba(0, 0, 255), 0.5)
@@ -178,16 +179,16 @@ def test_rgba_is_dark_light_grayscale():
 
 
 def test_rgba_with_alpha():
-    c = rgba(255, 0, 0)
-    ca = c.with_alpha(0.5)
-    assert ca.alpha == 0.5
+    color1 = rgba(255, 0, 0)
+    color_alpha = color1.with_alpha(0.5)
+    assert math.isclose(color_alpha.alpha, 0.5)
     with pytest.raises(ValueError):
-        c.with_alpha(1.5)
+        color1.with_alpha(1.5)
 
 
 def test_rgba_complementary():
-    c = rgba(255, 0, 0)
-    comp = c.complementary()
+    color1 = rgba(255, 0, 0)
+    comp = color1.complementary()
     assert comp.to_hsla().hue == 180
 
 

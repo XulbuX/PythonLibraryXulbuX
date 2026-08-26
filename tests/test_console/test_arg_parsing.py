@@ -531,7 +531,7 @@ def test_argument_parser_invalid_expects_value():
     parser = ArgumentParser()
     with pytest.raises(ValueError, match="The 'expects_value' parameter must be False or a string"):
         # `True` is not allowed, must be a string placeholder or `False`:
-        parser.add_opt({"-f"}, expects_value=True)  # type: ignore[arg-type]
+        parser.add_opt({"-f"}, expects_value=True)
 
     with pytest.raises(ValueError, match="The 'expects_value' parameter must be False or a string"):
         parser.add_opt({"-f"}, expects_value="Hi!")

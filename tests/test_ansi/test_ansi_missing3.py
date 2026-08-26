@@ -36,7 +36,7 @@ def test_term_methods():
 
 def test_styledtext_cache_reset():
     st = StyledText("a")
-    st.ansi  # cache it
+    _ = st.ansi  # cache it
     # nothing to do for property caching check directly, just call it multiple times
 
 

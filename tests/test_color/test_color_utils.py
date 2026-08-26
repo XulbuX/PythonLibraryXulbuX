@@ -1,3 +1,4 @@
+import math
 import xulbux.color as _color_module
 from xulbux.color import hexa, hsla, rgba
 # ******************************************************* MODULE TESTS ********************************************************
@@ -143,9 +144,9 @@ def test_color_conversions():
         _color_module.to_rgba("invalid")
 
     # hsla
-    c2 = _color_module.to_hsla((255, 0, 0, 0.5))
-    assert isinstance(c2, hsla)
-    assert _color_module.to_hsla(c2) is c2
+    color2 = _color_module.to_hsla((255, 0, 0, 0.5))
+    assert isinstance(color2, hsla)
+    assert _color_module.to_hsla(color2) is color2
     assert isinstance(_color_module.to_hsla(rgba(255, 0, 0)), hsla)
     assert isinstance(_color_module.to_hsla("#F00"), hsla)
     assert isinstance(_color_module.to_hsla({"hue": 0, "sat": 100, "light": 50}), hsla)
@@ -154,9 +155,9 @@ def test_color_conversions():
         _color_module.to_hsla("invalid")
 
     # hexa
-    c3 = _color_module.to_hexa((255, 0, 0, 0.5))
-    assert isinstance(c3, hexa)
-    assert _color_module.to_hexa(c3) is c3
+    color3 = _color_module.to_hexa((255, 0, 0, 0.5))
+    assert isinstance(color3, hexa)
+    assert _color_module.to_hexa(color3) is color3
     assert isinstance(_color_module.to_hexa(rgba(255, 0, 0)), hexa)
     assert isinstance(_color_module.to_hexa(hsla(0, 100, 50)), hexa)
     assert isinstance(_color_module.to_hexa("#F00"), hexa)
@@ -173,13 +174,13 @@ def test_str_to_rgba():
 
     color2 = _color_module.str_to_rgba("rgba(255,0,0,1)", only_first=True)
     assert isinstance(color2, rgba)
-    assert color2.alpha == 1.0
+    assert math.isclose(color2.alpha, 1.0)
 
     colors = _color_module.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
-    assert len(colors) == 3  # type: ignore[assignment]
-    assert colors[0].values() == (255, 0, 0, None)  # type: ignore[not-subscriptable]
-    assert colors[1].values() == (0, 255, 0, 0.5)  # type: ignore[not-subscriptable]
-    assert colors[2].alpha == 1.0  # type: ignore
+    assert len(colors) == 3
+    assert colors[0].values() == (255, 0, 0, None)
+    assert colors[1].values() == (0, 255, 0, 0.5)
+    assert math.isclose(colors[2].alpha, 1.0)
     assert _color_module.str_to_rgba("No colors here") is None
     assert _color_module.str_to_rgba("No colors here", only_first=True) is None
 
@@ -189,11 +190,11 @@ def test_str_to_hsla():
     assert isinstance(color, hsla)
     color2 = _color_module.str_to_hsla("hsla(180, 50%, 50%, 1)", only_first=True)
     assert isinstance(color2, hsla)
-    assert color2.alpha == 1.0
+    assert math.isclose(color2.alpha, 1.0)
 
     colors = _color_module.str_to_hsla("hsl(0, 100%, 50%) hsla(120, 100%, 50%, 0.5) hsla(0,0%,0%,1)")
-    assert len(colors) == 3  # type: ignore
-    assert colors[2].alpha == 1.0  # type: ignore
+    assert len(colors) == 3
+    assert math.isclose(colors[2].alpha, 1.0)
     assert _color_module.str_to_hsla("No colors here") is None
     assert _color_module.str_to_hsla("No colors here", only_first=True) is None
 
@@ -270,13 +271,13 @@ def test_adjust_saturation():
 
 def test_parse_rgba_internal():
     assert _color_module._parse_rgba((255, 0, 0)).red == 255
-    assert _color_module._parse_rgba((255, 0, 0, 0.5)).alpha == 0.5
+    assert math.isclose(_color_module._parse_rgba((255, 0, 0, 0.5)).alpha, 0.5)
     assert _color_module._parse_rgba({"red": 255, "green": 0, "blue": 0}).red == 255
-    assert _color_module._parse_rgba({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}).alpha == 0.5
+    assert math.isclose(_color_module._parse_rgba({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}).alpha, 0.5)
     assert _color_module._parse_rgba(rgba(255, 0, 0)).red == 255
     assert _color_module._parse_rgba("rgb(255, 0, 0)").red == 255
     with pytest.raises(ValueError):
-        _color_module._parse_rgba("invalid")  # type: ignore
+        _color_module._parse_rgba("invalid")
     with pytest.raises(ValueError):
         _color_module._parse_rgba((255, 0))
     with pytest.raises(ValueError):
@@ -285,13 +286,13 @@ def test_parse_rgba_internal():
 
 def test_parse_hsla_internal():
     assert _color_module._parse_hsla((180, 50, 50)).hue == 180
-    assert _color_module._parse_hsla((180, 50, 50, 0.5)).alpha == 0.5
+    assert math.isclose(_color_module._parse_hsla((180, 50, 50, 0.5)).alpha, 0.5)
     assert _color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50}).hue == 180
-    assert _color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}).alpha == 0.5
+    assert math.isclose(_color_module._parse_hsla({"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}).alpha, 0.5)
     assert _color_module._parse_hsla(hsla(180, 50, 50)).hue == 180
     assert _color_module._parse_hsla("hsl(180, 50%, 50%)").hue == 180
     with pytest.raises(ValueError):
-        _color_module._parse_hsla("invalid")  # type: ignore
+        _color_module._parse_hsla("invalid")
     with pytest.raises(ValueError):
         _color_module._parse_hsla((180, 50))
     with pytest.raises(ValueError):

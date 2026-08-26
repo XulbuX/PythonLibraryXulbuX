@@ -1,8 +1,8 @@
 from typing import cast
-import regex as rx
 import xulbux.regex as _regex_module
 from xulbux.regex import LazyRegex
 import pytest
+import regex as rx
 
 # ******************************************************* MODULE TESTS ********************************************************
 

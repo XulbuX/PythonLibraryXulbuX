@@ -19,8 +19,8 @@ def test_missing_7():
     # paragraph without spaces that is too long -> textwrap might not wrap it, or returns empty?
     # Actually `textwrap.wrap("abcdef", 2)` returns `['ab', 'cd', 'ef']`
     # Let's see if we can trigger find() returning -1 or wrapped chunks being empty
-    t = StyledText("a" * 100)
-    t.wrap(5)
+    st = StyledText("a" * 100)
+    st.wrap(5)
 
     # To trigger `chunk_start = para_offset` (1793):
     # textwrap.wrap replaces tabs with spaces, so find fails

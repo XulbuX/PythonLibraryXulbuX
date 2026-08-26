@@ -90,7 +90,7 @@ reportPrivateUsage = "none"
 include = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100"
+addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100 --basetemp=.pytest_tmp"
 minversion = "7.0"
 pythonpath = ["src"]
 testpaths = ["tests"]
@@ -120,25 +120,6 @@ select = [
 ]
 ignore = ["ambiguous-unicode-character-docstring"]
 mccabe = { max-complexity = 12 }
-
-# [tool.ruff.lint.per-file-ignores]
-# "tests/**/*.py" = [
-#   "ambiguous-variable-name",
-#   "bare-except",
-#   "C4",
-#   "complex-structure",
-#   "float-equality-comparison",
-#   "line-too-long",
-#   "magic-value-comparison",
-#   "multiple-with-statements",
-#   "pytest-raises-ambiguous-pattern",
-#   "raise-without-from-inside-except",
-#   "rule-codes-in-selectors",
-#   "suppressible-exception",
-#   "true-false-comparison",
-#   "unused-variable",
-#   "useless-expression",
-# ]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false

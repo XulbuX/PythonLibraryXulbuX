@@ -3,13 +3,13 @@ from xulbux.ansi import S, StyledText, _StyledSequence, is_base_style, is_render
 
 def test_missing_catch_all():
     # StyledText init edge
-    t = StyledText("a", "b", sep=" ")
+    st = StyledText("a", "b", sep=" ")
 
     # Text segment guards
     is_base_style(S.BOLD)
-    is_text_segment(t)
+    is_text_segment(st)
     is_text_segment(_StyledSequence(("a",), ("b",), "c"))
-    is_render_segment(t)
+    is_render_segment(st)
     is_render_segment(S.BOLD)
 
     # Justification

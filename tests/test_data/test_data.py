@@ -115,7 +115,7 @@ def test_is_equal():
 
 
 def test_get_path_id():
-    id1, id2 = _data_module.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])  # type: ignore[return-value]
+    id1, id2 = _data_module.get_path_id(d1_path_id, ["healthy->fruit->bananas", "healthy->vegetables->2"])
     assert id1 == "1>001"
     assert id2 == "1>012"
     assert _data_module.get_value_by_path_id(d1_path_id, id1) == "bananas"
@@ -149,11 +149,11 @@ def test_set_value_by_path_id() -> None:
     path_id_f = _data_module.get_path_id(data, "d->1")
     assert path_id_c is not None and path_id_f is not None
 
-    updated_data = _data_module.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})  # type: ignore[assignment]
+    updated_data = _data_module.set_value_by_path_id(data, {path_id_c: "NEW_C", path_id_f: "NEW_F"})
     expected_data: dict[str, Any] = {"a": [1, {"b": "NEW_C"}], "d": ("e", "NEW_F")}
     assert updated_data == expected_data
 
-    updated_data_types = _data_module.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})  # type: ignore[assignment]
+    updated_data_types = _data_module.set_value_by_path_id(data, {path_id_c: [1, 2], path_id_f: {"x": 1}})
     expected_data_types: dict[str, Any] = {"a": [1, {"b": [1, 2]}], "d": ("e", {"x": 1})}
     assert updated_data_types == expected_data_types
 

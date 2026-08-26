@@ -7,7 +7,7 @@ import pytest
 import regex as rx
 
 # Define paths relative to this test file `tests/test_metadata_consistency.py`:
-ROOT_DIR = Path(__file__).parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 

@@ -70,7 +70,7 @@ def test_styledtext_input():
 
 
 def test_styledtext_render_fallback():
-    st = StyledText(123)  # pyright:ignore[reportArgumentType]
+    st = StyledText(123)
     assert st.ansi == "123"
 
 

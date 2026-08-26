@@ -37,73 +37,73 @@ def test_radd_with_string():
 
 
 def test_iadd_with_string():
-    x = StyledText(S.CYAN("a"))
-    x += " b"
-    assert x.ansi == f"{ESC}[36ma{ESC}[39m b"
-    assert x.raw == "a b"
+    st1 = StyledText(S.CYAN("a"))
+    st1 += " b"
+    assert st1.ansi == f"{ESC}[36ma{ESC}[39m b"
+    assert st1.raw == "a b"
 
 
 def test_add_concatenates_ansi_strings():
-    x = StyledText("Hello, ")
-    y = StyledText("world!")
-    result = x + y
+    st1 = StyledText("Hello, ")
+    st2 = StyledText("world!")
+    result = st1 + st2
     assert result.ansi == "Hello, world!"
     assert isinstance(result, StyledText)
 
 
 def test_add_preserves_ansi_sequences():
-    x = StyledText(S.BOLD("Hello"))
-    y = StyledText(S.RED(" world"))
-    result = x + y
+    st1 = StyledText(S.BOLD("Hello"))
+    st2 = StyledText(S.RED(" world"))
+    result = st1 + st2
     assert result.ansi == f"{ESC}[1mHello{ESC}[22m{ESC}[31m world{ESC}[39m"
     assert result.raw == "Hello world"
 
 
 def test_add_does_not_mutate_operands():
-    x = StyledText("a")
-    y = StyledText("b")
-    _ = x + y
-    assert x.ansi == "a"
-    assert y.ansi == "b"
+    st1 = StyledText("a")
+    st2 = StyledText("b")
+    _ = st1 + st2
+    assert st1.ansi == "a"
+    assert st2.ansi == "b"
 
 
 def test_iadd_mutates_in_place():
-    x = StyledText("Hello")
-    original_id = id(x)
-    x += ", world!"
-    assert x.ansi == "Hello, world!"
-    assert id(x) == original_id
+    st1 = StyledText("Hello")
+    original_id = id(st1)
+    st1 += ", world!"
+    assert st1.ansi == "Hello, world!"
+    assert id(st1) == original_id
 
 
 def test_iadd_preserves_ansi_sequences():
-    x = StyledText(S.CYAN("a"))
-    x += S.DIM("b")
-    assert x.ansi == f"{ESC}[36ma{ESC}[39m{ESC}[2mb{ESC}[22m"
+    st1 = StyledText(S.CYAN("a"))
+    st1 += S.DIM("b")
+    assert st1.ansi == f"{ESC}[36ma{ESC}[39m{ESC}[2mb{ESC}[22m"
 
 
 def test_mul_repeats_output():
-    x = StyledText("-")
-    result = x * 3
+    st1 = StyledText("-")
+    result = st1 * 3
     assert result.ansi == "---"
     assert isinstance(result, StyledText)
 
 
 def test_mul_preserves_ansi_sequences():
-    x = StyledText(S.BOLD("!"))
-    result = x * 3
+    st1 = StyledText(S.BOLD("!"))
+    result = st1 * 3
     unit = f"{ESC}[1m!{ESC}[22m"
     assert result.ansi == unit * 3
 
 
 def test_mul_does_not_mutate_operand():
-    x = StyledText("x")
-    _ = x * 4
-    assert x.ansi == "x"
+    st1 = StyledText("x")
+    _ = st1 * 4
+    assert st1.ansi == "x"
 
 
 def test_rmul_equals_mul():
-    x = StyledText(S.RED("-"))
-    assert (x * 5).ansi == (5 * x).ansi
+    st1 = StyledText(S.RED("-"))
+    assert (st1 * 5).ansi == (5 * st1).ansi
 
 
 def test_mul_by_zero_gives_empty():

@@ -168,11 +168,11 @@ def test_progressbar_set_width():
 def test_progressbar_set_width_invalid():
     pb = ProgressBar()
     with pytest.raises(TypeError):
-        pb.set_width(min_width="not_int")  # type: ignore[arg-type]
+        pb.set_width(min_width="not_int")
     with pytest.raises(ValueError):
         pb.set_width(min_width=0)
     with pytest.raises(TypeError):
-        pb.set_width(max_width="not_int")  # type: ignore[arg-type]
+        pb.set_width(max_width="not_int")
     with pytest.raises(ValueError):
         pb.set_width(max_width=0)
 

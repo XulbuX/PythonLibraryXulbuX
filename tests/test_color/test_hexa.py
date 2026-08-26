@@ -1,3 +1,4 @@
+import math
 from xulbux.color import hexa, rgba
 import pytest
 
@@ -10,13 +11,13 @@ def test_hexa_init():
     assert c1.alpha is None
 
     # RGBA string
-    c2 = hexa("#F008")
-    assert c2.alpha is not None
+    color2 = hexa("#F008")
+    assert color2.alpha is not None
 
     # RRGGBB string
-    c3 = hexa("0xFF0000")
-    assert c3.red == 255
-    assert c3.alpha is None
+    color3 = hexa("0xFF0000")
+    assert color3.red == 255
+    assert color3.alpha is None
 
     # RRGGBBAA string
     c4 = hexa("#FF000080")
@@ -33,15 +34,15 @@ def test_hexa_init():
         blue = 0
         alpha = 0.5
 
-    c6 = hexa(MockColor())
-    assert c6.red == 255
-    assert c6.alpha == 0.5
+    color6 = hexa(MockColor())
+    assert color6.red == 255
+    assert math.isclose(color6.alpha, 0.5)
 
     # invalid strings
     with pytest.raises(ValueError, match="Invalid HEXA color string"):
         hexa("FF000")
     with pytest.raises(ValueError, match="Could initialize hexa"):
-        hexa(None)  # type: ignore
+        hexa(None)
 
     # kwargs
     c7 = hexa(_red=255, _green=0, _blue=0, _alpha=0.5)
@@ -66,15 +67,15 @@ def test_hexa_getitem():
     assert c1[-2] == "00"
     assert c1[-3] == "FF"
 
-    c2 = hexa("#FF000080")
-    assert c2[3] == "80"
-    assert c2[-1] == "80"
-    assert c2[-4] == "FF"
+    color2 = hexa("#FF000080")
+    assert color2[3] == "80"
+    assert color2[-1] == "80"
+    assert color2[-4] == "FF"
 
     with pytest.raises(IndexError):
         c1[3]
     with pytest.raises(IndexError):
-        c2[4]
+        color2[4]
 
 
 def test_hexa_eq():
@@ -99,75 +100,75 @@ def test_hexa_values():
 
 
 def test_hexa_conversions():
-    c = hexa("#FF000080")
-    rgba_c = c.to_rgba()
+    color1 = hexa("#FF000080")
+    rgba_c = color1.to_rgba()
     assert isinstance(rgba_c, rgba)
     assert rgba_c.red == 255
 
-    hsla_c = c.to_hsla()
+    hsla_c = color1.to_hsla()
     assert hsla_c.hue == 0
 
 
 def test_hexa_lighten_darken():
-    c = hexa("#808080")
-    l = c.lighten(0.5)
-    assert l.red > 128
+    color1 = hexa("#808080")
+    lightened1 = color1.lighten(0.5)
+    assert lightened1.red > 128
     with pytest.raises(ValueError):
-        c.lighten(1.5)
+        color1.lighten(1.5)
 
-    d = c.darken(0.5)
-    assert d.red < 128
+    darkened1 = color1.darken(0.5)
+    assert darkened1.red < 128
     with pytest.raises(ValueError):
-        c.darken(-0.5)
+        color1.darken(-0.5)
 
 
 def test_hexa_saturate_desaturate():
-    c = hexa("#805050")
-    s = c.saturate(0.5)
-    assert s != c
+    color1 = hexa("#805050")
+    saturated1 = color1.saturate(0.5)
+    assert saturated1 != color1
     with pytest.raises(ValueError):
-        c.saturate(-0.1)
+        color1.saturate(-0.1)
 
-    ds = c.desaturate(0.5)
-    assert ds != c
+    ds = color1.desaturate(0.5)
+    assert ds != color1
     with pytest.raises(ValueError):
-        c.desaturate(2.0)
+        color1.desaturate(2.0)
 
 
 def test_hexa_rotate():
-    c = hexa("#FF0000")
-    r = c.rotate(180)
-    assert r.to_hsla().hue == 180
+    color1 = hexa("#FF0000")
+    rotated1 = color1.rotate(180)
+    assert rotated1.to_hsla().hue == 180
 
 
 def test_hexa_invert():
-    c = hexa("#FF800033")  # alpha 0.2
-    inv = c.invert()
-    assert inv.red == 0
-    assert inv.green == 127
-    assert inv.blue == 255
+    color1 = hexa("#FF800033")  # alpha 0.2
+    inv1 = color1.invert()
+    assert inv1.red == 0
+    assert inv1.green == 127
+    assert inv1.blue == 255
 
-    inv2 = c.invert(invert_alpha=True)
-    assert inv2.alpha == 0.8
+    inv2 = color1.invert(invert_alpha=True)
+    assert math.isclose(inv2.alpha, 0.8)
 
 
 def test_hexa_grayscale():
-    c = hexa("#FF8000")
-    g = c.grayscale()
-    assert g.red == g.green == g.blue
+    color1 = hexa("#FF8000")
+    gray1 = color1.grayscale()
+    assert gray1.red == gray1.green == gray1.blue
 
 
 def test_hexa_blend():
     c1 = hexa("#FF000080")
-    c2 = hexa("#0000FF80")
-    b = c1.blend(c2, 0.5)
-    assert isinstance(b, hexa)
+    color2 = hexa("#0000FF80")
+    blend1 = c1.blend(color2, 0.5)
+    assert isinstance(blend1, hexa)
 
     with pytest.raises(ValueError):
-        c1.blend(c2, 1.5)
+        c1.blend(color2, 1.5)
 
     with pytest.raises(TypeError):
-        c1.blend("invalid", 0.5)  # type: ignore
+        c1.blend("invalid", 0.5)
 
     b3 = hexa("#F00").blend(hexa("#00F"), 0.5)
     assert not b3.has_alpha()
@@ -181,14 +182,14 @@ def test_hexa_is_dark_light_grayscale():
 
 
 def test_hexa_with_alpha():
-    c = hexa("#FF0000")
-    ca = c.with_alpha(0.5)
-    assert ca.alpha == 0.5
+    color1 = hexa("#FF0000")
+    color_alpha = color1.with_alpha(0.5)
+    assert math.isclose(color_alpha.alpha, 0.5)
     with pytest.raises(ValueError):
-        c.with_alpha(1.5)
+        color1.with_alpha(1.5)
 
 
 def test_hexa_complementary():
-    c = hexa("#FF0000")
-    comp = c.complementary()
+    color1 = hexa("#FF0000")
+    comp = color1.complementary()
     assert comp.to_hsla().hue == 180

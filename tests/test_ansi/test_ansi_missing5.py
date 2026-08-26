@@ -6,8 +6,8 @@ from xulbux.ansi import S, StyledText, _Link, is_any_style, is_base_style, is_re
 
 def test_missing_5():
     # 661: _ColorStyle.__matmul__?
-    c = S.hex("#F00")
-    assert (c @ "a").text == "a"
+    c_st = S.hex("#F00")
+    assert (c_st @ "a").text == "a"
 
     # 828-831: _Link.__eq__
     l1 = _Link("url")
@@ -25,9 +25,9 @@ def test_missing_5():
     assert isinstance(sseq.center(5), StyledText)
     assert isinstance(sseq.wrap(5), list)
 
-    f = io.StringIO()
-    sseq.print(file=f, flush=False)
-    assert f.getvalue() == "\x1b[1ma\x1b[22m\n"
+    file1 = io.StringIO()
+    sseq.print(file=file1, flush=False)
+    assert file1.getvalue() == "\x1b[1ma\x1b[22m\n"
 
     with patch("builtins.input", return_value="x"):
         assert sseq.input() == "x"
@@ -44,9 +44,9 @@ def test_missing_5():
 
     # 1785-1787, 1793, 1809: StyledText.wrap
     # wrap behavior
-    t = StyledText("a b")
-    w = t.wrap(1)  # force chunk wrapping
-    assert isinstance(w, list)
+    st = StyledText("a b")
+    wrapped1 = st.wrap(1)  # force chunk wrapping
+    assert isinstance(wrapped1, list)
 
     # 1991->exit: _process_code SGR
     g3 = S.BOLD | S.DIM
