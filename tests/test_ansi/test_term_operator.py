@@ -4,9 +4,6 @@ from xulbux.base.consts import ANSI
 ESC = ANSI.CHAR
 
 
-# **************************************************** Term OPERATOR TESTS ****************************************************
-
-
 def test_term_constants():
     assert f"{ESC}[2K" == Term.CLEAR_LINE
     assert f"{ESC}[2J" == Term.CLEAR_SCREEN

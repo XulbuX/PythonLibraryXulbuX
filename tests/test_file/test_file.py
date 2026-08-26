@@ -3,8 +3,6 @@ import xulbux.file as _file_module
 from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
 
-# ******************************************************* MODULE TESTS ********************************************************
-
 
 @pytest.mark.parametrize(
     "input_file, new_extension, camel_case, full_extension, expected_output",

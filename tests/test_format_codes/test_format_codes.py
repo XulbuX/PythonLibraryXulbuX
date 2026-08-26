@@ -20,9 +20,6 @@ reset_invert = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_inverse', '_invert', '
 reset_underline = f"{ANSI.CHAR}{ANSI.START}{ANSI.CODES_MAP['_underline', '_u']}{ANSI.END}"
 
 
-# ******************************************************* MODULE TESTS ********************************************************
-
-
 def test_to_ansi():
     assert (
         FormatCodes.to_ansi("[b|#000|bg:red](He[in](l)lo) [[i|u|#F87](world)][default]![_]", default_color="#FFF")

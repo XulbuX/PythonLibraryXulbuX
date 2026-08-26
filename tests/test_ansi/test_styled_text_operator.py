@@ -19,9 +19,6 @@ from xulbux.base.consts import ANSI
 ESC = ANSI.CHAR
 
 
-# ************************************************* StyledText OPERATOR TESTS *************************************************
-
-
 def test_add_with_string():
     result = StyledText(S.BOLD("hi")) + " there"
     assert result.ansi == f"{ESC}[1mhi{ESC}[22m there"

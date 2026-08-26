@@ -1,7 +1,5 @@
 import xulbux.code as _code_module
 
-# ******************************************************* MODULE TESTS ********************************************************
-
 
 def test_add_indent():
     sample = "def hello():\n    return 'Hello, World!'"

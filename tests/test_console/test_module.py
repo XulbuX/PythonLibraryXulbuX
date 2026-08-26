@@ -5,8 +5,6 @@ from xulbux.ansi import S, StyledText
 from xulbux.base.consts import ANSI
 import pytest
 
-# ******************************************************* MODULE TESTS ********************************************************
-
 
 def test_cls(monkeypatch: pytest.MonkeyPatch):
     mock_shutil = MagicMock()

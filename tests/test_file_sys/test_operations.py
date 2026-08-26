@@ -51,9 +51,6 @@ def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> d
     }
 
 
-# ******************************************************* MODULE TESTS ********************************************************
-
-
 def test_path_cwd(setup_test_environment: dict[str, Path]):
     cwd_output = _file_sys_module.get_cwd()
     assert isinstance(cwd_output, Path)

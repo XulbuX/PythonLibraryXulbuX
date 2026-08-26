@@ -75,9 +75,6 @@ UPDATE_DATA_END: dict[str, Any] = {
 }
 
 
-# ******************************************************* MODULE TESTS ********************************************************
-
-
 def test_read_simple(tmp_path: Path):
     file_path = create_test_json(tmp_path, "simple.json", SIMPLE_DATA)
     data = _json_module.read(str(file_path))

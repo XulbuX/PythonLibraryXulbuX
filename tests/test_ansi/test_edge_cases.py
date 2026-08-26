@@ -8,7 +8,7 @@ def test_stylegroup_missing():
     assert isinstance(g1 | g2, _StyleGroup)
     assert len((g1 | g2)._codes) == 4
 
-    # ror with BaseStyle:
+    # __ror__ with `BaseStyle`:
     assert isinstance(S.ITALIC | g1, _StyleGroup)
 
     # __matmul__:
@@ -17,7 +17,7 @@ def test_stylegroup_missing():
     # __eq__ False:
     assert g1 != S.BOLD
 
-    # format methods:
+    # Format methods:
     assert isinstance(g1.join(["a", "b"]), StyledText)
     assert isinstance(g1.ljust(4, "-"), StyledText)
     assert isinstance(g1.rjust(4, "-"), StyledText)
@@ -38,7 +38,7 @@ def test_style_missing():
     # __matmul__:
     assert (S.BOLD @ "text").text == "text"
 
-    # format methods:
+    # Format methods:
     assert isinstance(S.BOLD.join(["a", "b"]), StyledText)
     assert isinstance(S.BOLD.ljust(4, "-"), StyledText)
     assert isinstance(S.BOLD.rjust(4, "-"), StyledText)
@@ -62,7 +62,7 @@ def test_colorstyle_missing():
     # __eq__ false:
     assert c1_st != "red"
 
-    # format methods:
+    # Format methods:
     assert isinstance(c1_st.join(["a", "b"]), StyledText)
     assert isinstance(c1_st.ljust(4), StyledText)
     assert isinstance(c1_st.rjust(4), StyledText)
@@ -83,7 +83,7 @@ def test_link_missing():
     # __matmul__:
     assert (link_st @ "text").text == "text"
 
-    # format methods:
+    # Format methods:
     assert isinstance(link_st.join(["a", "b"]), StyledText)
     assert isinstance(link_st.ljust(4), StyledText)
     assert isinstance(link_st.rjust(4), StyledText)
@@ -114,9 +114,9 @@ def test_styledtext_missing():
     assert bool(st1) is True
     assert bool(StyledText("")) is False
 
-    # ansi caching:
+    # ANSI caching:
     assert st1.ansi == "a"
-    assert st1.ansi == "a"  # cached.
+    assert st1.ansi == "a"  # Cached.
 
     # rjust, wrap:
     assert st1.rjust(4, "-").ansi == "---a"

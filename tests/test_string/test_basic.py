@@ -2,8 +2,6 @@ import math
 import xulbux.string as _string_module
 import pytest
 
-# ******************************************************* MODULE TESTS ********************************************************
-
 
 def test_to_type():
     assert _string_module.to_type("123") == 123

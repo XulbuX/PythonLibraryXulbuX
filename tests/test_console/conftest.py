@@ -44,6 +44,3 @@ def mock_prompt_session(monkeypatch: pytest.MonkeyPatch):
     mock_session.prompt.return_value = None
     monkeypatch.setattr("xulbux.console._pt.PromptSession", mock_session_class)
     return mock_session_class, mock_session
-
-
-# ******************************************************* MODULE TESTS ********************************************************

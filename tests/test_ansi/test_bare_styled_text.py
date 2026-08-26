@@ -4,9 +4,6 @@ from xulbux.base.consts import ANSI
 ESC = ANSI.CHAR
 
 
-# *************************************************** BARE StyledText TESTS ***************************************************
-
-
 def test_bare_fmt_emits_only_open_sequence():
     result = StyledText(S.RED)
     assert result.ansi == f"{ESC}[31m"

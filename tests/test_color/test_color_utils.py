@@ -1,8 +1,6 @@
 import math
 import xulbux.color as _color_module
 from xulbux.color import hexa, hsla, rgba
-
-# ******************************************************* MODULE TESTS ********************************************************
 import pytest
 
 

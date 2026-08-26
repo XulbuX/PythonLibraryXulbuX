@@ -8,9 +8,6 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 
-# *********************************************** ENTRYPOINT REGISTRATION TESTS ***********************************************
-
-
 def test_xulbux_lib_entrypoint_registered():
     """Verifies that the `xulbux-lib` script is registered in pyproject.toml pointing to the CLI main()."""
 
@@ -19,9 +16,6 @@ def test_xulbux_lib_entrypoint_registered():
     scripts = pyproject_data.get("project", {}).get("scripts", {})
     assert "xulbux-lib" in scripts, "`xulbux-lib` not found in [project.scripts] in pyproject.toml"
     assert scripts["xulbux-lib"] == "xulbux.cli:main"
-
-
-# ***************************************************** XULBUX-LIB TESTS ******************************************************
 
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):

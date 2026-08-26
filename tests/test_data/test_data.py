@@ -31,9 +31,6 @@ d1_path_id = {"healthy": {"fruit": ["apples", "bananas", "oranges"], "vegetables
 d2_path_id = {"school": {"material": ["pencil", "paper", "rubber"], "subjects": ["math", "science", "history"]}}
 
 
-# ******************************************************* MODULE TESTS ********************************************************
-
-
 @pytest.mark.parametrize(
     "input_data, expected_count",
     [

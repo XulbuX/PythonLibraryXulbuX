@@ -4,9 +4,6 @@ from xulbux.base.consts import ANSI
 ESC = ANSI.CHAR
 
 
-# ************************************************** COLOR CONVERSION TESTS ***************************************************
-
-
 def test_fg_style_to_bg():
     # Standard FG colors:
     assert S.RED.to_bg() == S.BG.RED

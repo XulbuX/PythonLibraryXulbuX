@@ -8,9 +8,6 @@ import pytest
 ESC = ANSI.CHAR
 
 
-# *************************************************** StyledText CALL TESTS ***************************************************
-
-
 def test_plain_string_passes_through():
     result = StyledText("Hello, world!")
     assert result.ansi == "Hello, world!"
