@@ -608,7 +608,7 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # Enable VT100 mode on Windows:
-                    kernel32 = _ctypes.windll.kernel32
+                    kernel32 = _ctypes.windll.kernel32  # type: ignore[attr-defined]
                     handle = kernel32.GetStdHandle(-11)
                     mode = _ctypes.c_ulong()
                     kernel32.GetConsoleMode(handle, _ctypes.byref(mode))

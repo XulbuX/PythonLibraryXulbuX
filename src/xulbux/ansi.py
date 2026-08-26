@@ -1943,7 +1943,7 @@ def _config_terminal() -> None:
 
     if _os.name == "nt":
         with _suppress(Exception):
-            kernel32 = _ctypes.windll.kernel32
+            kernel32 = _ctypes.windll.kernel32  # type: ignore[attr-defined]
             handle = kernel32.GetStdHandle(-11)
             mode = _ctypes.c_ulong()
             kernel32.GetConsoleMode(handle, _ctypes.byref(mode))

@@ -33,7 +33,7 @@ class _SafeDeprecated:
 
     def __call__(self, arg: Any, /) -> Any:
         if _sys.version_info >= (3, 13):
-            from warnings import deprecated as _dep
+            from warnings import deprecated as _dep  # type: ignore[attr-defined]
         else:
             try:
                 from typing_extensions import deprecated as _dep

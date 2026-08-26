@@ -1207,7 +1207,7 @@ def supports_color() -> bool:
     if _os.name == "nt":
         # Check if VT100 mode is enabled on Windows:
         with suppress(Exception):
-            kernel32 = _ctypes.windll.kernel32
+            kernel32 = _ctypes.windll.kernel32  # type: ignore[attr-defined]
             handle = kernel32.GetStdHandle(-11)
             mode = _ctypes.c_ulong()
 
@@ -2054,7 +2054,7 @@ def _read_single_key() -> None:
     if _sys.platform == "win32":
         import msvcrt as _msvcrt
 
-        _msvcrt.getch()
+        _msvcrt.getch()  # type: ignore[attr-defined]
 
     else:
         import termios as _termios
