@@ -22,7 +22,7 @@
 *   Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
 *   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
 *   Reformat all docstrings of the whole library.
-*   Improved the performance of `console.log()` and `FormatCodes.to_ansi()` by restructuring the way they process the formatting and output.
+*   Improved the performance of `console.log()` by restructuring the way it processes formatting and output.
 *   Improved the performance of `string.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
 *   Improved the performance of `data.remove_duplicates()` for lists and tuples:<br>
     Hashable items now deduplicate in $ O(n) $ using `dict.fromkeys()`, with an $ O(n^2) $ equality-check fallback only for unhashable items (*lists, dicts, sets*).
@@ -39,8 +39,7 @@
 *   **Architectural Refactor:** Removed default module classes (`Console`, `System`, `FileSys`, `Data`, `String`, `Code`, `EnvPath`, `Json`, `Regex`, `File`) that acted as namespaces:
     -   All methods are now accessible directly as module-level functions (e.g., `xulbux.console.log` instead of `xulbux.console.Console.log`).
     -   Properties like `console.w` and `system.is_elevated` have been converted into standard getter functions like `get_width()` and `is_elevated()` to circumvent a MyPyC segmentation fault.
-*   The original bracket-syntax in `format_codes` has been changed to a new, typed, operator-based styling API in the new `ansi` module.<br>
-    The old module was marked as deprecated, but kept, so that existing callers keep working. It will be completely removed in an upcoming future update (*this also applies to its related constants/methods in* `xulbux.base.consts`, *which were also marked as deprecated*).
+*   **Removed the `format_codes` module and bracket syntax.** Replaced the legacy styling API with a new, strictly typed, operator-based styling engine in the new `ansi` module (*this also includes the removal of legacy format-code constants and methods from* `xulbux.base.consts`):
     -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
     -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
@@ -49,7 +48,7 @@
 *   Removed the `data.print()` method, since `data.render()` now returns a `StyledText` object, so you can simply call `data.render(…).print()` instead.
 *   `data.render(as_json=True)` now natively converts special Python objects into valid JSON strings without creating proprietary special-objects for them, allowing standard lossless serialization compatible across external web APIs.
 *   Removed `serialize_bytes()` and `deserialize_bytes()` from the `data` module, as bytes serialization is now handled natively and transparently.
-*   Migrated the entire `console` module as well as the `ProgressBar` and `Throbber` classes off the deprecated `format_codes` module and onto the new operator-based styling API:
+*   Migrated the entire `console` module as well as the `ProgressBar` and `Throbber` classes off the removed `format_codes` module and onto the new operator-based styling API:
     -   All prompts/messages/content now accept any object, including `StyledText` ones directly, instead of format-code strings.
     -   `console.log()`'s `title_bg_color` and `console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.
     -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.

@@ -4,11 +4,10 @@ from __future__ import annotations
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from . import ansi, cli, code, color, console, data, env_path, file, file_sys, format_codes, json, regex, string, system
+    from . import ansi, cli, code, color, console, data, env_path, file, file_sys, json, regex, string, system
     from .ansi import S, StyledText, Term
     from .color import hexa, hsla, rgba
     from .console import ArgumentParser, ParsedArgData, ParsedArgs, ProgressBar, Throbber
-    from .format_codes import FormatCodes
     from .regex import LazyRegex
 
     from typing import Any, Final
@@ -34,7 +33,6 @@ __dependencies__: Final[list[str]] = [
 
 __all__ = [
     "ArgumentParser",
-    "FormatCodes",
     "LazyRegex",
     "ParsedArgData",
     "ParsedArgs",
@@ -63,7 +61,6 @@ __all__ = [
     "env_path",
     "file",
     "file_sys",
-    "format_codes",
     "hexa",
     "hsla",
     "json",
@@ -85,7 +82,6 @@ _SUBMODULES: Final[dict[str, str]] = {
     "ParsedArgs": "console",
     "ProgressBar": "console",
     "Throbber": "console",
-    "FormatCodes": "format_codes",
     "LazyRegex": "regex",
 }
 

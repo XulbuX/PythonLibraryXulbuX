@@ -42,25 +42,25 @@ def test_rgb_and_hex_overloads() -> None:
 
 
 def test_terminal_configuration_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
-    _ansi_module._terminal_ansi_configured = False
+    _ansi_module._terminal_configured = False
     mock_ctypes = mock_ctypes_windll()
     mock_ctypes.kernel32.GetStdHandle.return_value = 1
     mock_ctypes.kernel32.GetConsoleMode.return_value = 1
     mock_ctypes.kernel32.SetConsoleMode.return_value = 1
     _config_terminal()
-    assert _ansi_module._terminal_ansi_configured is True
+    assert _ansi_module._terminal_configured is True
 
 
 def test_terminal_configuration_posix(mock_os_linux: None) -> None:
-    _ansi_module._terminal_ansi_configured = False
+    _ansi_module._terminal_configured = False
     _config_terminal()
-    assert _ansi_module._terminal_ansi_configured is True
+    assert _ansi_module._terminal_configured is True
 
 
 def test_terminal_configuration_repeated_calls_are_no_ops() -> None:
-    _ansi_module._terminal_ansi_configured = True
+    _ansi_module._terminal_configured = True
     _config_terminal()
-    assert _ansi_module._terminal_ansi_configured is True
+    assert _ansi_module._terminal_configured is True
 
 
 def test_styled_text_print_stream_options() -> None:

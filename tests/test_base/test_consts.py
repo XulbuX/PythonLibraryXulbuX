@@ -28,12 +28,6 @@ def test_chars_constants() -> None:
 def test_ansi_escape_constants_and_sequences() -> None:
     assert ANSI.CHAR == "\x1b"
     assert ANSI.CHAR_ESCAPED == r"\x1b"
-    assert ANSI.START == "["
-    assert ANSI.SEP == ";"
-    assert ANSI.END == "m"
-
-    assert ANSI.seq(1) == "\x1b[{}m"
-    assert ANSI.seq(3) == "\x1b[{};{};{}m"
 
     assert ANSI.SEQ_FG_COLOR.format(255, 0, 0) == "\x1b[38;2;255;0;0m"
     assert ANSI.SEQ_BG_COLOR.format(0, 255, 0) == "\x1b[48;2;0;255;0m"
@@ -43,7 +37,3 @@ def test_ansi_escape_constants_and_sequences() -> None:
     assert ANSI.SEQ_LINK_CLOSE == "\x1b]8;;\x1b\\"
 
     assert ANSI.SEQ_PATTERN.search("\x1b[31mHello\x1b[0m") is not None
-    assert "red" in ANSI.COLOR_MAP
-    assert "br:red" in ANSI.COLOR_VARIANTS_MAP
-    assert ANSI.CODES_MAP["red"] == 31
-    assert ANSI.CODES_MAP["bold", "b"] == 1

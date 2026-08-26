@@ -204,7 +204,7 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import TypeIs
 
-_terminal_ansi_configured: bool = False
+_terminal_configured: bool = False
 """Whether the terminal was already configured to be able to interpret and render ANSI styling."""
 
 _ANSI_SEQ_RX: Final[_rx.Pattern[str]] = ANSI.SEQ_PATTERN
@@ -1935,8 +1935,8 @@ def _config_terminal() -> None:
     """Configure the terminal to be able to interpret and render ANSI styling.\n
     This function only does something the first time it is called. Subsequent calls are no-ops."""
 
-    global _terminal_ansi_configured
-    if _terminal_ansi_configured:
+    global _terminal_configured
+    if _terminal_configured:
         return
 
     _sys.stdout.flush()
@@ -1949,7 +1949,7 @@ def _config_terminal() -> None:
             kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # pyright:ignore[reportUnknownMemberType]
             kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # pyright:ignore[reportUnknownMemberType]
 
-    _terminal_ansi_configured = True
+    _terminal_configured = True
 
 
 class _BuildOpenClose:

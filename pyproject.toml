@@ -78,7 +78,6 @@ exclude_lines = [
 [tool.coverage.run]
 branch = true
 source = ["src/xulbux"]
-omit = ["src/xulbux/format_codes.py"]
 
 [tool.mypy]
 exclude_gitignore = true
