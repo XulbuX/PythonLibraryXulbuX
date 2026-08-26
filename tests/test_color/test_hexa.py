@@ -4,53 +4,44 @@ import pytest
 
 
 def test_hexa_init():
-    # RGB string:
-    c1 = hexa("F00")
-    assert c1.red == 255
-    assert c1.green == 0
-    assert c1.alpha is None
+    color_short = hexa("F00")
+    assert color_short.red == 255
+    assert color_short.green == 0
+    assert color_short.alpha is None
 
-    # RGBA string:
-    color2 = hexa("#F008")
-    assert color2.alpha is not None
+    color_short_alpha = hexa("#F008")
+    assert color_short_alpha.alpha is not None
 
-    # RRGGBB string:
-    color3 = hexa("0xFF0000")
-    assert color3.red == 255
-    assert color3.alpha is None
+    color_full = hexa("0xFF0000")
+    assert color_full.red == 255
+    assert color_full.alpha is None
 
-    # RRGGBBAA string:
-    c4 = hexa("#FF000080")
-    assert c4.alpha is not None
+    color_full_alpha = hexa("#FF000080")
+    assert color_full_alpha.alpha is not None
 
-    # From `int`:
-    c5 = hexa(0xFF000080)
-    assert c5.red == 255
+    color_int = hexa(0xFF000080)
+    assert color_int.red == 255
 
-    # From object with attrs:
-    class MockColor:
+    class CustomColorObject:
         red = 255
         green = 0
         blue = 0
         alpha = 0.5
 
-    color6 = hexa(MockColor())  # pyright:ignore[reportArgumentType]
-    assert color6.red == 255
-    assert math.isclose(color6.alpha, 0.5)  # pyright:ignore[reportArgumentType]
+    color_from_obj = hexa(CustomColorObject())  # pyright:ignore[reportArgumentType]
+    assert color_from_obj.red == 255
+    assert color_from_obj.alpha is not None and math.isclose(color_from_obj.alpha, 0.5)
 
-    # Invalid strings:
     with pytest.raises(ValueError, match="Invalid HEXA color string"):
         hexa("FF000")
     with pytest.raises(ValueError, match="Could initialize hexa"):
         hexa(None)
 
-    # `kwargs`:
-    c7 = hexa(_red=255, _green=0, _blue=0, _alpha=0.5)
-    assert c7.red == 255
+    color_kwargs = hexa(_red=255, _green=0, _blue=0, _alpha=0.5)
+    assert color_kwargs.red == 255
 
-    # `hexa` copy:
-    c8 = hexa(c1)
-    assert c8.red == 255
+    color_copy = hexa(color_short)
+    assert color_copy.red == 255
 
 
 def test_hexa_iter():
@@ -59,32 +50,32 @@ def test_hexa_iter():
 
 
 def test_hexa_getitem():
-    c1 = hexa("F00")
-    assert c1[0] == "FF"
-    assert c1[1] == "00"
-    assert c1[2] == "00"
-    assert c1[-1] == "00"
-    assert c1[-2] == "00"
-    assert c1[-3] == "FF"
+    color_opaque = hexa("F00")
+    assert color_opaque[0] == "FF"
+    assert color_opaque[1] == "00"
+    assert color_opaque[2] == "00"
+    assert color_opaque[-1] == "00"
+    assert color_opaque[-2] == "00"
+    assert color_opaque[-3] == "FF"
 
-    color2 = hexa("#FF000080")
-    assert color2[3] == "80"
-    assert color2[-1] == "80"
-    assert color2[-4] == "FF"
+    color_alpha = hexa("#FF000080")
+    assert color_alpha[3] == "80"
+    assert color_alpha[-1] == "80"
+    assert color_alpha[-4] == "FF"
 
     with pytest.raises(IndexError):
-        c1[3]
+        color_opaque[3]
     with pytest.raises(IndexError):
-        color2[4]
+        color_alpha[4]
 
 
-def test_hexa_eq():
+def test_hexa_equality():
     assert hexa("F00") == hexa("#FF0000")
     assert hexa("F00") != hexa("#0F0")
     assert hexa("F00") != "not a color"
 
 
-def test_hexa_str_repr():
+def test_hexa_str_and_repr():
     assert str(hexa("F00")) == "#FF0000"
     assert repr(hexa("#FF000080")) == "hexa(#FF000080)"
 
@@ -96,100 +87,97 @@ def test_hexa_dict():
 
 def test_hexa_values():
     assert hexa("#FF000080").values() == (255, 0, 0, 0.5)
-    assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)  # Actually 128/255.
+    assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)
 
 
 def test_hexa_conversions():
     color1 = hexa("#FF000080")
-    rgba_c = color1.to_rgba()
-    assert isinstance(rgba_c, rgba)
-    assert rgba_c.red == 255
+    rgba_color = color1.to_rgba()
+    assert isinstance(rgba_color, rgba)
+    assert rgba_color.red == 255
 
-    hsla_c = color1.to_hsla()
-    assert hsla_c.hue == 0
+    hsla_color = color1.to_hsla()
+    assert hsla_color.hue == 0
 
 
 def test_hexa_lighten_darken():
     color1 = hexa("#808080")
-    lightened1 = color1.lighten(0.5)
-    assert lightened1.red > 128
+    lightened = color1.lighten(0.5)
+    assert lightened.red > 128
     with pytest.raises(ValueError):
         color1.lighten(1.5)
 
-    darkened1 = color1.darken(0.5)
-    assert darkened1.red < 128
+    darkened = color1.darken(0.5)
+    assert darkened.red < 128
     with pytest.raises(ValueError):
         color1.darken(-0.5)
 
 
 def test_hexa_saturate_desaturate():
     color1 = hexa("#805050")
-    saturated1 = color1.saturate(0.5)
-    assert saturated1 != color1
+    saturated = color1.saturate(0.5)
+    assert saturated != color1
     with pytest.raises(ValueError):
         color1.saturate(-0.1)
 
-    ds = color1.desaturate(0.5)
-    assert ds != color1
+    desaturated = color1.desaturate(0.5)
+    assert desaturated != color1
     with pytest.raises(ValueError):
         color1.desaturate(2.0)
 
 
 def test_hexa_rotate():
     color1 = hexa("#FF0000")
-    rotated1 = color1.rotate(180)
-    assert rotated1.to_hsla().hue == 180
+    rotated = color1.rotate(180)
+    assert rotated.to_hsla().hue == 180
 
 
 def test_hexa_invert():
-    color1 = hexa("#FF800033")  # Alpha `0.2`.
-    inv1 = color1.invert()
-    assert inv1.red == 0
-    assert inv1.green == 127
-    assert inv1.blue == 255
+    color1 = hexa("#FF800033")
+    inverted = color1.invert()
+    assert inverted.red == 0
+    assert inverted.green == 127
+    assert inverted.blue == 255
 
-    inv2 = color1.invert(invert_alpha=True)
-    assert math.isclose(inv2.alpha, 0.8)  # pyright:ignore[reportArgumentType]
+    inverted_with_alpha = color1.invert(invert_alpha=True)
+    assert inverted_with_alpha.alpha is not None and math.isclose(inverted_with_alpha.alpha, 0.8)
 
 
 def test_hexa_grayscale():
     color1 = hexa("#FF8000")
-    gray1 = color1.grayscale()
-    assert gray1.red == gray1.green == gray1.blue
+    gray = color1.grayscale()
+    assert gray.red == gray.green == gray.blue
 
 
 def test_hexa_blend():
-    c1 = hexa("#FF000080")
+    color1 = hexa("#FF000080")
     color2 = hexa("#0000FF80")
-    blend1 = c1.blend(color2, 0.5)
-    assert isinstance(blend1, hexa)
+    blended = color1.blend(color2, 0.5)
+    assert isinstance(blended, hexa)
 
     with pytest.raises(ValueError):
-        c1.blend(color2, 1.5)
+        color1.blend(color2, 1.5)
 
     with pytest.raises(TypeError):
-        c1.blend("invalid", 0.5)
+        color1.blend("invalid", 0.5)  # pyright:ignore[reportArgumentType]
 
-    b3 = hexa("#F00").blend(hexa("#00F"), 0.5)
-    assert not b3.has_alpha()
+    blended_no_alpha = hexa("#F00").blend(hexa("#00F"), 0.5)
+    assert not blended_no_alpha.has_alpha()
 
 
-def test_hexa_is_dark_light_grayscale():
+def test_hexa_predicates():
     assert hexa("#000000").is_dark() is True
     assert hexa("#FFFFFF").is_light() is True
     assert hexa("#808080").is_grayscale() is True
     assert hexa("#80807F").is_grayscale() is False
 
 
-def test_hexa_with_alpha():
+def test_hexa_with_alpha_and_complementary():
     color1 = hexa("#FF0000")
     color_alpha = color1.with_alpha(0.5)
-    assert math.isclose(color_alpha.alpha, 0.5)  # pyright:ignore[reportArgumentType]
+    assert color_alpha.alpha is not None and math.isclose(color_alpha.alpha, 0.5)
     with pytest.raises(ValueError):
         color1.with_alpha(1.5)
 
-
-def test_hexa_complementary():
-    color1 = hexa("#FF0000")
-    comp = color1.complementary()
-    assert comp.to_hsla().hue == 180
+    complementary_color = hexa("#FF0000").complementary()
+    assert complementary_color.to_hsla().hue == 180
