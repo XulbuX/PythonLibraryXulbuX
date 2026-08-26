@@ -1944,10 +1944,10 @@ def _config_terminal() -> None:
     if _os.name == "nt":
         with _suppress(Exception):
             kernel32 = _ctypes.windll.kernel32  # type: ignore[attr-defined]
-            handle = kernel32.GetStdHandle(-11)
+            handle = kernel32.GetStdHandle(-11)  # pyright:ignore[reportUnknownMemberType,reportUnknownVariableType]
             mode = _ctypes.c_ulong()
-            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
-            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # pyright:ignore[reportUnknownMemberType]
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # pyright:ignore[reportUnknownMemberType]
 
     _terminal_ansi_configured = True
 

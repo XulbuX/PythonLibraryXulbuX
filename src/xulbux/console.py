@@ -1208,10 +1208,10 @@ def supports_color() -> bool:
         # Check if VT100 mode is enabled on Windows:
         with suppress(Exception):
             kernel32 = _ctypes.windll.kernel32  # type: ignore[attr-defined]
-            handle = kernel32.GetStdHandle(-11)
+            handle = kernel32.GetStdHandle(-11)  # pyright:ignore[reportUnknownMemberType,reportUnknownVariableType]
             mode = _ctypes.c_ulong()
 
-            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):
+            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # pyright:ignore[reportUnknownMemberType]
                 return (mode.value & 0x0004) != 0
 
         return False

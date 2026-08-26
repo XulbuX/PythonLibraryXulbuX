@@ -88,7 +88,7 @@ typeCheckingMode = "strict"
 reportDeprecated = "warning"
 reportPrivateUsage = "none"
 include = ["src"]
-exclude = ["build"]
+exclude = [".venv", "build"]
 
 [tool.pytest.ini_options]
 addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100"
