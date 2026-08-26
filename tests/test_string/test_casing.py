@@ -1,7 +1,7 @@
 import xulbux.string as _string_module
 
 
-def test_decompose_standard_casing():
+def test_decompose_standard_casing() -> None:
     assert _string_module.decompose("camelCaseString") == ["camel", "case", "string"]
     assert _string_module.decompose("PascalCaseString") == ["pascal", "case", "string"]
     assert _string_module.decompose("snake_case_string") == ["snake", "case", "string"]
@@ -11,14 +11,14 @@ def test_decompose_standard_casing():
     assert _string_module.decompose("singleword") == ["singleword"]
 
 
-def test_decompose_with_custom_separators_and_lower_all():
+def test_decompose_with_custom_separators_and_lower_all() -> None:
     assert _string_module.decompose("version2_0", seps="_.") == ["version2", "0"]
     assert _string_module.decompose("PascalCase", lower_all=False) == ["Pascal", "Case"]
     assert _string_module.decompose("snake_case", lower_all=False) == ["snake", "case"]
     assert _string_module.decompose("mixed_Case", lower_all=False) == ["mixed", "Case"]
 
 
-def test_to_camel_case_upper_and_lower():
+def test_to_camel_case_upper_and_lower() -> None:
     assert _string_module.to_camel_case("snake_case_string") == "SnakeCaseString"
     assert _string_module.to_camel_case("kebab-case-string") == "KebabCaseString"
     assert _string_module.to_camel_case("PascalCaseString") == "PascalCaseString"
@@ -34,7 +34,7 @@ def test_to_camel_case_upper_and_lower():
     assert _string_module.to_camel_case("single", upper=False) == "single"
 
 
-def test_to_delimited_case_formats():
+def test_to_delimited_case_formats() -> None:
     assert _string_module.to_delimited_case("camelCaseString") == "camel_case_string"
     assert _string_module.to_delimited_case("PascalCaseString") == "pascal_case_string"
     assert _string_module.to_delimited_case("snake_case_string") == "snake_case_string"

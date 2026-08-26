@@ -1,12 +1,13 @@
 import ctypes
 import tempfile
+from collections.abc import Callable, Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
 
 
 @pytest.fixture
-def tmp_path():
+def tmp_path() -> Generator[Path, None, None]:
     """Provides access to a temporary directory for testing purposes."""
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -17,7 +18,7 @@ def tmp_path():
 
 
 @pytest.fixture
-def mock_os_windows(monkeypatch: pytest.MonkeyPatch):
+def mock_os_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mocks the OS to be detected as Windows for testing purposes."""
 
     monkeypatch.setattr("os.name", "nt")
@@ -26,7 +27,7 @@ def mock_os_windows(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def mock_os_linux(monkeypatch: pytest.MonkeyPatch):
+def mock_os_linux(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mocks the OS to be detected as Linux for testing purposes."""
 
     monkeypatch.setattr("os.name", "posix")
@@ -35,7 +36,7 @@ def mock_os_linux(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def mock_os_darwin(monkeypatch: pytest.MonkeyPatch):
+def mock_os_darwin(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mocks the OS to be detected as macOS for testing purposes."""
 
     monkeypatch.setattr("os.name", "posix")
@@ -47,7 +48,7 @@ def mock_os_darwin(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def mock_subprocess_run():
+def mock_subprocess_run() -> Generator[MagicMock, None, None]:
     """Mocks `subprocess.run` for testing purposes."""
 
     with patch("subprocess.run") as mock:
@@ -55,7 +56,7 @@ def mock_subprocess_run():
 
 
 @pytest.fixture
-def mock_subprocess_popen():
+def mock_subprocess_popen() -> Generator[MagicMock, None, None]:
     """Mocks `subprocess.Popen` for testing purposes."""
 
     with patch("subprocess.Popen") as mock:
@@ -63,7 +64,7 @@ def mock_subprocess_popen():
 
 
 @pytest.fixture
-def mock_subprocess_check_output():
+def mock_subprocess_check_output() -> Generator[MagicMock, None, None]:
     """Mocks `subprocess.check_output` for testing purposes."""
 
     with patch("subprocess.check_output") as mock:
@@ -74,14 +75,13 @@ def mock_subprocess_check_output():
 
 
 @pytest.fixture
-def mock_ctypes_windll(monkeypatch: pytest.MonkeyPatch):
+def mock_ctypes_windll(monkeypatch: pytest.MonkeyPatch) -> Callable[..., MagicMock]:
     """Safely mocks `ctypes.windll` so it can be tested on Unix without crashing.<br>
     Returns a factory function that optionally takes `shell_execute_return`."""
 
-    def _factory(shell_execute_return: int = 42) -> MagicMock:
-
+    def _factory(shell_exec_return: int = 42) -> MagicMock:
         mock_windll = MagicMock()
-        mock_windll.shell32.ShellExecuteW.return_value = shell_execute_return
+        mock_windll.shell32.ShellExecuteW.return_value = shell_exec_return
         monkeypatch.setattr(ctypes, "windll", mock_windll, raising=False)
 
         return mock_windll

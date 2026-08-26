@@ -17,11 +17,11 @@ import pytest
         ({}, 0),
     ],
 )
-def test_chars_count_data_structures(input_data: DataObj, expected_count: int):
+def test_chars_count_data_structures(input_data: DataObj, expected_count: int) -> None:
     assert _data_module.chars_count(input_data) == expected_count
 
 
-def test_strip_nested_collections():
+def test_strip_nested_collections() -> None:
     sample_list = ["  item1  ", " item2 ", "item3"]
     assert _data_module.strip(sample_list) == ["item1", "item2", "item3"]
 
@@ -54,11 +54,11 @@ def test_strip_nested_collections():
         ],
     ),
 )
-def test_remove_empty_items(input_data: DataObj, spaces_are_empty: bool, expected_output: DataObj):
+def test_remove_empty_items(input_data: DataObj, spaces_are_empty: bool, expected_output: DataObj) -> None:
     assert _data_module.remove_empty_items(input_data, spaces_are_empty=spaces_are_empty) == expected_output
 
 
-def test_remove_duplicates_hashable_and_unhashable():
+def test_remove_duplicates_hashable_and_unhashable() -> None:
     sample_list = ["a", "b", "a", "c", "b"]
     assert _data_module.remove_duplicates(sample_list) == ["a", "b", "c"]
 
@@ -78,7 +78,7 @@ def test_remove_duplicates_hashable_and_unhashable():
     assert _data_module.remove_duplicates(unhashable_items) == [[1], {"a": 1}]
 
 
-def test_remove_comments_basic_and_nested():
+def test_remove_comments_basic_and_nested() -> None:
     commented_data: dict[str, Any] = {
         "key1": [
             ">> Comment at start << value1",
@@ -97,12 +97,12 @@ def test_remove_comments_basic_and_nested():
     }
 
 
-def test_remove_comments_custom_delimiters():
+def test_remove_comments_custom_delimiters() -> None:
     data_list = ["# comment", "val # comment", "val"]
     res = _data_module.remove_comments(data_list, comment_start="#", comment_end="")
     assert res == ["val # comment", "val"]
 
 
-def test_remove_comments_empty_start_raises_value_error():
+def test_remove_comments_empty_start_raises_value_error() -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         _data_module.remove_comments({"a": 1}, comment_start="")

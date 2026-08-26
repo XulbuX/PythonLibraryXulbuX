@@ -608,14 +608,14 @@ class FormatCodes:
             if _os.name == "nt":
                 try:
                     # Enable VT100 mode on Windows:
-                    kernel32 = _ctypes.windll.kernel32  # pyright:ignore
-                    handle = kernel32.GetStdHandle(-11)  # pyright:ignore
-                    mode = _ctypes.c_ulong()  # pyright:ignore
-                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # pyright:ignore
-                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # pyright:ignore
+                    kernel32 = _ctypes.windll.kernel32
+                    handle = kernel32.GetStdHandle(-11)
+                    mode = _ctypes.c_ulong()
+                    kernel32.GetConsoleMode(handle, _ctypes.byref(mode))
+                    kernel32.SetConsoleMode(handle, mode.value | 0x0004)
                 except Exception:
                     pass
-            _TERMINAL_ANSI_CONFIGURED = True  # pyright:ignore
+            _TERMINAL_ANSI_CONFIGURED = True  # pyright:ignore[reportConstantRedefinition]
 
     @classmethod
     def _no_bracket_fast_path(

@@ -4,7 +4,7 @@ from xulbux import env_path
 import pytest
 
 
-def test_paths_as_path_and_as_list():
+def test_paths_as_path_and_as_list() -> None:
     path_single = env_path.paths()
     paths_list = env_path.paths(as_list=True)
 
@@ -13,7 +13,7 @@ def test_paths_as_path_and_as_list():
     assert all(isinstance(item, Path) for item in paths_list)
 
 
-def test_has_path_detection():
+def test_has_path_detection() -> None:
     current_paths = env_path.paths(as_list=True)
     if current_paths:
         assert env_path.has_path(current_paths[0]) is True
@@ -21,7 +21,7 @@ def test_has_path_detection():
     assert env_path.has_path(Path("non_existent_folder_xyz_12345")) is False
 
 
-def test_add_path_and_remove_path_lifecycle():
+def test_add_path_and_remove_path_lifecycle() -> None:
     sample_path = Path("custom_test_env_path_entry")
 
     with patch("xulbux.env_path.has_path") as mock_has_path, patch("xulbux.env_path._persistent") as mock_persistent:
@@ -45,7 +45,7 @@ def test_add_path_and_remove_path_lifecycle():
         mock_persistent.assert_not_called()
 
 
-def test_get_path_resolution_options():
+def test_get_path_resolution_options() -> None:
     with patch("xulbux.file_sys.get_cwd", return_value=Path("/mock/cwd")):
         assert env_path._get(cwd=True) == Path("/mock/cwd")
 
@@ -56,7 +56,7 @@ def test_get_path_resolution_options():
     assert env_path._get(Path("some/path/obj")) == Path("some/path/obj")
 
 
-def test_get_validation_errors():
+def test_get_validation_errors() -> None:
     with pytest.raises(ValueError, match="Both 'cwd' and 'base_dir' cannot be True"):
         env_path._get(cwd=True, base_dir=True)
 
@@ -64,7 +64,7 @@ def test_get_validation_errors():
         env_path._get(None)
 
 
-def test_persistent_windows_success_and_failure(mock_os_windows: None):
+def test_persistent_windows_success_and_failure(mock_os_windows: None) -> None:
     mock_winreg = MagicMock()
     with patch.dict("sys.modules", {"winreg": mock_winreg}):
         env_path._persistent(Path("test_path"))
@@ -76,7 +76,7 @@ def test_persistent_windows_success_and_failure(mock_os_windows: None):
         env_path._persistent(Path("test_path"))
 
 
-def test_persistent_unix_add_and_remove(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock):
+def test_persistent_unix_add_and_remove(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock) -> None:
     monkeypatch.setattr("sys.platform", "linux")
     sample_target = Path("test_bin_dir")
 
@@ -93,7 +93,7 @@ def test_persistent_unix_add_and_remove(monkeypatch: pytest.MonkeyPatch, mock_su
         env_path._persistent(sample_target, remove=True)
 
 
-def test_persistent_add_already_existing_path_in_list(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock):
+def test_persistent_add_already_existing_path_in_list(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock) -> None:
     monkeypatch.setattr("sys.platform", "linux")
     existing_paths = env_path.paths(as_list=True)
     if existing_paths:

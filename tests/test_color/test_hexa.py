@@ -3,7 +3,7 @@ from xulbux.color import hexa, rgba
 import pytest
 
 
-def test_hexa_init():
+def test_hexa_init() -> None:
     color_short = hexa("F00")
     assert color_short.red == 255
     assert color_short.green == 0
@@ -28,7 +28,7 @@ def test_hexa_init():
         blue = 0
         alpha = 0.5
 
-    color_from_obj = hexa(CustomColorObject())  # pyright:ignore[reportArgumentType]
+    color_from_obj = hexa(CustomColorObject())  # type:ignore[arg-type]
     assert color_from_obj.red == 255
     assert color_from_obj.alpha is not None and math.isclose(color_from_obj.alpha, 0.5)
 
@@ -44,12 +44,12 @@ def test_hexa_init():
     assert color_copy.red == 255
 
 
-def test_hexa_iter():
+def test_hexa_iter() -> None:
     assert list(hexa("F00")) == ["FF", "00", "00"]
     assert list(hexa("#FF000080")) == ["FF", "00", "00", "80"]
 
 
-def test_hexa_getitem():
+def test_hexa_getitem() -> None:
     color_opaque = hexa("F00")
     assert color_opaque[0] == "FF"
     assert color_opaque[1] == "00"
@@ -69,28 +69,28 @@ def test_hexa_getitem():
         color_alpha[4]
 
 
-def test_hexa_equality():
+def test_hexa_equality() -> None:
     assert hexa("F00") == hexa("#FF0000")
     assert hexa("F00") != hexa("#0F0")
     assert hexa("F00") != "not a color"
 
 
-def test_hexa_str_and_repr():
+def test_hexa_str_and_repr() -> None:
     assert str(hexa("F00")) == "#FF0000"
     assert repr(hexa("#FF000080")) == "hexa(#FF000080)"
 
 
-def test_hexa_dict():
+def test_hexa_dict() -> None:
     assert hexa("#FF000080").dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": "80"}
     assert hexa("#FF0000").dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": None}
 
 
-def test_hexa_values():
+def test_hexa_values() -> None:
     assert hexa("#FF000080").values() == (255, 0, 0, 0.5)
     assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)
 
 
-def test_hexa_conversions():
+def test_hexa_conversions() -> None:
     color1 = hexa("#FF000080")
     rgba_color = color1.to_rgba()
     assert isinstance(rgba_color, rgba)
@@ -100,7 +100,7 @@ def test_hexa_conversions():
     assert hsla_color.hue == 0
 
 
-def test_hexa_lighten_darken():
+def test_hexa_lighten_darken() -> None:
     color1 = hexa("#808080")
     lightened = color1.lighten(0.5)
     assert lightened.red > 128
@@ -113,7 +113,7 @@ def test_hexa_lighten_darken():
         color1.darken(-0.5)
 
 
-def test_hexa_saturate_desaturate():
+def test_hexa_saturate_desaturate() -> None:
     color1 = hexa("#805050")
     saturated = color1.saturate(0.5)
     assert saturated != color1
@@ -126,13 +126,13 @@ def test_hexa_saturate_desaturate():
         color1.desaturate(2.0)
 
 
-def test_hexa_rotate():
+def test_hexa_rotate() -> None:
     color1 = hexa("#FF0000")
     rotated = color1.rotate(180)
     assert rotated.to_hsla().hue == 180
 
 
-def test_hexa_invert():
+def test_hexa_invert() -> None:
     color1 = hexa("#FF800033")
     inverted = color1.invert()
     assert inverted.red == 0
@@ -143,13 +143,13 @@ def test_hexa_invert():
     assert inverted_with_alpha.alpha is not None and math.isclose(inverted_with_alpha.alpha, 0.8)
 
 
-def test_hexa_grayscale():
+def test_hexa_grayscale() -> None:
     color1 = hexa("#FF8000")
     gray = color1.grayscale()
     assert gray.red == gray.green == gray.blue
 
 
-def test_hexa_blend():
+def test_hexa_blend() -> None:
     color1 = hexa("#FF000080")
     color2 = hexa("#0000FF80")
     blended = color1.blend(color2, 0.5)
@@ -165,14 +165,14 @@ def test_hexa_blend():
     assert not blended_no_alpha.has_alpha()
 
 
-def test_hexa_predicates():
+def test_hexa_predicates() -> None:
     assert hexa("#000000").is_dark() is True
     assert hexa("#FFFFFF").is_light() is True
     assert hexa("#808080").is_grayscale() is True
     assert hexa("#80807F").is_grayscale() is False
 
 
-def test_hexa_with_alpha_and_complementary():
+def test_hexa_with_alpha_and_complementary() -> None:
     color1 = hexa("#FF0000")
     color_alpha = color1.with_alpha(0.5)
     assert color_alpha.alpha is not None and math.isclose(color_alpha.alpha, 0.5)

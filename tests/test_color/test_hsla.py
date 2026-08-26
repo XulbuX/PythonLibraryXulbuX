@@ -3,7 +3,7 @@ from xulbux.color import hsla
 import pytest
 
 
-def test_hsla_init():
+def test_hsla_init() -> None:
     color1 = hsla(180, 50, 50, 0.5)
     assert color1.hue == 180
     assert color1.sat == 50
@@ -26,7 +26,7 @@ def test_hsla_init():
         hsla(0, 0, 0, 1.5)
 
 
-def test_hsla_len_and_has_alpha():
+def test_hsla_len_and_has_alpha() -> None:
     assert len(hsla(0, 0, 0)) == 3
     assert len(hsla(0, 0, 0, 0.5)) == 4
     assert hsla(0, 0, 0).has_alpha() is False
@@ -35,12 +35,12 @@ def test_hsla_len_and_has_alpha():
     assert hsla(0, 0, 0, 0.5).is_opaque() is False
 
 
-def test_hsla_iter():
+def test_hsla_iter() -> None:
     assert list(hsla(180, 50, 50)) == [180, 50, 50]
     assert list(hsla(180, 50, 50, 0.5)) == [180, 50, 50, 0.5]
 
 
-def test_hsla_getitem():
+def test_hsla_getitem() -> None:
     color_opaque = hsla(180, 50, 50)
     assert color_opaque[0] == 180
     assert color_opaque[1] == 50
@@ -62,23 +62,23 @@ def test_hsla_getitem():
         color_alpha[4]
 
 
-def test_hsla_equality():
+def test_hsla_equality() -> None:
     assert hsla(180, 50, 50, 0.5) == hsla(180, 50, 50, 0.5)
     assert hsla(180, 50, 50) != hsla(180, 50, 50, 0.5)
     assert hsla(180, 50, 50) != "not a color"
 
 
-def test_hsla_str_and_repr():
+def test_hsla_str_and_repr() -> None:
     assert str(hsla(180, 50, 50)) == "hsla(180°, 50%, 50%)"
     assert repr(hsla(180, 50, 50, 0.5)) == "hsla(180°, 50%, 50%, 0.5)"
 
 
-def test_hsla_dict_and_values():
+def test_hsla_dict_and_values() -> None:
     assert hsla(180, 50, 50, 0.5).dict() == {"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}
     assert hsla(180, 50, 50, 0.5).values() == (180, 50, 50, 0.5)
 
 
-def test_hsla_conversions():
+def test_hsla_conversions() -> None:
     color1 = hsla(0, 100, 50, 0.5)
     rgba_color = color1.to_rgba()
     assert rgba_color.red == 255
@@ -89,7 +89,7 @@ def test_hsla_conversions():
     assert hexa_color.alpha is not None and math.isclose(hexa_color.alpha, 0.5)
 
 
-def test_hsla_lighten_darken():
+def test_hsla_lighten_darken() -> None:
     color1 = hsla(0, 0, 50)
     lightened = color1.lighten(0.5)
     assert lightened.light == 75
@@ -102,7 +102,7 @@ def test_hsla_lighten_darken():
         color1.darken(-0.5)
 
 
-def test_hsla_saturate_desaturate():
+def test_hsla_saturate_desaturate() -> None:
     color1 = hsla(0, 50, 50)
     saturated = color1.saturate(0.5)
     assert saturated.sat == 75
@@ -115,13 +115,13 @@ def test_hsla_saturate_desaturate():
         color1.desaturate(2.0)
 
 
-def test_hsla_rotate():
+def test_hsla_rotate() -> None:
     color1 = hsla(180, 50, 50)
     rotated = color1.rotate(190)
     assert rotated.hue == 10
 
 
-def test_hsla_invert():
+def test_hsla_invert() -> None:
     color1 = hsla(0, 50, 20, 0.2)
     inverted = color1.invert()
     assert inverted.hue == 180
@@ -132,13 +132,13 @@ def test_hsla_invert():
     assert inverted_with_alpha.alpha is not None and math.isclose(inverted_with_alpha.alpha, 0.8)
 
 
-def test_hsla_grayscale():
+def test_hsla_grayscale() -> None:
     color1 = hsla(180, 50, 50)
     gray = color1.grayscale()
     assert gray.sat == 0
 
 
-def test_hsla_blend():
+def test_hsla_blend() -> None:
     color1 = hsla(0, 100, 50, 0.5)
     color2 = hsla(240, 100, 50, 0.5)
     blended = color1.blend(color2, 0.5)
@@ -154,14 +154,14 @@ def test_hsla_blend():
     assert blended_no_alpha.alpha is None
 
 
-def test_hsla_predicates():
+def test_hsla_predicates() -> None:
     assert hsla(0, 0, 49).is_dark() is True
     assert hsla(0, 0, 50).is_light() is True
     assert hsla(0, 0, 50).is_grayscale() is True
     assert hsla(0, 1, 50).is_grayscale() is False
 
 
-def test_hsla_with_alpha_and_complementary():
+def test_hsla_with_alpha_and_complementary() -> None:
     color1 = hsla(0, 0, 0)
     color_alpha = color1.with_alpha(0.5)
     assert color_alpha.alpha is not None and math.isclose(color_alpha.alpha, 0.5)
@@ -172,7 +172,7 @@ def test_hsla_with_alpha_and_complementary():
     assert complementary_color.hue == 180
 
 
-def test_hsl_to_rgb_branching():
+def test_hsl_to_rgb_branching() -> None:
     assert hsla._hsl_to_rgb(180, 0, 50) == (127, 127, 127)
     assert hsla._hsl_to_rgb(0, 100, 75) == (255, 128, 128)
     assert hsla._hsl_to_rgb(300, 100, 50) == (255, 0, 255)

@@ -4,12 +4,12 @@ import xulbux.system as _system_module
 import pytest
 
 
-def test_elevate_already_elevated_returns_true():
+def test_elevate_already_elevated_returns_true() -> None:
     with patch("xulbux.system.is_elevated", return_value=True):
         assert _system_module.elevate() is True
 
 
-def test_elevate_windows_success(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_elevate_windows_success(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     with patch("xulbux.system.is_elevated", return_value=False):
         mock_windll = mock_ctypes_windll(42)
         with pytest.raises(SystemExit) as exc_info:
@@ -22,7 +22,7 @@ def test_elevate_windows_success(mock_os_windows: None, mock_ctypes_windll: Call
         assert "--flag value" in args_passed
 
 
-def test_elevate_windows_without_title(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_elevate_windows_without_title(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     with patch("xulbux.system.is_elevated", return_value=False):
         mock_windll = mock_ctypes_windll(42)
         with pytest.raises(SystemExit) as exc_info:
@@ -34,7 +34,9 @@ def test_elevate_windows_without_title(mock_os_windows: None, mock_ctypes_windll
         assert "SetConsoleTitleW" not in args_passed
 
 
-def test_elevate_windows_failure_raises_permission_error(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_elevate_windows_failure_raises_permission_error(
+    mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]
+) -> None:
     with (
         patch("xulbux.system.is_elevated", return_value=False),
         pytest.raises(PermissionError, match="Failed to launch elevated process"),
@@ -43,7 +45,7 @@ def test_elevate_windows_failure_raises_permission_error(mock_os_windows: None, 
         _system_module.elevate()
 
 
-def test_elevate_posix_success(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+def test_elevate_posix_success(mock_os_linux: None, mock_subprocess_popen: MagicMock) -> None:
     with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 0
@@ -60,7 +62,7 @@ def test_elevate_posix_success(mock_os_linux: None, mock_subprocess_popen: Magic
         assert "Posix Prompt" in cmd_args
 
 
-def test_elevate_posix_without_title(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+def test_elevate_posix_without_title(mock_os_linux: None, mock_subprocess_popen: MagicMock) -> None:
     with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 0
@@ -74,7 +76,7 @@ def test_elevate_posix_without_title(mock_os_linux: None, mock_subprocess_popen:
         assert "--description" not in cmd_args
 
 
-def test_elevate_posix_denied_raises_permission_error(mock_os_linux: None, mock_subprocess_popen: MagicMock):
+def test_elevate_posix_denied_raises_permission_error(mock_os_linux: None, mock_subprocess_popen: MagicMock) -> None:
     with patch("xulbux.system.is_elevated", return_value=False):
         mock_proc = MagicMock()
         mock_proc.returncode = 1

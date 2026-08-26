@@ -1207,11 +1207,11 @@ def supports_color() -> bool:
     if _os.name == "nt":
         # Check if VT100 mode is enabled on Windows:
         with suppress(Exception):
-            kernel32 = _ctypes.windll.kernel32  # pyright:ignore
-            handle = kernel32.GetStdHandle(-11)  # pyright:ignore
-            mode = _ctypes.c_ulong()  # pyright:ignore
+            kernel32 = _ctypes.windll.kernel32
+            handle = kernel32.GetStdHandle(-11)
+            mode = _ctypes.c_ulong()
 
-            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # pyright:ignore
+            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):
                 return (mode.value & 0x0004) != 0
 
         return False
@@ -2052,13 +2052,13 @@ def _read_single_key() -> None:
         return
 
     if _sys.platform == "win32":
-        import msvcrt as _msvcrt  # pyright:ignore
+        import msvcrt as _msvcrt
 
-        _msvcrt.getch()  # pyright:ignore
+        _msvcrt.getch()
 
     else:
-        import termios as _termios  # pyright:ignore
-        import tty as _tty  # pyright:ignore
+        import termios as _termios
+        import tty as _tty
 
         fd = _sys.stdin.fileno()
         old_settings = _termios.tcgetattr(fd)  # type:ignore[attr-defined]

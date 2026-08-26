@@ -52,32 +52,32 @@ def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> d
     }
 
 
-def test_get_cwd(setup_test_environment: dict[str, Path]):
+def test_get_cwd(setup_test_environment: dict[str, Path]) -> None:
     cwd_output = _file_sys_module.get_cwd()
     assert isinstance(cwd_output, Path)
     assert str(cwd_output) == str(setup_test_environment["cwd"])
 
 
-def test_get_home():
+def test_get_home() -> None:
     home = _file_sys_module.get_home()
     assert isinstance(home, Path)
     assert home.exists()
     assert home.is_dir()
 
 
-def test_get_script_dir(setup_test_environment: dict[str, Path]):
+def test_get_script_dir(setup_test_environment: dict[str, Path]) -> None:
     script_dir_output = _file_sys_module.get_script_dir()
     assert isinstance(script_dir_output, Path)
     assert str(script_dir_output) == str(setup_test_environment["script_dir"])
 
 
-def test_get_script_dir_frozen_environment():
+def test_get_script_dir_frozen_environment() -> None:
     with patch.object(sys, "frozen", True, create=True), patch.object(sys, "executable", "mocked_app.exe"):
         script_dir = _file_sys_module.get_script_dir()
         assert script_dir == Path("mocked_app.exe").parent
 
 
-def test_get_script_dir_spec_fallback():
+def test_get_script_dir_spec_fallback() -> None:
     class CustomSpec:
         origin = "mocked_spec_origin.py"
 
@@ -89,7 +89,7 @@ def test_get_script_dir_spec_fallback():
         assert script_dir == Path("mocked_spec_origin.py").resolve().parent
 
 
-def test_get_script_dir_missing_file_and_spec_raises_runtime_error():
+def test_get_script_dir_missing_file_and_spec_raises_runtime_error() -> None:
     class IncompleteMainModule:
         __spec__ = None
 
@@ -100,7 +100,7 @@ def test_get_script_dir_missing_file_and_spec_raises_runtime_error():
         _file_sys_module.get_script_dir()
 
 
-def test_extend_path_standard_locations(setup_test_environment: dict[str, Path]):
+def test_extend_path_standard_locations(setup_test_environment: dict[str, Path]) -> None:
     env = setup_test_environment
     search_dir = str(env["search_in"])
     search_dirs = [str(env["cwd"]), search_dir]
@@ -127,13 +127,13 @@ def test_extend_path_standard_locations(setup_test_environment: dict[str, Path])
     )
 
 
-def test_extend_path_missing_paths(setup_test_environment: dict[str, Path]):
+def test_extend_path_missing_paths(setup_test_environment: dict[str, Path]) -> None:
     assert _file_sys_module.extend_path("non_existent_file.xyz") is None
     with pytest.raises(PathNotFoundError, match="not found in specified directories"):
         _file_sys_module.extend_path("non_existent_file.xyz", raise_error=True)
 
 
-def test_extend_path_fuzzy_matching(setup_test_environment: dict[str, Path]):
+def test_extend_path_fuzzy_matching(setup_test_environment: dict[str, Path]) -> None:
     env = setup_test_environment
     search_dir = str(env["search_in"])
     expected_typo = env["search_in"] / "TypoDir" / "file_in_typo.txt"
@@ -150,7 +150,7 @@ def test_extend_path_fuzzy_matching(setup_test_environment: dict[str, Path]):
     assert _file_sys_module.extend_path("CompletelyWrong/no_file_here.dat", search_in=search_dir, fuzzy_match=True) is None
 
 
-def test_extend_or_make_path(setup_test_environment: dict[str, Path]):
+def test_extend_or_make_path(setup_test_environment: dict[str, Path]) -> None:
     env = setup_test_environment
 
     assert str(_file_sys_module.extend_or_make_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
@@ -162,7 +162,7 @@ def test_extend_or_make_path(setup_test_environment: dict[str, Path]):
     assert str(_file_sys_module.extend_or_make_path(rel_cwd, prefer_script_dir=False)) == str(env["cwd"] / rel_cwd)
 
 
-def test_extend_path_env_vars_and_absolute_handling():
+def test_extend_path_env_vars_and_absolute_handling() -> None:
     with patch.dict(os.environ, {"TEST_ENV_ROOT": "C:\\" if os.name == "nt" else "/"}):
         env_pattern = "%TEST_ENV_ROOT%sample_file" if os.name == "nt" else "$TEST_ENV_ROOT/sample_file"
         _file_sys_module.extend_path(env_pattern)
@@ -176,13 +176,13 @@ def test_extend_path_env_vars_and_absolute_handling():
             helper()
 
 
-def test_find_path_traversal_when_parent_is_file(tmp_path: Path):
+def test_find_path_traversal_when_parent_is_file(tmp_path: Path) -> None:
     file_path = tmp_path / "sample_file.txt"
     file_path.touch()
     helper = _ExtendPathHelper(Path("sample_file.txt/nested"), search_dirs=[tmp_path], fuzzy_match=True, raise_error=False)
     assert helper() == file_path
 
 
-def test_get_closest_match_permission_error():
+def test_get_closest_match_permission_error() -> None:
     with patch.object(Path, "iterdir", side_effect=PermissionError("Mocked access error")):
         assert _ExtendPathHelper.get_closest_match(Path("."), "target_name") is None

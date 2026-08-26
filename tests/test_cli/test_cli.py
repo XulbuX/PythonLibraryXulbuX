@@ -9,7 +9,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 
 
-def test_cli_entrypoint_registered_in_pyproject():
+def test_cli_entrypoint_registered_in_pyproject() -> None:
     with open(PYPROJECT_PATH, "rb") as file:
         pyproject_data = tomllib.load(file)
 
@@ -18,7 +18,7 @@ def test_cli_entrypoint_registered_in_pyproject():
     assert scripts["xulbux-lib"] == "xulbux.cli:main"
 
 
-def test_cli_main_ansi_subcommand(capsys: pytest.CaptureFixture[str]):
+def test_cli_main_ansi_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with patch.object(sys, "argv", ["xulbux-lib", "ansi"]):
         main()
         captured = capsys.readouterr()
@@ -26,7 +26,7 @@ def test_cli_main_ansi_subcommand(capsys: pytest.CaptureFixture[str]):
         assert "Foreground Colors" in captured.out
 
 
-def test_cli_main_default_help_subcommand(capsys: pytest.CaptureFixture[str]):
+def test_cli_main_default_help_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with patch.object(sys, "argv", ["xulbux-lib"]), patch("xulbux.console.pause_exit"):
         main()
         captured = capsys.readouterr()
@@ -34,7 +34,7 @@ def test_cli_main_default_help_subcommand(capsys: pytest.CaptureFixture[str]):
         assert "xulbux-lib" in captured.out
 
 
-def test_cli_main_unknown_subcommand(capsys: pytest.CaptureFixture[str]):
+def test_cli_main_unknown_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with patch.object(sys, "argv", ["xulbux-lib", "unknown_cmd"]), patch("xulbux.console.pause_exit"):
         main()
         captured = capsys.readouterr()

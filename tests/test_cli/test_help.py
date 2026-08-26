@@ -6,7 +6,7 @@ from xulbux.cli.help import H, get_latest_version, is_latest_version, show_help
 import pytest
 
 
-def test_get_latest_version_successful_response():
+def test_get_latest_version_successful_response() -> None:
     mock_response = MagicMock()
     mock_response.status = 200
     mock_response.__enter__.return_value = mock_response
@@ -18,7 +18,7 @@ def test_get_latest_version_successful_response():
         assert get_latest_version() == "2.0.0"
 
 
-def test_get_latest_version_http_error():
+def test_get_latest_version_http_error() -> None:
     mock_response = MagicMock()
     mock_response.status = 404
     mock_response.headers = {}
@@ -28,7 +28,7 @@ def test_get_latest_version_http_error():
         get_latest_version()
 
 
-def test_get_latest_version_invalid_json():
+def test_get_latest_version_invalid_json() -> None:
     mock_response = MagicMock()
     mock_response.status = 200
     mock_response.__enter__.return_value = mock_response
@@ -40,7 +40,7 @@ def test_get_latest_version_invalid_json():
         assert get_latest_version() is None
 
 
-def test_is_latest_version_evaluations():
+def test_is_latest_version_evaluations() -> None:
     with patch("xulbux.cli.help.get_latest_version", return_value=None):
         assert is_latest_version() is None
 
@@ -57,7 +57,7 @@ def test_is_latest_version_evaluations():
         assert is_latest_version() is None
 
 
-def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]):
+def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]) -> None:
     mock_pause = MagicMock()
     with patch("xulbux.console.pause_exit", mock_pause):
         show_help()
@@ -70,7 +70,7 @@ def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]):
     mock_pause.assert_called_once()
 
 
-def test_h_styling_constants():
+def test_h_styling_constants() -> None:
     assert H.CMD is not None
     assert H.HEADING is not None
     assert H.BORDER is not None

@@ -8,7 +8,7 @@ from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
 
 
-def test_read_simple_json_file(tmp_path: Path):
+def test_read_simple_json_file(tmp_path: Path) -> None:
     file_path = tmp_path / "sample.json"
     file_path.write_text('{"name": "test", "value": 123}')
 
@@ -16,14 +16,14 @@ def test_read_simple_json_file(tmp_path: Path):
     assert data == {"name": "test", "value": 123}
 
 
-def test_read_without_json_extension(tmp_path: Path):
+def test_read_without_json_extension(tmp_path: Path) -> None:
     file_path = tmp_path / "data_without_ext"
     file_path.with_suffix(".json").write_text('{"key": "value"}')
 
     assert _json_module.read(file_path) == {"key": "value"}
 
 
-def test_read_with_comments_and_return_original(tmp_path: Path):
+def test_read_with_comments_and_return_original(tmp_path: Path) -> None:
     raw_json = """{
       "key1": "value with no comments",
       "key2": "value >>inline comment<<",
@@ -47,7 +47,7 @@ def test_read_with_comments_and_return_original(tmp_path: Path):
     assert "key2" in original_data
 
 
-def test_read_error_cases(tmp_path: Path):
+def test_read_error_cases(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         _json_module.read("non_existent_json_file.json")
 
@@ -67,7 +67,7 @@ def test_read_error_cases(tmp_path: Path):
         _json_module.read(str(comment_only_file))
 
 
-def test_create_simple_and_formatted(tmp_path: Path):
+def test_create_simple_and_formatted(tmp_path: Path) -> None:
     file_path = tmp_path / "created.json"
     created = _json_module.create(file_path, {"a": 1, "b": [2, 3]})
 
@@ -80,7 +80,7 @@ def test_create_simple_and_formatted(tmp_path: Path):
     assert created_formatted.with_suffix(".json").exists()
 
 
-def test_create_file_exists_errors(tmp_path: Path):
+def test_create_file_exists_errors(tmp_path: Path) -> None:
     file_path = tmp_path / "existing.json"
     _json_module.create(file_path, {"initial": 1})
 
@@ -91,7 +91,7 @@ def test_create_file_exists_errors(tmp_path: Path):
         _json_module.create(file_path, {"initial": 1}, force=False)
 
 
-def test_create_force_overwrite(tmp_path: Path):
+def test_create_force_overwrite(tmp_path: Path) -> None:
     file_path = tmp_path / "overwrite.json"
     _json_module.create(file_path, {"version": 1})
     _json_module.create(file_path, {"version": 2}, force=True)
@@ -99,7 +99,7 @@ def test_create_force_overwrite(tmp_path: Path):
     assert json.loads(file_path.read_text()) == {"version": 2}
 
 
-def test_update_existing_and_nested_values(tmp_path: Path):
+def test_update_existing_and_nested_values(tmp_path: Path) -> None:
     file_path = tmp_path / "update_target.json"
     _json_module.create(
         file_path,
@@ -121,7 +121,7 @@ def test_update_existing_and_nested_values(tmp_path: Path):
     assert result["new_section"]["nested"]["key"] == "value"
 
 
-def test_update_with_custom_separator(tmp_path: Path):
+def test_update_with_custom_separator(tmp_path: Path) -> None:
     file_path = tmp_path / "update_sep.json"
     _json_module.create(file_path, {"a": {"b": 1}})
 
@@ -129,7 +129,7 @@ def test_update_with_custom_separator(tmp_path: Path):
     assert json.loads(file_path.read_text()) == {"a": {"b": 2}}
 
 
-def test_update_with_comments_preservation(tmp_path: Path):
+def test_update_with_comments_preservation(tmp_path: Path) -> None:
     file_path = tmp_path / "update_comments.json"
     file_path.write_text("""{
       "config": {
@@ -151,7 +151,7 @@ def test_update_with_comments_preservation(tmp_path: Path):
     assert updated["user"] == "Cool User"
 
 
-def test_update_when_path_id_returns_none(tmp_path: Path):
+def test_update_when_path_id_returns_none(tmp_path: Path) -> None:
     file_path = tmp_path / "fallback.json"
     _json_module.create(file_path, {"a": 1})
 

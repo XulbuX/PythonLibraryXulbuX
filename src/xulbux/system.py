@@ -27,7 +27,7 @@ def is_elevated() -> bool:
 
     with _suppress(Exception):
         if _os.name == "nt":
-            return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # pyright:ignore
+            return _ctypes.windll.shell32.IsUserAnAdmin() != 0
         elif _os.name == "posix":
             return _os.geteuid() == 0  # type:ignore[attr-defined]
 
@@ -192,7 +192,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
         else:
             args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-        if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # pyright:ignore
+        if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:
             raise PermissionError("Failed to launch elevated process") from None
         else:
             raise SystemExit(0)

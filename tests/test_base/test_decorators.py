@@ -4,14 +4,14 @@ from unittest.mock import patch
 from xulbux.base.decorators import _noop_decorator, deprecated, mypyc_attr
 
 
-def test_noop_decorator_returns_same_object():
-    def sample_func():
+def test_noop_decorator_returns_same_object() -> None:
+    def sample_func() -> str:
         return "result"
 
     assert _noop_decorator(sample_func) is sample_func
 
 
-def test_mypyc_attr_with_installed_mypy_extensions():
+def test_mypyc_attr_with_installed_mypy_extensions() -> None:
     decorator = mypyc_attr(native_class=False)
 
     class SampleClass:
@@ -20,7 +20,7 @@ def test_mypyc_attr_with_installed_mypy_extensions():
     assert decorator(SampleClass) is SampleClass
 
 
-def test_mypyc_attr_fallback_when_mypy_extensions_missing():
+def test_mypyc_attr_fallback_when_mypy_extensions_missing() -> None:
     with patch.dict(sys.modules, {"mypy_extensions": None}):
         decorator = mypyc_attr(native_class=False)
         assert decorator is _noop_decorator
@@ -31,15 +31,15 @@ def test_mypyc_attr_fallback_when_mypy_extensions_missing():
         assert decorator(SampleClass) is SampleClass
 
 
-def test_deprecated_decorator_on_standard_function():
+def test_deprecated_decorator_on_standard_function() -> None:
     @deprecated("Use new_function instead")
-    def old_function():
+    def old_function() -> int:
         return 42
 
     assert old_function() == 42
 
 
-def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions():
+def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions() -> None:
     class SampleClass:
         pass
 
@@ -50,7 +50,7 @@ def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions():
         assert getattr(SampleClass, "__deprecated__", None) == "Deprecated feature"
 
 
-def test_deprecated_wrapper_for_immutable_callable():
+def test_deprecated_wrapper_for_immutable_callable() -> None:
     class CustomCallable:
         def __call__(self, *args: Any, **kwargs: Any) -> str:
             return "callable_output"
@@ -66,7 +66,7 @@ def test_deprecated_wrapper_for_immutable_callable():
     assert wrapped() == "callable_output"
 
 
-def test_deprecated_wrapper_for_immutable_class():
+def test_deprecated_wrapper_for_immutable_class() -> None:
     class ImmutableMeta(type):
         def __setattr__(cls, name: str, value: Any) -> None:
             raise TypeError("Cannot set attribute on this class")

@@ -2,7 +2,7 @@ import xulbux.regex as _regex_module
 import regex as rx
 
 
-def test_quotes_matching_single_and_double():
+def test_quotes_matching_single_and_double() -> None:
     pattern = _regex_module.quotes()
     text = """He said 'Hello' and "World" and 'Another' string"""
     matches = rx.findall(pattern, text)
@@ -11,7 +11,7 @@ def test_quotes_matching_single_and_double():
     assert rx.findall(pattern, "") == []
 
 
-def test_quotes_nested_and_escaped():
+def test_quotes_nested_and_escaped() -> None:
     text = r'He said "She said \"Hello\" to me"'
     pattern = _regex_module.quotes()
     matches = rx.findall(pattern, text)
@@ -19,7 +19,7 @@ def test_quotes_nested_and_escaped():
     assert rx.findall(pattern, "Unclosed 'quote") == []
 
 
-def test_brackets_standard_delimiters():
+def test_brackets_standard_delimiters() -> None:
     pattern_round = _regex_module.brackets()
     text_round = "Call fn(param1, param2) and fn(other)"
     assert rx.findall(pattern_round, text_round) == ["(param1, param2)", "(other)"]
@@ -33,7 +33,7 @@ def test_brackets_standard_delimiters():
     assert rx.findall(pattern_curly, text_curly) == ["{a: 1}", "{b: 2}"]
 
 
-def test_brackets_options_group_spaces_and_strings():
+def test_brackets_options_group_spaces_and_strings() -> None:
     pattern_group = _regex_module.brackets(is_group=True)
     match_group = rx.search(pattern_group, "fn(content)")
     assert match_group is not None
@@ -53,7 +53,7 @@ def test_brackets_options_group_spaces_and_strings():
     assert rx.findall(pattern_multichar_bracket, "custom <<content>>") == ["<<content>>"]
 
 
-def test_outside_strings():
+def test_outside_strings() -> None:
     pattern = _regex_module.outside_strings(r"\d+")
     text = 'Number 123 and "string 456" and 789'
     matches = rx.findall(pattern, text)
@@ -65,7 +65,7 @@ def test_outside_strings():
     assert isinstance(default_pattern, str)
 
 
-def test_all_except_with_and_without_ignore():
+def test_all_except_with_and_without_ignore() -> None:
     pattern = _regex_module.all_except(">")
     match = rx.match(pattern, "Hello > World")
     assert match is not None
@@ -78,7 +78,7 @@ def test_all_except_with_and_without_ignore():
     assert match_with_ignore.group(1) == "Content without greater sign"
 
 
-def test_func_call_any_and_specific():
+def test_func_call_any_and_specific() -> None:
     pattern_any = _regex_module.func_call()
     matches_any = rx.findall(pattern_any, "call_one(1, 2) and call_two(3)")
     assert matches_any == [("call_one", "1, 2"), ("call_two", "3")]
@@ -92,7 +92,7 @@ def test_func_call_any_and_specific():
     assert matches_specific == [("print", "hello"), ("print", "world")]
 
 
-def test_rgba_str_formats_and_options():
+def test_rgba_str_formats_and_options() -> None:
     pattern_default = _regex_module.rgba_str()
     text = "rgba(255, 128, 0, 0.5) and rgb(100, 200, 50) and 255, 128, 0"
     matches_default = rx.findall(pattern_default, text)
@@ -109,7 +109,7 @@ def test_rgba_str_formats_and_options():
     assert len(rx.findall(pattern_any_sep, "255 128 0")) == 1
 
 
-def test_hsla_str_formats_and_options():
+def test_hsla_str_formats_and_options() -> None:
     pattern_default = _regex_module.hsla_str()
     text = "hsla(240, 100%, 50%, 0.8) and hsl(360, 100%, 50%) and 120, 80%, 60%"
     matches_default = rx.findall(pattern_default, text)
@@ -126,7 +126,7 @@ def test_hsla_str_formats_and_options():
     assert len(rx.findall(pattern_any_sep, "240-100%-50%")) == 1
 
 
-def test_hexa_str_formats_and_options():
+def test_hexa_str_formats_and_options() -> None:
     pattern_with_alpha = _regex_module.hexa_str(allow_alpha=True)
     text = "Colors: #FF0000 and 0xABCDEF and F00 and #FF0000FF and 0xF00F"
     matches_with_alpha = rx.findall(pattern_with_alpha, text)

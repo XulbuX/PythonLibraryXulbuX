@@ -33,10 +33,10 @@ class _SafeDeprecated:
 
     def __call__(self, arg: Any, /) -> Any:
         if _sys.version_info >= (3, 13):
-            from warnings import deprecated as _dep  # pyright:ignore
+            from warnings import deprecated as _dep
         else:
             try:
-                from typing_extensions import deprecated as _dep  # pyright:ignore
+                from typing_extensions import deprecated as _dep
             except ImportError:
                 from contextlib import suppress
 

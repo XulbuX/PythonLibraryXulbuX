@@ -4,7 +4,7 @@ from xulbux.data import _set_nested_val
 import pytest
 
 
-def test_is_equal_identical_and_differing_structures():
+def test_is_equal_identical_and_differing_structures() -> None:
     dict1 = {"k1": [1, 2], "k2": "value"}
     dict2 = {"k1": [1, 2], "k2": "value"}
     dict3 = {"k1": [1, 3], "k2": "value"}
@@ -20,7 +20,7 @@ def test_is_equal_identical_and_differing_structures():
     assert _data_module.is_equal(frozenset([1]), frozenset([2])) is False
 
 
-def test_is_equal_with_ignore_paths():
+def test_is_equal_with_ignore_paths() -> None:
     dict_source = {"k1": [1, 2], "k2": "value_original"}
     dict_target = {"k1": [1, 2], "k2": "value_modified"}
 
@@ -29,12 +29,12 @@ def test_is_equal_with_ignore_paths():
     assert _data_module.is_equal({"a": {"b": 1}}, {"a": {"b": 2}}, ignore_paths=["c->d"]) is False
 
 
-def test_is_equal_empty_path_sep_raises_value_error():
+def test_is_equal_empty_path_sep_raises_value_error() -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         _data_module.is_equal({"a": 1}, {"a": 1}, path_sep="")
 
 
-def test_get_path_id_single_and_multiple():
+def test_get_path_id_single_and_multiple() -> None:
     sample_data = {
         "healthy": {
             "fruit": ["apples", "bananas", "oranges"],
@@ -54,7 +54,7 @@ def test_get_path_id_single_and_multiple():
     assert _data_module.get_path_id(sample_data, []) is None
 
 
-def test_get_path_id_errors_and_ignore_not_found():
+def test_get_path_id_errors_and_ignore_not_found() -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         _data_module.get_path_id({"a": 1}, "a", path_sep="")
 
@@ -78,7 +78,7 @@ def test_get_path_id_errors_and_ignore_not_found():
     assert str(_data_module.get_path_id({"a": 1}, "a->b", ignore_not_found=True)) == "1>0"
 
 
-def test_get_value_by_path_id():
+def test_get_value_by_path_id() -> None:
     sample_data = {
         "healthy": {
             "fruit": ["apples", "bananas", "oranges"],
@@ -99,7 +99,7 @@ def test_get_value_by_path_id():
     assert _data_module.get_value_by_path_id(multi_key_dict, multi_path_id, get_key=True) == "fruit"
 
 
-def test_get_value_by_path_id_errors():
+def test_get_value_by_path_id_errors() -> None:
     path_id = _data_module.get_path_id([[1]], "0->0")
     assert path_id is not None
     with pytest.raises(ValueError, match="Cannot get key from a non-dict parent"):
@@ -119,7 +119,7 @@ def test_get_value_by_path_id_errors():
         _data_module.get_value_by_path_id(data, dict_path_id, get_key=True)
 
 
-def test_set_value_by_path_id():
+def test_set_value_by_path_id() -> None:
     sample_data = {"healthy": {"fruit": ["apples", "bananas"]}}
     path_id = _data_module.get_path_id(sample_data, "healthy->fruit->0")
     assert path_id is not None
@@ -142,14 +142,14 @@ def test_set_value_by_path_id():
     single_tuple = (10, 20)
     assert _data_module.set_value_by_path_id(single_tuple, {"1>0": 99}) == (99, 20)
 
-    res = _set_nested_val(1, [0, 0], 2)  # pyright:ignore[reportArgumentType]
+    res = _set_nested_val(1, [0, 0], 2)  # type:ignore[arg-type]
     assert res == 1
 
-    res_single = _set_nested_val(1, [0], 2)  # pyright:ignore[reportArgumentType]
+    res_single = _set_nested_val(1, [0], 2)  # type:ignore[arg-type]
     assert res_single == 1
 
 
-def test_set_value_by_path_id_invalid_formats():
+def test_set_value_by_path_id_invalid_formats() -> None:
     with pytest.raises(ValueError, match="No valid 'update_values'"):
         _data_module.set_value_by_path_id({"a": 1}, {})
 

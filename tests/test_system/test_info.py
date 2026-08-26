@@ -4,80 +4,80 @@ import xulbux.system as _system_module
 import pytest
 
 
-def test_is_elevated_windows_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_is_elevated_windows_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     mock_ctypes = mock_ctypes_windll()
     mock_ctypes.shell32.IsUserAnAdmin.return_value = 1
     assert _system_module.is_elevated() is True
 
 
-def test_is_elevated_windows_non_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_is_elevated_windows_non_admin(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     mock_ctypes = mock_ctypes_windll()
     mock_ctypes.shell32.IsUserAnAdmin.return_value = 0
     assert _system_module.is_elevated() is False
 
 
-def test_is_elevated_windows_exception(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]):
+def test_is_elevated_windows_exception(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     mock_ctypes = mock_ctypes_windll()
     mock_ctypes.shell32.IsUserAnAdmin.side_effect = OSError("Access denied")
     assert _system_module.is_elevated() is False
 
 
-def test_is_elevated_posix_root(mock_os_linux: None):
+def test_is_elevated_posix_root(mock_os_linux: None) -> None:
     with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.return_value = 0
         assert _system_module.is_elevated() is True
 
 
-def test_is_elevated_posix_non_root(mock_os_linux: None):
+def test_is_elevated_posix_non_root(mock_os_linux: None) -> None:
     with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.return_value = 1000
         assert _system_module.is_elevated() is False
 
 
-def test_is_elevated_posix_exception(mock_os_linux: None):
+def test_is_elevated_posix_exception(mock_os_linux: None) -> None:
     with patch("xulbux.system._os.geteuid", create=True) as mock_geteuid:
         mock_geteuid.side_effect = OSError("Call failed")
         assert _system_module.is_elevated() is False
 
 
-def test_is_elevated_unknown_os(monkeypatch: pytest.MonkeyPatch):
+def test_is_elevated_unknown_os(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_system_module._os, "name", "unknown_os")
     assert _system_module.is_elevated() is False
 
 
-def test_is_win_detection(mock_os_windows: None):
+def test_is_win_detection(mock_os_windows: None) -> None:
     assert _system_module.is_win() is True
 
 
-def test_is_win_false_on_linux(mock_os_linux: None):
+def test_is_win_false_on_linux(mock_os_linux: None) -> None:
     assert _system_module.is_win() is False
 
 
-def test_is_linux_detection(mock_os_linux: None):
+def test_is_linux_detection(mock_os_linux: None) -> None:
     assert _system_module.is_linux() is True
 
 
-def test_is_linux_false_on_windows(mock_os_windows: None):
+def test_is_linux_false_on_windows(mock_os_windows: None) -> None:
     assert _system_module.is_linux() is False
 
 
-def test_is_mac_detection(mock_os_darwin: None):
+def test_is_mac_detection(mock_os_darwin: None) -> None:
     assert _system_module.is_mac() is True
 
 
-def test_is_mac_false_on_windows(mock_os_windows: None):
+def test_is_mac_false_on_windows(mock_os_windows: None) -> None:
     assert _system_module.is_mac() is False
 
 
-def test_is_unix_detection(mock_os_linux: None):
+def test_is_unix_detection(mock_os_linux: None) -> None:
     assert _system_module.is_unix() is True
 
 
-def test_is_unix_false_on_windows(mock_os_windows: None):
+def test_is_unix_false_on_windows(mock_os_windows: None) -> None:
     assert _system_module.is_unix() is False
 
 
-def test_get_hostname_success_and_fallback():
+def test_get_hostname_success_and_fallback() -> None:
     with patch("socket.gethostname", return_value="my_machine"):
         assert _system_module.get_hostname() == "my_machine"
 
@@ -85,7 +85,7 @@ def test_get_hostname_success_and_fallback():
         assert _system_module.get_hostname() == "unknown"
 
 
-def test_get_username_success_and_fallbacks():
+def test_get_username_success_and_fallbacks() -> None:
     with patch("getpass.getuser", return_value="current_user"):
         assert _system_module.get_username() == "current_user"
 
@@ -97,7 +97,7 @@ def test_get_username_success_and_fallbacks():
             assert _system_module.get_username() == "unknown"
 
 
-def test_get_os_information():
+def test_get_os_information() -> None:
     with patch("platform.system", return_value="CustomOS"):
         assert _system_module.get_os_name() == "CustomOS"
 
@@ -114,7 +114,7 @@ def test_get_os_information():
         assert _system_module.get_python_version() == "3.14.0"
 
 
-def test_get_cpu_count_with_fallbacks():
+def test_get_cpu_count_with_fallbacks() -> None:
     with patch("multiprocessing.cpu_count", return_value=16):
         assert _system_module.get_cpu_count() == 16
 

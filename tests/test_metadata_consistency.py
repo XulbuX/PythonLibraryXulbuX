@@ -37,7 +37,7 @@ def get_current_branch() -> str | None:
 # ************************************************* VERSION CONSISTENCY TEST **************************************************
 
 
-def test_version_consistency():
+def test_version_consistency() -> None:
     """Verifies that the version numbers in `pyproject.toml` and `__init__.py`<br>
     match the version specified in the current release branch name (`dev/X.Y.Z`)."""
 
@@ -77,7 +77,7 @@ def test_version_consistency():
 # *********************************************** DEPENDENCIES CONSISTENCY TEST ***********************************************
 
 
-def test_dependencies_consistency():
+def test_dependencies_consistency() -> None:
     """Verifies that dependencies in `pyproject.toml` match `__dependencies__` in `__init__.py`."""
 
     # Extract dependencies from `__init__.py`:
@@ -107,7 +107,7 @@ def test_dependencies_consistency():
 # *********************************************** DESCRIPTION CONSISTENCY TEST ************************************************
 
 
-def test_description_consistency():
+def test_description_consistency() -> None:
     """Verifies that the description in `pyproject.toml` matches `__description__` in `__init__.py`."""
 
     # Extract description from `__init__.py`:

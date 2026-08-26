@@ -2,12 +2,12 @@ from xulbux.regex import LazyRegex
 import pytest
 
 
-def test_lazy_regex_initialization():
+def test_lazy_regex_initialization() -> None:
     lazy = LazyRegex(digits=r"\d+", letters=r"[a-z]+")
     assert lazy._patterns == {"digits": r"\d+", "letters": r"[a-z]+"}
 
 
-def test_lazy_regex_attribute_access_and_caching():
+def test_lazy_regex_attribute_access_and_caching() -> None:
     lazy = LazyRegex(digits=r"\d+")
 
     pattern1 = lazy.digits
@@ -18,7 +18,7 @@ def test_lazy_regex_attribute_access_and_caching():
     assert pattern1 is pattern2
 
 
-def test_lazy_regex_missing_attribute_raises_attribute_error():
+def test_lazy_regex_missing_attribute_raises_attribute_error() -> None:
     lazy = LazyRegex(digits=r"\d+")
 
     with pytest.raises(AttributeError, match="has no attribute 'unknown'"):

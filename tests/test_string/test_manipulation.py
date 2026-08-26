@@ -3,7 +3,7 @@ import xulbux.string as _string_module
 import pytest
 
 
-def test_to_type_conversions():
+def test_to_type_conversions() -> None:
     assert _string_module.to_type("123") == 123
     assert math.isclose(_string_module.to_type("123.45"), 123.45)
     assert _string_module.to_type("True") is True
@@ -19,7 +19,7 @@ def test_to_type_conversions():
     assert _string_module.to_type("invalid { structure") == "invalid { structure"
 
 
-def test_normalize_spaces():
+def test_normalize_spaces() -> None:
     assert _string_module.normalize_spaces("Hello\tWorld") == "Hello    World"
     assert _string_module.normalize_spaces("Hello\tWorld", tab_spaces=2) == "Hello  World"
     assert _string_module.normalize_spaces("Spaces:\u2000\u2001\u2002\u2003!") == "Spaces:    !"
@@ -29,7 +29,7 @@ def test_normalize_spaces():
         _string_module.normalize_spaces("text", -1)
 
 
-def test_escape():
+def test_escape() -> None:
     assert _string_module.escape("Line 1\nLine 2\tTabbed") == r"Line 1\nLine 2\tTabbed"
     assert _string_module.escape("Path: C:\\Users\\Name") == r"Path: C:\\Users\\Name"
 
@@ -39,7 +39,7 @@ def test_escape():
     assert _string_module.escape("String without quotes", str_quotes=None) == "String without quotes"
 
 
-def test_is_empty():
+def test_is_empty() -> None:
     assert _string_module.is_empty(None) is True
     assert _string_module.is_empty("") is True
     assert _string_module.is_empty("   ") is False
@@ -48,7 +48,7 @@ def test_is_empty():
     assert _string_module.is_empty(" Not Empty ", spaces_are_empty=True) is False
 
 
-def test_single_char_repeats():
+def test_single_char_repeats() -> None:
     assert _string_module.single_char_repeats("-----", "-") == 5
     assert _string_module.single_char_repeats("", "a") == 0
     assert _string_module.single_char_repeats("a", "a") == 1
@@ -62,7 +62,7 @@ def test_single_char_repeats():
         _string_module.single_char_repeats("test", "")
 
 
-def test_get_lines():
+def test_get_lines() -> None:
     assert _string_module.get_lines("Line 1\nLine 2\nLine 3") == ["Line 1", "Line 2", "Line 3"]
     assert _string_module.get_lines("Line 1\r\nLine 2\rLine 3") == ["Line 1", "Line 2", "Line 3"]
     assert _string_module.get_lines("Line 1\n\nLine 3") == ["Line 1", "", "Line 3"]
@@ -73,7 +73,7 @@ def test_get_lines():
     assert _string_module.get_lines("Only text", remove_empty_lines=True) == ["Only text"]
 
 
-def test_remove_consecutive_empty_lines():
+def test_remove_consecutive_empty_lines() -> None:
     assert _string_module.remove_consecutive_empty_lines("Line 1\n\n\nLine 2") == "Line 1\nLine 2"
     assert _string_module.remove_consecutive_empty_lines("Line 1\n\n\nLine 2", max_consecutive=1) == "Line 1\n\nLine 2"
     assert _string_module.remove_consecutive_empty_lines("") == ""
@@ -82,7 +82,7 @@ def test_remove_consecutive_empty_lines():
         _string_module.remove_consecutive_empty_lines("test", -1)
 
 
-def test_split_count():
+def test_split_count() -> None:
     assert _string_module.split_count("abcdefghi", 3) == ["abc", "def", "ghi"]
     assert _string_module.split_count("abcdefgh", 3) == ["abc", "def", "gh"]
     assert _string_module.split_count("abc", 3) == ["abc"]

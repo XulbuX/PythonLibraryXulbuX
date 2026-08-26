@@ -4,14 +4,14 @@ import xulbux.file_sys as _file_sys_module
 import pytest
 
 
-def test_remove_non_existent_path(tmp_path: Path):
+def test_remove_non_existent_path(tmp_path: Path) -> None:
     non_existent = tmp_path / "does_not_exist"
     _file_sys_module.remove(str(non_existent))
     _file_sys_module.remove(str(non_existent), only_content=True)
     assert not non_existent.exists()
 
 
-def test_remove_single_file(tmp_path: Path):
+def test_remove_single_file(tmp_path: Path) -> None:
     target_file = tmp_path / "target_to_remove.txt"
     target_file.touch()
     assert target_file.exists()
@@ -20,7 +20,7 @@ def test_remove_single_file(tmp_path: Path):
     assert not target_file.exists()
 
 
-def test_remove_entire_directory(tmp_path: Path):
+def test_remove_entire_directory(tmp_path: Path) -> None:
     dir_to_remove = tmp_path / "directory_to_remove"
     dir_to_remove.mkdir()
     (dir_to_remove / "nested_file.txt").touch()
@@ -31,7 +31,7 @@ def test_remove_entire_directory(tmp_path: Path):
     assert not dir_to_remove.exists()
 
 
-def test_remove_directory_only_content(tmp_path: Path):
+def test_remove_directory_only_content(tmp_path: Path) -> None:
     dir_to_empty = tmp_path / "directory_to_empty"
     dir_to_empty.mkdir()
     (dir_to_empty / "file1.txt").touch()
@@ -43,7 +43,7 @@ def test_remove_directory_only_content(tmp_path: Path):
     assert list(dir_to_empty.iterdir()) == []
 
 
-def test_remove_only_content_on_file_raises_not_a_directory_error(tmp_path: Path):
+def test_remove_only_content_on_file_raises_not_a_directory_error(tmp_path: Path) -> None:
     regular_file = tmp_path / "regular_file.txt"
     regular_file.write_text("sample content")
 
@@ -51,7 +51,7 @@ def test_remove_only_content_on_file_raises_not_a_directory_error(tmp_path: Path
         _file_sys_module.remove(str(regular_file), only_content=True)
 
 
-def test_remove_custom_path_neither_file_nor_dir():
+def test_remove_custom_path_neither_file_nor_dir() -> None:
     class CustomNonFileDirItem:
         def exists(self) -> bool:
             return True
@@ -69,7 +69,7 @@ def test_remove_custom_path_neither_file_nor_dir():
         _file_sys_module.remove("fake_item")
 
 
-def test_remove_failure_raises_runtime_error():
+def test_remove_failure_raises_runtime_error() -> None:
     class UnlinkFailingPath:
         def exists(self) -> bool:
             return True

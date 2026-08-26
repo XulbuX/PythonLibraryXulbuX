@@ -1,7 +1,7 @@
 from xulbux.base.consts import ANSI, CHARS, COLOR
 
 
-def test_color_presets_are_valid_hex():
+def test_color_presets_are_valid_hex() -> None:
     assert COLOR.WHITE == "#F1F2FF"
     assert COLOR.BLACK == "#202125"
     assert COLOR.RED == "#FF606A"
@@ -9,7 +9,7 @@ def test_color_presets_are_valid_hex():
     assert COLOR.BLUE == "#8085FF"
 
 
-def test_chars_constants():
+def test_chars_constants() -> None:
     assert CHARS.DIGITS == "0123456789"
     assert CHARS.FLOAT_DIGITS == ".0123456789"
     assert "#" in CHARS.HEX_DIGITS
@@ -25,7 +25,7 @@ def test_chars_constants():
     assert CHARS.FULL_ASCII == CHARS.DIGITS + CHARS.LETTERS_EXTENDED + CHARS.SPECIAL_ASCII_EXTENDED
 
 
-def test_ansi_escape_constants_and_sequences():
+def test_ansi_escape_constants_and_sequences() -> None:
     assert ANSI.CHAR == "\x1b"
     assert ANSI.CHAR_ESCAPED == r"\x1b"
     assert ANSI.START == "["
