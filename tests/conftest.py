@@ -18,7 +18,15 @@ def tmp_path() -> Generator[Path, None, None]:
 
 
 def _mock_path_new(cls: type[object], *args: object, **kwargs: object) -> object:
+    """Mocks the `__new__` method of `Path` subclasses to prevent errors when creating new instances."""
+
     return object.__new__(cls)
+
+
+def _mock_path_resolve(self: Path, strict: bool = False) -> Path:
+    """Mocks the `resolve` method of `Path` subclasses to return the absolute path without resolving symlinks."""
+
+    return self.absolute()
 
 
 @pytest.fixture
@@ -29,6 +37,7 @@ def mock_os_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("platform.system", lambda: "Windows")
     monkeypatch.setattr("sys.platform", "win32")
     monkeypatch.setattr(WindowsPath, "__new__", _mock_path_new)
+    monkeypatch.setattr(WindowsPath, "resolve", _mock_path_resolve)
 
 
 @pytest.fixture
@@ -39,6 +48,7 @@ def mock_os_linux(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr("sys.platform", "linux")
     monkeypatch.setattr(PosixPath, "__new__", _mock_path_new)
+    monkeypatch.setattr(PosixPath, "resolve", _mock_path_resolve)
 
 
 @pytest.fixture
@@ -49,6 +59,7 @@ def mock_os_darwin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("platform.system", lambda: "Darwin")
     monkeypatch.setattr("sys.platform", "darwin")
     monkeypatch.setattr(PosixPath, "__new__", _mock_path_new)
+    monkeypatch.setattr(PosixPath, "resolve", _mock_path_resolve)
 
 
 # ***************************************************** SUBPROCESS MOCKS ******************************************************

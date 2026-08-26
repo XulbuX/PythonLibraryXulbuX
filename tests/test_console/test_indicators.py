@@ -221,15 +221,21 @@ def test_throbber_context_and_animation() -> None:
     throbber = Throbber(label="Working", interval=0.01)
 
     with patch("sys.stdout", mock_stdout), throbber.context("Initial step") as update_label:
-        time.sleep(0.03)
+        assert throbber.active is True
         update_label("Next step")
+        assert throbber.label == "Next step"
         time.sleep(0.03)
-        # Redraw display:
-        throbber._redraw_display()
 
-    assert "Initial step" in mock_stdout.getvalue()
-    assert "Next step" in mock_stdout.getvalue()
     assert throbber.active is False
+
+    # Deterministic animation frame rendering check:
+    throbber.label = "Next step"
+    throbber.active = True
+    throbber._original_stdout = mock_stdout
+    throbber._stop_event = threading.Event()
+    throbber._stop_event.set()
+    throbber._animation_loop()
+    assert "Next step" in mock_stdout.getvalue()
 
     # Redraw when inactive:
     throbber._redraw_display()

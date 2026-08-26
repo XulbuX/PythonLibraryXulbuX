@@ -45,6 +45,24 @@ def test_deprecated_decorator_on_standard_function() -> None:
     assert old_function() == 42
 
 
+def test_deprecated_branch_for_python_3_13_plus() -> None:
+    mock_dep_factory = MagicMock(return_value=_noop_decorator)
+    mock_warnings = MagicMock(deprecated=mock_dep_factory)
+
+    with (
+        patch.object(sys, "version_info", (3, 13)),
+        patch.dict(sys.modules, {"warnings": mock_warnings}),
+    ):
+        decorator = deprecated("Deprecated in 3.13")
+
+        def sample_func() -> int:
+            return 123
+
+        result = decorator(sample_func)
+        assert result is sample_func
+        mock_dep_factory.assert_called_once_with("Deprecated in 3.13")
+
+
 def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions() -> None:
     class SampleClass:
         pass
