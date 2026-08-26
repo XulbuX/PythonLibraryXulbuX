@@ -32,12 +32,16 @@ def test_get_cwd():
         assert env_path._get(cwd=True) == Path(".")
 
 
+def test_persistent_windows_success():
+    mock_winreg = MagicMock()
+    with patch("sys.platform", "win32"), patch.dict("sys.modules", {"winreg": mock_winreg}):
+        env_path._persistent(Path("test"))
+
 def test_persistent_windows_error():
-    if sys.platform == "win32":
-        mock_winreg = MagicMock()
-        mock_winreg.OpenKey.side_effect = Exception("mocked error")
-        with patch.dict(sys.modules, {"winreg": mock_winreg}), pytest.raises(RuntimeError):
-            env_path._persistent(Path("test"))
+    mock_winreg = MagicMock()
+    mock_winreg.OpenKey.side_effect = Exception("mocked error")
+    with patch("sys.platform", "win32"), patch.dict("sys.modules", {"winreg": mock_winreg}), pytest.raises(RuntimeError):
+        env_path._persistent(Path("test"))
 
 
 def test_persistent_unix():

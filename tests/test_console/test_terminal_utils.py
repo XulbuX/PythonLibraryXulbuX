@@ -48,7 +48,7 @@ def test_cls_clear(monkeypatch: pytest.MonkeyPatch):
     def fake_which(cmd: typing.Any):
         return cmd == "clear"  # pyright:ignore[reportUnknownVariableType]
 
-    monkeypatch.setattr(shutil, "which", fake_which)  # pyright:ignore[reportUnknownArgumentType]
+    monkeypatch.setattr("xulbux.console._shutil.which", fake_which)  # pyright:ignore[reportUnknownArgumentType]
     called = []
     import subprocess
 

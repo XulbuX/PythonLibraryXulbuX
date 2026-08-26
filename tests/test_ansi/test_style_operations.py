@@ -89,11 +89,18 @@ def test_print_exit():
     assert file.getvalue() == "a\n"
 
 
+def test_config_terminal_posix():
+    from unittest.mock import patch
+    import xulbux.ansi
+    with patch("xulbux.ansi._os.name", "posix"):
+        xulbux.ansi._terminal_ansi_configured = False
+        xulbux.ansi._config_terminal()
+
 def test_config_terminal_windows_success():
     # 1943->1953:
     from unittest.mock import patch
 
-    with patch("xulbux.ansi._os.name", "posix"):
+    with patch("xulbux.ansi._os.name", "nt"), patch("xulbux.ansi._ctypes"):
         xulbux.ansi._terminal_ansi_configured = False
         xulbux.ansi._config_terminal()
 

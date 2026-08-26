@@ -12,6 +12,11 @@ def test_noop_decorator():
     assert _noop_decorator(dummy) is dummy
 
 
+def test_mypyc_attr_success():
+    dec = mypyc_attr(native_class=False)
+    def dummy(): pass
+    assert dec(dummy) is dummy
+
 def test_mypyc_attr_import_error():
     # Force `ImportError` on `mypy_extensions`:
     with patch.dict(sys.modules, {"mypy_extensions": None}):

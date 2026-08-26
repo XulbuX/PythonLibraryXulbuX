@@ -114,3 +114,18 @@ def test_find_path_no_drive_absolute():
         helper = _ExtendPathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
         with contextlib.suppress(Exception):
             helper()
+
+def test_extend_path_helper_windows_drive():
+    from unittest.mock import patch, MagicMock
+    from xulbux.file_sys import _ExtendPathHelper
+    from pathlib import Path
+    
+    mock_path = MagicMock()
+    mock_path.is_absolute.return_value = True
+    mock_path.drive = "C:"
+    mock_path.parts = ["C:\\", "foo"]
+    
+    with patch("xulbux.file_sys.Path", side_effect=lambda *args: mock_path if not args else Path(*args)) as mock_Path:
+        helper = _ExtendPathHelper(mock_path, [], fuzzy_match=False, raise_error=False)
+        helper()
+        assert len(helper.search_dirs) > 0

@@ -75,14 +75,12 @@ def test_styledtext_render_fallback():
 
 
 def test_config_terminal_windows_error():
-    import os
-
-    if os.name == "nt":
-        with patch("ctypes.windll.kernel32.GetConsoleMode", side_effect=Exception):
-            import xulbux.ansi
-
-            xulbux.ansi._terminal_ansi_configured = False
-            _config_terminal()
+    from unittest.mock import patch
+    import xulbux.ansi
+    with patch("xulbux.ansi._os.name", "nt"), patch("xulbux.ansi._ctypes") as mock_ctypes:
+        mock_ctypes.windll.kernel32.GetConsoleMode.side_effect = Exception
+        xulbux.ansi._terminal_ansi_configured = False
+        _config_terminal()
 
 
 def test_build_open_close_bg_color():

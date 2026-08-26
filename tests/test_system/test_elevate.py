@@ -12,14 +12,14 @@ def test_elevate_windows_success(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell_execute,
+        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=42))))) as mock_ctypes,
     ):
         with pytest.raises(SystemExit) as exc_info:
             _system_module.elevate(win_title="My Title", args=["--arg1", "val1"])
         assert exc_info.value.code == 0
 
-        mock_shell_execute.assert_called_once()
-        args_passed = mock_shell_execute.call_args[0][3]
+        mock_ctypes.windll.shell32.ShellExecuteW.assert_called_once()
+        args_passed = mock_ctypes.windll.shell32.ShellExecuteW.call_args[0][3]
         assert "My Title" in args_passed
         assert "--arg1 val1" in args_passed
 
@@ -28,13 +28,13 @@ def test_elevate_windows_no_title(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell_execute,
+        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=42))))) as mock_ctypes,
     ):
         with pytest.raises(SystemExit):
             _system_module.elevate()
 
-        mock_shell_execute.assert_called_once()
-        args_passed = mock_shell_execute.call_args[0][3]
+        mock_ctypes.windll.shell32.ShellExecuteW.assert_called_once()
+        args_passed = mock_ctypes.windll.shell32.ShellExecuteW.call_args[0][3]
         assert "SetConsoleTitleW" not in args_passed
 
 
@@ -42,7 +42,7 @@ def test_elevate_windows_failure(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(_system_module._os, "name", "nt")
     with (
         patch("xulbux.system.is_elevated", return_value=False),
-        patch("xulbux.system._ctypes.windll.shell32.ShellExecuteW", return_value=5),
+        patch("xulbux.system._ctypes", MagicMock(windll=MagicMock(shell32=MagicMock(ShellExecuteW=MagicMock(return_value=5))))),
         pytest.raises(PermissionError, match="Failed to launch elevated process"),
     ):
         _system_module.elevate()
