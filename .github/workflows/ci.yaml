@@ -43,7 +43,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .[dev]
-          pip install ruff pyright pytest
 
       - name: Validate code with Ruff
         run: |

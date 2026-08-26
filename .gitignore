@@ -5,6 +5,7 @@ __pypackages__/
 .pytest_cache/
 .pytest_tmp/
 .ruff_cache/
+.coverage
 *.py[cdio]
 *$py.class
 

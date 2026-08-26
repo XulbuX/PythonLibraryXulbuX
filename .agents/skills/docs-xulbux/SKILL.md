@@ -29,7 +29,7 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
 6. **Styling & Tags:**
    - **Bold:** Use Markdown `**bold text**`.
    - **Italics:** Do **NOT** use italics (it breaks in some IDEs).
-   - **Inline Code:** Use backticks `` ` `` for variables and inline code.
+   - **Inline Code/Expressions:** Use backticks `` ` `` for variables, expression parts, and inline code.
    - **Headers:** Use `#### Some Title` (Markdown H4) only for section headers, and only as the first thing inside a docstring's section.
    - **HTML:** Do NOT use any HTML tags besides `<br>` and the special docs components defined below.
 
@@ -65,6 +65,7 @@ Raises `SomeError` if some condition is met during execution.\n
 ### Module Docstrings
 
 The HR and text width rules above do **NOT** apply to module-level docstrings (the docstrings placed at the very top of a module file):
+
 - **Text Width:** Content in module docstrings has a maximum width of **127 characters** (matching the repo's max linting line-length).
 - **Horizontal Rules:** Use standard Markdown `---` (three characters wide) with an empty line before and after them, following standard Markdown linting rules.
 

@@ -1,4 +1,17 @@
-from typing import TYPE_CHECKING, Any, Final
+# ruff: file-ignore[non-empty-init-module]
+from __future__ import annotations
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from . import ansi, cli, code, color, console, data, env_path, file, file_sys, format_codes, json, regex, string, system
+    from .ansi import S, StyledText, Term
+    from .color import hexa, hsla, rgba
+    from .console import ArgumentParser, ParsedArgData, ParsedArgs, ProgressBar, Throbber
+    from .format_codes import FormatCodes
+    from .regex import LazyRegex
+
+    from typing import Any, Final
 
 __package_name__: Final[str] = "xulbux"
 __version__: Final[str] = "2.0.0"
@@ -16,21 +29,15 @@ __requires_python__: Final[str] = ">=3.10.0"
 __dependencies__: Final[list[str]] = [
     "prompt_toolkit>=3.0.41",
     "regex>=2023.10.3",
-    "typing-extensions>=4.6.0; python_version < '3.13'",
+    "typing-extensions>=4.10.0; python_version < '3.13'",
 ]
-
-if TYPE_CHECKING:
-    from . import ansi, code, color, console, data, env_path, file, file_sys, json, regex, string, system
-    from .ansi import S, StyledText, Term
-    from .color import hexa, hsla, rgba
-    from .console import ArgumentParser, ProgressBar, Throbber
-    from .format_codes import FormatCodes
-    from .regex import LazyRegex
 
 __all__ = [
     "ArgumentParser",
     "FormatCodes",
     "LazyRegex",
+    "ParsedArgData",
+    "ParsedArgs",
     "ProgressBar",
     "S",
     "StyledText",
@@ -48,6 +55,7 @@ __all__ = [
     "__url__",
     "__version__",
     "ansi",
+    "cli",
     "code",
     "color",
     "console",
@@ -55,6 +63,7 @@ __all__ = [
     "env_path",
     "file",
     "file_sys",
+    "format_codes",
     "hexa",
     "hsla",
     "json",
@@ -64,35 +73,49 @@ __all__ = [
     "system",
 ]
 
+_SUBMODULES: Final[dict[str, str]] = {
+    "S": "ansi",
+    "StyledText": "ansi",
+    "Term": "ansi",
+    "hexa": "color",
+    "hsla": "color",
+    "rgba": "color",
+    "ArgumentParser": "console",
+    "ParsedArgData": "console",
+    "ParsedArgs": "console",
+    "ProgressBar": "console",
+    "Throbber": "console",
+    "FormatCodes": "format_codes",
+    "LazyRegex": "regex",
+}
+
 
 def __getattr__(name: str) -> Any:
+    """Lazy-loads submodules and submodule attributes when accessed.<br>
+    This allows for faster initial import times and reduces memory usage.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `name` – The name of the submodule or attribute to access."""
+
     if name in __all__:
         import importlib
 
-        # Map specific exported objects to their submodules:
-        submodules = {
-            "S": "ansi",
-            "StyledText": "ansi",
-            "Term": "ansi",
-            "hexa": "color",
-            "hsla": "color",
-            "rgba": "color",
-            "ArgumentParser": "console",
-            "ProgressBar": "console",
-            "Throbber": "console",
-            "FormatCodes": "format_codes",
-            "LazyRegex": "regex",
-        }
+        if name in _SUBMODULES:
+            module = importlib.import_module(f".{_SUBMODULES[name]}", package=__package__)
+            globals()[name] = (val := getattr(module, name))
 
-        if name in submodules:
-            module = importlib.import_module(f".{submodules[name]}", package=__package__)
-            return getattr(module, name)
+            return val
 
-        # Otherwise, it must be a top-level module (e.g., `console`, `string`, …).
-        return importlib.import_module(f".{name}", package=__package__)
+        # Otherwise, it must be a top-level module (e.g., `console`, `string`, …):
+        module = importlib.import_module(f".{name}", package=__package__)
+        globals()[name] = module
+
+        return module
 
     raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:
+    """Returns the list of attributes available in this module,<br>
+    including submodules and submodule attributes."""
+
     return __all__
