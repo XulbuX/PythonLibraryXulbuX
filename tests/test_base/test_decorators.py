@@ -1,6 +1,6 @@
 import sys
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from xulbux.base.decorators import _noop_decorator, deprecated, mypyc_attr
 
 
@@ -12,12 +12,18 @@ def test_noop_decorator_returns_same_object() -> None:
 
 
 def test_mypyc_attr_with_installed_mypy_extensions() -> None:
-    decorator = mypyc_attr(native_class=False)
+    mock_module = MagicMock()
+    mock_decorator = MagicMock(side_effect=_noop_decorator)
+    mock_module.mypyc_attr.return_value = mock_decorator
 
-    class SampleClass:
-        pass
+    with patch.dict(sys.modules, {"mypy_extensions": mock_module}):
+        decorator = mypyc_attr(native_class=False)
+        mock_module.mypyc_attr.assert_called_once_with(native_class=False)
 
-    assert decorator(SampleClass) is SampleClass
+        class SampleClass:
+            pass
+
+        assert decorator(SampleClass) is SampleClass
 
 
 def test_mypyc_attr_fallback_when_mypy_extensions_missing() -> None:

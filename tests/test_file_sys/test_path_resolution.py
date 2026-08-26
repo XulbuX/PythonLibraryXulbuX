@@ -12,11 +12,11 @@ import pytest
 
 @pytest.fixture
 def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
-    mock_cwd = tmp_path / "mock_cwd"
-    mock_script_dir = tmp_path / "mock_script_dir"
-    mock_home = tmp_path / "mock_home"
-    mock_temp = tmp_path / "mock_temp"
-    mock_search_in = tmp_path / "mock_search_in"
+    mock_cwd = (tmp_path / "mock_cwd").resolve()
+    mock_script_dir = (tmp_path / "mock_script_dir").resolve()
+    mock_home = (tmp_path / "mock_home").resolve()
+    mock_temp = (tmp_path / "mock_temp").resolve()
+    mock_search_in = (tmp_path / "mock_search_in").resolve()
 
     for path_item in [mock_cwd, mock_script_dir, mock_home, mock_temp, mock_search_in]:
         path_item.mkdir()
@@ -29,7 +29,7 @@ def setup_test_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> d
     (mock_search_in / "custom_file.dat").touch()
     (mock_search_in / "TypoDir").mkdir()
     (mock_search_in / "TypoDir" / "file_in_typo.txt").touch()
-    abs_file = mock_cwd / "absolute_file.txt"
+    abs_file = (mock_cwd / "absolute_file.txt").resolve()
     abs_file.touch()
 
     monkeypatch.setattr(Path, "cwd", staticmethod(lambda: mock_cwd))

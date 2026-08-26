@@ -11,7 +11,7 @@ def tmp_path() -> Generator[Path, None, None]:
     """Provides access to a temporary directory for testing purposes."""
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        yield Path(temp_dir)
+        yield Path(temp_dir).resolve()
 
 
 # ********************************************************* OS MOCKS **********************************************************
