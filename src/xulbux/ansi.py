@@ -188,6 +188,7 @@ import ctypes as _ctypes
 import os as _os
 import sys as _sys
 import textwrap as _textwrap
+from contextlib import suppress as _suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Self, TextIO, cast, overload
 
@@ -1941,14 +1942,12 @@ def _config_terminal() -> None:
     _sys.stdout.flush()
 
     if _os.name == "nt":
-        try:
-            kernel32 = _ctypes.windll.kernel32  # type:ignore
-            handle = kernel32.GetStdHandle(-11)  # type:ignore
-            mode = _ctypes.c_ulong()  # type:ignore
-            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # type:ignore
-            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # type:ignore
-        except Exception:
-            pass
+        with _suppress(Exception):
+            kernel32 = _ctypes.windll.kernel32  # pyright:ignore
+            handle = kernel32.GetStdHandle(-11)  # pyright:ignore
+            mode = _ctypes.c_ulong()  # pyright:ignore
+            kernel32.GetConsoleMode(handle, _ctypes.byref(mode))  # pyright:ignore
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)  # pyright:ignore
 
     _terminal_ansi_configured = True
 

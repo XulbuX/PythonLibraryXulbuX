@@ -35,6 +35,7 @@ import threading as _threading
 import time as _time
 from collections.abc import Callable, Generator, Iterable, Sequence
 from contextlib import contextmanager, suppress
+from contextlib import suppress as _suppress
 from pathlib import Path
 from typing import Any, Final, Literal, NoReturn, TextIO, TypedDict, cast, overload
 import prompt_toolkit as _pt
@@ -127,8 +128,8 @@ def _is_number(text: str, /) -> bool:
         try:
             float(text)
             return True
-        except ValueError:  # pragma:no-cover
-            return False  # pragma:no-cover
+        except ValueError:
+            return False
 
     return False
 
@@ -534,11 +535,11 @@ class ArgumentParser:
         else:
             output.append(box_fg_st("▄" * console_width))
 
-            if title_st:  # pragma:no-cover
+            if title_st:
                 for title_line in _wrap_text(S.BOLD(title_st), inner_width):
                     output.append(box_bg_st("  ", title_line, " " * max(0, inner_width - len(title_line)), "  "))
 
-            if sub_st:  # pragma:no-cover
+            if sub_st:
                 for subtitle_line in _wrap_text(sub_st, inner_width):
                     output.append(box_bg_st("  ", subtitle_line, " " * max(0, inner_width - len(subtitle_line)), "  "))
 
@@ -598,7 +599,7 @@ class ArgumentParser:
         """Internal method to collect help items for options."""
 
         if not has_opts and not self.help_opts:
-            return []  # pragma:no-cover
+            return []
 
         opts_items: list[tuple[StyledText, Renderable]] = [
             (self._opts_to_st(self.help_opts), "Show this help message and exit")
@@ -697,19 +698,19 @@ class ArgumentParser:
             opt_prefix, opt_val = token.split(self.opt_value_sep, 1)
             if opt_prefix in all_opts or ((self.intermixed or not state[1]) and self._opt_pattern.fullmatch(opt_prefix)):
                 return StyledText(S.BR.BLUE(opt_prefix, S.DIM(self.opt_value_sep), opt_val)).ansi
-            state[1] = True  # pragma:no-cover
-            return StyledText(S.BR.CYAN(token)).ansi  # pragma:no-cover
+            state[1] = True
+            return StyledText(S.BR.CYAN(token)).ansi
 
         if token in all_opts:
             if not self.intermixed and state[1]:
-                return StyledText(S.BR.CYAN(token)).ansi  # pragma:no-cover
+                return StyledText(S.BR.CYAN(token)).ansi
             if token in value_opts:
                 state[0] = True
             return StyledText(S.BR.BLUE(token)).ansi
 
         if _is_number(token):
-            state[1] = True  # pragma:no-cover
-            return StyledText(S.BR.CYAN(token)).ansi  # pragma:no-cover
+            state[1] = True
+            return StyledText(S.BR.CYAN(token)).ansi
 
         if self._opt_pattern.fullmatch(token):
             if not self.intermixed and state[1]:
@@ -906,12 +907,12 @@ class ArgumentParser:
             opt_details: list[Renderable] = [f"Option '{potential_opt}' requires a value"]
             extra: list[str] = []
 
-            if cfg["expects_value"]:  # pragma:no-cover
+            if cfg["expects_value"]:
                 extra.append(f"expected <{cfg['expects_value']}>")
             if cfg["choices"]:
                 extra.append(f"choices: {', '.join(cfg['choices'])}")
 
-            if extra:  # pragma:no-cover
+            if extra:
                 opt_details.append(S.DIM(f" ({'; '.join(extra)})"))
 
             self._error(StyledText(*opt_details))
@@ -982,7 +983,7 @@ class ArgumentParser:
                 sub_nargs = sub_cfg["nargs"]
                 if isinstance(sub_nargs, int):
                     total += sub_nargs
-                elif sub_nargs == "+":  # pragma:no-cover
+                elif sub_nargs == "+":
                     total += 1
 
         return total
@@ -1025,11 +1026,11 @@ class ArgumentParser:
             parsed_data[name]["exists"] = False
 
             if cfg["required"]:
-                arg_details_req: list[Renderable] = [f"Missing required argument '{name}'"]  # pragma:no-cover
-                if cfg["choices"]:  # pragma:no-cover
-                    arg_details_req.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))  # pragma:no-cover
-                # pragma:no-cover
-                self._error(StyledText(*arg_details_req))  # pragma:no-cover
+                arg_details_req: list[Renderable] = [f"Missing required argument '{name}'"]
+                if cfg["choices"]:
+                    arg_details_req.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
+
+                self._error(StyledText(*arg_details_req))
 
             return token_idx
 
@@ -1069,11 +1070,11 @@ class ArgumentParser:
         for alias, cfg in self._arg_configs.items():
             if cfg["required"] and not parsed_data[alias]["exists"]:
                 if cfg["is_arg"]:
-                    arg_details: list[Renderable] = [f"Missing required argument '{alias}'"]  # pragma:no-cover
-                    if cfg["choices"]:  # pragma:no-cover
-                        arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))  # pragma:no-cover
-                    # pragma:no-cover
-                    self._error(StyledText(*arg_details))  # pragma:no-cover
+                    arg_details: list[Renderable] = [f"Missing required argument '{alias}'"]
+                    if cfg["choices"]:
+                        arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
+
+                    self._error(StyledText(*arg_details))
 
                 else:
                     self._error(
@@ -1084,12 +1085,12 @@ class ArgumentParser:
                     )
 
             if cfg["choices"] and parsed_data[alias]["exists"]:
-                for val in parsed_data[alias]["values"]:  # pragma:no-cover
-                    if val not in cfg["choices"]:  # pragma:no-cover
+                for val in parsed_data[alias]["values"]:
+                    if val not in cfg["choices"]:
                         choice_details: list[Renderable] = [f"Invalid choice '{val}' for '{alias}'"]
-                        if cfg["opts"] is not None:  # pragma:no-cover
-                            choice_details.append(S.DIM(f" ({', '.join(self._sort_opts(cfg['opts']))})"))  # pragma:no-cover
-                        choice_details.append(f"\nAllowed: {', '.join(cfg['choices'])}")  # pragma:no-cover
+                        if cfg["opts"] is not None:
+                            choice_details.append(S.DIM(f" ({', '.join(self._sort_opts(cfg['opts']))})"))
+                        choice_details.append(f"\nAllowed: {', '.join(cfg['choices'])}")
 
                         self._error(StyledText(*choice_details))
 
@@ -1203,19 +1204,19 @@ def supports_color() -> bool:
     if not is_tty():
         return False
 
-    if _os.name == "nt":  # pragma:no-cover
-        # Check if VT100 mode is enabled on Windows:  # pragma:no-cover
-        with suppress(Exception):  # pragma:no-cover
-            kernel32 = _ctypes.windll.kernel32  # type:ignore  # pragma:no-cover
-            handle = kernel32.GetStdHandle(-11)  # type:ignore  # pragma:no-cover
-            mode = _ctypes.c_ulong()  # type:ignore  # pragma:no-cover
-            # pragma:no-cover
-            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # type:ignore  # pragma:no-cover
-                return (mode.value & 0x0004) != 0  # pragma:no-cover
-        # pragma:no-cover
-        return False  # pragma:no-cover
-    # pragma:no-cover
-    return _os.getenv("TERM", "").lower() not in {"", "dumb"}  # pragma:no-cover
+    if _os.name == "nt":
+        # Check if VT100 mode is enabled on Windows:
+        with suppress(Exception):
+            kernel32 = _ctypes.windll.kernel32  # pyright:ignore
+            handle = kernel32.GetStdHandle(-11)  # pyright:ignore
+            mode = _ctypes.c_ulong()  # pyright:ignore
+
+            if kernel32.GetConsoleMode(handle, _ctypes.byref(mode)):  # pyright:ignore
+                return (mode.value & 0x0004) != 0
+
+        return False
+
+    return _os.getenv("TERM", "").lower() not in {"", "dumb"}
 
 
 @overload
@@ -1742,11 +1743,11 @@ def log_box_bordered(
     if border_chars is not None:
         if len(border_chars) != 11:
             raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
-        for char in border_chars:  # pragma:no-cover
-            if len(char) != 1:  # pragma:no-cover
+        for char in border_chars:
+            if len(char) != 1:
                 raise ValueError(f"List values must be single-char strings, got {border_chars!r}")
-    # pragma:no-cover
-    border_open = StyledText(_as_fg_style(border_style, param_name="border_style")).ansi  # pragma:no-cover
+
+    border_open = StyledText(_as_fg_style(border_style, param_name="border_style")).ansi
     content_open = (
         StyledText(_as_fg_style(default_color, param_name="default_color")).ansi if default_color is not None else ""
     )
@@ -1824,7 +1825,7 @@ def confirm(
     )
 
     if end:
-        _to_styled_text(end).print(end="", flush=True)  # pragma:no-cover
+        _to_styled_text(end).print(end="", flush=True)
 
     return confirmed
 
@@ -1984,9 +1985,9 @@ def input(
     if mask_char is not None and len(mask_char) != 1:
         raise ValueError(f"The 'mask_char' parameter must be a single character, got {mask_char!r}")
     if min_len is not None and min_len < 0:
-        raise ValueError(f"The 'min_len' parameter must be a non-negative integer, got {min_len!r}")  # pragma:no-cover
+        raise ValueError(f"The 'min_len' parameter must be a non-negative integer, got {min_len!r}")
     if max_len is not None and max_len < 0:
-        raise ValueError(f"The 'max_len' parameter must be a non-negative integer, got {max_len!r}")  # pragma:no-cover
+        raise ValueError(f"The 'max_len' parameter must be a non-negative integer, got {max_len!r}")
 
     helper = _ConsoleInputHelper(
         mask_char=mask_char,
@@ -2024,22 +2025,22 @@ def input(
     session.prompt()
     StyledText(end).print(end="", flush=True)
 
-    if (result_text := helper.get_text()) in {"", None}:  # pragma:no-cover
-        if default_val is not None:  # pragma:no-cover
-            return default_val  # pragma:no-cover
-        result_text = ""  # pragma:no-cover
-    # pragma:no-cover
-    if output_type is str:  # pragma:no-cover
+    if (result_text := helper.get_text()) in {"", None}:
+        if default_val is not None:
+            return default_val
+        result_text = ""
+
+    if output_type is str:
         return result_text
 
     else:
-        try:  # pragma:no-cover
-            return output_type(result_text)  # pragma:no-cover
-        # pragma:no-cover
-        except (ValueError, TypeError):  # pragma:no-cover
-            if default_val is not None:  # pragma:no-cover
-                return default_val  # pragma:no-cover
-            raise  # pragma:no-cover
+        try:
+            return output_type(result_text)
+
+        except (ValueError, TypeError):
+            if default_val is not None:
+                return default_val
+            raise
 
 
 def _read_single_key() -> None:
@@ -2048,27 +2049,25 @@ def _read_single_key() -> None:
 
     if not _sys.stdin.isatty():
         _sys.stdin.readline()
-        return  # pragma:no-cover
-    # pragma:no-cover
-    if _sys.platform == "win32":  # pragma:no-cover
-        import msvcrt as _msvcrt  # type:ignore[import-not-found]  # pragma:no-cover
+        return
 
-        # pragma:no-cover
-        _msvcrt.getch()  # type:ignore[attr-defined]  # pragma:no-cover
-    # pragma:no-cover
-    else:  # pragma:no-cover
-        import termios as _termios  # type:ignore[import-not-found]  # pragma:no-cover
-        import tty as _tty  # type:ignore[import-not-found]  # pragma:no-cover
+    if _sys.platform == "win32":
+        import msvcrt as _msvcrt  # pyright:ignore
 
-        # pragma:no-cover
-        fd = _sys.stdin.fileno()  # pragma:no-cover
-        old_settings = _termios.tcgetattr(fd)  # type:ignore[attr-defined]  # pragma:no-cover
-        # pragma:no-cover
-        try:  # pragma:no-cover
-            _tty.setraw(fd)  # type:ignore[attr-defined]  # pragma:no-cover
-            _sys.stdin.read(1)  # pragma:no-cover
-        finally:  # pragma:no-cover
-            _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type:ignore[attr-defined]  # pragma:no-cover
+        _msvcrt.getch()  # pyright:ignore
+
+    else:
+        import termios as _termios  # pyright:ignore
+        import tty as _tty  # pyright:ignore
+
+        fd = _sys.stdin.fileno()
+        old_settings = _termios.tcgetattr(fd)  # type:ignore[attr-defined]
+
+        try:
+            _tty.setraw(fd)  # type:ignore[attr-defined]
+            _sys.stdin.read(1)
+        finally:
+            _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type:ignore[attr-defined]
 
 
 def _resolve_title_colors(title_bg_color: object, /) -> tuple[AnyStyle, BaseStyle]:
@@ -2081,8 +2080,8 @@ def _resolve_title_colors(title_bg_color: object, /) -> tuple[AnyStyle, BaseStyl
         return title_bg_color, S.BLACK
 
     if _color_module.is_valid_rgba(title_bg_color) or _color_module.is_valid_hexa(title_bg_color):
-        hexa_bg = _color_module.to_hexa(title_bg_color)  # pragma:no-cover
-        return S.BG.hex(str(hexa_bg)), S.hex(str(_color_module.text_color_for_on_bg(hexa_bg)))  # pragma:no-cover
+        hexa_bg = _color_module.to_hexa(title_bg_color)
+        return S.BG.hex(str(hexa_bg)), S.hex(str(_color_module.text_color_for_on_bg(hexa_bg)))
 
     raise ValueError(
         "The 'title_bg_color' parameter must be a valid background style (e.g., 'S.BG.BLUE'), "
@@ -2127,7 +2126,7 @@ def _persist_style(ansi_text: str, style_open: str, /) -> str:
     if not style_open or ANSI.CHAR not in ansi_text:
         return ansi_text
 
-    return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", r"\\"), ansi_text)  # pragma:no-cover
+    return ANSI.SEQ_PATTERN.sub(r"\g<0>" + style_open.replace("\\", r"\\"), ansi_text)
 
 
 def _render_log_title(text: str, style: AnyStyle, /) -> str:
@@ -2140,10 +2139,10 @@ def _render_log_title(text: str, style: AnyStyle, /) -> str:
 
     if (cached := _LOG_TITLE_CACHE.get(key)) is None:
         cached = StyledText(style(text)).ansi
-        if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:  # pragma:no-cover
-            _LOG_TITLE_CACHE[key] = cached  # pragma:no-cover
-    # pragma:no-cover
-    return cached  # pragma:no-cover
+        if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:
+            _LOG_TITLE_CACHE[key] = cached
+
+    return cached
 
 
 def _split_hr_parts(val_str: str, /) -> list[str]:
@@ -2158,22 +2157,22 @@ def _split_hr_parts(val_str: str, /) -> list[str]:
         should_split_after = end < len(val_str) and val_str[end] != "\n"
 
         if should_split_before:
-            if start > current_pos:  # pragma:no-cover
-                result_parts.append(val_str[current_pos:start])  # pragma:no-cover
-            if should_split_after:  # pragma:no-cover
-                result_parts.append(match.group())  # pragma:no-cover
-                current_pos = end  # pragma:no-cover
-            else:  # pragma:no-cover
-                current_pos = start  # pragma:no-cover
+            if start > current_pos:
+                result_parts.append(val_str[current_pos:start])
+            if should_split_after:
+                result_parts.append(match.group())
+                current_pos = end
+            else:
+                current_pos = start
 
         elif should_split_after:
-            result_parts.append(val_str[current_pos:end])  # pragma:no-cover
-            current_pos = end  # pragma:no-cover
+            result_parts.append(val_str[current_pos:end])
+            current_pos = end
 
-    if current_pos < len(val_str):  # pragma:no-cover
-        result_parts.append(val_str[current_pos:])  # pragma:no-cover
-    if not result_parts:  # pragma:no-cover
-        result_parts.append(val_str)  # pragma:no-cover
+    if current_pos < len(val_str):
+        result_parts.append(val_str[current_pos:])
+    if not result_parts:
+        result_parts.append(val_str)
 
     return result_parts
 
@@ -2189,13 +2188,11 @@ def _prepare_log_box(
 
     for val in values:
         if is_text_renderable(val) and not isinstance(val, str):
-            st = (
-                val if isinstance(val, StyledText) else (StyledText(*val) if isinstance(val, tuple) else StyledText(val))
-            )  # pragma:no-cover
-            for ansi_line, plain_line in zip(st.ansi.split("\n"), st.raw.split("\n"), strict=False):  # pragma:no-cover
-                ansi_lines.append(ansi_line)  # pragma:no-cover
-                plain_lines.append(plain_line)  # pragma:no-cover
-            continue  # pragma:no-cover
+            st = val if isinstance(val, StyledText) else (StyledText(*val) if isinstance(val, tuple) else StyledText(val))
+            for ansi_line, plain_line in zip(st.ansi.split("\n"), st.raw.split("\n"), strict=False):
+                ansi_lines.append(ansi_line)
+                plain_lines.append(plain_line)
+            continue
 
         val_str: str = str(val)
         parts: list[str] = _split_hr_parts(val_str) if has_rules else [val_str]
@@ -2254,36 +2251,28 @@ class _ConsoleInputHelper:
 
             toolbar_msgs: list[str] = []
             if self.max_len and len(text_to_check) > self.max_len:
-                toolbar_msgs.append(
-                    StyledText((S.BOLD | S.hex("#FFF") | S.BG.RED)(" Text too long! ")).ansi
-                )  # pragma:no-cover
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#FFF") | S.BG.RED)(" Text too long! ")).ansi)
             if self.validator and text_to_check and (validation_error_msg := self.validator(text_to_check)) not in {"", None}:
-                toolbar_msgs.append(  # pragma:no-cover
+                toolbar_msgs.append(
                     StyledText((S.BOLD | S.hex("#000") | S.BG.BR.RED), f" {validation_error_msg} ", S.RESET_BG, sep="").ansi
                 )
             if self.filtered_chars:
-                plural = "" if len(char_list := "".join(sorted(self.filtered_chars))) == 1 else "s"  # pragma:no-cover
-                toolbar_msgs.append(  # pragma:no-cover
-                    StyledText(
-                        (S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Char{plural} '{char_list}' not allowed )")
-                    ).ansi  # pragma:no-cover
-                )  # pragma:no-cover
-                self.filtered_chars.clear()  # pragma:no-cover
+                plural = "" if len(char_list := "".join(sorted(self.filtered_chars))) == 1 else "s"
+                toolbar_msgs.append(
+                    StyledText((S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Char{plural} '{char_list}' not allowed )")).ansi
+                )
+                self.filtered_chars.clear()
             if self.min_len and len(text_to_check) < self.min_len:
-                toolbar_msgs.append(  # pragma:no-cover
+                toolbar_msgs.append(
                     StyledText(
                         (S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Need {self.min_len - len(text_to_check)} more chars )")
                     ).ansi
                 )
             if self.tried_pasting:
-                toolbar_msgs.append(
-                    StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Pasting disabled )")).ansi
-                )  # pragma:no-cover
-                self.tried_pasting = False  # pragma:no-cover
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Pasting disabled )")).ansi)
+                self.tried_pasting = False
             if self.max_len and len(text_to_check) == self.max_len:
-                toolbar_msgs.append(
-                    StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Maximum length reached )")).ansi
-                )  # pragma:no-cover
+                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Maximum length reached )")).ansi)
 
             return _pt.formatted_text.ANSI(" ".join(toolbar_msgs))
 
@@ -2296,81 +2285,69 @@ class _ConsoleInputHelper:
         removed_chars: set[str] = set()
 
         if not text:
-            return "", removed_chars  # pragma:no-cover
+            return "", removed_chars
 
         processed_text = "".join([char for char in text if ord(char) >= 32])
 
-        if self.allowed_chars is not CHARS.ALL:  # pragma:no-cover
+        if self.allowed_chars is not CHARS.ALL:
             filtered_text = ""
             for char in processed_text:
-                if char in cast("str", self.allowed_chars):  # pragma:no-cover
-                    filtered_text += char  # pragma:no-cover
-                else:  # pragma:no-cover
-                    removed_chars.add(char)  # pragma:no-cover
+                if char in cast("str", self.allowed_chars):
+                    filtered_text += char
+                else:
+                    removed_chars.add(char)
             processed_text = filtered_text
 
         if self.max_len:
             if (remaining_space := self.max_len - len(self.result_text)) > 0:
-                if len(processed_text) > remaining_space:  # pragma:no-cover
-                    processed_text = processed_text[:remaining_space]  # pragma:no-cover
-            else:  # pragma:no-cover
-                processed_text = ""  # pragma:no-cover
-        # pragma:no-cover
-        return processed_text, removed_chars  # pragma:no-cover
+                if len(processed_text) > remaining_space:
+                    processed_text = processed_text[:remaining_space]
+            else:
+                processed_text = ""
+
+        return processed_text, removed_chars
 
     def insert_text_event(self, event: KeyPressEvent, /) -> None:
         """Handles text insertion events (typing/pasting)."""
 
-        try:
+        with _suppress(Exception):
             if not (insert_text := event.data):
-                return  # pragma:no-cover
+                return
 
             buffer = event.app.current_buffer
             cursor_pos = buffer.cursor_position
             insert_text, filtered_chars = self.process_insert_text(insert_text)
-            self.filtered_chars.update(filtered_chars)  # pragma:no-cover
-            # pragma:no-cover
-            if insert_text:  # pragma:no-cover
-                self.result_text = (
-                    self.result_text[:cursor_pos] + insert_text + self.result_text[cursor_pos:]
-                )  # pragma:no-cover
-                if self.mask_char:  # pragma:no-cover
-                    buffer.insert_text(self.mask_char[0] * len(insert_text))  # pragma:no-cover
-                else:  # pragma:no-cover
-                    buffer.insert_text(insert_text)  # pragma:no-cover
+            self.filtered_chars.update(filtered_chars)
 
-        except Exception:
-            pass
+            if insert_text:
+                self.result_text = self.result_text[:cursor_pos] + insert_text + self.result_text[cursor_pos:]
+                if self.mask_char:
+                    buffer.insert_text(self.mask_char[0] * len(insert_text))
+                else:
+                    buffer.insert_text(insert_text)
 
     def remove_text_event(self, event: KeyPressEvent, /, *, is_backspace: bool = False) -> None:
         """Handles text removal events (backspace/delete)."""
 
-        try:
+        with _suppress(Exception):
             buffer = event.app.current_buffer
             cursor_pos = buffer.cursor_position
             has_selection = buffer.selection_state is not None
 
             if has_selection:
                 start, end = buffer.document.selection_range()
-                self.result_text = self.result_text[:start] + self.result_text[end:]  # pragma:no-cover
-                buffer.cursor_position = start  # pragma:no-cover
-                buffer.delete(end - start)  # pragma:no-cover
-            else:  # pragma:no-cover
-                if is_backspace:  # pragma:no-cover
-                    if cursor_pos > 0:  # pragma:no-cover
-                        self.result_text = (
-                            self.result_text[: cursor_pos - 1] + self.result_text[cursor_pos:]
-                        )  # pragma:no-cover
-                        buffer.delete_before_cursor(1)  # pragma:no-cover
-                else:  # pragma:no-cover
-                    if cursor_pos < len(self.result_text):  # pragma:no-cover
-                        self.result_text = (
-                            self.result_text[:cursor_pos] + self.result_text[cursor_pos + 1 :]
-                        )  # pragma:no-cover
-                        buffer.delete(1)  # pragma:no-cover
-
-        except Exception:
-            pass
+                self.result_text = self.result_text[:start] + self.result_text[end:]
+                buffer.cursor_position = start
+                buffer.delete(end - start)
+            else:
+                if is_backspace:
+                    if cursor_pos > 0:
+                        self.result_text = self.result_text[: cursor_pos - 1] + self.result_text[cursor_pos:]
+                        buffer.delete_before_cursor(1)
+                else:
+                    if cursor_pos < len(self.result_text):
+                        self.result_text = self.result_text[:cursor_pos] + self.result_text[cursor_pos + 1 :]
+                        buffer.delete(1)
 
     def handle_delete(self, event: KeyPressEvent, /) -> None:
         self.remove_text_event(event)
@@ -2380,16 +2357,16 @@ class _ConsoleInputHelper:
 
     @staticmethod
     def handle_control_a(event: KeyPressEvent, /) -> None:
-        buffer = event.app.current_buffer  # pragma:no-cover
-        buffer.cursor_position = 0  # pragma:no-cover
-        buffer.start_selection()  # pragma:no-cover
-        buffer.cursor_position = len(buffer.text)  # pragma:no-cover
+        buffer = event.app.current_buffer
+        buffer.cursor_position = 0
+        buffer.start_selection()
+        buffer.cursor_position = len(buffer.text)
 
     def handle_paste(self, event: KeyPressEvent, /) -> None:
         if self.allow_paste:
             self.insert_text_event(event)
         else:
-            self.tried_pasting = True  # pragma:no-cover
+            self.tried_pasting = True
 
     def handle_any(self, event: KeyPressEvent, /) -> None:
         self.insert_text_event(event)
@@ -2413,11 +2390,11 @@ class _ConsoleInputValidator(Validator):
     def validate(self, document: Document) -> None:
         """Validates the input text according to the minimum length and custom validator function."""
 
-        text_to_validate = self.get_text() if self.mask_char else document.text  # pragma:no-cover
-        if self.min_len and len(text_to_validate) < self.min_len:  # pragma:no-cover
-            raise ValidationError(message="", cursor_position=len(document.text))  # pragma:no-cover
-        if self.validator and self.validator(text_to_validate) not in {"", None}:  # pragma:no-cover
-            raise ValidationError(message="", cursor_position=len(document.text))  # pragma:no-cover
+        text_to_validate = self.get_text() if self.mask_char else document.text
+        if self.min_len and len(text_to_validate) < self.min_len:
+            raise ValidationError(message="", cursor_position=len(document.text))
+        if self.validator and self.validator(text_to_validate) not in {"", None}:
+            raise ValidationError(message="", cursor_position=len(document.text))
 
 
 class _StdoutInterceptorMixin:
@@ -2452,11 +2429,11 @@ class _StdoutInterceptorMixin:
 
     def _flush_buffer(self) -> None:
         if self._buffer and self._original_stdout:
-            self._clear_intercept_line()  # pragma:no-cover
-            for content in self._buffer:  # pragma:no-cover
-                self._original_stdout.write(content)  # pragma:no-cover
-            self._original_stdout.flush()  # pragma:no-cover
-            self._buffer.clear()  # pragma:no-cover
+            self._clear_intercept_line()
+            for content in self._buffer:
+                self._original_stdout.write(content)
+            self._original_stdout.flush()
+            self._buffer.clear()
 
     def _redraw_display(self) -> None:
         pass
@@ -2475,9 +2452,9 @@ class _InterceptedOutput:
 
     def write(self, content: str, /) -> int:
         try:
-            if content and content != "\r":  # pragma:no-cover
-                self.status_indicator._buffer.append(content)  # pragma:no-cover
-            return len(content)  # pragma:no-cover
+            if content and content != "\r":
+                self.status_indicator._buffer.append(content)
+            return len(content)
         except Exception:
             self.status_indicator._emergency_cleanup()
             raise
@@ -2487,9 +2464,9 @@ class _InterceptedOutput:
             if self.status_indicator.active and self.status_indicator._buffer:
                 self.status_indicator._flush_buffer()
                 self.status_indicator._redraw_display()
-        except Exception:  # pragma:no-cover
-            self.status_indicator._emergency_cleanup()  # pragma:no-cover
-            raise  # pragma:no-cover
+        except Exception:
+            self.status_indicator._emergency_cleanup()
+            raise
 
     def __getattr__(self, name: str, /) -> Any:
         return getattr(self.original_stdout, name)
@@ -2567,7 +2544,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
             self.min_width = max(1, min_width)
 
-        if max_width is not None:  # pragma:no-cover
+        if max_width is not None:
             if max_width < 1:
                 raise ValueError(f"The 'max_width' parameter must be a positive integer, got {max_width!r}")
 
@@ -2611,7 +2588,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
             self.format = compiled_bar
 
-        if limited_format is not None:  # pragma:no-cover
+        if limited_format is not None:
             compiled_limited = _compile_format(limited_format)
             has_limited = False
 
@@ -2672,20 +2649,21 @@ class ProgressBar(_StdoutInterceptorMixin):
         self._last_update_time = current_time
 
         if current < 0:
-            raise ValueError(f"The 'current' parameter must be a non-negative integer, got {current!r}")  # pragma:no-cover
+            raise ValueError(f"The 'current' parameter must be a non-negative integer, got {current!r}")
         if total <= 0:
             raise ValueError(f"The 'total' parameter must be a positive integer, got {total!r}")
 
         try:
-            if not self.active:  # pragma:no-cover
-                self._start_intercepting()  # pragma:no-cover
-            self._flush_buffer()  # pragma:no-cover
+            if not self.active:
+                self._start_intercepting()
+            self._flush_buffer()
             self._draw_progress_bar(current, total, label or "")
             if current < 0 or current > total:
-                self.hide_progress()  # pragma:no-cover
-        except Exception:  # pragma:no-cover
-            self._emergency_cleanup()  # pragma:no-cover
-            raise  # pragma:no-cover
+                self.hide_progress()
+
+        except Exception:
+            self._emergency_cleanup()
+            raise
 
     def hide_progress(self) -> None:
         """Hide the progress bar and restore normal terminal output."""
@@ -2724,7 +2702,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         ```"""
 
         if total <= 0:
-            raise ValueError(f"The 'total' parameter must be a positive integer, got {total!r}")  # pragma:no-cover
+            raise ValueError(f"The 'total' parameter must be a positive integer, got {total!r}")
 
         try:
             yield _ProgressContextHelper(self, total, label)
@@ -2736,13 +2714,13 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def _draw_progress_bar(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
         if total <= 0 or not self._original_stdout:
-            return  # pragma:no-cover
+            return
 
         percentage = min(100, (current / total) * 100)
 
         formatted, bar_width = self._get_formatted_info_and_bar_width(self.format, current, total, percentage, label)
         if bar_width < self.min_width:
-            formatted, bar_width = self._get_formatted_info_and_bar_width(  # pragma:no-cover
+            formatted, bar_width = self._get_formatted_info_and_bar_width(
                 self.limited_format, current, total, percentage, label
             )
 
@@ -2771,7 +2749,7 @@ class ProgressBar(_StdoutInterceptorMixin):
             fmt_part = _PATTERNS.percentage.sub(
                 lambda match: f"{percentage:.{match.group(1) if match.group(1) else '1'}f}", fmt_part
             )
-            if fmt_part:  # pragma:no-cover
+            if fmt_part:
                 fmt_parts.append(fmt_part)
 
         fmt_str = self.sep.join(fmt_parts)
@@ -2802,7 +2780,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         self._current_progress_str = ""
 
     def _redraw_display(self) -> None:
-        if self._current_progress_str and self._original_stdout:  # pragma:no-cover
+        if self._current_progress_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_progress_str}")
             self._original_stdout.flush()
 
@@ -2832,16 +2810,16 @@ class _ProgressContextHelper:
             raise TypeError(f"update_progress() takes 1 or 2 positional arguments, got {len(args)}")
 
         if current is not None and "current" in kwargs:
-            current = kwargs["current"]  # pragma:no-cover
+            current = kwargs["current"]
         if label is None and "label" in kwargs:
-            label = kwargs["label"]  # pragma:no-cover
+            label = kwargs["label"]
 
         if current is None and label is None:
-            raise TypeError("Either the keyword argument 'current' or 'label' must be provided")  # pragma:no-cover
+            raise TypeError("Either the keyword argument 'current' or 'label' must be provided")
 
-        if current is not None:  # pragma:no-cover
-            self.current_progress = current  # pragma:no-cover
-        if label is not None:  # pragma:no-cover
+        if current is not None:
+            self.current_progress = current
+        if label is not None:
             self.current_label = label
 
         self.progress_bar.show_progress(self.current_progress, self.total, label=self.current_label)
@@ -2964,12 +2942,12 @@ class Throbber(_StdoutInterceptorMixin):
         """Stop and hide the throbber and restore normal terminal output."""
 
         if self.active:
-            if self._stop_event:  # pragma:no-cover
-                self._stop_event.set()  # pragma:no-cover
-            if self._animation_thread:  # pragma:no-cover
-                self._animation_thread.join()  # pragma:no-cover
-            # pragma:no-cover
-            self._stop_event = None  # pragma:no-cover
+            if self._stop_event:
+                self._stop_event.set()
+            if self._animation_thread:
+                self._animation_thread.join()
+
+            self._stop_event = None
             self._animation_thread = None
             self._frame_idx = 0
 
@@ -3019,7 +2997,7 @@ class Throbber(_StdoutInterceptorMixin):
         while self._stop_event and not self._stop_event.is_set():
             try:
                 if not self.active or not self._original_stdout:
-                    break  # pragma:no-cover
+                    break
 
                 self._flush_buffer()
 
@@ -3040,17 +3018,17 @@ class Throbber(_StdoutInterceptorMixin):
                 self._redraw_display()
                 self._frame_idx += 1
 
-            except Exception:  # pragma:no-cover
-                self._emergency_cleanup()  # pragma:no-cover
-                break  # pragma:no-cover
+            except Exception:
+                self._emergency_cleanup()
+                break
 
-            if self._stop_event:  # pragma:no-cover
+            if self._stop_event:
                 self._stop_event.wait(self.interval)
 
     def _reset_state(self) -> None:
         self._current_animation_str = ""
 
     def _redraw_display(self) -> None:
-        if self._current_animation_str and self._original_stdout:  # pragma:no-cover
+        if self._current_animation_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_animation_str}")
             self._original_stdout.flush()

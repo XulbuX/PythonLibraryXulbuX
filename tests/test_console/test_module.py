@@ -1,4 +1,5 @@
 import builtins
+from contextlib import suppress
 from unittest.mock import MagicMock, patch
 import xulbux.console as _console_module
 from xulbux.ansi import S, StyledText
@@ -239,11 +240,9 @@ def test_input_bottom_toolbar_function(mock_prompt_session: tuple[MagicMock, Mag
     toolbar_func = call_kwargs["bottom_toolbar"]
     assert callable(toolbar_func)
 
-    try:
+    with suppress(Exception):
         result = toolbar_func()
         assert result is not None
-    except Exception:
-        pass
 
 
 def test_input_creates_prompt_session(mock_prompt_session: tuple[MagicMock, MagicMock], mock_formatcodes_print: MagicMock):

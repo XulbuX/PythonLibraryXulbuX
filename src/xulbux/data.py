@@ -645,6 +645,7 @@ class _DataGetPathIdHelper:
             idx = list(self.current_data.keys()).index(key)
             self.current_data = self.current_data[key]
             return idx
+
         except (ValueError, KeyError):
             if self.ignore_not_found:
                 return None
@@ -658,15 +659,18 @@ class _DataGetPathIdHelper:
             idx = int(key)
             self.current_data = list(self.current_data)[idx]
             return idx
+
         except IndexError:
             if self.ignore_not_found:
                 return None
             raise IndexError(f"Index {idx} out of range") from None
+
         except ValueError:
             try:
                 idx = list(self.current_data).index(key)
                 self.current_data = list(self.current_data)[idx]
                 return idx
+
             except ValueError:
                 if self.ignore_not_found:
                     return None

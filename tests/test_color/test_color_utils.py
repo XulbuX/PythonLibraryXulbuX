@@ -177,9 +177,9 @@ def test_str_to_rgba():
 
     colors = _color_module.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
     assert len(colors) == 3  # pyright:ignore[reportArgumentType]
-    assert colors[0].values() == (255, 0, 0, None)  # pyright:ignore[reportOptionalSubscript, reportUnknownMemberType]
-    assert colors[1].values() == (0, 255, 0, 0.5)  # pyright:ignore[reportOptionalSubscript, reportUnknownMemberType]
-    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType, reportOptionalSubscript, reportUnknownMemberType]
+    assert colors[0].values() == (255, 0, 0, None)  # pyright:ignore[reportOptionalSubscript,reportUnknownMemberType]
+    assert colors[1].values() == (0, 255, 0, 0.5)  # pyright:ignore[reportOptionalSubscript,reportUnknownMemberType]
+    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType,reportOptionalSubscript,reportUnknownMemberType]
     assert _color_module.str_to_rgba("No colors here") is None
     assert _color_module.str_to_rgba("No colors here", only_first=True) is None
 
@@ -193,7 +193,7 @@ def test_str_to_hsla():
 
     colors = _color_module.str_to_hsla("hsl(0, 100%, 50%) hsla(120, 100%, 50%, 0.5) hsla(0,0%,0%,1)")
     assert len(colors) == 3  # pyright:ignore[reportArgumentType]
-    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType, reportOptionalSubscript, reportUnknownMemberType]
+    assert math.isclose(colors[2].alpha, 1.0)  # pyright:ignore[reportArgumentType,reportOptionalSubscript,reportUnknownMemberType]
     assert _color_module.str_to_hsla("No colors here") is None
     assert _color_module.str_to_hsla("No colors here", only_first=True) is None
 

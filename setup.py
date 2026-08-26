@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable
+from contextlib import suppress
 from pathlib import Path
 from setuptools import setup
 
@@ -32,11 +33,9 @@ def clean_project_files(patterns: set[str], message: str) -> None:
     deleted_count = 0
     for pattern in patterns:
         for file in (PROJECT_ROOT / "src").rglob(pattern):
-            try:
+            with suppress(OSError):
                 file.unlink()
                 deleted_count += 1
-            except OSError:
-                pass
 
     if deleted_count > 0:
         print(message.format(n=deleted_count, s="" if deleted_count == 1 else "s"), flush=True)

@@ -2,26 +2,24 @@ from xulbux.regex import LazyRegex
 import pytest
 
 
-def test_lazy_regex_init():
-    patterns = LazyRegex(test=r"\d+")
-    assert patterns._patterns == {"test": r"\d+"}
+def test_lazy_regex_initialization():
+    lazy = LazyRegex(digits=r"\d+", letters=r"[a-z]+")
+    assert lazy._patterns == {"digits": r"\d+", "letters": r"[a-z]+"}
 
 
-def test_lazy_regex_getattr_valid():
-    patterns = LazyRegex(test=r"\d+")
-    regex = patterns.test
-    assert regex.pattern == r"\d+"
-    assert "test" in patterns.__dict__  # Check caching.
+def test_lazy_regex_attribute_access_and_caching():
+    lazy = LazyRegex(digits=r"\d+")
+
+    pattern1 = lazy.digits
+    assert pattern1.pattern == r"\d+"
+    assert "digits" in lazy.__dict__
+
+    pattern2 = lazy.digits
+    assert pattern1 is pattern2
 
 
-def test_lazy_regex_getattr_invalid():
-    patterns = LazyRegex(test=r"\d+")
-    with pytest.raises(AttributeError):
-        _ = patterns.invalid
+def test_lazy_regex_missing_attribute_raises_attribute_error():
+    lazy = LazyRegex(digits=r"\d+")
 
-
-def test_lazy_regex_caching():
-    patterns = LazyRegex(test=r"\d+")
-    regex1 = patterns.test
-    regex2 = patterns.test
-    assert regex1 is regex2
+    with pytest.raises(AttributeError, match="has no attribute 'unknown'"):
+        _ = lazy.unknown

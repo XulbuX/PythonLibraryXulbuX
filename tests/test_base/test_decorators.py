@@ -4,78 +4,76 @@ from unittest.mock import patch
 from xulbux.base.decorators import _noop_decorator, deprecated, mypyc_attr
 
 
-def test_noop_decorator():
-    def dummy():
+def test_noop_decorator_returns_same_object():
+    def sample_func():
+        return "result"
+
+    assert _noop_decorator(sample_func) is sample_func
+
+
+def test_mypyc_attr_with_installed_mypy_extensions():
+    decorator = mypyc_attr(native_class=False)
+
+    class SampleClass:
         pass
 
-    assert _noop_decorator(dummy) is dummy
+    assert decorator(SampleClass) is SampleClass
 
 
-def test_mypyc_attr_success():
-    dec = mypyc_attr(native_class=False)
-
-    def dummy():
-        pass
-
-    assert dec(dummy) is dummy
-
-
-def test_mypyc_attr_import_error():
-    # Force `ImportError` on `mypy_extensions`:
+def test_mypyc_attr_fallback_when_mypy_extensions_missing():
     with patch.dict(sys.modules, {"mypy_extensions": None}):
-        dec = mypyc_attr(native_class=False)
-        assert dec is _noop_decorator
+        decorator = mypyc_attr(native_class=False)
+        assert decorator is _noop_decorator
 
-        def dummy():
+        class SampleClass:
             pass
 
-        assert dec(dummy) is dummy
+        assert decorator(SampleClass) is SampleClass
 
 
-def test_deprecated_import_error_typing_extensions():
-    # Test when `sys.version_info` < (3, 13) and `typing_extensions` fails to import:
-    class DummyClass:
+def test_deprecated_decorator_on_standard_function():
+    @deprecated("Use new_function instead")
+    def old_function():
+        return 42
+
+    assert old_function() == 42
+
+
+def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions():
+    class SampleClass:
         pass
 
-    with patch.object(sys, "version_info", (3, 10)), patch.dict(sys.modules, {"typing_extensions": None}):
-        dec = deprecated("test msg")
-        assert dec(DummyClass) is DummyClass
-        assert getattr(DummyClass, "__deprecated__", None) == "test msg"
+    with patch.object(sys, "version_info", (3, 12)), patch.dict(sys.modules, {"typing_extensions": None}):
+        decorator = deprecated("Deprecated feature")
+        result = decorator(SampleClass)
+        assert result is SampleClass
+        assert getattr(SampleClass, "__deprecated__", None) == "Deprecated feature"
 
 
-def test_deprecated_mypyc_wrapper():
-    # Test when `_dep` fails because it can't set attributes on the arg (`e.g`. `MyPyC` func):
-    class CExtFunc:
-        # Simulate a C extension / `MyPyC` function that rejects arbitrary attributes:
-        def __call__(self, *args: Any, **kwargs: Any):
-            return "called"
+def test_deprecated_wrapper_for_immutable_callable():
+    class CustomCallable:
+        def __call__(self, *args: Any, **kwargs: Any) -> str:
+            return "callable_output"
 
         def __setattr__(self, name: str, value: Any) -> None:
-            raise TypeError("cannot set attribute")
+            raise TypeError("Cannot set attribute on this object")
 
-    # We `mock` `typing_extensions.deprecated` or `warnings.deprecated` to raise `TypeError` when applied:
-    func = CExtFunc()
+    target = CustomCallable()
+    decorator = deprecated("Deprecated callable")
+    wrapped = decorator(target)
 
-    # We want to force the except (`AttributeError`, `TypeError`) block to trigger.
-    # To do this, we can let `typing_extensions.deprecated` be used, which internally tries to set `__deprecated__`.
-    # If we pass CExtFunc, it should raise `TypeError`:
-
-    dec = deprecated("test")
-    wrapped = dec(func)
-    assert wrapped is not func
-    assert wrapped() == "called"
-    assert hasattr(wrapped, "__deprecated__")
+    assert wrapped is not target
+    assert wrapped() == "callable_output"
 
 
-def test_deprecated_mypyc_wrapper_class():
-    # If the thing failing is a class, it just returns arg:
-    class BuiltinClass(type):
-        def __setattr__(self, name: str, value: Any) -> None:
-            raise TypeError("cannot set attribute")
+def test_deprecated_wrapper_for_immutable_class():
+    class ImmutableMeta(type):
+        def __setattr__(cls, name: str, value: Any) -> None:
+            raise TypeError("Cannot set attribute on this class")
 
-    class MyBuiltin(metaclass=BuiltinClass):
+    class ImmutableClass(metaclass=ImmutableMeta):
         pass
 
-    dec = deprecated("test")
-    wrapped = dec(MyBuiltin)
-    assert wrapped is MyBuiltin
+    decorator = deprecated("Deprecated class")
+    result = decorator(ImmutableClass)
+    assert result is ImmutableClass

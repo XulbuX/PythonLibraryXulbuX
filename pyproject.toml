@@ -67,11 +67,11 @@ xulbux-lib = "xulbux.cli:main"
 [tool.coverage.report]
 exclude_lines = [
   "@overload",
+  "#\\s+coverage:ignore\\[.*\\]", # coverage:ignore[reason]
   "def __repr__",
   "if __name__ == .__main__.:",
   "if self.debug:",
   "if TYPE_CHECKING:",
-  "pragma:no-cover",
   "raise NotImplementedError",
 ]
 

@@ -264,12 +264,10 @@ def generate_md_for_api(api_path: str) -> str:  # ruff:ignore[complex-structure]
         tree = None
         source_code = ""
         # Parse the AST to extract exact variable definitions and docstrings (which `inspect` cannot see):
-        try:
+        with suppress(Exception):
             if source_file := inspect.getsourcefile(module):
                 source_code = Path(source_file).read_text("utf-8")
                 tree = ast.parse(source_code)
-        except Exception:
-            pass
 
         # Extract module-level variables:
         module_vars = _extract_ast_vars(tree.body, source_code) if tree else {}
@@ -503,12 +501,10 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
     src_sidebar_file = docs_src_dir / SIDEBAR_REL_PATH
 
     if src_sidebar_file.exists() and (src_content := src_sidebar_file.read_text(encoding="utf-8").strip()):
-        try:
+        with suppress(json.JSONDecodeError):
             parsed = json.loads(src_content)
             if isinstance(parsed, list):
                 return cast("list[Any]", parsed)
-        except json.JSONDecodeError:
-            pass
 
     return []
 

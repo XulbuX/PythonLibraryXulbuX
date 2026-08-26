@@ -101,7 +101,7 @@ def test_render_exceptions():
 
 def test_render_syntax_highlighting_dict():
     # Pass a valid lambda that returns `StyledText`:
-    res = render({"a": 1}, syntax_highlighting={"number": lambda x: StyledText(x)})  # pyright:ignore[reportArgumentType, reportUnknownArgumentType, reportUnknownLambdaType]
+    res = render({"a": 1}, syntax_highlighting={"number": lambda x: StyledText(x)})  # pyright:ignore[reportArgumentType,reportUnknownArgumentType,reportUnknownLambdaType]
     assert res is not None
 
 
@@ -125,7 +125,7 @@ def test_sep_path_id_invalid():
 def test_data_get_value_stop_iteration():
 
     class BadDict(dict):  # pyright:ignore[reportMissingTypeArgument]
-        def items(self):  # pyright:ignore[reportIncompatibleMethodOverride, reportUnknownParameterType]
+        def items(self):  # pyright:ignore[reportIncompatibleMethodOverride,reportUnknownParameterType]
             return []  # pyright:ignore[reportUnknownVariableType]
 
     data = BadDict({"a": [1]})

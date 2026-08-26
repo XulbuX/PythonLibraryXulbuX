@@ -19,18 +19,18 @@ import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
 import time as _time
+from contextlib import suppress as _suppress
 
 
 def is_elevated() -> bool:
     """Whether the current process has elevated privileges or not."""
 
-    try:
+    with _suppress(Exception):
         if _os.name == "nt":
-            return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # type:ignore
+            return _ctypes.windll.shell32.IsUserAnAdmin() != 0  # pyright:ignore
         elif _os.name == "posix":
             return _os.geteuid() == 0  # type:ignore[attr-defined]
-    except Exception:
-        pass
+
     return False
 
 
@@ -70,13 +70,13 @@ def get_hostname() -> str:
 def get_username() -> str:
     """The name of the current user."""
 
-    try:
+    with _suppress(Exception):
         return _getpass.getuser()
+
+    try:
+        return _os.getlogin()
     except Exception:
-        try:
-            return _os.getlogin()
-        except Exception:
-            return "unknown"
+        return "unknown"
 
 
 def get_os_name() -> str:
@@ -192,7 +192,7 @@ def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool
         else:
             args_str = f'-c "exec(open(\\"{_sys.argv[0]}\\").read())" {" ".join(args_list)}'
 
-        if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # type:ignore
+        if _ctypes.windll.shell32.ShellExecuteW(None, "runas", _sys.executable, args_str, None, 1) <= 32:  # pyright:ignore
             raise PermissionError("Failed to launch elevated process") from None
         else:
             raise SystemExit(0)
@@ -351,10 +351,8 @@ class _SystemCheckLibsHelper:
         """Install missing libraries using pip."""
 
         for lib in missing[:]:
-            try:
+            with _suppress(_subprocess.CalledProcessError):
                 _subprocess.check_call([_sys.executable, "-m", "pip", "install", lib])
                 missing.remove(lib)
-            except _subprocess.CalledProcessError:
-                pass
 
         return None if len(missing) == 0 else missing
