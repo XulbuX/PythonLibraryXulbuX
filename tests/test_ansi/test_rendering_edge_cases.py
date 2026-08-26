@@ -2,7 +2,7 @@ from xulbux.ansi import S, StyledText, _StyledSequence, is_base_style, is_render
 
 
 def test_missing_catch_all():
-    # StyledText init edge:
+    # `StyledText` init edge:
     st = StyledText("a", "b", sep=" ")
 
     # Text segment guards:

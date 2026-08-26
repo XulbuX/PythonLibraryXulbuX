@@ -6,6 +6,6 @@ def test_matmul_fallback():
         pass
 
     style = DummyStyle(123)
-    # This should trigger AttributeError and set _oc:
+    # This should trigger `AttributeError` and set `_oc`:
     res = style @ "hello"
     assert "hello" in res.text  # pyright:ignore[reportOperatorIssue]

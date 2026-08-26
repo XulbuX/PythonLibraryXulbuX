@@ -30,7 +30,7 @@ def test_get_latest_version_json_error():
 
 
 def test_is_latest_version_none():
-    # Test when latest is None:
+    # Test when latest is `None`:
     with patch("xulbux.cli.help.get_latest_version", return_value=None):
         assert is_latest_version() is None
 

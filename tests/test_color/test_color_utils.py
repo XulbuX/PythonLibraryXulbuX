@@ -115,23 +115,23 @@ def test_has_alpha():
     assert _color_module.has_alpha("FF0000FF") is True
     assert _color_module.has_alpha(0xFF0000) is False
     assert _color_module.has_alpha(0xFF0000FF) is True
-    # hsla string:
+    # `hsla` string:
     assert _color_module.has_alpha("hsl(0,100%,50%)") is False
     assert _color_module.has_alpha("hsla(0,100%,50%,.5)") is True
-    # rgb string:
+    # Rgb string:
     assert _color_module.has_alpha("rgb(0,0,0)") is False
     assert _color_module.has_alpha("rgba(0,0,0,.5)") is True
-    # dicts and lists:
+    # Dicts and lists:
     assert _color_module.has_alpha([255, 0, 0]) is False
     assert _color_module.has_alpha([255, 0, 0, 0.5]) is True
     assert _color_module.has_alpha({"red": 255, "green": 0, "blue": 0}) is False
     assert _color_module.has_alpha({"red": 255, "green": 0, "blue": 0, "alpha": 0.5}) is True
-    # invalid:
+    # Invalid:
     assert _color_module.has_alpha("invalid") is False
 
 
 def test_color_conversions():
-    # rgba:
+    # `rgba`:
     c1 = _color_module.to_rgba("#FF00007F")
     assert isinstance(c1, rgba)
     assert _color_module.to_rgba(c1) is c1
@@ -142,7 +142,7 @@ def test_color_conversions():
     with pytest.raises(ValueError):
         _color_module.to_rgba("invalid")
 
-    # hsla:
+    # `hsla`:
     color2 = _color_module.to_hsla((255, 0, 0, 0.5))
     assert isinstance(color2, hsla)
     assert _color_module.to_hsla(color2) is color2
@@ -153,7 +153,7 @@ def test_color_conversions():
     with pytest.raises(ValueError):
         _color_module.to_hsla("invalid")
 
-    # hexa:
+    # `hexa`:
     color3 = _color_module.to_hexa((255, 0, 0, 0.5))
     assert isinstance(color3, hexa)
     assert _color_module.to_hexa(color3) is color3
@@ -221,7 +221,7 @@ def test_text_color_for_on_bg():
     assert isinstance(text_color, rgba)
     assert text_color.values() == (0, 0, 0, None)
 
-    # hexa:
+    # `hexa`:
     text_color = _color_module.text_color_for_on_bg(hexa("#000000"))
     assert isinstance(text_color, hexa)
     assert str(text_color) == "#FFFFFF"
@@ -230,7 +230,7 @@ def test_text_color_for_on_bg():
     assert isinstance(text_color, hexa)
     assert str(text_color) == "#000000"
 
-    # int:
+    # `int`:
     assert _color_module.text_color_for_on_bg(0x000000) == 0xFFFFFF
     assert _color_module.text_color_for_on_bg(0xFFFFFF) == 0x000000
 

@@ -162,11 +162,11 @@ def test_rgba_blend():
     with pytest.raises(TypeError):
         c1.blend("invalid", 0.5)
 
-    # test additive alpha:
+    # Test additive alpha:
     blend2 = c1.blend(color2, 0.5, additive_alpha=True)
     assert math.isclose(blend2.alpha, 1.0)  # pyright:ignore[reportArgumentType]
 
-    # test none alpha:
+    # Test none alpha:
     b3 = rgba(255, 0, 0).blend(rgba(0, 0, 255), 0.5)
     assert b3.alpha is None
 
@@ -193,14 +193,14 @@ def test_rgba_complementary():
 
 
 def test_rgb_to_hsl_internal():
-    # specifically trigger branching in _rgb_to_hsl.
-    # max_c == min_c:
+    # Specifically trigger branching in `_rgb_to_hsl`.
+    # `max_c` == `min_c`:
     assert rgba._rgb_to_hsl(128, 128, 128) == (0, 0, 50)
-    # max_c == red_norm:
+    # `max_c` == `red_norm`:
     assert rgba._rgb_to_hsl(255, 0, 0) == (0, 100, 50)
-    # max_c == green_norm:
+    # `max_c` == `green_norm`:
     assert rgba._rgb_to_hsl(0, 255, 0) == (120, 100, 50)
-    # max_c == blue_norm:
+    # `max_c` == `blue_norm`:
     assert rgba._rgb_to_hsl(0, 0, 255) == (240, 100, 50)
-    # max_c == red_norm, green < blue:
+    # `max_c` == `red_norm`, green < blue:
     assert rgba._rgb_to_hsl(255, 0, 128) == (330, 100, 50)

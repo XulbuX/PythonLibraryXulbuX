@@ -56,8 +56,8 @@ def test_json_update_type_error(tmp_path: Path):
 
 
 def test_create_nested_list_expand():
-    # 173-175: while len <= idx: append(None) (for last_idx).
-    # 190-192: while len <= idx: append(None) (for NOT last_idx):
+    # 173-175: while len <= `idx`: append(None) (for `last_idx`).
+    # 190-192: while len <= `idx`: append(None) (for NOT `last_idx`):
     res = xjson._create_nested_path([], ["2"], 1)  # pyright:ignore[reportArgumentType]
     assert res == [None, None, 1]
 

@@ -15,7 +15,7 @@ def test_change_tab_size_negative():
 def test_change_tab_size_remove_empty():
     sample = "def test():\n\n    print('test')"
     expected = "def test():\n    print('test')"
-    # 4 spaces to 4 spaces, with remove_empty_lines=True:
+    # 4 spaces to 4 spaces, with `remove_empty_lines=True`:
     assert _code_module.change_tab_size(sample, 4, remove_empty_lines=True) == expected
 
 
@@ -24,7 +24,7 @@ def test_is_js_short():
 
 
 def test_is_js_empty_funcs():
-    # To hit the branch if funcs: is False:
+    # To hit the branch if funcs: is `False`:
     assert _code_module.is_js("let x = 1; if (x === 1) { }", funcs=set()) is True
 
 

@@ -25,7 +25,7 @@ def test_remove_comments_value_error():
 def test_remove_comments_custom():
     data = ["# comment", "val # comment", "val"]
     res = remove_comments(data, comment_start="#", comment_end="")
-    # It returns None for `# comment`, and keeps `val # comment` intact because there's no comment_end:
+    # It returns `None` for `# comment`, and keeps `val # comment` intact because there's no `comment_end`:
     assert res == ["val # comment", "val"]
 
 
@@ -68,7 +68,7 @@ def test_get_path_id_exceptions():
     with pytest.raises(ValueError):
         get_path_id([1, 2], "val")
 
-    # to hit IndexError, just pass out of bounds when not ignore_not_found:
+    # To hit `IndexError`, just pass out of bounds when not `ignore_not_found`:
     with pytest.raises(IndexError):
         get_path_id([1, 2], "3")
 
@@ -98,7 +98,7 @@ def test_render_exceptions():
 
 
 def test_render_syntax_highlighting_dict():
-    # Pass a valid lambda that returns StyledText:
+    # Pass a valid lambda that returns `StyledText`:
     res = render({"a": 1}, syntax_highlighting={"number": lambda x: StyledText(x)})  # pyright:ignore[reportArgumentType, reportUnknownArgumentType, reportUnknownLambdaType]
     assert res is not None
 
@@ -136,23 +136,23 @@ def test_data_get_value_stop_iteration():
 def test_render_more_coverage():
     from xulbux.data import render
 
-    # line 701: syntax_highlighting is True:
+    # Line 701: `syntax_highlighting` is `True`:
     render({"a": 1}, syntax_highlighting=True)
 
-    # line 737: __dict__ formatting:
+    # Line 737: `__dict__` formatting:
     class Dummy:
         def __init__(self):
             self.a = 1
 
     render({"dummy": Dummy()})
 
-    # line 746-748: bytearray fallback:
+    # Line 746-748: bytearray fallback:
     render({"b": b"\xff\xfe"}, as_json=True)
 
-    # line 797-805: get_complexity on tuple, set, frozenset:
+    # Line 797-805: `get_complexity` on tuple, set, frozenset:
     render({"tuple": (1, (2,)), "set": {1, frozenset([2])}}, compactness=1)
 
-    # line 815: compactness=2:
+    # Line 815: compactness=2:
     render([1, 2], compactness=2)
 
 

@@ -15,7 +15,7 @@ INIT_PATH = ROOT_DIR / "src" / "xulbux" / "__init__.py"
 def get_current_branch() -> str | None:
     """Returns the current git branch name, or `None` if it cannot be determined."""
 
-    # Check GitHub Actions environment variables first:
+    # Check `GitHub` Actions environment variables first:
     if branch := os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME"):
         return branch
 

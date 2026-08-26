@@ -56,7 +56,7 @@ def test_escape():
     assert FormatCodes.escape("[#F87]Hello[_]") == "[/#F87]Hello[/_]"
     assert FormatCodes.escape("[rgb(255, 136, 119)]Hello[_]") == "[/rgb(255, 136, 119)]Hello[/_]"
 
-    # Test with default color:
+    # Test with default `color`:
     assert FormatCodes.escape("[default]Hello", default_color="#FFF") == "[/default]Hello"
     assert FormatCodes.escape("[bg:default]Hello", default_color="#FFF") == "[/bg:default]Hello"
 

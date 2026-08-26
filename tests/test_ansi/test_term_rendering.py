@@ -36,8 +36,8 @@ def test_term_methods():
 
 def test_styledtext_cache_reset():
     st = StyledText("a")
-    _ = st.ansi  # cache it.
-    # nothing to do for property caching check directly, just call it multiple times:
+    _ = st.ansi  # Cache it.
+    # Nothing to do for property caching check directly, just call it multiple times:
 
 
 def test_colorstyle_from_hex():
@@ -48,14 +48,14 @@ def test_colorstyle_from_hex():
 
 
 def test_more_styledtext():
-    # StyledText.__eq__ other is not str or StyledText:
+    # `StyledText.__eq__` other is not `str` or `StyledText`:
     st = StyledText("a")
     assert st != 1
 
-    # StyledText.__len__:
+    # `StyledText.__len__`:
     assert len(st) == 1
 
-    # StyledText.__bool__:
+    # `StyledText.__bool__`:
     assert bool(st) is True
     assert bool(StyledText("")) is False
 

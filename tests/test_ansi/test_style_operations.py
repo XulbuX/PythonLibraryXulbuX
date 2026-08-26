@@ -26,7 +26,7 @@ def test_colorstyle_call_multiple():
 
 
 def test_link_matmul_multiple():
-    # 828-831: _Link.__matmul__:
+    # 828-831: `_Link.__matmul__`:
     link_st = _Link("url")
     assert (link_st @ "a").text == "a"
     assert (link_st @ ("a", "b")).text == ("a", "b")
@@ -47,7 +47,7 @@ def test_S_properties():
 
 def test_styledtext_methods_missing():
     # 1113, 1123, 1133, 1143, 1182, 1185, 1248, 1383.
-    # StyledText stuff:
+    # `StyledText` stuff:
     st = StyledText("a")
     # 1113?
     assert issubclass(type(st), object)
@@ -56,8 +56,8 @@ def test_styledtext_methods_missing():
     assert st.raw == "a"
     assert StyledText(S.BOLD("a")).raw == "a"
 
-    # 1248: probably rjust?
-    # 1383: probably wrap?
+    # 1248: probably `rjust`?
+    # 1383: probably `wrap`?
     pass
 
 
@@ -74,7 +74,7 @@ def test_styledtext_wrap_edges():
     wrapped_st1 = st1.wrap(2)
     assert isinstance(wrapped_st1, list)
 
-    # word longer than width:
+    # Word longer than width:
     st2 = StyledText("abcdef")
     wrapped_st2 = st2.wrap(2)
     assert isinstance(wrapped_st2, list)
@@ -105,18 +105,18 @@ def test_buildopenclose_edges():
     opens, _closes = xulbux.ansi._build_open_close(g1_st)
     assert opens
 
-    # 1986-1987: FG color style:
+    # 1986-1987: FG `color` style:
     g2_st = _StyleGroup(S.hex("#F00"))
     _opens2, _closes2 = xulbux.ansi._build_open_close(g2_st)
 
-    # 1991->exit: _process_code SGR.
-    # multiple styles that share the same reset?
+    # 1991->exit: `_process_code` SGR.
+    # Multiple styles that share the same reset?
     g3_st = S.BOLD | S.DIM | S.RESET
     _opens3, _closes3 = xulbux.ansi._build_open_close(g3_st)
 
 
 def test_render_tuple_styledtext():
-    # render a tuple inside StyledText:
+    # Render a tuple inside `StyledText`:
     st1 = StyledText(("a", "b"))
     assert st1.ansi == "ab"
     st2 = StyledText((S.BOLD("a"), "b"))

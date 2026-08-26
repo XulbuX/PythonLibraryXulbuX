@@ -14,7 +14,7 @@ def test_argparse_missing_opt_value(monkeypatch: pytest.MonkeyPatch):
 def test_argparse_missing_opt_value_with_choices(monkeypatch: pytest.MonkeyPatch):
     parser = ArgumentParser()
     parser.add_opt(["-x"], expects_value="X", choices=["a", "b"])
-    monkeypatch.setattr(sys, "argv", ["prog", "-x", "-h"])  # Next token is help_opt.
+    monkeypatch.setattr(sys, "argv", ["prog", "-x", "-h"])  # Next token is `help_opt`.
     with pytest.raises(SystemExit):
         parser.parse()
 

@@ -2,19 +2,19 @@ from xulbux.ansi import S, StyledText, _ColorStyle, _StyleGroup
 
 
 def test_stylegroup_missing():
-    # __or__, __ror__:
+    # `__or__`, `__ror__`:
     g1 = S.BOLD | S.RED
     g2 = S.ITALIC | S.BLUE
     assert isinstance(g1 | g2, _StyleGroup)
     assert len((g1 | g2)._codes) == 4
 
-    # __ror__ with `BaseStyle`:
+    # `__ror__` with `BaseStyle`:
     assert isinstance(S.ITALIC | g1, _StyleGroup)
 
-    # __matmul__:
+    # `__matmul__`:
     assert (g1 @ "text").text == "text"
 
-    # __eq__ False:
+    # `__eq__` `False`:
     assert g1 != S.BOLD
 
     # Format methods:
@@ -26,16 +26,16 @@ def test_stylegroup_missing():
 
 
 def test_style_missing():
-    # __eq__ false:
+    # `__eq__` false:
     assert S.BOLD != "bold"
 
-    # __hash__:
+    # `__hash__`:
     assert hash(S.BOLD) == hash(1)
 
-    # __ror__:
+    # `__ror__`:
     assert isinstance(S.RED | S.BOLD, _StyleGroup)
 
-    # __matmul__:
+    # `__matmul__`:
     assert (S.BOLD @ "text").text == "text"
 
     # Format methods:
@@ -47,19 +47,19 @@ def test_style_missing():
 
 
 def test_colorstyle_missing():
-    # from_hex:
+    # `from_hex`:
     c1_st = S.hex("#FF0000")
     c2_st = S.hex("F00")
     S.BG.hex("0xFF0000")
     assert c1_st._red == 255 and c1_st._green == 0 and c1_st._blue == 0
     assert c2_st._red == 255 and c2_st._green == 0 and c2_st._blue == 0
 
-    # __or__, __ror__:
+    # `__or__`, `__ror__`:
     assert isinstance(c1_st | c2_st, _StyleGroup)
     assert isinstance(c1_st | S.BOLD, _StyleGroup)
     assert isinstance(S.BOLD | c1_st, _StyleGroup)
 
-    # __eq__ false:
+    # `__eq__` false:
     assert c1_st != "red"
 
     # Format methods:
@@ -73,14 +73,14 @@ def test_colorstyle_missing():
 def test_link_missing():
     link_st = S.link("https://example.com")
 
-    # __or__:
+    # `__or__`:
     assert isinstance(link_st | S.BOLD, _StyleGroup)
     assert isinstance(link_st | (S.BOLD | S.RED), _StyleGroup)
 
-    # __call__:
+    # `__call__`:
     assert link_st("text").text == "text"
 
-    # __matmul__:
+    # `__matmul__`:
     assert (link_st @ "text").text == "text"
 
     # Format methods:
@@ -103,14 +103,14 @@ def test_styledtext_missing():
     st1 = StyledText("a")
     st2 = StyledText("b")
 
-    # __eq__:
+    # `__eq__`:
     assert st1 != st2
     assert st1 == "a"
 
-    # __len__:
+    # `__len__`:
     assert len(st1) == 1
 
-    # __bool__:
+    # `__bool__`:
     assert bool(st1) is True
     assert bool(StyledText("")) is False
 
@@ -118,6 +118,6 @@ def test_styledtext_missing():
     assert st1.ansi == "a"
     assert st1.ansi == "a"  # Cached.
 
-    # rjust, wrap:
+    # `rjust`, `wrap`:
     assert st1.rjust(4, "-").ansi == "---a"
     assert isinstance(st1.wrap(10), list)

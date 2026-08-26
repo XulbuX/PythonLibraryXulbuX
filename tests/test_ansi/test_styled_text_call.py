@@ -158,7 +158,7 @@ def test_input_uses_ansi_as_prompt(monkeypatch: pytest.MonkeyPatch):
 def test_or_chains_produce_FmtGroup():
     group = S.BOLD | S.RED | S.UNDERLINE
     assert isinstance(group, _StyleGroup)
-    # `_Style` is an `int` subclass, so direct int comparison works:
+    # `_Style` is an `int` subclass, so direct `int` comparison works:
     assert list(group) == [1, 31, 4]
 
 

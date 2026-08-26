@@ -67,7 +67,7 @@ def test_parsed_args_attribute_access():
     assert args.test2.exists is False
     assert args.title.val() == "My App"
 
-    # Accessing an undefined argument raises informative AttributeError listing available args:
+    # Accessing an undefined argument raises informative `AttributeError` listing available `args`:
     with pytest.raises(
         AttributeError,
         match=r"Argument 'unknown' is not defined on 'ParsedArgs'\nAvailable arguments: 'test1', 'test2', 'title'",
@@ -372,7 +372,7 @@ def test_argument_parser_custom_sep(monkeypatch: pytest.MonkeyPatch, capsys: pyt
     args2 = parser2.parse()
     assert args2.msg.val() == "hello"
 
-    # None sep configured on `ArgumentParser` (space-separated only):
+    # `None` sep configured on `ArgumentParser` (space-separated only):
     parser3 = ArgumentParser(opt_value_sep=None)
     parser3.add_opt({"--msg"}, "msg", expects_value="VAL", help="Message option")
     parser3.print_help()
@@ -702,11 +702,11 @@ def test_argument_parser_reactive_narrow_width_layout(capsys: pytest.CaptureFixt
     cmd_idx = next(i for i, line in enumerate(raw_lines) if "-I" in line and "#" not in line)
     assert comment_idx < cmd_idx
 
-    # [4] Long descriptions in Options should wrap and continuation lines should be indented:
+    # [4] Long descriptions in Options should `wrap` and continuation lines should be indented:
     continuation_line = next(line for line in raw_lines if "paths/names, separated by |)" in line)
     assert continuation_line.startswith(" ")
 
-    # [5] Styling (e.g., dim sequence) in wrapped descriptions should be preserved:
+    # [5] Styling (`e.g`., dim sequence) in wrapped descriptions should be preserved:
     dim_seq = StyledText(S.DIM).ansi
     ansi_continuation = next(line for line in ansi_lines if "paths/names, separated by |)" in line)
     assert dim_seq in ansi_continuation
