@@ -1,7 +1,7 @@
 import ctypes
 import tempfile
 from collections.abc import Callable, Generator
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -17,6 +17,10 @@ def tmp_path() -> Generator[Path, None, None]:
 # ********************************************************* OS MOCKS **********************************************************
 
 
+def _mock_path_new(cls: type[object], *args: object, **kwargs: object) -> object:
+    return object.__new__(cls)
+
+
 @pytest.fixture
 def mock_os_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mocks the OS to be detected as Windows for testing purposes."""
@@ -24,6 +28,7 @@ def mock_os_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("os.name", "nt")
     monkeypatch.setattr("platform.system", lambda: "Windows")
     monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setattr(WindowsPath, "__new__", _mock_path_new)
 
 
 @pytest.fixture
@@ -33,6 +38,7 @@ def mock_os_linux(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("os.name", "posix")
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.setattr(PosixPath, "__new__", _mock_path_new)
 
 
 @pytest.fixture
@@ -42,6 +48,7 @@ def mock_os_darwin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("os.name", "posix")
     monkeypatch.setattr("platform.system", lambda: "Darwin")
     monkeypatch.setattr("sys.platform", "darwin")
+    monkeypatch.setattr(PosixPath, "__new__", _mock_path_new)
 
 
 # ***************************************************** SUBPROCESS MOCKS ******************************************************

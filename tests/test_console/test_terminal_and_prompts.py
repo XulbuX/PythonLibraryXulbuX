@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 from xulbux.ansi import S, StyledText
 from xulbux.base.consts import CHARS
@@ -65,10 +66,12 @@ def test_terminal_dimensions_and_environment() -> None:
     assert isinstance(get_user(), str)
 
 
-def test_supports_color_windows_and_posix() -> None:
+def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     # When not a TTY:
     with patch("xulbux.console.is_tty", return_value=False):
         assert supports_color() is False
+
+    mock_ctypes = mock_ctypes_windll()
 
     # Windows VT mode check:
     def mock_get_console_mode(handle: int, mode_ptr: MagicMock) -> int:
@@ -77,9 +80,8 @@ def test_supports_color_windows_and_posix() -> None:
 
     with (
         patch("xulbux.console.is_tty", return_value=True),
-        patch("os.name", "nt"),
-        patch("ctypes.windll.kernel32.GetStdHandle", return_value=1),
-        patch("ctypes.windll.kernel32.GetConsoleMode", side_effect=mock_get_console_mode),
+        patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
+        patch.object(mock_ctypes.kernel32, "GetConsoleMode", side_effect=mock_get_console_mode),
     ):
         assert supports_color() is True
 
@@ -90,33 +92,30 @@ def test_supports_color_windows_and_posix() -> None:
 
     with (
         patch("xulbux.console.is_tty", return_value=True),
-        patch("os.name", "nt"),
-        patch("ctypes.windll.kernel32.GetStdHandle", return_value=1),
-        patch("ctypes.windll.kernel32.GetConsoleMode", side_effect=mock_get_console_mode_disabled),
+        patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
+        patch.object(mock_ctypes.kernel32, "GetConsoleMode", side_effect=mock_get_console_mode_disabled),
     ):
         assert supports_color() is False
 
     # Windows VT check returning False (0):
     with (
         patch("xulbux.console.is_tty", return_value=True),
-        patch("os.name", "nt"),
-        patch("ctypes.windll.kernel32.GetStdHandle", return_value=1),
-        patch("ctypes.windll.kernel32.GetConsoleMode", return_value=0),
+        patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
+        patch.object(mock_ctypes.kernel32, "GetConsoleMode", return_value=0),
     ):
         assert supports_color() is False
 
     # Windows VT check exception:
     with (
         patch("xulbux.console.is_tty", return_value=True),
-        patch("os.name", "nt"),
-        patch("ctypes.windll.kernel32.GetStdHandle", side_effect=Exception),
+        patch.object(mock_ctypes.kernel32, "GetStdHandle", side_effect=Exception),
     ):
         assert supports_color() is False
 
-    # POSIX TERM check:
+
+def test_supports_color_posix(mock_os_linux: None) -> None:
     with (
         patch("xulbux.console.is_tty", return_value=True),
-        patch("os.name", "posix"),
         patch.dict("os.environ", {"TERM": "xterm-256color"}),
     ):
         assert supports_color() is True
@@ -155,25 +154,26 @@ def test_pause_and_pause_exit() -> None:
     assert exc_info.value.code == 42
 
 
-def test_read_single_key_branches() -> None:
-    # When stdin is not a tty:
+def test_read_single_key_non_tty() -> None:
     with patch("sys.stdin.isatty", return_value=False), patch("sys.stdin.readline", return_value=""):
         _read_single_key()
 
-    # Windows tty:
+
+def test_read_single_key_windows(mock_os_windows: None) -> None:
+    mock_msvcrt = MagicMock()
+    mock_msvcrt.getch.return_value = b"a"
     with (
         patch("sys.stdin.isatty", return_value=True),
-        patch("sys.platform", "win32"),
-        patch("msvcrt.getch", return_value=b"a"),
+        patch.dict("sys.modules", {"msvcrt": mock_msvcrt}),
     ):
         _read_single_key()
 
-    # POSIX tty:
+
+def test_read_single_key_posix(mock_os_linux: None) -> None:
     mock_termios = MagicMock()
     mock_tty = MagicMock()
     with (
         patch("sys.stdin.isatty", return_value=True),
-        patch("sys.platform", "linux"),
         patch("sys.stdin.fileno", return_value=0),
         patch("sys.stdin.read", return_value="a"),
         patch.dict("sys.modules", {"termios": mock_termios, "tty": mock_tty}),

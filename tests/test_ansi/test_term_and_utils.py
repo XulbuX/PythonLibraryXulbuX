@@ -1,6 +1,7 @@
 import io
+from collections.abc import Callable
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock
 import xulbux.ansi as _ansi_module
 from xulbux.ansi import S, StyledText, Term, _build_open_close, _config_terminal, _StyleGroup
 from xulbux.base.consts import ANSI
@@ -40,26 +41,26 @@ def test_rgb_and_hex_overloads() -> None:
     assert "tests/test_ansi" in StyledText(link_from_path("Link")).ansi
 
 
-def test_terminal_configuration_windows_and_posix() -> None:
-    # Test configuring terminal on Windows:
+def test_terminal_configuration_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     _ansi_module._terminal_ansi_configured = False
-    with (
-        patch("os.name", "nt"),
-        patch("ctypes.windll.kernel32.GetStdHandle", return_value=1),
-        patch("ctypes.windll.kernel32.GetConsoleMode", return_value=1),
-        patch("ctypes.windll.kernel32.SetConsoleMode", return_value=1),
-    ):
-        _config_terminal()
-        assert _ansi_module._terminal_ansi_configured is True
-
-    # Test configuring terminal on POSIX:
-    _ansi_module._terminal_ansi_configured = False
-    with patch("os.name", "posix"):
-        _config_terminal()
-        assert _ansi_module._terminal_ansi_configured is True
-
-    # Repeated calls should be no-ops:
+    mock_ctypes = mock_ctypes_windll()
+    mock_ctypes.kernel32.GetStdHandle.return_value = 1
+    mock_ctypes.kernel32.GetConsoleMode.return_value = 1
+    mock_ctypes.kernel32.SetConsoleMode.return_value = 1
     _config_terminal()
+    assert _ansi_module._terminal_ansi_configured is True
+
+
+def test_terminal_configuration_posix(mock_os_linux: None) -> None:
+    _ansi_module._terminal_ansi_configured = False
+    _config_terminal()
+    assert _ansi_module._terminal_ansi_configured is True
+
+
+def test_terminal_configuration_repeated_calls_are_no_ops() -> None:
+    _ansi_module._terminal_ansi_configured = True
+    _config_terminal()
+    assert _ansi_module._terminal_ansi_configured is True
 
 
 def test_styled_text_print_stream_options() -> None:

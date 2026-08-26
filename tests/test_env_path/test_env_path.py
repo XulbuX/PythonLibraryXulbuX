@@ -76,8 +76,7 @@ def test_persistent_windows_success_and_failure(mock_os_windows: None) -> None:
         env_path._persistent(Path("test_path"))
 
 
-def test_persistent_unix_add_and_remove(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock) -> None:
-    monkeypatch.setattr("sys.platform", "linux")
+def test_persistent_unix_add_and_remove(mock_os_linux: None, mock_subprocess_run: MagicMock) -> None:
     sample_target = Path("test_bin_dir")
 
     with (
@@ -93,8 +92,7 @@ def test_persistent_unix_add_and_remove(monkeypatch: pytest.MonkeyPatch, mock_su
         env_path._persistent(sample_target, remove=True)
 
 
-def test_persistent_add_already_existing_path_in_list(monkeypatch: pytest.MonkeyPatch, mock_subprocess_run: MagicMock) -> None:
-    monkeypatch.setattr("sys.platform", "linux")
+def test_persistent_add_already_existing_path_in_list(mock_os_linux: None, mock_subprocess_run: MagicMock) -> None:
     existing_paths = env_path.paths(as_list=True)
     if existing_paths:
         with (

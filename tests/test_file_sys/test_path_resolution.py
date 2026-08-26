@@ -175,6 +175,14 @@ def test_extend_path_env_vars_and_absolute_handling() -> None:
         with contextlib.suppress(Exception):
             helper()
 
+    with (
+        patch("pathlib.Path.is_absolute", return_value=True),
+        patch("pathlib.Path.drive", new_callable=PropertyMock, return_value="C:"),
+    ):
+        helper_drive = _ExtendPathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
+        with contextlib.suppress(Exception):
+            helper_drive()
+
 
 def test_find_path_traversal_when_parent_is_file(tmp_path: Path) -> None:
     file_path = tmp_path / "sample_file.txt"
