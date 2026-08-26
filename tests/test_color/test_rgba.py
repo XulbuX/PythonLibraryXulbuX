@@ -4,7 +4,7 @@ import pytest
 
 
 def test_rgba_init():
-    # Valid
+    # Valid:
     color1 = rgba(255, 128, 0, 0.5)
     assert color1.red == 255
     assert color1.green == 128
@@ -14,7 +14,7 @@ def test_rgba_init():
     color2 = rgba(255, 128, 0)
     assert color2.alpha is None
 
-    # Validation bypassing
+    # Validation bypassing:
     color3 = rgba(300, 300, 300, 2.0, _validate=False)
     assert color3.red == 300
     assert math.isclose(color3.alpha, 2.0)  # pyright:ignore[reportArgumentType]
@@ -24,7 +24,7 @@ def test_rgba_init():
     with pytest.raises(ValueError, match="must be integers in range"):
         rgba(0, 256, 0)
 
-    # Invalid Alpha
+    # Invalid Alpha:
     with pytest.raises(ValueError, match=r"must be in range \[0\.0, 1\.0\]"):
         rgba(0, 0, 0, -0.1)
     with pytest.raises(ValueError, match=r"must be in range \[0\.0, 1\.0\]"):
@@ -162,11 +162,11 @@ def test_rgba_blend():
     with pytest.raises(TypeError):
         c1.blend("invalid", 0.5)
 
-    # test additive alpha
+    # test additive alpha:
     blend2 = c1.blend(color2, 0.5, additive_alpha=True)
     assert math.isclose(blend2.alpha, 1.0)  # pyright:ignore[reportArgumentType]
 
-    # test none alpha
+    # test none alpha:
     b3 = rgba(255, 0, 0).blend(rgba(0, 0, 255), 0.5)
     assert b3.alpha is None
 
@@ -193,14 +193,14 @@ def test_rgba_complementary():
 
 
 def test_rgb_to_hsl_internal():
-    # specifically trigger branching in _rgb_to_hsl
-    # max_c == min_c
+    # specifically trigger branching in _rgb_to_hsl.
+    # max_c == min_c:
     assert rgba._rgb_to_hsl(128, 128, 128) == (0, 0, 50)
-    # max_c == red_norm
+    # max_c == red_norm:
     assert rgba._rgb_to_hsl(255, 0, 0) == (0, 100, 50)
-    # max_c == green_norm
+    # max_c == green_norm:
     assert rgba._rgb_to_hsl(0, 255, 0) == (120, 100, 50)
-    # max_c == blue_norm
+    # max_c == blue_norm:
     assert rgba._rgb_to_hsl(0, 0, 255) == (240, 100, 50)
-    # max_c == red_norm, green < blue
+    # max_c == red_norm, green < blue:
     assert rgba._rgb_to_hsl(255, 0, 128) == (330, 100, 50)

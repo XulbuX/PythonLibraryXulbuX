@@ -21,7 +21,7 @@ def test_xulbux_lib_entrypoint_registered():
     assert scripts["xulbux-lib"] == "xulbux.cli:main"
 
 
-# ***************************************************** xulbux-lib TESTS ******************************************************
+# ***************************************************** XULBUX-LIB TESTS ******************************************************
 
 
 def test_show_help_prints_output(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):

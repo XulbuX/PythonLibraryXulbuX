@@ -119,7 +119,7 @@ def test_hsla_saturate_desaturate():
 def test_hsla_rotate():
     color1 = hsla(180, 50, 50)
     rotated1 = color1.rotate(190)
-    assert rotated1.hue == 10  # (180+190)%360 = 10
+    assert rotated1.hue == 10  # (180+190)%360 = 10.
 
 
 def test_hsla_invert():
@@ -143,7 +143,7 @@ def test_hsla_blend():
     c1 = hsla(0, 100, 50, 0.5)
     color2 = hsla(240, 100, 50, 0.5)
     blend1 = c1.blend(color2, 0.5)
-    # the result will be an hsla, checking if valid
+    # the result will be an hsla, checking if valid:
     assert blend1.alpha is not None
 
     with pytest.raises(ValueError):
@@ -178,19 +178,19 @@ def test_hsla_complementary():
 
 
 def test_hsl_to_rgb_internal():
-    # specifically trigger branching in _hsl_to_rgb
-    # sat_norm == 0
+    # specifically trigger branching in _hsl_to_rgb.
+    # sat_norm == 0:
     assert hsla._hsl_to_rgb(180, 0, 50) == (127, 127, 127)
 
-    # light_norm >= 0.5
+    # light_norm >= 0.5:
     assert hsla._hsl_to_rgb(0, 100, 75) == (255, 128, 128)
 
-    # hue > 240 to trigger hue_pos > 1 inside _hue_to_rgb for red channel (hue_norm + 1/3 > 1)
+    # hue > 240 to trigger hue_pos > 1 inside _hue_to_rgb for red channel (hue_norm + 1/3 > 1):
     assert hsla._hsl_to_rgb(300, 100, 50) == (255, 0, 255)
 
-    # hue < 120 to trigger hue_pos < 0 inside _hue_to_rgb for blue channel (hue_norm - 1/3 < 0)
+    # hue < 120 to trigger hue_pos < 0 inside _hue_to_rgb for blue channel (hue_norm - 1/3 < 0):
     assert hsla._hsl_to_rgb(60, 100, 50) == (255, 255, 0)
 
-    # hue_pos < 0, hue_pos > 1, etc in _hue_to_rgb
-    # hue_to_rgb logic branches
-    # these are typically covered by various conversions above
+    # hue_pos < 0, hue_pos > 1, etc in _hue_to_rgb.
+    # hue_to_rgb logic branches.
+    # these are typically covered by various conversions above:

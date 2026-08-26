@@ -7,7 +7,7 @@ from xulbux.base.consts import ANSI
 from xulbux.console import ProgressBar
 import pytest
 
-# ***************************************************** ProgressBar TESTS *****************************************************
+# ***************************************************** PROGRESSBAR TESTS *****************************************************
 
 
 def test_progressbar_clear_intercept_line():

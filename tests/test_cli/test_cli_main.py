@@ -22,4 +22,4 @@ def test_cli_main_unknown(capsys: pytest.CaptureFixture[str]):
     with patch.object(sys, "argv", ["xulbux-lib", "unknown"]), patch("xulbux.console.pause_exit"):
         main()
         captured = capsys.readouterr()
-        assert "xulbux" in captured.out.lower()  # Prints help
+        assert "xulbux" in captured.out.lower()  # Prints help.

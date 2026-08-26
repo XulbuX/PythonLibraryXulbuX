@@ -6,7 +6,7 @@ import pytest
 
 
 def test_get_latest_version_http_error():
-    # Test HTTP error status != 200
+    # Test HTTP error status != 200:
     mock_response = MagicMock()
     mock_response.status = 404
     mock_response.headers = {}
@@ -17,7 +17,7 @@ def test_get_latest_version_http_error():
 
 
 def test_get_latest_version_json_error():
-    # Test JSON parse error or missing fields
+    # Test JSON parse error or missing fields:
     mock_response = MagicMock()
     mock_response.status = 200
     mock_response.__enter__.return_value = mock_response
@@ -30,7 +30,7 @@ def test_get_latest_version_json_error():
 
 
 def test_is_latest_version_none():
-    # Test when latest is None
+    # Test when latest is None:
     with patch("xulbux.cli.help.get_latest_version", return_value=None):
         assert is_latest_version() is None
 
@@ -39,6 +39,6 @@ def test_is_latest_version_none():
 
 
 def test_is_latest_version_exception():
-    # Test when version parsing fails
+    # Test when version parsing fails:
     with patch("xulbux.cli.help.get_latest_version", return_value="vNotAVersion"):
         assert is_latest_version() is None

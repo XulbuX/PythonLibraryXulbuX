@@ -67,14 +67,14 @@ def test_log_value_errors():
 
 
 def test_log_presets():
-    # Call them to increase coverage, they mostly output to stdout
+    # Call them to increase coverage, they mostly output to stdout:
     debug("msg", active=False)
     debug("msg", active=True, pause=False, exit=False)
     info("msg", pause=False, exit=False)
     warn("msg", pause=False, exit=False)
     done("msg", pause=False, exit=False)
-    # Fail defaults to exit=True, so test with exit=False
+    # Fail defaults to exit=True, so test with exit=False:
     fail("msg", pause=False, exit=False)
-    # Or catch exit
+    # Or catch exit:
     with pytest.raises(SystemExit):
         fail("msg", exit=True)

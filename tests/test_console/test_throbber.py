@@ -5,7 +5,7 @@ from xulbux.base.consts import ANSI
 from xulbux.console import Throbber
 import pytest
 
-# ****************************************************** Throbber TESTS *******************************************************
+# ****************************************************** THROBBER TESTS *******************************************************
 
 
 def test_throbber_context_manager():

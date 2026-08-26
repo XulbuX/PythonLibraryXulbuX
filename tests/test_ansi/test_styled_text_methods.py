@@ -25,10 +25,10 @@ def test_styledtext_eq_fallback():
 def test_styledtext_multiply_char_edge():
     from xulbux.ansi import StyledText
 
-    # times <= 0
+    # times <= 0:
     assert StyledText._multiply_char(StyledText("a"), 0) == ""
     assert StyledText._multiply_char(StyledText("a"), -1) == ""
-    # with ansi code
+    # with ansi code:
     st = StyledText(S.BOLD("a"))
     assert isinstance(StyledText._multiply_char(st, 2), str)
 
@@ -36,7 +36,7 @@ def test_styledtext_multiply_char_edge():
 def test_styledtext_just_edge_cases():
     st = StyledText("a")
 
-    # fill_char != 1
+    # fill_char != 1:
     with pytest.raises(TypeError):
         st.ljust(5, "ab")
     with pytest.raises(TypeError):
@@ -44,24 +44,24 @@ def test_styledtext_just_edge_cases():
     with pytest.raises(TypeError):
         st.center(5, "ab")
 
-    # padding == 0
+    # padding == 0:
     assert st.ljust(1).ansi == "a"
     assert st.rjust(1).ansi == "a"
     assert st.center(1).ansi == "a"
 
 
 def test_styledtext_wrap_edge():
-    # width <= 0 or fits
+    # width <= 0 or fits:
     assert len(StyledText("a").wrap(0)) == 1
     assert len(StyledText("a").wrap(10)) == 1
 
-    # empty paragraph
+    # empty paragraph:
     st = StyledText("\n")
     assert len(st.wrap(10)) == 2
 
-    # wrapped_chunks empty? (word too long)
+    # wrapped_chunks empty? (word too long):
     st = StyledText("abcdefghij")
-    assert len(st.wrap(5)) == 2  # textwrap will chunk it
+    assert len(st.wrap(5)) == 2  # textwrap will chunk it.
 
 
 def test_styledtext_input():
@@ -109,7 +109,7 @@ def test_stylegroup_eq_fallback():
 
 
 def test_stylegroup_ror_custom():
-    # Just call __ror__ explicitly to cover it
+    # Just call __ror__ explicitly to cover it:
     g1_st = _StyleGroup(S.BOLD)
     g2_st = g1_st.__ror__(S.ITALIC)
     assert isinstance(g2_st, _StyleGroup)

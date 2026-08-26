@@ -41,7 +41,7 @@ def test_restart_windows_with_prompt_and_wait(mock_run: MagicMock, mock_check_ou
 @patch("xulbux.system._subprocess.check_output")
 def test_restart_windows_processes_running(mock_check_output: MagicMock):
     with patch("platform.system", return_value="Windows"):
-        # Not a python or shell process
+        # Not a python or shell process:
         mock_check_output.return_value = b"1\n2\n3\nchrome.exe\n"
         with pytest.raises(RuntimeError, match="Processes are still running"):
             _system_module.restart()

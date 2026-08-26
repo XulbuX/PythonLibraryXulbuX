@@ -23,5 +23,5 @@ def test_log_box_bordered_errors():
 
 
 def test_log_box_bordered_hr():
-    # Will trigger lines 1784-1785
+    # Will trigger lines 1784-1785:
     log_box_bordered("line1", "{hr}", "line2")

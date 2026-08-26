@@ -181,7 +181,7 @@ def test_argument_parser_positionals(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_argument_parser_multi_positionals(monkeypatch: pytest.MonkeyPatch):
-    # One or more with `nargs="+"`:
+    # One or more with `nargs=`+``:
     monkeypatch.setattr(sys, "argv", ["script.py", "#ff0000", "#00ff00", "#0000ff", "-o", "gradient.png"])
     parser = ArgumentParser()
     parser.add_arg("color_points", nargs="+", help="Color stops")
@@ -195,7 +195,7 @@ def test_argument_parser_multi_positionals(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_argument_parser_positional_nargs_options(monkeypatch: pytest.MonkeyPatch):
-    # Fixed count `nargs=2`, optional `nargs="?"`, zero-or-more `nargs="*"`:
+    # Fixed count `nargs=2`, optional `nargs=`?``, zero-or-more `nargs=`*``:
     monkeypatch.setattr(sys, "argv", ["script.py", "10", "20", "extra1", "extra2"])
     parser = ArgumentParser()
     parser.add_arg("coords", nargs=2)

@@ -4,30 +4,30 @@ import pytest
 
 
 def test_hexa_init():
-    # RGB string
+    # RGB string:
     c1 = hexa("F00")
     assert c1.red == 255
     assert c1.green == 0
     assert c1.alpha is None
 
-    # RGBA string
+    # RGBA string:
     color2 = hexa("#F008")
     assert color2.alpha is not None
 
-    # RRGGBB string
+    # RRGGBB string:
     color3 = hexa("0xFF0000")
     assert color3.red == 255
     assert color3.alpha is None
 
-    # RRGGBBAA string
+    # RRGGBBAA string:
     c4 = hexa("#FF000080")
     assert c4.alpha is not None
 
-    # from int
+    # from int:
     c5 = hexa(0xFF000080)
     assert c5.red == 255
 
-    # from object with attrs
+    # from object with attrs:
     class MockColor:
         red = 255
         green = 0
@@ -38,17 +38,17 @@ def test_hexa_init():
     assert color6.red == 255
     assert math.isclose(color6.alpha, 0.5)  # pyright:ignore[reportArgumentType]
 
-    # invalid strings
+    # invalid strings:
     with pytest.raises(ValueError, match="Invalid HEXA color string"):
         hexa("FF000")
     with pytest.raises(ValueError, match="Could initialize hexa"):
         hexa(None)
 
-    # kwargs
+    # kwargs:
     c7 = hexa(_red=255, _green=0, _blue=0, _alpha=0.5)
     assert c7.red == 255
 
-    # hexa copy
+    # hexa copy:
     c8 = hexa(c1)
     assert c8.red == 255
 
@@ -96,7 +96,7 @@ def test_hexa_dict():
 
 def test_hexa_values():
     assert hexa("#FF000080").values() == (255, 0, 0, 0.5)
-    assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)  # actually 128/255
+    assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)  # actually 128/255.
 
 
 def test_hexa_conversions():
@@ -142,7 +142,7 @@ def test_hexa_rotate():
 
 
 def test_hexa_invert():
-    color1 = hexa("#FF800033")  # alpha 0.2
+    color1 = hexa("#FF800033")  # alpha 0.2.
     inv1 = color1.invert()
     assert inv1.red == 0
     assert inv1.green == 127
