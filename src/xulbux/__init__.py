@@ -1,7 +1,8 @@
 # ruff: file-ignore[non-empty-init-module]
 from __future__ import annotations
 
-TYPE_CHECKING = False
+TYPE_CHECKING: bool = False
+"""Flag indicating whether type checking is active during static analysis."""
 
 if TYPE_CHECKING:
     from . import ansi, cli, code, color, console, data, env_path, file, file_sys, json, regex, string, system
@@ -82,6 +83,7 @@ _SUBMODULES: Final[dict[str, str]] = {
     "Throbber": "console",
     "LazyRegex": "regex",
 }
+"""Mapping of top-level exported class names to their originating submodule for lazy-loading."""
 
 
 def __getattr__(name: str) -> Any:

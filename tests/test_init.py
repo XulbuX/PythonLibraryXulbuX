@@ -22,13 +22,13 @@ def test_dir() -> None:
 
 
 def test_getattr_direct() -> None:
-    res = xulbux.__getattr__("S")
-    assert res is not None
-    res = xulbux.__getattr__("console")
-    assert res is not None
+    res_s = xulbux.S
+    assert res_s is not None
+    res_console = xulbux.console
+    assert res_console is not None
 
     with pytest.raises(AttributeError):
-        xulbux.__getattr__("invalid")
+        _ = xulbux.invalid
 
 
 def test_dir_direct() -> None:

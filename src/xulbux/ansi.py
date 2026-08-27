@@ -371,9 +371,7 @@ def _render_styled(opens: tuple[str, ...], closes: tuple[str, ...], segments: tu
     for close in closes:
         ansi_parts.append(close)
 
-    result = S.__new__(S)
-    result.ansi = "".join(ansi_parts)
-    return result
+    return S("".join(ansi_parts))
 
 
 def _render_segment(segment: object, ansi_parts: list[str]) -> None:
@@ -408,6 +406,15 @@ class _SBase:
 
     __slots__: tuple[str, ...] = ("ansi",)
     ansi: str
+
+    def __call__(self, *text: Renderable) -> S:
+        """Dummy method required to prevent a MyPyC C-struct memory layout bug.\n
+        ----------------------------------------------------------------------------------------------------
+        If subclasses define `__call__` but the native base class does not, MyPyC injects a<br>
+        `vectorcallfunc` pointer into the subclass struct. This breaks the memory offset<br>
+        for inherited fields (like `ansi`), causing a segmentation fault when accessed."""
+
+        raise NotImplementedError
 
     # ************************* PROPERTIES **************************
 
@@ -511,9 +518,7 @@ class _SBase:
         result_parts.append(sliced_raw[last_index:])
         result_parts.extend(suffix_codes)
 
-        result = S.__new__(S)
-        result.ansi = "".join(result_parts)
-        return result
+        return S("".join(result_parts))
 
     def __contains__(self, item: object, /) -> bool:
         """Check if a substring or plain string is contained in the rendered output or plain text."""
@@ -733,7 +738,7 @@ class _Style(_SBase):
 
     def __init__(self, value: int, /) -> None:
         self._value: int = value
-        self.ansi: str = f"{ANSI.CHAR}[{value}m"
+        self.ansi = f"{ANSI.CHAR}[{value}m"
 
     def __int__(self) -> int:
         return self._value
@@ -840,7 +845,7 @@ class _ColorStyle(_SBase):
             self._open_seq = ANSI.SEQ_FG_COLOR.format(red, green, blue)
             self._close_seq = f"{ANSI.CHAR}[39m"
 
-        self.ansi: str = self._open_seq
+        self.ansi = self._open_seq
 
     @classmethod
     def from_hex(cls: type[Self], color: str | int | hexa, /, *, bg: bool | None = None) -> Self:
@@ -904,6 +909,9 @@ class _ColorStyle(_SBase):
 
         return False
 
+    def __hash__(self) -> int:
+        return hash((self._red, self._green, self._blue, self._bg))
+
 
 class _FgColorStyle(_ColorStyle):
     """A 24-bit true-color foreground style."""
@@ -955,7 +963,7 @@ class _Color256Style(_SBase):
             self._open_seq = ANSI.SEQ_FG_COLOR_256.format(code)
             self._close_seq = f"{ANSI.CHAR}[39m"
 
-        self.ansi: str = self._open_seq
+        self.ansi = self._open_seq
 
     def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this 256-color style with another style or group via `|`."""
@@ -995,6 +1003,9 @@ class _Color256Style(_SBase):
 
         return False
 
+    def __hash__(self) -> int:
+        return hash((self._code, self._bg))
+
 
 class _FgColor256Style(_Color256Style):
     """A 256-color palette foreground style."""
@@ -1033,7 +1044,7 @@ class _Link(_SBase):
         self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
         self._open_seq: str = ANSI.SEQ_LINK_OPEN.format(self._url)
         self._close_seq: str = ANSI.SEQ_LINK_CLOSE
-        self.ansi: str = self._open_seq
+        self.ansi = self._open_seq
 
     def __or__(self, other: AnyStyle) -> _StyleGroup:
         """Combines this link style with another style or group via `|`."""
@@ -1073,6 +1084,9 @@ class _Link(_SBase):
 
         return False
 
+    def __hash__(self) -> int:
+        return hash(self._url)
+
 
 class _StyleGroup(_SBase):
     """An immutable, ordered group of styles produced by `|`.\n
@@ -1083,7 +1097,7 @@ class _StyleGroup(_SBase):
 
     def __init__(self, *codes: BaseStyle) -> None:
         self._codes: tuple[BaseStyle, ...] = codes
-        self.ansi: str = "".join(_build_open_close(self)[0])
+        self.ansi = "".join(_build_open_close(self)[0])
 
     def __iter__(self) -> Iterator[BaseStyle]:
         """Iterating a `_StyleGroup` yields its individual styles in order."""
@@ -1129,6 +1143,9 @@ class _StyleGroup(_SBase):
             return super().__eq__(other)
 
         return False
+
+    def __hash__(self) -> int:
+        return hash(self._codes)
 
     def to_bg(self) -> _StyleGroup:
         """Convert all foreground color styles in this group to background color styles."""
@@ -1418,7 +1435,7 @@ class S(_SBase):
 
             _render_segment(segment, ansi_parts)
 
-        self.ansi: str = "".join(ansi_parts)
+        self.ansi = "".join(ansi_parts)
 
     @staticmethod
     def _render(segment: object, ansi_parts: list[str]) -> None:

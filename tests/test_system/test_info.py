@@ -41,7 +41,7 @@ def test_is_elevated_posix_exception(mock_os_linux: None) -> None:
 
 
 def test_is_elevated_unknown_os(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_system_module._os, "name", "unknown_os")
+    monkeypatch.setattr("os.name", "unknown_os")
     assert _system_module.is_elevated() is False
 
 

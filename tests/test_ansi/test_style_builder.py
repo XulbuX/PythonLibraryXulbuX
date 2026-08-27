@@ -510,3 +510,10 @@ def test_256_color_styles() -> None:
         S.BG.color256(-1)
     with pytest.raises(ValueError, match="256-color index"):
         S.BG.color256(256)
+
+    # Hashing tests:
+    assert isinstance(hash(S.RED), int)
+    assert isinstance(hash(S.rgb(255, 0, 0)), int)
+    assert isinstance(hash(S.color256(196)), int)
+    assert isinstance(hash(S.link("https://example.com")), int)
+    assert isinstance(hash(S.BOLD | S.RED), int)

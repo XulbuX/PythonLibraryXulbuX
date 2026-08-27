@@ -164,6 +164,14 @@ def test_style_resolution_and_persistence_helpers() -> None:
     bg_color_light, fg_color_light = _resolve_title_colors(S.BG.hex("#FFFFFF"))
     assert bg_color_light is not None and fg_color_light == S.hex(0x000000)
 
+    # 256-color testing (base, cube dark/light, grayscale dark/light, and cache hit):
+    assert _resolve_title_colors(S.BG.color256(1))[1] == S.BLACK
+    assert _resolve_title_colors(S.BG.color256(16))[1] == S.hex(0xFFFFFF)
+    assert _resolve_title_colors(S.BG.color256(16))[1] == S.hex(0xFFFFFF)  # Cache hit
+    assert _resolve_title_colors(S.BG.color256(231))[1] == S.hex(0x000000)
+    assert _resolve_title_colors(S.BG.color256(232))[1] == S.hex(0xFFFFFF)
+    assert _resolve_title_colors(S.BG.color256(255))[1] == S.hex(0x000000)
+
     with pytest.raises(ValueError, match="title_bg_color"):
         _resolve_title_colors("invalid_color")
     with pytest.raises(ValueError, match="title_bg_color"):

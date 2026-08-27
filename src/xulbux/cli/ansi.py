@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def _st(style: str) -> RenderSegment:
-    """Helper function to format styles for display in the `xulbux-lib ansi` command output."""
+    """Internal helper function to format styles for display in the `xulbux-lib ansi` command output."""
 
     return style if "." not in style else S.DIM(".").join(style.split("."))
 
@@ -14,8 +14,8 @@ def show_ansi() -> None:
     """CLI command function for `xulbux-lib ansi` command,<br>
     which shows all possible styles using the `xulbux.ansi` API."""
 
-    title = S.BOLD
-    sep = (get_width(), S.DIM("━"))
+    title = S.BOLD | S.BR.BLACK
+    sep = (get_width(), (S.DIM | S.BR.BLACK)("━"))
     code = S.DIM | S.BR.BLACK
 
     S(
@@ -30,6 +30,8 @@ def show_ansi() -> None:
         code('                   S.ITALIC("Text")'),
         (_st("UNDERLINE          "), S.UNDERLINE("Text")),
         code('                   S.UNDERLINE("Text")'),
+        (_st("BLINK              "), S.BLINK("Text")),
+        code('                   S.BLINK("Text")'),
         (_st("DOUBLE_UNDERLINE   "), S.DOUBLE_UNDERLINE("Text")),
         code('                   S.DOUBLE_UNDERLINE("Text")'),
         (_st("INVERSE            "), S.INVERSE("Text")),
@@ -115,10 +117,14 @@ def show_ansi() -> None:
         code('                   S.rgb(255, 96, 112)("rgb(255, 96, 112)")'),
         (_st("hex()              "), S.hex("#FF6070")("#FF6070")),
         code('                   S.hex("#FF6070")("#FF6070")'),
+        (_st("color256()         "), S.color256(208)("color256(208)")),
+        code('                   S.color256(208)("color256(208)")'),
         (_st("BG.rgb()           "), (S.hex("FFF") | S.BG.rgb(0, 100, 255))(" rgb(0, 100, 255) ")),
         code('                   S.BG.rgb(0, 100, 255)(" rgb(0, 100, 255) ")'),
         (_st("BG.hex()           "), (S.hex("FFF") | S.BG.hex("#0064FF"))(" #0064FF ")),
         code('                   S.BG.hex("#0064FF")(" #0064FF ")'),
+        (_st("BG.color256()      "), (S.hex("FFF") | S.BG.color256(208))(" color256(208) ")),
+        code('                   S.BG.color256(208)(" color256(208) ")'),
         (_st("link()             "), (S.hex("89F") | S.link("https://xul.is"))("xul.is")),
         code('                   S.link("https://xul.is")("xul.is")'),
         (_st("link() [file]      "), (S.hex("89F") | S.link(Path(__file__)))("Click here to see how this link was created!")),

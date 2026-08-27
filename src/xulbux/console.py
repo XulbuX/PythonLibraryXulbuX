@@ -12,6 +12,7 @@ from .ansi import (
     Renderable,
     S,
     TextRenderable,
+    _Color256Style,
     _ColorStyle,
     is_any_style,
     is_bg_color_style,
@@ -65,6 +66,11 @@ _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
 """Cache of rendered log-title ANSI strings, keyed by `(padded_title, style_repr)`."""
 _LOG_TITLE_CACHE_MAX: Final[int] = 256
 """Maximum number of entries kept in `_LOG_TITLE_CACHE`."""
+
+_TITLE_COLORS_CACHE: Final[dict[object, tuple[BgColorStyle, FgColorStyle]]] = {}
+"""Cache of resolved background and matching foreground style pairs."""
+_CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
+"""RGB step values for the 6x6x6 256-color palette cube."""
 
 _ANSI_RESET: Final[str] = S.RESET.ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
@@ -741,10 +747,8 @@ class ArgumentParser:
             last_idx = match.end()
 
         parts.append(example_cmd[last_idx:])
-        result = S.__new__(S)
-        result.ansi = "".join(parts)
 
-        return result
+        return S("".join(parts))
 
     def _add_examples_to_output(
         self,
@@ -2075,12 +2079,31 @@ def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, FgCo
     ----------------------------------------------------------------------------------------------------
     *   `title_bg_color` – An `S` background color style (e.g., `S.BG.BLUE`, `S.BG.hex("#67F")`)."""
 
+    if (cached := _TITLE_COLORS_CACHE.get(title_bg_color)) is not None:
+        return cached
+
     if is_bg_color_style(title_bg_color):
+        fg_style: FgColorStyle = S.BLACK
+
         if isinstance(title_bg_color, _ColorStyle):
             luminance = 0.2126 * title_bg_color._red + 0.7152 * title_bg_color._green + 0.0722 * title_bg_color._blue
-            return title_bg_color, S.rgb(255, 255, 255) if luminance < 128 else S.rgb(0, 0, 0)
+            fg_style = S.rgb(255, 255, 255) if luminance < 128 else S.rgb(0, 0, 0)
 
-        return title_bg_color, S.BLACK
+        elif isinstance(title_bg_color, _Color256Style):
+            if 16 <= (code := title_bg_color._code) <= 231:
+                r_idx, rem = divmod(code - 16, 36)
+                g_idx, b_idx = divmod(rem, 6)
+                luminance = 0.2126 * _CUBE_STEPS[r_idx] + 0.7152 * _CUBE_STEPS[g_idx] + 0.0722 * _CUBE_STEPS[b_idx]
+                fg_style = S.rgb(255, 255, 255) if luminance < 128 else S.rgb(0, 0, 0)
+
+            elif 232 <= code <= 255:
+                gray = 8 + 10 * (code - 232)
+                fg_style = S.rgb(255, 255, 255) if gray < 128 else S.rgb(0, 0, 0)
+
+        result: tuple[BgColorStyle, FgColorStyle] = (title_bg_color, fg_style)
+        _TITLE_COLORS_CACHE[title_bg_color] = result
+
+        return result
 
     raise ValueError(
         f"The 'title_bg_color' parameter must be a valid background color style (e.g., 'S.BG.BLUE'), got {title_bg_color!r}"

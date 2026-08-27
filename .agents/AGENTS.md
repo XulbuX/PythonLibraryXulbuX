@@ -30,6 +30,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 ## 5. Code Structure & Readability
 
 *   **Logical Placement:** Do not mindlessly append new code (variables, constants, functions, classes, etc.) to the end of a file. Always insert new code in a logical location that groups related functionality together.
+*   **Private Constants Placement:** Private constants and module-level variables (e.g., `_PATTERNS`, caches, lookup tables) should always be defined directly below the imports at the very top of the file.
 *   **Spacing & Formatting:** Keep the code "spacy" and readable, matching the current formatting conventions of the repository.
 *   **Imports Placement:** Always place imports at the top of the file. The only exception is OS-specific libraries (such as `winreg`, `msvcrt`, `termios`, or `tty`) that do not exist on other operating systems and therefore must be imported inside platform-specific code branches.
 *   **Explicit Import Styles:** For libraries like `typing`, `typing_extensions`, `collections.abc`, and `pathlib`, always use explicit `from <module> import ...` statements (e.g., `from typing import overload, Any`, `from pathlib import Path`). Never import the entire module as `import typing` or `import pathlib`.
@@ -39,7 +40,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 ## 6. Documentation & Markdown Formatting
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
-*   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions.
+*   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions. Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
 
 ## 7. Dependency Management
 

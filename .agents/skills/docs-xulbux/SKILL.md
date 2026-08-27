@@ -11,13 +11,14 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
 
 ### General Rules
 
-1.  **Mandatory Documentation:** Everything in the library's source code that is not private (or special modified things like custom dunderscore methods) requires a docstring.
-2.  **Parameters (`__init__` vs Classes):** For classes that take parameters, document the parameters in the **class's docstring**. Do NOT add a docstring to the `__init__` method itself. (This ensures params are displayed in the signature of the class in the docs).
-3.  **Parameters List:** Docstrings for signatures that have params MUST list those params in the exact same order as the signature, **without type-hints**, and quickly describe what each param is for.
-4.  **Returns & Yields:** Do **NOT** describe the return/yield value unless it is special, complex, or cannot be inferred from the type hinting.
-5.  **Exceptions:** If a function/method raises special exceptions for specific reasons, describe that in the docstring.
-6.  **Attributes & Properties:** Document public class/instance attributes or properties directly below their variable/property definitions, *not* in the class docstring (see `console.ArgumentParser` for an example).
-7.  **Examples:** Always add one or more example usages if the function/class is large or quite complicated to understand.
+1.  **Mandatory Documentation:** Everything in the library's source code (including private variables, functions, classes, and helper constructs) requires at least a one-line docstring quickly describing what it does or what it is for. The only exceptions are internal dunderscore methods where a docstring is truly redundant.
+2.  **Private Constants & Caches:** Private constants and module-level variables (e.g., regex patterns, lookup dictionaries, internal caches) should always be placed directly below the imports at the very top of the file and include a concise docstring.
+3.  **Parameters (`__init__` vs Classes):** For classes that take parameters, document the parameters in the **class's docstring**. Do NOT add a docstring to the `__init__` method itself. (This ensures params are displayed in the signature of the class in the docs).
+4.  **Parameters List:** Docstrings for signatures that have params MUST list those params in the exact same order as the signature, **without type-hints**, and quickly describe what each param is for.
+5.  **Returns & Yields:** Do **NOT** describe the return/yield value unless it is special, complex, or cannot be inferred from the type hinting.
+6.  **Exceptions:** If a function/method raises special exceptions for specific reasons, describe that in the docstring.
+7.  **Attributes & Properties:** Document public class/instance attributes or properties directly below their variable/property definitions, *not* in the class docstring (see `console.ArgumentParser` for an example).
+8.  **Examples:** Always add one or more example usages if the function/class is large or quite complicated to understand.
 
 ### Formatting & Line Wraps
 
