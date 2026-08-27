@@ -23,6 +23,7 @@ def get_current_branch() -> str | None:
     try:
         result = subprocess.run(
             ["git", "branch", "--show-current"],
+            cwd=ROOT_DIR,
             stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,

@@ -66,13 +66,17 @@ def test_get_validation_errors() -> None:
 
 def test_persistent_windows_success_and_failure(mock_os_windows: None) -> None:
     mock_winreg = MagicMock()
-    with patch.dict("sys.modules", {"winreg": mock_winreg}):
+    with patch.dict("os.environ"), patch.dict("sys.modules", {"winreg": mock_winreg}):
         env_path._persistent(Path("test_path"))
         mock_winreg.SetValueEx.assert_called_once()
 
     mock_winreg_err = MagicMock()
     mock_winreg_err.OpenKey.side_effect = OSError("Access denied")
-    with patch.dict("sys.modules", {"winreg": mock_winreg_err}), pytest.raises(RuntimeError, match="Failed to update PATH"):
+    with (
+        patch.dict("os.environ"),
+        patch.dict("sys.modules", {"winreg": mock_winreg_err}),
+        pytest.raises(RuntimeError, match="Failed to update PATH"),
+    ):
         env_path._persistent(Path("test_path"))
 
 
@@ -80,6 +84,7 @@ def test_persistent_unix_add_and_remove(mock_os_linux: None, mock_subprocess_run
     sample_target = Path("test_bin_dir")
 
     with (
+        patch.dict("os.environ"),
         patch("pathlib.Path.exists", return_value=True),
         patch("builtins.open") as mock_open,
         patch("xulbux.env_path.Path.home", return_value=Path(".")),
@@ -96,6 +101,7 @@ def test_persistent_add_already_existing_path_in_list(mock_os_linux: None, mock_
     existing_paths = env_path.paths(as_list=True)
     if existing_paths:
         with (
+            patch.dict("os.environ"),
             patch("builtins.open"),
             patch("pathlib.Path.exists", return_value=True),
             patch("xulbux.env_path.Path.home", return_value=Path(".")),

@@ -183,7 +183,7 @@ def test_parse_empty_positional_handling() -> None:
 def test_internal_consume_opt_and_calc_remaining_branches() -> None:
     parser = ArgumentParser()
     parser._args_order = ["first", "second"]
-    parser._arg_configs["second"] = {  # pyright:ignore[reportArgumentType]
+    parser._arg_configs["second"] = {
         "is_arg": True,
         "nargs": "*",
         "required": True,
@@ -193,11 +193,11 @@ def test_internal_consume_opt_and_calc_remaining_branches() -> None:
         "choices": None,
         "help": None,
     }
-    # _calculate_remaining_min with nargs="*" and required=True:
+    # `_calculate_remaining_min` with `nargs="*"` and `required=True`:
     assert parser._calculate_remaining_min(0) == 0
 
-    # _consume_opt with empty expects_value and optional_value=False:
-    parser._arg_configs["custom_opt"] = {  # pyright:ignore[reportArgumentType] # type:ignore[typeddict-item]
+    # `_consume_opt` with empty `expects_value` and `optional_value=False`:
+    parser._arg_configs["custom_opt"] = {
         "is_arg": False,
         "nargs": 1,
         "required": False,

@@ -127,6 +127,7 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
     -   `S.ITALIC`
     -   `S.UNDERLINE`
     -   `S.INVERSE`
+    -   `S.BLINK`
     -   `S.HIDDEN`
     -   `S.STRIKE`
     -   `S.DOUBLE_UNDERLINE`
@@ -139,6 +140,9 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
     -   `S.BG.BLACK`, `S.BG.RED`, `S.BG.GREEN`, …
 *   Bright background colors (`S.BG.BR.*`):
     -   `S.BG.BR.RED`, `S.BG.BR.GREEN`, …
+*   256-color palette (foreground / background):
+    -   `S.color256(196)`
+    -   `S.BG.color256(21)`
 *   24-bit true-color (foreground / background):
     -   `S.rgb(255, 96, 112)`
     -   `S.hex("#FF6070")`  or  `S.hex("F67")`
@@ -149,7 +153,7 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
     -   `(S.link("…") | S.BR.BLUE)("click here")`
 *   Specific resets (only needed in advanced use; auto-reset usually covers it):
     -   `S.RESET_BOLD`, `S.RESET_DIM`, `S.RESET_ITALIC`, `S.RESET_UNDERLINE`,
-        `S.RESET_INVERSE`, `S.RESET_HIDDEN`, `S.RESET_STRIKE`,
+        `S.RESET_BLINK`, `S.RESET_INVERSE`, `S.RESET_HIDDEN`, `S.RESET_STRIKE`,
         `S.RESET_COLOR`, `S.RESET_BG`
 *   Total reset (resets every previously applied styles):
     -   `S.RESET`
@@ -161,33 +165,46 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
 These are plain strings (or string-returning helpers), so they can be passed directly into a<br>
 `S(…)` call or written to `sys.stdout`:
 
-*   `Term.CLEAR_LINE`       – Erase the entire current line.
-*   `Term.CLEAR_SCREEN`     – Erase the whole screen.
-*   `Term.HIDE_CURSOR`      – Hide the cursor.
-*   `Term.SHOW_CURSOR`      – Show the cursor.
-*   `Term.ALT_SCREEN`       – Enter the alternate screen buffer.
-*   `Term.MAIN_SCREEN`      – Leave the alternate screen buffer.
-*   `Term.up(n)`            – Move the cursor up by `n` rows.
-*   `Term.down(n)`          – Move the cursor down by `n` rows.
-*   `Term.right(n)`         – Move the cursor right by `n` columns.
-*   `Term.left(n)`          – Move the cursor left by `n` columns.
-*   `Term.move(row, col)`   – Move the cursor to an absolute `(row, col)` position.
-*   `Term.title(text)`      – Set the terminal window / tab title (OSC 2).
-*   `Term.save()`           – Save the current cursor position.
-*   `Term.restore()`        – Restore the previously saved cursor position.
+*   `CLEAR_LINE`                     – Erase the entire current line.
+*   `CLEAR_LINE_TO_END`              – Erase from the cursor to the end of the line.
+*   `CLEAR_LINE_TO_START`            – Erase from the line start to the cursor.
+*   `CLEAR_SCREEN`                   – Erase the whole screen.
+*   `CLEAR_SCREEN_TO_END`            – Erase from the cursor to the end of the screen.
+*   `CLEAR_SCREEN_TO_START`          – Erase from the screen start to the cursor.
+*   `CLEAR_SCROLLBACK`               – Erase the scrollback buffer.
+*   `HIDE_CURSOR`                    – Hide the cursor.
+*   `SHOW_CURSOR`                    – Show the cursor.
+*   `ALT_SCREEN`                     – Enter the alternate screen buffer.
+*   `MAIN_SCREEN`                    – Leave the alternate screen buffer.
+*   `BELL`                           – Terminal bell signal (`\\x07`).
+*   `up(n)`                          – Move the cursor up by `n` rows.
+*   `down(n)`                        – Move the cursor down by `n` rows.
+*   `right(n)`                       – Move the cursor right by `n` columns.
+*   `left(n)`                        – Move the cursor left by `n` columns.
+*   `column(col)`                    – Move the cursor to an absolute column position (1-based).
+*   `move(row, col)`                 – Move the cursor to an absolute `(row, col)` position.
+*   `scroll_up(n)`                   – Scroll page up by `n` lines.
+*   `scroll_down(n)`                 – Scroll page down by `n` lines.
+*   `title(text)`                    – Set the terminal window / tab title (OSC 2).
+*   `cursor_shape(shape)`            – Change cursor shape (DECSCUSR 1-6).
+*   `clipboard_copy(text)`           – Copy text to system clipboard via OSC 52.
+*   `cwd(path)`                      – Notify terminal of current working directory via OSC 7.
+*   `save()` / `restore()`           – Save/restore cursor position (ANSI.SYS).
+*   `save_dec()` / `restore_dec()`   – Save/restore cursor position (DEC `ESC 7`/`8`).
 """
 
 from __future__ import annotations
 
 from .base.consts import ANSI
 
+import base64 as _base64
 import ctypes as _ctypes
 import os as _os
 import sys as _sys
 import textwrap as _textwrap
 from contextlib import suppress as _suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Self, TextIO, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, Self, TextIO, cast, overload
 
 if TYPE_CHECKING:
     from .color import hexa, rgba
@@ -208,55 +225,22 @@ _ANSI_SEQ_RX: Final[_rx.Pattern[str]] = ANSI.SEQ_PATTERN
 """Module shorthand for `ANSI.SEQ_PATTERN`.<br>
 Matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
+# fmt: off
 _RESET_MAP: Final[dict[int, int]] = {
     # Text styles:
-    1: 22,
-    2: 22,
-    3: 23,
-    4: 24,
-    7: 27,
-    8: 28,
-    9: 29,
-    21: 24,
+    1: 22, 2: 22, 3: 23, 4: 24, 5: 25, 7: 27, 8: 28, 9: 29, 21: 24,
     # FG colors:
-    30: 39,
-    31: 39,
-    32: 39,
-    33: 39,
-    34: 39,
-    35: 39,
-    36: 39,
-    37: 39,
+    30: 39, 31: 39, 32: 39, 33: 39, 34: 39, 35: 39, 36: 39, 37: 39,
     # BG colors:
-    40: 49,
-    41: 49,
-    42: 49,
-    43: 49,
-    44: 49,
-    45: 49,
-    46: 49,
-    47: 49,
+    40: 49, 41: 49, 42: 49, 43: 49, 44: 49, 45: 49, 46: 49, 47: 49,
     # Bright FG colors:
-    90: 39,
-    91: 39,
-    92: 39,
-    93: 39,
-    94: 39,
-    95: 39,
-    96: 39,
-    97: 39,
+    90: 39, 91: 39, 92: 39, 93: 39, 94: 39, 95: 39, 96: 39, 97: 39,
     # Bright BG colors:
-    100: 49,
-    101: 49,
-    102: 49,
-    103: 49,
-    104: 49,
-    105: 49,
-    106: 49,
-    107: 49,
+    100: 49, 101: 49, 102: 49, 103: 49, 104: 49, 105: 49, 106: 49, 107: 49,
 }
 """Mapping from ANSI style integer to its matching reset integer.\n
 Codes that fully reset everything (`0`) or have no useful specific reset are intentionally omitted."""
+# fmt: on
 
 _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
     cid: ((f"{ANSI.CHAR}[{cid}m",), (f"{ANSI.CHAR}[{reset}m",)) for cid, reset in _RESET_MAP.items()
@@ -308,6 +292,11 @@ class _BuildOpenClose:
         self.link_url: str | None = None
 
     def build(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """Build the opening and closing ANSI sequences for the given `_StyleGroup`.\n
+        ----------------------------------------------------------------------------------------------------
+        Returns a `(opens, closes)` pair of tuples. Multiple opens / closes are emitted<br>
+        only when both an OSC 8 hyperlink and SGR codes are present (OSC wraps SGR)."""
+
         if (
             len(codes := self.group._codes) == 1
             and type(codes[0]) is _Style
@@ -321,8 +310,11 @@ class _BuildOpenClose:
         return self._build_result()
 
     def _process_code(self, code: BaseStyle) -> None:
+        """Internal helper to process a single style code and append its opening and closing sequences."""
+
         if isinstance(code, _Link):
             self.link_url = code._url
+
         elif isinstance(code, _ColorStyle):
             if code._bg:
                 self.sgr_open.append(f"48;2;{code._red};{code._green};{code._blue}")
@@ -330,13 +322,23 @@ class _BuildOpenClose:
             else:
                 self.sgr_open.append(f"38;2;{code._red};{code._green};{code._blue}")
                 self.sgr_close.append("39")
+
+        elif isinstance(code, _Color256Style):
+            if code._bg:
+                self.sgr_open.append(f"48;5;{code._code}")
+                self.sgr_close.append("49")
+            else:
+                self.sgr_open.append(f"38;5;{code._code}")
+                self.sgr_close.append("39")
+
         else:
-            cid = int(code)
-            self.sgr_open.append(str(cid))
+            self.sgr_open.append(str(cid := int(code)))
             if (reset := _RESET_MAP.get(cid)) is not None:
                 self.sgr_close.append(str(reset))
 
     def _build_result(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """Internal helper to build the final `(opens, closes)` result tuples."""
+
         seen: set[str] = set()
         dedup_close: list[str] = []
 
@@ -928,6 +930,97 @@ class _BgColorStyle(_ColorStyle):
         return _FgColorStyle(self._red, self._green, self._blue)
 
 
+class _Color256Style(_SBase):
+    """An 8-bit / 256-color palette style – foreground or background.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `code` – The 256-color palette index in range [0, 255] inclusive.
+    *   `bg` – Whether this style applies to the background instead of the foreground.\n
+    ----------------------------------------------------------------------------------------------------
+    >>> S.color256(196)("text")     # Red FG from 256-color palette
+    >>> S.BG.color256(21)("text")   # Blue BG from 256-color palette"""
+
+    __slots__: tuple[str, ...] = ("_bg", "_close_seq", "_code", "_open_seq")
+
+    def __init__(self, code: int, /, *, bg: bool = False) -> None:
+        if not (0 <= code <= 255):
+            raise ValueError(f"Expected 256-color index in range [0, 255] inclusive, got {code!r}")
+
+        self._code: int = code
+        self._bg: bool = bg
+
+        if bg:
+            self._open_seq: str = ANSI.SEQ_BG_COLOR_256.format(code)
+            self._close_seq: str = f"{ANSI.CHAR}[49m"
+        else:
+            self._open_seq = ANSI.SEQ_FG_COLOR_256.format(code)
+            self._close_seq = f"{ANSI.CHAR}[39m"
+
+        self.ansi: str = self._open_seq
+
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
+        """Combines this 256-color style with another style or group via `|`."""
+
+        if isinstance(other, _StyleGroup):
+            return _StyleGroup(self, *other._codes)
+
+        return _StyleGroup(self, other)
+
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
+        """Combines this 256-color style with another style or group via `|`."""
+
+        return _StyleGroup(other, self)
+
+    def __call__(self, *text: Renderable) -> S:
+        """Applies this 256-color style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), text)
+
+    def __matmul__(self, text: Renderable) -> S:
+        """Applies this 256-color style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), (text,))
+
+    def __repr__(self) -> str:
+        """Returns a string representation of this 256-color style."""
+
+        return f"_Color256Style({'bg' if self._bg else 'fg'} {self._code})"
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_Color256Style` with identical color code and background flag."""
+
+        if isinstance(other, _Color256Style):
+            return self._code == other._code and self._bg == other._bg
+        elif isinstance(other, (_SBase, str)):
+            return super().__eq__(other)
+
+        return False
+
+
+class _FgColor256Style(_Color256Style):
+    """A 256-color palette foreground style."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_bg(self) -> _BgColor256Style:
+        """Convert to the corresponding background color style."""
+
+        return _BgColor256Style(self._code)
+
+
+class _BgColor256Style(_Color256Style):
+    """A 256-color palette background style."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def __init__(self, code: int, /, *, bg: bool = True) -> None:
+        super().__init__(code, bg=bg)
+
+    def to_fg(self) -> _FgColor256Style:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgColor256Style(self._code)
+
+
 class _Link(_SBase):
     """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
     ----------------------------------------------------------------------------------------------------
@@ -1041,8 +1134,9 @@ class _StyleGroup(_SBase):
         """Convert all foreground color styles in this group to background color styles."""
 
         converted_codes: list[BaseStyle] = []
+
         for code in self._codes:
-            if isinstance(code, (_FgStyle, _FgColorStyle)):
+            if isinstance(code, (_FgStyle, _FgColorStyle, _FgColor256Style)):
                 converted_codes.append(code.to_bg())
             else:
                 converted_codes.append(code)
@@ -1053,8 +1147,9 @@ class _StyleGroup(_SBase):
         """Convert all background color styles in this group to foreground color styles."""
 
         converted_codes: list[BaseStyle] = []
+
         for code in self._codes:
-            if isinstance(code, (_BgStyle, _BgColorStyle)):
+            if isinstance(code, (_BgStyle, _BgColorStyle, _BgColor256Style)):
                 converted_codes.append(code.to_fg())
             else:
                 converted_codes.append(code)
@@ -1135,6 +1230,13 @@ class _BgNS:
 
         return _BgColorStyle.from_hex(color, bg=True)
 
+    @staticmethod
+    def color256(code: int, /) -> _BgColor256Style:
+        """256-color palette background color (code in range [0, 255] inclusive).\n
+        `S.BG.color256(196)("text")`"""
+
+        return _BgColor256Style(code)
+
 
 class _BrNS:
     """Namespace for bright foreground colors, reachable as `S.BR.*`."""
@@ -1208,6 +1310,8 @@ class S(_SBase):
     """Reset hidden."""
     RESET_STRIKETHROUGH: ClassVar[_Style] = _Style(29)
     """Reset strikethrough."""
+    RESET_BLINK: ClassVar[_Style] = _Style(25)
+    """Reset blink."""
     RESET_FG: ClassVar[_Style] = _Style(39)
     """Reset foreground color."""
     RESET_BG: ClassVar[_Style] = _Style(49)
@@ -1225,6 +1329,8 @@ class S(_SBase):
     """Italic text."""
     UNDERLINE: ClassVar[_Style] = _Style(4)
     """Underline text."""
+    BLINK: ClassVar[_Style] = _Style(5)
+    """Blinking text."""
     INVERSE: ClassVar[_Style] = _Style(7)
     """Inverse colors (swap foreground and background colors)."""
     HIDDEN: ClassVar[_Style] = _Style(8)
@@ -1285,6 +1391,13 @@ class S(_SBase):
         return _FgColorStyle.from_hex(color)
 
     @staticmethod
+    def color256(code: int, /) -> _FgColor256Style:
+        """256-color palette foreground color (code in range [0, 255] inclusive).\n
+        `S.color256(196)("text")`"""
+
+        return _FgColor256Style(code)
+
+    @staticmethod
     def link(url: str | Path, /) -> _Link:
         """Clickable hyperlink. Accepts strings or `pathlib.Path` objects.<br>
         If a `pathlib.Path` is passed, it is automatically resolved and converted to a URI.\n
@@ -1322,43 +1435,37 @@ class S(_SBase):
 # **************************************************** PUBLIC TYPE HELPERS ****************************************************
 
 
-type FgColorStyle = _FgStyle | _FgColorStyle
-"""A single foreground color style code (e.g., `S.RED`, `S.BR.BLUE`, `S.hex("#FFF")`).<br>
+type FgColorStyle = _FgStyle | _FgColorStyle | _FgColor256Style
+"""A single foreground color style code (e.g., `S.RED`, `S.BR.BLUE`, `S.hex("#67F")`, `S.color256(196)`).<br>
 Excludes background colors and non-color styles like `S.BOLD`."""
 
 
 def is_fg_color_style(obj: object, /) -> TypeIs[FgColorStyle]:
     """Returns true if `obj` is an instance that matches the `FgColorStyle` type."""
 
-    if isinstance(obj, (_FgColorStyle, _FgStyle)):
+    if isinstance(obj, (_FgColorStyle, _FgColor256Style, _FgStyle)):
         return True
-
     elif isinstance(obj, _Style):
-        value = obj._value
-        return (30 <= value <= 37) or (90 <= value <= 97)
-
-    elif isinstance(obj, _ColorStyle):
+        return (30 <= (val := obj._value) <= 37) or (90 <= val <= 97)
+    elif isinstance(obj, (_ColorStyle, _Color256Style)):
         return not obj._bg
 
     return False
 
 
-type BgColorStyle = _BgStyle | _BgColorStyle
-"""A single background color style code (e.g., `S.BG.RED`, `S.BG.BR.BLUE`, `S.BG.hex("#67F")`).<br>
+type BgColorStyle = _BgStyle | _BgColorStyle | _BgColor256Style
+"""A single background color style code (e.g., `S.BG.RED`, `S.BG.hex("#67F")`, `S.BG.color256(196)`).<br>
 Excludes foreground colors and non-color styles like `S.BOLD`."""
 
 
 def is_bg_color_style(obj: object, /) -> TypeIs[BgColorStyle]:
     """Returns true if `obj` is an instance that matches the `BgColorStyle` type."""
 
-    if isinstance(obj, (_BgColorStyle, _BgStyle)):
+    if isinstance(obj, (_BgColorStyle, _BgColor256Style, _BgStyle)):
         return True
-
     elif isinstance(obj, _Style):
-        value = obj._value
-        return (40 <= value <= 47) or (100 <= value <= 107)
-
-    elif isinstance(obj, _ColorStyle):
+        return (40 <= (val := obj._value) <= 47) or (100 <= val <= 107)
+    elif isinstance(obj, (_ColorStyle, _Color256Style)):
         return obj._bg
 
     return False
@@ -1375,14 +1482,14 @@ def is_color_style(obj: object, /) -> TypeIs[ColorStyle]:
     return is_fg_color_style(obj) or is_bg_color_style(obj)
 
 
-type BaseStyle = _Style | _ColorStyle | _Link
+type BaseStyle = _Style | _ColorStyle | _Color256Style | _Link
 """Any single style code, color style, or link style that can be combined via `|` and applied to text."""
 
 
 def is_base_style(obj: object, /) -> TypeIs[BaseStyle]:
     """Returns true if `obj` is an instance that matches the `BaseStyle` type."""
 
-    return isinstance(obj, (_Style, _ColorStyle, _Link))
+    return isinstance(obj, (_Style, _ColorStyle, _Color256Style, _Link))
 
 
 type AnyStyle = BaseStyle | _StyleGroup
@@ -1392,7 +1499,7 @@ type AnyStyle = BaseStyle | _StyleGroup
 def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
     """Returns true if `obj` is an instance that matches the `AnyStyle` type."""
 
-    return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
+    return isinstance(obj, (_Style, _ColorStyle, _Color256Style, _Link, _StyleGroup))
 
 
 type TextSegment = str | S
@@ -1462,15 +1569,27 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 
 
 class Term:
-    """Common ANSI terminal control sequences (cursor, screen, title)<br>
+    """Common ANSI terminal control sequences (cursor, screen, title, clipboard, modes)<br>
     as plain strings or string-returning static methods.<br>
     ----------------------------------------------------------------------------------------------------
     Values can be passed straight into an `S(…)` call or written to `sys.stdout`."""
 
+    BELL: ClassVar[str] = "\x07"
+    """Terminal bell character to trigger an audio or visual alert."""
     CLEAR_LINE: ClassVar[str] = f"{ANSI.CHAR}[2K"
     """Erase the entire current line."""
+    CLEAR_LINE_TO_END: ClassVar[str] = f"{ANSI.CHAR}[0K"
+    """Erase from the cursor to the end of the current line."""
+    CLEAR_LINE_TO_START: ClassVar[str] = f"{ANSI.CHAR}[1K"
+    """Erase from the beginning of the line up to the cursor."""
     CLEAR_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[2J"
     """Erase the whole screen."""
+    CLEAR_SCREEN_TO_END: ClassVar[str] = f"{ANSI.CHAR}[0J"
+    """Erase from the cursor to the end of the screen."""
+    CLEAR_SCREEN_TO_START: ClassVar[str] = f"{ANSI.CHAR}[1J"
+    """Erase from the beginning of the screen up to the cursor."""
+    CLEAR_SCROLLBACK: ClassVar[str] = f"{ANSI.CHAR}[3J"
+    """Erase the terminal scrollback history buffer."""
     HIDE_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25l"
     """Hide the cursor."""
     SHOW_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25h"
@@ -1479,6 +1598,18 @@ class Term:
     """Enter the alternate screen buffer."""
     MAIN_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049l"
     """Leave the alternate screen buffer."""
+    BRACKETED_PASTE_ENABLE: ClassVar[str] = f"{ANSI.CHAR}[?2004h"
+    """Enable bracketed paste mode (wraps pasted text in paste brackets)."""
+    BRACKETED_PASTE_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?2004l"
+    """Disable bracketed paste mode."""
+    LINE_WRAP_ENABLE: ClassVar[str] = f"{ANSI.CHAR}[?7h"
+    """Enable line wrapping (DECAWM)."""
+    LINE_WRAP_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?7l"
+    """Disable line wrapping (DECAWM)."""
+    RESET: ClassVar[str] = f"{ANSI.CHAR}c"
+    """Hard reset to initial state (RIS)."""
+    SOFT_RESET: ClassVar[str] = f"{ANSI.CHAR}[!p"
+    """Soft terminal reset to sensible defaults (DECSTR)."""
 
     @staticmethod
     def up(n: int = 1, /) -> str:
@@ -1517,10 +1648,82 @@ class Term:
         return f"{ANSI.CHAR}[{n}E"
 
     @staticmethod
+    def column(col: int = 1, /) -> str:
+        """Move the cursor to absolute column `col` in the current row (1-based, CHA)."""
+
+        return f"{ANSI.CHAR}[{col}G"
+
+    @staticmethod
     def move(row: int, col: int, /) -> str:
-        """Move the cursor to absolute position `(row, col)` (1-based)."""
+        """Move the cursor to absolute position `(row, col)` (1-based, CUP)."""
 
         return f"{ANSI.CHAR}[{row};{col}H"
+
+    @staticmethod
+    def home() -> str:
+        """Move the cursor to the home position (0,0) (CUP/HVP)."""
+
+        return f"{ANSI.CHAR}[H"
+
+    @staticmethod
+    def insert_lines(n: int = 1, /) -> str:
+        """Insert `n` blank lines at the current row (IL)."""
+
+        return f"{ANSI.CHAR}[{n}L"
+
+    @staticmethod
+    def delete_lines(n: int = 1, /) -> str:
+        """Delete `n` lines starting from the current row (DL)."""
+
+        return f"{ANSI.CHAR}[{n}M"
+
+    @staticmethod
+    def insert_chars(n: int = 1, /) -> str:
+        """Insert `n` blank characters at the current cursor position (ICH)."""
+
+        return f"{ANSI.CHAR}[{n}@"
+
+    @staticmethod
+    def delete_chars(n: int = 1, /) -> str:
+        """Delete `n` characters at the current cursor position (DCH)."""
+
+        return f"{ANSI.CHAR}[{n}P"
+
+    @staticmethod
+    def scroll_up(n: int = 1, /) -> str:
+        """Scroll page up by `n` lines."""
+
+        return f"{ANSI.CHAR}[{n}S"
+
+    @staticmethod
+    def scroll_down(n: int = 1, /) -> str:
+        """Scroll page down by `n` lines."""
+
+        return f"{ANSI.CHAR}[{n}T"
+
+    @staticmethod
+    def save() -> str:
+        """Save the current cursor position (ANSI.SYS / SCO)."""
+
+        return f"{ANSI.CHAR}[s"
+
+    @staticmethod
+    def restore() -> str:
+        """Restore the previously saved cursor position (ANSI.SYS / SCO)."""
+
+        return f"{ANSI.CHAR}[u"
+
+    @staticmethod
+    def save_dec() -> str:
+        """Save cursor position and attributes (DEC private sequence `ESC 7`)."""
+
+        return f"{ANSI.CHAR}7"
+
+    @staticmethod
+    def restore_dec() -> str:
+        """Restore cursor position and attributes (DEC private sequence `ESC 8`)."""
+
+        return f"{ANSI.CHAR}8"
 
     @staticmethod
     def title(text: str, /) -> str:
@@ -1529,13 +1732,57 @@ class Term:
         return f"{ANSI.CHAR}]2;{text}\x07"
 
     @staticmethod
-    def save() -> str:
-        """Save the current cursor position."""
+    def cursor_shape(
+        shape: Literal[
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            "blinking_block",
+            "steady_block",
+            "blinking_underline",
+            "steady_underline",
+            "blinking_bar",
+            "steady_bar",
+        ],
+        /,
+    ) -> str:
+        """Set the terminal cursor shape using DECSCUSR.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `shape` – An integer in range [1, 6] inclusive, or a string name of the shape:
+            - `1` `"blinking_block"`
+            - `2` `"steady_block"`
+            - `3` `"blinking_underline"`
+            - `4` `"steady_underline"`
+            - `5` `"blinking_bar"`
+            - `6` `"steady_bar"`"""
 
-        return f"{ANSI.CHAR}[s"
+        shape_map: dict[str, int] = {
+            "blinking_block": 1,
+            "steady_block": 2,
+            "blinking_underline": 3,
+            "steady_underline": 4,
+            "blinking_bar": 5,
+            "steady_bar": 6,
+        }
+
+        if (shape_num := shape_map.get(shape) if isinstance(shape, str) else shape) not in {1, 2, 3, 4, 5, 6}:
+            raise ValueError(f"Expected cursor shape in [1, 6] inclusive, or one of {list(shape_map.keys())!r}, got {shape!r}")
+
+        return f"{ANSI.CHAR}[{shape_num} q"
 
     @staticmethod
-    def restore() -> str:
-        """Restore the previously saved cursor position."""
+    def clipboard_copy(text: str, /) -> str:
+        """Copy `text` to the system clipboard via OSC 52."""
 
-        return f"{ANSI.CHAR}[u"
+        encoded = _base64.b64encode(text.encode("utf-8")).decode("ascii")
+        return f"{ANSI.CHAR}]52;c;{encoded}{ANSI.CHAR}\\"
+
+    @staticmethod
+    def cwd(path: str | Path, /) -> str:
+        """Notify the terminal of the current working directory via OSC 7."""
+
+        uri = path.resolve().as_uri() if isinstance(path, Path) else path
+        return f"{ANSI.CHAR}]7;{uri}{ANSI.CHAR}\\"

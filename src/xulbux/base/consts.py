@@ -94,11 +94,15 @@ class ANSI:
     """RGB foreground color sequence with placeholders for red, green, and blue values."""
     SEQ_BG_COLOR: Final[FormattableString] = f"{CHAR}[48;2;{{}};{{}};{{}}m"
     """RGB background color sequence with placeholders for red, green, and blue values."""
+    SEQ_FG_COLOR_256: Final[FormattableString] = f"{CHAR}[38;5;{{}}m"
+    """256-color foreground sequence with placeholder for color index (0-255)."""
+    SEQ_BG_COLOR_256: Final[FormattableString] = f"{CHAR}[48;5;{{}}m"
+    """256-color background sequence with placeholder for color index (0-255)."""
 
     SEQ_LINK_OPEN: Final[FormattableString] = f"{CHAR}]8;;{{}}{CHAR}\\"
     """OSC 8 hyperlink opening sequence with a placeholder for the URL."""
     SEQ_LINK_CLOSE: Final[str] = f"{CHAR}]8;;{CHAR}\\"
     """OSC 8 hyperlink closing sequence."""
 
-    SEQ_PATTERN: Final[Pattern[str]] = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])")
+    SEQ_PATTERN: Final[Pattern[str]] = _rx.compile(CHAR + r"(?:\].*?(?:\x1b\\|\x07)|\[[0-?]*[ -/]*[@-~]|[@-Z\\-_c]|[0-9=><])")
     """Compiled regex pattern matching any ANSI escape sequence (CSI, OSC, or single-character)."""

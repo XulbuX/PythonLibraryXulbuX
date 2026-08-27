@@ -5,7 +5,6 @@ Features include styled logging, progress bars, interactive prompts,
 and command-line argument parsing.
 """
 
-from . import color as _color_module
 from .ansi import (
     AnyStyle,
     BgColorStyle,
@@ -2078,8 +2077,8 @@ def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, FgCo
 
     if is_bg_color_style(title_bg_color):
         if isinstance(title_bg_color, _ColorStyle):
-            rgb_int = (title_bg_color._red << 16) | (title_bg_color._green << 8) | title_bg_color._blue
-            return title_bg_color, S.hex(_color_module.text_color_for_on_bg(rgb_int))
+            luminance = 0.2126 * title_bg_color._red + 0.7152 * title_bg_color._green + 0.0722 * title_bg_color._blue
+            return title_bg_color, S.rgb(255, 255, 255) if luminance < 128 else S.rgb(0, 0, 0)
 
         return title_bg_color, S.BLACK
 

@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 from xulbux.ansi import (
     S,
+    _Color256Style,
     _ColorStyle,
     _Link,
     _Style,
@@ -31,6 +32,7 @@ def test_standard_text_styles() -> None:
     assert S.ITALIC("italic text").ansi == "\x1b[3mitalic text\x1b[23m"
     assert S.UNDERLINE("underline text").ansi == "\x1b[4munderline text\x1b[24m"
     assert S.DOUBLE_UNDERLINE("double").ansi == "\x1b[21mdouble\x1b[24m"
+    assert S.BLINK("blink text").ansi == "\x1b[5mblink text\x1b[25m"
     assert S.INVERSE("inverse text").ansi == "\x1b[7minverse text\x1b[27m"
     assert S.HIDDEN("hidden text").ansi == "\x1b[8mhidden text\x1b[28m"
     assert S.STRIKETHROUGH("strike text").ansi == "\x1b[9mstrike text\x1b[29m"
@@ -376,11 +378,19 @@ def test_type_guards() -> None:
     assert is_fg_color_style(_ColorStyle(255, 0, 0, bg=False)) is True
     assert is_fg_color_style(_ColorStyle(255, 0, 0, bg=True)) is False
     assert is_fg_color_style(S.BG.RED) is False
+    assert is_fg_color_style(S.color256(196)) is True
+    assert is_fg_color_style(S.BG.color256(196)) is False
+    assert is_fg_color_style(_Color256Style(196, bg=False)) is True
+    assert is_fg_color_style(_Color256Style(196, bg=True)) is False
     assert is_fg_color_style(S.BOLD) is False
     assert is_fg_color_style(123) is False
 
     assert is_bg_color_style(S.BG.RED) is True
     assert is_bg_color_style(S.BG.hex("#FF0000")) is True
+    assert is_bg_color_style(S.BG.color256(21)) is True
+    assert is_bg_color_style(S.color256(21)) is False
+    assert is_bg_color_style(_Color256Style(21, bg=True)) is True
+    assert is_bg_color_style(_Color256Style(21, bg=False)) is False
     assert is_bg_color_style(_Style(45)) is True
     assert is_bg_color_style(_Style(105)) is True
     assert is_bg_color_style(_Style(1)) is False
@@ -392,14 +402,19 @@ def test_type_guards() -> None:
 
     assert is_color_style(S.RED) is True
     assert is_color_style(S.BG.RED) is True
+    assert is_color_style(S.color256(196)) is True
+    assert is_color_style(S.BG.color256(196)) is True
     assert is_color_style(S.BOLD) is False
 
     assert is_base_style(S.BOLD) is True
     assert is_base_style(S.hex("#FF0000")) is True
+    assert is_base_style(S.color256(196)) is True
     assert is_base_style(S.link("url")) is True
     assert is_base_style(S.BOLD | S.RED) is False
 
     assert is_any_style(S.BOLD) is True
+    assert is_any_style(S.color256(196)) is True
+    assert is_any_style(S.BOLD | S.color256(196)) is True
     assert is_any_style(S.BOLD | S.RED) is True
     assert is_any_style("not_a_style") is False
 
@@ -410,6 +425,7 @@ def test_type_guards() -> None:
 
     assert is_render_segment("text") is True
     assert is_render_segment(S.RED) is True
+    assert is_render_segment(S.color256(196)) is True
     assert is_render_segment(123) is False
 
     assert is_text_renderable("text") is True
@@ -419,5 +435,78 @@ def test_type_guards() -> None:
 
     assert is_renderable("text") is True
     assert is_renderable(("text", S.RED)) is True
+    assert is_renderable(("text", S.color256(196))) is True
     assert is_renderable(123) is False
     assert is_renderable(("text", 123)) is False
+
+
+def test_256_color_styles() -> None:
+    fg_256 = S.color256(196)("text")
+    assert isinstance(fg_256, S)
+    assert fg_256.raw == "text"
+    assert fg_256.ansi == "\x1b[38;5;196mtext\x1b[39m"
+
+    bg_256 = S.BG.color256(21)("bg text")
+    assert isinstance(bg_256, S)
+    assert bg_256.raw == "bg text"
+    assert bg_256.ansi == "\x1b[48;5;21mbg text\x1b[49m"
+
+    # Conversion methods:
+    fg_style = S.color256(196)
+    bg_converted = fg_style.to_bg()
+    assert bg_converted("text").ansi == "\x1b[48;5;196mtext\x1b[49m"
+
+    bg_style = S.BG.color256(21)
+    fg_converted = bg_style.to_fg()
+    assert fg_converted("text").ansi == "\x1b[38;5;21mtext\x1b[39m"
+
+    # Combining:
+    combined = (S.BOLD | S.color256(196) | S.BG.color256(21))("styled")
+    assert combined.ansi == "\x1b[1;38;5;196;48;5;21mstyled\x1b[22;39;49m"
+    comb_simple = S.color256(196) | S.BOLD
+    assert isinstance(comb_simple, _StyleGroup)
+    comb_ror_direct = S.color256(196).__ror__(S.BOLD)
+    assert isinstance(comb_ror_direct, _StyleGroup)
+
+    # StyleGroup to_bg and to_fg conversions:
+    group = S.BOLD | S.color256(196)
+    group_bg = group.to_bg()
+    assert group_bg("text").ansi == "\x1b[1;48;5;196mtext\x1b[22;49m"
+
+    group_fg = group_bg.to_fg()
+    assert group_fg("text").ansi == "\x1b[1;38;5;196mtext\x1b[22;39m"
+
+    # Single item application:
+    assert (S.color256(10) @ "item").ansi == "\x1b[38;5;10mitem\x1b[39m"
+
+    # Reverse combining:
+    r_comb = S.BOLD.__ror__(S.color256(5))
+    assert isinstance(r_comb, _StyleGroup)
+
+    # Combining with StyleGroup and ror:
+    comb_with_group = S.color256(196) | (S.BOLD | S.UNDERLINE)
+    assert isinstance(comb_with_group, _StyleGroup)
+    comb_ror = S.link("https://example.com") | S.color256(196)
+    assert isinstance(comb_ror, _StyleGroup)
+
+    # Repr and equality:
+    c256 = _Color256Style(196, bg=False)
+    assert repr(c256) == "_Color256Style(fg 196)"
+    assert repr(_Color256Style(21, bg=True)) == "_Color256Style(bg 21)"
+    assert c256 == _Color256Style(196, bg=False)
+    assert c256 != _Color256Style(196, bg=True)
+    assert c256 != _Color256Style(100, bg=False)
+    assert c256 == c256.ansi
+    assert c256 == S(c256.ansi)
+    assert c256 != "other_string"
+    assert (c256 == object()) is False
+
+    # Validation errors:
+    with pytest.raises(ValueError, match="256-color index"):
+        S.color256(-1)
+    with pytest.raises(ValueError, match="256-color index"):
+        S.color256(256)
+    with pytest.raises(ValueError, match="256-color index"):
+        S.BG.color256(-1)
+    with pytest.raises(ValueError, match="256-color index"):
+        S.BG.color256(256)
