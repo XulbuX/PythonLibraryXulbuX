@@ -8,12 +8,12 @@ and command-line argument parsing.
 from . import color as _color_module
 from .ansi import (
     AnyStyle,
-    BaseStyle,
     BgColorStyle,
     FgColorStyle,
     Renderable,
     S,
     TextRenderable,
+    _ColorStyle,
     is_any_style,
     is_bg_color_style,
     is_fg_color_style,
@@ -22,7 +22,7 @@ from .ansi import (
 )
 from .base.consts import ANSI, CHARS
 from .base.decorators import mypyc_attr
-from .base.types import AllTextChars, Hexa, ProgressUpdater, Rgba, SeqOrSet
+from .base.types import AllTextChars, ProgressUpdater, SeqOrSet
 from .regex import LazyRegex
 
 import ctypes as _ctypes
@@ -1283,8 +1283,8 @@ def log(
     *,
     start: str = "",
     end: str = "\n",
-    title_bg_color: BgColorStyle | Rgba | Hexa | None = None,
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    title_bg_color: BgColorStyle | None = None,
+    default_color: FgColorStyle | None = None,
     tab_size: int = 8,
     title_px: int = 1,
     title_mx: int = 2,
@@ -1296,8 +1296,8 @@ def log(
     *   `start` – Something to print before the log is printed.
     *   `end` – Something to print after the log is printed (e.g., `\\n`).
     *   `title_bg_color` – The background color of the `title`<br>
-        (an `S` background style, RGBA, or HEXA color).
-    *   `default_color` – The default text color of the `prompt` (RGBA or HEXA).
+        (an `S` background color style).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
     *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
     *   `title_mx` – The horizontal margin (in chars) to the title.\n
@@ -1353,10 +1353,10 @@ def log(
 def _log_preset(
     title: str,
     prompt: TextRenderable | object,
-    title_bg_color: BgColorStyle | Rgba | Hexa | None,
+    title_bg_color: BgColorStyle | None,
     start: str,
     end: str,
-    default_color: FgColorStyle | Rgba | Hexa | None,
+    default_color: FgColorStyle | None,
     pause: bool,
     do_exit: bool,
     exit_code: int,
@@ -1373,7 +1373,7 @@ def debug(
     active: bool = True,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1392,7 +1392,7 @@ def info(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1410,7 +1410,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -1422,7 +1422,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -1434,7 +1434,7 @@ def done(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1447,7 +1447,7 @@ def done(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 0,
@@ -1465,7 +1465,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[True],
     exit_code: int = ...,
@@ -1477,7 +1477,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[False] = ...,
     exit_code: int = ...,
@@ -1489,7 +1489,7 @@ def warn(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1502,7 +1502,7 @@ def warn(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = False,
     exit_code: int = 1,
@@ -1520,7 +1520,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -1532,7 +1532,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -1544,7 +1544,7 @@ def fail(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1557,7 +1557,7 @@ def fail(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 1,
@@ -1575,7 +1575,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[True] = ...,
     exit_code: int = ...,
@@ -1587,7 +1587,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: Literal[False],
     exit_code: int = ...,
@@ -1599,7 +1599,7 @@ def exit(
     *,
     start: str = ...,
     end: str = ...,
-    default_color: FgColorStyle | Rgba | Hexa | None = ...,
+    default_color: FgColorStyle | None = ...,
     pause: bool = ...,
     exit: bool,
     exit_code: int = ...,
@@ -1612,7 +1612,7 @@ def exit(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = True,
     exit_code: int = 0,
@@ -1628,8 +1628,8 @@ def log_box_filled(
     *lines: TextRenderable | object,
     start: str = "",
     end: str = "\n",
-    box_bg_color: AnyStyle | Rgba | Hexa | None = None,
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    box_bg_color: BgColorStyle | None = None,
+    default_color: FgColorStyle | None = None,
     w_padding: int = 2,
     w_full: bool = False,
     indent: int = 0,
@@ -1640,8 +1640,8 @@ def log_box_filled(
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `box_bg_color` – The background color of the box<br>
-        (an `S` background style, RGBA, or HEXA color).
-    *   `default_color` – The default text color of the `*lines`.
+        (an `S` background color style).
+    *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).\n
@@ -1689,8 +1689,8 @@ def log_box_bordered(
     start: str = "",
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-    border_style: AnyStyle | Rgba | Hexa = S.BR.BLACK,
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    border_style: AnyStyle = S.BR.BLACK,
+    default_color: FgColorStyle | None = None,
     w_padding: int = 1,
     w_full: bool = False,
     indent: int = 0,
@@ -1702,8 +1702,8 @@ def log_box_bordered(
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `border_type` – One of the predefined border character sets.
-    *   `border_style` – The style of the border (an `S` style, RGBA, or HEXA color).
-    *   `default_color` – The default text color of the `*lines`.
+    *   `border_style` – The style of the border (an `S` non-background style).
+    *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).
@@ -1736,8 +1736,8 @@ def log_box_bordered(
         border_open = border_style.ansi
     else:
         raise ValueError(
-            f"The 'border_style' parameter must be a valid foreground style (e.g., 'S.DIM | S.BR.BLUE'), "
-            f"RGBA color, or HEXA color, got {border_style!r}"
+            "The 'border_style' parameter must be a valid non-background style "
+            f"(e.g., 'S.DIM | S.BR.BLUE', 'S.hex(\"#67F\")'), got {border_style!r}"
         )
 
     if w_padding < 0:
@@ -1795,7 +1795,7 @@ def confirm(
     *,
     start: S | str = "",
     end: S | str = "",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     default_is_yes: bool = True,
 ) -> bool:
     """Ask a yes/no question.\n
@@ -1803,7 +1803,7 @@ def confirm(
     *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
-    *   `default_color` – The default text color of the `prompt`.
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `default_is_yes` – The default answer if the user just presses enter.\n
     ----------------------------------------------------------------------------------------------------
     To style the `prompt`, pass a `S` object. For more detailed<br>
@@ -1835,7 +1835,7 @@ def multiline_input(
     *,
     start: str = "",
     end: str = "\n",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     show_keybindings: bool = True,
     input_prefix: str = " ⮡ ",
     reset_ansi: bool = True,
@@ -1845,7 +1845,7 @@ def multiline_input(
     *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
-    *   `default_color` – The default text color of the `prompt`.
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `show_keybindings` – Whether to show the special keybindings or not.
     *   `input_prefix` – The prefix of the input line.
     *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input.\n
@@ -1876,7 +1876,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1894,7 +1894,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1912,7 +1912,7 @@ def input[T](
     *,
     start: str = "",
     end: str = "",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1931,7 +1931,7 @@ def input(
     *,
     start: str = "",
     end: str = "",
-    default_color: FgColorStyle | Rgba | Hexa | None = None,
+    default_color: FgColorStyle | None = None,
     placeholder: str | None = None,
     mask_char: str | None = None,
     min_len: int | None = None,
@@ -1947,7 +1947,7 @@ def input(
     *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
-    *   `default_color` – The default text color of the `prompt`.
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `placeholder` – A placeholder text that is shown when the input is empty.
     *   `mask_char` – If set, the input will be masked with this character.
     *   `min_len` – The minimum length of the input (required to submit).
@@ -2071,50 +2071,44 @@ def _read_single_key() -> None:
             _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type:ignore[attr-defined]
 
 
-def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, BaseStyle]:
+def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, FgColorStyle]:
     """Resolves the log title's background style and its matching foreground style.\n
     ----------------------------------------------------------------------------------------------------
-    *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
-        RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
+    *   `title_bg_color` – An `S` background color style (e.g., `S.BG.BLUE`, `S.BG.hex("#67F")`)."""
 
     if is_bg_color_style(title_bg_color):
+        if isinstance(title_bg_color, _ColorStyle):
+            rgb_int = (title_bg_color._red << 16) | (title_bg_color._green << 8) | title_bg_color._blue
+            return title_bg_color, S.hex(_color_module.text_color_for_on_bg(rgb_int))
+
         return title_bg_color, S.BLACK
 
-    if _color_module.is_valid_rgba(title_bg_color) or _color_module.is_valid_hexa(title_bg_color):
-        hexa_bg = _color_module.to_hexa(title_bg_color)
-        return S.BG.hex(str(hexa_bg)), S.hex(str(_color_module.text_color_for_on_bg(hexa_bg)))
-
     raise ValueError(
-        "The 'title_bg_color' parameter must be a valid background style (e.g., 'S.BG.BLUE'), "
-        f"RGBA color, or HEXA color, got {title_bg_color!r}"
+        f"The 'title_bg_color' parameter must be a valid background color style (e.g., 'S.BG.BLUE'), got {title_bg_color!r}"
     )
 
 
 def _as_bg_color_style(color: object, /, *, param_name: str = "box_bg_color") -> BgColorStyle:
-    """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
+    """Resolves and validates an `S` background color style."""
 
     if is_bg_color_style(color):
         return color
-    elif _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
-        return S.BG.hex(str(_color_module.to_hexa(color)))
 
     raise ValueError(
-        f"The {param_name!r} parameter must be a valid background color style (e.g., 'S.BG.BLUE'), "
-        f"RGBA color, or HEXA color, got {color!r}"
+        f"The {param_name!r} parameter must be a valid background color style "
+        f"(e.g., 'S.BG.BLUE', 'S.BG.hex(\"#67F\")'), got {color!r}"
     )
 
 
 def _as_fg_color_style(color: object, /, *, param_name: str = "color") -> FgColorStyle:
-    """Resolves an `S` style, an RGBA/HEXA color, or `None` (returns fallback) to an `S` foreground style."""
+    """Resolves and validates an `S` foreground color style."""
 
     if is_fg_color_style(color):
         return color
-    elif _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
-        return S.hex(str(_color_module.to_hexa(color)))
 
     raise ValueError(
-        f"The {param_name!r} parameter must be a valid foreground color style (e.g., 'S.BR.BLUE'), "
-        f"RGBA color, or HEXA color, got {color!r}"
+        f"The {param_name!r} parameter must be a valid foreground color style "
+        f"(e.g., 'S.RED', 'S.hex(\"#67F\")'), got {color!r}"
     )
 
 

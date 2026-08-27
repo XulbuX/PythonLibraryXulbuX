@@ -18,6 +18,7 @@ from xulbux.ansi import (
     is_text_segment,
 )
 from xulbux.color import hexa, rgba
+import pytest
 
 
 def test_standard_text_styles() -> None:
@@ -90,6 +91,8 @@ def test_custom_color_builders() -> None:
     assert rgb_st.ansi == "\x1b[38;2;255;0;128mcustom rgb\x1b[39m"
     assert S.hex("#FF0080")("custom hex").ansi == "\x1b[38;2;255;0;128mcustom hex\x1b[39m"
     assert S.hex("0xFF0080")("0x hex").ansi == "\x1b[38;2;255;0;128m0x hex\x1b[39m"
+    assert S.hex(0xFF0080)("int hex").ansi == "\x1b[38;2;255;0;128mint hex\x1b[39m"
+    assert S.hex(0x00FF00)("int hex green").ansi == "\x1b[38;2;0;255;0mint hex green\x1b[39m"
     assert S.hex("F08")("short hex").ansi == "\x1b[38;2;255;0;136mshort hex\x1b[39m"
     assert S.rgb(rgba(255, 0, 128))("from rgba").ansi == "\x1b[38;2;255;0;128mfrom rgba\x1b[39m"
     assert S.hex(hexa("#FF0080"))("from hexa").ansi == "\x1b[38;2;255;0;128mfrom hexa\x1b[39m"
@@ -97,10 +100,19 @@ def test_custom_color_builders() -> None:
     # ColorStyle.from_hex with explicit bg:
     assert _ColorStyle.from_hex("#FF0000", bg=True)._bg is True
     assert _ColorStyle.from_hex("#FF0000", bg=False)._bg is False
+    assert _ColorStyle.from_hex(0xFF0000, bg=True)._bg is True
+    assert _ColorStyle.from_hex(0xFF0000, bg=False)._bg is False
+
+    # Out-of-range integer validation:
+    with pytest.raises(ValueError, match="24-bit HEX integer"):
+        _ColorStyle.from_hex(-1)
+    with pytest.raises(ValueError, match="24-bit HEX integer"):
+        _ColorStyle.from_hex(0x1000000)
 
     # Background custom colors:
     assert S.BG.rgb(0, 128, 255)("bg rgb").ansi == "\x1b[48;2;0;128;255mbg rgb\x1b[49m"
     assert S.BG.hex("#0080FF")("bg hex").ansi == "\x1b[48;2;0;128;255mbg hex\x1b[49m"
+    assert S.BG.hex(0x0080FF)("bg int hex").ansi == "\x1b[48;2;0;128;255mbg int hex\x1b[49m"
     assert S.BG.hex("08F")("bg short hex").ansi == "\x1b[48;2;0;136;255mbg short hex\x1b[49m"
     assert S.BG.rgb(rgba(0, 128, 255))("bg from rgba").ansi == "\x1b[48;2;0;128;255mbg from rgba\x1b[49m"
     assert S.BG.hex(hexa("#0080FF"))("bg from hexa").ansi == "\x1b[48;2;0;128;255mbg from hexa\x1b[49m"

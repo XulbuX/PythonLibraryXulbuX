@@ -1,7 +1,6 @@
 import io
 from unittest.mock import patch
 from xulbux.ansi import S
-from xulbux.color import hexa, rgba
 from xulbux.console import (
     _LOG_TITLE_CACHE_MAX,
     _as_bg_color_style,
@@ -62,11 +61,13 @@ def test_log_empty_title_and_colors() -> None:
     stream = io.StringIO()
     with patch("sys.stdout", stream):
         log(None, "No title message", title_bg_color=None, default_color=None)
-        log("HEX_BG", "Message", title_bg_color=hexa("#FF0000"), default_color=rgba(0, 255, 0, 1))
+        log("HEX_BG", "Message", title_bg_color=S.BG.hex("#FF0000"), default_color=S.hex("#00FF00"))
+        log("DARK_BG", "Message", title_bg_color=S.BG.hex("#000000"), default_color=S.hex("#00FF00"))
 
     output = stream.getvalue()
     assert "No title message" in output
     assert "HEX_BG" in output
+    assert "DARK_BG" in output
 
 
 def test_log_invalid_arguments() -> None:
@@ -146,28 +147,41 @@ def test_log_box_bordered_validation() -> None:
         log_box_bordered("Error", border_chars=("+", "-"))  # type:ignore[arg-type]
     with pytest.raises(ValueError, match="single-char"):
         log_box_bordered("Error", border_chars=("++", "-", "+", "|", "+", "-", "+", "|", "+", "-", "+"))  # type:ignore[arg-type]
+    with pytest.raises(ValueError, match="border_style"):
+        log_box_bordered("Error", border_style=S.BG.RED)
+    with pytest.raises(ValueError, match="border_style"):
+        log_box_bordered("Error", border_style=object())  # type:ignore[arg-type]
 
 
 def test_style_resolution_and_persistence_helpers() -> None:
     # _resolve_title_colors:
-    bg_style, _ = _resolve_title_colors(S.BG.RED)
-    assert bg_style == S.BG.RED
+    bg_style, fg_style = _resolve_title_colors(S.BG.RED)
+    assert bg_style == S.BG.RED and fg_style == S.BLACK
 
-    bg_color, _ = _resolve_title_colors(hexa("#00FF00"))
-    assert bg_color is not None
+    bg_color_dark, fg_color_dark = _resolve_title_colors(S.BG.hex("#000000"))
+    assert bg_color_dark is not None and fg_color_dark == S.hex(0xFFFFFF)
+
+    bg_color_light, fg_color_light = _resolve_title_colors(S.BG.hex("#FFFFFF"))
+    assert bg_color_light is not None and fg_color_light == S.hex(0x000000)
 
     with pytest.raises(ValueError, match="title_bg_color"):
         _resolve_title_colors("invalid_color")
+    with pytest.raises(ValueError, match="title_bg_color"):
+        _resolve_title_colors(S.RED)
 
     # _as_bg_color_style:
     assert _as_bg_color_style(S.BG.BLUE) == S.BG.BLUE
-    assert _as_bg_color_style(rgba(10, 20, 30, 1)) is not None
+    assert _as_bg_color_style(S.BG.rgb(10, 20, 30)) is not None
+    with pytest.raises(ValueError, match="box_bg_color"):
+        _as_bg_color_style(S.BLUE)
     with pytest.raises(ValueError, match="box_bg_color"):
         _as_bg_color_style(object())
 
     # _as_fg_color_style:
     assert _as_fg_color_style(S.GREEN) == S.GREEN
-    assert _as_fg_color_style(hexa("#ff00ff")) is not None
+    assert _as_fg_color_style(S.hex("#ff00ff")) is not None
+    with pytest.raises(ValueError, match="color"):
+        _as_fg_color_style(S.BG.GREEN)
     with pytest.raises(ValueError, match="color"):
         _as_fg_color_style(object())
 

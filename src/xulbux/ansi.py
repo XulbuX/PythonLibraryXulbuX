@@ -818,10 +818,10 @@ class _BgStyle(_Style):
 class _ColorStyle(_SBase):
     """A 24-bit true-color style – foreground or background.\n
     ----------------------------------------------------------------------------------------------------
-    >>> S.rgb(255, 96, 112)("text")             # Custom FG color
-    >>> S.BG.rgb(0, 0, 0)("text")               # Custom BG color
-    >>> S.hex("#FF6070")("text")                # Hex FG color
-    >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
+    >>> S.rgb(112, 118, 255)("text")             # Custom FG color
+    >>> S.BG.rgb(112, 118, 255)("text")          # Custom BG color
+    >>> S.hex("#7075FF")("text")                 # Hex FG color
+    >>> (S.BOLD | S.rgb(112, 118, 255))("text")  # Combined with style"""
 
     __slots__: tuple[str, ...] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
 
@@ -841,10 +841,17 @@ class _ColorStyle(_SBase):
         self.ansi: str = self._open_seq
 
     @classmethod
-    def from_hex(cls: type[Self], color: str, /, *, bg: bool | None = None) -> Self:
-        """Create a color style from a HEX color string (e.g., `#FF6070` or `F67`)."""
+    def from_hex(cls: type[Self], color: str | int | hexa, /, *, bg: bool | None = None) -> Self:
+        """Create a color style from a HEX string, HEX integer, or `hexa` object."""
 
-        if (hex_str := color.strip().lstrip("#")).lower().startswith("0x"):
+        if isinstance(color, int):
+            if not (0x000000 <= color <= 0xFFFFFF):
+                raise ValueError(f"Expected 24-bit HEX integer in range [0x000000, 0xFFFFFF] inclusive, got 0x{color:X}")
+
+            red, green, blue = (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF
+            return cls(red, green, blue, bg=bg) if bg is not None else cls(red, green, blue)
+
+        if (hex_str := str(color).strip().lstrip("#")).lower().startswith("0x"):
             hex_str = hex_str[2:]
         if len(hex_str) == 3:
             hex_str = hex_str[0] * 2 + hex_str[1] * 2 + hex_str[2] * 2
@@ -1114,7 +1121,7 @@ class _BgNS:
     @staticmethod
     def rgb(*args: Any) -> _BgColorStyle:
         """24-bit background color from RGB components or an `rgba` object.\n
-        `S.BG.rgb(0, 0, 0)("text")` or `S.BG.rgb(my_rgba)("text")`"""
+        `S.BG.rgb(112, 118, 255)("text")` or `S.BG.rgb(my_rgba)("text")`"""
 
         if len(args) == 3:
             return _BgColorStyle(args[0], args[1], args[2])
@@ -1122,11 +1129,11 @@ class _BgNS:
         return _BgColorStyle(args[0][0], args[0][1], args[0][2])
 
     @staticmethod
-    def hex(color: str | hexa, /) -> _BgColorStyle:
-        """24-bit background color from HEX string or `hexa` object.\n
-        `S.BG.hex("#000000")("text")`, `S.BG.hex("000")`, or `S.BG.hex(my_hexa)("text")`"""
+    def hex(color: str | int | hexa, /) -> _BgColorStyle:
+        """24-bit background color from HEX string, HEX integer, or `hexa` object.\n
+        `S.BG.hex("#67F")("text")`, `S.BG.hex(0x7075FF)`, or `S.BG.hex(my_hexa)("text")`"""
 
-        return _BgColorStyle.from_hex(str(color), bg=True)
+        return _BgColorStyle.from_hex(color, bg=True)
 
 
 class _BrNS:
@@ -1263,7 +1270,7 @@ class S(_SBase):
     @staticmethod
     def rgb(*args: Any) -> _FgColorStyle:
         """24-bit foreground color from RGB components or an `rgba` object.\n
-        `S.rgb(255, 96, 112)("text")` or `S.rgb(my_rgba)("text")`"""
+        `S.rgb(112, 118, 255)("text")` or `S.rgb(my_rgba)("text")`"""
 
         if len(args) == 3:
             return _FgColorStyle(args[0], args[1], args[2])
@@ -1271,11 +1278,11 @@ class S(_SBase):
         return _FgColorStyle(args[0][0], args[0][1], args[0][2])
 
     @staticmethod
-    def hex(color: str | hexa, /) -> _FgColorStyle:
-        """24-bit foreground color from HEX string or `hexa` object.\n
-        `S.hex("#FF6070")("text")`, `S.hex("F67")`, or `S.hex(my_hexa)("text")`"""
+    def hex(color: str | int | hexa, /) -> _FgColorStyle:
+        """24-bit foreground color from HEX string, HEX integer, or `hexa` object.\n
+        `S.hex("#67F")("text")`, `S.hex(0x7075FF)`, or `S.hex(my_hexa)("text")`"""
 
-        return _FgColorStyle.from_hex(str(color))
+        return _FgColorStyle.from_hex(color)
 
     @staticmethod
     def link(url: str | Path, /) -> _Link:
