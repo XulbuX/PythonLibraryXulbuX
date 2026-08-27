@@ -491,6 +491,12 @@ class _SBase:
 
         if step != 1:
             raise ValueError("Styled text slicing only supports a step of 1.")
+
+        return self._slice(start, stop, raw_text, self.raw_code_positions)
+
+    def _slice(self, start: int, stop: int, raw_text: str, raw_code_positions: tuple[tuple[int, str], ...]) -> S:
+        """Internal fast-path for slicing with precomputed `raw_text` and `raw_code_positions`."""
+
         if start >= stop:
             return S("")
 
@@ -498,7 +504,7 @@ class _SBase:
         middle_codes: list[tuple[int, str]] = []
         suffix_codes: list[str] = []
 
-        for pos, seq in self.raw_code_positions:
+        for pos, seq in raw_code_positions:
             if pos <= start:
                 prefix_codes.append(seq)
             elif start < pos < stop:
@@ -652,6 +658,7 @@ class _SBase:
         if not raw_text or width <= 0:
             return [cast("S", self) if type(self) is S else S(self)]
 
+        raw_code_positions = self.raw_code_positions
         result: list[S] = []
         current_offset = 0
 
@@ -663,7 +670,7 @@ class _SBase:
 
             for line in _textwrap.wrap(paragraph, width=width, replace_whitespace=False, drop_whitespace=False):
                 line_len = len(line)
-                result.append(self[current_offset : current_offset + line_len])
+                result.append(self._slice(current_offset, current_offset + line_len, raw_text, raw_code_positions))
                 current_offset += line_len
             current_offset += 1
 
@@ -1093,11 +1100,12 @@ class _StyleGroup(_SBase):
     ----------------------------------------------------------------------------------------------------
     Supports further `|` chaining and `()` application."""
 
-    __slots__: tuple[str, ...] = ("_codes",)
+    __slots__: tuple[str, ...] = ("_codes", "_oc")
 
     def __init__(self, *codes: BaseStyle) -> None:
         self._codes: tuple[BaseStyle, ...] = codes
-        self.ansi = "".join(_build_open_close(self)[0])
+        self._oc = _build_open_close(self)
+        self.ansi = "".join(self._oc[0])
 
     def __iter__(self) -> Iterator[BaseStyle]:
         """Iterating a `_StyleGroup` yields its individual styles in order."""
@@ -1120,14 +1128,12 @@ class _StyleGroup(_SBase):
     def __call__(self, *text: Renderable) -> S:
         """Applies this style group to the given text, auto-resetting after."""
 
-        opens, closes = _build_open_close(self)
-        return _render_styled(opens, closes, text)
+        return _render_styled(self._oc[0], self._oc[1], text)
 
     def __matmul__(self, text: Renderable) -> S:
         """Applies this style group to the given text, auto-resetting after."""
 
-        opens, closes = _build_open_close(self)
-        return _render_styled(opens, closes, (text,))
+        return _render_styled(self._oc[0], self._oc[1], (text,))
 
     def __repr__(self) -> str:
         """Returns a string representation of this style group, showing its individual codes."""
@@ -1553,7 +1559,7 @@ def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
 
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("tuple[Any, ...]", obj):  # ruff:ignore[reimplemented-builtin]
             if not is_text_renderable(item):
                 return False
         return True
@@ -1574,7 +1580,7 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 
     elif isinstance(obj, tuple):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("tuple[Any, ...]", obj):  # ruff:ignore[reimplemented-builtin]
             if not is_renderable(item):
                 return False
         return True

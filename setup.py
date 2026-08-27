@@ -82,49 +82,24 @@ class StubGen(ast.NodeTransformer):
                 print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
 
         if generated_files:
+            # fmt: off
             # Format all generated stubs with Ruff in one call:
             subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "ruff",
-                    "check",
-                    *generated_files,
-                    "--fix",
-                    "--select",
-                    "I,F401,F841,UP",
-                    "--config",
-                    "lint.isort.lines-between-types=0",
-                    "--config",
-                    "lint.isort.no-lines-before=['future', 'standard-library', 'third-party', 'first-party', 'local-folder']",
-                ],
+                [sys.executable, "-m", "ruff", "check", *generated_files,
+                 "--fix", "--select", "I,F401,F841,UP", "--config", "lint.isort.lines-between-types=0", "--config",
+                 "lint.isort.no-lines-before=['future', 'standard-library', 'third-party', 'first-party', 'local-folder']"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
             )
             subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "ruff",
-                    "format",
-                    *generated_files,
-                    "--line-length",
-                    "9999",
-                    "--config",
-                    "format.skip-magic-trailing-comma=true",
-                ],
+                [sys.executable, "-m", "ruff", "format", *generated_files,
+                 "--line-length", "9999", "--config", "format.skip-magic-trailing-comma=true"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
             )
-
-            # Add `noqa: E501`, but only to files that actually exceed the line-length
-            # limit of 127 characters to prevent `Unused noqa directive` errors:
-            for file in generated_files:
-                content = file.read_text(encoding="utf-8")
-                if any(len(line) > 127 for line in content.splitlines()):
-                    file.write_text("# ruff: noqa: E501\n" + content, encoding="utf-8")
+            # fmt: on
 
         print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
 

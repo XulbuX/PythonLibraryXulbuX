@@ -14,8 +14,8 @@ def show_ansi() -> None:
     """CLI command function for `xulbux-lib ansi` command,<br>
     which shows all possible styles using the `xulbux.ansi` API."""
 
-    title = S.BOLD | S.BR.BLACK
-    sep = (get_width(), (S.DIM | S.BR.BLACK)("━"))
+    title = S.BOLD
+    sep = (get_width(), S.DIM("━"))
     code = S.DIM | S.BR.BLACK
 
     S(

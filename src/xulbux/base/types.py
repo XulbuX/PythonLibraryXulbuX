@@ -46,7 +46,7 @@ def is_paths_list(obj: object, /) -> TypeIs[PathsList]:
 
     if isinstance(obj, (list, tuple)):
         # Don't use `all()` as for-loop is more performant:
-        for item in cast("list[Any] | tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+        for item in cast("list[Any] | tuple[Any, ...]", obj):  # ruff:ignore[reimplemented-builtin]
             if not isinstance(item, (Path, str)):
                 return False
         return True
@@ -89,7 +89,7 @@ def is_seq_or_set(obj: object, item_type: type[Any] | tuple[type[Any], ...] | No
         return True
 
     # Don't use `all()` as for-loop is more performant:
-    for item in cast("Iterable[Any]", obj):  # ruff: ignore[reimplemented-builtin]
+    for item in cast("Iterable[Any]", obj):  # ruff:ignore[reimplemented-builtin]
         if not isinstance(item, item_type):
             return False
 

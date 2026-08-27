@@ -2299,13 +2299,9 @@ class _ConsoleInputHelper:
         processed_text = "".join([char for char in text if ord(char) >= 32])
 
         if self.allowed_chars is not CHARS.ALL:
-            filtered_text = ""
-            for char in processed_text:
-                if char in cast("str", self.allowed_chars):
-                    filtered_text += char
-                else:
-                    removed_chars.add(char)
-            processed_text = filtered_text
+            allowed_set = set(cast("str", self.allowed_chars))
+            removed_chars.update([char for char in processed_text if char not in allowed_set])
+            processed_text = "".join([char for char in processed_text if char in allowed_set])
 
         if self.max_len:
             if (remaining_space := self.max_len - len(self.result_text)) > 0:

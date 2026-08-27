@@ -1,4 +1,4 @@
-# ruff: file-ignore[non-empty-init-module]
+# ruff:file-ignore[non-empty-init-module]
 from __future__ import annotations
 
 TYPE_CHECKING: bool = False

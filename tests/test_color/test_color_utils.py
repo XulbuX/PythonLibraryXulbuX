@@ -209,25 +209,25 @@ def test_luminance() -> None:
         _color_module.luminance(256, 0, 0)
 
 
-def test_text_color_for_on_bg() -> None:
-    text_color_dark = _color_module.text_color_for_on_bg(rgba(0, 0, 0))
+def test_fg_for_on_bg() -> None:
+    text_color_dark = _color_module.fg_for_on_bg(rgba(0, 0, 0))
     assert isinstance(text_color_dark, rgba)
     assert text_color_dark.values() == (255, 255, 255, None)
 
-    text_color_light = _color_module.text_color_for_on_bg(rgba(255, 255, 255))
+    text_color_light = _color_module.fg_for_on_bg(rgba(255, 255, 255))
     assert isinstance(text_color_light, rgba)
     assert text_color_light.values() == (0, 0, 0, None)
 
-    text_color_hexa_dark = _color_module.text_color_for_on_bg(hexa("#000000"))
+    text_color_hexa_dark = _color_module.fg_for_on_bg(hexa("#000000"))
     assert isinstance(text_color_hexa_dark, hexa)
     assert str(text_color_hexa_dark) == "#FFFFFF"
 
-    text_color_hexa_light = _color_module.text_color_for_on_bg(hexa("#FFFFFF"))
+    text_color_hexa_light = _color_module.fg_for_on_bg(hexa("#FFFFFF"))
     assert isinstance(text_color_hexa_light, hexa)
     assert str(text_color_hexa_light) == "#000000"
 
-    assert _color_module.text_color_for_on_bg(0x000000) == 0xFFFFFF
-    assert _color_module.text_color_for_on_bg(0xFFFFFF) == 0x000000
+    assert _color_module.fg_for_on_bg(0x000000) == 0xFFFFFF
+    assert _color_module.fg_for_on_bg(0xFFFFFF) == 0x000000
 
 
 def test_adjust_lightness() -> None:

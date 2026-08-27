@@ -393,7 +393,7 @@ def render(
     max_width: int = 127,
     sep: str = ", ",
     as_json: bool = False,
-    syntax_highlighting: dict[str, AnyStyle] | bool = False,
+    syntax_highlighting: dict[str, AnyStyle] | bool | None = False,
 ) -> S:
     """Get nicely formatted data structures as an `S` object.\n
     ----------------------------------------------------------------------------------------------------
@@ -613,7 +613,8 @@ class _DataGetPathIdHelper:
 
         if not self.path_ids:
             return None
-        return f"{self.max_id_length}>{''.join(id.zfill(self.max_id_length) for id in self.path_ids)}"
+
+        return f"{self.max_id_length}>{''.join([id.zfill(self.max_id_length) for id in self.path_ids])}"
 
     def process_key(self, key: str, /) -> bool:
         """Process a single key and update `path_ids`. Returns `False` if processing should stop."""
@@ -690,7 +691,7 @@ class _DataRenderHelper:
         max_width: int,
         sep: str,
         as_json: bool,
-        syntax_highlighting: dict[str, AnyStyle] | bool,
+        syntax_highlighting: dict[str, AnyStyle] | bool | None,
     ) -> None:
         self.data: DataObjType = data
         self.indent: int = indent
@@ -699,7 +700,7 @@ class _DataRenderHelper:
         self.as_json: bool = as_json
 
         self.styles: dict[str, AnyStyle] = _DEFAULT_SYNTAX_HL.copy()
-        self.do_syntax_hl: bool = syntax_highlighting not in (None, False)
+        self.do_syntax_hl: bool = syntax_highlighting is not None and syntax_highlighting is not False
 
         if self.do_syntax_hl:
             if syntax_highlighting is True:
@@ -823,8 +824,8 @@ class _DataRenderHelper:
         if self.as_json:
             complex_types += (bytes, bytearray)
 
-        complex_items = sum(1 for item in seq if isinstance(item, complex_types))
-        complexity = sum(self.get_complexity(item) for item in seq)
+        complex_items = sum([1 for item in seq if isinstance(item, complex_types)])  # ruff:ignore[unnecessary-comprehension-in-call]
+        complexity = sum([self.get_complexity(item) for item in seq])  # ruff:ignore[unnecessary-comprehension-in-call]
 
         return (complex_items > 1 and complexity > 2) or chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
 
@@ -877,10 +878,10 @@ class _DataRenderHelper:
         trailing_comma = self.punct[","] if not self.as_json and isinstance(seq, tuple) and len(seq) == 1 else ""
 
         if self.compactness == 2 or not self.should_expand(seq):
-            items_str = self.sep.join(self.format_value(item, current_indent) for item in seq)
+            items_str = self.sep.join([self.format_value(item, current_indent) for item in seq])
             return f"{prefix}{brackets[0]}{items_str}{trailing_comma}{brackets[1]}"
 
         items = [self.format_value(item, current_indent) for item in seq]
-        formatted_items = f"{self.sep}\n".join(f"{' ' * (current_indent + self.indent)}{item}" for item in items)
+        formatted_items = f"{self.sep}\n".join([f"{' ' * (current_indent + self.indent)}{item}" for item in items])
 
         return f"{prefix}{brackets[0]}\n{formatted_items}{trailing_comma}\n{' ' * current_indent}{brackets[1]}"

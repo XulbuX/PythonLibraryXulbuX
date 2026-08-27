@@ -60,6 +60,7 @@
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
 *   Renamed `r`, `g`, `b` and `a` to `red`, `green`, `blue` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
 *   Renamed `h`, `s` and `l` to `hue`, `sat` and `light` everywhere in the library, to follow the no-single-letter-names convention.
+*   Renamed the function `color.text_color_for_on_bg()` to `fg_for_on_bg()` as this name describes its purpose just as well, but is shorter and easier to type.
 *   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
 *   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.
 *   Renamed the `throbber_format` param of `Throbber` to simply `format`, since the class is already called `Throbber`.

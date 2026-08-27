@@ -136,7 +136,7 @@ def to_camel_case(string: str, /, *, upper: bool = True) -> str:
 
     parts = decompose(string)
 
-    return ("" if upper else parts[0].lower()) + "".join(part.capitalize() for part in (parts if upper else parts[1:]))
+    return ("" if upper else parts[0].lower()) + "".join([part.capitalize() for part in (parts if upper else parts[1:])])
 
 
 def to_delimited_case(string: str, /, delimiter: str = "_", *, screaming: bool = False) -> str:
@@ -146,7 +146,7 @@ def to_delimited_case(string: str, /, delimiter: str = "_", *, screaming: bool =
     *   `delimiter` – The delimiter to use between parts.
     *   `screaming` – Whether to convert all parts to uppercase."""
 
-    return delimiter.join(part.upper() if screaming else part for part in decompose(string))
+    return delimiter.join([part.upper() if screaming else part for part in decompose(string)])
 
 
 def get_lines(string: str, /, *, remove_empty_lines: bool = False) -> list[str]:
