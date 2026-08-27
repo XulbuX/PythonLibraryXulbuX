@@ -1,11 +1,11 @@
 import io
 from unittest.mock import patch
-from xulbux.ansi import S, StyledText
+from xulbux.ansi import S
 from xulbux.color import hexa, rgba
 from xulbux.console import (
     _LOG_TITLE_CACHE_MAX,
-    _as_bg_style,
-    _as_fg_style,
+    _as_bg_color_style,
+    _as_fg_color_style,
     _persist_style,
     _prepare_log_box,
     _render_log_title,
@@ -159,18 +159,17 @@ def test_style_resolution_and_persistence_helpers() -> None:
     with pytest.raises(ValueError, match="title_bg_color"):
         _resolve_title_colors("invalid_color")
 
-    # _as_bg_style:
-    assert _as_bg_style(S.BG.BLUE) == S.BG.BLUE
-    assert _as_bg_style(rgba(10, 20, 30, 1)) is not None
+    # _as_bg_color_style:
+    assert _as_bg_color_style(S.BG.BLUE) == S.BG.BLUE
+    assert _as_bg_color_style(rgba(10, 20, 30, 1)) is not None
     with pytest.raises(ValueError, match="box_bg_color"):
-        _as_bg_style(object())
+        _as_bg_color_style(object())
 
-    # _as_fg_style:
-    assert _as_fg_style(None, fallback="#fff") is not None
-    assert _as_fg_style(S.GREEN) == S.GREEN
-    assert _as_fg_style(hexa("#ff00ff")) is not None
+    # _as_fg_color_style:
+    assert _as_fg_color_style(S.GREEN) == S.GREEN
+    assert _as_fg_color_style(hexa("#ff00ff")) is not None
     with pytest.raises(ValueError, match="color"):
-        _as_fg_style(object())
+        _as_fg_color_style(object())
 
     # _persist_style:
     assert _persist_style("plain text", "\x1b[31m") == "plain text"
@@ -208,13 +207,9 @@ def test_split_hr_parts_and_prepare_log_box() -> None:
     parts_7 = _split_hr_parts("pre{hr}{hr}post")
     assert len(parts_7) == 4
 
-    # _prepare_log_box with StyledText and tuple items:
+    # _prepare_log_box with S and tuple items:
     ansi_lines, _, max_w = _prepare_log_box(
-        [
-            StyledText(S.RED("Styled line 1\nStyled line 2")),
-            ("Tuple line 1",),
-            "Plain line",
-        ],
+        [S.RED("Styled line 1\nStyled line 2"), ("Tuple line 1",), "Plain line"],
         has_rules=True,
     )
     assert len(ansi_lines) == 4

@@ -9,14 +9,15 @@ from . import color as _color_module
 from .ansi import (
     AnyStyle,
     BaseStyle,
+    BgColorStyle,
     FgColorStyle,
     Renderable,
     S,
-    StyledText,
     TextRenderable,
-    _StyledSequence,
     is_any_style,
+    is_bg_color_style,
     is_fg_color_style,
+    is_renderable,
     is_text_renderable,
 )
 from .base.consts import ANSI, CHARS
@@ -66,7 +67,7 @@ _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
 _LOG_TITLE_CACHE_MAX: Final[int] = 256
 """Maximum number of entries kept in `_LOG_TITLE_CACHE`."""
 
-_ANSI_RESET: Final[str] = StyledText(S.RESET).ansi
+_ANSI_RESET: Final[str] = S.RESET.ansi
 """The ANSI full-reset sequence (`ESC[0m`)."""
 
 _OPT_SEP_DEFAULT: Final[object] = object()
@@ -92,28 +93,28 @@ FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ",
 # fmt: on
 
 
-def _compile_format(fmt: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable) -> list[str]:
+def _compile_format(fmt: Sequence[TextRenderable] | TextRenderable) -> list[str]:
     """Internal function to compile a format specification into a list of ANSI strings."""
 
-    if isinstance(fmt, (list, tuple)):
-        return [StyledText(part).ansi if not isinstance(part, str) else part for part in fmt]
+    if isinstance(fmt, (str, S)):
+        return [fmt.ansi if isinstance(fmt, S) else fmt]
 
-    return [StyledText(fmt).ansi if not isinstance(fmt, str) else fmt]
+    return [S(part).ansi if not isinstance(part, str) else part for part in fmt]
 
 
-def _to_styled_text(obj: TextRenderable | object) -> StyledText:
-    """Internal function to convert an object into a `StyledText` instance."""
+def _to_styled_text(obj: Renderable | object) -> S:
+    """Internal function to convert an object into a `S` instance."""
 
-    if isinstance(obj, StyledText):
+    if isinstance(obj, S):
         return obj
-    elif is_text_renderable(obj):
-        return StyledText(*obj) if isinstance(obj, tuple) else StyledText(obj)
+    elif is_renderable(obj):
+        return S(*obj) if isinstance(obj, tuple) else S(obj)
 
-    return StyledText(str(obj))
+    return S(str(obj))
 
 
-def _wrap_text(obj: TextRenderable | object, width: int) -> list[StyledText]:
-    """Internal helper to word-wrap a string or `StyledText` while preserving styles and line breaks."""
+def _wrap_text(obj: TextRenderable | object, width: int) -> list[S]:
+    """Internal helper to word-wrap a string or `S` while preserving styles and line breaks."""
 
     return _to_styled_text(obj).wrap(width)
 
@@ -483,11 +484,11 @@ class ArgumentParser:
 
         return sorted(opts, key=lambda opt: (len(opt) - len(_PATTERNS.cli_opt_prefix.sub("", opt)), opt))
 
-    def _opts_to_st(self, opts: Iterable[str]) -> StyledText:
+    def _opts_to_st(self, opts: Iterable[str]) -> S:
         """Internal method to convert a set of options into a<br>
-        nicely formatted `StyledText` object for help printing."""
+        nicely formatted `S` object for help printing."""
 
-        return StyledText(", ").join([S.BR.BLUE(opt) for opt in self._sort_opts(opts)])
+        return S(", ").join([S.BR.BLUE(opt) for opt in self._sort_opts(opts)])
 
     def _deduce_alias(self, opts: Iterable[str]) -> str:
         """Internal helper to deduce a clean Python attribute name from option strings."""
@@ -548,25 +549,25 @@ class ArgumentParser:
     def _add_usage_to_output(
         self,
         output: list[Renderable],
-        cmd_st: StyledText,
-        args_st: StyledText,
-        opts_st: StyledText,
+        cmd_st: S,
+        args_st: S,
+        opts_st: S,
     ) -> None:
         """Internal method to add the usage line to the help output."""
 
         if self.usage is None:
-            usage_parts: list[Renderable | StyledText] = [(S.RESET, S.BOLD("Usage:")), cmd_st]
+            usage_parts: list[Renderable] = [(S.RESET, S.BOLD("Usage:")), cmd_st]
 
             if args_st.raw:
                 usage_parts.append(args_st)
             if opts_st.raw:
                 usage_parts.append(opts_st)
 
-            output.append(StyledText(" ").join(usage_parts))
+            output.append(S(" ").join(usage_parts))
 
         else:
             output.append(
-                (self.usage if isinstance(self.usage, StyledText) else StyledText(self.usage))
+                (self.usage if isinstance(self.usage, S) else S(self.usage))
                 .ansi.replace("{cmd}", cmd_st.ansi)
                 .replace("{args}", args_st.ansi)
                 .replace("{opts}", opts_st.ansi)
@@ -574,10 +575,10 @@ class ArgumentParser:
 
         output.append("")
 
-    def _get_args_help_items(self) -> list[tuple[StyledText, Renderable]]:
+    def _get_args_help_items(self) -> list[tuple[S, TextRenderable]]:
         """Internal method to collect help items for positional arguments."""
 
-        args_items: list[tuple[StyledText, Renderable]] = []
+        args_items: list[tuple[S, TextRenderable]] = []
 
         for name in self._args_order:
             cfg = self._arg_configs[name]
@@ -585,25 +586,23 @@ class ArgumentParser:
 
             match nargs := cfg["nargs"]:
                 case "*" | "+":
-                    label_st = StyledText(S.BR.CYAN(f"{l_br}{name}...{r_br}"))
+                    label_st = S.BR.CYAN(f"{l_br}{name}...{r_br}")
                 case int(n) if n > 1:
-                    label_st = StyledText(S.BR.CYAN(l_br, name, " "), S.DIM(f"[{nargs}]"), S.BR.CYAN(r_br))
+                    label_st = S(S.BR.CYAN(l_br, name, " "), S.DIM(f"[{nargs}]"), S.BR.CYAN(r_br))
                 case _:
-                    label_st = StyledText(S.BR.CYAN(f"{l_br}{name}{r_br}"))
+                    label_st = S.BR.CYAN(f"{l_br}{name}{r_br}")
 
             args_items.append((label_st, cfg["help"] or ""))
 
         return args_items
 
-    def _get_opts_help_items(self, has_opts: bool) -> list[tuple[StyledText, Renderable]]:
+    def _get_opts_help_items(self, has_opts: bool) -> list[tuple[S, Renderable]]:
         """Internal method to collect help items for options."""
 
         if not has_opts and not self.help_opts:
             return []
 
-        opts_items: list[tuple[StyledText, Renderable]] = [
-            (self._opts_to_st(self.help_opts), "Show this help message and exit")
-        ]
+        opts_items: list[tuple[S, Renderable]] = [(self._opts_to_st(self.help_opts), "Show this help message and exit")]
 
         sep_st: Renderable = S.DIM(self.opt_value_sep) if self.opt_value_sep else " "
 
@@ -621,18 +620,18 @@ class ArgumentParser:
 
         return opts_items
 
-    def _get_controls_help_items(self) -> list[tuple[StyledText, Renderable]]:
+    def _get_controls_help_items(self) -> list[tuple[S, Renderable]]:
         """Internal method to collect help items for controls."""
 
         if not self.controls:
             return []
 
-        controls_items: list[tuple[StyledText, Renderable]] = []
+        controls_items: list[tuple[S, Renderable]] = []
 
         for control, help in self.controls:
             key_list = [control] if isinstance(control, str) else list(control)
-            formatted_keys = [StyledText(S.BR.RED(S.DIM("+").join(k.split("+")))) for k in key_list]
-            controls_items.append((StyledText(", ").join(formatted_keys), help))
+            formatted_keys = [S.BR.RED(S.DIM("+").join(key.split("+"))) for key in key_list]
+            controls_items.append((S(", ").join(formatted_keys), help))
 
         return controls_items
 
@@ -640,7 +639,7 @@ class ArgumentParser:
         self,
         output: list[Renderable],
         title: str,
-        items: list[tuple[StyledText, Renderable]],
+        items: Sequence[tuple[S, Renderable]],
         max_col_width: int,
         console_width: int,
     ) -> None:
@@ -682,45 +681,45 @@ class ArgumentParser:
         if token.startswith("{cmd}"):
             suffix = token[5:]
             state[0] = False
-            return StyledText(S.BR.GREEN(cmd_name), S.DIM(suffix) if suffix else "").ansi
+            return S(S.BR.GREEN(cmd_name), S.DIM(suffix) if suffix else "").ansi
 
         if token == "--":
             state[0] = False
             state[2] = True
-            return StyledText(S.BR.BLUE(token)).ansi
+            return S.BR.BLUE(token).ansi
 
         if state[2] or state[0]:
             is_opt_val = state[0]
             state[0] = False
-            return StyledText(S.BR.BLUE(token) if is_opt_val else S.BR.CYAN(token)).ansi
+            return (S.BR.BLUE(token) if is_opt_val else S.BR.CYAN(token)).ansi
 
         if self.opt_value_sep and self.opt_value_sep in token:
             opt_prefix, opt_val = token.split(self.opt_value_sep, 1)
             if opt_prefix in all_opts or ((self.intermixed or not state[1]) and self._opt_pattern.fullmatch(opt_prefix)):
-                return StyledText(S.BR.BLUE(opt_prefix, S.DIM(self.opt_value_sep), opt_val)).ansi
+                return S.BR.BLUE(opt_prefix, S.DIM(self.opt_value_sep), opt_val).ansi
             state[1] = True
-            return StyledText(S.BR.CYAN(token)).ansi
+            return S.BR.CYAN(token).ansi
 
         if token in all_opts:
             if not self.intermixed and state[1]:
-                return StyledText(S.BR.CYAN(token)).ansi
+                return S.BR.CYAN(token).ansi
             if token in value_opts:
                 state[0] = True
-            return StyledText(S.BR.BLUE(token)).ansi
+            return S.BR.BLUE(token).ansi
 
         if _is_number(token):
             state[1] = True
-            return StyledText(S.BR.CYAN(token)).ansi
+            return S.BR.CYAN(token).ansi
 
         if self._opt_pattern.fullmatch(token):
             if not self.intermixed and state[1]:
-                return StyledText(S.BR.CYAN(token)).ansi
-            return StyledText(S.BR.BLUE(token)).ansi
+                return S.BR.CYAN(token).ansi
+            return S.BR.BLUE(token).ansi
 
         state[1] = True
-        return StyledText(S.BR.CYAN(token)).ansi
+        return S.BR.CYAN(token).ansi
 
-    def _highlight_example(self, example_cmd: str, cmd_name: str) -> StyledText:
+    def _highlight_example(self, example_cmd: str, cmd_name: str) -> S:
         """Internal method to syntax-highlight the left command part of an example."""
 
         all_opts: set[str] = set()
@@ -743,7 +742,7 @@ class ArgumentParser:
             last_idx = match.end()
 
         parts.append(example_cmd[last_idx:])
-        result = StyledText.__new__(StyledText)
+        result = S.__new__(S)
         result.ansi = "".join(parts)
 
         return result
@@ -761,14 +760,14 @@ class ArgumentParser:
 
         output.append((S.RESET, S.BOLD("Examples:")))
 
-        highlighted_examples: list[tuple[StyledText, Renderable]] = [
+        highlighted_examples: list[tuple[S, Renderable]] = [
             (self._highlight_example(example_cmd, cmd_name_ext[0]), comment) for example_cmd, comment in self.examples
         ]
         max_example_len = max([len(cmd_st.raw) for cmd_st, _ in highlighted_examples], default=0)
 
         fits_wide = True
         for _, comment in highlighted_examples:
-            desc_raw_len = 2 + len(comment if isinstance(comment, str) else StyledText(comment).raw)
+            desc_raw_len = 2 + len(comment if isinstance(comment, str) else S(comment).raw)
             line_len = 2 + max_example_len + 4 + desc_raw_len
 
             if line_len > console_width:
@@ -803,14 +802,11 @@ class ArgumentParser:
         opts_items = self._get_opts_help_items(has_opts)
         controls_items = self._get_controls_help_items()
 
-        cmd_st = StyledText(S.BR.GREEN(cmd_name_ext[0], S.DIM(cmd_name_ext[1]) if cmd_name_ext[1] else ""))
-        args_st = StyledText(" ").join([item[0] for item in args_items])
-        opts_st = StyledText(S.BR.BLUE("[options]") if has_opts else "")
+        cmd_st = S.BR.GREEN(cmd_name_ext[0], S.DIM(cmd_name_ext[1]) if cmd_name_ext[1] else "")
+        args_st = S(" ").join([item[0] for item in args_items])
+        opts_st = S.BR.BLUE("[options]") if has_opts else S("")
 
-        max_col_width = max(
-            [len(left_st.raw) for left_st, _ in (*args_items, *opts_items, *controls_items)],
-            default=0,
-        )
+        max_col_width = max([len(left_st.raw) for left_st, _ in (*args_items, *opts_items, *controls_items)], default=0)
 
         console_width = get_width()
         output: list[Renderable] = [""]
@@ -831,9 +827,9 @@ class ArgumentParser:
             output.append(_to_styled_text(self.epilog))
             output.append("")
 
-        StyledText(*output, "", sep="\n").print(flush=True)
+        S(*output, "", sep="\n").print(flush=True)
 
-    def _error(self, message: TextRenderable | object, exit_code: int = 1) -> NoReturn:
+    def _error(self, *message: TextRenderable | object, exit_code: int = 1) -> NoReturn:
         """Internal method to print an error message with a help notice and exit the program."""
 
         title = self.title or (Path(_sys.argv[0]).stem if _sys.argv and _sys.argv[0] else "")
@@ -853,7 +849,7 @@ class ArgumentParser:
         help_opt_st = S.BR.BLUE(self._sort_opts(self.help_opts)[-1] if self.help_opts else "--help")
         output.append(S.DIM("  Run with ", help_opt_st, " for usage and available options."))
 
-        StyledText(*output, "\n", sep="\n").print(flush=True)
+        S(*output, "\n", sep="\n").print(flush=True)
 
         raise SystemExit(exit_code)
 
@@ -905,17 +901,17 @@ class ArgumentParser:
 
         if not cfg["optional_value"]:
             opt_details: list[Renderable] = [f"Option '{potential_opt}' requires a value"]
-            extra: list[str] = []
+            extra: list[TextRenderable] = []
 
             if cfg["expects_value"]:
-                extra.append(f"expected <{cfg['expects_value']}>")
+                extra.append(("expected <", S.BOLD(cfg["expects_value"]), ">"))
             if cfg["choices"]:
-                extra.append(f"choices: {', '.join(cfg['choices'])}")
+                extra.append(f"choices: {S(', ').join([S.BOLD(choice) for choice in cfg['choices']])}")
 
             if extra:
-                opt_details.append(S.DIM(f" ({'; '.join(extra)})"))
+                opt_details.append(S.DIM(f" ({S('; ').join(extra)})"))
 
-            self._error(StyledText(*opt_details))
+            self._error(*opt_details)
 
         return i
 
@@ -1019,7 +1015,7 @@ class ArgumentParser:
             if cfg["choices"]:
                 arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
 
-            self._error(StyledText(*arg_details))
+            self._error(*arg_details)
 
         if (count := min(available, 1) if nargs == "?" else available) < 1:
             parsed_data[name]["values"] = []
@@ -1030,7 +1026,7 @@ class ArgumentParser:
                 if cfg["choices"]:
                     arg_details_req.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
 
-                self._error(StyledText(*arg_details_req))
+                self._error(*arg_details_req)
 
             return token_idx
 
@@ -1074,14 +1070,12 @@ class ArgumentParser:
                     if cfg["choices"]:
                         arg_details.append(S.DIM(f" (choices: {', '.join(cfg['choices'])})"))
 
-                    self._error(StyledText(*arg_details))
+                    self._error(*arg_details)
 
                 else:
                     self._error(
-                        StyledText(
-                            f"Missing required option '{alias}'",
-                            S.DIM(f" ({', '.join(self._sort_opts(cast('Iterable[str]', cfg['opts'])))})"),
-                        )
+                        f"Missing required option '{alias}'",
+                        S.DIM(f" ({', '.join(self._sort_opts(cast('Iterable[str]', cfg['opts'])))})"),
                     )
 
             if cfg["choices"] and parsed_data[alias]["exists"]:
@@ -1092,7 +1086,7 @@ class ArgumentParser:
                             choice_details.append(S.DIM(f" ({', '.join(self._sort_opts(cfg['opts']))})"))
                         choice_details.append(f"\nAllowed: {', '.join(cfg['choices'])}")
 
-                        self._error(StyledText(*choice_details))
+                        self._error(*choice_details)
 
     def parse(
         self,
@@ -1258,7 +1252,7 @@ def pause_exit(
 ) -> None:
     """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The message to print before pausing/exiting (any object, or a `StyledText` object).
+    *   `prompt` – The message to print before pausing/exiting (any object, or a `S` object).
     *   `pause` – Whether to pause and wait for a key press after printing the prompt.
     *   `exit` – Whether to exit the program after printing
         the prompt (and pausing if `pause` is true).
@@ -1289,7 +1283,7 @@ def log(
     *,
     start: str = "",
     end: str = "\n",
-    title_bg_color: BaseStyle | Rgba | Hexa | None = None,
+    title_bg_color: BgColorStyle | Rgba | Hexa | None = None,
     default_color: FgColorStyle | Rgba | Hexa | None = None,
     tab_size: int = 8,
     title_px: int = 1,
@@ -1298,7 +1292,7 @@ def log(
     """Prints a nicely formatted log message.\n
     ----------------------------------------------------------------------------------------------------
     *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
-    *   `prompt` – The log message (any object, or a `StyledText` object for styled output).
+    *   `prompt` – The log message (any object, or a `S` object for styled output).
     *   `start` – Something to print before the log is printed.
     *   `end` – Something to print after the log is printed (e.g., `\\n`).
     *   `title_bg_color` – The background color of the `title`<br>
@@ -1308,7 +1302,7 @@ def log(
     *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
     *   `title_mx` – The horizontal margin (in chars) to the title.\n
     ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    To style the `prompt`, pass a `S` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
     if tab_size < 0:
@@ -1342,24 +1336,24 @@ def log(
     wrap_len: int = get_width() - (title_len + len(tab))
 
     # Convert the prompt to styled text and apply the optional default color:
-    prompt_st: _StyledSequence | StyledText = _to_styled_text(prompt)
+    prompt_st: S = _to_styled_text(prompt)
     if default_color is not None:
-        prompt_st = _as_fg_style(default_color, param_name="default_color")(prompt_st)
+        prompt_st = _as_fg_color_style(default_color, param_name="default_color")(prompt_st)
 
     # Wrap prompt text to the next line with proper indentation after the title and tab:
-    joined_prompt = StyledText(f"\n{' ' * title_len + tab}").join(prompt_st.wrap(wrap_len))
+    joined_prompt = S(f"\n{' ' * title_len + tab}").join(prompt_st.wrap(wrap_len))
 
     if title == "":
-        StyledText(f"{start}{mx}", joined_prompt, sep="").print(end=end)
+        S(f"{start}{mx}", joined_prompt).print(end=end)
     else:
         title_ansi = _render_log_title(f"{px}{title}{px}", title_style)
-        StyledText(f"{start}{mx}", title_ansi, f"{mx}{tab}", joined_prompt, sep="").print(end=end)
+        S(f"{start}{mx}", title_ansi, f"{mx}{tab}", joined_prompt).print(end=end)
 
 
 def _log_preset(
     title: str,
     prompt: TextRenderable | object,
-    title_bg_color: BaseStyle | Rgba | Hexa | None,
+    title_bg_color: BgColorStyle | Rgba | Hexa | None,
     start: str,
     end: str,
     default_color: FgColorStyle | Rgba | Hexa | None,
@@ -1631,7 +1625,7 @@ def exit(
 
 
 def log_box_filled(
-    *values: TextRenderable | object,
+    *lines: TextRenderable | object,
     start: str = "",
     end: str = "\n",
     box_bg_color: AnyStyle | Rgba | Hexa | None = None,
@@ -1642,17 +1636,17 @@ def log_box_filled(
 ) -> None:
     """Will print a box with a colored background, containing a log message.\n
     ----------------------------------------------------------------------------------------------------
-    *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
+    *   `*lines` – The box content (any objects, or `S` objects, one per line).
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `box_bg_color` – The background color of the box<br>
         (an `S` background style, RGBA, or HEXA color).
-    *   `default_color` – The default text color of the `*values`.
+    *   `default_color` – The default text color of the `*lines`.
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).\n
     ----------------------------------------------------------------------------------------------------
-    To style the content, pass `StyledText` objects. For more detailed<br>
+    To style the content, pass `S` objects. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
     if w_padding < 0:
@@ -1660,18 +1654,20 @@ def log_box_filled(
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-    fg_style = _as_fg_style(default_color, fallback="#000", param_name="default_color")
+    fg_style = _as_fg_color_style(default_color, param_name="default_color") if default_color is not None else S.hex("#000")
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
     bg_style: AnyStyle = (
-        (S.RESET_FG | S.INVERSE | fg_style) if box_bg_color is None else _as_bg_style(box_bg_color, param_name="box_bg_color")
+        (S.RESET_FG | S.INVERSE | fg_style)
+        if box_bg_color is None
+        else _as_bg_color_style(box_bg_color, param_name="box_bg_color")
     )
 
-    open_seq = StyledText(fg_style | bg_style).ansi
-    bg_open = StyledText(bg_style).ansi
-    reset = StyledText(S.RESET).ansi
+    open_seq = (fg_style | bg_style).ansi
+    bg_open = bg_style.ansi
+    reset = S.RESET.ansi
 
-    ansi_lines, plain_lines, max_line_len = _prepare_log_box(values)
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines)
 
     spaces_l = " " * indent
     pady = " " * (get_width() if w_full else max_line_len + (2 * w_padding))
@@ -1685,11 +1681,11 @@ def log_box_filled(
 
     box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
 
-    StyledText(start + "\n".join(box_lines)).print(end=end)
+    S(start, "\n".join(box_lines)).print(end=end)
 
 
 def log_box_bordered(
-    *values: TextRenderable | object,
+    *lines: TextRenderable | object,
     start: str = "",
     end: str = "\n",
     border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
@@ -1702,20 +1698,20 @@ def log_box_bordered(
 ) -> None:
     """Will print a bordered box, containing a log message.\n
     ----------------------------------------------------------------------------------------------------
-    *   `*values` – The box content (any objects, or `StyledText` objects, one per line).
+    *   `*lines` – The box content (any objects, or `S` objects, one per line).
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `border_type` – One of the predefined border character sets.
     *   `border_style` – The style of the border (an `S` style, RGBA, or HEXA color).
-    *   `default_color` – The default text color of the `*values`.
+    *   `default_color` – The default text color of the `*lines`.
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
     *   `indent` – The indentation of the box (in chars).
     *   `border_chars` – Define your own border characters set (overwrites `border_type`).\n
     ----------------------------------------------------------------------------------------------------
-    You can insert horizontal rules to split the box content by using `{hr}` in the `*values`.\n
+    You can insert horizontal rules to split the box content by using `{hr}` in the `*lines`.\n
     ----------------------------------------------------------------------------------------------------
-    To style the content, pass `StyledText` objects. For more detailed<br>
+    To style the content, pass `S` objects. For more detailed<br>
     information about styling, see the `ansi` module documentation.\n
     ----------------------------------------------------------------------------------------------------
     The `border_type` can be one of the following:
@@ -1736,6 +1732,14 @@ def log_box_bordered(
     10. horizontal rule
     11. right horizontal rule connector"""
 
+    if is_any_style(border_style) and not is_bg_color_style(border_style):
+        border_open = border_style.ansi
+    else:
+        raise ValueError(
+            f"The 'border_style' parameter must be a valid foreground style (e.g., 'S.DIM | S.BR.BLUE'), "
+            f"RGBA color, or HEXA color, got {border_style!r}"
+        )
+
     if w_padding < 0:
         raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
     if indent < 0:
@@ -1747,11 +1751,8 @@ def log_box_bordered(
             if len(char) != 1:
                 raise ValueError(f"List values must be single-char strings, got {border_chars!r}")
 
-    border_open = StyledText(_as_fg_style(border_style, param_name="border_style")).ansi
-    content_open = (
-        StyledText(_as_fg_style(default_color, param_name="default_color")).ansi if default_color is not None else ""
-    )
-    reset = StyledText(S.RESET).ansi
+    content_open = _as_fg_color_style(default_color, param_name="default_color").ansi if default_color is not None else ""
+    reset = S.RESET.ansi
 
     borders = {
         "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
@@ -1761,7 +1762,7 @@ def log_box_bordered(
     }
     border_chars = borders.get(border_type, borders["standard"]) if border_chars is None else border_chars
 
-    ansi_lines, plain_lines, max_line_len = _prepare_log_box(values, has_rules=True)
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines, has_rules=True)
 
     spaces_l = " " * indent
     pad_w_full = (get_width() - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
@@ -1785,29 +1786,27 @@ def log_box_bordered(
         right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
         box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
-    StyledText(
-        f"{start}{border_t}{reset}\n" + "\n".join(box_lines) + ("\n" if box_lines else "") + f"{border_b}{reset}"
-    ).print(end=end)
+    S(f"{start}{border_t}{reset}\n", "\n".join(box_lines), ("\n" if box_lines else ""), f"{border_b}{reset}").print(end=end)
 
 
 def confirm(
     prompt: TextRenderable | object = "Do you want to continue?",
     /,
     *,
-    start: StyledText | str = "",
-    end: StyledText | str = "",
+    start: S | str = "",
+    end: S | str = "",
     default_color: FgColorStyle | Rgba | Hexa | None = None,
     default_is_yes: bool = True,
 ) -> bool:
     """Ask a yes/no question.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt`.
     *   `default_is_yes` – The default answer if the user just presses enter.\n
     ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    To style the `prompt`, pass a `S` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
     yes_no = S.DIM(
@@ -1818,9 +1817,9 @@ def confirm(
         "): ",
     )
     head = f"{_to_styled_text(start)}{_to_styled_text(prompt).ansi} "
-    head_seg = _as_fg_style(default_color, param_name="default_color")(head) if default_color is not None else head
+    head_seg = _as_fg_color_style(default_color, param_name="default_color")(head) if default_color is not None else head
 
-    confirmed = input(StyledText(head_seg, S.RESET, yes_no).ansi).strip().lower() in (
+    confirmed = input(S(head_seg, S.RESET, yes_no).ansi).strip().lower() in (
         {"", "y", "yes"} if default_is_yes else {"y", "yes"}
     )
 
@@ -1843,7 +1842,7 @@ def multiline_input(
 ) -> str:
     """An input where users can write (and paste) text over multiple lines.\n
     ------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt`.
@@ -1851,19 +1850,21 @@ def multiline_input(
     *   `input_prefix` – The prefix of the input line.
     *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input.\n
     ------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    To style the `prompt`, pass a `S` object. For more detailed<br>
     information about styling, see the `ansi` module documentation."""
 
     kb = KeyBindings()
-    kb.add("c-d", eager=True)(_multiline_input_submit)
+    kb.add("escape", "enter", eager=True)(_multiline_input_submit)
 
     head = f"{start}{_to_styled_text(prompt).ansi}"
-    head_seg = _as_fg_style(default_color, param_name="default_color")(head) if default_color is not None else head
-    StyledText(head_seg).print()
+    S(_as_fg_color_style(default_color, param_name="default_color")(head) if default_color is not None else head).print()
+
     if show_keybindings:
-        StyledText(S.DIM("[", S.BOLD("CTRL+D"), " : end of input]")).print()
+        S.DIM("[", S.BOLD("ALT+ENTER"), " : confirm input]").print()
+
     input_string = _pt.prompt(input_prefix, multiline=True, wrap_lines=True, key_bindings=kb)
-    StyledText(S.RESET if reset_ansi else "").print(end=end[1:] if end.startswith("\n") else end)
+
+    S(S.RESET if reset_ansi else "").print(end=end[1:] if end.startswith("\n") else end)
 
     return input_string
 
@@ -1943,7 +1944,7 @@ def input(
 ) -> Any:
     """Acts like a standard Python `input()` a bunch of cool extra features.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `StyledText` object for styled output).
+    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt`.
@@ -1959,7 +1960,7 @@ def input(
     *   `default_val` – The default value to return if the input is empty.
     *   `output_type` – The type (class) to convert the input to before returning it.\n
     ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `StyledText` object. For more detailed<br>
+    To style the `prompt`, pass a `S` object. For more detailed<br>
     information about styling, see the `ansi` module documentation.\n
     ----------------------------------------------------------------------------------------------------
     #### Example Usage
@@ -2009,7 +2010,7 @@ def input(
 
     prompt_ansi = _to_styled_text(prompt).ansi
     if default_color is not None:
-        prompt_ansi = StyledText(_as_fg_style(default_color, param_name="default_color")(prompt_ansi)).ansi
+        prompt_ansi = _as_fg_color_style(default_color, param_name="default_color")(prompt_ansi).ansi
 
     session: _pt.PromptSession[str] = _pt.PromptSession(
         message=_pt.formatted_text.ANSI(prompt_ansi),
@@ -2017,13 +2018,13 @@ def input(
         validate_while_typing=True,
         key_bindings=kb,
         bottom_toolbar=helper.bottom_toolbar,
-        placeholder=_pt.formatted_text.ANSI(StyledText((S.ITALIC | S.BR.BLACK)(placeholder)).ansi) if placeholder else "",
+        placeholder=_pt.formatted_text.ANSI((S.ITALIC | S.BR.BLACK)(placeholder).ansi) if placeholder else "",
         style=custom_style,
     )
 
-    StyledText(start).print(end="", flush=True)
+    S(start).print(end="", flush=True)
     session.prompt()
-    StyledText(end).print(end="", flush=True)
+    S(end).print(end="", flush=True)
 
     if (result_text := helper.get_text()) in {"", None}:
         if default_val is not None:
@@ -2070,13 +2071,13 @@ def _read_single_key() -> None:
             _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type:ignore[attr-defined]
 
 
-def _resolve_title_colors(title_bg_color: object, /) -> tuple[AnyStyle, BaseStyle]:
+def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, BaseStyle]:
     """Resolves the log title's background style and its matching foreground style.\n
     ----------------------------------------------------------------------------------------------------
     *   `title_bg_color` – An `S` background style (black text is used on it) or an<br>
         RGBA/HEXA color (the best-contrast black or white text is computed for it)."""
 
-    if is_any_style(title_bg_color):
+    if is_bg_color_style(title_bg_color):
         return title_bg_color, S.BLACK
 
     if _color_module.is_valid_rgba(title_bg_color) or _color_module.is_valid_hexa(title_bg_color):
@@ -2089,32 +2090,30 @@ def _resolve_title_colors(title_bg_color: object, /) -> tuple[AnyStyle, BaseStyl
     )
 
 
-def _as_bg_style(color: object, /, *, param_name: str = "box_bg_color") -> AnyStyle:
+def _as_bg_color_style(color: object, /, *, param_name: str = "box_bg_color") -> BgColorStyle:
     """Resolves an `S` background style or an RGBA/HEXA color to an `S` background style."""
 
-    if is_any_style(color):
+    if is_bg_color_style(color):
         return color
-    if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
+    elif _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.BG.hex(str(_color_module.to_hexa(color)))
 
     raise ValueError(
-        f"The {param_name!r} parameter must be a valid background style (e.g., 'S.BG.BLUE'), "
+        f"The {param_name!r} parameter must be a valid background color style (e.g., 'S.BG.BLUE'), "
         f"RGBA color, or HEXA color, got {color!r}"
     )
 
 
-def _as_fg_style(color: object, /, *, fallback: str = "#000", param_name: str = "color") -> AnyStyle:
+def _as_fg_color_style(color: object, /, *, param_name: str = "color") -> FgColorStyle:
     """Resolves an `S` style, an RGBA/HEXA color, or `None` (returns fallback) to an `S` foreground style."""
 
-    if color is None:
-        return S.hex(fallback)
-    if is_any_style(color):
+    if is_fg_color_style(color):
         return color
-    if _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
+    elif _color_module.is_valid_rgba(color) or _color_module.is_valid_hexa(color):
         return S.hex(str(_color_module.to_hexa(color)))
 
     raise ValueError(
-        f"The {param_name!r} parameter must be a valid style (e.g., 'S.DIM | S.BR.BLUE'), "
+        f"The {param_name!r} parameter must be a valid foreground color style (e.g., 'S.BR.BLUE'), "
         f"RGBA color, or HEXA color, got {color!r}"
     )
 
@@ -2138,7 +2137,7 @@ def _render_log_title(text: str, style: AnyStyle, /) -> str:
     key = (text, repr(style))
 
     if (cached := _LOG_TITLE_CACHE.get(key)) is None:
-        cached = StyledText(style(text)).ansi
+        cached = style(text).ansi
         if len(_LOG_TITLE_CACHE) < _LOG_TITLE_CACHE_MAX:
             _LOG_TITLE_CACHE[key] = cached
 
@@ -2178,7 +2177,7 @@ def _split_hr_parts(val_str: str, /) -> list[str]:
 
 
 def _prepare_log_box(
-    values: list[TextRenderable | object] | tuple[TextRenderable | object, ...], /, *, has_rules: bool = False
+    values: Sequence[TextRenderable | object], /, *, has_rules: bool = False
 ) -> tuple[list[str], list[str], int]:
     """Prepares the log box content, returning the ANSI lines,<br>
     their plain-text counterparts, and the maximum visible line length."""
@@ -2188,7 +2187,7 @@ def _prepare_log_box(
 
     for val in values:
         if is_text_renderable(val) and not isinstance(val, str):
-            st = val if isinstance(val, StyledText) else (StyledText(*val) if isinstance(val, tuple) else StyledText(val))
+            st = val if isinstance(val, S) else S(*val)
             for ansi_line, plain_line in zip(st.ansi.split("\n"), st.raw.split("\n"), strict=False):
                 ansi_lines.append(ansi_line)
                 plain_lines.append(plain_line)
@@ -2251,28 +2250,22 @@ class _ConsoleInputHelper:
 
             toolbar_msgs: list[str] = []
             if self.max_len and len(text_to_check) > self.max_len:
-                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#FFF") | S.BG.RED)(" Text too long! ")).ansi)
+                toolbar_msgs.append((S.BOLD | S.hex("#FFF") | S.BG.RED)(" Text too long! ").ansi)
             if self.validator and text_to_check and (validation_error_msg := self.validator(text_to_check)) not in {"", None}:
-                toolbar_msgs.append(
-                    StyledText((S.BOLD | S.hex("#000") | S.BG.BR.RED), f" {validation_error_msg} ", S.RESET_BG, sep="").ansi
-                )
+                toolbar_msgs.append(S((S.BOLD | S.hex("#000") | S.BG.BR.RED), f" {validation_error_msg} ", S.RESET_BG).ansi)
             if self.filtered_chars:
                 plural = "" if len(char_list := "".join(sorted(self.filtered_chars))) == 1 else "s"
-                toolbar_msgs.append(
-                    StyledText((S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Char{plural} '{char_list}' not allowed )")).ansi
-                )
+                toolbar_msgs.append((S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Char{plural} '{char_list}' not allowed )").ansi)
                 self.filtered_chars.clear()
             if self.min_len and len(text_to_check) < self.min_len:
                 toolbar_msgs.append(
-                    StyledText(
-                        (S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Need {self.min_len - len(text_to_check)} more chars )")
-                    ).ansi
+                    (S.BOLD | S.hex("#000") | S.BG.YELLOW)(f"( Need {self.min_len - len(text_to_check)} more chars )").ansi
                 )
             if self.tried_pasting:
-                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Pasting disabled )")).ansi)
+                toolbar_msgs.append((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Pasting disabled )").ansi)
                 self.tried_pasting = False
             if self.max_len and len(text_to_check) == self.max_len:
-                toolbar_msgs.append(StyledText((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Maximum length reached )")).ansi)
+                toolbar_msgs.append((S.BOLD | S.hex("#000") | S.BG.BR.YELLOW)("( Maximum length reached )").ansi)
 
             return _pt.formatted_text.ANSI(" ".join(toolbar_msgs))
 
@@ -2501,8 +2494,8 @@ class ProgressBar(_StdoutInterceptorMixin):
         *,
         min_width: int = 10,
         max_width: int = 25,
-        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_BAR_FORMAT,
-        limited_format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_LIMITED_BAR_FORMAT,
+        format: Sequence[TextRenderable] | TextRenderable = _DEFAULT_BAR_FORMAT,
+        limited_format: Sequence[TextRenderable] | TextRenderable = _DEFAULT_LIMITED_BAR_FORMAT,
         sep: str = " ",
         chars: tuple[str, ...] = ("█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", " "),
     ) -> None:
@@ -2552,8 +2545,8 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     def set_format(
         self,
-        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable | None = None,
-        limited_format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable | None = None,
+        format: Sequence[TextRenderable] | TextRenderable | None = None,
+        limited_format: Sequence[TextRenderable] | TextRenderable | None = None,
         *,
         sep: str | None = None,
     ) -> None:
@@ -2632,7 +2625,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
         self.chars = chars_tuple
 
-    def show_progress(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
+    def show_progress(self, current: int, total: int, /, label: S | str | None = None) -> None:
         """Show or update the progress bar.\n
         ----------------------------------------------------------------------------------------------------
         *   `current` – The current progress value (below `0` or greater than `total` hides the bar).
@@ -2673,7 +2666,7 @@ class ProgressBar(_StdoutInterceptorMixin):
             self._stop_intercepting()
 
     @contextmanager
-    def progress_context(self, total: int, /, label: StyledText | str | None = None) -> Generator[ProgressUpdater, None, None]:
+    def progress_context(self, total: int, /, label: S | str | None = None) -> Generator[ProgressUpdater, None, None]:
         """Context manager for automatic cleanup. Returns a function to update progress.\n
         ----------------------------------------------------------------------------------------------------
         *   `total` – The total value representing 100% progress (must be greater than `0`).
@@ -2712,7 +2705,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         finally:
             self.hide_progress()
 
-    def _draw_progress_bar(self, current: int, total: int, /, label: StyledText | str | None = None) -> None:
+    def _draw_progress_bar(self, current: int, total: int, /, label: S | str | None = None) -> None:
         if total <= 0 or not self._original_stdout:
             return
 
@@ -2733,7 +2726,7 @@ class ProgressBar(_StdoutInterceptorMixin):
         self._original_stdout.flush()
 
     def _get_formatted_info_and_bar_width(
-        self, format: list[str], current: int, total: int, percentage: float, /, label: StyledText | str | None = None
+        self, format: list[str], current: int, total: int, percentage: float, /, label: S | str | None = None
     ) -> tuple[str, int]:
         fmt_parts: list[str] = []
         label_ansi = _to_styled_text(label).ansi if label is not None else ""
@@ -2754,7 +2747,7 @@ class ProgressBar(_StdoutInterceptorMixin):
 
         fmt_str = self.sep.join(fmt_parts)
 
-        bar_space = get_width() - len(StyledText.remove_ansi(_PATTERNS.bar.sub("", fmt_str)))
+        bar_space = get_width() - len(S(_PATTERNS.bar.sub("", fmt_str)).raw)
         bar_width = min(bar_space, self.max_width) if bar_space > 0 else 0
 
         return fmt_str, bar_width
@@ -2793,10 +2786,10 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
-    def __init__(self, progress_bar: ProgressBar, total: int, label: StyledText | str | None, /) -> None:
+    def __init__(self, progress_bar: ProgressBar, total: int, label: S | str | None, /) -> None:
         self.progress_bar: ProgressBar = progress_bar
         self.total: int = total
-        self.current_label: StyledText | str | None = label
+        self.current_label: S | str | None = label
         self.current_progress: int = 0
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
@@ -2842,8 +2835,8 @@ class Throbber(_StdoutInterceptorMixin):
     def __init__(
         self,
         *,
-        label: StyledText | str | None = None,
-        format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable = _DEFAULT_THROBBER_FORMAT,
+        label: S | str | None = None,
+        format: Sequence[TextRenderable] | TextRenderable = _DEFAULT_THROBBER_FORMAT,
         sep: str = " ",
         frames: tuple[str, ...] = FRAMES_STANDARD,
         interval: float = 0.08,
@@ -2856,7 +2849,7 @@ class Throbber(_StdoutInterceptorMixin):
         """A tuple of strings representing the animation frames."""
         self.interval: float
         """The time in seconds between each animation frame."""
-        self.label: StyledText | str | None
+        self.label: S | str | None
         """The current label text."""
         self.active: bool = False
         """Whether the throbber is currently active (intercepting stdout) or not."""
@@ -2874,9 +2867,7 @@ class Throbber(_StdoutInterceptorMixin):
         self._stop_event: _threading.Event | None = None
         self._animation_thread: _threading.Thread | None = None
 
-    def set_format(
-        self, format: list[TextRenderable] | tuple[TextRenderable, ...] | TextRenderable, *, sep: str | None = None
-    ) -> None:
+    def set_format(self, format: Sequence[TextRenderable] | TextRenderable, *, sep: str | None = None) -> None:
         """Set the format string used to render the throbber.\n
         ----------------------------------------------------------------------------------------------------
         *   `format` – The format strings used to render the throbber, containing placeholders:
@@ -2924,7 +2915,7 @@ class Throbber(_StdoutInterceptorMixin):
 
         self.interval = interval
 
-    def start(self, label: StyledText | str | None = None, /) -> None:
+    def start(self, label: S | str | None = None, /) -> None:
         """Start the throbber animation and intercept stdout.\n
         ----------------------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber."""
@@ -2954,7 +2945,7 @@ class Throbber(_StdoutInterceptorMixin):
             self._clear_intercept_line()
             self._stop_intercepting()
 
-    def update_label(self, label: StyledText | str | None, /) -> None:
+    def update_label(self, label: S | str | None, /) -> None:
         """Update the throbber's label text.\n
         ----------------------------------------------------------------------------------------------------
         *   `new_label` – The new label text."""
@@ -2962,7 +2953,7 @@ class Throbber(_StdoutInterceptorMixin):
         self.label = label
 
     @contextmanager
-    def context(self, label: StyledText | str | None = None, /) -> Generator[Callable[[StyledText | str], None], None, None]:
+    def context(self, label: S | str | None = None, /) -> Generator[Callable[[S | str], None], None, None]:
         """Context manager for automatic cleanup. Returns a function to update the label.\n
         ----------------------------------------------------------------------------------------------------
         *   `label` – The label to display alongside the throbber.\n

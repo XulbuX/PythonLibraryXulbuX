@@ -1,7 +1,6 @@
-# ruff:ignore[line-too-long]
 """
-This module provides the `StyledText` class together with the `S` and `Term` classes<br>
-for building richly styled terminal output using a typed, operator-based syntax.
+This module provides the `S` and `Term` classes for building richly styled<br>
+terminal output using a typed, operator-based syntax.
 
 ---
 
@@ -10,9 +9,11 @@ for building richly styled terminal output using a typed, operator-based syntax.
 First, let's take a look at a small example of what a highly styled output could look like using this module:
 
 ```python
-StyledText(
-    ("First normal & unstyled text. ", (S.BOLD | S.UNDERLINE | S.BR.BLUE)("Bright blue, bold, and underlined text.")),
-    ((S.hex("#000") | S.BG.hex("#F67"))("Black text with a red background."), " And then ", S.ITALIC("(boring)"), " plain text again."),
+S(
+    ("First normal & unstyled text. ", \
+(S.BOLD | S.UNDERLINE | S.BR.BLUE)("Bright blue, bold, and underlined text.")),
+    ((S.hex("#000") | S.BG.hex("#F67"))("Black text with a red background."), \
+" And then ", S.ITALIC("(boring)"), " plain text again."),
     sep="\\n",
 ).print()
 ```
@@ -45,7 +46,7 @@ Every `_Style`, `_StyleGroup`, `_ColorStyle` or `_Link` call automatically gener
 matching reset sequence behind its text, just like shown in the following example:
 
 ```python
-StyledText(
+S(
     ("This is plain text, ", S.BR.BLUE("which is bright blue now.")),
     "Now it was automatically reset to plain again.",
     sep="\\n",
@@ -60,11 +61,9 @@ Now it was automatically reset to plain again.
 Only the specific styles that were applied are reset; other styling in scope is left intact:
 
 ```python
-StyledText(
-    S.CYAN(
-        "This is cyan text, ", S.DIM("which is dimmed now."),
-        "\\nNow it's not dimmed any more but still cyan.",
-    ),
+S.CYAN(
+    "This is cyan text, ", S.DIM("which is dimmed now."),
+    "\\nNow it's not dimmed any more but still cyan.",
 ).print()
 ```
 
@@ -81,7 +80,7 @@ position, with no matching close/reset appended. This is the typed equivalent of
 (open bracket without closing braces) from the legacy string syntax:
 
 ```python
-StyledText(
+S(
     S.RED, "[ERROR] Something went wrong!",
     S.RESET, " Back to normal.",
 ).print()
@@ -96,9 +95,7 @@ Any style type supports bare usage: `S.RED` (`_Style`), `S.hex("#F67")` (`_Color
 Bare styles can also appear inside tuples and nested calls:
 
 ```python
-StyledText(
-    S.ITALIC("a", S.MAGENTA, "B", S.RESET_FG, "c"),
-).print()
+S.ITALIC("a", S.MAGENTA, "B", S.RESET_FG, "c").print()
 ```
 
 <!-- DOCS: <TerminalOutput>
@@ -109,16 +106,16 @@ StyledText(
 ### Nesting and Multi-Segment Groups
 
 A style call accepts either a single piece of text or any number of mixed segments.<br>
-Strings, nested `_StyledSequence` calls, bare style objects, and raw tuples can be mixed freely:
+Strings, `S` objects, bare style objects, and raw tuples can be mixed freely:
 
 *   `S.X("text")`               – Apply `X` to `"text"`, auto-reset after.
 *   `S.X | S.Y`                 – Combine `X` and `Y` into a single group.
 *   `(S.X | S.Y)("text")`       – Apply the group to `"text"`.
 *   `S.X("a", S.Y("b"), "c")`   – Nested multi-segment: `Y` is applied only to `"b"`.
 *   `S.X`                       – Bare: emit only the opening sequence, no auto-reset.
-*   `("a", S.X("b"), "c")`      – Same-line group; passed as a single tuple to `StyledText(…)`.
+*   `("a", S.X("b"), "c")`      – Same-line group; passed as a single tuple to `S(…)`.
 
-Inside `StyledText(*segments, sep="\\n")`, every positional argument is treated as one<br>
+Inside `S(*segments, sep="\\n")`, every positional argument is treated as one<br>
 logical line and joined by `sep`. An empty string argument `""` therefore produces a blank line.
 
 
@@ -162,7 +159,7 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
 
 `Term` exposes commonly used non-styling ANSI sequences for cursor- and screen-control.<br>
 These are plain strings (or string-returning helpers), so they can be passed directly into a<br>
-`StyledText(…)` call or written to `sys.stdout`:
+`S(…)` call or written to `sys.stdout`:
 
 *   `Term.CLEAR_LINE`       – Erase the entire current line.
 *   `Term.CLEAR_SCREEN`     – Erase the whole screen.
@@ -268,1657 +265,6 @@ _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
 
-# ******************************************************** CORE TYPES *********************************************************
-
-
-class _StyleGroup:
-    """An immutable, ordered group of styles produced by `|`.\n
-    ----------------------------------------------------------------------------------------------------
-    Supports further `|` chaining and `()` application."""
-
-    __slots__: tuple[str, ...] = ("_codes",)
-
-    def __init__(self, *codes: BaseStyle) -> None:
-        self._codes: tuple[BaseStyle, ...] = codes
-
-    def __iter__(self) -> Iterator[BaseStyle]:
-        """Iterating a `_StyleGroup` yields its individual styles in order."""
-
-        return iter(self._codes)
-
-    def __or__(self, other: AnyStyle) -> _StyleGroup:
-        """Combines this style group with another style or group via `|`."""
-
-        if isinstance(other, _StyleGroup):
-            return _StyleGroup(*self._codes, *other._codes)
-
-        return _StyleGroup(*self._codes, other)
-
-    def __ror__(self, other: BaseStyle) -> _StyleGroup:
-        """Combines this style group with another style or group via `|`."""
-
-        return _StyleGroup(other, *self._codes)
-
-    def __call__(self, *text: Renderable) -> _StyledSequence:
-        """Applies this style group to the given text, auto-resetting after."""
-
-        opens, closes = _build_open_close(self)
-        return _StyledSequence(opens, closes, text[0] if len(text) == 1 else text)
-
-    def __matmul__(self, text: Renderable) -> _StyledSequence:
-        """Applies this style group to the given text, auto-resetting after."""
-
-        opens, closes = _build_open_close(self)
-        return _StyledSequence(opens, closes, text)
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this style group, showing its individual codes."""
-
-        return f"_StyleGroup{self._codes!r}"
-
-    def __eq__(self, other: object) -> bool:
-        """Returns `True` if `other` is a `_StyleGroup` with identical style codes in identical order."""
-
-        if isinstance(other, _StyleGroup):
-            return self._codes == other._codes
-
-        return False
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `_StyleGroup` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        (S.BOLD | S.BLUE).join(["A ", " B"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        A <span class="b blue"> B</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=StyledText(self).ansi)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyleGroup` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        (S.BOLD | S.BLUE).ljust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="b blue">---</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).ljust(width, fill_char)
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyleGroup` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        (S.BOLD | S.BLUE).rjust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ----<span class="b blue"></span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).rjust(width, fill_char)
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyleGroup` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        (S.BOLD | S.BLUE).center(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        --<span class="b blue">-</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).center(width, fill_char)
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `_StyleGroup` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line."""
-
-        return StyledText(self).wrap(width)
-
-    def to_bg(self) -> _StyleGroup:
-        """Convert all foreground color styles in this group to background color styles."""
-
-        converted_codes: list[BaseStyle] = []
-        for code in self._codes:
-            if isinstance(code, (_FgStyle, _FgColorStyle)):
-                converted_codes.append(code.to_bg())
-            else:
-                converted_codes.append(code)
-
-        return _StyleGroup(*converted_codes)
-
-    def to_fg(self) -> _StyleGroup:
-        """Convert all background color styles in this group to foreground color styles."""
-
-        converted_codes: list[BaseStyle] = []
-        for code in self._codes:
-            if isinstance(code, (_BgStyle, _BgColorStyle)):
-                converted_codes.append(code.to_fg())
-            else:
-                converted_codes.append(code)
-
-        return _StyleGroup(*converted_codes)
-
-
-class _Style:
-    """A single ANSI style integer.\n
-    ----------------------------------------------------------------------------------------------------
-    Supports two operators:
-    *   `|`  combines two or more codes into a `_StyleGroup` → `S.BOLD | S.RED`
-    *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`"""
-
-    __slots__: tuple[str, ...] = ("_oc", "_value")
-    _oc: tuple[tuple[str, ...], tuple[str, ...]]
-
-    def __init__(self, value: int, /) -> None:
-        self._value: int = value
-
-    def __int__(self) -> int:
-        return self._value
-
-    def __str__(self) -> str:
-        return str(self._value)
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, int):
-            return self._value == other
-        elif isinstance(other, _Style):
-            return self._value == other._value
-
-        return NotImplemented
-
-    def __hash__(self) -> int:
-        return hash(self._value)
-
-    def __or__(self, other: AnyStyle) -> _StyleGroup:
-        """Combines this style with another code or group via `|`."""
-
-        if isinstance(other, _StyleGroup):
-            return _StyleGroup(self, *other)
-
-        return _StyleGroup(self, other)
-
-    def __ror__(self, other: BaseStyle) -> _StyleGroup:
-        """Combines this style with another code or group via `|`."""
-
-        return _StyleGroup(other, self)
-
-    def __call__(self, *text: Renderable) -> _StyledSequence:
-        """Applies this style code to the given text, auto-resetting after."""
-
-        try:
-            oc = self._oc
-
-        except AttributeError:
-            cached = _STANDARD_SEQS.get(int(self))
-            oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
-            self._oc = oc
-
-        return _StyledSequence(oc[0], oc[1], text[0] if len(text) == 1 else text)
-
-    def __matmul__(self, text: Renderable) -> _StyledSequence:
-        """Applies this style code to the given text, auto-resetting after."""
-
-        try:
-            oc = self._oc
-
-        except AttributeError:
-            cached = _STANDARD_SEQS.get(int(self))
-            oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
-            self._oc = oc
-
-        return _StyledSequence(oc[0], oc[1], text)
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `_Style` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.RED.join(["A ", " B"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        A <span class="red"> B</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=StyledText(self).ansi)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Style` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.RED.ljust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="red">---</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).ljust(width, fill_char)
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Style` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.RED.rjust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ----<span class="red"></span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).rjust(width, fill_char)
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Style` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.RED.center(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        --<span class="red">-</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).center(width, fill_char)
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `_Style` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line."""
-
-        return StyledText(self).wrap(width)
-
-
-class _FgStyle(_Style):
-    """A single ANSI foreground color code."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def to_bg(self) -> _BgStyle:
-        """Convert to the corresponding background color style."""
-
-        return _BgStyle(self._value + 10)
-
-
-class _BgStyle(_Style):
-    """A single ANSI background color code."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def to_fg(self) -> _FgStyle:
-        """Convert to the corresponding foreground color style."""
-
-        return _FgStyle(self._value - 10)
-
-
-class _ColorStyle:
-    """A 24-bit true-color style – foreground or background.\n
-    ----------------------------------------------------------------------------------------------------
-    >>> S.rgb(255, 96, 112)("text")             # Custom FG color
-    >>> S.BG.rgb(0, 0, 0)("text")               # Custom BG color
-    >>> S.hex("#FF6070")("text")                # Hex FG color
-    >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
-
-    __slots__: tuple[str, ...] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
-
-    def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
-        self._red: int = red
-        self._green: int = green
-        self._blue: int = blue
-        self._bg: bool = bg
-        self._open_seq: str
-        self._close_seq: str
-
-        if bg:
-            self._open_seq = ANSI.SEQ_BG_COLOR.format(red, green, blue)
-            self._close_seq = f"{ANSI.CHAR}[{S.RESET_BG}m"
-        else:
-            self._open_seq = ANSI.SEQ_FG_COLOR.format(red, green, blue)
-            self._close_seq = f"{ANSI.CHAR}[{S.RESET_FG}m"
-
-    @classmethod
-    def from_hex(cls: type[Self], color: str, /, *, bg: bool | None = None) -> Self:
-        """Create a color style from a HEX color string (e.g., `#FF6070` or `F67`)."""
-
-        if (hex_str := color.strip().lstrip("#")).lower().startswith("0x"):
-            hex_str = hex_str[2:]
-        if len(hex_str) == 3:
-            hex_str = hex_str[0] * 2 + hex_str[1] * 2 + hex_str[2] * 2
-
-        if bg is None:
-            return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
-
-        return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), bg=bg)
-
-    def __or__(self, other: AnyStyle) -> _StyleGroup:
-        """Combines this color style with another style or group via `|`."""
-
-        if isinstance(other, _StyleGroup):
-            return _StyleGroup(self, *other._codes)
-
-        return _StyleGroup(self, other)
-
-    def __ror__(self, other: BaseStyle) -> _StyleGroup:
-        """Combines this color style with another style or group via `|`."""
-
-        return _StyleGroup(other, self)
-
-    def __call__(self, *text: Renderable) -> _StyledSequence:
-        """Applies this color style to the given text, auto-resetting after."""
-
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
-
-    def __matmul__(self, text: Renderable) -> _StyledSequence:
-        """Applies this color style to the given text, auto-resetting after."""
-
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text)
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this color style, indicating<br>
-        whether it's foreground or background and its RGB values."""
-
-        return f"_ColorStyle({'bg' if self._bg else 'fg'} {self._red},{self._green},{self._blue})"
-
-    def __eq__(self, other: object) -> bool:
-        """Returns `True` if `other` is a `_ColorStyle` with identical RGB values and background flag."""
-
-        if isinstance(other, _ColorStyle):
-            return (
-                self._red == other._red and self._green == other._green and self._blue == other._blue and self._bg == other._bg
-            )
-
-        return False
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `_ColorStyle` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.hex("#F67").join(["A ", " B"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        A <span class="bg-#F67"> B</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=StyledText(self).ansi)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_ColorStyle` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.hex("#F67").ljust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="bg-#F67">---</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).ljust(width, fill_char)
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_ColorStyle` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.hex("#F67").rjust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ----<span class="bg-#F67"></span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).rjust(width, fill_char)
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_ColorStyle` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.hex("#F67").center(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        --<span class="bg-#F67">-</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).center(width, fill_char)
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `_ColorStyle` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line."""
-
-        return StyledText(self).wrap(width)
-
-
-class _FgColorStyle(_ColorStyle):
-    """A 24-bit true-color foreground style."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def to_bg(self) -> _BgColorStyle:
-        """Convert to the corresponding background color style."""
-
-        return _BgColorStyle(self._red, self._green, self._blue)
-
-
-class _BgColorStyle(_ColorStyle):
-    """A 24-bit true-color background style."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = True) -> None:
-        super().__init__(red, green, blue, bg=bg)
-
-    def to_fg(self) -> _FgColorStyle:
-        """Convert to the corresponding foreground color style."""
-
-        return _FgColorStyle(self._red, self._green, self._blue)
-
-
-class _Link:
-    """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
-    ----------------------------------------------------------------------------------------------------
-    >>> S.link("https://example.com")("click here")
-    >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
-
-    __slots__: tuple[str, ...] = ("_close_seq", "_open_seq", "_url")
-
-    def __init__(self, url: str | Path, /) -> None:
-        self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
-        self._open_seq: str = ANSI.SEQ_LINK_OPEN.format(self._url)
-        self._close_seq: str = ANSI.SEQ_LINK_CLOSE
-
-    def __or__(self, other: AnyStyle) -> _StyleGroup:
-        """Combines this link style with another style or group via `|`."""
-
-        if isinstance(other, _StyleGroup):
-            return _StyleGroup(self, *other._codes)
-
-        return _StyleGroup(self, other)
-
-    def __ror__(self, other: BaseStyle) -> _StyleGroup:
-        """Combines this link style with another style or group via `|`."""
-
-        return _StyleGroup(other, self)
-
-    def __call__(self, *text: Renderable) -> _StyledSequence:
-        """Applies this link style to the given text, auto-resetting after."""
-
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text[0] if len(text) == 1 else text)
-
-    def __matmul__(self, text: Renderable) -> _StyledSequence:
-        """Applies this link style to the given text, auto-resetting after."""
-
-        return _StyledSequence((self._open_seq,), (self._close_seq,), text)
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this link style, showing the URL it points to."""
-
-        return f"_Link({self._url!r})"
-
-    def __eq__(self, other: object) -> bool:
-        """Returns `True` if `other` is a `_Link` pointing to the same URL."""
-
-        if isinstance(other, _Link):
-            return self._url == other._url
-
-        return False
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `_Link` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.link("url").join(["A ", " B"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        A <span> B</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=StyledText(self).ansi)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Link` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.link("url").ljust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span>---</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).ljust(width, fill_char)
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Link` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.link("url").rjust(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ----<span></span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).rjust(width, fill_char)
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_Link` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.link("url").center(4, "-").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        --<span>-</span>-
-        </TerminalOutput> -->"""
-
-        return StyledText(self).center(width, fill_char)
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `_Link` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line."""
-
-        return StyledText(self).wrap(width)
-
-
-class _StyledSequence:
-    """Pre-computed ANSI open/close sequences applied to text.\n
-    ----------------------------------------------------------------------------------------------------
-    The renderer emits the opening ANSI codes, then `text`, then the matching reset codes.<br>
-    `text` may be a plain `str`, a nested `_StyledSequence`, or a tuple of mixed segments."""
-
-    __slots__: tuple[str, ...] = ("_closes", "_opens", "text")
-
-    def __init__(self, opens: tuple[str, ...], closes: tuple[str, ...], text: Renderable) -> None:
-        self._opens: tuple[str, ...] = opens
-        self._closes: tuple[str, ...] = closes
-        self.text: Renderable = text
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this styled segment, showing its opens and text."""
-
-        return f"_StyledSequence(opens={self._opens!r}, text={self.text!r})"
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `_StyledSequence` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.BR.BLACK(".").join(["file", "txt"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        file<span class="br-black">.</span>txt
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=StyledText(self).ansi)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyledSequence` object left justified
-        in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.RED("Failed ").ljust(20, ".").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="red">Failed </span>.............
-        </TerminalOutput> -->"""
-
-        return StyledText(self).ljust(width, fill_char)
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyledSequence` object right justified
-        in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.GREEN(" Success").rjust(20, ".").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ............<span class="green"> Success</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).rjust(width, fill_char)
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `_StyledSequence` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.BOLD(" Title ").center(20, S.BLUE("━")).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="blue">━━━━━━</span><span class="b"> Title </span><span class="blue">━━━━━━━</span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).center(width, fill_char)
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `_StyledSequence` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line."""
-
-        return StyledText(self).wrap(width)
-
-    def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
-        """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
-        for ANSI on first use) or to a custom file-like object.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `end` – The string to append at the end of the output (default `"\\n"`).
-        *   `flush` – Whether to flush the output stream after writing (default `True`).
-        *   `file` – The file-like object to write to (default `sys.stdout`).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.YELLOW("Warning!").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="yellow">Warning!</span>
-        </TerminalOutput> -->"""
-
-        StyledText(self).print(end=end, flush=flush, file=file)
-
-    def input(self, /, *, reset_ansi: bool = False) -> str:
-        """Use the rendered ANSI string as an input prompt and return the user's input.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `reset_ansi` – If true, all ANSI styling will be reset after<br>
-            the user confirmed the input and the program continues to run.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        S.BR.BLUE("Enter name: ").input()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="br-blue">Enter name: </span>
-        </TerminalOutput> -->"""
-
-        return StyledText(self).input(reset_ansi=reset_ansi)
-
-
-# ********************* PUBLIC TYPE HELPERS *********************
-
-type FgColorStyle = _FgStyle | _FgColorStyle
-"""A single foreground color style code (e.g., `S.RED`, `S.BR.BLUE`, `S.hex("#FFF")`).<br>
-Excludes background colors and non-color styles like `S.BOLD`."""
-
-
-def is_fg_color_style(obj: object, /) -> TypeIs[FgColorStyle]:
-    """Returns true if `obj` is an instance that matches the `FgColorStyle` type."""
-
-    if isinstance(obj, (_FgColorStyle, _FgStyle)):
-        return True
-
-    elif isinstance(obj, _Style):
-        value = obj._value
-        return (30 <= value <= 37) or (90 <= value <= 97)
-
-    elif isinstance(obj, _ColorStyle):
-        return not obj._bg
-
-    return False
-
-
-type BgColorStyle = _BgStyle | _BgColorStyle
-"""A single background color style code (e.g., `S.BG.RED`, `S.BG.BR.BLUE`, `S.BG.hex("#67F")`).<br>
-Excludes foreground colors and non-color styles like `S.BOLD`."""
-
-
-def is_bg_color_style(obj: object, /) -> TypeIs[BgColorStyle]:
-    """Returns true if `obj` is an instance that matches the `BgColorStyle` type."""
-
-    if isinstance(obj, (_BgColorStyle, _BgStyle)):
-        return True
-
-    elif isinstance(obj, _Style):
-        value = obj._value
-        return (40 <= value <= 47) or (100 <= value <= 107)
-
-    elif isinstance(obj, _ColorStyle):
-        return obj._bg
-
-    return False
-
-
-type ColorStyle = FgColorStyle | BgColorStyle
-"""Any single foreground or background color style code (e.g., `S.RED`, `S.BG.BLUE`, `S.hex("#67F")`).<br>
-Excludes non-color styles like `S.BOLD`."""
-
-
-def is_color_style(obj: object, /) -> TypeIs[ColorStyle]:
-    """Returns true if `obj` is an instance that matches the `ColorStyle` type."""
-
-    return is_fg_color_style(obj) or is_bg_color_style(obj)
-
-
-type BaseStyle = _Style | _ColorStyle | _Link
-"""Any single style code, color style, or link style that can be combined via `|` and applied to text."""
-
-
-def is_base_style(obj: object, /) -> TypeIs[BaseStyle]:
-    """Returns true if `obj` is an instance that matches the `BaseStyle` type."""
-
-    return isinstance(obj, (_Style, _ColorStyle, _Link))
-
-
-type AnyStyle = BaseStyle | _StyleGroup
-"""Any single style or group of styles that can be combined via `|` and applied to text."""
-
-
-def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
-    """Returns true if `obj` is an instance that matches the `AnyStyle` type."""
-
-    return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
-
-
-type TextSegment = str | _StyledSequence | StyledText
-"""A single segment that contains actual text: a plain string, a nested styled segment, or a `StyledText` object."""
-
-
-def is_text_segment(obj: object, /) -> TypeIs[TextSegment]:
-    """Returns true if `obj` is an instance that matches the `TextSegment` type."""
-
-    return isinstance(obj, (str, _StyledSequence, StyledText))
-
-
-type RenderSegment = str | _StyledSequence | AnyStyle | StyledText
-"""A single segment: a plain string, a nested styled segment, a bare style object (open-only), or a `StyledText` object."""
-
-
-def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
-    """Returns true if `obj` is an instance that matches the `RenderSegment` type."""
-
-    return isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText))
-
-
-type TextRenderable = TextSegment | tuple[TextRenderable, ...]
-"""Anything that contains actual textual content to be rendered, strictly excluding bare styles.<br>
-Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`. Can be arbitrarily nested in tuples."""
-
-
-def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
-    """Returns true if `obj` is an instance that matches the `TextRenderable` type."""
-
-    if isinstance(obj, (str, _StyledSequence, StyledText)):
-        return True
-
-    elif isinstance(obj, tuple):
-        # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
-            if not is_text_renderable(item):
-                return False
-        return True
-
-    return False
-
-
-type Renderable = RenderSegment | tuple[Renderable, ...]
-"""Anything that can be styled or rendered.<br>
-Can be passed to a `_Style` call, or as a positional argument to `StyledText(…)`. Can be arbitrarily nested in tuples."""
-
-
-def is_renderable(obj: object, /) -> TypeIs[Renderable]:
-    """Returns true if `obj` is an instance that matches the `Renderable` type."""
-
-    if isinstance(obj, (str, _StyledSequence, _Style, _ColorStyle, _Link, _StyleGroup, StyledText)):
-        return True
-
-    elif isinstance(obj, tuple):
-        # Don't use `all()` as for-loop is more performant:
-        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
-            if not is_renderable(item):
-                return False
-        return True
-
-    return False
-
-
-# ***************************************************** NAMESPACE HELPERS *****************************************************
-
-
-class _BgBrNS:
-    """Namespace for bright background colors, reachable as `S.BG.BR.*`."""
-
-    BLACK: ClassVar[_BgStyle] = _BgStyle(100)
-    """Bright black background."""
-    RED: ClassVar[_BgStyle] = _BgStyle(101)
-    """Bright red background."""
-    GREEN: ClassVar[_BgStyle] = _BgStyle(102)
-    """Bright green background."""
-    YELLOW: ClassVar[_BgStyle] = _BgStyle(103)
-    """Bright yellow background."""
-    BLUE: ClassVar[_BgStyle] = _BgStyle(104)
-    """Bright blue background."""
-    MAGENTA: ClassVar[_BgStyle] = _BgStyle(105)
-    """Bright magenta background."""
-    CYAN: ClassVar[_BgStyle] = _BgStyle(106)
-    """Bright cyan background."""
-    WHITE: ClassVar[_BgStyle] = _BgStyle(107)
-    """Bright white background."""
-
-
-class _BgNS:
-    """Namespace for background colors, reachable as `S.BG.*`."""
-
-    BLACK: ClassVar[_BgStyle] = _BgStyle(40)
-    """Black background."""
-    RED: ClassVar[_BgStyle] = _BgStyle(41)
-    """Red background."""
-    GREEN: ClassVar[_BgStyle] = _BgStyle(42)
-    """Green background."""
-    YELLOW: ClassVar[_BgStyle] = _BgStyle(43)
-    """Yellow background."""
-    BLUE: ClassVar[_BgStyle] = _BgStyle(44)
-    """Blue background."""
-    MAGENTA: ClassVar[_BgStyle] = _BgStyle(45)
-    """Magenta background."""
-    CYAN: ClassVar[_BgStyle] = _BgStyle(46)
-    """Cyan background."""
-    WHITE: ClassVar[_BgStyle] = _BgStyle(47)
-    """White background."""
-    BR: ClassVar[type[_BgBrNS]] = _BgBrNS
-
-    @overload
-    @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _BgColorStyle: ...
-    @overload
-    @staticmethod
-    def rgb(color: rgba, /) -> _BgColorStyle: ...
-
-    @staticmethod
-    def rgb(*args: Any) -> _BgColorStyle:
-        """24-bit background color from RGB components or an `rgba` object.\n
-        `S.BG.rgb(0, 0, 0)("text")` or `S.BG.rgb(my_rgba)("text")`"""
-
-        if len(args) == 3:
-            return _BgColorStyle(args[0], args[1], args[2], bg=True)
-
-        return _BgColorStyle(args[0][0], args[0][1], args[0][2], bg=True)
-
-    @staticmethod
-    def hex(color: str | hexa, /) -> _BgColorStyle:
-        """24-bit background color from HEX string or `hexa` object.\n
-        `S.BG.hex("#202020")("text")` or `S.BG.hex(my_hexa)("text")`"""
-
-        return _BgColorStyle.from_hex(str(color))
-
-
-class _BrNS:
-    """Namespace for bright foreground colors, reachable as `S.BR.*`."""
-
-    BLACK: ClassVar[_FgStyle] = _FgStyle(90)
-    """Bright black foreground."""
-    RED: ClassVar[_FgStyle] = _FgStyle(91)
-    """Bright red foreground."""
-    GREEN: ClassVar[_FgStyle] = _FgStyle(92)
-    """Bright green foreground."""
-    YELLOW: ClassVar[_FgStyle] = _FgStyle(93)
-    """Bright yellow foreground."""
-    BLUE: ClassVar[_FgStyle] = _FgStyle(94)
-    """Bright blue foreground."""
-    MAGENTA: ClassVar[_FgStyle] = _FgStyle(95)
-    """Bright magenta foreground."""
-    CYAN: ClassVar[_FgStyle] = _FgStyle(96)
-    """Bright cyan foreground."""
-    WHITE: ClassVar[_FgStyle] = _FgStyle(97)
-    """Bright white foreground."""
-
-
-# ******************************************************** STYLE ATTRS ********************************************************
-
-
-class S:
-    """All available ANSI style codes.\n
-    ----------------------------------------------------------------------------------------------------
-    Every attribute supports `|` for combining and `()` for applying to text:
-
-    >>> S.BOLD("hello")                   # Bold, auto-reset after
-    >>> (S.BOLD | S.RED)("hello")         # Bold + red, auto-reset after
-    >>> S.BR.GREEN("hello")               # Bright green
-    >>> S.BG.BLACK("hello")               # Black background
-    >>> S.DIM("# ", S.ITALIC("comment"))  # Nested: dim wraps italic inside
-
-    For a full list of available attributes, see the `ansi` module documentation."""
-
-    # ************************* TOTAL RESET *************************
-
-    RESET: ClassVar[_Style] = _Style(0)
-    """Reset all styling to default."""
-
-    # *********************** SPECIFIC RESETS ***********************
-
-    RESET_BOLD: ClassVar[_Style] = _Style(22)
-    """Reset bold (also resets dim, as they share the same code)."""
-    RESET_DIM: ClassVar[_Style] = _Style(22)
-    """Reset dim (also resets bold, as they share the same code)."""
-    RESET_ITALIC: ClassVar[_Style] = _Style(23)
-    """Reset italic."""
-    RESET_UNDERLINE: ClassVar[_Style] = _Style(24)
-    """Reset underline and double underline."""
-    RESET_INVERSE: ClassVar[_Style] = _Style(27)
-    """Reset inverse."""
-    RESET_HIDDEN: ClassVar[_Style] = _Style(28)
-    """Reset hidden."""
-    RESET_STRIKETHROUGH: ClassVar[_Style] = _Style(29)
-    """Reset strikethrough."""
-    RESET_FG: ClassVar[_Style] = _Style(39)
-    """Reset foreground color."""
-    RESET_BG: ClassVar[_Style] = _Style(49)
-    """Reset background color."""
-
-    # ************************* TEXT STYLES *************************
-
-    BOLD: ClassVar[_Style] = _Style(1)
-    """Bold text.\n
-    Note that this is also reset by `RESET_DIM`."""
-    DIM: ClassVar[_Style] = _Style(2)
-    """Dim text.\n
-    Note that this is also reset by `RESET_BOLD`."""
-    ITALIC: ClassVar[_Style] = _Style(3)
-    """Italic text."""
-    UNDERLINE: ClassVar[_Style] = _Style(4)
-    """Underline text."""
-    INVERSE: ClassVar[_Style] = _Style(7)
-    """Inverse colors (swap foreground and background colors)."""
-    HIDDEN: ClassVar[_Style] = _Style(8)
-    """Hidden (invisible) text."""
-    STRIKETHROUGH: ClassVar[_Style] = _Style(9)
-    """Strikethrough text."""
-    DOUBLE_UNDERLINE: ClassVar[_Style] = _Style(21)
-    """Double underline text."""
-
-    # ********************** STANDARD FG COLORS *********************
-
-    BLACK: ClassVar[_FgStyle] = _FgStyle(30)
-    """Black foreground."""
-    RED: ClassVar[_FgStyle] = _FgStyle(31)
-    """Red foreground."""
-    GREEN: ClassVar[_FgStyle] = _FgStyle(32)
-    """Green foreground."""
-    YELLOW: ClassVar[_FgStyle] = _FgStyle(33)
-    """Yellow foreground."""
-    BLUE: ClassVar[_FgStyle] = _FgStyle(34)
-    """Blue foreground."""
-    MAGENTA: ClassVar[_FgStyle] = _FgStyle(35)
-    """Magenta foreground."""
-    CYAN: ClassVar[_FgStyle] = _FgStyle(36)
-    """Cyan foreground."""
-    WHITE: ClassVar[_FgStyle] = _FgStyle(37)
-    """White foreground."""
-
-    # ************************* NAMESPACES **************************
-
-    BR: ClassVar[type[_BrNS]] = _BrNS
-    BG: ClassVar[type[_BgNS]] = _BgNS
-
-    # ******************** CUSTOM COLORS & LINKS ********************
-
-    @overload
-    @staticmethod
-    def rgb(red: int, green: int, blue: int, /) -> _FgColorStyle: ...
-    @overload
-    @staticmethod
-    def rgb(color: rgba, /) -> _FgColorStyle: ...
-
-    @staticmethod
-    def rgb(*args: Any) -> _FgColorStyle:
-        """24-bit foreground color from RGB components or an `rgba` object.\n
-        `S.rgb(255, 96, 112)("text")` or `S.rgb(my_rgba)("text")`"""
-
-        if len(args) == 3:
-            return _FgColorStyle(args[0], args[1], args[2])
-
-        return _FgColorStyle(args[0][0], args[0][1], args[0][2])
-
-    @staticmethod
-    def hex(color: str | hexa, /) -> _FgColorStyle:
-        """24-bit foreground color from HEX string or `hexa` object.\n
-        `S.hex("#FF6070")("text")`, `S.hex("F67")`, or `S.hex(my_hexa)("text")`"""
-
-        return _FgColorStyle.from_hex(str(color))
-
-    @staticmethod
-    def link(url: str | Path, /) -> _Link:
-        """Clickable hyperlink. Accepts strings or `pathlib.Path` objects.<br>
-        If a `pathlib.Path` is passed, it is automatically resolved and converted to a URI.\n
-        ----------------------------------------------------------------------------------------------------
-        >>> S.link("https://example.com")("click here")
-        >>> S.link(Path("docs/readme.md"))("open file")"""
-
-        return _Link(url)
-
-
-# ***************************************************** TERMINAL CONTROL ******************************************************
-
-
-class Term:
-    """Common ANSI terminal control sequences (cursor, screen, title)<br>
-    as plain strings or string-returning static methods.\n
-    ----------------------------------------------------------------------------------------------------
-    Values can be passed straight into an `StyledText(…)` call or written to `sys.stdout`."""
-
-    CLEAR_LINE: ClassVar[str] = f"{ANSI.CHAR}[2K"
-    """Erase the entire current line."""
-    CLEAR_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[2J"
-    """Erase the whole screen."""
-    HIDE_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25l"
-    """Hide the cursor."""
-    SHOW_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25h"
-    """Show the cursor."""
-    ALT_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049h"
-    """Enter the alternate screen buffer."""
-    MAIN_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049l"
-    """Leave the alternate screen buffer."""
-
-    @staticmethod
-    def up(n: int = 1, /) -> str:
-        """Move the cursor up by `n` rows."""
-
-        return f"{ANSI.CHAR}[{n}A"
-
-    @staticmethod
-    def down(n: int = 1, /) -> str:
-        """Move the cursor down by `n` rows."""
-
-        return f"{ANSI.CHAR}[{n}B"
-
-    @staticmethod
-    def left(n: int = 1, /) -> str:
-        """Move the cursor left by `n` columns."""
-
-        return f"{ANSI.CHAR}[{n}D"
-
-    @staticmethod
-    def right(n: int = 1, /) -> str:
-        """Move the cursor right by `n` columns."""
-
-        return f"{ANSI.CHAR}[{n}C"
-
-    @staticmethod
-    def prev_line(n: int = 1, /) -> str:
-        """Move the cursor to the beginning of the previous line, `n` lines up."""
-
-        return f"{ANSI.CHAR}[{n}F"
-
-    @staticmethod
-    def next_line(n: int = 1, /) -> str:
-        """Move the cursor to the beginning of the next line, `n` lines down."""
-
-        return f"{ANSI.CHAR}[{n}E"
-
-    @staticmethod
-    def move(row: int, col: int, /) -> str:
-        """Move the cursor to absolute position `(row, col)` (1-based)."""
-
-        return f"{ANSI.CHAR}[{row};{col}H"
-
-    @staticmethod
-    def title(text: str, /) -> str:
-        """Set the terminal window / tab title (OSC 2)."""
-
-        return f"{ANSI.CHAR}]2;{text}\x07"
-
-    @staticmethod
-    def save() -> str:
-        """Save the current cursor position."""
-
-        return f"{ANSI.CHAR}[s"
-
-    @staticmethod
-    def restore() -> str:
-        """Restore the previously saved cursor position."""
-
-        return f"{ANSI.CHAR}[u"
-
-
-# ******************************************************** StyledText *********************************************************
-
-
-class StyledText:
-    """Build a styled string from a sequence of segments<br>
-    (strings, `_StyledSequence` calls, or raw tuples), joined by `sep`.\n
-    ----------------------------------------------------------------------------------------------------
-    *   `segments` – Any number of segments to render.
-        Each positional argument represents one logical line.
-    *   `sep` – The separator inserted between two adjacent positional arguments (default `""`).\n
-    ----------------------------------------------------------------------------------------------------
-    After construction the instance exposes:
-    *   `ansi` – The fully rendered ANSI escape string, ready to be written to a terminal.
-    *   `raw` – `ansi` with every ANSI escape sequence stripped; computed on demand.
-    *   `code_positions` – A tuple of `(position, sequence)` pairs giving<br>
-        the start offset of every ANSI escape sequence inside `ansi`; computed on demand.\n
-    ----------------------------------------------------------------------------------------------------
-    For exact information about how to use the operator syntax,<br>
-    see the `ansi` module documentation."""
-
-    __slots__: tuple[str, ...] = ("_ansi_parts", "ansi")
-
-    def __init__(self, /, *segments: Renderable, sep: str = "") -> None:
-        ansi_parts: list[str] = []
-
-        for i, segment in enumerate(segments):
-            if i > 0 and sep:
-                ansi_parts.append(sep)
-            self._render(segment, ansi_parts)
-
-        self.ansi: str = "".join(ansi_parts)
-
-    @property
-    def raw(self) -> str:
-        """The rendered output with every ANSI escape sequence stripped (the "plain" text)."""
-
-        return _ANSI_SEQ_RX.sub("", self.ansi)
-
-    @property
-    def code_positions(self) -> tuple[tuple[int, str], ...]:
-        """A tuple of `(position, sequence)` pairs giving the<br>
-        start offset of every ANSI escape sequence inside `ansi`."""
-
-        return tuple([(match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi)])
-
-    @property
-    def raw_code_positions(self) -> tuple[tuple[int, str], ...]:
-        """A tuple of `(position, sequence)` pairs giving the start offset of every ANSI escape<br>
-        sequence relative to the plain `raw` text (i.e., as if all escape sequences were removed).\n
-        ----------------------------------------------------------------------------------------------------
-        This is the counterpart to `code_positions`, which reports offsets inside the rendered<br>
-        `ansi` string. It is useful for re-inserting the styling after processing the plain text<br>
-        (e.g., wrapping or splitting it), since the positions stay valid against `raw`."""
-
-        result: list[tuple[int, str]] = []
-        consumed = 0
-
-        for match in _ANSI_SEQ_RX.finditer(self.ansi):
-            result.append((match.start() - consumed, match.group()))
-            consumed += len(match.group())
-
-        return tuple(result)
-
-    def __add__(self, other: Renderable, /) -> StyledText:
-        """Concatenate a `StyledText` object with another renderable object."""
-
-        return StyledText(self, other)
-
-    def __radd__(self, other: Renderable, /) -> StyledText:
-        """Concatenate another renderable object with a `StyledText` object from the left."""
-
-        return StyledText(other, self)
-
-    def __iadd__(self, other: Renderable, /) -> StyledText:
-        """Append another renderable object in place (`+=`)."""
-
-        if isinstance(other, StyledText):
-            self.ansi += other.ansi
-        else:
-            self.ansi += StyledText(other).ansi
-
-        return self
-
-    def __mul__(self, n: int, /) -> StyledText:
-        """Repeat the rendered output `n` times, e.g., `StyledText(S.CYAN("─")) * 40`."""
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = self.ansi * n
-
-        return result
-
-    def __rmul__(self, n: int, /) -> StyledText:
-        """Repeat the rendered output `n` times, e.g., `40 * StyledText(S.CYAN("─"))`."""
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = self.ansi * n
-
-        return result
-
-    def __len__(self) -> int:
-        """Return the visible character count (ANSI sequences stripped)."""
-
-        return len(self.raw)
-
-    def __eq__(self, other: object, /) -> bool:
-        """Check if this `StyledText` instance produces the exact same output as another object.\n
-        If `other` is a string, it is compared against the rendered `ansi` string."""
-
-        if isinstance(other, StyledText):
-            return self.ansi == other.ansi
-        if isinstance(other, str):
-            return self.ansi == other
-        return NotImplemented
-
-    def __bool__(self) -> bool:
-        """Return `True` if this `StyledText` instance contains any visible text, `False` otherwise."""
-
-        return bool(self.raw)
-
-    def __getitem__(self, key: slice, /) -> StyledText:
-        """Return a sliced `StyledText` object containing a subset of the visible characters,<br>
-        while correctly preserving all ANSI styling applied across the entire text."""
-
-        start, stop, step = key.indices(len(self))
-        if step != 1:
-            raise ValueError("StyledText slicing only supports a step of 1")
-
-        new_ansi_parts: list[str] = []
-        raw_idx = 0
-        last_end = 0
-
-        for match in _ANSI_SEQ_RX.finditer(self.ansi):
-            for char in self.ansi[last_end : match.start()]:
-                if start <= raw_idx < stop:
-                    new_ansi_parts.append(char)
-                raw_idx += 1
-
-            new_ansi_parts.append(match.group())
-            last_end = match.end()
-
-        for char in self.ansi[last_end:]:
-            if start <= raw_idx < stop:
-                new_ansi_parts.append(char)
-            raw_idx += 1
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = "".join(new_ansi_parts)
-        return result
-
-    def join(self, iterable: Iterable[Renderable], /) -> StyledText:
-        """Join a sequence of segments using the current `StyledText` object as the separator.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `iterable` – The segments to join, e.g., a list of strings or `StyledText` objects.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText(S.BR.BLACK(" | ")).join(["Item 1", S.RED("Item 2"), "Item 3"]).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        Item 1 <span class="br-black">|</span> \
-        <span class="red">Item 2</span> \
-        <span class="br-black">|</span> Item 3
-        </TerminalOutput> -->"""
-
-        return StyledText(*iterable, sep=self.ansi)
-
-    @staticmethod
-    def _multiply_char(st: StyledText, times: int) -> str:
-        """Helper to multiply the single visible character inside a StyledText by `times`."""
-
-        if times <= 0:
-            return ""
-
-        parts: list[str] = []
-        last_end = 0
-
-        for match in _ANSI_SEQ_RX.finditer(st.ansi):
-            parts.append(st.ansi[last_end : match.start()] * times)
-            parts.append(match.group())
-            last_end = match.end()
-
-        parts.append(st.ansi[last_end:] * times)
-        return "".join(parts)
-
-    def ljust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `StyledText` object left justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string,
-            including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText((S.BR.WHITE | S.BG.RED)(" Error ")).ljust(20, ".").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="br-white bg-red"> Error </span>.............
-        </TerminalOutput> -->"""
-
-        if len(fill_st := StyledText(fill_char)) != 1:
-            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
-        elif (padding := max(0, width - len(self))) == 0:
-            return StyledText(self)
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = self.ansi + StyledText._multiply_char(fill_st, padding)
-
-        return result
-
-    def rjust(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `StyledText` object right justified in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string,
-            including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText((S.BLACK | S.BG.GREEN)(" OK ")).rjust(20, ".").print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        ................<span class="black bg-green"> OK </span>
-        </TerminalOutput> -->"""
-
-        if len(fill_st := StyledText(fill_char)) != 1:
-            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
-        elif (padding := max(0, width - len(self))) == 0:
-            return StyledText(self)
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = StyledText._multiply_char(fill_st, padding) + self.ansi
-
-        return result
-
-    def center(self, width: int, fill_char: Renderable = " ", /) -> StyledText:
-        """Return the `StyledText` object centered in a string of length `width` (visible chars).\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The total visible width of the resulting string,
-            including the original `StyledText` content.
-        *   `fill_char` – The character to use for padding (default is a space).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText(S.BOLD(" Title ")).center(20, S.BLUE("━")).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="blue">━━━━━━</span><span class="b"> Title </span><span class="blue">━━━━━━━</span>
-        </TerminalOutput> -->"""
-
-        fill_st = StyledText(fill_char)
-        if len(fill_st) != 1:
-            raise TypeError(f"The 'fill_char' parameter must be exactly one visible character long, got {len(fill_st)}")
-
-        padding = max(0, width - len(self))
-        if padding == 0:
-            return StyledText(self)
-
-        left = padding // 2
-        right = padding - left
-
-        result = StyledText.__new__(StyledText)
-        result.ansi = StyledText._multiply_char(fill_st, left) + self.ansi + StyledText._multiply_char(fill_st, right)
-
-        return result
-
-    def wrap(self, width: int, /) -> list[StyledText]:
-        """Wrap the `StyledText` object to fit within a given line width<br>
-        (in visible characters), preserving ANSI styling across all wrapped lines.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `width` – The maximum visible width of each line.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        for line in StyledText(S.RED("A very long red error message")).wrap(10):
-            line.print()
-        ```"""
-
-        if width <= 0 or ("\n" not in self.raw and len(self) <= width):
-            return [StyledText(self)]
-
-        lines: list[StyledText] = []
-        current_pos = 0
-
-        for paragraph in self.raw.split("\n"):
-            if not paragraph:
-                lines.append(StyledText(""))
-                current_pos += 1
-                continue
-
-            if not (wrapped_chunks := _textwrap.wrap(paragraph, width=width)):
-                lines.append(self[current_pos : current_pos + len(paragraph)])
-                current_pos += len(paragraph) + 1
-                continue
-
-            para_offset = 0
-
-            for chunk in wrapped_chunks:
-                if (chunk_start := paragraph.find(chunk, para_offset)) == -1:
-                    chunk_start = para_offset
-
-                slice_start = current_pos + chunk_start
-                slice_end = slice_start + len(chunk)
-
-                lines.append(self[slice_start:slice_end])
-                para_offset = chunk_start + len(chunk)
-
-            current_pos += len(paragraph) + 1
-
-        return lines or [StyledText(self)]
-
-    def __str__(self) -> str:
-        """Stringifying a `StyledText` instance yields its rendered<br>
-        ANSI string, ready to be written to a terminal."""
-
-        return self.ansi
-
-    def __repr__(self) -> str:
-        """Returns a string representation of this `StyledText` instance, showing its rendered ANSI string."""
-
-        return f"StyledText(ansi={self.ansi!r})"
-
-    def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
-        """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
-        for ANSI on first use) or to a custom file-like object.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `end` – The string to append at the end of the output (default `"\\n"`).
-        *   `flush` – Whether to flush the output stream after writing (default `True`).
-        *   `file` – The file-like object to write to (default `sys.stdout`).\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText("Status: ", (S.BLACK | S.BG.GREEN)(" OK ")).print()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        Status: <span class="black bg-green"> OK </span>
-        </TerminalOutput> -->"""
-
-        _config_terminal()
-        target = file or _sys.stdout
-
-        target.write(self.ansi + end)
-
-        if flush:
-            target.flush()
-
-    def input(self, /, *, reset_ansi: bool = False) -> str:
-        """Use the rendered ANSI string as an input prompt and return the user's input.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `reset_ansi` – If true, all ANSI styling will be reset after<br>
-            the user confirmed the input and the program continues to run.\n
-        ----------------------------------------------------------------------------------------------------
-        #### Example Usage
-
-        ```python
-        StyledText(S.MAGENTA("Password: ")).input()
-        ```
-
-        <!-- DOCS: <TerminalOutput>
-        <span class="magenta">Password: </span>
-        </TerminalOutput> -->"""
-
-        _config_terminal()
-        user_input = input(self.ansi)
-
-        if reset_ansi:
-            _sys.stdout.write(f"{ANSI.CHAR}[0m")
-
-        return user_input
-
-    @staticmethod
-    def remove_ansi(ansi_string: str, /) -> str:
-        """Remove every ANSI escape sequence from `ansi_string`, returning the plain text.\n
-        ----------------------------------------------------------------------------------------------------
-        *   `ansi_string` – The string that contains the ANSI codes to remove."""
-
-        return _ANSI_SEQ_RX.sub("", ansi_string)
-
-    def _render(self, segment: object, ansi_parts: list[str]) -> None:
-        """Internal method to recursively render a `segment`, dispatching by runtime type.\n
-        ----------------------------------------------------------------------------------------------------
-        Strings are emitted as raw text; `_StyledSequence` segments are wrapped in their<br>
-        opening and closing ANSI sequences; `tuple` segments are flattened in order.<br>
-        Bare style objects (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`) emit only their<br>
-        opening sequence with no matching close."""
-
-        if isinstance(segment, str):
-            ansi_parts.append(segment)
-            return
-
-        elif isinstance(segment, StyledText):
-            ansi_parts.append(segment.ansi)
-            return
-
-        elif isinstance(segment, _StyledSequence):
-            for piece in segment._opens:
-                ansi_parts.append(piece)
-            self._render(segment.text, ansi_parts)
-            for piece in segment._closes:
-                ansi_parts.append(piece)
-            return
-
-        elif isinstance(segment, tuple):
-            for tuple_part in cast("tuple[object, ...]", segment):
-                self._render(tuple_part, ansi_parts)
-            return
-
-        elif isinstance(segment, _Style):
-            ansi_parts.append(f"{ANSI.CHAR}[{int(segment)}m")
-            return
-
-        elif isinstance(segment, (_ColorStyle, _Link)):
-            ansi_parts.append(segment._open_seq)
-            return
-
-        elif isinstance(segment, _StyleGroup):
-            for piece in _build_open_close(segment)[0]:
-                ansi_parts.append(piece)
-            return
-
-        else:
-            # Fallback; coerce unknown objects to str:
-            ansi_parts.append(str(segment))
-
-
 # ***************************************************** INTERNAL HELPERS ******************************************************
 
 
@@ -2012,3 +358,1177 @@ class _BuildOpenClose:
             closes.append(ANSI.SEQ_LINK_CLOSE)
 
         return tuple(opens), tuple(closes)
+
+
+def _render_styled(opens: tuple[str, ...], closes: tuple[str, ...], segments: tuple[Renderable, ...]) -> S:
+    """Internal helper to construct an `S` object wrapped in opening and closing ANSI sequences."""
+
+    ansi_parts: list[str] = list(opens)
+    for segment in segments:
+        _render_segment(segment, ansi_parts)
+    for close in closes:
+        ansi_parts.append(close)
+
+    result = S.__new__(S)
+    result.ansi = "".join(ansi_parts)
+    return result
+
+
+def _render_segment(segment: object, ansi_parts: list[str]) -> None:
+    """Internal helper to recursively render a segment into `ansi_parts`."""
+
+    if isinstance(segment, str):
+        ansi_parts.append(segment)
+        return
+
+    elif isinstance(segment, _SBase):
+        ansi_parts.append(segment.ansi)
+        return
+
+    elif isinstance(segment, tuple):
+        for tuple_part in cast("tuple[object, ...]", segment):
+            _render_segment(tuple_part, ansi_parts)
+        return
+
+    else:
+        # Fallback; coerce unknown objects to str:
+        ansi_parts.append(str(segment))
+
+
+# ******************************************************** BASE CLASS *********************************************************
+
+
+class _SBase:
+    """Common base class for styled text (`S`)
+    and bare ANSI style builders (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`).\n
+    ----------------------------------------------------------------------------------------------------
+    Provides all string inspection properties, mathematical operators, and text formatting methods."""
+
+    __slots__: tuple[str, ...] = ("ansi",)
+    ansi: str
+
+    # ************************* PROPERTIES **************************
+
+    @property
+    def raw(self) -> str:
+        """The rendered output with every ANSI escape sequence stripped (the "plain" text)."""
+
+        return _ANSI_SEQ_RX.sub("", self.ansi)
+
+    @property
+    def code_positions(self) -> tuple[tuple[int, str], ...]:
+        """A tuple of `(position, sequence)` pairs giving the<br>
+        start offset of every ANSI escape sequence inside `ansi`."""
+
+        return tuple([(match.start(), match.group()) for match in _ANSI_SEQ_RX.finditer(self.ansi)])
+
+    @property
+    def raw_code_positions(self) -> tuple[tuple[int, str], ...]:
+        """A tuple of `(position, sequence)` pairs giving the start offset of every ANSI escape<br>
+        sequence relative to the plain `raw` text (i.e., as if all escape sequences were removed).\n
+        ----------------------------------------------------------------------------------------------------
+        This is the counterpart to `code_positions`, which reports offsets inside the rendered<br>
+        `ansi` string. It is useful for re-inserting the styling after processing the plain text<br>
+        (e.g., wrapping or splitting it), since the positions stay valid against `raw`."""
+
+        result: list[tuple[int, str]] = []
+        consumed = 0
+
+        for match in _ANSI_SEQ_RX.finditer(self.ansi):
+            result.append((match.start() - consumed, match.group()))
+            consumed += len(match.group())
+
+        return tuple(result)
+
+    # ************************** OPERATORS **************************
+
+    def __add__(self, other: Renderable, /) -> S:
+        """Concatenate an `_SBase` object with another renderable object."""
+
+        return S(self, other)
+
+    def __radd__(self, other: Renderable, /) -> S:
+        """Concatenate another renderable object with an `_SBase` object from the left."""
+
+        return S(other, self)
+
+    def __iadd__(self, other: Renderable, /) -> S:
+        """Append another renderable object in place (`+=`)."""
+
+        self.ansi = S(self, other).ansi
+        return cast("S", self)
+
+    def __mul__(self, n: int, /) -> S:
+        """Repeat this `_SBase` object `n` times."""
+
+        return S(*([self] * max(0, n)))
+
+    def __rmul__(self, n: int, /) -> S:
+        """Repeat this `_SBase` object `n` times from the left."""
+
+        return self * n
+
+    def __len__(self) -> int:
+        """Return the visible length (character count of plain `raw` text)."""
+
+        return len(self.raw)
+
+    def __getitem__(self, key: slice, /) -> S:
+        """Slice the styled text by character positions in the plain unstyled (`raw`) text.<br>
+        ANSI escape codes are preserved and redistributed over the sliced segment."""
+
+        raw_text = self.raw
+        start, stop, step = key.indices(len(raw_text))
+
+        if step != 1:
+            raise ValueError("Styled text slicing only supports a step of 1.")
+        if start >= stop:
+            return S("")
+
+        prefix_codes: list[str] = []
+        middle_codes: list[tuple[int, str]] = []
+        suffix_codes: list[str] = []
+
+        for pos, seq in self.raw_code_positions:
+            if pos <= start:
+                prefix_codes.append(seq)
+            elif start < pos < stop:
+                middle_codes.append((pos - start, seq))
+            else:
+                suffix_codes.append(seq)
+
+        sliced_raw = raw_text[start:stop]
+        result_parts: list[str] = list(prefix_codes)
+        last_index = 0
+
+        for pos, seq in middle_codes:
+            result_parts.append(sliced_raw[last_index:pos])
+            result_parts.append(seq)
+            last_index = pos
+
+        result_parts.append(sliced_raw[last_index:])
+        result_parts.extend(suffix_codes)
+
+        result = S.__new__(S)
+        result.ansi = "".join(result_parts)
+        return result
+
+    def __contains__(self, item: object, /) -> bool:
+        """Check if a substring or plain string is contained in the rendered output or plain text."""
+
+        if isinstance(item, str):
+            return item in self.ansi or item in self.raw
+
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is an `_SBase` instance or string with identical ANSI text."""
+
+        if isinstance(other, _SBase):
+            return self.ansi == other.ansi
+        elif isinstance(other, str):
+            return self.ansi == other
+
+        return False
+
+    def __bool__(self) -> bool:
+        """Return `True` if the unstyled plain text is non-empty."""
+
+        return bool(self.raw)
+
+    def __str__(self) -> str:
+        """Return the fully rendered ANSI string."""
+
+        return self.ansi
+
+    def __repr__(self) -> str:
+        """Return the debug string representation of the `_SBase` object."""
+
+        return f"S({self.ansi!r})"
+
+    # *************************** METHODS ***************************
+
+    def join(self, iterable: Iterable[Renderable], /) -> S:
+        """Join a sequence of segments using the current object as the separator.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `iterable` – The segments to join, e.g., a list of strings or `S` objects.\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S(", ").join(["Apple", S.BOLD("Banana"), "Cherry"]).print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        Apple, <span class="b">Banana</span>, Cherry
+        </TerminalOutput> -->"""
+
+        return S(*iterable, sep=self.ansi)
+
+    def ljust(self, width: int, fill_char: Renderable = " ", /) -> S:
+        """Return the object left justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.RED("Text").ljust(10, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="red">Text</span>......
+        </TerminalOutput> -->"""
+
+        raw_len = len(self.raw)
+        if raw_len >= width:
+            return cast("S", self) if type(self) is S else S(self)
+
+        return self + fill_char * (width - raw_len)
+
+    def rjust(self, width: int, fill_char: Renderable = " ", /) -> S:
+        """Return the object right justified in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.GREEN("Text").rjust(10, ".").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ......<span class="green">Text</span>
+        </TerminalOutput> -->"""
+
+        raw_len = len(self.raw)
+        if raw_len >= width:
+            return cast("S", self) if type(self) is S else S(self)
+
+        return fill_char * (width - raw_len) + self
+
+    def center(self, width: int, fill_char: Renderable = " ", /) -> S:
+        """Return the object centered in a string of length `width` (visible chars).\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The total visible width of the resulting string.
+        *   `fill_char` – The character to use for padding (default is a space).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.BOLD("Text").center(10, "-").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        ---<span class="b">Text</span>---
+        </TerminalOutput> -->"""
+
+        raw_len = len(self.raw)
+        if raw_len >= width:
+            return cast("S", self) if type(self) is S else S(self)
+
+        total_pad = width - raw_len
+        left_pad = total_pad // 2
+        right_pad = total_pad - left_pad
+
+        return fill_char * left_pad + self + fill_char * right_pad
+
+    def wrap(self, width: int, /) -> list[S]:
+        """Wrap the object to fit within a given line width<br>
+        (in visible characters), preserving ANSI styling across all wrapped lines.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `width` – The maximum visible width of each line."""
+
+        raw_text = self.raw
+        if not raw_text or width <= 0:
+            return [cast("S", self) if type(self) is S else S(self)]
+
+        result: list[S] = []
+        current_offset = 0
+
+        for paragraph in raw_text.split("\n"):
+            if not paragraph:
+                result.append(S(""))
+                current_offset += 1
+                continue
+
+            for line in _textwrap.wrap(paragraph, width=width, replace_whitespace=False, drop_whitespace=False):
+                line_len = len(line)
+                result.append(self[current_offset : current_offset + line_len])
+                current_offset += line_len
+            current_offset += 1
+
+        return result
+
+    def print(self, /, *, end: str = "\n", flush: bool = True, file: TextIO | None = None) -> None:
+        """Write the rendered ANSI string straight to `sys.stdout` (configuring the terminal<br>
+        for ANSI on first use) or to a custom file-like object.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `end` – The string to append at the end of the output (default `"\\n"`).
+        *   `flush` – Whether to flush the output stream after writing (default `True`).
+        *   `file` – The file-like object to write to (default `sys.stdout`).\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.GREEN("Operation successful!").print()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="green">Operation successful!</span>
+        </TerminalOutput> -->"""
+
+        if file is None:
+            _config_terminal()
+            out = _sys.stdout
+        else:
+            out = file
+
+        out.write(self.ansi + end)
+
+        if flush:
+            out.flush()
+
+    def input(self, /, *, reset_ansi: bool = False) -> str:
+        """Use the rendered ANSI string as an input prompt and return the user's input.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `reset_ansi` – If true, all ANSI styling will be reset after<br>
+            the user confirmed the input and the program continues to run.\n
+        ----------------------------------------------------------------------------------------------------
+        #### Example Usage
+
+        ```python
+        S.BOLD("Enter value: ").input()
+        ```
+
+        <!-- DOCS: <TerminalOutput>
+        <span class="b">Enter value: </span>
+        </TerminalOutput> -->"""
+
+        _config_terminal()
+        user_input = input(self.ansi)
+
+        if reset_ansi:
+            _sys.stdout.write(f"{ANSI.CHAR}[0m")
+
+        return user_input
+
+
+# ***************************************************** STYLE SUBCLASSES ******************************************************
+
+
+class _Style(_SBase):
+    """A single ANSI style integer.\n
+    ----------------------------------------------------------------------------------------------------
+    Supports two operators:
+    *   `|`  combines two or more codes into a `_StyleGroup` → `S.BOLD | S.RED`
+    *   `()` applies the code to text, auto-resetting after → `S.BOLD("hello")`"""
+
+    __slots__: tuple[str, ...] = ("_oc", "_value")
+    _oc: tuple[tuple[str, ...], tuple[str, ...]]
+
+    def __init__(self, value: int, /) -> None:
+        self._value: int = value
+        self.ansi: str = f"{ANSI.CHAR}[{value}m"
+
+    def __int__(self) -> int:
+        return self._value
+
+    def __str__(self) -> str:
+        return str(self._value)
+
+    def __repr__(self) -> str:
+        return f"_Style({self._value})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self._value == other
+        elif isinstance(other, _Style):
+            return self._value == other._value
+        elif isinstance(other, (_SBase, str)):
+            return super().__eq__(other)
+
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
+        """Combines this style with another code or group via `|`."""
+
+        if isinstance(other, _StyleGroup):
+            return _StyleGroup(self, *other._codes)
+
+        return _StyleGroup(self, other)
+
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
+        """Combines this style with another code or group via `|`."""
+
+        return _StyleGroup(other, self)
+
+    def __call__(self, *text: Renderable) -> S:
+        """Applies this style code to the given text, auto-resetting after."""
+
+        try:
+            oc = self._oc
+        except AttributeError:
+            cached = _STANDARD_SEQS.get(int(self))
+            oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
+            self._oc = oc
+
+        return _render_styled(oc[0], oc[1], text)
+
+    def __matmul__(self, text: Renderable) -> S:
+        """Applies this style code to the given text, auto-resetting after."""
+
+        try:
+            oc = self._oc
+        except AttributeError:
+            cached = _STANDARD_SEQS.get(int(self))
+            oc = _build_open_close(_StyleGroup(self)) if cached is None else cached
+            self._oc = oc
+
+        return _render_styled(oc[0], oc[1], (text,))
+
+
+class _FgStyle(_Style):
+    """A single ANSI foreground color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_bg(self) -> _BgStyle:
+        """Convert to the corresponding background color style."""
+
+        return _BgStyle(self._value + 10)
+
+
+class _BgStyle(_Style):
+    """A single ANSI background color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_fg(self) -> _FgStyle:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgStyle(self._value - 10)
+
+
+class _ColorStyle(_SBase):
+    """A 24-bit true-color style – foreground or background.\n
+    ----------------------------------------------------------------------------------------------------
+    >>> S.rgb(255, 96, 112)("text")             # Custom FG color
+    >>> S.BG.rgb(0, 0, 0)("text")               # Custom BG color
+    >>> S.hex("#FF6070")("text")                # Hex FG color
+    >>> (S.BOLD | S.rgb(255, 96, 112))("text")  # Combined with style"""
+
+    __slots__: tuple[str, ...] = ("_bg", "_blue", "_close_seq", "_green", "_open_seq", "_red")
+
+    def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = False) -> None:
+        self._red: int = red
+        self._green: int = green
+        self._blue: int = blue
+        self._bg: bool = bg
+
+        if bg:
+            self._open_seq: str = ANSI.SEQ_BG_COLOR.format(red, green, blue)
+            self._close_seq: str = f"{ANSI.CHAR}[49m"
+        else:
+            self._open_seq = ANSI.SEQ_FG_COLOR.format(red, green, blue)
+            self._close_seq = f"{ANSI.CHAR}[39m"
+
+        self.ansi: str = self._open_seq
+
+    @classmethod
+    def from_hex(cls: type[Self], color: str, /, *, bg: bool | None = None) -> Self:
+        """Create a color style from a HEX color string (e.g., `#FF6070` or `F67`)."""
+
+        if (hex_str := color.strip().lstrip("#")).lower().startswith("0x"):
+            hex_str = hex_str[2:]
+        if len(hex_str) == 3:
+            hex_str = hex_str[0] * 2 + hex_str[1] * 2 + hex_str[2] * 2
+
+        if bg is None:
+            return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
+
+        return cls(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), bg=bg)
+
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
+        """Combines this color style with another style or group via `|`."""
+
+        if isinstance(other, _StyleGroup):
+            return _StyleGroup(self, *other._codes)
+
+        return _StyleGroup(self, other)
+
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
+        """Combines this color style with another style or group via `|`."""
+
+        return _StyleGroup(other, self)
+
+    def __call__(self, *text: Renderable) -> S:
+        """Applies this color style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), text)
+
+    def __matmul__(self, text: Renderable) -> S:
+        """Applies this color style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), (text,))
+
+    def __repr__(self) -> str:
+        """Returns a string representation of this color style, indicating<br>
+        whether it's foreground or background and its RGB values."""
+
+        return f"_ColorStyle({'bg' if self._bg else 'fg'} {self._red},{self._green},{self._blue})"
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_ColorStyle` with identical RGB values and background flag."""
+
+        if isinstance(other, _ColorStyle):
+            return (
+                self._red == other._red and self._green == other._green and self._blue == other._blue and self._bg == other._bg
+            )
+        elif isinstance(other, (_SBase, str)):
+            return super().__eq__(other)
+
+        return False
+
+
+class _FgColorStyle(_ColorStyle):
+    """A 24-bit true-color foreground style."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_bg(self) -> _BgColorStyle:
+        """Convert to the corresponding background color style."""
+
+        return _BgColorStyle(self._red, self._green, self._blue)
+
+
+class _BgColorStyle(_ColorStyle):
+    """A 24-bit true-color background style."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = True) -> None:
+        super().__init__(red, green, blue, bg=bg)
+
+    def to_fg(self) -> _FgColorStyle:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgColorStyle(self._red, self._green, self._blue)
+
+
+class _Link(_SBase):
+    """An OSC 8 hyperlink. Combine with other styles via `|` to add text styling.\n
+    ----------------------------------------------------------------------------------------------------
+    >>> S.link("https://example.com")("click here")
+    >>> (S.link("https://example.com") | S.BR.BLUE)("click here")"""
+
+    __slots__: tuple[str, ...] = ("_close_seq", "_open_seq", "_url")
+
+    def __init__(self, url: str | Path, /) -> None:
+        self._url: str = url.resolve().as_uri() if isinstance(url, Path) else url
+        self._open_seq: str = ANSI.SEQ_LINK_OPEN.format(self._url)
+        self._close_seq: str = ANSI.SEQ_LINK_CLOSE
+        self.ansi: str = self._open_seq
+
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
+        """Combines this link style with another style or group via `|`."""
+
+        if isinstance(other, _StyleGroup):
+            return _StyleGroup(self, *other._codes)
+
+        return _StyleGroup(self, other)
+
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
+        """Combines this link style with another style or group via `|`."""
+
+        return _StyleGroup(other, self)
+
+    def __call__(self, *text: Renderable) -> S:
+        """Applies this link style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), text)
+
+    def __matmul__(self, text: Renderable) -> S:
+        """Applies this link style to the given text, auto-resetting after."""
+
+        return _render_styled((self._open_seq,), (self._close_seq,), (text,))
+
+    def __repr__(self) -> str:
+        """Returns a string representation of this link style, showing the URL it points to."""
+
+        return f"_Link({self._url!r})"
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_Link` pointing to the same URL."""
+
+        if isinstance(other, _Link):
+            return self._url == other._url
+        elif isinstance(other, (_SBase, str)):
+            return super().__eq__(other)
+
+        return False
+
+
+class _StyleGroup(_SBase):
+    """An immutable, ordered group of styles produced by `|`.\n
+    ----------------------------------------------------------------------------------------------------
+    Supports further `|` chaining and `()` application."""
+
+    __slots__: tuple[str, ...] = ("_codes",)
+
+    def __init__(self, *codes: BaseStyle) -> None:
+        self._codes: tuple[BaseStyle, ...] = codes
+        self.ansi: str = "".join(_build_open_close(self)[0])
+
+    def __iter__(self) -> Iterator[BaseStyle]:
+        """Iterating a `_StyleGroup` yields its individual styles in order."""
+
+        return iter(self._codes)
+
+    def __or__(self, other: AnyStyle) -> _StyleGroup:
+        """Combines this style group with another style or group via `|`."""
+
+        if isinstance(other, _StyleGroup):
+            return _StyleGroup(*self._codes, *other._codes)
+
+        return _StyleGroup(*self._codes, other)
+
+    def __ror__(self, other: BaseStyle) -> _StyleGroup:
+        """Combines this style group with another style or group via `|`."""
+
+        return _StyleGroup(other, *self._codes)
+
+    def __call__(self, *text: Renderable) -> S:
+        """Applies this style group to the given text, auto-resetting after."""
+
+        opens, closes = _build_open_close(self)
+        return _render_styled(opens, closes, text)
+
+    def __matmul__(self, text: Renderable) -> S:
+        """Applies this style group to the given text, auto-resetting after."""
+
+        opens, closes = _build_open_close(self)
+        return _render_styled(opens, closes, (text,))
+
+    def __repr__(self) -> str:
+        """Returns a string representation of this style group, showing its individual codes."""
+
+        return f"_StyleGroup{self._codes!r}"
+
+    def __eq__(self, other: object) -> bool:
+        """Returns `True` if `other` is a `_StyleGroup` with identical style codes in identical order."""
+
+        if isinstance(other, _StyleGroup):
+            return self._codes == other._codes
+        elif isinstance(other, (_SBase, str)):
+            return super().__eq__(other)
+
+        return False
+
+    def to_bg(self) -> _StyleGroup:
+        """Convert all foreground color styles in this group to background color styles."""
+
+        converted_codes: list[BaseStyle] = []
+        for code in self._codes:
+            if isinstance(code, (_FgStyle, _FgColorStyle)):
+                converted_codes.append(code.to_bg())
+            else:
+                converted_codes.append(code)
+
+        return _StyleGroup(*converted_codes)
+
+    def to_fg(self) -> _StyleGroup:
+        """Convert all background color styles in this group to foreground color styles."""
+
+        converted_codes: list[BaseStyle] = []
+        for code in self._codes:
+            if isinstance(code, (_BgStyle, _BgColorStyle)):
+                converted_codes.append(code.to_fg())
+            else:
+                converted_codes.append(code)
+
+        return _StyleGroup(*converted_codes)
+
+
+# ***************************************************** NAMESPACE HELPERS *****************************************************
+
+
+class _BgBrNS:
+    """Namespace for bright background colors, reachable as `S.BG.BR.*`."""
+
+    BLACK: ClassVar[_BgStyle] = _BgStyle(100)
+    """Bright black (gray) background."""
+    RED: ClassVar[_BgStyle] = _BgStyle(101)
+    """Bright red background."""
+    GREEN: ClassVar[_BgStyle] = _BgStyle(102)
+    """Bright green background."""
+    YELLOW: ClassVar[_BgStyle] = _BgStyle(103)
+    """Bright yellow background."""
+    BLUE: ClassVar[_BgStyle] = _BgStyle(104)
+    """Bright blue background."""
+    MAGENTA: ClassVar[_BgStyle] = _BgStyle(105)
+    """Bright magenta background."""
+    CYAN: ClassVar[_BgStyle] = _BgStyle(106)
+    """Bright cyan background."""
+    WHITE: ClassVar[_BgStyle] = _BgStyle(107)
+    """Bright white background."""
+
+
+class _BgNS:
+    """Namespace for background styles and colors, reachable as `S.BG.*`."""
+
+    BR: ClassVar[type[_BgBrNS]] = _BgBrNS
+    """Access bright background colors (e.g., `S.BG.BR.RED`)."""
+
+    BLACK: ClassVar[_BgStyle] = _BgStyle(40)
+    """Black background."""
+    RED: ClassVar[_BgStyle] = _BgStyle(41)
+    """Red background."""
+    GREEN: ClassVar[_BgStyle] = _BgStyle(42)
+    """Green background."""
+    YELLOW: ClassVar[_BgStyle] = _BgStyle(43)
+    """Yellow background."""
+    BLUE: ClassVar[_BgStyle] = _BgStyle(44)
+    """Blue background."""
+    MAGENTA: ClassVar[_BgStyle] = _BgStyle(45)
+    """Magenta background."""
+    CYAN: ClassVar[_BgStyle] = _BgStyle(46)
+    """Cyan background."""
+    WHITE: ClassVar[_BgStyle] = _BgStyle(47)
+    """White background."""
+
+    # ********************** CUSTOM BG COLORS ***********************
+
+    @overload
+    @staticmethod
+    def rgb(red: int, green: int, blue: int, /) -> _BgColorStyle: ...
+    @overload
+    @staticmethod
+    def rgb(color: rgba, /) -> _BgColorStyle: ...
+
+    @staticmethod
+    def rgb(*args: Any) -> _BgColorStyle:
+        """24-bit background color from RGB components or an `rgba` object.\n
+        `S.BG.rgb(0, 0, 0)("text")` or `S.BG.rgb(my_rgba)("text")`"""
+
+        if len(args) == 3:
+            return _BgColorStyle(args[0], args[1], args[2])
+
+        return _BgColorStyle(args[0][0], args[0][1], args[0][2])
+
+    @staticmethod
+    def hex(color: str | hexa, /) -> _BgColorStyle:
+        """24-bit background color from HEX string or `hexa` object.\n
+        `S.BG.hex("#000000")("text")`, `S.BG.hex("000")`, or `S.BG.hex(my_hexa)("text")`"""
+
+        return _BgColorStyle.from_hex(str(color), bg=True)
+
+
+class _BrNS:
+    """Namespace for bright foreground colors, reachable as `S.BR.*`."""
+
+    BLACK: ClassVar[_FgStyle] = _FgStyle(90)
+    """Bright black (gray) foreground."""
+    RED: ClassVar[_FgStyle] = _FgStyle(91)
+    """Bright red foreground."""
+    GREEN: ClassVar[_FgStyle] = _FgStyle(92)
+    """Bright green foreground."""
+    YELLOW: ClassVar[_FgStyle] = _FgStyle(93)
+    """Bright yellow foreground."""
+    BLUE: ClassVar[_FgStyle] = _FgStyle(94)
+    """Bright blue foreground."""
+    MAGENTA: ClassVar[_FgStyle] = _FgStyle(95)
+    """Bright magenta foreground."""
+    CYAN: ClassVar[_FgStyle] = _FgStyle(96)
+    """Bright cyan foreground."""
+    WHITE: ClassVar[_FgStyle] = _FgStyle(97)
+    """Bright white foreground."""
+
+
+# ******************************************************* STYLE & TEXT ********************************************************
+
+
+class S(_SBase):
+    """Build a styled string from a sequence of segments (strings, `S` objects, bare styles, or raw<br>
+    tuples), joined by `sep`, or use class-level style attributes and methods to apply ANSI styling.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `segments` – Any number of segments to render.
+        Each positional argument represents one logical line.
+    *   `sep` – The separator inserted between two adjacent positional arguments (default `""`).\n
+    ----------------------------------------------------------------------------------------------------
+    After construction the instance exposes:
+    *   `ansi` – The fully rendered ANSI escape string, ready to be written to a terminal.
+    *   `raw` – `ansi` with every ANSI escape sequence stripped (computed on demand).
+    *   `code_positions` – A tuple of `(position, sequence)` pairs giving<br>
+        the start offset of every ANSI escape sequence inside `ansi` (computed on demand).\n
+    ----------------------------------------------------------------------------------------------------
+    Every style attribute supports `|` for combining and `()` for applying to text:
+
+    >>> S.BOLD("hello")                   # Bold, auto-reset after
+    >>> (S.BOLD | S.RED)("hello")         # Bold + red, auto-reset after
+    >>> S.BR.GREEN("hello")               # Bright green
+    >>> S.BG.BLACK("hello")               # Black background
+    >>> S.DIM("# ", S.ITALIC("comment"))  # Nested: dim wraps italic inside
+    >>> S("choices: ", S(", ").join([S.BOLD(c) for c in choices]))
+
+    For a full list of available attributes, see the `ansi` module documentation."""
+
+    __slots__: tuple[str, ...] = ()
+
+    # ************************* TOTAL RESET *************************
+
+    RESET: ClassVar[_Style] = _Style(0)
+    """Reset all styling to default."""
+
+    # *********************** SPECIFIC RESETS ***********************
+
+    RESET_BOLD: ClassVar[_Style] = _Style(22)
+    """Reset bold (also resets dim, as they share the same code)."""
+    RESET_DIM: ClassVar[_Style] = _Style(22)
+    """Reset dim (also resets bold, as they share the same code)."""
+    RESET_ITALIC: ClassVar[_Style] = _Style(23)
+    """Reset italic."""
+    RESET_UNDERLINE: ClassVar[_Style] = _Style(24)
+    """Reset underline and double underline."""
+    RESET_INVERSE: ClassVar[_Style] = _Style(27)
+    """Reset inverse."""
+    RESET_HIDDEN: ClassVar[_Style] = _Style(28)
+    """Reset hidden."""
+    RESET_STRIKETHROUGH: ClassVar[_Style] = _Style(29)
+    """Reset strikethrough."""
+    RESET_FG: ClassVar[_Style] = _Style(39)
+    """Reset foreground color."""
+    RESET_BG: ClassVar[_Style] = _Style(49)
+    """Reset background color."""
+
+    # ************************* TEXT STYLES *************************
+
+    BOLD: ClassVar[_Style] = _Style(1)
+    """Bold text.\n
+    Note that this is also reset by `RESET_DIM`."""
+    DIM: ClassVar[_Style] = _Style(2)
+    """Dim text.\n
+    Note that this is also reset by `RESET_BOLD`."""
+    ITALIC: ClassVar[_Style] = _Style(3)
+    """Italic text."""
+    UNDERLINE: ClassVar[_Style] = _Style(4)
+    """Underline text."""
+    INVERSE: ClassVar[_Style] = _Style(7)
+    """Inverse colors (swap foreground and background colors)."""
+    HIDDEN: ClassVar[_Style] = _Style(8)
+    """Hidden (invisible) text."""
+    STRIKETHROUGH: ClassVar[_Style] = _Style(9)
+    """Strikethrough text."""
+    DOUBLE_UNDERLINE: ClassVar[_Style] = _Style(21)
+    """Double underline text."""
+
+    # ********************* STANDARD FG COLORS **********************
+
+    BLACK: ClassVar[_FgStyle] = _FgStyle(30)
+    """Black foreground."""
+    RED: ClassVar[_FgStyle] = _FgStyle(31)
+    """Red foreground."""
+    GREEN: ClassVar[_FgStyle] = _FgStyle(32)
+    """Green foreground."""
+    YELLOW: ClassVar[_FgStyle] = _FgStyle(33)
+    """Yellow foreground."""
+    BLUE: ClassVar[_FgStyle] = _FgStyle(34)
+    """Blue foreground."""
+    MAGENTA: ClassVar[_FgStyle] = _FgStyle(35)
+    """Magenta foreground."""
+    CYAN: ClassVar[_FgStyle] = _FgStyle(36)
+    """Cyan foreground."""
+    WHITE: ClassVar[_FgStyle] = _FgStyle(37)
+    """Bright white foreground."""
+
+    # ************************* NAMESPACES **************************
+
+    BR: ClassVar[type[_BrNS]] = _BrNS
+    BG: ClassVar[type[_BgNS]] = _BgNS
+
+    # ******************** CUSTOM COLORS & LINKS ********************
+
+    @overload
+    @staticmethod
+    def rgb(red: int, green: int, blue: int, /) -> _FgColorStyle: ...
+    @overload
+    @staticmethod
+    def rgb(color: rgba, /) -> _FgColorStyle: ...
+
+    @staticmethod
+    def rgb(*args: Any) -> _FgColorStyle:
+        """24-bit foreground color from RGB components or an `rgba` object.\n
+        `S.rgb(255, 96, 112)("text")` or `S.rgb(my_rgba)("text")`"""
+
+        if len(args) == 3:
+            return _FgColorStyle(args[0], args[1], args[2])
+
+        return _FgColorStyle(args[0][0], args[0][1], args[0][2])
+
+    @staticmethod
+    def hex(color: str | hexa, /) -> _FgColorStyle:
+        """24-bit foreground color from HEX string or `hexa` object.\n
+        `S.hex("#FF6070")("text")`, `S.hex("F67")`, or `S.hex(my_hexa)("text")`"""
+
+        return _FgColorStyle.from_hex(str(color))
+
+    @staticmethod
+    def link(url: str | Path, /) -> _Link:
+        """Clickable hyperlink. Accepts strings or `pathlib.Path` objects.<br>
+        If a `pathlib.Path` is passed, it is automatically resolved and converted to a URI.\n
+        ----------------------------------------------------------------------------------------------------
+        >>> S.link("https://example.com")("click here")
+        >>> S.link(Path("docs/readme.md"))("open file")"""
+
+        return _Link(url)
+
+    # *********************** INITIALIZATION ************************
+
+    def __init__(self, /, *segments: Renderable, sep: str = "") -> None:
+        ansi_parts: list[str] = []
+
+        for i, segment in enumerate(segments):
+            if i > 0 and sep:
+                ansi_parts.append(sep)
+
+            _render_segment(segment, ansi_parts)
+
+        self.ansi: str = "".join(ansi_parts)
+
+    @staticmethod
+    def _render(segment: object, ansi_parts: list[str]) -> None:
+        """Internal method to recursively render a `segment`, dispatching by runtime type.\n
+        ----------------------------------------------------------------------------------------------------
+        Strings are emitted as raw text; `S` segments emit their `ansi` string;<br>
+        `tuple` segments are flattened in order.<br>
+        Bare style objects (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`)<br>
+        emit only their opening sequence with no matching close."""
+
+        _render_segment(segment, ansi_parts)
+
+
+# **************************************************** PUBLIC TYPE HELPERS ****************************************************
+
+
+type FgColorStyle = _FgStyle | _FgColorStyle
+"""A single foreground color style code (e.g., `S.RED`, `S.BR.BLUE`, `S.hex("#FFF")`).<br>
+Excludes background colors and non-color styles like `S.BOLD`."""
+
+
+def is_fg_color_style(obj: object, /) -> TypeIs[FgColorStyle]:
+    """Returns true if `obj` is an instance that matches the `FgColorStyle` type."""
+
+    if isinstance(obj, (_FgColorStyle, _FgStyle)):
+        return True
+
+    elif isinstance(obj, _Style):
+        value = obj._value
+        return (30 <= value <= 37) or (90 <= value <= 97)
+
+    elif isinstance(obj, _ColorStyle):
+        return not obj._bg
+
+    return False
+
+
+type BgColorStyle = _BgStyle | _BgColorStyle
+"""A single background color style code (e.g., `S.BG.RED`, `S.BG.BR.BLUE`, `S.BG.hex("#67F")`).<br>
+Excludes foreground colors and non-color styles like `S.BOLD`."""
+
+
+def is_bg_color_style(obj: object, /) -> TypeIs[BgColorStyle]:
+    """Returns true if `obj` is an instance that matches the `BgColorStyle` type."""
+
+    if isinstance(obj, (_BgColorStyle, _BgStyle)):
+        return True
+
+    elif isinstance(obj, _Style):
+        value = obj._value
+        return (40 <= value <= 47) or (100 <= value <= 107)
+
+    elif isinstance(obj, _ColorStyle):
+        return obj._bg
+
+    return False
+
+
+type ColorStyle = FgColorStyle | BgColorStyle
+"""Any single foreground or background color style code (e.g., `S.RED`, `S.BG.BLUE`, `S.hex("#67F")`).<br>
+Excludes non-color styles like `S.BOLD`."""
+
+
+def is_color_style(obj: object, /) -> TypeIs[ColorStyle]:
+    """Returns true if `obj` is an instance that matches the `ColorStyle` type."""
+
+    return is_fg_color_style(obj) or is_bg_color_style(obj)
+
+
+type BaseStyle = _Style | _ColorStyle | _Link
+"""Any single style code, color style, or link style that can be combined via `|` and applied to text."""
+
+
+def is_base_style(obj: object, /) -> TypeIs[BaseStyle]:
+    """Returns true if `obj` is an instance that matches the `BaseStyle` type."""
+
+    return isinstance(obj, (_Style, _ColorStyle, _Link))
+
+
+type AnyStyle = BaseStyle | _StyleGroup
+"""Any single style or group of styles that can be combined via `|` and applied to text."""
+
+
+def is_any_style(obj: object, /) -> TypeIs[AnyStyle]:
+    """Returns true if `obj` is an instance that matches the `AnyStyle` type."""
+
+    return isinstance(obj, (_Style, _ColorStyle, _Link, _StyleGroup))
+
+
+type TextSegment = str | S
+"""A single segment that contains actual text: a plain string or a styled `S` object.<br>
+Strictly excludes bare style objects (e.g., `S.RED`, `S.BOLD | S.BLUE`) that do not contain text."""
+
+
+def is_text_segment(obj: object, /) -> TypeIs[TextSegment]:
+    """Returns true if `obj` is an instance that matches the `TextSegment` type (has actual text)."""
+
+    return isinstance(obj, (str, S))
+
+
+type RenderSegment = str | _SBase
+"""A single segment: a plain string, a bare style object (open-only), or a styled `S` object."""
+
+
+def is_render_segment(obj: object, /) -> TypeIs[RenderSegment]:
+    """Returns true if `obj` is an instance that matches the `RenderSegment` type."""
+
+    return isinstance(obj, (str, _SBase))
+
+
+type TextRenderable = TextSegment | tuple[TextRenderable, ...]
+"""Anything that contains actual textual content to be rendered, strictly excluding bare styles.<br>
+Can be passed to a `_Style` call, or as a positional argument to `S(…)`. Can be arbitrarily nested in tuples."""
+
+
+def is_text_renderable(obj: object, /) -> TypeIs[TextRenderable]:
+    """Returns true if `obj` is an instance that matches the `TextRenderable` type."""
+
+    if isinstance(obj, (str, S)):
+        return True
+
+    elif isinstance(obj, tuple):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+            if not is_text_renderable(item):
+                return False
+        return True
+
+    return False
+
+
+type Renderable = RenderSegment | tuple[Renderable, ...]
+"""Anything that can be styled or rendered.<br>
+Can be passed to a `_Style` call, or as a positional argument to `S(…)`. Can be arbitrarily nested in tuples."""
+
+
+def is_renderable(obj: object, /) -> TypeIs[Renderable]:
+    """Returns true if `obj` is an instance that matches the `Renderable` type."""
+
+    if isinstance(obj, (str, _SBase)):
+        return True
+
+    elif isinstance(obj, tuple):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("tuple[Any, ...]", obj):  # ruff: ignore[reimplemented-builtin]
+            if not is_renderable(item):
+                return False
+        return True
+
+    return False
+
+
+# ***************************************************** TERMINAL CONTROL ******************************************************
+
+
+class Term:
+    """Common ANSI terminal control sequences (cursor, screen, title)<br>
+    as plain strings or string-returning static methods.<br>
+    ----------------------------------------------------------------------------------------------------
+    Values can be passed straight into an `S(…)` call or written to `sys.stdout`."""
+
+    CLEAR_LINE: ClassVar[str] = f"{ANSI.CHAR}[2K"
+    """Erase the entire current line."""
+    CLEAR_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[2J"
+    """Erase the whole screen."""
+    HIDE_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25l"
+    """Hide the cursor."""
+    SHOW_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25h"
+    """Show the cursor."""
+    ALT_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049h"
+    """Enter the alternate screen buffer."""
+    MAIN_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049l"
+    """Leave the alternate screen buffer."""
+
+    @staticmethod
+    def up(n: int = 1, /) -> str:
+        """Move the cursor up by `n` rows."""
+
+        return f"{ANSI.CHAR}[{n}A"
+
+    @staticmethod
+    def down(n: int = 1, /) -> str:
+        """Move the cursor down by `n` rows."""
+
+        return f"{ANSI.CHAR}[{n}B"
+
+    @staticmethod
+    def left(n: int = 1, /) -> str:
+        """Move the cursor left by `n` columns."""
+
+        return f"{ANSI.CHAR}[{n}D"
+
+    @staticmethod
+    def right(n: int = 1, /) -> str:
+        """Move the cursor right by `n` columns."""
+
+        return f"{ANSI.CHAR}[{n}C"
+
+    @staticmethod
+    def prev_line(n: int = 1, /) -> str:
+        """Move the cursor to the beginning of the previous line, `n` lines up."""
+
+        return f"{ANSI.CHAR}[{n}F"
+
+    @staticmethod
+    def next_line(n: int = 1, /) -> str:
+        """Move the cursor to the beginning of the next line, `n` lines down."""
+
+        return f"{ANSI.CHAR}[{n}E"
+
+    @staticmethod
+    def move(row: int, col: int, /) -> str:
+        """Move the cursor to absolute position `(row, col)` (1-based)."""
+
+        return f"{ANSI.CHAR}[{row};{col}H"
+
+    @staticmethod
+    def title(text: str, /) -> str:
+        """Set the terminal window / tab title (OSC 2)."""
+
+        return f"{ANSI.CHAR}]2;{text}\x07"
+
+    @staticmethod
+    def save() -> str:
+        """Save the current cursor position."""
+
+        return f"{ANSI.CHAR}[s"
+
+    @staticmethod
+    def restore() -> str:
+        """Restore the previously saved cursor position."""
+
+        return f"{ANSI.CHAR}[u"

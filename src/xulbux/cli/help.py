@@ -1,6 +1,6 @@
 from .. import __version__
 from .. import console as _console_module
-from ..ansi import S, StyledText, _Style, _StyleGroup
+from ..ansi import S, _Style, _StyleGroup
 from ..base.decorators import mypyc_attr
 
 import json as _json
@@ -79,7 +79,7 @@ class H:
 
 
 # fmt: off
-CLI_HELP: Final[StyledText] = StyledText(
+CLI_HELP: Final[S] = S(
     S.RESET,
     (
         (S.BOLD | S.hex("#7075FF"))(
@@ -117,7 +117,7 @@ CLI_HELP: Final[StyledText] = StyledText(
     "",
     sep="\n",
 )
-"""The help message for the CLI command `xulbux-lib` as a `StyledText` object."""
+"""The help message for the CLI command `xulbux-lib` as an `S` object."""
 # fmt: on
 
 
@@ -126,4 +126,4 @@ def show_help() -> None:
     which shows some information about the library."""
 
     CLI_HELP.print()
-    _console_module.pause_exit(StyledText("  ", S.DIM("Press any key to exit..."), "\n\n"), pause=True)
+    _console_module.pause_exit(S("  ", S.DIM("Press any key to exit..."), "\n\n"), pause=True)

@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import MagicMock
 import xulbux.ansi as _ansi_module
-from xulbux.ansi import S, StyledText, Term, _build_open_close, _config_terminal, _StyleGroup
+from xulbux.ansi import S, Term, _build_open_close, _config_terminal, _StyleGroup
 from xulbux.base.consts import ANSI
 from xulbux.color import hexa, rgba
 
@@ -32,13 +32,13 @@ def test_term_cursor_methods() -> None:
 
 def test_rgb_and_hex_overloads() -> None:
     rgb_from_rgba = S.rgb(rgba(255, 0, 0))
-    assert StyledText(rgb_from_rgba("text")).ansi == "\x1b[38;2;255;0;0mtext\x1b[39m"
+    assert rgb_from_rgba("text").ansi == "\x1b[38;2;255;0;0mtext\x1b[39m"
 
     hex_from_hexa = S.hex(hexa("#00FF00"))
-    assert StyledText(hex_from_hexa("text")).ansi == "\x1b[38;2;0;255;0mtext\x1b[39m"
+    assert hex_from_hexa("text").ansi == "\x1b[38;2;0;255;0mtext\x1b[39m"
 
     link_from_path = S.link(Path("tests/test_ansi"))
-    assert "tests/test_ansi" in StyledText(link_from_path("Link")).ansi
+    assert "tests/test_ansi" in link_from_path("Link").ansi
 
 
 def test_terminal_configuration_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
@@ -65,8 +65,7 @@ def test_terminal_configuration_repeated_calls_are_no_ops() -> None:
 
 def test_styled_text_print_stream_options() -> None:
     stream = io.StringIO()
-    text = StyledText("No flush")
-    text.print(file=stream, flush=False)
+    S("No flush").print(file=stream, flush=False)
     assert stream.getvalue() == "No flush\n"
 
 

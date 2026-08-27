@@ -1,7 +1,7 @@
 import io
 from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
-from xulbux.ansi import StyledText
+from xulbux.ansi import S
 from xulbux.console import ArgumentParser
 import pytest
 
@@ -36,7 +36,7 @@ def test_argument_parser_help_generation_full_options() -> None:
     with patch("sys.stdout", stream):
         parser.print_help()
     help_text = stream.getvalue()
-    raw_help = StyledText.remove_ansi(help_text)
+    raw_help = S(help_text).raw
     assert "Sample App Title" in raw_help
     assert "Sample subtitle" in raw_help
     assert "Beta software" in raw_help

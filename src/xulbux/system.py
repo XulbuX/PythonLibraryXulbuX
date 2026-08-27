@@ -6,7 +6,7 @@ commands, installing dependencies, and managing application restarts.
 """
 
 from . import console as _console_module
-from .ansi import S, StyledText
+from .ansi import S
 from .base.types import MissingLibsMsgs
 
 import ctypes as _ctypes
@@ -19,6 +19,7 @@ import socket as _socket
 import subprocess as _subprocess
 import sys as _sys
 import time as _time
+from collections.abc import Sequence
 from contextlib import suppress as _suppress
 
 
@@ -163,7 +164,7 @@ def check_libs(
     )()
 
 
-def elevate(win_title: str | None = None, args: list[str] | None = None) -> bool:
+def elevate(win_title: str | None = None, args: Sequence[str] | None = None) -> bool:
     """Attempts to start a new process with elevated privileges.\n
     ----------------------------------------------------------------------------------------------------
     *   `win_title` – The window title of the elevated process (only on Windows).
@@ -341,9 +342,7 @@ class _SystemCheckLibsHelper:
     def confirm_installation(self, missing: list[str], /) -> bool:
         """Ask user for confirmation before installing libraries."""
 
-        StyledText(
-            S.BOLD(self.missing_libs_msgs["found_missing"]), *[(S.DIM(" • "), S.ITALIC(lib)) for lib in missing], ""
-        ).print()
+        S(S.BOLD(self.missing_libs_msgs["found_missing"]), *[(S.DIM(" • "), S.ITALIC(lib)) for lib in missing], "").print()
 
         return _console_module.confirm(self.missing_libs_msgs["should_install"], end="\n")
 

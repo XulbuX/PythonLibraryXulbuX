@@ -10,17 +10,11 @@ from __future__ import annotations
 from . import regex as _regex_module
 from .base.types import Hexa, HexaDict, Hsla, HslaDict, Rgba, RgbaDict
 
-from typing import TYPE_CHECKING, Any, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, cast, overload
 import regex as _rx
 
 if TYPE_CHECKING:
-    import sys
     from collections.abc import Iterator
-
-    if sys.version_info >= (3, 13):
-        from typing import TypeIs
-    else:
-        from typing_extensions import TypeIs
 
 
 _SRGB_LINEAR_LUT: tuple[float, ...] = tuple([
@@ -864,7 +858,7 @@ class hexa(_ColorBase):
         return self.to_hsla(round_alpha=False).complementary().to_hexa()
 
 
-def is_valid_rgba(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Rgba]:
+def is_valid_rgba(color: object, /, *, allow_alpha: bool = True) -> TypeGuard[Rgba]:
     """Check if the given color is a valid RGBA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -926,7 +920,7 @@ def is_valid_rgba(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Rgba]
     return False
 
 
-def is_valid_hsla(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Hsla]:
+def is_valid_hsla(color: object, /, *, allow_alpha: bool = True) -> TypeGuard[Hsla]:
     """Check if the given color is a valid HSLA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -993,16 +987,16 @@ def is_valid_hexa(
     color: object, /, *, allow_alpha: bool = True, get_prefix: Literal[True]
 ) -> tuple[bool, Literal["#", "0x"] | None]: ...
 @overload
-def is_valid_hexa(color: object, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> TypeIs[Hexa]: ...
+def is_valid_hexa(color: object, /, *, allow_alpha: bool = True, get_prefix: Literal[False] = False) -> TypeGuard[Hexa]: ...
 @overload
 def is_valid_hexa(
     color: object, /, *, allow_alpha: bool = True, get_prefix: bool = False
-) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]: ...
+) -> TypeGuard[Hexa] | tuple[bool, Literal["#", "0x"] | None]: ...
 
 
 def is_valid_hexa(
     color: object, /, *, allow_alpha: bool = True, get_prefix: bool = False
-) -> TypeIs[Hexa] | tuple[bool, Literal["#", "0x"] | None]:
+) -> TypeGuard[Hexa] | tuple[bool, Literal["#", "0x"] | None]:
     """Check if the given color is a valid HEXA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).
@@ -1030,7 +1024,7 @@ def is_valid_hexa(
     return (False, None) if get_prefix else False
 
 
-def is_valid(color: object, /, *, allow_alpha: bool = True) -> TypeIs[Rgba | Hsla | Hexa]:
+def is_valid(color: object, /, *, allow_alpha: bool = True) -> TypeGuard[Rgba | Hsla | Hexa]:
     """Check if the given color is a valid RGBA, HSLA or HEXA color.\n
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to check (can be in any supported format).

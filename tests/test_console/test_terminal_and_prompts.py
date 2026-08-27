@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 from unittest.mock import MagicMock, patch
-from xulbux.ansi import S, StyledText
+from xulbux.ansi import S
 from xulbux.base.consts import CHARS
 from xulbux.console import (
     _ConsoleInputHelper,
@@ -408,7 +408,7 @@ def test_console_input_helper_and_validator() -> None:
 
 def test_to_styled_text_fallback() -> None:
     st = _to_styled_text(12345)
-    assert isinstance(st, StyledText)
+    assert isinstance(st, S)
 
 
 def test_input_invalid_arguments() -> None:

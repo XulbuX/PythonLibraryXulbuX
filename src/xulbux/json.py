@@ -46,7 +46,7 @@ def read(
 
     if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
         json_path = json_path.with_suffix(".json")
-    file_path = _file_sys_module.extend_or_make_path(json_path, prefer_script_dir=True)
+    file_path = _file_sys_module.extend_path(json_path) or json_path
 
     with open(file_path) as file:
         content = file.read()

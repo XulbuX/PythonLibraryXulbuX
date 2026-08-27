@@ -13,6 +13,7 @@ import os as _os
 import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
+from contextlib import suppress as _suppress
 from pathlib import Path
 
 
@@ -33,14 +34,17 @@ def get_script_dir() -> Path:
 
     if getattr(_sys, "frozen", False):
         base_path = Path(_sys.executable).parent
+
     else:
         main_module = _sys.modules["__main__"]
+
         if hasattr(main_module, "__file__") and main_module.__file__ is not None:
             base_path = Path(main_module.__file__).resolve().parent
         elif hasattr(main_module, "__spec__") and main_module.__spec__ and main_module.__spec__.origin is not None:
             base_path = Path(main_module.__spec__.origin).resolve().parent
         else:
             raise RuntimeError("Can only get base directory if accessed from a file")
+
     return base_path
 
 
@@ -157,7 +161,7 @@ def remove(path: Path | str, /, *, only_content: bool = False) -> None:
 
 
 class _ExtendPathHelper:
-    """Internal, callable helper class to extend a relative path to an absolute path."""
+    """Internal, callable helper class to find and extend a relative path to an absolute path."""
 
     def __init__(self, rel_path: Path, /, search_dirs: list[Path], *, fuzzy_match: bool, raise_error: bool) -> None:
         self.rel_path: Path = rel_path
@@ -166,7 +170,7 @@ class _ExtendPathHelper:
         self.raise_error: bool = raise_error
 
     def __call__(self) -> Path | None:
-        """Execute the path extension logic."""
+        """Find the matching path for `self.rel_path` in `self.search_dirs`."""
 
         expanded_path = self.expand_env_vars(self.rel_path)
 
@@ -181,7 +185,11 @@ class _ExtendPathHelper:
 
         else:
             # Add predefined search dirs:
-            self.search_dirs.extend([get_cwd(), get_home(), get_script_dir(), Path(_tempfile.gettempdir())])
+            predefined_dirs = [get_cwd(), get_home()]
+            with _suppress(RuntimeError):
+                predefined_dirs.append(get_script_dir())
+            predefined_dirs.append(Path(_tempfile.gettempdir()))
+            self.search_dirs.extend(predefined_dirs)
 
         return self.search_in_dirs(expanded_path)
 

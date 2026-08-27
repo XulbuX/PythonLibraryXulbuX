@@ -5,7 +5,7 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from . import ansi, cli, code, color, console, data, env_path, file, file_sys, json, regex, string, system
-    from .ansi import S, StyledText, Term
+    from .ansi import S, Term
     from .color import hexa, hsla, rgba
     from .console import ArgumentParser, ParsedArgData, ParsedArgs, ProgressBar, Throbber
     from .regex import LazyRegex
@@ -38,7 +38,6 @@ __all__ = [
     "ParsedArgs",
     "ProgressBar",
     "S",
-    "StyledText",
     "Term",
     "Throbber",
     "__author__",
@@ -72,7 +71,6 @@ __all__ = [
 
 _SUBMODULES: Final[dict[str, str]] = {
     "S": "ansi",
-    "StyledText": "ansi",
     "Term": "ansi",
     "hexa": "color",
     "hsla": "color",

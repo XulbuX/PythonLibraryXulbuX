@@ -3,7 +3,6 @@ import pytest
 
 
 def test_getattr_submodule() -> None:
-    assert xulbux.StyledText is not None
     assert xulbux.S is not None
 
 
@@ -19,11 +18,11 @@ def test_getattr_invalid() -> None:
 
 def test_dir() -> None:
     assert isinstance(dir(xulbux), list)
-    assert "StyledText" in dir(xulbux)
+    assert "S" in dir(xulbux)
 
 
 def test_getattr_direct() -> None:
-    res = xulbux.__getattr__("StyledText")
+    res = xulbux.__getattr__("S")
     assert res is not None
     res = xulbux.__getattr__("console")
     assert res is not None
@@ -33,4 +32,4 @@ def test_getattr_direct() -> None:
 
 
 def test_dir_direct() -> None:
-    assert "StyledText" in xulbux.__dir__()
+    assert "S" in xulbux.__dir__()

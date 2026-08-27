@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from unittest.mock import patch
-from xulbux.ansi import S, StyledText
+from xulbux.ansi import S
 import pytest
 
 if TYPE_CHECKING:
@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 def test_styled_text_join() -> None:
-    separator = StyledText(S.BR.BLACK(" | "))
+    separator = S.BR.BLACK(" | ")
     items: list[Renderable] = ["Item 1", S.RED("Item 2"), "Item 3"]
     joined = separator.join(items)
 
@@ -21,7 +21,7 @@ def test_styled_text_join() -> None:
 
 
 def test_styled_text_alignment_ljust_rjust_center() -> None:
-    text = StyledText(S.RED("Alert"))
+    text = S.RED("Alert")
     assert len(text) == 5
 
     # Left justify:
@@ -48,22 +48,14 @@ def test_styled_text_alignment_ljust_rjust_center() -> None:
     assert (S.BOLD | S.BLUE).rjust(4, "-").raw == "----"
     assert (S.BOLD | S.BLUE).center(4, "-").raw == "----"
 
-    # Internal _multiply_char edge cases:
-    assert StyledText._multiply_char(StyledText("x"), 0) == ""
-    multi_char_st = StyledText(S.RED("a"), S.BLUE("b"))
-    assert StyledText._multiply_char(multi_char_st, 2) != ""
-
-    # Invalid fill characters (must be length 1):
-    with pytest.raises(TypeError, match="exactly one visible character"):
-        text.ljust(10, "..")
-    with pytest.raises(TypeError, match="exactly one visible character"):
-        text.rjust(10, "")
-    with pytest.raises(TypeError, match="exactly one visible character"):
-        text.center(10, "--")
+    # Bare style / custom color alignment:
+    assert S.RED.ljust(4, "-").raw == "----"
+    assert S.hex("#F67").rjust(4, "-").raw == "----"
+    assert S.link("url").center(4, "-").raw == "----"
 
 
 def test_styled_text_wrap() -> None:
-    long_styled = StyledText(S.RED("This is a long sentence that should be wrapped into multiple lines cleanly."))
+    long_styled = S.RED("This is a long sentence that should be wrapped into multiple lines cleanly.")
     wrapped_lines = long_styled.wrap(20)
 
     assert len(wrapped_lines) > 1
@@ -72,22 +64,22 @@ def test_styled_text_wrap() -> None:
         assert line.ansi.startswith("\x1b[31m")
 
     # Edge cases for wrap:
-    empty_lines = StyledText("Line 1\n\nLine 2").wrap(20)
+    empty_lines = S("Line 1\n\nLine 2").wrap(20)
     assert len(empty_lines) == 3
 
-    short_line = StyledText("Short").wrap(20)
+    short_line = S("Short").wrap(20)
     assert len(short_line) == 1
 
-    zero_width = StyledText("Text").wrap(0)
+    zero_width = S("Text").wrap(0)
     assert len(zero_width) == 1
 
     # Whitespace only line where textwrap returns empty in multi-line text:
-    spaces_line = StyledText("   \nvalid text").wrap(5)
+    spaces_line = S("   \nvalid text").wrap(5)
     assert len(spaces_line) >= 2
 
     # Chunk not found in paragraph offset fallback:
     with patch("textwrap.wrap", return_value=["xyz"]):
-        fallback_wrap = StyledText("abc\ndef").wrap(5)
+        fallback_wrap = S("abc\ndef").wrap(5)
         assert len(fallback_wrap) >= 1
 
     # StyleGroup wrap:
@@ -96,7 +88,7 @@ def test_styled_text_wrap() -> None:
 
 
 def test_code_positions_properties() -> None:
-    styled = StyledText("Hello ", S.RED("Red"), " World")
+    styled = S("Hello ", S.RED("Red"), " World")
     positions = styled.code_positions
     assert len(positions) == 2
     assert positions[0][1] == "\x1b[31m"
@@ -108,13 +100,13 @@ def test_code_positions_properties() -> None:
     assert raw_positions[1][0] == 9
 
 
-def test_remove_ansi() -> None:
+def test_s_raw_removes_ansi() -> None:
     ansi_str = "\x1b[1;31mError\x1b[0m: \x1b[4mDetails\x1b[24m"
-    assert StyledText.remove_ansi(ansi_str) == "Error: Details"
+    assert S(ansi_str).raw == "Error: Details"
 
 
 def test_styled_text_slice_with_step() -> None:
-    styled = StyledText(S.RED("ABCDE"))
+    styled = S.RED("ABCDE")
     assert styled[1:4].raw == "BCD"
 
     with pytest.raises(ValueError, match="only supports a step of 1"):
@@ -122,7 +114,7 @@ def test_styled_text_slice_with_step() -> None:
 
 
 def test_styled_text_input_prompt() -> None:
-    styled_prompt = StyledText(S.GREEN("Enter name: "))
+    styled_prompt = S.GREEN("Enter name: ")
     with patch("builtins.input", return_value="Alice") as mock_input:
         user_response = styled_prompt.input(reset_ansi=True)
         assert user_response == "Alice"

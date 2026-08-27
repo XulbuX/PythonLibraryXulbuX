@@ -30,7 +30,7 @@ xx.data.render({"key": "value"})
 The library's classes can be imported directly from the `xulbux` package:
 
 ```python
-from xulbux import StyledText, S
+from xulbux import ArgumentParser, S
 ```
 
 Certain things aren't exposed under the `xulbux` package directly.<br>
@@ -38,7 +38,7 @@ They can be imported from their respective submodules, for example:
 
 ```python
 from xulbux.base.consts import COLOR
-from xulbux.base.types import DataObj
+from xulbux.base.types import PathsList
 ```
 
 ## Example Usage
@@ -47,7 +47,7 @@ This is what it could look like using this library for a simple but ultra good-l
 
 ```python
 import xulbux as xx
-from xulbux import S, StyledText, hexa
+from xulbux import S, hexa
 from xulbux.base.consts import CHARS, COLOR
 
 
@@ -55,7 +55,7 @@ def main() -> None:
 
     # Let the user enter a hexa color in any hexa format.
     input_clr = xx.console.input(
-        StyledText(S.BOLD("Enter a HEXA color in any format"), " > "),
+        (S.BOLD("Enter a HEXA color in any format"), " > "),
         start="\n",
         placeholder="#7075FF",
         max_len=7,
@@ -85,15 +85,14 @@ def main() -> None:
 
     # Pretty print the color in different formats.
     xx.console.log_box_bordered(
-        StyledText(
-            (S.BOLD("HEXA: "), (S.ITALIC | S.BR.WHITE)(str(hexa_color))),
-            (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
-            (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
-            sep="\n",
-        )
+        (S.BOLD("HEXA: "), (S.ITALIC | S.BR.WHITE)(str(hexa_color))),
+        (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
+        (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
+        end="\n\n",
     )
 
 
 if __name__ == "__main__":
     main()
+
 ```

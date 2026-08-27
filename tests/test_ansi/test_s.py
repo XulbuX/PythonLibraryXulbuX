@@ -1,37 +1,41 @@
 import io
-from xulbux.ansi import S, StyledText
+from xulbux.ansi import S
 
 
-def test_styled_text_construction_and_properties() -> None:
-    text = StyledText("Plain text")
+def test_s_construction_and_properties() -> None:
+    text = S("Plain text")
     assert text.raw == "Plain text"
     assert text.ansi == "Plain text"
     assert len(text) == 10
     assert bool(text) is True
-    assert bool(StyledText("")) is False
+    assert bool(S("")) is False
 
-    multi_line = StyledText("Line 1", "Line 2", sep="\n")
+    multi_line = S("Line 1", "Line 2", sep="\n")
     assert multi_line.raw == "Line 1\nLine 2"
 
-    multi_part_line = StyledText(("Part 1 ", S.BOLD("Part 2"), " Part 3"))
+    multi_part_line = S(("Part 1 ", S.BOLD("Part 2"), " Part 3"))
     assert multi_part_line.raw == "Part 1 Part 2 Part 3"
     assert "\x1b[1mPart 2\x1b[22m" in multi_part_line.ansi
 
 
-def test_styled_text_slicing_and_containment() -> None:
-    styled = StyledText(S.RED("Hello World"))
+def test_s_slicing_and_containment() -> None:
+    styled = S.RED("Hello World")
+    assert isinstance(styled, S)
     assert styled[0:5].raw == "Hello"
     assert styled[6:11].raw == "World"
     assert "World" in styled.raw
     assert "World" in styled.ansi
+    assert "World" in styled
+    assert "lo Wo" in S(S.RED("Hello "), S.BLUE("World"))
+    assert "xyz" not in styled
 
 
-def test_styled_text_concatenation_and_repetition() -> None:
-    text1 = StyledText(S.RED("Hello"))
-    text2 = StyledText(S.BLUE(" World"))
+def test_s_concatenation_and_repetition() -> None:
+    text1 = S.RED("Hello")
+    text2 = S.BLUE(" World")
 
     combined = text1 + text2
-    assert isinstance(combined, StyledText)
+    assert isinstance(combined, S)
     assert combined.raw == "Hello World"
     assert "\x1b[31mHello\x1b[39m\x1b[34m World\x1b[39m" in combined.ansi
 
@@ -41,10 +45,10 @@ def test_styled_text_concatenation_and_repetition() -> None:
     radd_combined = "Plain " + text2
     assert radd_combined.raw == "Plain  World"
 
-    iadd_text = StyledText("Base")
+    iadd_text = S("Base")
     iadd_text += " Extra"
     assert iadd_text.raw == "Base Extra"
-    iadd_text += StyledText(" More")
+    iadd_text += S(" More")
     assert iadd_text.raw == "Base Extra More"
 
     repeated = text1 * 3
@@ -52,50 +56,52 @@ def test_styled_text_concatenation_and_repetition() -> None:
     assert (3 * text1).raw == "HelloHelloHello"
 
 
-def test_styled_text_matmul_operator() -> None:
+def test_s_matmul_operator() -> None:
     base_text = "Important Notification"
 
     applied_left = (S.BOLD | S.RED) @ base_text
-    rendered = StyledText(applied_left)
-    assert rendered.raw == "Important Notification"
-    assert rendered.ansi == "\x1b[1;31mImportant Notification\x1b[22;39m"
+    assert isinstance(applied_left, S)
+    assert applied_left.raw == "Important Notification"
+    assert applied_left.ansi == "\x1b[1;31mImportant Notification\x1b[22;39m"
 
     single_matmul = S.UNDERLINE @ "Underlined"
-    assert StyledText(single_matmul).ansi == "\x1b[4mUnderlined\x1b[24m"
+    assert isinstance(single_matmul, S)
+    assert single_matmul.ansi == "\x1b[4mUnderlined\x1b[24m"
 
-    group_matmul_styled = (S.BOLD | S.BLUE) @ StyledText("Nested")
-    assert StyledText(group_matmul_styled).raw == "Nested"
+    group_matmul_styled = (S.BOLD | S.BLUE) @ S("Nested")
+    assert isinstance(group_matmul_styled, S)
+    assert group_matmul_styled.raw == "Nested"
 
 
-def test_styled_text_equality() -> None:
-    text1 = StyledText(S.RED("Hello"))
-    text2 = StyledText(S.RED("Hello"))
-    text3 = StyledText(S.BLUE("Hello"))
+def test_s_equality() -> None:
+    text1 = S.RED("Hello")
+    text2 = S.RED("Hello")
+    text3 = S.BLUE("Hello")
 
     assert text1 == text2
     assert text1 != text3
     assert text1 == "\x1b[31mHello\x1b[39m"
     assert text1 != 123
     assert str(text1) == text1.ansi
-    assert "StyledText(" in repr(text1)
+    assert "S(" in repr(text1)
 
 
-def test_styled_text_print() -> None:
+def test_s_print() -> None:
     stream = io.StringIO()
-    text = StyledText(S.GREEN("Success"))
+    text = S.GREEN("Success")
 
     text.print(file=stream)
     assert stream.getvalue() == "\x1b[32mSuccess\x1b[39m\n"
 
 
-def test_styled_text_render_dispatch_and_fallbacks() -> None:
+def test_s_render_dispatch_and_fallbacks() -> None:
     class CustomRenderable:
         def __str__(self) -> str:
             return "CustomStr"
 
-    rendered = StyledText(
+    rendered = S(
         "Str",
-        StyledText("Nested"),
+        S("Nested"),
         S.BOLD("Sequence"),
         ("Tuple1", "Tuple2"),
         S.BOLD,  # Bare _Style
@@ -106,3 +112,7 @@ def test_styled_text_render_dispatch_and_fallbacks() -> None:
     )
     assert "CustomStr" in rendered.raw
     assert "Sequence" in rendered.raw
+
+    parts: list[str] = []
+    S._render("direct_render", parts)
+    assert parts == ["direct_render"]

@@ -202,8 +202,9 @@ class StubGen(ast.NodeTransformer):
                 continue  # Drop variable docstrings.
 
             if isinstance(stmt, ast.Assign):
-                targets = [ast.unparse(t) for t in stmt.targets]
-                if not (len(targets) == 1 and targets[0] == "__all__"):
+                if all(isinstance(target, ast.Attribute) for target in stmt.targets):
+                    continue  # Drop post-class attribute assignments; they are already declared on the class.
+                if not (len(targets := [ast.unparse(tg) for tg in stmt.targets]) == 1 and targets[0] == "__all__"):
                     raise ValueError(
                         f"Constant(s) '{', '.join(targets)}' missing explicit type-hint. All variables must be strictly typed."
                     )

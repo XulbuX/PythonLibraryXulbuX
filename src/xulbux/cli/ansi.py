@@ -1,4 +1,4 @@
-from ..ansi import RenderSegment, S, StyledText
+from ..ansi import RenderSegment, S
 from ..console import get_width
 
 from pathlib import Path
@@ -18,8 +18,8 @@ def show_ansi() -> None:
     sep = (get_width(), S.DIM("━"))
     code = S.DIM | S.BR.BLACK
 
-    StyledText(
-        "",
+    S(
+        S.RESET,
         title(" Text Styles ").center(*sep),
         "",
         (_st("BOLD               "), S.BOLD("Text")),

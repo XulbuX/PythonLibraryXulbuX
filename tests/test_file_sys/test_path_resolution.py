@@ -161,6 +161,14 @@ def test_extend_or_make_path(setup_test_environment: dict[str, Path]) -> None:
     rel_cwd = "another_dir/another_file.txt"
     assert str(_file_sys_module.extend_or_make_path(rel_cwd, prefer_script_dir=False)) == str(env["cwd"] / rel_cwd)
 
+    with (
+        patch(
+            "xulbux.file_sys.get_script_dir", side_effect=RuntimeError("Can only get base directory if accessed from a file")
+        ),
+        pytest.raises(RuntimeError, match="Can only get base directory if accessed from a file"),
+    ):
+        _file_sys_module.extend_or_make_path("fallback_dir/fallback_file.txt", prefer_script_dir=True)
+
 
 def test_extend_path_env_vars_and_absolute_handling() -> None:
     with patch.dict(os.environ, {"TEST_ENV_ROOT": "C:\\" if os.name == "nt" else "/"}):

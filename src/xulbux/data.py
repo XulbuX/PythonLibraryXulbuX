@@ -6,7 +6,7 @@ syntax-highlighted rendering, and data type conversions.
 """
 
 from . import string as _string_module
-from .ansi import AnyStyle, S, StyledText
+from .ansi import AnyStyle, S
 from .base.types import DataObj as DataObjType
 from .base.types import SeqOrSet, is_data_obj, is_seq_or_set
 from .regex import LazyRegex
@@ -394,8 +394,8 @@ def render(
     sep: str = ", ",
     as_json: bool = False,
     syntax_highlighting: dict[str, AnyStyle] | bool = False,
-) -> StyledText:
-    """Get nicely formatted data structures as a `StyledText` object.\n
+) -> S:
+    """Get nicely formatted data structures as an `S` object.\n
     ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to format.
     *   `indent` – The amount of spaces to use for indentation.
@@ -424,7 +424,7 @@ def render(
     *   `type: S.ITALIC | S.GREEN`
     *   `punctuation: S.BR.BLACK`\n
     ----------------------------------------------------------------------------------------------------
-    The returned `StyledText` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)<br>
+    The returned `S` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)\n
     and the plain, un-styled text via `.raw`.\n
     For more detailed information about styling, see the `ansi` module documentation."""
 
@@ -678,7 +678,7 @@ class _DataGetPathIdHelper:
 
 
 class _DataRenderHelper:
-    """Internal, callable helper class to format data structures as `StyledText` objects."""
+    """Internal, callable helper class to format data structures as `S` objects."""
 
     def __init__(
         self,
@@ -720,9 +720,9 @@ class _DataRenderHelper:
     def _hl(self, key: str, text: str, /) -> str:
         """Applies the syntax-highlighting style registered for `key` to `text`, returning the rendered ANSI string."""
 
-        return StyledText(self.styles[key](text)).ansi
+        return self.styles[key](text).ansi
 
-    def __call__(self) -> StyledText:
+    def __call__(self) -> S:
         if isinstance(self.data, dict):
             formatted = self.format_dict(self.data, 0)
         elif is_seq_or_set(self.data):
@@ -730,7 +730,7 @@ class _DataRenderHelper:
         else:
             formatted = self.format_value(self.data, None)
 
-        return StyledText(_rx.sub(r"\s+(?=\n)", "", formatted))
+        return S(_rx.sub(r"\s+(?=\n)", "", formatted))
 
     def format_value(self, value: Any, /, current_indent: int | None = None) -> str:
         """Formats a single value based on its type and the current indentation level."""

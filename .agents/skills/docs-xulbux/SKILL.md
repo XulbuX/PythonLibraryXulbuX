@@ -119,7 +119,7 @@ Used to display the output of a terminal-outputting code example. Note that this
 #### Example Usage
 
 ```python
-StyledText((S.BLACK | S.BG.GREEN)(" OK ")).rjust(20, ".").print()
+(S.BLACK | S.BG.GREEN)(" OK ").rjust(20, ".").print()
 ```
 
 <!-- DOCS: <TerminalOutput>

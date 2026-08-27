@@ -41,17 +41,17 @@
     -   Properties like `console.w` and `system.is_elevated` have been converted into standard getter functions like `get_width()` and `is_elevated()` to circumvent a MyPyC segmentation fault.
 *   **Removed the `format_codes` module and bracket syntax.** Replaced the legacy styling API with a new, strictly typed, operator-based styling engine in the new `ansi` module (*this also includes the removal of legacy format-code constants and methods from* `xulbux.base.consts`):
     -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
-    -   The new `StyledText(*segments, sep="\\n")` class builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
+    -   The `S(*segments, sep="")` class also directly builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
     -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
-*   `data.render()` now returns a `StyledText` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
+*   `data.render()` now returns an `S` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.BR.BLUE, "type": S.ITALIC | S.GREEN}`. The default styles are unchanged in appearance.
 *   Replaced `get_args` and `_ConsoleArgsParseHelper` with fully typed `ArgumentParser` and `ParsedArgData` classes.
-*   Removed the `data.print()` method, since `data.render()` now returns a `StyledText` object, so you can simply call `data.render(…).print()` instead.
+*   Removed the `data.print()` method, since `data.render()` now returns an `S` object, so you can simply call `data.render(…).print()` instead.
 *   `data.render(as_json=True)` now natively converts special Python objects into valid JSON strings without creating proprietary special-objects for them, allowing standard lossless serialization compatible across external web APIs.
 *   Removed `serialize_bytes()` and `deserialize_bytes()` from the `data` module, as bytes serialization is now handled natively and transparently.
 *   Migrated the entire `console` module as well as the `ProgressBar` and `Throbber` classes off the removed `format_codes` module and onto the new operator-based styling API:
-    -   All prompts/messages/content now accept any object, including `StyledText` ones directly, instead of format-code strings.
+    -   All prompts/messages/content now accept any object, including `S` ones directly, instead of format-code strings.
     -   `console.log()`'s `title_bg_color` and `console.log_box_filled()`'s `box_bg_color` now take an `S` background style (*e.g.,* `S.BG.BR.BLUE`) or an RGBA/HEXA color, and `console.log_box_bordered()`'s `border_style` now takes an `S` style or an RGBA/HEXA color (*defaulting to* `S.BR.BLACK`). All instead of terminal-color name strings.
-    -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `StyledText(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
+    -   The `bar_format`/`limited_bar_format`/`throbber_format` templates of `ProgressBar`/`Throbber` are now styled by embedding ANSI from the new API (*e.g.,* `S(S.BG.BLACK("{b}")).ansi`) instead of format-code strings; the placeholder syntax (`{bar}`, `{label}`, …) stays the same.
 *   Replaced the type tuples `DataObjTT` and `IndexIterableTT`, meant for `isinstance` checks, with `is_data_obj()` and `is_index_iterable()` functions, which are more explicit and easier to read.
 *   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
 *   Removed the `AnyRgba`, `AnyHsla` and `AnyHexa` type aliases as you should simply use the types `object` or `Any` for the same effect.
