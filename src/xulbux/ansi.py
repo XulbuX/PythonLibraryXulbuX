@@ -225,7 +225,7 @@ _ANSI_SEQ_RX: Final[_rx.Pattern[str]] = ANSI.SEQ_PATTERN
 """Module shorthand for `ANSI.SEQ_PATTERN`.<br>
 Matches any ANSI escape sequence (CSI, OSC, or single-character)."""
 
-# fmt: off
+# fmt:off
 _RESET_MAP: Final[dict[int, int]] = {
     # Text styles:
     1: 22, 2: 22, 3: 23, 4: 24, 5: 25, 7: 27, 8: 28, 9: 29, 21: 24,
@@ -240,7 +240,7 @@ _RESET_MAP: Final[dict[int, int]] = {
 }
 """Mapping from ANSI style integer to its matching reset integer.\n
 Codes that fully reset everything (`0`) or have no useful specific reset are intentionally omitted."""
-# fmt: on
+# fmt:on
 
 _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
     cid: ((f"{ANSI.CHAR}[{cid}m",), (f"{ANSI.CHAR}[{reset}m",)) for cid, reset in _RESET_MAP.items()

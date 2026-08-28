@@ -90,12 +90,12 @@ _DEFAULT_LIMITED_BAR_FORMAT: Final[list[TextRenderable]] = ["{l}", (S.BR.MAGENTA
 _DEFAULT_THROBBER_FORMAT: Final[list[TextRenderable]] = [S.BR.MAGENTA("{a}"), "{l}"]
 """Default `Throbber` format, styled with the operator-based API."""
 
-# fmt: off
+# fmt:off
 FRAMES_STANDARD: Final[tuple[str, ...]] = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
 """Throbber `frames` preset: A standard, clean, and modern Braille circular spinner."""
 FRAMES_WINDMILL: Final[tuple[str, ...]] = ("⠓⠆", "⠳⠄", "⠹⠄", "⠽ ", "⠼⠁", "⠞⠁", "⠖⠃", "⠓⠃", "⠓⠆", "⠙⠆", "⠹⠄", "⠸⠅", "⠼⠁", "⠴⠃", "⠖⠃", "⠖⠆")  # ruff:ignore[line-too-long]
 """Throbber `frames` preset: A wide, dual-character Braille windmill animation."""
-# fmt: on
+# fmt:on
 
 
 def _compile_format(fmt: Sequence[TextRenderable] | TextRenderable) -> list[str]:

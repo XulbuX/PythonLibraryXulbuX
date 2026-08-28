@@ -82,7 +82,7 @@ class StubGen(ast.NodeTransformer):
                 print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
 
         if generated_files:
-            # fmt: off
+            # fmt:off
             # Format all generated stubs with Ruff in one call:
             subprocess.run(
                 [sys.executable, "-m", "ruff", "check", *generated_files,
@@ -99,7 +99,7 @@ class StubGen(ast.NodeTransformer):
                 stderr=subprocess.DEVNULL,
                 check=False,
             )
-            # fmt: on
+            # fmt:on
 
         print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
 

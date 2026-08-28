@@ -6,23 +6,22 @@ from ..base.decorators import mypyc_attr
 import json as _json
 import urllib.request as _request
 from typing import Final
-from urllib.error import HTTPError
 
 
 def get_latest_version() -> str | None:
-    """Fetches the latest version of the library from PyPI.\n
+    """Fetches the latest version of the library from PyPI in the format `x.y.z`.\n
     ----------------------------------------------------------------------------------------------------
-    Raises a `HTTPError` if the request fails.<br>
-    Returns `None` if the request succeeds but the version info is not found."""
+    Returns `None` if the latest version could not be fetched."""
 
     with _request.urlopen(PACKAGE_META_URL) as response:
-        if response.status == 200:
-            try:
-                return _json.load(response)["info"]["version"]
-            except Exception:
-                return None
-        else:
-            raise HTTPError(PACKAGE_META_URL, response.status, "Failed to fetch latest version info", response.headers, None)
+        try:
+            return (
+                ".".join(clean_version.split("."))
+                if (clean_version := (_json.load(response)["info"]["version"] or "").lower().lstrip("v"))
+                else None
+            )
+        except Exception:
+            return None
 
 
 def is_latest_version() -> bool | None:
@@ -70,6 +69,8 @@ class H:
     """Styling for meta information in the CLI help message."""
     MODULE: _Style = S.BR.MAGENTA
     """Styling for module names in the CLI help message."""
+    NOTICE: _Style = S.BR.CYAN
+    """Styling for notices in the CLI help message."""
     OBJ: _Style = S.BR.CYAN
     """Styling for object names in the CLI help message."""
     PUNCT: _Style = S.BR.BLACK
@@ -78,47 +79,44 @@ class H:
     """Styling for regular text in the CLI help message."""
 
 
-# fmt: off
+# fmt:off
+# ruff:ignore[line-too-long]
 CLI_HELP: Final[S] = S(
     S.RESET,
     (
-        (S.BOLD | S.hex("#7075FF"))(
-            "                 __  __              \n"
-            "    _  __ __  __/ / / /_  __  ___  __\n"
-            "   | |/ // / / / / / __ \\/ / / | |/ /\n"
-            "   > , </ /_/ / /_/ /_/ / /_/ /> , < \n"
-            "  /_/|_|\\____/\\__/\\____/\\____//_/|_|  ",
-            (S.hex("#000") | S.BG.hex("#8085FF"))(f" v{__version__} "),
-        ),
-        "" if IS_LATEST_VERSION else (S.DIM | S.YELLOW)(" (", S.ITALIC("newer available"), ")"),
+        "  ", (S.BOLD | S.hex("#7075FF"))("               __  __              "), " \n",
+        "  ", (S.BOLD | S.hex("#7075FF"))("  _  __ __  __/ / / /_  __  ___  __"), " \n",
+        "  ", (S.BOLD | S.hex("#7075FF"))(" | |/ // / / / / / __ \\/ / / | |/ /"), " \n",
+        "  ", (S.BOLD | S.hex("#7075FF"))(" > , </ /_/ / /_/ /_/ / /_/ /> , <"), "  ", S.hex("#9095FF")("▄" * (len(__version__) + 7)), (S.DIM | H.NOTICE)("─" * (len(v_notice) + 15), "╮") if (v_notice := (ver if IS_LATEST_VERSION is False and (ver := get_latest_version()) else None)) else "", "\n",
+        "  ", (S.BOLD | S.hex("#7075FF"))("/_/|_|\\____/\\__/\\____/\\____//_/|_|"), "  ", (S.hex("#000") | S.BG.hex("#9095FF"))("  ✓ v", S.BOLD(__version__), "  "), (H.NOTICE(" ↑ ", S.link("https://pypi.org/pypi/xulbux")("v", S.BOLD(v_notice)), " available "), (S.DIM | H.NOTICE)("│")) if v_notice else "",
     ),
+    ("                                      ", S.hex("#9095FF")("▀" * (len(__version__) + 7)), (S.DIM | H.NOTICE)("─" * (len(v_notice) + 15), "╯") if v_notice else ""),
+    ("  ", (S.ITALIC | S.hex("#9095FF"))("Simplify common programming tasks!")),
     "",
-    (S.ITALIC | S.hex("#9095FF"))("  Simplify common programming tasks!"),
-    "",
-    H.HEADING("  Commands:"),
-    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.CMD("xulbux-lib     "), H.TEXT("  Show library info and usage      "), H.BORDER("│")),
-    (H.BORDER("  │ "), H.CMD("xulbux-lib ", S.BOLD("ansi")), H.TEXT("  Preview all possible ANSI styles "), H.BORDER("│")),
-    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
-    H.HEADING("  Usage:"),
-    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Library Constants                               ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI "), H.BORDER("│")),  # ruff:ignore[line-too-long]
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Modules                                         ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.MODULE("ansi"), H.PUNCT(", "), H.MODULE("code"), H.PUNCT(", "), H.MODULE("color"), H.PUNCT(", "), H.META("...         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
-    (H.BORDER("  │ "), H.PUNCT("# ", S.ITALIC("Module Specific Imports                         ")), H.BORDER("│")),
-    (H.BORDER("  │ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.OBJ("rgba"), H.PUNCT(", "), H.OBJ("hsla"), H.PUNCT(", "), H.OBJ("hexa         "), H.BORDER("│")),  # ruff:ignore[line-too-long]
-    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
-    H.HEADING("  Documentation:"),
-    H.BORDER("  ╭───────────────────────────────────────────────────╮"),
-    (H.BORDER("  │ "), H.TEXT("For more information see the documentation:       "), H.BORDER("│")),
-    (H.BORDER("  │ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), "           ", H.BORDER("│")),  # ruff:ignore[line-too-long]
-    H.BORDER("  ╰───────────────────────────────────────────────────╯"),
+    ("  ", H.HEADING("Commands:")),
+    ("  ", H.BORDER("╭───────────────────────────────────────────────────╮")),
+    ("  ", H.BORDER("│ "), H.CMD("xulbux-lib     "), H.TEXT("  Show library info and usage     "), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.CMD("xulbux-lib ", S.BOLD("ansi")), H.TEXT("  Preview all possible ANSI styles"), H.BORDER(" │")),
+    ("  ", H.BORDER("╰───────────────────────────────────────────────────╯")),
+    ("  ", H.HEADING("Usage:")),
+    ("  ", H.BORDER("╭───────────────────────────────────────────────────╮")),
+    ("  ", H.BORDER("│ "), H.PUNCT("# ", S.ITALIC("Library Constants                              ")), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("base"), (S.DIM | H.LIB)("."), H.LIB("consts "), H.IMPORT("import "), H.CONST("COLOR"), H.PUNCT(", "), H.CONST("CHARS"), H.PUNCT(", "), H.CONST("ANSI"), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.PUNCT("# ", S.ITALIC("Modules                                        ")), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.IMPORT("from "), H.LIB("xulbux "), H.IMPORT("import "), H.MODULE("ansi"), H.PUNCT(", "), H.MODULE("code"), H.PUNCT(", "), H.MODULE("color"), H.PUNCT(", "), H.META("...        "), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.PUNCT("# ", S.ITALIC("Module Specific Imports                        ")), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), H.IMPORT("from "), H.LIB("xulbux"), (S.DIM | H.LIB)("."), H.LIB("color "), H.IMPORT("import "), H.OBJ("rgba"), H.PUNCT(", "), H.OBJ("hsla"), H.PUNCT(", "), H.OBJ("hexa        "), H.BORDER(" │")),
+    ("  ", H.BORDER("╰───────────────────────────────────────────────────╯")),
+    ("  ", H.HEADING("Documentation:")),
+    ("  ", H.BORDER("╭───────────────────────────────────────────────────╮")),
+    ("  ", H.BORDER("│ "), H.TEXT("For more information see the documentation:      "), H.BORDER(" │")),
+    ("  ", H.BORDER("│ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), "          ", H.BORDER(" │")),
+    ("  ", H.BORDER("╰───────────────────────────────────────────────────╯")),
     "",
     sep="\n",
 )
 """The help message for the CLI command `xulbux-lib` as an `S` object."""
-# fmt: on
+# fmt:on
 
 
 def show_help() -> None:
