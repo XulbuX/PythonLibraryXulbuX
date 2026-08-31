@@ -127,8 +127,13 @@ def show_ansi() -> None:
         code('                   S.BG.color256(105)(" color256(105) ")'),
         (_st("link()             "), (S.hex("89F") | S.link("https://xul.is"))("xul.is")),
         code('                   S.link("https://xul.is")("xul.is")'),
-        (_st("link() [file]      "), (S.hex("89F") | S.link(Path(__file__)))("Click here to see how this link was created!")),
-        code("                   (I am not going to spoil it, you have to click it!)"),
+        (
+            _st("link() "),
+            S.DIM("[folder]"),
+            "    ",
+            (S.hex("89F") | S.link(Path.cwd()))("Click here to open the CWD in your file explorer!"),
+        ),
+        code('                   S.link(Path.cwd())("Click here to open the CWD in your file explorer!")'),
         "",
         sep="\n",
     ).print()
