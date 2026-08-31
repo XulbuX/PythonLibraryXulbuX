@@ -248,26 +248,6 @@ _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
 """Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR style.\n
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
-_ANSI16_RGB: Final[tuple[tuple[int, int, int], ...]] = (
-    (0, 0, 0),  # Black
-    (128, 0, 0),  # Red
-    (0, 128, 0),  # Green
-    (128, 128, 0),  # Yellow
-    (0, 0, 128),  # Blue
-    (128, 0, 128),  # Magenta
-    (0, 128, 128),  # Cyan
-    (192, 192, 192),  # White
-    (128, 128, 128),  # Bright Black (Gray)
-    (255, 0, 0),  # Bright Red
-    (0, 255, 0),  # Bright Green
-    (255, 255, 0),  # Bright Yellow
-    (0, 0, 255),  # Bright Blue
-    (255, 0, 255),  # Bright Magenta
-    (0, 255, 255),  # Bright Cyan
-    (255, 255, 255),  # Bright White
-)
-"""RGB channel values for the 16 standard ANSI colors."""
-
 _CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
 """RGB channel steps for the 6×6×6 color cube in 256-color palettes."""  # ruff:ignore[ambiguous-unicode-character-string]
 
@@ -276,11 +256,9 @@ _CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
 
 
 def _ansi256_to_rgb(code: int, /) -> tuple[int, int, int]:
-    """Internal functions to convert an ANSI 256-color palette index in range `[0, 255]` to an `(R, G, B)` tuple."""
+    """Internal function to convert an ANSI 256-color palette index in range `[16, 255]` to an `(R, G, B)` tuple."""
 
-    if code < 16:
-        return _ANSI16_RGB[code]
-    elif code < 232:
+    if code < 232:
         offset = code - 16
         return (_CUBE_STEPS[offset // 36], _CUBE_STEPS[(offset // 6) % 6], _CUBE_STEPS[offset % 6])
 
@@ -1087,6 +1065,9 @@ class _FgColor256Style(_Color256Style):
     def contrast_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind this foreground."""
 
+        if self._code < 16:
+            return _BgColorStyle(255, 255, 255) if self._code in {0, 8} else _BgColorStyle(0, 0, 0)
+
         red, green, blue = _ansi256_to_rgb(self._code)
         luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
         return _BgColorStyle(255, 255, 255) if luminance < 128 else _BgColorStyle(0, 0, 0)
@@ -1107,6 +1088,9 @@ class _BgColor256Style(_Color256Style):
 
     def contrast_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on this background."""
+
+        if self._code < 16:
+            return _FgColorStyle(255, 255, 255) if self._code in {0, 8} else _FgColorStyle(0, 0, 0)
 
         red, green, blue = _ansi256_to_rgb(self._code)
         luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue

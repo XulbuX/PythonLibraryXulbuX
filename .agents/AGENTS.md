@@ -4,7 +4,7 @@ When working on this repository, any AI agent or automated assistant must adhere
 
 ## 1. Strict Typing (MyPyC Compatibility)
 
-This library is compiled using **MyPyC**. Therefore, **EVERYTHING** must be meticulously and strictly type-hinted. Do not ever use `Any` unless it is fundamentally impossible to type-hint otherwise. All changes must be fully statically analyzable to compile correctly.
+This entire library (including all Python files across all subdirectories of `src/xulbux/`, such as `base/`, `cli/`, etc.) is compiled to C using **MyPyC**. Therefore, **EVERYTHING** must be meticulously and strictly type-hinted. Do not ever use `Any` unless it is fundamentally impossible to type-hint otherwise. All changes must be fully statically analyzable to compile correctly.
 
 ## 2. Validation & Testing
 
@@ -17,7 +17,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 ## 4. Performance & MyPyC Idioms
 
 *   **Performance First:** This library prioritizes modernity and speed. Avoid eager imports for heavy operations. Utilize lazy loading via PEP 562 (`__getattr__` in `__init__.py`) and lazy compiled regular expressions (`LazyRegex`).
-*   **MyPyC Optimization (CRITICAL):** Because the library is compiled to C via MyPyC, standard Python performance advice doesn't always apply. You must strictly follow these rules:
+*   **MyPyC Optimization (CRITICAL):** Because the library in its entirety (all modules and subpackages) is compiled to C via MyPyC, standard Python performance advice doesn't always apply. You must strictly follow these rules everywhere across the codebase:
     *   **Generators:** NEVER pass generator expressions to functions like `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`, etc.
         *   For full iterations (`join`, `sum`, `tuple`, `max`), ALWAYS wrap them in brackets `[]` to force an optimized list comprehension.
         *   For short-circuiting functions (`any`, `all`, `next`), write explicit unrolled native `for`-loops with `break` or `return`.
@@ -40,7 +40,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 ## 6. Documentation & Markdown Formatting
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
-*   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions. Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
+*   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
 
 ## 7. Dependency Management
 

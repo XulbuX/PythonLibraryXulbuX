@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 from xulbux import __version__
-from xulbux.cli.help import H, get_latest_version, is_latest_version, show_help
+from xulbux.cli.help import get_latest_version, is_latest_version, show_help
 import pytest
 
 
@@ -60,7 +60,31 @@ def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]) -> None
     mock_pause.assert_called_once()
 
 
-def test_h_styling_constants() -> None:
-    assert H.CMD is not None
-    assert H.HEADING is not None
-    assert H.BORDER is not None
+def test_show_help_with_update_notice(capsys: pytest.CaptureFixture[str]) -> None:
+    mock_pause = MagicMock()
+    with (
+        patch("xulbux.cli.help.IS_LATEST_VERSION", False),
+        patch("xulbux.cli.help.get_latest_version", return_value="99.0.0"),
+        patch("xulbux.console.pause_exit", mock_pause),
+    ):
+        show_help()
+
+    captured = capsys.readouterr()
+    assert "99.0.0" in captured.out
+    assert "available" in captured.out
+    mock_pause.assert_called_once()
+
+
+def test_show_help_when_not_latest_but_get_version_none(capsys: pytest.CaptureFixture[str]) -> None:
+    mock_pause = MagicMock()
+    with (
+        patch("xulbux.cli.help.IS_LATEST_VERSION", False),
+        patch("xulbux.cli.help.get_latest_version", return_value=None),
+        patch("xulbux.console.pause_exit", mock_pause),
+    ):
+        show_help()
+
+    captured = capsys.readouterr()
+    assert __version__ in captured.out
+    assert "available" not in captured.out
+    mock_pause.assert_called_once()

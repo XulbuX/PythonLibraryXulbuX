@@ -26,6 +26,36 @@ def test_cli_main_ansi_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
         assert "Foreground Colors" in captured.out
 
 
+def test_cli_main_color256_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch.object(sys, "argv", ["xulbux-lib", "color256"]):
+        main()
+        captured = capsys.readouterr()
+        assert "000" in captured.out
+        assert "255" in captured.out
+
+
+def test_cli_main_c256_alias_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch.object(sys, "argv", ["xulbux-lib", "c256"]):
+        main()
+        captured = capsys.readouterr()
+        assert "000" in captured.out
+        assert "255" in captured.out
+
+
+def test_cli_main_true_color_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch.object(sys, "argv", ["xulbux-lib", "truecolor"]):
+        main()
+        captured = capsys.readouterr()
+        assert "▄" in captured.out
+
+
+def test_cli_main_tc_alias_with_color(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch.object(sys, "argv", ["xulbux-lib", "tc", "#FF0000"]):
+        main()
+        captured = capsys.readouterr()
+        assert "▄" in captured.out
+
+
 def test_cli_main_default_help_subcommand(capsys: pytest.CaptureFixture[str]) -> None:
     with patch.object(sys, "argv", ["xulbux-lib"]), patch("xulbux.console.pause_exit"):
         main()

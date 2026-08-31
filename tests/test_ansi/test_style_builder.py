@@ -554,6 +554,9 @@ def test_contrast_methods() -> None:
 
     # 256-color palette styles -> contrast_fg & contrast_bg:
     assert S.BG.color256(0).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(1).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.BG.color256(8).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(9).contrast_fg() == S.rgb(0, 0, 0)
     assert S.BG.color256(15).contrast_fg() == S.rgb(0, 0, 0)
     assert S.BG.color256(16).contrast_fg() == S.rgb(255, 255, 255)
     assert S.BG.color256(231).contrast_fg() == S.rgb(0, 0, 0)
@@ -561,6 +564,9 @@ def test_contrast_methods() -> None:
     assert S.BG.color256(255).contrast_fg() == S.rgb(0, 0, 0)
 
     assert S.color256(0).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(1).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(8).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(9).contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.color256(15).contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.color256(16).contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.color256(231).contrast_bg() == S.BG.rgb(0, 0, 0)
