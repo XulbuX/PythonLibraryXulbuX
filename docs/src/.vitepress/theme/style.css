@@ -368,10 +368,13 @@ body .vp-doc > div > .api-item {
   box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
 }
 
-/* Ensure copy button and language indicator sit above the vignette. */
-.vp-doc div[class*='language-'] > button.copy,
+/* Ensure copy button and language indicator sit above the vignette: */
 .vp-doc div[class*='language-'] > span.lang {
   z-index: 3 !important;
+  pointer-events: none !important;
+}
+.vp-doc div[class*='language-'] > button.copy {
+  z-index: 4 !important;
 }
 
 /* Custom Scroll Buttons */

@@ -1295,7 +1295,7 @@ def log(
     """Prints a nicely formatted log message.\n
     ----------------------------------------------------------------------------------------------------
     *   `title` – The title of the log message (e.g., `DEBUG`, `WARN`, `FAIL`, …).
-    *   `prompt` – The log message (any object, or a `S` object for styled output).
+    *   `prompt` – The log message.
     *   `start` – Something to print before the log is printed.
     *   `end` – Something to print after the log is printed (e.g., `\\n`).
     *   `title_bg_color` – The background color of the `title`<br>
@@ -1303,10 +1303,7 @@ def log(
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `tab_size` – The tab size used for the log (default is 8 – matches terminal tabs).
     *   `title_px` – The horizontal padding (in chars) to the title (if `title_bg_color` is set).
-    *   `title_mx` – The horizontal margin (in chars) to the title.\n
-    ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `S` object. For more detailed<br>
-    information about styling, see the `ansi` module documentation."""
+    *   `title_mx` – The horizontal margin (in chars) to the title."""
 
     if tab_size < 0:
         raise ValueError(f"The 'tab_size' parameter must be a non-negative integer, got {tab_size!r}")
@@ -1639,7 +1636,7 @@ def log_box_filled(
 ) -> None:
     """Will print a box with a colored background, containing a log message.\n
     ----------------------------------------------------------------------------------------------------
-    *   `*lines` – The box content (any objects, or `S` objects, one per line).
+    *   `*lines` – The box content (one object per line).
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `box_bg_color` – The background color of the box<br>
@@ -1647,10 +1644,7 @@ def log_box_filled(
     *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
-    *   `indent` – The indentation of the box (in chars).\n
-    ----------------------------------------------------------------------------------------------------
-    To style the content, pass `S` objects. For more detailed<br>
-    information about styling, see the `ansi` module documentation."""
+    *   `indent` – The indentation of the box (in chars)."""
 
     if w_padding < 0:
         raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
@@ -1701,7 +1695,8 @@ def log_box_bordered(
 ) -> None:
     """Will print a bordered box, containing a log message.\n
     ----------------------------------------------------------------------------------------------------
-    *   `*lines` – The box content (any objects, or `S` objects, one per line).
+    *   `*lines` – The box content (one object per line).<br>
+        By adding `{hr}` in the `*lines`, you can insert horizontal rules to split the box content.
     *   `start` – Something to print before the log box is printed (e.g., `\\n`).
     *   `end` – Something to print after the log box is printed (e.g., `\\n`).
     *   `border_type` – One of the predefined border character sets.
@@ -1712,16 +1707,12 @@ def log_box_bordered(
     *   `indent` – The indentation of the box (in chars).
     *   `border_chars` – Define your own border characters set (overwrites `border_type`).\n
     ----------------------------------------------------------------------------------------------------
-    You can insert horizontal rules to split the box content by using `{hr}` in the `*lines`.\n
-    ----------------------------------------------------------------------------------------------------
-    To style the content, pass `S` objects. For more detailed<br>
-    information about styling, see the `ansi` module documentation.\n
-    ----------------------------------------------------------------------------------------------------
     The `border_type` can be one of the following:
-    *   `"standard" = ('┌', '─', '┐', '│', '┘', '─', '└', '│', '├', '─', '┤')`
-    *   `"rounded" = ('╭', '─', '╮', '│', '╯', '─', '╰', '│', '├', '─', '┤')`
-    *   `"strong" = ('┏', '━', '┓', '┃', '┛', '━', '┗', '┃', '┣', '━', '┫')`
-    *   `"double" = ('╔', '═', '╗', '║', '╝', '═', '╚', '║', '╠', '═', '╣')`\n
+    *   `"standard"` = `("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤")`
+    *   `"rounded"` = `("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤")`
+    *   `"strong"` = `("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫")`
+    *   `"double"` = `("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣")`
+
     The order of the characters is always:
     1.  top-left corner
     2.  top border
@@ -1733,7 +1724,30 @@ def log_box_bordered(
     8.  left border
     9.  left horizontal rule connector
     10. horizontal rule
-    11. right horizontal rule connector"""
+    11. right horizontal rule connector\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+    from xulbux import S
+
+    xx.console.log_box_bordered(
+        S.BOLD("A Title"),
+        "{hr}",
+        "Some content.",
+        "Some more content.",
+    )
+    ```
+
+    <!-- DOCS: <TerminalOutput>
+    <span class="br-black">╭────────────────────╮</span>
+    <span class="br-black">│</span> <span class="b">A Title           </span> <span class="br-black">│</span>
+    <span class="br-black">├────────────────────┤</span>
+    <span class="br-black">│</span> Some content.      <span class="br-black">│</span>
+    <span class="br-black">│</span> Some more content. <span class="br-black">│</span>
+    <span class="br-black">╰────────────────────╯</span>
+    </TerminalOutput> -->"""
 
     if is_any_style(border_style) and not is_bg_color_style(border_style):
         border_open = border_style.ansi
@@ -1803,14 +1817,11 @@ def confirm(
 ) -> bool:
     """Ask a yes/no question.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
+    *   `prompt` – The input prompt.
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
-    *   `default_is_yes` – The default answer if the user just presses enter.\n
-    ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `S` object. For more detailed<br>
-    information about styling, see the `ansi` module documentation."""
+    *   `default_is_yes` – The default answer if the user just presses enter."""
 
     yes_no = S.DIM(
         "(",
@@ -1844,17 +1855,14 @@ def multiline_input(
     reset_ansi: bool = True,
 ) -> str:
     """An input where users can write (and paste) text over multiple lines.\n
-    ------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The input prompt.
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `show_keybindings` – Whether to show the special keybindings or not.
     *   `input_prefix` – The prefix of the input line.
-    *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input.\n
-    ------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `S` object. For more detailed<br>
-    information about styling, see the `ansi` module documentation."""
+    *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input."""
 
     kb = KeyBindings()
     kb.add("escape", "enter", eager=True)(_multiline_input_submit)
@@ -1947,7 +1955,7 @@ def input(
 ) -> Any:
     """Acts like a standard Python `input()` a bunch of cool extra features.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The input prompt (any object, or a `S` object for styled output).
+    *   `prompt` – The input prompt.
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
@@ -1962,9 +1970,6 @@ def input(
         message if invalid, or nothing if valid.
     *   `default_val` – The default value to return if the input is empty.
     *   `output_type` – The type (class) to convert the input to before returning it.\n
-    ----------------------------------------------------------------------------------------------------
-    To style the `prompt`, pass a `S` object. For more detailed<br>
-    information about styling, see the `ansi` module documentation.\n
     ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
