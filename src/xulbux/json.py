@@ -42,7 +42,19 @@ def read(
         ```\n
     ----------------------------------------------------------------------------------------------------
     For more detailed information about the comment handling,<br>
-    see the `_data_module.remove_comments()` method documentation."""
+    see the `_data_module.remove_comments()` method documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Read JSON and strip comments:
+    config = xx.json.read("config.json")
+
+    # Read both stripped and raw original data with comments:
+    clean_data, raw_data = xx.json.read("config.json", return_original=True)
+    ```"""
 
     if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
         json_path = json_path.with_suffix(".json")
@@ -77,7 +89,21 @@ def create(
     ----------------------------------------------------------------------------------------------------
     The method will throw a `FileExistsError` if a file with the same<br>
     name already exists and a `SameContentFileExistsError` if a file<br>
-    with the same name and same content already exists."""
+    with the same name and same content already exists.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {
+        "app": "my-tool",
+        "version": "1.0.0",
+        "settings": {"debug": True, "workers": 4},
+    }
+
+    file_path = xx.json.create("config.json", data, indent=2, force=True)
+    ```"""
 
     if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
         json_path = json_path.with_suffix(".json")
@@ -138,7 +164,22 @@ def update(
     you can use `healthy->fruits->apples` as the value-path.\n
     If you don't know that the first list item is `"apples"`,<br>
     you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
-    ⇾ If the given value-path doesn't exist, it will be created."""
+    ⇾ If the given value-path doesn't exist, it will be created.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Update nested values in a JSON file without altering other keys:
+    xx.json.update(
+        "config.json",
+        {
+            "server->port": 8080,
+            "server->ssl->enabled": True,
+        },
+    )
+    ```"""
 
     processed_data, data = read(json_file, comment_start=comment_start, comment_end=comment_end, return_original=True)
 

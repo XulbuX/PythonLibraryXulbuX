@@ -221,7 +221,8 @@ def process_docstring(doc: str | None) -> str:
     def terminal_output_replacer(match: re.Match[str]) -> str:
         # Wrap each line in a `<span class="line">` and replace newlines with `<br>` for proper formatting in the docs:
         wrapped_lines = [f'<span class="line">{line.rstrip()}</span>' for line in match.group(1).strip("\n\r").split("\n")]
-        return f"<TerminalOutput>{'<br>'.join(wrapped_lines)}</TerminalOutput>\n"
+        content = f'<pre class="shiki vp-code" tabindex="0"><code class="term">{"<br>".join(wrapped_lines)}</code></pre>'
+        return f"<TerminalOutput>{content}</TerminalOutput>\n"
 
     processed = re.sub(
         r"<!--\s*DOCS:\s*<TerminalOutput>\s*\n(.*?)\n</TerminalOutput>\s*-->",

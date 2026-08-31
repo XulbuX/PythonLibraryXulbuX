@@ -215,7 +215,27 @@ def is_equal(
     *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.\n
     ----------------------------------------------------------------------------------------------------
     The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
-    `get_path_id()`. See its documentation for more details."""
+    `get_path_id()`. See its documentation for more details.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    dict_a = {"user": "alice", "timestamp": 1600000000, "role": "admin"}
+    dict_b = {"user": "alice", "timestamp": 1700000000, "role": "admin"}
+
+    # Compare while ignoring volatile fields:
+    same = xx.data.is_equal(dict_a, dict_b, ignore_paths="timestamp")
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Result:
+
+    ```python
+    True
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     if not path_sep:
         raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}") from None
@@ -286,22 +306,29 @@ def get_path_id(
     *   `ignore_not_found` – If true, the function will return `None`<br>
         if the value is not found instead of raising an error.\n
     ----------------------------------------------------------------------------------------------------
-    The param `value_path` is a sort of path (or a list of paths) to the value/s to be updated.
-
-    #### Example
+    #### Example Usage
 
     ```python
-    {
-        "healthy": {
-            "fruit": ["apples", "bananas", "oranges"],
-            "vegetables": ["carrots", "broccoli", "celery"]
+    import xulbux as xx
+
+    data = {
+        "server": {
+            "host": "localhost",
+            "ports": [80, 443],
         }
     }
+
+    # Generate path ID for the HTTPS port:
+    path_id = xx.data.get_path_id(data, "server->ports->1")
     ```
 
-    … if you want to change the value of `"apples"` to `"strawberries"`, the value path would be<br>
-    `healthy->fruit->apples` or if you don't know that the value is `"apples"` you can also use<br>
-    the index of the value, so `healthy->fruit->0`."""
+    <!-- DOCS: <AttachedCode> -->
+    Generated Path ID:
+
+    ```python
+    "1>011"
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     if not path_sep:
         raise ValueError(f"The 'path_sep' parameter must be a non-empty string, got {path_sep!r}") from None
@@ -326,7 +353,27 @@ def get_value_by_path_id(data: DataObjType, path_id: str, /, *, get_key: bool = 
     *   `data` – The list, tuple, or dictionary to retrieve the value from.
     *   `path_id` – The path ID to the value to retrieve, created before using `get_path_id()`.
     *   `get_key` – If true and the final item is in a dict,
-        it returns the key instead of the value."""
+        it returns the key instead of the value.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {"server": {"host": "localhost", "ports": [80, 443]}}
+    path_id = xx.data.get_path_id(data, "server->ports->1")
+
+    # Retrieve the value at the generated path ID:
+    port = xx.data.get_value_by_path_id(data, path_id)
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Retrieved Port Value:
+
+    ```python
+    443
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     parent: DataObjType | None = None
     path = _sep_path_id(path_id)
@@ -369,11 +416,33 @@ def set_value_by_path_id[DataObj: DataObjType](data: DataObj, update_values: dic
     ----------------------------------------------------------------------------------------------------
     *   `data` – The list, tuple, or dictionary to update the value/s in.
     *   `update_values` – A dictionary where keys are path IDs<br>
-        and values are the new values to insert, for example:
-        ```python
-        { "1>012": "new value", "1>31": ["new value 1", "new value 2"], ... }
-        ```
-        The path IDs should have been created using `get_path_id()`."""
+        and values are the new values to insert.
+        The path IDs should have been created using `get_path_id()`.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {"server": {"host": "localhost", "ports": [80, 443]}}
+    path_id = xx.data.get_path_id(data, "server->ports->1")
+
+    # Update the value at the generated path ID:
+    updated = xx.data.set_value_by_path_id(data, {path_id: 8443})
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Updated Structure:
+
+    ```python
+    {
+        "server": {
+            "host": "localhost",
+            "ports": [80, 8443],  # 2nd port updated from 443 to 8443
+        }
+    }
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     if not (valid_update_values := list(update_values.items())):
         raise ValueError(f"No valid 'update_values' found in dictionary:\n{update_values!r}") from None
@@ -426,7 +495,38 @@ def render(
     ----------------------------------------------------------------------------------------------------
     The returned `S` object exposes the rendered ANSI string via `.ansi` (or `str(…)`)\n
     and the plain, un-styled text via `.raw`.\n
-    For more detailed information about styling, see the `ansi` module documentation."""
+    For more detailed information about styling, see the `ansi` module documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {
+        "name": "xulbux",
+        "version": 2.0,
+        "items": ["ansi", "data"],
+        "ok": True,
+    }
+
+    # Format and print with syntax highlighting:
+    styled_output = xx.data.render(data, indent=2, max_width=60, syntax_highlighting=True)
+    styled_output.print()
+    ```
+
+    <!-- DOCS: <TerminalOutput>
+    <span class="br-black">{</span>
+      <span class="br-black">"</span><span class="br-blue">name</span><span class="br-black">": \
+"</span><span class="br-blue">xulbux</span><span class="br-black">",</span>
+      <span class="br-black">"</span><span class="br-blue">version</span><span class="br-black">": \
+</span><span class="br-magenta">2.0</span><span class="br-black">,</span>
+      <span class="br-black">"</span><span class="br-blue">items</span><span class="br-black">": \
+["</span><span class="br-blue">ansi</span><span class="br-black">", \
+"</span><span class="br-blue">data</span><span class="br-black">"],</span>
+      <span class="br-black">"</span><span class="br-blue">ok</span><span class="br-black">": \
+</span><span class="magenta">True</span>
+    <span class="br-black">}</span>
+    </TerminalOutput> -->"""
 
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}") from None

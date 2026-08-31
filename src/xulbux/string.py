@@ -12,7 +12,10 @@ import json as _json
 from typing import Any, Final, Literal
 import regex as _rx
 
-_PATTERNS: Final[LazyRegex] = LazyRegex(consecutive_empty_lines=r"(\n\s*){2,}", decompose_default=r"(?<=[a-z])(?=[A-Z])|[\-_]")
+_PATTERNS: Final[LazyRegex] = LazyRegex(
+    consecutive_empty_lines=r"(\n\s*){2,}",
+    decompose_default=r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\-_]",
+)
 
 _SPACE_TRANS_CACHE: dict[int, dict[int, str | int | None]] = {}
 
@@ -20,7 +23,27 @@ _SPACE_TRANS_CACHE: dict[int, dict[int, str | int | None]] = {}
 def to_type(string: str, /) -> Any:
     """Will convert a string to the found type, including complex nested structures.\n
     ----------------------------------------------------------------------------------------------------
-    *   `string` – The string to convert."""
+    *   `string` – The string to convert.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    val1 = xx.string.to_type("12345")
+    val2 = xx.string.to_type("[1, 2, 3]")
+    val3 = xx.string.to_type('{"enabled": true, "timeout": 30}')
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Parsed Types:
+
+    ```python
+    val1 = 12345  # int
+    val2 = [1, 2, 3]  # list[int]
+    val3 = {"enabled": True, "timeout": 30}  # dict[str, Any]
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     try:
         return _ast.literal_eval(string := string.strip())
@@ -118,12 +141,28 @@ def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) 
     ----------------------------------------------------------------------------------------------------
     *   `case_string` – The string to decompose.
     *   `seps` – Additional separators to split the string at.
-    *   `lower_all` – If true, all parts will be converted to lowercase."""
+    *   `lower_all` – If true, all parts will be converted to lowercase.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    parts = xx.string.decompose("myHTTPServer_port-config")
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Decomposed Parts:
+
+    ```python
+    ["my", "http", "server", "port", "config"]
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     if seps == "-_":
         parts = _PATTERNS.decompose_default.split(case_string)
     else:
-        parts = _rx.split(rf"(?<=[a-z])(?=[A-Z])|[{_rx.escape(seps)}]", case_string)
+        parts = _rx.split(rf"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[{_rx.escape(seps)}]", case_string)
 
     return [(part.lower() if lower_all else part) for part in parts]
 
@@ -132,7 +171,16 @@ def to_camel_case(string: str, /, *, upper: bool = True) -> str:
     """Will convert the string of any type of casing to CamelCase.\n
     ----------------------------------------------------------------------------------------------------
     *   `string` – The string to convert.
-    *   `upper` – If true, it will convert to UpperCamelCase, otherwise to lowerCamelCase."""
+    *   `upper` – If true, it will convert to UpperCamelCase, otherwise to lowerCamelCase.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    upper_camel = xx.string.to_camel_case("my_var_name")  # MyVarName
+    lower_camel = xx.string.to_camel_case("my_var_name", upper=False)  # myVarName
+    ```"""
 
     parts = decompose(string)
 
@@ -144,7 +192,16 @@ def to_delimited_case(string: str, /, delimiter: str = "_", *, screaming: bool =
     ----------------------------------------------------------------------------------------------------
     *   `string` – The string to convert.
     *   `delimiter` – The delimiter to use between parts.
-    *   `screaming` – Whether to convert all parts to uppercase."""
+    *   `screaming` – Whether to convert all parts to uppercase.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    kebab = xx.string.to_delimited_case("MyVarName", delimiter="-")  # my-var-name
+    screaming_snake = xx.string.to_delimited_case("MyVarName", screaming=True)  # MY_VAR_NAME
+    ```"""
 
     return delimiter.join([part.upper() if screaming else part for part in decompose(string)])
 

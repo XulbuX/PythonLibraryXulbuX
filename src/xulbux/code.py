@@ -114,7 +114,28 @@ def change_tab_size(code: str, new_tab_size: int, /, *, remove_empty_lines: bool
 def get_func_calls(code: str, /) -> list[list[Any]]:
     """Will try to get all function calls and return them as a list.\n
     ----------------------------------------------------------------------------------------------------
-    *   `code` – The code to analyze."""
+    *   `code` – The code to analyze.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    code_snippet = "result = math.sqrt(foo.bar(10)) + calculate()"
+    calls = xx.code.get_func_calls(code_snippet)
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Extracted Calls:
+
+    ```python
+    [
+        ("sqrt", "foo.bar(10)"),
+        ("calculate", ""),
+        ("bar", "10"),
+    ]
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     nested_func_calls: list[list[Any]] = []
 
@@ -129,7 +150,24 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
     """Will check if the code is very likely to be JavaScript.\n
     ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze.
-    *   `funcs` – A list of custom function names to check for."""
+    *   `funcs` – A list of custom function names to check for.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    js_code = "const add = (a, b) => { return a + b; };"
+    result = xx.code.is_js(js_code)
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Result:
+
+    ```python
+    True
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     if len(code.strip()) < 3:
         return False

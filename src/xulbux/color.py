@@ -67,7 +67,24 @@ class rgba(_ColorBase):
     *   `is_grayscale()` to check if the color is grayscale
     *   `is_opaque()` to check if the color has no transparency
     *   `with_alpha(alpha)` to create a new color with different alpha
-    *   `complementary()` to get the complementary color"""
+    *   `complementary()` to get the complementary color\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux import rgba
+
+    color = rgba(30, 144, 255)  # Dodger Blue
+
+    # Adjust color properties:
+    lighter = color.lighten(0.2)
+    darker = color.darken(0.15)
+    blended = color.blend(rgba(255, 0, 0), ratio=0.5)
+
+    # Convert to other color spaces:
+    hex_str = color.to_hexa()  # #1E90FF
+    hsl_obj = color.to_hsla()  # hsla(210°, 100%, 56%)
+    ```"""
 
     def __init__(self, red: int, green: int, blue: int, alpha: float | None = None, /, *, _validate: bool = True) -> None:
         self.red: int
@@ -334,7 +351,24 @@ class hsla(_ColorBase):
     *   `is_grayscale()` to check if the color is grayscale
     *   `is_opaque()` to check if the color has no transparency
     *   `with_alpha(alpha)` to create a new color with different alpha
-    *   `complementary()` to get the complementary color"""
+    *   `complementary()` to get the complementary color\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux import hsla
+
+    color = hsla(210, 100, 56)  # Dodger Blue
+
+    # Rotate hue and adjust saturation:
+    complementary = color.complementary()  # hsla(30°, 100%, 56%)
+    saturated = color.saturate(0.2)
+    desaturated = color.desaturate(0.3)
+
+    # Convert to other color spaces:
+    rgb_obj = color.to_rgba()  # rgba(30, 144, 255)
+    hex_obj = color.to_hexa()  # #1E90FF
+    ```"""
 
     def __init__(self, hue: int, sat: int, light: int, alpha: float | None = None, /, *, _validate: bool = True) -> None:
         self.hue: int
@@ -590,7 +624,23 @@ class hexa(_ColorBase):
     *   `is_grayscale()` to check if the color is grayscale
     *   `is_opaque()` to check if the color has no transparency
     *   `with_alpha(alpha)` to create a new color with different alpha
-    *   `complementary()` to get the complementary color"""
+    *   `complementary()` to get the complementary color\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux import hexa
+
+    color = hexa("#1E90FF")  # Dodger Blue
+
+    # Manipulate hex color:
+    lighter = color.lighten(0.2)
+    inverted = color.invert()
+
+    # Convert to other representations:
+    rgb_obj = color.to_rgba()  # rgba(30, 144, 255)
+    hsl_obj = color.to_hsla()  # hsla(210°, 100%, 56%)
+    ```"""
 
     def __init__(
         self,

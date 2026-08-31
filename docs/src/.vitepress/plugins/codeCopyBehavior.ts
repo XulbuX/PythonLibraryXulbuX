@@ -25,7 +25,7 @@ function handleCopy(event: ClipboardEvent) {
 
   if (inCodeBlock) {
     // Force plain text copy to strip out hyperlink formatting and preserve pure code:
-    event.clipboardData.setData('text/plain', selection.toString());
+    event.clipboardData.setData('text/plain', selection.toString().replace(/\u00a0/g, ' '));
     event.preventDefault();
   }
 }

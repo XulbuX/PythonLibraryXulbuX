@@ -152,7 +152,20 @@ def check_libs(
     ----------------------------------------------------------------------------------------------------
     If some libraries are missing or they could not be installed,
     their names will be returned as a list.<br>
-    If all libraries are installed (or were installed successfully), `None` will be returned."""
+    If all libraries are installed (or were installed successfully), `None` will be returned.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Check and prompt to install missing packages:
+    missing = xx.system.check_libs(
+        ["requests", "pytest"],
+        install_missing=True,
+        confirm_install=True,
+    )
+    ```"""
 
     if missing_libs_msgs is None:
         missing_libs_msgs = {
@@ -175,7 +188,19 @@ def elevate(win_title: str | None = None, args: Sequence[str] | None = None) -> 
     or else the program has to continue in a new window after elevation.\n
     ----------------------------------------------------------------------------------------------------
     Returns `True` if the current process already has elevated privileges and raises<br>
-    a `PermissionError` if the user denied the elevation or the elevation failed."""
+    a `PermissionError` if the user denied the elevation or the elevation failed.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Request administrator / root privileges:
+    if xx.system.elevate(win_title="Elevated Setup"):
+        print("Running with elevated permissions.")
+    else:
+        print("Elevation failed or was denied.")
+    ```"""
 
     if is_elevated():
         return True

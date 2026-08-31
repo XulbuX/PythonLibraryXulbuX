@@ -1299,16 +1299,22 @@ class S(_SBase):
     *   `code_positions` – A tuple of `(position, sequence)` pairs giving<br>
         the start offset of every ANSI escape sequence inside `ansi` (computed on demand).\n
     ----------------------------------------------------------------------------------------------------
-    Every style attribute supports `|` for combining and `()` for applying to text:
+    Every style attribute supports `|` for combining and `()` for applying to text.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
 
-    >>> S.BOLD("hello")                   # Bold, auto-reset after
-    >>> (S.BOLD | S.RED)("hello")         # Bold + red, auto-reset after
-    >>> S.BR.GREEN("hello")               # Bright green
-    >>> S.BG.BLACK("hello")               # Black background
-    >>> S.DIM("# ", S.ITALIC("comment"))  # Nested: dim wraps italic inside
-    >>> S("choices: ", S(", ").join([S.BOLD(c) for c in choices]))
+    ```python
+    from xulbux import S
 
-    For a full list of available attributes, see the `ansi` module documentation."""
+    # Combine styles using operator `|`:
+    status = (S.BOLD | S.BR.GREEN)("SUCCESS")
+
+    # Nesting and joining styled items:
+    header = S(S.BOLD("Options: "), S(", ").join([S.CYAN("fast"), S.CYAN("safe")]))
+
+    # Direct terminal printing:
+    status.print()
+    ```"""
 
     __slots__: tuple[str, ...] = ()
 
@@ -1593,9 +1599,28 @@ def is_renderable(obj: object, /) -> TypeIs[Renderable]:
 
 class Term:
     """Common ANSI terminal control sequences (cursor, screen, title, clipboard, modes)<br>
-    as plain strings or string-returning static methods.<br>
+    as plain strings or string-returning static methods.\n
     ----------------------------------------------------------------------------------------------------
-    Values can be passed straight into an `S(…)` call or written to `sys.stdout`."""
+    Values can be passed straight into an `S(…)` call or written to `sys.stdout`.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import sys
+    from xulbux import Term
+
+    # Switch to alternate screen and hide cursor:
+    sys.stdout.write(Term.ALT_SCREEN + Term.HIDE_CURSOR)
+    sys.stdout.flush()
+
+    # Move cursor up 2 rows and clear line:
+    sys.stdout.write(Term.up(2) + Term.CLEAR_LINE)
+    sys.stdout.flush()
+
+    # Restore main screen and cursor:
+    sys.stdout.write(Term.SHOW_CURSOR + Term.MAIN_SCREEN)
+    sys.stdout.flush()
+    ```"""
 
     BELL: ClassVar[str] = "\x07"
     """Terminal bell character to trigger an audio or visual alert."""

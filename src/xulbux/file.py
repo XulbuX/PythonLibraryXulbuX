@@ -21,7 +21,24 @@ def rename_extension(
     *   `full_extension` – Whether to replace the full extension (e.g., `.tar.gz`)<br>
         or just the last part of it (e.g., `.gz`).
     *   `camel_case_filename` – Whether to convert the filename to CamelCase<br>
-        in addition to changing the files extension."""
+        in addition to changing the files extension.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Rename single extension:
+    new_path = xx.file.rename_extension("archive.tar.gz", ".zip")  # archive.tar.zip
+
+    # Replace full compound extension and convert to CamelCase:
+    new_path = xx.file.rename_extension(
+        "my_data_file.tar.gz",
+        ".zip",
+        full_extension=True,
+        camel_case_filename=True,
+    )  # MyDataFile.zip
+    ```"""
 
     path = Path(file_path)
     filename_with_ext = path.name
@@ -43,7 +60,7 @@ def rename_extension(
 
 
 def create(file_path: Path | str, content: str = "", /, *, force: bool = False) -> Path:
-    """Create a file with ot without content.\n
+    """Create a file with or without content.\n
     ----------------------------------------------------------------------------------------------------
     *   `file_path` – The path where the file should be created.
     *   `content` – The content to write into the file.
@@ -52,7 +69,16 @@ def create(file_path: Path | str, content: str = "", /, *, force: bool = False) 
     ----------------------------------------------------------------------------------------------------
     The method will throw a `FileExistsError` if a file with the same<br>
     name already exists and a `SameContentFileExistsError` if a file<br>
-    with the same name and same content already exists."""
+    with the same name and same content already exists.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Create file safely or force overwrite:
+    file_path = xx.file.create("output/result.txt", "Generated content", force=True)
+    ```"""
 
     path = Path(file_path)
 

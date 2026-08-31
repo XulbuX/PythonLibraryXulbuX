@@ -9,6 +9,9 @@ def test_decompose_standard_casing() -> None:
     assert _string_module.decompose("SCREAMING_SNAKE_CASE") == ["screaming", "snake", "case"]
     assert _string_module.decompose("mixed_Case-StringExample") == ["mixed", "case", "string", "example"]
     assert _string_module.decompose("singleword") == ["singleword"]
+    assert _string_module.decompose("myHTTPServer_port-config") == ["my", "http", "server", "port", "config"]
+    assert _string_module.decompose("getHTTPResponse") == ["get", "http", "response"]
+    assert _string_module.decompose("HTTPServer") == ["http", "server"]
 
 
 def test_decompose_with_custom_separators_and_lower_all() -> None:
@@ -16,6 +19,7 @@ def test_decompose_with_custom_separators_and_lower_all() -> None:
     assert _string_module.decompose("PascalCase", lower_all=False) == ["Pascal", "Case"]
     assert _string_module.decompose("snake_case", lower_all=False) == ["snake", "case"]
     assert _string_module.decompose("mixed_Case", lower_all=False) == ["mixed", "Case"]
+    assert _string_module.decompose("myHTTPServer.port", seps=".", lower_all=False) == ["my", "HTTP", "Server", "port"]
 
 
 def test_to_camel_case_upper_and_lower() -> None:

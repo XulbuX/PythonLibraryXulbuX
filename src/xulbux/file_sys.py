@@ -69,7 +69,16 @@ def extend_path(
     If the `rel_path` couldn't be located in predefined directories,<br>
     it will be searched in the `search_in` directory/s.\n
     If the `rel_path` is still not found, it returns `None` or<br>
-    raises a `PathNotFoundError` if `raise_error` is true."""
+    raises a `PathNotFoundError` if `raise_error` is true.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Resolve a relative file with fuzzy matching:
+    resolved_path = xx.file_sys.extend_path("config.json", search_in="./settings", fuzzy_match=True)
+    ```"""
 
     search_dirs: list[Path] = []
     path: Path
@@ -121,7 +130,16 @@ def extend_or_make_path(
     that points to where the `rel_path` would be in the script directory,<br>
     even though the `rel_path` doesn't exist there.\n
     If `prefer_script_dir` is false, it will instead make a path<br>
-    that points to where the `rel_path` would be in the CWD."""
+    that points to where the `rel_path` would be in the CWD.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Resolve existing file or compute fallback path in script directory:
+    target_path = xx.file_sys.extend_or_make_path("data/cache.json")
+    ```"""
 
     try:
         return extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()

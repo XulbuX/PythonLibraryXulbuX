@@ -304,7 +304,34 @@ class ArgumentParser:
     *   `prefix_chars` – Characters that prefix options (default: `"-"`).
     *   `opt_value_sep` – String separating option from value (default: `"="`).
     *   `intermixed` – Whether options and positional arguments can be intermixed (default: `True`).
-    *   `help_opts` – A set of options that trigger the help print (default: `{"-h", "--help"}`)."""
+    *   `help_opts` – A set of options that trigger the help print (default: `{"-h", "--help"}`).\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux import ArgumentParser
+
+    parser = ArgumentParser(
+        title="File Processor",
+        subtitle="Process files with configurable output",
+    )
+
+    # Define positional arguments:
+    parser.add_arg("files", nargs="+", help="Input files to process.")
+
+    # Define flagged options:
+    parser.add_opt(("-o", "--output"), expects_value="PATH", help="Output directory.")
+    parser.add_opt(("-p", "--port"), expects_value="NUM?", help="Optional custom target port.")
+    parser.add_opt(("-v", "-vv", "-vvv"), "verbosity", help="Set verbosity level.")
+
+    args = parser.parse()
+
+    # Access parsed arguments:
+    input_files = args.files.vals()
+    output_dir = args.output.val(default="./dist")
+    port = args.port.val(int, default=8080)
+    verbosity = args.verbosity.opt  # -v, -vv, -vvv, or None if not provided
+    ```"""
 
     def __init__(
         self,
@@ -1644,7 +1671,28 @@ def log_box_filled(
     *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
     *   `w_padding` – The horizontal padding (in chars) to the box content.
     *   `w_full` – Whether to make the box be the full terminal width or not.
-    *   `indent` – The indentation of the box (in chars)."""
+    *   `indent` – The indentation of the box (in chars).\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+    from xulbux import S
+
+    xx.console.log_box_filled(
+        S.BOLD("Build Success"),
+        "Compiled 14 modules without errors.",
+        box_bg_color=S.BG.GREEN,
+        default_color=S.BLACK,
+    )
+    ```
+
+    <!-- DOCS: <TerminalOutput>
+    <span class="bg-green">                                      </span>
+    <span class="bg-green">  <span class="b black">Build Success</span>                         </span>
+    <span class="bg-green">  <span class="black">Compiled 14 modules without errors.</span>  </span>
+    <span class="bg-green">                                      </span>
+    </TerminalOutput> -->"""
 
     if w_padding < 0:
         raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
@@ -1654,14 +1702,14 @@ def log_box_filled(
     fg_style = _as_fg_color_style(default_color, param_name="default_color") if default_color is not None else S.hex("#000")
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-    bg_style: AnyStyle = (
+    bg_st: AnyStyle = (
         (S.RESET_FG | S.INVERSE | fg_style)
         if box_bg_color is None
         else _as_bg_color_style(box_bg_color, param_name="box_bg_color")
     )
 
-    open_seq = (fg_style | bg_style).ansi
-    bg_open = bg_style.ansi
+    open_seq = (fg_style | bg_st).ansi
+    bg_open = bg_st.ansi
     reset = S.RESET.ansi
 
     ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines)
@@ -1817,7 +1865,17 @@ def confirm(
     *   `start` – Something to print before the input.
     *   `end` – Something to print after the input (e.g., `\\n`).
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
-    *   `default_is_yes` – The default answer if the user just presses enter."""
+    *   `default_is_yes` – The default answer if the user just presses enter.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+    from xulbux import S
+
+    if xx.console.confirm("Do you want to overwrite the existing file?", default_is_yes=False):
+        print("Overwriting file...")
+    ```"""
 
     yes_no = S.DIM(
         "(",
@@ -1858,7 +1916,19 @@ def multiline_input(
     *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
     *   `show_keybindings` – Whether to show the special keybindings or not.
     *   `input_prefix` – The prefix of the input line.
-    *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input."""
+    *   `reset_ansi` – Whether to reset the ANSI codes after the user confirms the input.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+    from xulbux import S
+
+    content = xx.console.multiline_input(
+        S.BOLD("Enter commit message:"),
+        input_prefix=" > ",
+    )
+    ```"""
 
     kb = KeyBindings()
     kb.add("escape", "enter", eager=True)(_multiline_input_submit)
@@ -2500,7 +2570,23 @@ class ProgressBar(_StdoutInterceptorMixin):
         The last character represents empty sections.\n
     ----------------------------------------------------------------------------------------------------
     The formats can additionally be styled by embedding ANSI from the operator-based API.<br>
-    For more detailed information, see the `ansi` module documentation."""
+    For more detailed information, see the `ansi` module documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import time
+    from xulbux import ProgressBar, S
+
+    pb = ProgressBar()
+    total_steps = 100
+
+    for i in range(total_steps + 1):
+        pb.show_progress(i, total_steps, label=S.BR.CYAN("Downloading assets..."))
+        time.sleep(0.01)
+
+    pb.hide_progress()
+    ```"""
 
     def __init__(
         self,
@@ -2843,7 +2929,23 @@ class Throbber(_StdoutInterceptorMixin):
     *   `interval` – The time in seconds between each animation frame.\n
     ----------------------------------------------------------------------------------------------------
     The format can additionally be styled by embedding ANSI from the operator-based API.<br>
-    For more detailed information, see the `ansi` module documentation."""
+    For more detailed information, see the `ansi` module documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import time
+    from xulbux import S, Throbber
+    from xulbux.console import FRAMES_WINDMILL
+
+    throbber = Throbber(frames=FRAMES_WINDMILL)
+
+    throbber.start(S.BR.YELLOW("Initializing server..."))
+    time.sleep(2)
+    throbber.update_label(S.BR.GREEN("Connected successfully!"))
+    time.sleep(1)
+    throbber.stop()
+    ```"""
 
     def __init__(
         self,
