@@ -321,6 +321,8 @@ def _config_terminal() -> None:
 class _BuildOpenClose:
     """Internal, callable helper class to build the opening and closing ANSI sequences for a `_StyleGroup`."""
 
+    __slots__: tuple[str, ...] = ("group", "link_url", "sgr_close", "sgr_open")
+
     def __init__(self, group: _StyleGroup, /) -> None:
         self.group: _StyleGroup = group
         self.sgr_open: list[str] = []

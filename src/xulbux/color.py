@@ -23,6 +23,7 @@ _SRGB_LINEAR_LUT: tuple[float, ...] = tuple([
 
 
 class _ColorBase:
+    __slots__: tuple[str, ...] = ("alpha",)
     alpha: float | None
 
     def __len__(self) -> int:
@@ -85,6 +86,8 @@ class rgba(_ColorBase):
     hex_str = color.to_hexa()  # #1E90FF
     hsl_obj = color.to_hsla()  # hsla(210°, 100%, 56%)
     ```"""
+
+    __slots__: tuple[str, ...] = ("blue", "green", "red")
 
     def __init__(self, red: int, green: int, blue: int, alpha: float | None = None, /, *, _validate: bool = True) -> None:
         self.red: int
@@ -370,6 +373,8 @@ class hsla(_ColorBase):
     hex_obj = color.to_hexa()  # #1E90FF
     ```"""
 
+    __slots__: tuple[str, ...] = ("hue", "light", "sat")
+
     def __init__(self, hue: int, sat: int, light: int, alpha: float | None = None, /, *, _validate: bool = True) -> None:
         self.hue: int
         """The hue channel in range [0, 360] inclusive."""
@@ -641,6 +646,8 @@ class hexa(_ColorBase):
     rgb_obj = color.to_rgba()  # rgba(30, 144, 255)
     hsl_obj = color.to_hsla()  # hsla(210°, 100%, 56%)
     ```"""
+
+    __slots__: tuple[str, ...] = ("blue", "green", "red")
 
     def __init__(
         self,

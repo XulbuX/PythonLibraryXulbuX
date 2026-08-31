@@ -137,7 +137,7 @@ def test_progress_bar_draw_edge_cases() -> None:
     bar._draw_progress_bar(10, 0)
 
     # Emergency cleanup on draw failure:
-    with patch.object(bar, "_draw_progress_bar", side_effect=RuntimeError("Draw fail")), pytest.raises(RuntimeError):
+    with patch.object(ProgressBar, "_draw_progress_bar", side_effect=RuntimeError("Draw fail")), pytest.raises(RuntimeError):
         bar.show_progress(10, 100)
 
 
@@ -274,7 +274,7 @@ def test_throbber_animation_loop_error() -> None:
         throbber._buffer = []
         throbber._start_intercepting()
         throbber._stop_event = threading.Event()
-        with patch.object(throbber, "_redraw_display", side_effect=Exception("Redraw boom")):
+        with patch.object(Throbber, "_redraw_display", side_effect=Exception("Redraw boom")):
             throbber._animation_loop()
         assert throbber.active is False
 
@@ -290,7 +290,7 @@ def test_throbber_animation_loop_stop_event_cleared() -> None:
         def clear_event() -> None:
             throbber._stop_event = None
 
-        with patch.object(throbber, "_redraw_display", side_effect=clear_event):
+        with patch.object(Throbber, "_redraw_display", side_effect=clear_event):
             throbber._animation_loop()
         throbber.stop()
 

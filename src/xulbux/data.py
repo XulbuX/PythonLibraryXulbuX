@@ -637,6 +637,8 @@ def _set_nested_val(data: DataObjType, id_path: list[int], value: Any, /) -> Any
 class _DataRemoveCommentsHelper:
     """Internal, callable helper class to remove all comments from nested data structures."""
 
+    __slots__: tuple[str, ...] = ("comment_end", "comment_sep", "comment_start", "data", "pattern")
+
     def __init__(self, data: DataObjType, /, *, comment_start: str, comment_end: str, comment_sep: str) -> None:
         self.data: DataObjType = data
         self.comment_start: str = comment_start
@@ -696,6 +698,8 @@ class _DataRemoveCommentsHelper:
 
 class _DataGetPathIdHelper:
     """Internal, callable helper class to process a data path and generate its unique path ID."""
+
+    __slots__: tuple[str, ...] = ("current_data", "data_obj", "ignore_not_found", "keys", "max_id_length", "path_ids")
 
     def __init__(self, path: str, /, *, path_sep: str, data_obj: DataObjType, ignore_not_found: bool) -> None:
         self.keys: list[str] = path.split(path_sep)
@@ -780,6 +784,18 @@ class _DataGetPathIdHelper:
 
 class _DataRenderHelper:
     """Internal, callable helper class to format data structures as `S` objects."""
+
+    __slots__: tuple[str, ...] = (
+        "as_json",
+        "compactness",
+        "data",
+        "do_syntax_hl",
+        "indent",
+        "max_width",
+        "punct",
+        "sep",
+        "styles",
+    )
 
     def __init__(
         self,
@@ -935,10 +951,10 @@ class _DataRenderHelper:
         if self.compactness == 2 or not data_dict or not self.should_expand(list(data_dict.values())):
             return (
                 self.punct["{"]
-                + self.sep.join(
+                + self.sep.join([
                     f"{self.format_value(key)}{self.punct[':']} {self.format_value(val, current_indent)}"
                     for key, val in data_dict.items()
-                )
+                ])
                 + self.punct["}"]
             )
 

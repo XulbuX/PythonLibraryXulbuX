@@ -165,6 +165,8 @@ class ParsedArgData:
     When the `ParsedArgData` instance is accessed as a boolean
     it will correspond to the `exists` attribute."""
 
+    __slots__: tuple[str, ...] = ("exists", "is_arg", "opt", "values")
+
     def __init__(
         self,
         exists: bool = False,
@@ -264,6 +266,8 @@ class ParsedArgData:
 class ParsedArgs:
     """Container for the result of `ArgumentParser.parse()`."""
 
+    __slots__: tuple[str, ...] = ("_args",)
+
     def __init__(self) -> None:
         self._args: dict[str, ParsedArgData] = {}
 
@@ -332,6 +336,23 @@ class ArgumentParser:
     port = args.port.val(int, default=8080)
     verbosity = args.verbosity.opt  # -v, -vv, -vvv, or None if not provided
     ```"""
+
+    __slots__: tuple[str, ...] = (
+        "_arg_configs",
+        "_args_order",
+        "_opt_pattern",
+        "controls",
+        "epilog",
+        "examples",
+        "help_opts",
+        "intermixed",
+        "notice",
+        "opt_value_sep",
+        "prefix_chars",
+        "subtitle",
+        "title",
+        "usage",
+    )
 
     def __init__(
         self,
@@ -2305,6 +2326,18 @@ def _multiline_input_submit(event: KeyPressEvent, /) -> None:
 class _ConsoleInputHelper:
     """Helper class to manage input processing and events."""
 
+    __slots__: tuple[str, ...] = (
+        "allow_paste",
+        "allowed_chars",
+        "filtered_chars",
+        "mask_char",
+        "max_len",
+        "min_len",
+        "result_text",
+        "tried_pasting",
+        "validator",
+    )
+
     def __init__(
         self,
         mask_char: str | None,
@@ -2454,6 +2487,8 @@ class _ConsoleInputHelper:
 
 
 class _ConsoleInputValidator(Validator):
+    __slots__: tuple[str, ...] = ("get_text", "mask_char", "min_len", "validator")
+
     def __init__(
         self,
         get_text: Callable[[], str],
@@ -2479,6 +2514,8 @@ class _ConsoleInputValidator(Validator):
 
 
 class _StdoutInterceptorMixin:
+    __slots__: tuple[str, ...] = ("_buffer", "_last_line_len", "_original_stdout", "active")
+
     active: bool
     _original_stdout: TextIO | None
     _buffer: list[str]
@@ -2526,6 +2563,8 @@ class _StdoutInterceptorMixin:
 @mypyc_attr(native_class=False)
 class _InterceptedOutput:
     """Custom stdout wrapper that captures output and stores it in the progress bar buffer."""
+
+    __slots__: tuple[str, ...] = ("original_stdout", "status_indicator")
 
     def __init__(self, status_indicator: _StdoutInterceptorMixin, original_stdout: TextIO, /) -> None:
         self.status_indicator: _StdoutInterceptorMixin = status_indicator
@@ -2592,6 +2631,18 @@ class ProgressBar(_StdoutInterceptorMixin):
 
     pb.hide_progress()
     ```"""
+
+    __slots__: tuple[str, ...] = (
+        "_current_progress_str",
+        "_last_update_time",
+        "_min_update_interval",
+        "chars",
+        "format",
+        "limited_format",
+        "max_width",
+        "min_width",
+        "sep",
+    )
 
     def __init__(
         self,
@@ -2890,6 +2941,8 @@ class _ProgressContextHelper:
     *   `type_checking` – Whether to check the parameters' types:<br>
         Is false per default to save performance, but can be set to true for debugging purposes."""
 
+    __slots__: tuple[str, ...] = ("current_label", "current_progress", "progress_bar", "total")
+
     def __init__(self, progress_bar: ProgressBar, total: int, label: S | str | None, /) -> None:
         self.progress_bar: ProgressBar = progress_bar
         self.total: int = total
@@ -2951,6 +3004,18 @@ class Throbber(_StdoutInterceptorMixin):
     time.sleep(1)
     throbber.stop()
     ```"""
+
+    __slots__: tuple[str, ...] = (
+        "_animation_thread",
+        "_current_animation_str",
+        "_frame_idx",
+        "_stop_event",
+        "format",
+        "frames",
+        "interval",
+        "label",
+        "sep",
+    )
 
     def __init__(
         self,
@@ -3114,7 +3179,7 @@ class Throbber(_StdoutInterceptorMixin):
 
                 frame = self.frames[self._frame_idx % len(self.frames)] + _ANSI_RESET
                 label_ansi = _to_styled_text(self.label).ansi if self.label is not None else ""
-                formatted = self.sep.join(
+                formatted = self.sep.join([
                     fmt_part
                     for part in self.format
                     if (
@@ -3122,7 +3187,7 @@ class Throbber(_StdoutInterceptorMixin):
                             frame.replace("\\", r"\\"), _PATTERNS.label.sub(label_ansi.replace("\\", r"\\"), part)
                         )
                     )
-                )
+                ])
 
                 self._current_animation_str = formatted
                 self._last_line_len = len(formatted)

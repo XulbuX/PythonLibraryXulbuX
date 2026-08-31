@@ -197,7 +197,7 @@ type Hexa = str | int | _HexaObj
 class AllTextChars:
     """Sentinel class indicating all characters are allowed."""
 
-    ...
+    __slots__: tuple[str, ...] = ()
 
 
 class MissingLibsMsgs(TypedDict):
