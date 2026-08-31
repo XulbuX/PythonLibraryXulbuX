@@ -13,7 +13,7 @@ def test_getattr_module() -> None:
 
 def test_getattr_invalid() -> None:
     with pytest.raises(AttributeError):
-        _ = xulbux.non_existent_attribute
+        _ = getattr(xulbux, "non_existent_attribute")  # ruff:ignore[get-attr-with-constant]
 
 
 def test_dir() -> None:
@@ -28,7 +28,7 @@ def test_getattr_direct() -> None:
     assert res_console is not None
 
     with pytest.raises(AttributeError):
-        _ = xulbux.invalid
+        _ = getattr(xulbux, "invalid")  # ruff:ignore[get-attr-with-constant]
 
 
 def test_dir_direct() -> None:

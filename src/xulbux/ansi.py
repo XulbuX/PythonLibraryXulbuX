@@ -248,8 +248,44 @@ _STANDARD_SEQS: Final[dict[int, tuple[tuple[str, ...], tuple[str, ...]]],] = {
 """Pre-computed `(opens, closes)` tuple pairs for every standard single-code SGR style.\n
 Used as a fast path in `_build_open_close` to avoid per-call list and string allocations."""
 
+_ANSI16_RGB: Final[tuple[tuple[int, int, int], ...]] = (
+    (0, 0, 0),  # Black
+    (128, 0, 0),  # Red
+    (0, 128, 0),  # Green
+    (128, 128, 0),  # Yellow
+    (0, 0, 128),  # Blue
+    (128, 0, 128),  # Magenta
+    (0, 128, 128),  # Cyan
+    (192, 192, 192),  # White
+    (128, 128, 128),  # Bright Black (Gray)
+    (255, 0, 0),  # Bright Red
+    (0, 255, 0),  # Bright Green
+    (255, 255, 0),  # Bright Yellow
+    (0, 0, 255),  # Bright Blue
+    (255, 0, 255),  # Bright Magenta
+    (0, 255, 255),  # Bright Cyan
+    (255, 255, 255),  # Bright White
+)
+"""RGB channel values for the 16 standard ANSI colors."""
+
+_CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
+"""RGB channel steps for the 6×6×6 color cube in 256-color palettes."""  # ruff:ignore[ambiguous-unicode-character-string]
+
 
 # ***************************************************** INTERNAL HELPERS ******************************************************
+
+
+def _ansi256_to_rgb(code: int, /) -> tuple[int, int, int]:
+    """Internal functions to convert an ANSI 256-color palette index in range `[0, 255]` to an `(R, G, B)` tuple."""
+
+    if code < 16:
+        return _ANSI16_RGB[code]
+    elif code < 232:
+        offset = code - 16
+        return (_CUBE_STEPS[offset // 36], _CUBE_STEPS[(offset // 6) % 6], _CUBE_STEPS[offset % 6])
+
+    gray = 8 + (code - 232) * 10
+    return (gray, gray, gray)
 
 
 def _build_open_close(group: _StyleGroup, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -262,7 +298,7 @@ def _build_open_close(group: _StyleGroup, /) -> tuple[tuple[str, ...], tuple[str
 
 
 def _config_terminal() -> None:
-    """Configure the terminal to be able to interpret and render ANSI styling.\n
+    """Internal function to configure the terminal to be able to interpret and render ANSI styling.\n
     This function only does something the first time it is called. Subsequent calls are no-ops."""
 
     global _terminal_configured
@@ -807,28 +843,6 @@ class _Style(_SBase):
         return _render_styled(oc[0], oc[1], (text,))
 
 
-class _FgStyle(_Style):
-    """A single ANSI foreground color code."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def to_bg(self) -> _BgStyle:
-        """Convert to the corresponding background color style."""
-
-        return _BgStyle(self._value + 10)
-
-
-class _BgStyle(_Style):
-    """A single ANSI background color code."""
-
-    __slots__: tuple[str, ...] = ()
-
-    def to_fg(self) -> _FgStyle:
-        """Convert to the corresponding foreground color style."""
-
-        return _FgStyle(self._value - 10)
-
-
 class _ColorStyle(_SBase):
     """A 24-bit true-color style – foreground or background.\n
     ----------------------------------------------------------------------------------------------------
@@ -930,6 +944,12 @@ class _FgColorStyle(_ColorStyle):
 
         return _BgColorStyle(self._red, self._green, self._blue)
 
+    def contrast_bg(self) -> _BgColorStyle:
+        """Returns black or white background color for optimal contrast behind this foreground."""
+
+        luminance = 0.2126 * self._red + 0.7152 * self._green + 0.0722 * self._blue
+        return _BgColorStyle(255, 255, 255) if luminance < 128 else _BgColorStyle(0, 0, 0)
+
 
 class _BgColorStyle(_ColorStyle):
     """A 24-bit true-color background style."""
@@ -943,6 +963,44 @@ class _BgColorStyle(_ColorStyle):
         """Convert to the corresponding foreground color style."""
 
         return _FgColorStyle(self._red, self._green, self._blue)
+
+    def contrast_fg(self) -> _FgColorStyle:
+        """Returns black or white foreground color for optimal contrast on this background."""
+
+        luminance = 0.2126 * self._red + 0.7152 * self._green + 0.0722 * self._blue
+        return _FgColorStyle(255, 255, 255) if luminance < 128 else _FgColorStyle(0, 0, 0)
+
+
+class _FgStyle(_Style):
+    """A single ANSI foreground color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_bg(self) -> _BgStyle:
+        """Convert to the corresponding background color style."""
+
+        return _BgStyle(self._value + 10)
+
+    def contrast_bg(self) -> _BgColorStyle:
+        """Returns black or white background color for optimal contrast behind this foreground."""
+
+        return _BgColorStyle(255, 255, 255) if self._value in {30, 90} else _BgColorStyle(0, 0, 0)
+
+
+class _BgStyle(_Style):
+    """A single ANSI background color code."""
+
+    __slots__: tuple[str, ...] = ()
+
+    def to_fg(self) -> _FgStyle:
+        """Convert to the corresponding foreground color style."""
+
+        return _FgStyle(self._value - 10)
+
+    def contrast_fg(self) -> _FgColorStyle:
+        """Returns black or white foreground color for optimal contrast on this background."""
+
+        return _FgColorStyle(255, 255, 255) if self._value in {40, 100} else _FgColorStyle(0, 0, 0)
 
 
 class _Color256Style(_SBase):
@@ -1024,6 +1082,13 @@ class _FgColor256Style(_Color256Style):
 
         return _BgColor256Style(self._code)
 
+    def contrast_bg(self) -> _BgColorStyle:
+        """Returns black or white background color for optimal contrast behind this foreground."""
+
+        red, green, blue = _ansi256_to_rgb(self._code)
+        luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+        return _BgColorStyle(255, 255, 255) if luminance < 128 else _BgColorStyle(0, 0, 0)
+
 
 class _BgColor256Style(_Color256Style):
     """A 256-color palette background style."""
@@ -1037,6 +1102,13 @@ class _BgColor256Style(_Color256Style):
         """Convert to the corresponding foreground color style."""
 
         return _FgColor256Style(self._code)
+
+    def contrast_fg(self) -> _FgColorStyle:
+        """Returns black or white foreground color for optimal contrast on this background."""
+
+        red, green, blue = _ansi256_to_rgb(self._code)
+        luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+        return _FgColorStyle(255, 255, 255) if luminance < 128 else _FgColorStyle(0, 0, 0)
 
 
 class _Link(_SBase):
@@ -1178,6 +1250,24 @@ class _StyleGroup(_SBase):
                 converted_codes.append(code)
 
         return _StyleGroup(*converted_codes)
+
+    def contrast_fg(self) -> _FgColorStyle:
+        """Returns black or white foreground color for optimal contrast on the background in this group."""
+
+        for code in reversed(self._codes):
+            if isinstance(code, (_BgStyle, _BgColorStyle, _BgColor256Style)):
+                return code.contrast_fg()
+
+        return _FgColorStyle(255, 255, 255)
+
+    def contrast_bg(self) -> _BgColorStyle:
+        """Returns black or white background color for optimal contrast behind the foreground in this group."""
+
+        for code in reversed(self._codes):
+            if isinstance(code, (_FgStyle, _FgColorStyle, _FgColor256Style)):
+                return code.contrast_bg()
+
+        return _BgColorStyle(0, 0, 0)
 
 
 # ***************************************************** NAMESPACE HELPERS *****************************************************

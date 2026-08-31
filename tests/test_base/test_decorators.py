@@ -42,7 +42,7 @@ def test_deprecated_decorator_on_standard_function() -> None:
     def old_function() -> int:
         return 42
 
-    assert old_function() == 42
+    assert old_function() == 42  # pyright:ignore[reportDeprecated]
 
 
 def test_deprecated_branch_for_python_3_13_plus() -> None:

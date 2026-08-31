@@ -1436,7 +1436,7 @@ def fg_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
     was_hexa, was_int = is_valid_hexa(text_bg_color), isinstance(text_bg_color, int)
 
     text_bg_rgba = to_rgba(text_bg_color)
-    brightness = 0.2126 * text_bg_rgba[0] + 0.7152 * text_bg_rgba[1] + 0.0722 * text_bg_rgba[2]
+    luminance = 0.2126 * text_bg_rgba[0] + 0.7152 * text_bg_rgba[1] + 0.0722 * text_bg_rgba[2]
 
     return (
         (
@@ -1444,7 +1444,7 @@ def fg_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
             if was_hexa
             else rgba(255, 255, 255, _validate=False)
         )
-        if brightness < 128
+        if luminance < 128
         else ((0x000 if was_int else hexa(_red=0, _green=0, _blue=0)) if was_hexa else rgba(0, 0, 0, _validate=False))
     )
 

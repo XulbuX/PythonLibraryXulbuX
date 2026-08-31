@@ -95,10 +95,14 @@ def test_log_box_filled() -> None:
         # Full width log box:
         log_box_filled("Full width box", box_bg_color=None, w_full=True)
 
+        # Auto-contrast foreground on dark background:
+        log_box_filled("Dark box text", box_bg_color=S.BG.BLACK)
+
     output = stream.getvalue()
     assert "Line 1" in output
     assert "Line 2" in output
     assert "Full width box" in output
+    assert "Dark box text" in output
 
     with pytest.raises(ValueError, match="w_padding"):
         log_box_filled("Error", w_padding=-1)

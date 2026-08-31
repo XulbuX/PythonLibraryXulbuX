@@ -1201,7 +1201,7 @@ def get_size() -> tuple[int, int]:
 
 
 def get_user() -> str:
-    """The name of the current user."""
+    """The username of the current user."""
 
     return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
@@ -1699,7 +1699,12 @@ def log_box_filled(
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-    fg_style = _as_fg_color_style(default_color, param_name="default_color") if default_color is not None else S.hex("#000")
+    if default_color is not None:
+        fg_style = _as_fg_color_style(default_color, param_name="default_color")
+    elif box_bg_color is not None:
+        fg_style = _as_bg_color_style(box_bg_color, param_name="box_bg_color").contrast_fg()
+    else:
+        fg_style = S.hex("#000")
 
     # If no box BG color is set, use the console foreground color as the box BG (via inversion):
     bg_st: AnyStyle = (
