@@ -126,7 +126,7 @@ def test_log_box_bordered() -> None:
         log_box_bordered("Double", border_type="double")
 
         # Custom 11-character border:
-        custom_borders = ("+", "-", "+", "|", "+", "-", "+", "|", "+", "-", "+")
+        custom_borders = "+-+|+-+|+-+"
         log_box_bordered("Custom border", border_chars=custom_borders)
 
     output = stream.getvalue()
@@ -144,9 +144,7 @@ def test_log_box_bordered_validation() -> None:
     with pytest.raises(ValueError, match="indent"):
         log_box_bordered("Error", indent=-1)
     with pytest.raises(ValueError, match="exactly 11 characters"):
-        log_box_bordered("Error", border_chars=("+", "-"))  # type:ignore[arg-type]
-    with pytest.raises(ValueError, match="single-char"):
-        log_box_bordered("Error", border_chars=("++", "-", "+", "|", "+", "-", "+", "|", "+", "-", "+"))  # type:ignore[arg-type]
+        log_box_bordered("Error", border_chars="+-")
     with pytest.raises(ValueError, match="border_style"):
         log_box_bordered("Error", border_style=S.BG.RED)
     with pytest.raises(ValueError, match="border_style"):

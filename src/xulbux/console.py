@@ -1691,7 +1691,7 @@ def log_box_bordered(
     w_padding: int = 1,
     w_full: bool = False,
     indent: int = 0,
-    border_chars: tuple[str, str, str, str, str, str, str, str, str, str, str] | None = None,
+    border_chars: str | None = None,
 ) -> None:
     """Will print a bordered box, containing a log message.\n
     ----------------------------------------------------------------------------------------------------
@@ -1708,10 +1708,10 @@ def log_box_bordered(
     *   `border_chars` – Define your own border characters set (overwrites `border_type`).\n
     ----------------------------------------------------------------------------------------------------
     The `border_type` can be one of the following:
-    *   `"standard"` = `("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤")`
-    *   `"rounded"` = `("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤")`
-    *   `"strong"` = `("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫")`
-    *   `"double"` = `("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣")`
+    *   `"standard"` = `"┌─┐│┘─└│├─┤"`
+    *   `"rounded"` = `"╭─╮│╯─╰│├─┤"`
+    *   `"strong"` = `"┏━┓┃┛━┗┃┣━┫"`
+    *   `"double"` = `"╔═╗║╝═╚║╠═╣"`
 
     The order of the characters is always:
     1.  top-left corner
@@ -1761,21 +1761,17 @@ def log_box_bordered(
         raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
-    if border_chars is not None:
-        if len(border_chars) != 11:
-            raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
-        for char in border_chars:
-            if len(char) != 1:
-                raise ValueError(f"List values must be single-char strings, got {border_chars!r}")
+    if border_chars is not None and len(border_chars) != 11:
+        raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
 
     content_open = _as_fg_color_style(default_color, param_name="default_color").ansi if default_color is not None else ""
     reset = S.RESET.ansi
 
     borders = {
-        "standard": ("┌", "─", "┐", "│", "┘", "─", "└", "│", "├", "─", "┤"),
-        "rounded": ("╭", "─", "╮", "│", "╯", "─", "╰", "│", "├", "─", "┤"),
-        "strong": ("┏", "━", "┓", "┃", "┛", "━", "┗", "┃", "┣", "━", "┫"),
-        "double": ("╔", "═", "╗", "║", "╝", "═", "╚", "║", "╠", "═", "╣"),
+        "standard": "┌─┐│┘─└│├─┤",
+        "rounded": "╭─╮│╯─╰│├─┤",
+        "strong": "┏━┓┃┛━┗┃┣━┫",
+        "double": "╔═╗║╝═╚║╠═╣",
     }
     border_chars = borders.get(border_type, borders["standard"]) if border_chars is None else border_chars
 
