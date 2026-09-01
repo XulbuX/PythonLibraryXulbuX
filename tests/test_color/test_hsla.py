@@ -80,6 +80,8 @@ def test_hsla_dict_and_values() -> None:
 
 def test_hsla_conversions() -> None:
     color1 = hsla(0, 100, 50, 0.5)
+    assert color1.to_hsla() is color1
+
     rgba_color = color1.to_rgba()
     assert rgba_color.red == 255
     assert rgba_color.alpha is not None and math.isclose(rgba_color.alpha, 0.5)

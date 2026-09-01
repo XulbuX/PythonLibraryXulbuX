@@ -92,6 +92,8 @@ def test_hexa_values() -> None:
 
 def test_hexa_conversions() -> None:
     color1 = hexa("#FF000080")
+    assert color1.to_hexa() is color1
+
     rgba_color = color1.to_rgba()
     assert isinstance(rgba_color, rgba)
     assert rgba_color.red == 255

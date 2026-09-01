@@ -164,6 +164,11 @@ class rgba(_ColorBase):
 
         return self.red, self.green, self.blue, self.alpha
 
+    def to_rgba(self) -> rgba:
+        """Returns the color as `rgba()` color object."""
+
+        return self
+
     def to_hsla(self) -> hsla:
         """Returns the color as `hsla()` color object."""
 
@@ -454,6 +459,11 @@ class hsla(_ColorBase):
 
         red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
         return rgba(red, green, blue, self.alpha, _validate=False)
+
+    def to_hsla(self) -> hsla:
+        """Returns the color as `hsla()` color object."""
+
+        return self
 
     def to_hexa(self) -> hexa:
         """Returns the color as `hexa()` color object."""
@@ -801,6 +811,11 @@ class hexa(_ColorBase):
 
         return self.to_rgba(round_alpha=round_alpha).to_hsla()
 
+    def to_hexa(self) -> hexa:
+        """Returns the color as `hexa()` color object."""
+
+        return self
+
     def lighten(self, amount: float, /) -> hexa:
         """Increases the colors lightness by the specified amount in range [0.0, 1.0] inclusive."""
 
@@ -1131,14 +1146,14 @@ def to_rgba(color: Rgba | Hsla | Hexa, /) -> rgba:
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
-    if isinstance(color, (hsla, hexa)):
+    if isinstance(color, (rgba, hsla, hexa)):
         return color.to_rgba()
+    elif is_valid_rgba(color):
+        return _parse_rgba(color)
     elif is_valid_hsla(color):
         return _parse_hsla(color).to_rgba()
     elif is_valid_hexa(color):
         return hexa(color).to_rgba()
-    elif is_valid_rgba(color):
-        return _parse_rgba(color)
 
     raise ValueError(f"Could not convert color {color!r} to RGBA\nMust be a valid RGBA, HSLA, or HEXA color")
 
@@ -1148,14 +1163,14 @@ def to_hsla(color: Rgba | Hsla | Hexa, /) -> hsla:
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
-    if isinstance(color, (rgba, hexa)):
+    if isinstance(color, (rgba, hsla, hexa)):
         return color.to_hsla()
+    elif is_valid_hsla(color):
+        return _parse_hsla(color)
     elif is_valid_rgba(color):
         return _parse_rgba(color).to_hsla()
     elif is_valid_hexa(color):
         return hexa(color).to_hsla()
-    elif is_valid_hsla(color):
-        return _parse_hsla(color)
 
     raise ValueError(f"Could not convert color {color!r} to HSLA\nMust be a valid RGBA, HSLA, or HEXA color")
 
@@ -1165,14 +1180,14 @@ def to_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
     ----------------------------------------------------------------------------------------------------
     *   `color` – The color to convert (can be in any supported format)."""
 
-    if isinstance(color, (rgba, hsla)):
+    if isinstance(color, (rgba, hsla, hexa)):
         return color.to_hexa()
+    elif is_valid_hexa(color):
+        return hexa(color)
     elif is_valid_rgba(color):
         return _parse_rgba(color).to_hexa()
     elif is_valid_hsla(color):
         return _parse_hsla(color).to_hexa()
-    elif is_valid_hexa(color):
-        return color if isinstance(color, hexa) else hexa(color)
 
     raise ValueError(f"Could not convert color {color!r} to HEXA\nMust be a valid RGBA, HSLA, or HEXA color")
 

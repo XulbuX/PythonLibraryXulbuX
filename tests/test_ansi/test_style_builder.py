@@ -180,9 +180,25 @@ def test_style_group_composition_and_conversions() -> None:
 
     # Individual style conversions:
     assert S.RED.to_bg() == S.BG.RED
+    assert S.RED.to_fg() == S.RED
     assert S.BG.RED.to_fg() == S.RED
+    assert S.BG.RED.to_bg() == S.BG.RED
     assert S.hex("#FF0000").to_bg() == S.BG.hex("#FF0000")
+    assert S.hex("#FF0000").to_fg() == S.hex("#FF0000")
     assert S.BG.hex("#FF0000").to_fg() == S.hex("#FF0000")
+    assert S.BG.hex("#FF0000").to_bg() == S.BG.hex("#FF0000")
+    assert S.color256(196).to_fg() == S.color256(196)
+    assert S.color256(196).to_bg() == S.BG.color256(196)
+    assert S.BG.color256(196).to_fg() == S.color256(196)
+    assert S.BG.color256(196).to_bg() == S.BG.color256(196)
+    assert S.BOLD.to_fg() == S.BOLD
+    assert S.BOLD.to_bg() == S.BOLD
+    assert S.link("https://example.com").to_fg() == S.link("https://example.com")
+    assert S.link("https://example.com").to_bg() == S.link("https://example.com")
+    assert _ColorStyle(255, 0, 0, bg=False).to_bg() == S.BG.hex("#FF0000")
+    assert _ColorStyle(255, 0, 0, bg=True).to_fg() == S.hex("#FF0000")
+    assert _Color256Style(196, bg=False).to_bg() == S.BG.color256(196)
+    assert _Color256Style(196, bg=True).to_fg() == S.color256(196)
 
 
 def test_reset_tokens() -> None:
@@ -533,6 +549,12 @@ def test_contrast_methods() -> None:
     assert S.BG.BR.RED.contrast_fg() == S.rgb(0, 0, 0)
     assert S.BG.BR.WHITE.contrast_fg() == S.rgb(0, 0, 0)
 
+    # Standard ANSI background colors -> contrast_bg:
+    assert S.BG.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.BR.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.RED.contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
+
     # Standard ANSI foreground colors -> contrast_bg:
     assert S.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.BR.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
@@ -541,14 +563,24 @@ def test_contrast_methods() -> None:
     assert S.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.BR.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
 
+    # Standard ANSI foreground colors -> contrast_fg:
+    assert S.BLACK.contrast_fg() == S.rgb(255, 255, 255)
+    assert S.BR.BLACK.contrast_fg() == S.rgb(255, 255, 255)
+    assert S.RED.contrast_fg() == S.rgb(0, 0, 0)
+    assert S.WHITE.contrast_fg() == S.rgb(0, 0, 0)
+
     # TrueColor styles -> contrast_fg & contrast_bg:
     assert S.BG.rgb(0, 0, 0).contrast_fg() == S.rgb(255, 255, 255)
     assert S.BG.rgb(255, 255, 255).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.BG.rgb(0, 0, 0).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.rgb(255, 255, 255).contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.BG.hex("#111111").contrast_fg() == S.rgb(255, 255, 255)
     assert S.BG.hex("#EEEEEE").contrast_fg() == S.rgb(0, 0, 0)
 
     assert S.rgb(0, 0, 0).contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.rgb(255, 255, 255).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.rgb(0, 0, 0).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.rgb(255, 255, 255).contrast_fg() == S.rgb(0, 0, 0)
     assert S.hex("#111111").contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.hex("#EEEEEE").contrast_bg() == S.BG.rgb(0, 0, 0)
 
@@ -563,6 +595,16 @@ def test_contrast_methods() -> None:
     assert S.BG.color256(232).contrast_fg() == S.rgb(255, 255, 255)
     assert S.BG.color256(255).contrast_fg() == S.rgb(0, 0, 0)
 
+    assert S.BG.color256(0).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(1).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(8).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(9).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(15).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(16).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(231).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(232).contrast_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(255).contrast_bg() == S.BG.rgb(0, 0, 0)
+
     assert S.color256(0).contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.color256(1).contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.color256(8).contrast_bg() == S.BG.rgb(255, 255, 255)
@@ -572,6 +614,16 @@ def test_contrast_methods() -> None:
     assert S.color256(231).contrast_bg() == S.BG.rgb(0, 0, 0)
     assert S.color256(232).contrast_bg() == S.BG.rgb(255, 255, 255)
     assert S.color256(255).contrast_bg() == S.BG.rgb(0, 0, 0)
+
+    assert S.color256(0).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.color256(1).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.color256(8).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.color256(9).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.color256(15).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.color256(16).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.color256(231).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.color256(232).contrast_fg() == S.rgb(255, 255, 255)
+    assert S.color256(255).contrast_fg() == S.rgb(0, 0, 0)
 
     # StyleGroup -> contrast_fg & contrast_bg:
     assert (S.BOLD | S.BG.BLACK).contrast_fg() == S.rgb(255, 255, 255)

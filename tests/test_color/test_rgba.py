@@ -83,6 +83,8 @@ def test_rgba_dict_and_values() -> None:
 
 def test_rgba_conversions() -> None:
     color1 = rgba(255, 0, 0, 0.5)
+    assert color1.to_rgba() is color1
+
     hsla_color = color1.to_hsla()
     assert hsla_color.hue == 0
     assert hsla_color.sat == 100
