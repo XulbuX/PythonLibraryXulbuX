@@ -10,11 +10,11 @@ Show some information about the library.
 
 Preview all possible ANSI styles in the terminal.
 
-### `xulbux-lib color256`
+### `xulbux-lib c256`
 
 Show a map of all 256 colors in the terminal.
 
-### `xulbux-lib truecolor`
+### `xulbux-lib tc`
 
 Show a smooth true-color gradient map in the terminal.<br>
 Pass an optional color (HEX, RGB, or hue angle) to render a specific hue's gradient.

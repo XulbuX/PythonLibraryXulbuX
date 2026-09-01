@@ -48,7 +48,7 @@ def _parse_color_arg(raw: str, /) -> hsla | None:
 
 
 def show_true_color(color_arg: str | None = None, /) -> None:
-    """CLI command function for `xulbux-lib truecolor` command,<br>
+    """CLI command function for `xulbux-lib tc` command,<br>
     which renders a smooth true-color gradient in the terminal."""
 
     parsed_hsla: hsla | None = _parse_color_arg(color_arg) if color_arg else None

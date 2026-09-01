@@ -63,7 +63,6 @@ def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]) -> None
 def test_show_help_with_update_notice(capsys: pytest.CaptureFixture[str]) -> None:
     mock_pause = MagicMock()
     with (
-        patch("xulbux.cli.help.IS_LATEST_VERSION", False),
         patch("xulbux.cli.help.get_latest_version", return_value="99.0.0"),
         patch("xulbux.console.pause_exit", mock_pause),
     ):
@@ -78,7 +77,6 @@ def test_show_help_with_update_notice(capsys: pytest.CaptureFixture[str]) -> Non
 def test_show_help_when_not_latest_but_get_version_none(capsys: pytest.CaptureFixture[str]) -> None:
     mock_pause = MagicMock()
     with (
-        patch("xulbux.cli.help.IS_LATEST_VERSION", False),
         patch("xulbux.cli.help.get_latest_version", return_value=None),
         patch("xulbux.console.pause_exit", mock_pause),
     ):

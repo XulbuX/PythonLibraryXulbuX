@@ -10,12 +10,12 @@ def main() -> None:
 
             show_ansi()
 
-        case "c256" | "color256":
+        case "c256":
             from .color256 import show_color256
 
             show_color256()
 
-        case "tc" | "truecolor":
+        case "tc":
             from .true_color import show_true_color
 
             color_arg = _sys.argv[2] if len(_sys.argv) > 2 else None

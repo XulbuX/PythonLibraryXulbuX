@@ -9,7 +9,7 @@ def _render_pair(code: int, /) -> TextRenderable:
 
 
 def show_color256() -> None:
-    """CLI command function for `xulbux-lib color256` command,<br>
+    """CLI command function for `xulbux-lib c256` command,<br>
     which displays the full 256-color ANSI terminal palette."""
 
     lines: list[TextRenderable] = [S.RESET.ansi]

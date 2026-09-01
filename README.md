@@ -46,12 +46,12 @@ pip install --upgrade xulbux
 
 When the library is installed, the following commands are available in the terminal:
 
-| Command                | Description                                       |
-| :--------------------- | :------------------------------------------------ |
-| `xulbux-lib`           | Show some information about the library.          |
-| `xulbux-lib ansi`      | Preview all possible ANSI styles in the terminal. |
-| `xulbux-lib color256`  | Show a map of all 256 colors in the terminal.     |
-| `xulbux-lib truecolor` | Show a true-color gradient map in the terminal.   |
+| Command           | Description                                       |
+| :---------------- | :------------------------------------------------ |
+| `xulbux-lib`      | Show some information about the library.          |
+| `xulbux-lib ansi` | Preview all possible ANSI styles in the terminal. |
+| `xulbux-lib c256` | Show a map of all 256 colors in the terminal.     |
+| `xulbux-lib tc`   | Show a true-color gradient map in the terminal.   |
 
 <br>
 
