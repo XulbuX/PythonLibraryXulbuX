@@ -99,3 +99,21 @@ ruff format . ; if ($?) { ruff check . --fix } ; if ($?) { pyright --pythonpath 
 -   **Write Targeted Tests:** Add tests specifically exercising unexecuted branches or exception blocks.
 -   **Fix Code Bugs:** If a line cannot be covered or fails due to a real bug in `src/xulbux/`, **fix the bug in the code**. Never write tests expecting broken behavior.
 -   **No Pragmas Unless Truly Unavoidable:** Do not use `# pragma:no-cover` unless strictly necessary for defensive type-checking blocks already configured in `pyproject.toml`.
+
+---
+
+## 7. Mutation Testing (Mutmut)
+
+Use `mutmut` for periodic or on-demand test quality audits to catch redundant or ineffective tests.
+
+### Run Mutation Testing:
+
+-   **Run on a specific module or file:**
+    ```bash
+    mutmut run src/xulbux/ansi.py
+    ```
+-   **Inspect results & surviving mutants:**
+    ```bash
+    mutmut results
+    mutmut show <mutant_id>
+    ```

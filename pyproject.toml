@@ -27,6 +27,7 @@ dependencies = [
   "typing-extensions>=4.10.0; python_version < '3.13'",
 ]
 optional-dependencies = { dev = [
+  "mutmut>=3.7",
   "pyright>=1.1.411",
   "pytest>=9.0",
   "pytest-cov>=7.0",
@@ -65,6 +66,7 @@ keywords = [
 xulbux-lib = "xulbux.cli:main"
 
 [tool.coverage.report]
+fail_under = 100
 exclude_lines = [
   "@overload",
   "#\\s+coverage:ignore\\[.*\\]", # coverage:ignore[reason]
@@ -79,6 +81,20 @@ exclude_lines = [
 branch = true
 source = ["src/xulbux"]
 
+[tool.mutmut]
+pytest_add_cli_args = [
+  "-o", "addopts=",
+  "-x",
+  "-q",
+  "--no-cov",
+  "--disable-warnings",
+  "-W", "ignore",
+  "--tb=no",
+  "--no-header",
+  "--no-summary",
+]
+source_paths = ["src/xulbux/"]
+
 [tool.mypy]
 exclude_gitignore = true
 
@@ -87,10 +103,10 @@ typeCheckingMode = "strict"
 reportDeprecated = "warning"
 reportPrivateUsage = "none"
 include = ["src"]
-exclude = [".venv", "build"]
+exclude = [".venv", "build", "mutants"]
 
 [tool.pytest.ini_options]
-addopts = "-ra -q --cov=xulbux --cov-report=term-missing --cov-fail-under=100"
+addopts = "-ra -q --cov=xulbux --cov-report=term-missing"
 minversion = "7.0"
 pythonpath = ["src"]
 testpaths = ["tests"]
@@ -99,7 +115,7 @@ testpaths = ["tests"]
 preview = true
 line-length = 127
 target-version = "py312"
-extend-exclude = ["*.md"]
+extend-exclude = ["*.md", "mutants"]
 
 [tool.ruff.format]
 skip-magic-trailing-comma = false

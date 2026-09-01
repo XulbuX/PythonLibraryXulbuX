@@ -1,24 +1,19 @@
-# Compiled files & caches
 __pycache__/
 __pypackages__/
 .mypy_cache/
 .pytest_cache/
 .pytest_tmp/
 .ruff_cache/
-.coverage
-*.py[cdio]
-*$py.class
-
-# Build artifacts
+.venv/
 *.egg-info/
 build/
 dist/
-
-# Virtual environments
-.venv/
-
-# Documentation
 docs/.build/
 docs/node_modules/
 docs/src/.vitepress/cache/
 docs/src/.vitepress/dist/
+mutants/
+
+.coverage
+*.py[cdio]
+*$py.class
