@@ -5,7 +5,7 @@ def _render_pair(code: int, /) -> TextRenderable:
     """Internal helper to format a 256-color BG block and FG label pair."""
 
     bg, label = S.BG.color256(code), f"{code:03d}"
-    return ((bg.contrast_fg() | bg)(f" {label} "), " ", S.color256(code)(label))
+    return ((bg.as_text_fg() | bg)(f" {label} "), " ", S.color256(code)(label))
 
 
 def show_color256() -> None:

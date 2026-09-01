@@ -81,24 +81,24 @@ def test_hexa_str_and_repr() -> None:
 
 
 def test_hexa_dict() -> None:
-    assert hexa("#FF000080").dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": "80"}
-    assert hexa("#FF0000").dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": None}
+    assert hexa("#FF000080").as_dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": "80"}
+    assert hexa("#FF0000").as_dict() == {"red": "FF", "green": "00", "blue": "00", "alpha": None}
 
 
 def test_hexa_values() -> None:
-    assert hexa("#FF000080").values() == (255, 0, 0, 0.5)
-    assert hexa("#FF000080").values(round_alpha=False) != (255, 0, 0, 0.5)
+    assert hexa("#FF000080").as_tuple() == (255, 0, 0, 0.5)
+    assert hexa("#FF000080").as_tuple(round_alpha=False) != (255, 0, 0, 0.5)
 
 
 def test_hexa_conversions() -> None:
     color1 = hexa("#FF000080")
-    assert color1.to_hexa() is color1
+    assert color1.as_hexa() is color1
 
-    rgba_color = color1.to_rgba()
+    rgba_color = color1.as_rgba()
     assert isinstance(rgba_color, rgba)
     assert rgba_color.red == 255
 
-    hsla_color = color1.to_hsla()
+    hsla_color = color1.as_hsla()
     assert hsla_color.hue == 0
 
 
@@ -131,7 +131,7 @@ def test_hexa_saturate_desaturate() -> None:
 def test_hexa_rotate() -> None:
     color1 = hexa("#FF0000")
     rotated = color1.rotate(180)
-    assert rotated.to_hsla().hue == 180
+    assert rotated.as_hsla().hue == 180
 
 
 def test_hexa_invert() -> None:
@@ -182,4 +182,4 @@ def test_hexa_with_alpha_and_complementary() -> None:
         color1.with_alpha(1.5)
 
     complementary_color = hexa("#FF0000").complementary()
-    assert complementary_color.to_hsla().hue == 180
+    assert complementary_color.as_hsla().hue == 180

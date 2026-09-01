@@ -14,12 +14,12 @@ def test_rgba_to_hex_int_and_back() -> None:
     assert black == 0x010000FF
     assert preserved_blue == 0x0000FF
     assert preserved_black == 0x000000FF
-    assert _color_module.hex_int_to_rgba(blue).values() == (0, 0, 255, None)
-    assert _color_module.hex_int_to_rgba(black).values() == (0, 0, 0, 1.0)
-    assert _color_module.hex_int_to_rgba(preserved_blue).values() == (0, 0, 255, None)
-    assert _color_module.hex_int_to_rgba(preserved_black).values() == (0, 0, 255, None)
-    assert _color_module.hex_int_to_rgba(blue, preserve_original=True).values() == (1, 0, 255, None)
-    assert _color_module.hex_int_to_rgba(black, preserve_original=True).values() == (1, 0, 0, 1.0)
+    assert _color_module.hex_int_to_rgba(blue).as_tuple() == (0, 0, 255, None)
+    assert _color_module.hex_int_to_rgba(black).as_tuple() == (0, 0, 0, 1.0)
+    assert _color_module.hex_int_to_rgba(preserved_blue).as_tuple() == (0, 0, 255, None)
+    assert _color_module.hex_int_to_rgba(preserved_black).as_tuple() == (0, 0, 255, None)
+    assert _color_module.hex_int_to_rgba(blue, preserve_original=True).as_tuple() == (1, 0, 255, None)
+    assert _color_module.hex_int_to_rgba(black, preserve_original=True).as_tuple() == (1, 0, 0, 1.0)
 
     with pytest.raises(ValueError):
         _color_module.rgba_to_hex_int(256, 0, 0)
@@ -128,45 +128,45 @@ def test_has_alpha() -> None:
 
 
 def test_color_conversions() -> None:
-    color_rgba = _color_module.to_rgba("#FF00007F")
+    color_rgba = _color_module.as_rgba("#FF00007F")
     assert isinstance(color_rgba, rgba)
-    assert _color_module.to_rgba(color_rgba) is color_rgba
-    assert isinstance(_color_module.to_rgba(hsla(0, 100, 50)), rgba)
-    assert isinstance(_color_module.to_rgba((255, 0, 0)), rgba)
-    assert isinstance(_color_module.to_rgba("hsl(180, 50%, 50%)"), rgba)
-    assert isinstance(_color_module.to_rgba({"hue": 0, "sat": 100, "light": 50}), rgba)
-    assert isinstance(_color_module.to_rgba(0xFF0000), rgba)
+    assert _color_module.as_rgba(color_rgba) is color_rgba
+    assert isinstance(_color_module.as_rgba(hsla(0, 100, 50)), rgba)
+    assert isinstance(_color_module.as_rgba((255, 0, 0)), rgba)
+    assert isinstance(_color_module.as_rgba("hsl(180, 50%, 50%)"), rgba)
+    assert isinstance(_color_module.as_rgba({"hue": 0, "sat": 100, "light": 50}), rgba)
+    assert isinstance(_color_module.as_rgba(0xFF0000), rgba)
     with pytest.raises(ValueError):
-        _color_module.to_rgba("invalid")
+        _color_module.as_rgba("invalid")
 
-    color_hsla = _color_module.to_hsla((255, 0, 0, 0.5))
+    color_hsla = _color_module.as_hsla((255, 0, 0, 0.5))
     assert isinstance(color_hsla, hsla)
-    assert _color_module.to_hsla(color_hsla) is color_hsla
-    assert isinstance(_color_module.to_hsla(rgba(255, 0, 0)), hsla)
-    assert isinstance(_color_module.to_hsla("rgb(255, 200, 200)"), hsla)
-    assert isinstance(_color_module.to_hsla("#F00"), hsla)
-    assert isinstance(_color_module.to_hsla({"hue": 0, "sat": 100, "light": 50}), hsla)
-    assert isinstance(_color_module.to_hsla(0xFF0000), hsla)
+    assert _color_module.as_hsla(color_hsla) is color_hsla
+    assert isinstance(_color_module.as_hsla(rgba(255, 0, 0)), hsla)
+    assert isinstance(_color_module.as_hsla("rgb(255, 200, 200)"), hsla)
+    assert isinstance(_color_module.as_hsla("#F00"), hsla)
+    assert isinstance(_color_module.as_hsla({"hue": 0, "sat": 100, "light": 50}), hsla)
+    assert isinstance(_color_module.as_hsla(0xFF0000), hsla)
     with pytest.raises(ValueError):
-        _color_module.to_hsla("invalid")
+        _color_module.as_hsla("invalid")
 
-    color_hexa = _color_module.to_hexa((255, 0, 0, 0.5))
+    color_hexa = _color_module.as_hexa((255, 0, 0, 0.5))
     assert isinstance(color_hexa, hexa)
-    assert _color_module.to_hexa(color_hexa) is color_hexa
-    assert isinstance(_color_module.to_hexa(rgba(255, 0, 0)), hexa)
-    assert isinstance(_color_module.to_hexa(hsla(0, 100, 50)), hexa)
-    assert isinstance(_color_module.to_hexa("rgb(255, 200, 200)"), hexa)
-    assert isinstance(_color_module.to_hexa("#F00"), hexa)
-    assert isinstance(_color_module.to_hexa({"hue": 0, "sat": 100, "light": 50}), hexa)
-    assert isinstance(_color_module.to_hexa(0xFF0000), hexa)
+    assert _color_module.as_hexa(color_hexa) is color_hexa
+    assert isinstance(_color_module.as_hexa(rgba(255, 0, 0)), hexa)
+    assert isinstance(_color_module.as_hexa(hsla(0, 100, 50)), hexa)
+    assert isinstance(_color_module.as_hexa("rgb(255, 200, 200)"), hexa)
+    assert isinstance(_color_module.as_hexa("#F00"), hexa)
+    assert isinstance(_color_module.as_hexa({"hue": 0, "sat": 100, "light": 50}), hexa)
+    assert isinstance(_color_module.as_hexa(0xFF0000), hexa)
     with pytest.raises(ValueError):
-        _color_module.to_hexa("invalid")
+        _color_module.as_hexa("invalid")
 
 
 def test_str_to_rgba() -> None:
     color = _color_module.str_to_rgba("The color is rgb(255, 0, 0, 0.5).", only_first=True)
     assert isinstance(color, rgba)
-    assert color.values() == (255, 0, 0, 0.5)
+    assert color.as_tuple() == (255, 0, 0, 0.5)
 
     color_opaque = _color_module.str_to_rgba("rgba(255,0,0,1)", only_first=True)
     assert isinstance(color_opaque, rgba)
@@ -175,8 +175,8 @@ def test_str_to_rgba() -> None:
     colors = _color_module.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
     assert isinstance(colors, Sequence)
     assert len(colors) == 3
-    assert colors[0].values() == (255, 0, 0, None)
-    assert colors[1].values() == (0, 255, 0, 0.5)
+    assert colors[0].as_tuple() == (255, 0, 0, None)
+    assert colors[1].as_tuple() == (0, 255, 0, 0.5)
     assert colors[2].alpha is not None and math.isclose(colors[2].alpha, 1.0)
     assert _color_module.str_to_rgba("No colors here") is None
     assert _color_module.str_to_rgba("No colors here", only_first=True) is None
@@ -215,11 +215,11 @@ def test_luminance() -> None:
 def test_fg_for_on_bg() -> None:
     text_color_dark = _color_module.fg_for_on_bg(rgba(0, 0, 0))
     assert isinstance(text_color_dark, rgba)
-    assert text_color_dark.values() == (255, 255, 255, None)
+    assert text_color_dark.as_tuple() == (255, 255, 255, None)
 
     text_color_light = _color_module.fg_for_on_bg(rgba(255, 255, 255))
     assert isinstance(text_color_light, rgba)
-    assert text_color_light.values() == (0, 0, 0, None)
+    assert text_color_light.as_tuple() == (0, 0, 0, None)
 
     text_color_hexa_dark = _color_module.fg_for_on_bg(hexa("#000000"))
     assert isinstance(text_color_hexa_dark, hexa)
@@ -237,12 +237,12 @@ def test_adjust_lightness() -> None:
     color_red = rgba(128, 0, 0)
     lightened = _color_module.adjust_lightness(color_red, 0.5)
     assert isinstance(lightened, rgba)
-    assert lightened.values()[:-1] > color_red.values()[:-1]
+    assert lightened.as_tuple()[:-1] > color_red.as_tuple()[:-1]
 
     color_light_red = rgba(255, 128, 128)
     darkened = _color_module.adjust_lightness(color_light_red, -0.5)
     assert isinstance(darkened, rgba)
-    assert darkened.values()[:-1] < color_light_red.values()[:-1]
+    assert darkened.as_tuple()[:-1] < color_light_red.as_tuple()[:-1]
 
     lightened_hexa = _color_module.adjust_lightness(hexa("#800000"), 0.5)
     assert isinstance(lightened_hexa, hexa)
@@ -256,7 +256,7 @@ def test_adjust_saturation() -> None:
     color_base = rgba(128, 80, 80)
     saturated = _color_module.adjust_saturation(color_base, 0.25)
     assert isinstance(saturated, rgba)
-    assert saturated.to_hsla().sat > color_base.to_hsla().sat
+    assert saturated.as_hsla().sat > color_base.as_hsla().sat
 
     desaturated_hexa = _color_module.adjust_saturation(hexa("#FF0000"), -1.0)
     assert isinstance(desaturated_hexa, hexa)

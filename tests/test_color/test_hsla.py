@@ -74,19 +74,19 @@ def test_hsla_str_and_repr() -> None:
 
 
 def test_hsla_dict_and_values() -> None:
-    assert hsla(180, 50, 50, 0.5).dict() == {"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}
-    assert hsla(180, 50, 50, 0.5).values() == (180, 50, 50, 0.5)
+    assert hsla(180, 50, 50, 0.5).as_dict() == {"hue": 180, "sat": 50, "light": 50, "alpha": 0.5}
+    assert hsla(180, 50, 50, 0.5).as_tuple() == (180, 50, 50, 0.5)
 
 
 def test_hsla_conversions() -> None:
     color1 = hsla(0, 100, 50, 0.5)
-    assert color1.to_hsla() is color1
+    assert color1.as_hsla() is color1
 
-    rgba_color = color1.to_rgba()
+    rgba_color = color1.as_rgba()
     assert rgba_color.red == 255
     assert rgba_color.alpha is not None and math.isclose(rgba_color.alpha, 0.5)
 
-    hexa_color = color1.to_hexa()
+    hexa_color = color1.as_hexa()
     assert hexa_color.red == 255
     assert hexa_color.alpha is not None and math.isclose(hexa_color.alpha, 0.5)
 

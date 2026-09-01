@@ -99,7 +99,7 @@ def test_custom_color_builders() -> None:
     assert S.rgb(rgba(255, 0, 128))("from rgba").ansi == "\x1b[38;2;255;0;128mfrom rgba\x1b[39m"
     assert S.hex(hexa("#FF0080"))("from hexa").ansi == "\x1b[38;2;255;0;128mfrom hexa\x1b[39m"
 
-    # ColorStyle.from_hex with explicit bg:
+    # `ColorStyle.from_hex` with explicit bg:
     assert _ColorStyle.from_hex("#FF0000", bg=True)._bg is True
     assert _ColorStyle.from_hex("#FF0000", bg=False)._bg is False
     assert _ColorStyle.from_hex(0xFF0000, bg=True)._bg is True
@@ -151,7 +151,7 @@ def test_style_group_composition_and_conversions() -> None:
     left_styled_group = group1 | S.UNDERLINE
     assert len(list(left_styled_group)) == 3
 
-    # Explicit __ror__ calls:
+    # Explicit `__ror__` calls:
     assert _StyleGroup.__ror__(group1, S.UNDERLINE) == (S.UNDERLINE | group1)
     assert _Style.__ror__(S.BOLD, S.RED) == (S.RED | S.BOLD)
     assert _ColorStyle.__ror__(S.hex("#FF0000"), S.BOLD) == (S.BOLD | S.hex("#FF0000"))
@@ -172,33 +172,33 @@ def test_style_group_composition_and_conversions() -> None:
     assert result.raw == "complex text"
     assert "\x1b[1;4;94;47mcomplex text\x1b[22;24;39;49m" in result.ansi
 
-    # Group to_bg and to_fg conversions:
+    # Group `as_bg` and `as_fg` conversions:
     fg_group = S.RED | S.BOLD | S.hex("#FF0000")
-    bg_group = fg_group.to_bg()
+    bg_group = fg_group.as_bg()
     assert any(code == S.BG.RED for code in bg_group)
-    assert any(code == S.RED for code in bg_group.to_fg())
+    assert any(code == S.RED for code in bg_group.as_fg())
 
     # Individual style conversions:
-    assert S.RED.to_bg() == S.BG.RED
-    assert S.RED.to_fg() == S.RED
-    assert S.BG.RED.to_fg() == S.RED
-    assert S.BG.RED.to_bg() == S.BG.RED
-    assert S.hex("#FF0000").to_bg() == S.BG.hex("#FF0000")
-    assert S.hex("#FF0000").to_fg() == S.hex("#FF0000")
-    assert S.BG.hex("#FF0000").to_fg() == S.hex("#FF0000")
-    assert S.BG.hex("#FF0000").to_bg() == S.BG.hex("#FF0000")
-    assert S.color256(196).to_fg() == S.color256(196)
-    assert S.color256(196).to_bg() == S.BG.color256(196)
-    assert S.BG.color256(196).to_fg() == S.color256(196)
-    assert S.BG.color256(196).to_bg() == S.BG.color256(196)
-    assert S.BOLD.to_fg() == S.BOLD
-    assert S.BOLD.to_bg() == S.BOLD
-    assert S.link("https://example.com").to_fg() == S.link("https://example.com")
-    assert S.link("https://example.com").to_bg() == S.link("https://example.com")
-    assert _ColorStyle(255, 0, 0, bg=False).to_bg() == S.BG.hex("#FF0000")
-    assert _ColorStyle(255, 0, 0, bg=True).to_fg() == S.hex("#FF0000")
-    assert _Color256Style(196, bg=False).to_bg() == S.BG.color256(196)
-    assert _Color256Style(196, bg=True).to_fg() == S.color256(196)
+    assert S.RED.as_bg() == S.BG.RED
+    assert S.RED.as_fg() == S.RED
+    assert S.BG.RED.as_fg() == S.RED
+    assert S.BG.RED.as_bg() == S.BG.RED
+    assert S.hex("#FF0000").as_bg() == S.BG.hex("#FF0000")
+    assert S.hex("#FF0000").as_fg() == S.hex("#FF0000")
+    assert S.BG.hex("#FF0000").as_fg() == S.hex("#FF0000")
+    assert S.BG.hex("#FF0000").as_bg() == S.BG.hex("#FF0000")
+    assert S.color256(196).as_fg() == S.color256(196)
+    assert S.color256(196).as_bg() == S.BG.color256(196)
+    assert S.BG.color256(196).as_fg() == S.color256(196)
+    assert S.BG.color256(196).as_bg() == S.BG.color256(196)
+    assert S.BOLD.as_fg() == S.BOLD
+    assert S.BOLD.as_bg() == S.BOLD
+    assert S.link("https://example.com").as_fg() == S.link("https://example.com")
+    assert S.link("https://example.com").as_bg() == S.link("https://example.com")
+    assert _ColorStyle(255, 0, 0, bg=False).as_bg() == S.BG.hex("#FF0000")
+    assert _ColorStyle(255, 0, 0, bg=True).as_fg() == S.hex("#FF0000")
+    assert _Color256Style(196, bg=False).as_bg() == S.BG.color256(196)
+    assert _Color256Style(196, bg=True).as_fg() == S.color256(196)
 
 
 def test_reset_tokens() -> None:
@@ -269,7 +269,7 @@ def test_individual_style_string_helpers() -> None:
         assert S.RED.input() == "user_style_input"
         mock_input_style.assert_called_once_with("\x1b[31m")
 
-    # Bare _StyleGroup helpers:
+    # Bare `_StyleGroup` helpers:
     group = S.BOLD | S.RED
     assert group.raw == ""
     assert group.ansi == "\x1b[1;31m"
@@ -352,7 +352,7 @@ def test_individual_style_string_helpers() -> None:
     right_link_group = S.BOLD | link_obj
     assert len(list(right_link_group)) == 2
 
-    # Direct S returned by style calls:
+    # Direct `S` returned by style calls:
     seq = S.RED("Text")
     assert isinstance(seq, S)
     assert repr(seq) != ""
@@ -378,7 +378,7 @@ def test_individual_style_string_helpers() -> None:
     multi_link_arg = S.link("https://example.com")("a", "b", "c")
     assert multi_link_arg.raw == "abc"
 
-    # Custom _Style outside standard precomputed sequences:
+    # Custom `_Style` outside standard precomputed sequences:
     custom_style_matmul = _Style(999)
     assert (custom_style_matmul @ "custom").raw == "custom"
     custom_style_call = _Style(998)
@@ -469,11 +469,11 @@ def test_256_color_styles() -> None:
 
     # Conversion methods:
     fg_style = S.color256(196)
-    bg_converted = fg_style.to_bg()
+    bg_converted = fg_style.as_bg()
     assert bg_converted("text").ansi == "\x1b[48;5;196mtext\x1b[49m"
 
     bg_style = S.BG.color256(21)
-    fg_converted = bg_style.to_fg()
+    fg_converted = bg_style.as_fg()
     assert fg_converted("text").ansi == "\x1b[38;5;21mtext\x1b[39m"
 
     # Combining:
@@ -484,12 +484,12 @@ def test_256_color_styles() -> None:
     comb_ror_direct = S.color256(196).__ror__(S.BOLD)
     assert isinstance(comb_ror_direct, _StyleGroup)
 
-    # StyleGroup to_bg and to_fg conversions:
+    # StyleGroup `as_bg` and `as_fg` conversions:
     group = S.BOLD | S.color256(196)
-    group_bg = group.to_bg()
+    group_bg = group.as_bg()
     assert group_bg("text").ansi == "\x1b[1;48;5;196mtext\x1b[22;49m"
 
-    group_fg = group_bg.to_fg()
+    group_fg = group_bg.as_fg()
     assert group_fg("text").ansi == "\x1b[1;38;5;196mtext\x1b[22;39m"
 
     # Single item application:
@@ -535,107 +535,107 @@ def test_256_color_styles() -> None:
     assert isinstance(hash(S.BOLD | S.RED), int)
 
 
-def test_contrast_methods() -> None:
-    # Standard ANSI background colors -> contrast_fg:
-    assert S.BG.BLACK.contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.BR.BLACK.contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.RED.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.GREEN.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.YELLOW.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.BLUE.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.MAGENTA.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.CYAN.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.WHITE.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.BR.RED.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.BR.WHITE.contrast_fg() == S.rgb(0, 0, 0)
+def test_as_text_methods() -> None:
+    # Standard ANSI background colors -> `as_text_fg`:
+    assert S.BG.BLACK.as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.BR.BLACK.as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.RED.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.GREEN.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.YELLOW.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.BLUE.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.MAGENTA.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.CYAN.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.WHITE.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.BR.RED.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.BR.WHITE.as_text_fg() == S.rgb(0, 0, 0)
 
-    # Standard ANSI background colors -> contrast_bg:
-    assert S.BG.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.BR.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.RED.contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
+    # Standard ANSI background colors -> `as_text_bg`:
+    assert S.BG.BLACK.as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.BR.BLACK.as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.RED.as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.WHITE.as_text_bg() == S.BG.rgb(0, 0, 0)
 
-    # Standard ANSI foreground colors -> contrast_bg:
-    assert S.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BR.BLACK.contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.RED.contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.GREEN.contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BR.WHITE.contrast_bg() == S.BG.rgb(0, 0, 0)
+    # Standard ANSI foreground colors -> `as_text_bg`:
+    assert S.BLACK.as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BR.BLACK.as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.RED.as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.GREEN.as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.WHITE.as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BR.WHITE.as_text_bg() == S.BG.rgb(0, 0, 0)
 
-    # Standard ANSI foreground colors -> contrast_fg:
-    assert S.BLACK.contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BR.BLACK.contrast_fg() == S.rgb(255, 255, 255)
-    assert S.RED.contrast_fg() == S.rgb(0, 0, 0)
-    assert S.WHITE.contrast_fg() == S.rgb(0, 0, 0)
+    # Standard ANSI foreground colors -> `as_text_fg`:
+    assert S.BLACK.as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BR.BLACK.as_text_fg() == S.rgb(255, 255, 255)
+    assert S.RED.as_text_fg() == S.rgb(0, 0, 0)
+    assert S.WHITE.as_text_fg() == S.rgb(0, 0, 0)
 
-    # TrueColor styles -> contrast_fg & contrast_bg:
-    assert S.BG.rgb(0, 0, 0).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.rgb(255, 255, 255).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.rgb(0, 0, 0).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.rgb(255, 255, 255).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.hex("#111111").contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.hex("#EEEEEE").contrast_fg() == S.rgb(0, 0, 0)
+    # True color styles -> `as_text_fg` & `as_text_bg`:
+    assert S.BG.rgb(0, 0, 0).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.rgb(255, 255, 255).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.rgb(0, 0, 0).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.rgb(255, 255, 255).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.hex("#111111").as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.hex("#EEEEEE").as_text_fg() == S.rgb(0, 0, 0)
 
-    assert S.rgb(0, 0, 0).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.rgb(255, 255, 255).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.rgb(0, 0, 0).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.rgb(255, 255, 255).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.hex("#111111").contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.hex("#EEEEEE").contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.rgb(0, 0, 0).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.rgb(255, 255, 255).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.rgb(0, 0, 0).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.rgb(255, 255, 255).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.hex("#111111").as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.hex("#EEEEEE").as_text_bg() == S.BG.rgb(0, 0, 0)
 
-    # 256-color palette styles -> contrast_fg & contrast_bg:
-    assert S.BG.color256(0).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.color256(1).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.color256(8).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.color256(9).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.color256(15).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.color256(16).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.color256(231).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.BG.color256(232).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.BG.color256(255).contrast_fg() == S.rgb(0, 0, 0)
+    # 256-color palette styles -> `as_text_fg` & `as_text_bg`:
+    assert S.BG.color256(0).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(1).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.color256(8).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(9).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.color256(15).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.color256(16).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(231).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.BG.color256(232).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.BG.color256(255).as_text_fg() == S.rgb(0, 0, 0)
 
-    assert S.BG.color256(0).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.color256(1).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.color256(8).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.color256(9).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.color256(15).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.color256(16).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.color256(231).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.BG.color256(232).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.BG.color256(255).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(0).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(1).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(8).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(9).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(15).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(16).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(231).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.BG.color256(232).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.BG.color256(255).as_text_bg() == S.BG.rgb(0, 0, 0)
 
-    assert S.color256(0).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.color256(1).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.color256(8).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.color256(9).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.color256(15).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.color256(16).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.color256(231).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert S.color256(232).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert S.color256(255).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(0).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(1).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(8).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(9).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(15).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(16).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(231).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert S.color256(232).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert S.color256(255).as_text_bg() == S.BG.rgb(0, 0, 0)
 
-    assert S.color256(0).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.color256(1).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.color256(8).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.color256(9).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.color256(15).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.color256(16).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.color256(231).contrast_fg() == S.rgb(0, 0, 0)
-    assert S.color256(232).contrast_fg() == S.rgb(255, 255, 255)
-    assert S.color256(255).contrast_fg() == S.rgb(0, 0, 0)
+    assert S.color256(0).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.color256(1).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.color256(8).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.color256(9).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.color256(15).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.color256(16).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.color256(231).as_text_fg() == S.rgb(0, 0, 0)
+    assert S.color256(232).as_text_fg() == S.rgb(255, 255, 255)
+    assert S.color256(255).as_text_fg() == S.rgb(0, 0, 0)
 
-    # StyleGroup -> contrast_fg & contrast_bg:
-    assert (S.BOLD | S.BG.BLACK).contrast_fg() == S.rgb(255, 255, 255)
-    assert (S.BOLD | S.BG.WHITE).contrast_fg() == S.rgb(0, 0, 0)
-    assert (S.BOLD | S.BG.hex("#000")).contrast_fg() == S.rgb(255, 255, 255)
-    assert (S.BOLD | S.BG.color256(0)).contrast_fg() == S.rgb(255, 255, 255)
-    assert (S.BOLD | S.BG.color256(231)).contrast_fg() == S.rgb(0, 0, 0)
-    assert (S.BOLD | S.DIM).contrast_fg() == S.rgb(255, 255, 255)
+    # Style group -> `as_text_fg` & `as_text_bg`:
+    assert (S.BOLD | S.BG.BLACK).as_text_fg() == S.rgb(255, 255, 255)
+    assert (S.BOLD | S.BG.WHITE).as_text_fg() == S.rgb(0, 0, 0)
+    assert (S.BOLD | S.BG.hex("#000")).as_text_fg() == S.rgb(255, 255, 255)
+    assert (S.BOLD | S.BG.color256(0)).as_text_fg() == S.rgb(255, 255, 255)
+    assert (S.BOLD | S.BG.color256(231)).as_text_fg() == S.rgb(0, 0, 0)
+    assert (S.BOLD | S.DIM).as_text_fg() == S.rgb(255, 255, 255)
 
-    assert (S.BOLD | S.BLACK).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert (S.BOLD | S.WHITE).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert (S.BOLD | S.hex("#000")).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert (S.BOLD | S.color256(0)).contrast_bg() == S.BG.rgb(255, 255, 255)
-    assert (S.BOLD | S.color256(231)).contrast_bg() == S.BG.rgb(0, 0, 0)
-    assert (S.BOLD | S.DIM).contrast_bg() == S.BG.rgb(0, 0, 0)
+    assert (S.BOLD | S.BLACK).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert (S.BOLD | S.WHITE).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert (S.BOLD | S.hex("#000")).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert (S.BOLD | S.color256(0)).as_text_bg() == S.BG.rgb(255, 255, 255)
+    assert (S.BOLD | S.color256(231)).as_text_bg() == S.BG.rgb(0, 0, 0)
+    assert (S.BOLD | S.DIM).as_text_bg() == S.BG.rgb(0, 0, 0)

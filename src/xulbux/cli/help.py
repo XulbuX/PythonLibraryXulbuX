@@ -69,7 +69,7 @@ def show_help() -> None:
     # The local version of the library:
     version_msg: tuple[TextRenderable, TextRenderable, TextRenderable] = (
         xx_secondary("▄" * (len(__version__) + 7)),
-        (S.hex("#000") | xx_secondary.to_bg())("  ✓ v", S.BOLD(__version__), "  "),
+        (S.hex("#000") | xx_secondary.as_bg())("  ✓ v", S.BOLD(__version__), "  "),
         xx_secondary("▀" * (len(__version__) + 7)),
     )
 

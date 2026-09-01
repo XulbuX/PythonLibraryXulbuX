@@ -822,12 +822,12 @@ class _Style(_SBase):
 
         return _render_styled(oc[0], oc[1], (text,))
 
-    def to_fg(self) -> _Style:
+    def as_fg(self) -> _Style:
         """Convert to the corresponding foreground style."""
 
         return self
 
-    def to_bg(self) -> _Style:
+    def as_bg(self) -> _Style:
         """Convert to the corresponding background style."""
 
         return self
@@ -923,23 +923,23 @@ class _ColorStyle(_SBase):
     def __hash__(self) -> int:
         return hash((self._red, self._green, self._blue, self._bg))
 
-    def to_fg(self) -> _FgColorStyle:
+    def as_fg(self) -> _FgColorStyle:
         """Convert to the corresponding foreground color style."""
 
         return _FgColorStyle(self._red, self._green, self._blue)
 
-    def to_bg(self) -> _BgColorStyle:
+    def as_bg(self) -> _BgColorStyle:
         """Convert to the corresponding background color style."""
 
         return _BgColorStyle(self._red, self._green, self._blue)
 
-    def contrast_fg(self) -> _FgColorStyle:
+    def as_text_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on this color."""
 
         luminance = 0.2126 * self._red + 0.7152 * self._green + 0.0722 * self._blue
         return _FgColorStyle(255, 255, 255) if luminance < 128 else _FgColorStyle(0, 0, 0)
 
-    def contrast_bg(self) -> _BgColorStyle:
+    def as_text_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind this color."""
 
         luminance = 0.2126 * self._red + 0.7152 * self._green + 0.0722 * self._blue
@@ -951,12 +951,12 @@ class _FgColorStyle(_ColorStyle):
 
     __slots__: tuple[str, ...] = ()
 
-    def to_fg(self) -> _FgColorStyle:
+    def as_fg(self) -> _FgColorStyle:
         """Convert to the corresponding foreground color style."""
 
         return self
 
-    def to_bg(self) -> _BgColorStyle:
+    def as_bg(self) -> _BgColorStyle:
         """Convert to the corresponding background color style."""
 
         return _BgColorStyle(self._red, self._green, self._blue)
@@ -970,12 +970,12 @@ class _BgColorStyle(_ColorStyle):
     def __init__(self, red: int, green: int, blue: int, /, *, bg: bool = True) -> None:
         super().__init__(red, green, blue, bg=bg)
 
-    def to_fg(self) -> _FgColorStyle:
+    def as_fg(self) -> _FgColorStyle:
         """Convert to the corresponding foreground color style."""
 
         return _FgColorStyle(self._red, self._green, self._blue)
 
-    def to_bg(self) -> _BgColorStyle:
+    def as_bg(self) -> _BgColorStyle:
         """Convert to the corresponding background color style."""
 
         return self
@@ -986,22 +986,22 @@ class _FgStyle(_Style):
 
     __slots__: tuple[str, ...] = ()
 
-    def to_fg(self) -> _FgStyle:
+    def as_fg(self) -> _FgStyle:
         """Convert to the corresponding foreground color style."""
 
         return self
 
-    def to_bg(self) -> _BgStyle:
+    def as_bg(self) -> _BgStyle:
         """Convert to the corresponding background color style."""
 
         return _BgStyle(self._value + 10)
 
-    def contrast_fg(self) -> _FgColorStyle:
+    def as_text_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on this foreground."""
 
         return _FgColorStyle(255, 255, 255) if self._value in {30, 90} else _FgColorStyle(0, 0, 0)
 
-    def contrast_bg(self) -> _BgColorStyle:
+    def as_text_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind this foreground."""
 
         return _BgColorStyle(255, 255, 255) if self._value in {30, 90} else _BgColorStyle(0, 0, 0)
@@ -1012,22 +1012,22 @@ class _BgStyle(_Style):
 
     __slots__: tuple[str, ...] = ()
 
-    def to_fg(self) -> _FgStyle:
+    def as_fg(self) -> _FgStyle:
         """Convert to the corresponding foreground color style."""
 
         return _FgStyle(self._value - 10)
 
-    def to_bg(self) -> _BgStyle:
+    def as_bg(self) -> _BgStyle:
         """Convert to the corresponding background color style."""
 
         return self
 
-    def contrast_fg(self) -> _FgColorStyle:
+    def as_text_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on this background."""
 
         return _FgColorStyle(255, 255, 255) if self._value in {40, 100} else _FgColorStyle(0, 0, 0)
 
-    def contrast_bg(self) -> _BgColorStyle:
+    def as_text_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind this background."""
 
         return _BgColorStyle(255, 255, 255) if self._value in {40, 100} else _BgColorStyle(0, 0, 0)
@@ -1101,17 +1101,17 @@ class _Color256Style(_SBase):
     def __hash__(self) -> int:
         return hash((self._code, self._bg))
 
-    def to_fg(self) -> _FgColor256Style:
+    def as_fg(self) -> _FgColor256Style:
         """Convert to the corresponding foreground color style."""
 
         return _FgColor256Style(self._code)
 
-    def to_bg(self) -> _BgColor256Style:
+    def as_bg(self) -> _BgColor256Style:
         """Convert to the corresponding background color style."""
 
         return _BgColor256Style(self._code)
 
-    def contrast_fg(self) -> _FgColorStyle:
+    def as_text_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on this color."""
 
         if self._code < 16:
@@ -1121,7 +1121,7 @@ class _Color256Style(_SBase):
         luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
         return _FgColorStyle(255, 255, 255) if luminance < 128 else _FgColorStyle(0, 0, 0)
 
-    def contrast_bg(self) -> _BgColorStyle:
+    def as_text_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind this color."""
 
         if self._code < 16:
@@ -1137,12 +1137,12 @@ class _FgColor256Style(_Color256Style):
 
     __slots__: tuple[str, ...] = ()
 
-    def to_fg(self) -> _FgColor256Style:
+    def as_fg(self) -> _FgColor256Style:
         """Convert to the corresponding foreground color style."""
 
         return self
 
-    def to_bg(self) -> _BgColor256Style:
+    def as_bg(self) -> _BgColor256Style:
         """Convert to the corresponding background color style."""
 
         return _BgColor256Style(self._code)
@@ -1156,12 +1156,12 @@ class _BgColor256Style(_Color256Style):
     def __init__(self, code: int, /, *, bg: bool = True) -> None:
         super().__init__(code, bg=bg)
 
-    def to_fg(self) -> _FgColor256Style:
+    def as_fg(self) -> _FgColor256Style:
         """Convert to the corresponding foreground color style."""
 
         return _FgColor256Style(self._code)
 
-    def to_bg(self) -> _BgColor256Style:
+    def as_bg(self) -> _BgColor256Style:
         """Convert to the corresponding background color style."""
 
         return self
@@ -1222,12 +1222,12 @@ class _Link(_SBase):
     def __hash__(self) -> int:
         return hash(self._url)
 
-    def to_fg(self) -> _Link:
+    def as_fg(self) -> _Link:
         """Convert to the corresponding foreground style."""
 
         return self
 
-    def to_bg(self) -> _Link:
+    def as_bg(self) -> _Link:
         """Convert to the corresponding background style."""
 
         return self
@@ -1291,31 +1291,31 @@ class _StyleGroup(_SBase):
     def __hash__(self) -> int:
         return hash(self._codes)
 
-    def to_fg(self) -> _StyleGroup:
+    def as_fg(self) -> _StyleGroup:
         """Convert all background color styles in this group to foreground color styles."""
 
-        return _StyleGroup(*[code.to_fg() for code in self._codes])
+        return _StyleGroup(*[code.as_fg() for code in self._codes])
 
-    def to_bg(self) -> _StyleGroup:
+    def as_bg(self) -> _StyleGroup:
         """Convert all foreground color styles in this group to background color styles."""
 
-        return _StyleGroup(*[code.to_bg() for code in self._codes])
+        return _StyleGroup(*[code.as_bg() for code in self._codes])
 
-    def contrast_fg(self) -> _FgColorStyle:
+    def as_text_fg(self) -> _FgColorStyle:
         """Returns black or white foreground color for optimal contrast on the background in this group."""
 
         for code in reversed(self._codes):
             if isinstance(code, (_BgStyle, _BgColorStyle, _BgColor256Style)):
-                return code.contrast_fg()
+                return code.as_text_fg()
 
         return _FgColorStyle(255, 255, 255)
 
-    def contrast_bg(self) -> _BgColorStyle:
+    def as_text_bg(self) -> _BgColorStyle:
         """Returns black or white background color for optimal contrast behind the foreground in this group."""
 
         for code in reversed(self._codes):
             if isinstance(code, (_FgStyle, _FgColorStyle, _FgColor256Style)):
-                return code.contrast_bg()
+                return code.as_text_bg()
 
         return _BgColorStyle(0, 0, 0)
 

@@ -217,8 +217,8 @@ def main() -> None:
     xx.console.log("CONVERT", "Converting the HEXA color into different types...", title_bg_color=S.BG.BR.MAGENTA)
 
     # Convert the hexa color into the two other color styles.
-    rgba_color = hexa_color.to_rgba()
-    hsla_color = hexa_color.to_hsla()
+    rgba_color = hexa_color.as_rgba()
+    hsla_color = hexa_color.as_hsla()
 
     # Announce the successful conversion.
     xx.console.done("Successfully converted color into different types.", end="\n\n")

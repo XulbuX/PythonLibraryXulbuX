@@ -77,21 +77,21 @@ def test_rgba_str_and_repr() -> None:
 
 
 def test_rgba_dict_and_values() -> None:
-    assert rgba(255, 128, 0, 0.5).dict() == {"red": 255, "green": 128, "blue": 0, "alpha": 0.5}
-    assert rgba(255, 128, 0, 0.5).values() == (255, 128, 0, 0.5)
+    assert rgba(255, 128, 0, 0.5).as_dict() == {"red": 255, "green": 128, "blue": 0, "alpha": 0.5}
+    assert rgba(255, 128, 0, 0.5).as_tuple() == (255, 128, 0, 0.5)
 
 
 def test_rgba_conversions() -> None:
     color1 = rgba(255, 0, 0, 0.5)
-    assert color1.to_rgba() is color1
+    assert color1.as_rgba() is color1
 
-    hsla_color = color1.to_hsla()
+    hsla_color = color1.as_hsla()
     assert hsla_color.hue == 0
     assert hsla_color.sat == 100
     assert hsla_color.light == 50
     assert hsla_color.alpha is not None and math.isclose(hsla_color.alpha, 0.5)
 
-    hexa_color = color1.to_hexa()
+    hexa_color = color1.as_hexa()
     assert hexa_color.red == 255
     assert hexa_color.alpha is not None and math.isclose(hexa_color.alpha, 0.5)
 
@@ -112,12 +112,12 @@ def test_rgba_lighten_darken() -> None:
 def test_rgba_saturate_desaturate() -> None:
     color1 = rgba(128, 100, 100)
     saturated = color1.saturate(0.5)
-    assert saturated.to_hsla().sat > color1.to_hsla().sat
+    assert saturated.as_hsla().sat > color1.as_hsla().sat
     with pytest.raises(ValueError):
         color1.saturate(-0.1)
 
     desaturated = color1.desaturate(0.5)
-    assert desaturated.to_hsla().sat < color1.to_hsla().sat
+    assert desaturated.as_hsla().sat < color1.as_hsla().sat
     with pytest.raises(ValueError):
         color1.desaturate(2.0)
 
@@ -125,7 +125,7 @@ def test_rgba_saturate_desaturate() -> None:
 def test_rgba_rotate() -> None:
     color1 = rgba(255, 0, 0)
     rotated = color1.rotate(180)
-    assert rotated.to_hsla().hue == 180
+    assert rotated.as_hsla().hue == 180
 
 
 def test_rgba_invert() -> None:
@@ -182,7 +182,7 @@ def test_rgba_with_alpha_and_complementary() -> None:
         color1.with_alpha(1.5)
 
     complementary_color = color1.complementary()
-    assert complementary_color.to_hsla().hue == 180
+    assert complementary_color.as_hsla().hue == 180
 
 
 def test_rgb_to_hsl_branching() -> None:

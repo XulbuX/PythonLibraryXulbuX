@@ -54,6 +54,7 @@
 *   Replaced type tuples like `DataObjTT`, meant for `isinstance` checks, with type guard functions like `is_data_obj()`, which are more explicit and type-safe, across the library.
 *   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
 *   Renamed `r`, `g`, `b`, `h`, `s`, `l` and `a` to `red`, `green`, `blue`, `hue`, `sat`, `light` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
+*   Renamed `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()` and `.to_hexa()` methods to `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()` and `.as_hexa()` to follow the naming convention of the other `.as_…()` methods in the library.
 *   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
 *   Renamed the function `color.text_color_for_on_bg()` to `fg_for_on_bg()` as this name describes its purpose just as well, but is shorter and easier to type.
 *   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.

@@ -28,13 +28,13 @@ def _parse_color_arg(raw: str, /) -> hsla | None:
 
     if is_hex:
         with suppress(ValueError, TypeError):
-            return hexa(clean_str).to_hsla()
+            return hexa(clean_str).as_hsla()
 
     # [2] Try parsing as RGB color:
     if rgb_match := re.search(r"^(?:rgb\s*\(\s*)?(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*\)?$", clean_str):
         red, green, blue = [int(channel) for channel in rgb_match.groups()]
         if 0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255:
-            return rgba(red, green, blue).to_hsla()
+            return rgba(red, green, blue).as_hsla()
 
     # [3] Try parsing as numeric hue degrees:
     with suppress(ValueError):
@@ -42,7 +42,7 @@ def _parse_color_arg(raw: str, /) -> hsla | None:
 
     # [4] Fallback try parsing as shorthand 3-digit HEX:
     with suppress(ValueError, TypeError):
-        return hexa(clean_str).to_hsla()
+        return hexa(clean_str).as_hsla()
 
     return None
 
@@ -65,11 +65,11 @@ def show_true_color(color_arg: str | None = None, /) -> None:
         if parsed_hsla is not None:
             # Single color mode: Sweep saturation across X, lightness across Y:
             saturation = round((pixel_x / (width - 1)) * 100)
-            rgb_obj = hsla(parsed_hsla.hue, saturation, lightness).to_rgba()
+            rgb_obj = hsla(parsed_hsla.hue, saturation, lightness).as_rgba()
         else:
             # Full spectrum mode: Sweep hue across X, lightness across Y:
             hue = round((360.0 - (pixel_x / width) * 360.0) % 360.0)
-            rgb_obj = hsla(hue, 100, lightness).to_rgba()
+            rgb_obj = hsla(hue, 100, lightness).as_rgba()
 
         return (rgb_obj.red, rgb_obj.green, rgb_obj.blue)
 

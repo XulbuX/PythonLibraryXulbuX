@@ -573,7 +573,7 @@ class ArgumentParser:
         single_line_len = (len(title_st.raw) if title_st else 0) + (len(sub_st.raw) + 3 if sub_st else 0)
         has_newlines = ("\n" in title_st.raw if title_st else False) or ("\n" in sub_st.raw if sub_st else False)
 
-        box_bg_st: AnyStyle = (S.hex("000") | box_color.to_bg()) if is_fg_color_style(box_color) else (S.RESET | S.INVERSE)
+        box_bg_st: AnyStyle = (S.hex("000") | box_color.as_bg()) if is_fg_color_style(box_color) else (S.RESET | S.INVERSE)
         box_fg_st: AnyStyle = box_color if is_fg_color_style(box_color) else S.RESET
 
         if inline_subtitle and title_st and not has_newlines and ((single_line_len + 4) <= console_width):
@@ -1723,7 +1723,7 @@ def log_box_filled(
     if default_color is not None:
         fg_style = _as_fg_color_style(default_color, param_name="default_color")
     elif box_bg_color is not None:
-        fg_style = _as_bg_color_style(box_bg_color, param_name="box_bg_color").contrast_fg()
+        fg_style = _as_bg_color_style(box_bg_color, param_name="box_bg_color").as_text_fg()
     else:
         fg_style = S.hex("#000")
 
