@@ -164,37 +164,37 @@ def test_color_conversions() -> None:
 
 
 def test_str_to_rgba() -> None:
-    color = _color_module.str_to_rgba("The color is rgb(255, 0, 0, 0.5).", only_first=True)
+    color = _color_module.extract_rgba("The color is rgb(255, 0, 0, 0.5).", only_first=True)
     assert isinstance(color, rgba)
     assert color.as_tuple() == (255, 0, 0, 0.5)
 
-    color_opaque = _color_module.str_to_rgba("rgba(255,0,0,1)", only_first=True)
+    color_opaque = _color_module.extract_rgba("rgba(255,0,0,1)", only_first=True)
     assert isinstance(color_opaque, rgba)
     assert color_opaque.alpha is not None and math.isclose(color_opaque.alpha, 1.0)
 
-    colors = _color_module.str_to_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
+    colors = _color_module.extract_rgba("first color: rgb(255, 0, 0) | second color: rgba(0,255,0,.5) third: rgba(0,0,0,1)")
     assert isinstance(colors, Sequence)
     assert len(colors) == 3
     assert colors[0].as_tuple() == (255, 0, 0, None)
     assert colors[1].as_tuple() == (0, 255, 0, 0.5)
     assert colors[2].alpha is not None and math.isclose(colors[2].alpha, 1.0)
-    assert _color_module.str_to_rgba("No colors here") is None
-    assert _color_module.str_to_rgba("No colors here", only_first=True) is None
+    assert _color_module.extract_rgba("No colors here") is None
+    assert _color_module.extract_rgba("No colors here", only_first=True) is None
 
 
 def test_str_to_hsla() -> None:
-    color = _color_module.str_to_hsla("hsl(180, 50%, 50%)", only_first=True)
+    color = _color_module.extract_hsla("hsl(180, 50%, 50%)", only_first=True)
     assert isinstance(color, hsla)
-    color_opaque = _color_module.str_to_hsla("hsla(180, 50%, 50%, 1)", only_first=True)
+    color_opaque = _color_module.extract_hsla("hsla(180, 50%, 50%, 1)", only_first=True)
     assert isinstance(color_opaque, hsla)
     assert color_opaque.alpha is not None and math.isclose(color_opaque.alpha, 1.0)
 
-    colors = _color_module.str_to_hsla("hsl(0, 100%, 50%) hsla(120, 100%, 50%, 0.5) hsla(0,0%,0%,1)")
+    colors = _color_module.extract_hsla("hsl(0, 100%, 50%) hsla(120, 100%, 50%, 0.5) hsla(0,0%,0%,1)")
     assert isinstance(colors, Sequence)
     assert len(colors) == 3
     assert colors[2].alpha is not None and math.isclose(colors[2].alpha, 1.0)
-    assert _color_module.str_to_hsla("No colors here") is None
-    assert _color_module.str_to_hsla("No colors here", only_first=True) is None
+    assert _color_module.extract_hsla("No colors here") is None
+    assert _color_module.extract_hsla("No colors here", only_first=True) is None
 
 
 def test_luminance() -> None:

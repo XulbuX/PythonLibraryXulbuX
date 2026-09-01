@@ -129,10 +129,6 @@ from xulbux.base.types import PathsList
         operator-based syntax and for emitting common cursor- and screen-control sequences.</td>
     </tr>
     <tr>
-      <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/code">code</a></code></b></td>
-      <td><code>code</code> module, which provides methods to work with code strings.</td>
-    </tr>
-    <tr>
       <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/color">color</a></code></b></td>
       <td><code>rgba</code> <code>hsla</code> <code>hexa</code> <code>color</code> modules, which provide methods to work with<br>
         colors in various formats.</td>
@@ -146,16 +142,8 @@ from xulbux.base.types import PathsList
       <td><code>data</code> module, which provides methods to work with nested data structures.</td>
     </tr>
     <tr>
-      <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/env_path">env_path</a></code></b></td>
-      <td><code>env_path</code> module, which provides methods to work with the PATH environment variable.</td>
-    </tr>
-    <tr>
       <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/file_sys">file_sys</a></code></b></td>
       <td><code>file_sys</code> module, which provides methods to work with the file system and directories.</td>
-    </tr>
-    <tr>
-      <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/file">file</a></code></b></td>
-      <td><code>file</code> module, which provides methods to work with files and file paths.</td>
     </tr>
     <tr>
       <td align="center"><b><code><a href="https://xulbux.github.io/python-lib-xulbux/docs/json">json</a></code></b></td>

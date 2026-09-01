@@ -105,32 +105,32 @@ def test_extend_path_standard_locations(setup_test_environment: dict[str, Path])
     search_dir = str(env["search_in"])
     search_dirs = [str(env["cwd"]), search_dir]
 
-    assert str(_file_sys_module.extend_path(Path(str(env["abs_file"])))) == str(env["abs_file"])
-    assert str(_file_sys_module.extend_path(str(env["abs_file"]))) == str(env["abs_file"])
-    assert _file_sys_module.extend_path("") is None
+    assert str(_file_sys_module.resolve_path(Path(str(env["abs_file"])))) == str(env["abs_file"])
+    assert str(_file_sys_module.resolve_path(str(env["abs_file"]))) == str(env["abs_file"])
+    assert _file_sys_module.resolve_path("") is None
 
     with pytest.raises(PathNotFoundError, match="Given 'rel_path' is an empty string"):
-        _file_sys_module.extend_path("", raise_error=True)
+        _file_sys_module.resolve_path("", raise_error=True)
 
-    assert str(_file_sys_module.extend_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
-    assert str(_file_sys_module.extend_path("subdir/file_in_script_subdir.txt")) == str(
+    assert str(_file_sys_module.resolve_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
+    assert str(_file_sys_module.resolve_path("subdir/file_in_script_subdir.txt")) == str(
         env["script_dir"] / "subdir" / "file_in_script_subdir.txt"
     )
-    assert str(_file_sys_module.extend_path("file_in_home.txt")) == str(env["home"] / "file_in_home.txt")
-    assert str(_file_sys_module.extend_path("temp_file.tmp")) == str(env["temp"] / "temp_file.tmp")
+    assert str(_file_sys_module.resolve_path("file_in_home.txt")) == str(env["home"] / "file_in_home.txt")
+    assert str(_file_sys_module.resolve_path("temp_file.tmp")) == str(env["temp"] / "temp_file.tmp")
 
-    assert str(_file_sys_module.extend_path("custom_file.dat", search_in=search_dir)) == str(
+    assert str(_file_sys_module.resolve_path("custom_file.dat", search_in=search_dir)) == str(
         env["search_in"] / "custom_file.dat"
     )
-    assert str(_file_sys_module.extend_path("custom_file.dat", search_in=search_dirs)) == str(
+    assert str(_file_sys_module.resolve_path("custom_file.dat", search_in=search_dirs)) == str(
         env["search_in"] / "custom_file.dat"
     )
 
 
 def test_extend_path_missing_paths(setup_test_environment: dict[str, Path]) -> None:
-    assert _file_sys_module.extend_path("non_existent_file.xyz") is None
+    assert _file_sys_module.resolve_path("non_existent_file.xyz") is None
     with pytest.raises(PathNotFoundError, match="not found in specified directories"):
-        _file_sys_module.extend_path("non_existent_file.xyz", raise_error=True)
+        _file_sys_module.resolve_path("non_existent_file.xyz", raise_error=True)
 
 
 def test_extend_path_fuzzy_matching(setup_test_environment: dict[str, Path]) -> None:
@@ -138,28 +138,30 @@ def test_extend_path_fuzzy_matching(setup_test_environment: dict[str, Path]) -> 
     search_dir = str(env["search_in"])
     expected_typo = env["search_in"] / "TypoDir" / "file_in_typo.txt"
 
-    assert str(_file_sys_module.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=False)) == str(
+    assert str(_file_sys_module.resolve_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=False)) == str(
         expected_typo
     )
-    assert str(_file_sys_module.extend_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=True)) == str(
+    assert str(_file_sys_module.resolve_path("TypoDir/file_in_typo.txt", search_in=search_dir, fuzzy_match=True)) == str(
         expected_typo
     )
-    assert str(_file_sys_module.extend_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(
+    assert str(_file_sys_module.resolve_path("TypoDir/file_in_typx.txt", search_in=search_dir, fuzzy_match=True)) == str(
         expected_typo
     )
-    assert _file_sys_module.extend_path("CompletelyWrong/no_file_here.dat", search_in=search_dir, fuzzy_match=True) is None
+    assert _file_sys_module.resolve_path("CompletelyWrong/no_file_here.dat", search_in=search_dir, fuzzy_match=True) is None
 
 
 def test_extend_or_make_path(setup_test_environment: dict[str, Path]) -> None:
     env = setup_test_environment
 
-    assert str(_file_sys_module.extend_or_make_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
+    assert str(_file_sys_module.resolve_or_create_path("file_in_cwd.txt")) == str(env["cwd"] / "file_in_cwd.txt")
 
     rel_script = "new_dir/new_file.txt"
-    assert str(_file_sys_module.extend_or_make_path(rel_script, prefer_script_dir=True)) == str(env["script_dir"] / rel_script)
+    assert str(_file_sys_module.resolve_or_create_path(rel_script, prefer_script_dir=True)) == str(
+        env["script_dir"] / rel_script
+    )
 
     rel_cwd = "another_dir/another_file.txt"
-    assert str(_file_sys_module.extend_or_make_path(rel_cwd, prefer_script_dir=False)) == str(env["cwd"] / rel_cwd)
+    assert str(_file_sys_module.resolve_or_create_path(rel_cwd, prefer_script_dir=False)) == str(env["cwd"] / rel_cwd)
 
     with (
         patch(
@@ -167,13 +169,13 @@ def test_extend_or_make_path(setup_test_environment: dict[str, Path]) -> None:
         ),
         pytest.raises(RuntimeError, match="Can only get base directory if accessed from a file"),
     ):
-        _file_sys_module.extend_or_make_path("fallback_dir/fallback_file.txt", prefer_script_dir=True)
+        _file_sys_module.resolve_or_create_path("fallback_dir/fallback_file.txt", prefer_script_dir=True)
 
 
 def test_extend_path_env_vars_and_absolute_handling() -> None:
     with patch.dict(os.environ, {"TEST_ENV_ROOT": "C:\\" if os.name == "nt" else "/"}):
         env_pattern = "%TEST_ENV_ROOT%sample_file" if os.name == "nt" else "$TEST_ENV_ROOT/sample_file"
-        _file_sys_module.extend_path(env_pattern)
+        _file_sys_module.resolve_path(env_pattern)
 
     with (
         patch("pathlib.Path.is_absolute", return_value=True),

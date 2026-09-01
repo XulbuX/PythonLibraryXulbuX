@@ -54,15 +54,23 @@
 *   Replaced type tuples like `DataObjTT`, meant for `isinstance` checks, with type guard functions like `is_data_obj()`, which are more explicit and type-safe, across the library.
 *   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
 *   Renamed `r`, `g`, `b`, `h`, `s`, `l` and `a` to `red`, `green`, `blue`, `hue`, `sat`, `light` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
-*   Renamed `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()` and `.to_hexa()` methods to `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()` and `.as_hexa()` to follow the naming convention of the other `.as_…()` methods in the library.
+*   Renamed `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()`, and `.to_hexa()` methods to `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()`, and `.as_hexa()`.
+*   Renamed `str_to_rgba()` and `str_to_hsla()` in `color` to `extract_rgba()` and `extract_hsla()`.
+*   Renamed `data.chars_count()` to `count_chars()`.
+*   Removed the `env_path` module and moved its functions into `system` as `get_env_path()`, `has_env_path()`, `add_env_path()`, and `remove_env_path()`.
+*   Removed the `file` module and moved its functions into `file_sys` as `create_file()` and `rename_file_ext()`.
+*   Removed the `code` module and moved its functions into `string` as `add_indent()`, `get_tab_spaces()`, `change_tab_size()`, `extract_func_calls()`, and `is_js()`.
+*   Renamed `string.single_char_repeats()` to `count_char_repeats()`.
+*   Renamed `string.split_count()` to `chunk()`.
 *   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
 *   Renamed the function `color.text_color_for_on_bg()` to `fg_for_on_bg()` as this name describes its purpose just as well, but is shorter and easier to type.
 *   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.
 *   Renamed the `throbber_format` param of `Throbber` to simply `format`, since the class is already called `Throbber`.
 *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
-*   Removed the `AnyRgba`, `AnyHsla` and `AnyHexa` type aliases as you should simply use the types `object` or `Any` for the same effect.
-*   Removed the `reset_ansi` from all funcs where you can simply add a `S.RESET` at the end of your string to achieve the same effect.
+*   Removed the redundant `console.get_user()` function in favor of `system.get_username()`.
+*   Removed the `reset_ansi` param from all funcs where you can simply add a `S.RESET` at the end of your string to achieve the same effect.
 *   Removed the `format_linebreaks` param from `console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
+*   Removed the `AnyRgba`, `AnyHsla` and `AnyHexa` type aliases as you should simply use the types `object` or `Any` for the same effect.
 
 
 <span id="v1-9-7" />

@@ -28,7 +28,7 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, AnyStyle]] = {
 """Default syntax highlighting styles for data structure rendering."""
 
 
-def chars_count(data: DataObjType, /) -> int:
+def count_chars(data: DataObjType, /) -> int:
     """The sum of all the characters amount including the keys in dictionaries.\n
     ----------------------------------------------------------------------------------------------------
     *   `data` – The data structure to count the characters from."""
@@ -37,10 +37,10 @@ def chars_count(data: DataObjType, /) -> int:
 
     if isinstance(data, dict):
         for key, val in data.items():
-            count += len(str(key)) + (chars_count(val) if is_data_obj(val) else len(str(val)))
+            count += len(str(key)) + (count_chars(val) if is_data_obj(val) else len(str(val)))
     else:
         for item in data:
-            count += chars_count(item) if is_data_obj(item) else len(str(item))
+            count += count_chars(item) if is_data_obj(item) else len(str(item))
 
     return count
 
@@ -943,7 +943,7 @@ class _DataRenderHelper:
         complex_items = sum([1 for item in seq if isinstance(item, complex_types)])  # ruff:ignore[unnecessary-comprehension-in-call]
         complexity = sum([self.get_complexity(item) for item in seq])  # ruff:ignore[unnecessary-comprehension-in-call]
 
-        return (complex_items > 1 and complexity > 2) or chars_count(seq) + (len(seq) * len(self.sep)) > self.max_width
+        return (complex_items > 1 and complexity > 2) or count_chars(seq) + (len(seq) * len(self.sep)) > self.max_width
 
     def format_dict(self, data_dict: dict[Any, Any], current_indent: int, /) -> str:
         """Formats a dictionary as a string, applying indentation and compactness rules."""

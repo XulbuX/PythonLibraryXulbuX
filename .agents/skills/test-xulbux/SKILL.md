@@ -45,7 +45,7 @@ Tests are structured cleanly to mirror the `src/xulbux/` layout:
         ```
 
     *   Tests should be self-explanatory from their directory, file, and function names. Keep inline comments minimal and focused.
-5.  **Type Ignore Formatting:** When using `# pyright:ignore[...]` or `# type:ignore[...]`, **NEVER** put spaces after commas between rule names (e.g. `# pyright:ignore[attr-defined,reportUnknownMemberType]`).
+5.  **Type Ignore Formatting:** When using `# pyright:ignore[…]` or `# type:ignore[…]`, **NEVER** put spaces after commas between rule names (e.g. `# pyright:ignore[attr-defined,reportUnknownMemberType]`).
 
 ---
 
@@ -55,7 +55,7 @@ All tests must pass on **both Windows and Unix** without platform-dependent cras
 
 1.  **Safely Mock Windows-Only Modules (`ctypes.windll`, `msvcrt`):**
     *   On Linux/macOS, `ctypes` has no `windll` attribute and `msvcrt` does not exist.
-    *   For `ctypes.windll`: Use the `mock_ctypes_windll` fixture from `conftest.py` or mock on `ctypes` with `raising=False`. Never do direct `patch("ctypes.windll...")`.
+    *   For `ctypes.windll`: Use the `mock_ctypes_windll` fixture from `conftest.py` or mock on `ctypes` with `raising=False`. Never do direct `patch("ctypes.windll.…")`.
     *   For `msvcrt`: Use `patch.dict("sys.modules", {"msvcrt": mock_msvcrt})` instead of direct `patch("msvcrt.getch")`.
 2.  **`pathlib.Path` on Unix:**
     *   Python 3.14+ prevents instantiating `WindowsPath` on POSIX systems.
@@ -67,8 +67,8 @@ All tests must pass on **both Windows and Unix** without platform-dependent cras
 
 ## 4. Coding Standards & MyPyC Idioms in Tests
 
--   **Strict Typing:** All test functions, fixtures, and helpers must be fully type-hinted (`def test_...() -> None:`).
--   **No Generator Expressions in Iteration Builtins:** Never pass generator expressions to `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`. Use list comprehensions `[...]` or unrolled loops.
+-   **Strict Typing:** All test functions, fixtures, and helpers must be fully type-hinted (`def test_…() -> None:`).
+-   **No Generator Expressions in Iteration Builtins:** Never pass generator expressions to `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`. Use list comprehensions `[…]` or unrolled loops.
 -   **Descriptive Variable Names:** No single-letter variable names (except `i`, `j` for loop indices and `n` for counts/math).
 
 ---
@@ -109,10 +109,13 @@ Use `mutmut` for periodic or on-demand test quality audits to catch redundant or
 ### Run Mutation Testing:
 
 -   **Run on a specific module or file:**
+
     ```bash
     mutmut run src/xulbux/ansi.py
     ```
+
 -   **Inspect results & surviving mutants:**
+
     ```bash
     mutmut results
     mutmut show <mutant_id>

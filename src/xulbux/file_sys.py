@@ -5,7 +5,8 @@ Includes fuzzy matching, recursive searching, safe directory creation,
 and dynamic access to common paths like `cwd` and `home`.
 """
 
-from .base.exceptions import PathNotFoundError
+from . import string as _string_module
+from .base.exceptions import PathNotFoundError, SameContentFileExistsError
 from .base.types import PathsList
 
 import difflib as _difflib
@@ -48,7 +49,7 @@ def get_script_dir() -> Path:
     return base_path
 
 
-def extend_path(
+def resolve_path(
     rel_path: Path | str,
     /,
     search_in: Path | str | PathsList | None = None,
@@ -77,7 +78,7 @@ def extend_path(
     import xulbux as xx
 
     # Resolve a relative file with fuzzy matching:
-    resolved_path = xx.file_sys.extend_path("config.json", search_in="./settings", fuzzy_match=True)
+    resolved_path = xx.file_sys.resolve_path("config.json", search_in="./settings", fuzzy_match=True)
     ```"""
 
     search_dirs: list[Path] = []
@@ -105,7 +106,7 @@ def extend_path(
     return _ExtendPathHelper(path, search_dirs=search_dirs, fuzzy_match=fuzzy_match, raise_error=raise_error)()
 
 
-def extend_or_make_path(
+def resolve_or_create_path(
     rel_path: Path | str,
     /,
     search_in: Path | str | PathsList | None = None,
@@ -138,16 +139,105 @@ def extend_or_make_path(
     import xulbux as xx
 
     # Resolve existing file or compute fallback path in script directory:
-    target_path = xx.file_sys.extend_or_make_path("data/cache.json")
+    target_path = xx.file_sys.resolve_or_create_path("data/cache.json")
     ```"""
 
     try:
-        return extend_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()
+        return resolve_path(rel_path, search_in=search_in, raise_error=True, fuzzy_match=fuzzy_match) or Path()
 
     except PathNotFoundError:
         path = Path(str(rel_path))
         base_dir = get_script_dir() if prefer_script_dir else Path.cwd()
         return base_dir / path
+
+
+def create_file(file_path: Path | str, content: str = "", /, *, force: bool = False) -> Path:
+    """Create a file with or without content.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `file_path` – The path where the file should be created.
+    *   `content` – The content to write into the file.
+    *   `force` – If true, will overwrite existing files without<br>
+        throwing an error (errors explained below).\n
+    ----------------------------------------------------------------------------------------------------
+    The method will throw a `FileExistsError` if a file with the same<br>
+    name already exists and a `SameContentFileExistsError` if a file<br>
+    with the same name and same content already exists.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Create file safely or force overwrite:
+    file_path = xx.file_sys.create_file("output/result.txt", "Generated content", force=True)
+    ```"""
+
+    path = Path(file_path)
+
+    if path.exists() and not force:
+        with open(path, encoding="utf-8") as existing_file:
+            existing_content = existing_file.read()
+            if existing_content == content:
+                raise SameContentFileExistsError("Already created this file (nothing changed)")
+        raise FileExistsError("File already exists")
+
+    with open(path, "w", encoding="utf-8") as file:
+        file.write(content)
+
+    return path.resolve()
+
+
+def rename_file_ext(
+    file_path: Path | str,
+    new_extension: str,
+    /,
+    *,
+    full_extension: bool = False,
+    camel_case_filename: bool = False,
+) -> Path:
+    """Rename the extension of a file.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `file_path` – The path to the file whose extension should be changed.
+    *   `new_extension` – The new extension for the file (with or without dot).
+    *   `full_extension` – Whether to replace the full extension (e.g., `.tar.gz`)<br>
+        or just the last part of it (e.g., `.gz`).
+    *   `camel_case_filename` – Whether to convert the filename to CamelCase<br>
+        in addition to changing the files extension.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Rename single extension:
+    new_path = xx.file_sys.rename_file_ext("archive.tar.gz", ".zip")  # archive.tar.zip
+
+    # Replace full compound extension and convert to CamelCase:
+    new_path = xx.file_sys.rename_file_ext(
+        "my_data_file.tar.gz",
+        ".zip",
+        full_extension=True,
+        camel_case_filename=True,
+    )  # MyDataFile.zip
+    ```"""
+
+    path = Path(file_path)
+    filename_with_ext = path.name
+
+    if full_extension:
+        try:
+            filename = filename_with_ext[: filename_with_ext.index(".")]
+        except ValueError:
+            filename = filename_with_ext
+    else:
+        filename = path.stem
+
+    if camel_case_filename:
+        filename = _string_module.to_camel_case(filename)
+    if new_extension and not new_extension.startswith("."):
+        new_extension = "." + new_extension
+
+    return path.parent / f"{filename}{new_extension}"
 
 
 def remove(path: Path | str, /, *, only_content: bool = False) -> None:

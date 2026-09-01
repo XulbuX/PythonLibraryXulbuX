@@ -18,7 +18,7 @@ import pytest
     ],
 )
 def test_chars_count_data_structures(input_data: DataObj, expected_count: int) -> None:
-    assert _data_module.chars_count(input_data) == expected_count
+    assert _data_module.count_chars(input_data) == expected_count
 
 
 def test_strip_nested_collections() -> None:

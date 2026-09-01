@@ -48,18 +48,18 @@ def test_is_empty() -> None:
     assert _string_module.is_empty(" Not Empty ", spaces_are_empty=True) is False
 
 
-def test_single_char_repeats() -> None:
-    assert _string_module.single_char_repeats("-----", "-") == 5
-    assert _string_module.single_char_repeats("", "a") == 0
-    assert _string_module.single_char_repeats("a", "a") == 1
-    assert _string_module.single_char_repeats("aaaaa", "a") == 5
-    assert _string_module.single_char_repeats("aaaba", "a") == 0
+def test_count_char_repeats() -> None:
+    assert _string_module.count_char_repeats("-----", "-") == 5
+    assert _string_module.count_char_repeats("", "a") == 0
+    assert _string_module.count_char_repeats("a", "a") == 1
+    assert _string_module.count_char_repeats("aaaaa", "a") == 5
+    assert _string_module.count_char_repeats("aaaba", "a") == 0
 
     with pytest.raises(ValueError, match="must be a single character"):
-        _string_module.single_char_repeats("test", "ab")
+        _string_module.count_char_repeats("test", "ab")
 
     with pytest.raises(ValueError, match="must be a single character"):
-        _string_module.single_char_repeats("test", "")
+        _string_module.count_char_repeats("test", "")
 
 
 def test_get_lines() -> None:
@@ -82,14 +82,14 @@ def test_remove_consecutive_empty_lines() -> None:
         _string_module.remove_consecutive_empty_lines("test", -1)
 
 
-def test_split_count() -> None:
-    assert _string_module.split_count("abcdefghi", 3) == ["abc", "def", "ghi"]
-    assert _string_module.split_count("abcdefgh", 3) == ["abc", "def", "gh"]
-    assert _string_module.split_count("abc", 3) == ["abc"]
-    assert _string_module.split_count("", 3) == []
+def test_chunk() -> None:
+    assert _string_module.chunk("abcdefghi", 3) == ["abc", "def", "ghi"]
+    assert _string_module.chunk("abcdefgh", 3) == ["abc", "def", "gh"]
+    assert _string_module.chunk("abc", 3) == ["abc"]
+    assert _string_module.chunk("", 3) == []
 
     with pytest.raises(ValueError, match="must be a positive integer"):
-        _string_module.split_count("abc", 0)
+        _string_module.chunk("abc", 0)
 
     with pytest.raises(ValueError, match="must be a positive integer"):
-        _string_module.split_count("abc", -1)
+        _string_module.chunk("abc", -1)

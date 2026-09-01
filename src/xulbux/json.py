@@ -6,7 +6,6 @@ graceful fallback handling when updating complex JSON structures.
 """
 
 from . import data as _data_module
-from . import file as _file_module
 from . import file_sys as _file_sys_module
 
 import json as _json
@@ -58,7 +57,7 @@ def read(
 
     if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
         json_path = json_path.with_suffix(".json")
-    file_path = _file_sys_module.extend_path(json_path) or json_path
+    file_path = _file_sys_module.resolve_path(json_path) or json_path
 
     with open(file_path) as file:
         content = file.read()
@@ -108,8 +107,8 @@ def create(
     if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
         json_path = json_path.with_suffix(".json")
 
-    file_path = _file_sys_module.extend_or_make_path(json_path, prefer_script_dir=True)
-    _file_module.create(
+    file_path = _file_sys_module.resolve_or_create_path(json_path, prefer_script_dir=True)
+    _file_sys_module.create_file(
         file_path,
         _data_module.render(data, indent=indent, compactness=compactness, as_json=True, syntax_highlighting=False).raw,
         force=force,

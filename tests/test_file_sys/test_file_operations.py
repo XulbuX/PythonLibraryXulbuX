@@ -1,5 +1,5 @@
 from pathlib import Path
-import xulbux.file as _file_module
+import xulbux.file_sys as _file_sys_module
 from xulbux.base.exceptions import SameContentFileExistsError
 import pytest
 
@@ -30,10 +30,10 @@ import pytest
         ("missing_dot.txt", "md", False, False, "missing_dot.md"),
     ],
 )
-def test_rename_extension(
+def test_rename_file_ext(
     input_file: str | Path, new_extension: str, full_extension: bool, camel_case: bool, expected_output: str
 ) -> None:
-    result = _file_module.rename_extension(
+    result = _file_sys_module.rename_file_ext(
         input_file, new_extension, full_extension=full_extension, camel_case_filename=camel_case
     )
     assert isinstance(result, Path)
@@ -42,7 +42,7 @@ def test_rename_extension(
 
 def test_create_new_file(tmp_path: Path) -> None:
     file_path = tmp_path / "new_file.txt"
-    abs_path = _file_module.create(str(file_path))
+    abs_path = _file_sys_module.create_file(str(file_path))
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -53,7 +53,7 @@ def test_create_new_file(tmp_path: Path) -> None:
 def test_create_file_with_content(tmp_path: Path) -> None:
     file_path = tmp_path / "content_file.log"
     content = "This is the file content.\nWith multiple lines."
-    abs_path = _file_module.create(str(file_path), content)
+    abs_path = _file_sys_module.create_file(str(file_path), content)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -66,15 +66,15 @@ def test_create_file_exists_error(tmp_path: Path) -> None:
     with open(file_path, "w", encoding="utf-8") as file:
         file.write("Initial content")
     with pytest.raises(FileExistsError):
-        _file_module.create(str(file_path), "New content", force=False)
+        _file_sys_module.create_file(str(file_path), "New content", force=False)
 
 
 def test_create_file_same_content_exists_error(tmp_path: Path) -> None:
     file_path = tmp_path / "same_content_file.data"
     content = "Identical content"
-    _file_module.create(str(file_path), content)
+    _file_sys_module.create_file(str(file_path), content)
     with pytest.raises(SameContentFileExistsError):
-        _file_module.create(str(file_path), content, force=False)
+        _file_sys_module.create_file(str(file_path), content, force=False)
 
 
 def test_create_file_force_overwrite_different_content(tmp_path: Path) -> None:
@@ -82,10 +82,10 @@ def test_create_file_force_overwrite_different_content(tmp_path: Path) -> None:
     initial_content = "Old config"
     new_content = "New configuration values"
 
-    _file_module.create(str(file_path), initial_content)
+    _file_sys_module.create_file(str(file_path), initial_content)
     assert file_path.read_text(encoding="utf-8") == initial_content
 
-    abs_path = _file_module.create(str(file_path), new_content, force=True)
+    abs_path = _file_sys_module.create_file(str(file_path), new_content, force=True)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -97,10 +97,10 @@ def test_create_file_force_overwrite_same_content(tmp_path: Path) -> None:
     file_path = tmp_path / "overwrite_same_file.ini"
     content = "[Settings]\nValue=1"
 
-    _file_module.create(str(file_path), content)
+    _file_sys_module.create_file(str(file_path), content)
     assert file_path.read_text(encoding="utf-8") == content
 
-    abs_path = _file_module.create(str(file_path), content, force=True)
+    abs_path = _file_sys_module.create_file(str(file_path), content, force=True)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()
@@ -114,10 +114,10 @@ def test_create_file_in_subdirectory(tmp_path: Path) -> None:
     content = "Content in subdirectory"
 
     with pytest.raises(FileNotFoundError):
-        _file_module.create(str(file_path), content)
+        _file_sys_module.create_file(str(file_path), content)
 
     dir_path.mkdir()
-    abs_path = _file_module.create(str(file_path), content)
+    abs_path = _file_sys_module.create_file(str(file_path), content)
     assert isinstance(abs_path, Path)
     assert file_path.exists()
     assert abs_path.resolve() == file_path.resolve()

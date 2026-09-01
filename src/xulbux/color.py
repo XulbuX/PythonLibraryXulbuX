@@ -1073,9 +1073,9 @@ def has_alpha(color: Rgba | Hsla | Hexa, /) -> bool:
         return hex_length == 4 or hex_length == 8
 
     if isinstance(color, str):
-        if parsed_rgba := str_to_rgba(color, only_first=True):
+        if parsed_rgba := extract_rgba(color, only_first=True):
             return parsed_rgba.has_alpha()
-        if parsed_hsla := str_to_hsla(color, only_first=True):
+        if parsed_hsla := extract_hsla(color, only_first=True):
             return parsed_hsla.has_alpha()
 
     elif (isinstance(color, (list, tuple)) and len(color) == 4) or (isinstance(color, dict) and len(color) == 4):
@@ -1136,14 +1136,14 @@ def as_hexa(color: Rgba | Hsla | Hexa, /) -> hexa:
 
 
 @overload
-def str_to_rgba(string: str, /, *, only_first: Literal[True]) -> rgba | None: ...
+def extract_rgba(string: str, /, *, only_first: Literal[True]) -> rgba | None: ...
 @overload
-def str_to_rgba(string: str, /, *, only_first: Literal[False] = False) -> list[rgba] | None: ...
+def extract_rgba(string: str, /, *, only_first: Literal[False] = False) -> list[rgba] | None: ...
 @overload
-def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None: ...
+def extract_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None: ...
 
 
-def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None:
+def extract_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba] | None:
     """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.\n
     ----------------------------------------------------------------------------------------------------
     *   `string` – The string to search for RGBA colors.
@@ -1180,14 +1180,14 @@ def str_to_rgba(string: str, /, *, only_first: bool = False) -> rgba | list[rgba
 
 
 @overload
-def str_to_hsla(string: str, /, *, only_first: Literal[True]) -> hsla | None: ...
+def extract_hsla(string: str, /, *, only_first: Literal[True]) -> hsla | None: ...
 @overload
-def str_to_hsla(string: str, /, *, only_first: Literal[False] = False) -> list[hsla] | None: ...
+def extract_hsla(string: str, /, *, only_first: Literal[False] = False) -> list[hsla] | None: ...
 @overload
-def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None: ...
+def extract_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None: ...
 
 
-def str_to_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None:
+def extract_hsla(string: str, /, *, only_first: bool = False) -> hsla | list[hsla] | None:
     """Will try to recognize HSLA colors inside a string and output the found ones as HSLA objects.\n
     ----------------------------------------------------------------------------------------------------
     *   `string` – The string to search for HSLA colors.
@@ -1513,7 +1513,7 @@ def _parse_rgba(color: Rgba, /) -> rgba:
         except (KeyError, ValueError):
             raise ValueError(f"Could not parse RGBA color: {color!r}") from None
 
-    elif isinstance(color, str) and (parsed := str_to_rgba(color, only_first=True)):
+    elif isinstance(color, str) and (parsed := extract_rgba(color, only_first=True)):
         return parsed
 
     raise ValueError(f"Could not parse RGBA color: {color!r}")
@@ -1546,7 +1546,7 @@ def _parse_hsla(color: Hsla, /) -> hsla:
         except (KeyError, ValueError):
             raise ValueError(f"Could not parse HSLA color: {color!r}") from None
 
-    elif isinstance(color, str) and (parsed := str_to_hsla(color, only_first=True)):
+    elif isinstance(color, str) and (parsed := extract_hsla(color, only_first=True)):
         return parsed
 
     raise ValueError(f"Could not parse HSLA color: {color!r}")

@@ -14,7 +14,6 @@ from xulbux.console import (
     get_encoding,
     get_height,
     get_size,
-    get_user,
     get_width,
     input,
     is_tty,
@@ -34,19 +33,19 @@ def test_terminal_dimensions_and_environment() -> None:
         assert get_height() == 40
         assert get_size() == (120, 40)
 
-    # Fallback on OSError:
+    # Fallback on `OSError`:
     with patch("os.get_terminal_size", side_effect=OSError):
         assert get_width() == 80
         assert get_height() == 24
         assert get_size() == (80, 24)
 
-    # is_tty check:
+    # `is_tty` check:
     with patch("sys.stdout.isatty", return_value=True):
         assert is_tty() is True
     with patch("sys.stdout.isatty", return_value=False):
         assert is_tty() is False
 
-    # get_encoding and get_user:
+    # `get_encoding`:
     assert isinstance(get_encoding(), str)
 
     mock_stdout = MagicMock()
@@ -62,8 +61,6 @@ def test_terminal_dimensions_and_environment() -> None:
 
     with patch("sys.stdout", FaultyStdout()):
         assert get_encoding() == "utf-8"
-
-    assert isinstance(get_user(), str)
 
 
 def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
@@ -143,12 +140,12 @@ def test_cls_terminal() -> None:
 
 
 def test_pause_and_pause_exit() -> None:
-    # pause_exit without exiting:
+    # `pause_exit` without exiting:
     with patch("xulbux.console._read_single_key") as mock_read:
         pause_exit("Done", pause=True, exit=False)
         mock_read.assert_called_once()
 
-    # pause_exit with exiting:
+    # `pause_exit` with exiting:
     with patch("xulbux.console._read_single_key"), pytest.raises(SystemExit) as exc_info:
         pause_exit("Exiting", pause=False, exit=True, exit_code=42)
     assert exc_info.value.code == 42
@@ -206,7 +203,7 @@ def test_multiline_input() -> None:
     with patch("prompt_toolkit.prompt", return_value="Line"):
         assert multiline_input("Code:", show_keybindings=False) == "Line"
 
-    # _multiline_input_submit event:
+    # `_multiline_input_submit` event:
     mock_event = MagicMock()
     mock_event.app.current_buffer.document.text = "Submitted text"
     _multiline_input_submit(mock_event)
@@ -222,7 +219,7 @@ def test_input_session_prompt_and_conversions() -> None:
             int_res = input("Enter number: ", default_color=S.CYAN, output_type=int)
             assert int_res == 12345
 
-        # Empty string without default_val:
+        # Empty string without `default_val`:
         with patch.object(_ConsoleInputHelper, "get_text", return_value=""):
             empty_str = input("Enter text: ")
             assert empty_str == ""
@@ -278,7 +275,7 @@ def test_console_input_helper_and_validator() -> None:
 
     helper.handle_control_a(mock_event)
 
-    # Direct get_text:
+    # Direct `get_text`:
     assert helper.get_text() == helper.result_text
 
     # Selection delete:
@@ -330,7 +327,7 @@ def test_console_input_helper_and_validator() -> None:
     assert filtered == "abc"
     assert removed == {"!", "@"}
 
-    # Exceeding remaining space with CHARS.ALL:
+    # Exceeding remaining space with `CHARS.ALL`:
     helper.allowed_chars = CHARS.ALL
     helper.max_len = 3
     helper.result_text = "a"
@@ -342,7 +339,7 @@ def test_console_input_helper_and_validator() -> None:
     full_txt, _ = helper.process_insert_text("d")
     assert full_txt == ""
 
-    # max_len is None:
+    # `max_len` is None:
     helper.max_len = None
     no_max_txt, _ = helper.process_insert_text("hello")
     assert no_max_txt == "hello"
@@ -362,12 +359,12 @@ def test_console_input_helper_and_validator() -> None:
 
     # Toolbar with multiple filtered chars:
     helper.filtered_chars = {"x", "y"}
-    helper.result_text = "abcdef"  # Too long (> max_len 5)
+    helper.result_text = "abcdef"  # Too long (> `max_len` 5)
     tb_long = helper.bottom_toolbar()
     assert tb_long is not None
 
-    # Toolbar when max_len reached:
-    helper.result_text = "abcde"  # == max_len 5
+    # Toolbar when `max_len` reached:
+    helper.result_text = "abcde"  # == `max_len` 5
     tb_exact = helper.bottom_toolbar()
     assert tb_exact is not None
 
@@ -392,7 +389,7 @@ def test_console_input_helper_and_validator() -> None:
         tb_err = helper_unmask.bottom_toolbar()
         assert tb_err is not None
 
-    # Validation errors on min_len and custom validator:
+    # Validation errors on `min_len` and custom validator:
     val_masked = _ConsoleInputValidator(lambda: "a", mask_char="*", min_len=5, validator=None)
     with pytest.raises(ValidationError):
         val_masked.validate(Document("a"))

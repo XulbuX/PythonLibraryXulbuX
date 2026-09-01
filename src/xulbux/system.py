@@ -6,6 +6,7 @@ commands, installing dependencies, and managing application restarts.
 """
 
 from . import console as _console_module
+from . import file_sys as _file_sys_module
 from .ansi import S
 from .base.types import MissingLibsMsgs
 
@@ -21,6 +22,8 @@ import sys as _sys
 import time as _time
 from collections.abc import Sequence
 from contextlib import suppress as _suppress
+from pathlib import Path
+from typing import Literal, overload
 
 
 def is_elevated() -> bool:
@@ -116,65 +119,63 @@ def get_python_version() -> str:
     return _platform.python_version()
 
 
-def restart(prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
-    """Restarts the system with some advanced options\n
+@overload
+def get_env_path(*, as_list: Literal[True]) -> list[Path]: ...
+@overload
+def get_env_path(*, as_list: Literal[False] = False) -> Path: ...
+@overload
+def get_env_path(*, as_list: bool = False) -> Path | list[Path]: ...
+
+
+def get_env_path(*, as_list: bool = False) -> Path | list[Path]:
+    """Get the PATH environment variable.\n
     ----------------------------------------------------------------------------------------------------
-    *   `prompt` – The message to be displayed in the systems restart notification.
-    *   `wait` – The time to wait until restarting in seconds.
-    *   `continue_program` – Whether to continue the current Python program
-        after calling this function.
-    *   `force` – Whether to force a restart even if other processes are still running."""
+    *   `as_list` – If true, returns the paths as a list of `Path`s; otherwise, as a single `Path`."""
 
-    if wait < 0:
-        raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
+    paths_str = _os.environ.get("PATH", "")
 
-    _SystemRestartHelper(prompt, wait=wait, continue_program=continue_program, force=force)()
+    if as_list:
+        return [Path(path) for path in paths_str.split(_os.pathsep) if path]
+
+    return Path(paths_str)
 
 
-def check_libs(
-    lib_names: list[str],
-    /,
-    *,
-    install_missing: bool = False,
-    missing_libs_msgs: MissingLibsMsgs | None = None,
-    confirm_install: bool = True,
-) -> list[str] | None:
-    """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
+def has_env_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> bool:
+    """Check if a path is present in the PATH environment variable.\n
     ----------------------------------------------------------------------------------------------------
-    *   `lib_names` – A list of library names to check.
-    *   `install_missing` – Whether to directly missing libraries
-        will be installed automatically using pip.
-    *   `missing_libs_msgs` – Two messages:
-        -   The first one is displayed when missing libraries are found.
-        -   The second one is the confirmation message before installing missing libraries.
-    *   `confirm_install` – Whether the user will be asked
-        for confirmation before installing missing libraries.
-    ----------------------------------------------------------------------------------------------------
-    If some libraries are missing or they could not be installed,
-    their names will be returned as a list.<br>
-    If all libraries are installed (or were installed successfully), `None` will be returned.\n
-    ----------------------------------------------------------------------------------------------------
-    #### Example Usage
+    *   `path` – The path to check for.
+    *   `cwd` – If true, uses the current working directory as the path.
+    *   `base_dir` – If true, uses the script's base directory as the path."""
 
-    ```python
-    import xulbux as xx
-
-    # Check and prompt to install missing packages:
-    missing = xx.system.check_libs(
-        ["requests", "pytest"],
-        install_missing=True,
-        confirm_install=True,
+    return bool(
+        _get_env_path_target(path, cwd=cwd, base_dir=base_dir).resolve() in {p.resolve() for p in get_env_path(as_list=True)}
     )
-    ```"""
 
-    if missing_libs_msgs is None:
-        missing_libs_msgs = {
-            "found_missing": "The following required libraries are missing:",
-            "should_install": "Do you want to install them now?",
-        }
-    return _SystemCheckLibsHelper(
-        lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
-    )()
+
+def add_env_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
+    """Add a path to the PATH environment variable.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `path` – The path to add.
+    *   `cwd` – If true, uses the current working directory as the path.
+    *   `base_dir` – If true, uses the script's base directory as the path."""
+
+    path_obj = _get_env_path_target(path, cwd=cwd, base_dir=base_dir)
+
+    if not has_env_path(path_obj):
+        _persistent_env_path(path_obj)
+
+
+def remove_env_path(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> None:
+    """Remove a path from the PATH environment variable.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `path` – The path to remove.
+    *   `cwd` – If true, uses the current working directory as the path.
+    *   `base_dir` – If true, uses the script's base directory as the path."""
+
+    path_obj = _get_env_path_target(path, cwd=cwd, base_dir=base_dir)
+
+    if has_env_path(path_obj):
+        _persistent_env_path(path_obj, remove=True)
 
 
 def elevate(win_title: str | None = None, args: Sequence[str] | None = None) -> bool:
@@ -236,6 +237,137 @@ def elevate(win_title: str | None = None, args: Sequence[str] | None = None) -> 
         if proc.returncode != 0:
             raise PermissionError("Process elevation was denied") from None
         raise SystemExit(0)
+
+
+def restart(prompt: object = "", /, *, wait: int = 0, continue_program: bool = False, force: bool = False) -> None:
+    """Restarts the system with some advanced options\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The message to be displayed in the systems restart notification.
+    *   `wait` – The time to wait until restarting in seconds.
+    *   `continue_program` – Whether to continue the current Python program
+        after calling this function.
+    *   `force` – Whether to force a restart even if other processes are still running."""
+
+    if wait < 0:
+        raise ValueError(f"The 'wait' parameter must be non-negative, got {wait!r}")
+
+    _SystemRestartHelper(prompt, wait=wait, continue_program=continue_program, force=force)()
+
+
+def check_libs(
+    lib_names: list[str],
+    /,
+    *,
+    install_missing: bool = False,
+    missing_libs_msgs: MissingLibsMsgs | None = None,
+    confirm_install: bool = True,
+) -> list[str] | None:
+    """Checks if the given list of libraries are installed and optionally installs missing libraries.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `lib_names` – A list of library names to check.
+    *   `install_missing` – Whether to directly missing libraries
+        will be installed automatically using pip.
+    *   `missing_libs_msgs` – Two messages:
+        -   The first one is displayed when missing libraries are found.
+        -   The second one is the confirmation message before installing missing libraries.
+    *   `confirm_install` – Whether the user will be asked
+        for confirmation before installing missing libraries.
+    ----------------------------------------------------------------------------------------------------
+    If some libraries are missing or they could not be installed,
+    their names will be returned as a list.<br>
+    If all libraries are installed (or were installed successfully), `None` will be returned.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    # Check and prompt to install missing packages:
+    missing = xx.system.check_libs(
+        ["requests", "pytest"],
+        install_missing=True,
+        confirm_install=True,
+    )
+    ```"""
+
+    if missing_libs_msgs is None:
+        missing_libs_msgs = {
+            "found_missing": "The following required libraries are missing:",
+            "should_install": "Do you want to install them now?",
+        }
+    return _SystemCheckLibsHelper(
+        lib_names, install_missing=install_missing, missing_libs_msgs=missing_libs_msgs, confirm_install=confirm_install
+    )()
+
+
+def _get_env_path_target(path: Path | str | None = None, /, *, cwd: bool = False, base_dir: bool = False) -> Path:
+    """Internal method to get the normalized `path`, CWD path or script directory path.\n
+    ----------------------------------------------------------------------------------------------------
+    Raise an error if no path is provided and neither `cwd` or `base_dir` is true."""
+
+    if cwd:
+        if base_dir:
+            raise ValueError("Both 'cwd' and 'base_dir' cannot be True at the same time")
+        return _file_sys_module.get_cwd()
+    elif base_dir:
+        return _file_sys_module.get_script_dir()
+
+    if path is None:
+        raise ValueError("No path provided\nPlease provide a 'path' or set either 'cwd' or 'base_dir' to True")
+
+    return Path(path) if isinstance(path, str) else path
+
+
+def _persistent_env_path(path: Path, /, *, remove: bool = False) -> None:
+    """Internal method to add or remove a path from the PATH environment variable,<br>
+    persistently, across sessions, as well as the current session."""
+
+    current_paths = get_env_path(as_list=True)
+    path_resolved = path.resolve()
+
+    if remove:
+        # Filter out the path to remove:
+        current_paths = [p for p in current_paths if p.resolve() != path_resolved]
+    else:
+        # Add the new path if not already present:
+        if path_resolved not in {p.resolve() for p in current_paths}:
+            current_paths = [*current_paths, path_resolved]
+
+    # Convert to strings only for setting the environment variable:
+    path_strings = [str(p) for p in current_paths]
+    _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys([p for p in path_strings if p]))
+
+    # Windows:
+    if _sys.platform == "win32":
+        try:
+            winreg = __import__("winreg")
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+            winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, new_path)
+            winreg.CloseKey(key)
+
+        except Exception as exc:
+            raise RuntimeError(f"Failed to update PATH in registry:\n  {str(exc).replace('\n', '  \n')}") from exc
+
+    # Unix-like (Linux/macOS):
+    else:
+        home_path = Path.home()
+        bashrc = home_path / ".bashrc"
+        zshrc = home_path / ".zshrc"
+        shell_rc_file = bashrc if bashrc.exists() else zshrc
+
+        with open(shell_rc_file, "r+") as file:
+            content = file.read()
+            file.seek(0)
+
+            if remove:
+                new_content = [line for line in content.splitlines() if not line.endswith(f':{path_resolved}"')]
+                file.write("\n".join(new_content))
+            else:
+                file.write(f'{content.rstrip()}\n# Added by `python-lib-xulbux`.\nexport PATH="{new_path}"\n')
+
+            file.truncate()
+
+        _subprocess.run(f"source {shell_rc_file}", shell=True, executable="/bin/bash")
 
 
 class _SystemRestartHelper:

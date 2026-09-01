@@ -26,7 +26,6 @@ from .base.types import AllTextChars, ProgressUpdater, SeqOrSet
 from .regex import LazyRegex
 
 import ctypes as _ctypes
-import getpass as _getpass
 import os as _os
 import re as _re
 import shutil as _shutil
@@ -1219,12 +1218,6 @@ def get_size() -> tuple[int, int]:
         return (size.columns, size.lines)
     except OSError:
         return (80, 24)
-
-
-def get_user() -> str:
-    """The username of the current user."""
-
-    return _os.getenv("USER") or _os.getenv("USERNAME") or _getpass.getuser()
 
 
 def is_tty() -> bool:
