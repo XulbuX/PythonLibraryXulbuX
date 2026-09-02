@@ -23,6 +23,8 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     ),
     consecutive_empty_lines=r"(\n\s*){2,}",
     decompose_default=r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\-_]",
+    default_js_funcs2=r"(?i)(?:__|\\\$t|\\\$lang)" + _regex_module.brackets(),
+    default_js_funcs_direct=r"^[\s\n]*(?:__|\\\$t|\\\$lang)\([^\)]*\)[\s\n]*$",
     direct_js_patterns=(
         r"^[\s\n]*(?:\$\([\"'][^\"']+[\"']\)\.[\w]+\([^\)]*\);?|"
         r"\$\.[a-zA-Z]\w*\([^\)]*\);?|"
@@ -49,6 +51,9 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     js_indicators_var_let_const=r"(?i)\b(var|let|const)\s+[\w_$]+",
 )
 
+_DEFAULT_JS_FUNCS: Final[frozenset[str]] = frozenset({"__", "$t", "$lang"})
+"""Default function identifiers frequently used in localized JavaScript frameworks."""
+
 _JS_INDICATOR_SCORES: Final[dict[str, float]] = {
     "js_indicators_arrow_func": 2.0,
     "js_indicators_async": 2.0,
@@ -66,8 +71,10 @@ _JS_INDICATOR_SCORES: Final[dict[str, float]] = {
     "js_indicators_try_catch": 1.5,
     "js_indicators_var_let_const": 2.0,
 }
+"""Scoring weights assigned to JavaScript-indicative syntactic patterns."""
 
 _SPACE_TRANS_CACHE: dict[int, dict[int, str | int | None]] = {}
+"""Cache mapping tab space widths to compiled translation tables for space normalization."""
 
 
 def to_type(string: str, /) -> Any:
@@ -186,10 +193,10 @@ def count_char_repeats(string: str, char: str, /) -> int:
     return char_count if len(string) == char_count else 0
 
 
-def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) -> list[str]:
+def decompose(string: str, /, seps: str = "-_", *, lower_all: bool = True) -> list[str]:
     """Will decompose the string (any type of casing, also mixed) into parts.\n
     ----------------------------------------------------------------------------------------------------
-    *   `case_string` – The string to decompose.
+    *   `string` – The string to decompose.
     *   `seps` – Additional separators to split the string at.
     *   `lower_all` – If true, all parts will be converted to lowercase.\n
     ----------------------------------------------------------------------------------------------------
@@ -210,9 +217,9 @@ def decompose(case_string: str, /, seps: str = "-_", *, lower_all: bool = True) 
     <!-- DOCS: </AttachedCode> -->"""
 
     if seps == "-_":
-        parts = _PATTERNS.decompose_default.split(case_string)
+        parts = _PATTERNS.decompose_default.split(string)
     else:
-        parts = _rx.split(rf"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[{_rx.escape(seps)}]", case_string)
+        parts = _rx.split(rf"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[{_rx.escape(seps)}]", string)
 
     return [(part.lower() if lower_all else part) for part in parts]
 
@@ -326,19 +333,19 @@ def get_tab_spaces(string: str, /) -> int:
     return min(non_zero_indents) if (non_zero_indents := [indt for indt in indents if indt > 0]) else 0
 
 
-def change_tab_size(string: str, new_tab_size: int, /, *, remove_empty_lines: bool = False) -> str:
-    """Replaces all tabs with `new_tab_size` spaces.\n
+def change_tab_spaces(string: str, space_count: int, /, *, remove_empty_lines: bool = False) -> str:
+    """Rescales indentation across lines to use `space_count` spaces per indentation level.\n
     ----------------------------------------------------------------------------------------------------
-    *   `string` – The string to modify the tab size of.
-    *   `new_tab_size` – The new amount of spaces per tab.
+    *   `string` – The string to modify the indentation of.
+    *   `space_count` – The new number of spaces per indentation level.
     *   `remove_empty_lines` – If true, empty lines will be removed in the process."""
 
-    if new_tab_size < 0:
-        raise ValueError(f"The 'new_tab_size' parameter must be non-negative, got {new_tab_size!r}")
+    if space_count < 0:
+        raise ValueError(f"The 'space_count' parameter must be non-negative, got {space_count!r}")
 
     code_lines = get_lines(string, remove_empty_lines=remove_empty_lines)
 
-    if ((tab_spaces := get_tab_spaces(string)) == new_tab_size) or tab_spaces == 0:
+    if ((tab_spaces := get_tab_spaces(string)) == space_count) or tab_spaces == 0:
         if remove_empty_lines:
             return "\n".join(code_lines)
         return string
@@ -346,12 +353,12 @@ def change_tab_size(string: str, new_tab_size: int, /, *, remove_empty_lines: bo
     result: list[str] = []
     for line in code_lines:
         indent_level = (len(line) - len(stripped := line.lstrip())) // tab_spaces
-        result.append((" " * (indent_level * new_tab_size)) + stripped)
+        result.append((" " * (indent_level * space_count)) + stripped)
 
     return "\n".join(result)
 
 
-def extract_func_calls(code: str, /) -> list[list[Any]]:
+def extract_func_calls(code: str, /) -> list[tuple[str, str]]:
     """Will try to get all function calls and return them as a list.\n
     ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze.\n
@@ -377,7 +384,7 @@ def extract_func_calls(code: str, /) -> list[list[Any]]:
     ```
     <!-- DOCS: </AttachedCode> -->"""
 
-    nested_func_calls: list[list[Any]] = []
+    nested_func_calls: list[tuple[str, str]] = []
 
     for _, func_attrs in (funcs := _PATTERNS.func_call.findall(code)):
         if nested_calls := _PATTERNS.func_call.findall(func_attrs):
@@ -386,7 +393,16 @@ def extract_func_calls(code: str, /) -> list[list[Any]]:
     return list(_data_module.remove_duplicates(funcs + nested_func_calls))
 
 
-def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "$t", "$lang"})) -> bool:
+def _matches_js_funcs_direct(code: str, funcs: set[str] | frozenset[str], /) -> bool:
+    """Internal helper to test if code matches a direct top-level JavaScript function call."""
+
+    if funcs == _DEFAULT_JS_FUNCS:
+        return bool(_PATTERNS.default_js_funcs_direct.match(code))
+
+    return bool(_rx.match(r"^[\s\n]*(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")\([^\)]*\)[\s\n]*$", code))
+
+
+def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = _DEFAULT_JS_FUNCS) -> bool:
     """Will check if the code is very likely to be JavaScript.\n
     ----------------------------------------------------------------------------------------------------
     *   `code` – The code to analyze.
@@ -412,24 +428,27 @@ def is_js(code: str, /, *, funcs: set[str] | frozenset[str] = frozenset({"__", "
     if len(code.strip()) < 3:
         return False
 
-    if funcs:
-        funcs_pattern_direct = r"^[\s\n]*(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")\([^\)]*\)[\s\n]*$"
-        if _rx.match(funcs_pattern_direct, code):
-            return True
-
-    if _PATTERNS.direct_js_patterns.match(code):
-        return True
-
-    if _PATTERNS.arrow_function_patterns.match(code):
+    elif (
+        (funcs and _matches_js_funcs_direct(code, funcs))
+        or _PATTERNS.direct_js_patterns.match(code)
+        or _PATTERNS.arrow_function_patterns.match(code)
+    ):
         return True
 
     js_score = 0.0
+
     if funcs:
-        funcs_pattern2 = r"(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")" + _regex_module.brackets()
-        if matches := _rx.compile(funcs_pattern2, _rx.IGNORECASE).findall(code):
+        if funcs == _DEFAULT_JS_FUNCS:
+            matches = _PATTERNS.default_js_funcs2.findall(code)
+        else:
+            funcs_pattern2 = r"(" + "|".join([_rx.escape(fn) for fn in funcs]) + r")" + _regex_module.brackets()
+            matches = _rx.compile(funcs_pattern2, _rx.IGNORECASE).findall(code)
+
+        if matches:
             js_score += len(matches) * 2.0
 
     line_endings = [line.strip() for line in code.splitlines() if line.strip()]
+
     if (semicolon_endings := sum([1 for line in line_endings if line.endswith(";")])) >= 1:  # ruff:ignore[unnecessary-comprehension-in-call]
         js_score += min(semicolon_endings, 2)
     if (opening_braces := code.count("{")) > 0 and opening_braces == code.count("}"):

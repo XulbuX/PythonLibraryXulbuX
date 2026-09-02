@@ -41,19 +41,19 @@ def is_elevated() -> bool:
 def is_win() -> bool:
     """Whether the current operating system is Windows or not."""
 
-    return _platform.system() == "Windows"
+    return _sys.platform == "win32"
 
 
 def is_linux() -> bool:
     """Whether the current operating system is Linux or not."""
 
-    return _platform.system() == "Linux"
+    return _sys.platform.startswith("linux")
 
 
 def is_mac() -> bool:
     """Whether the current operating system is macOS or not."""
 
-    return _platform.system() == "Darwin"
+    return _sys.platform == "darwin"
 
 
 def is_unix() -> bool:
@@ -148,7 +148,8 @@ def has_env_path(path: Path | str | None = None, /, *, cwd: bool = False, base_d
     *   `base_dir` – If true, uses the script's base directory as the path."""
 
     return bool(
-        _get_env_path_target(path, cwd=cwd, base_dir=base_dir).resolve() in {p.resolve() for p in get_env_path(as_list=True)}
+        _get_env_path_target(path, cwd=cwd, base_dir=base_dir).resolve()
+        in {env_path.resolve() for env_path in get_env_path(as_list=True)}
     )
 
 
@@ -327,15 +328,15 @@ def _persistent_env_path(path: Path, /, *, remove: bool = False) -> None:
 
     if remove:
         # Filter out the path to remove:
-        current_paths = [p for p in current_paths if p.resolve() != path_resolved]
+        current_paths = [env_path for env_path in current_paths if env_path.resolve() != path_resolved]
     else:
         # Add the new path if not already present:
-        if path_resolved not in {p.resolve() for p in current_paths}:
+        if path_resolved not in {env_path.resolve() for env_path in current_paths}:
             current_paths = [*current_paths, path_resolved]
 
     # Convert to strings only for setting the environment variable:
-    path_strings = [str(p) for p in current_paths]
-    _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys([p for p in path_strings if p]))
+    path_strings = [str(env_path) for env_path in current_paths]
+    _os.environ["PATH"] = new_path = _os.pathsep.join(dict.fromkeys([env_path for env_path in path_strings if env_path]))
 
     # Windows:
     if _sys.platform == "win32":
@@ -355,7 +356,7 @@ def _persistent_env_path(path: Path, /, *, remove: bool = False) -> None:
         zshrc = home_path / ".zshrc"
         shell_rc_file = bashrc if bashrc.exists() else zshrc
 
-        with open(shell_rc_file, "r+") as file:
+        with open(shell_rc_file, "r+", encoding="utf-8") as file:
             content = file.read()
             file.seek(0)
 

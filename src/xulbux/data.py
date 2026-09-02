@@ -13,6 +13,7 @@ from .regex import LazyRegex
 
 import base64 as _base64
 import math as _math
+from contextlib import suppress as _suppress
 from typing import Any, Final, Literal, cast, overload
 import regex as _rx
 
@@ -26,6 +27,12 @@ _DEFAULT_SYNTAX_HL: Final[dict[str, AnyStyle]] = {
     "punctuation": S.BR.BLACK,
 }
 """Default syntax highlighting styles for data structure rendering."""
+
+_COMPLEX_TYPES: Final[tuple[type, ...]] = (list, tuple, dict, set, frozenset)
+"""Collection types considered complex for nesting analysis and rendering formatting."""
+
+_JSON_COMPLEX_TYPES: Final[tuple[type, ...]] = (list, tuple, dict, set, frozenset, bytes, bytearray)
+"""Collection and byte types considered complex for JSON rendering formatting."""
 
 
 def count_chars(data: DataObjType, /) -> int:
@@ -51,12 +58,19 @@ def strip[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     *   `data` – The data structure to strip the items from."""
 
     if isinstance(data, dict):
-        return type(data)({key.strip(): (strip(val) if is_data_obj(val) else val.strip()) for key, val in data.items()})
+        return type(data)({
+            (key.strip() if isinstance(key, str) else key): (
+                strip(val) if is_data_obj(val) else (val.strip() if isinstance(val, str) else val)
+            )
+            for key, val in data.items()
+        })
 
     else:
         return cast(
             "DataObj",
-            type(data)([strip(item) if is_data_obj(item) else item.strip() for item in data]),
+            type(data)([
+                strip(item) if is_data_obj(item) else (item.strip() if isinstance(item, str) else item) for item in data
+            ]),
         )
 
 
@@ -193,8 +207,8 @@ def remove_comments[DataObj: DataObjType](
 
 
 def is_equal(
-    data1: DataObjType,
-    data2: DataObjType,
+    data_a: DataObjType,
+    data_b: DataObjType,
     /,
     ignore_paths: str | list[str] = "",
     *,
@@ -205,14 +219,14 @@ def is_equal(
     """Compares two structures and returns `True` if they are equal and `False` otherwise.\n
     ⇾ Will not detect, if a key-name has changed, only if removed or added.\n
     ----------------------------------------------------------------------------------------------------
-    *   `data1` – The first data structure to compare.
-    *   `data2` – The second data structure to compare.
+    *   `data_a` – The first data structure to compare.
+    *   `data_b` – The second data structure to compare.
     *   `ignore_paths` – A path or list of paths to key/s and item/s to ignore during comparison:<br>
         Comments are not ignored when comparing. `comment_start` and `comment_end` are only used<br>
         to correctly recognize the keys in the `ignore_paths`.
     *   `path_sep` – The separator between the keys/indexes in the `ignore_paths`.
-    *   `comment_start` – The string that marks the start of a comment inside `data1` and `data2`.
-    *   `comment_end` – The string that marks the end of a comment inside `data1` and `data2`.\n
+    *   `comment_start` – The string that marks the start of a comment inside `data_a` and `data_b`.
+    *   `comment_end` – The string that marks the end of a comment inside `data_a` and `data_b`.\n
     ----------------------------------------------------------------------------------------------------
     The paths from `ignore_paths` and the `path_sep` parameter work exactly the same way as for<br>
     `get_path_id()`. See its documentation for more details.\n
@@ -244,8 +258,8 @@ def is_equal(
         ignore_paths = [ignore_paths]
 
     return _compare_nested(
-        remove_comments(data1, comment_start=comment_start, comment_end=comment_end),
-        remove_comments(data2, comment_start=comment_start, comment_end=comment_end),
+        remove_comments(data_a, comment_start=comment_start, comment_end=comment_end),
+        remove_comments(data_b, comment_start=comment_start, comment_end=comment_end),
         ignore_paths=[str(path).split(path_sep) for path in ignore_paths if path],
     )
 
@@ -592,14 +606,20 @@ def _compare_nested(data1: Any, data2: Any, /, ignore_paths: list[list[str]], cu
 def _sep_path_id(path_id: str, /) -> list[int]:
     """Internal method to separate a path-ID string into its ID parts as a list of integers."""
 
-    if len(split_id := path_id.split(">")) == 2:
-        id_part_len, path_id_parts = split_id
+    if len(path_id) > 1:
+        with _suppress(ValueError):
+            chunk_len = int(path_id[0], 16)
+            payload = path_id[1:]
 
-        if id_part_len.isdigit() and path_id_parts.isdigit():
-            id_part_len_int = int(id_part_len)
+            if chunk_len > 0 and (len(payload) % chunk_len == 0):
+                valid = True
+                for char in payload:
+                    if char not in "0123456789ABCDEFabcdef":
+                        valid = False
+                        break
 
-            if id_part_len_int > 0 and (len(path_id_parts) % id_part_len_int == 0):
-                return [int(path_id_parts[i : i + id_part_len_int]) for i in range(0, len(path_id_parts), id_part_len_int)]
+                if valid:
+                    return [int(payload[i : i + chunk_len], 16) for i in range(0, len(payload), chunk_len)]
 
     raise ValueError(f"Path ID '{path_id}' is an invalid format") from None
 
@@ -718,7 +738,10 @@ class _DataGetPathIdHelper:
         if not self.path_ids:
             return None
 
-        return f"{self.max_id_length}>{''.join([id.zfill(self.max_id_length) for id in self.path_ids])}"
+        header = hex(self.max_id_length)[2:].upper()
+        body = "".join([id_str.zfill(self.max_id_length) for id_str in self.path_ids])
+
+        return f"{header}{body}"
 
     def process_key(self, key: str, /) -> bool:
         """Process a single key and update `path_ids`. Returns `False` if processing should stop."""
@@ -734,8 +757,9 @@ class _DataGetPathIdHelper:
         else:
             return False
 
-        self.path_ids.append(str(idx))
-        self.max_id_length = max(self.max_id_length, len(str(idx)))
+        self.path_ids.append(hex_str := hex(idx)[2:].upper())
+        self.max_id_length = max(self.max_id_length, len(hex_str))
+
         return True
 
     def process_dict_key(self, key: str, /) -> int | None:
@@ -899,14 +923,10 @@ class _DataRenderHelper:
             inner = self._hl("str", escaped) if self.do_syntax_hl else escaped
             return self.punct[quote] + inner + self.punct[quote]
 
-    def get_complexity(self, data: Any, /) -> int:  # ruff:ignore[complex-structure]
+    def get_complexity(self, data: Any, /) -> int:
         """Calculates the complexity of a data structure based on its nested elements."""
 
-        complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
-        if self.as_json:
-            complex_types += (bytes, bytearray)
-
-        if not isinstance(data, complex_types):
+        if not isinstance(data, _JSON_COMPLEX_TYPES if self.as_json else _COMPLEX_TYPES):
             return 0
 
         score = 1
@@ -936,10 +956,7 @@ class _DataRenderHelper:
         if self.compactness == 2:
             return False
 
-        complex_types: tuple[type, ...] = (list, tuple, dict, set, frozenset)
-        if self.as_json:
-            complex_types += (bytes, bytearray)
-
+        complex_types = _JSON_COMPLEX_TYPES if self.as_json else _COMPLEX_TYPES
         complex_items = sum([1 for item in seq if isinstance(item, complex_types)])  # ruff:ignore[unnecessary-comprehension-in-call]
         complexity = sum([self.get_complexity(item) for item in seq])  # ruff:ignore[unnecessary-comprehension-in-call]
 

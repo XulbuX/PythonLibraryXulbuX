@@ -143,7 +143,7 @@ Used to display the output of a terminal-outputting code example. Note that this
     *   For single-line comments, end with a colon `:`.
     *   For multi-line comments (max 2 lines), preceding lines can end normally in a period `.`, and only the last line must end with a colon `:`.
 4.  **Inline Comments:** If a comment is written on the same line, behind code, always end it with a period `.`.
-5.  **Numbered Comments:** When writing numbered step comments (e.g. step-by-step logic), ALWAYS format numbers with square brackets like `[1]`, `[2]`, `[3]`, etc. (e.g., `# [1] Parse input:`, `# [2] Validate options:`), NEVER with trailing periods like `1.`, `2.`, etc.
+5.  **Numbered Comments:** When writing numbered step comments (e.g., step-by-step logic), ALWAYS format numbers with square brackets like `[1]`, `[2]`, `[3]`, etc. (e.g., `# [1] Parse input:`, `# [2] Validate options:`), NEVER with trailing periods like `1.`, `2.`, etc.
 
 ### Section Separators
 

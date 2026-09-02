@@ -49,7 +49,6 @@ This is what it could look like using this library for a simple but ultra good-l
 import xulbux as xx
 from xulbux import S, hexa
 from xulbux.base.consts import CHARS
-from xulbux.color import fg_for_on_bg
 
 
 def main() -> None:
@@ -90,7 +89,7 @@ def main() -> None:
         (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
         (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
         "{hr}",
-        (S.hex(fg_for_on_bg(hexa_color)) | S.BG.hex(hexa_color))(" ... .... . -. .- -. .. --. .- -. ... "),
+        (S.hex(hexa_color).as_text_fg() | S.BG.hex(hexa_color))(" ... .... . -. .- -. .. --. .- -. ... "),
         border_style=S.DIM,
         end="\n\n",
     )

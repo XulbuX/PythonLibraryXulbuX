@@ -83,12 +83,14 @@ source = ["src/xulbux"]
 
 [tool.mutmut]
 pytest_add_cli_args = [
-  "-o", "addopts=",
+  "-o",
+  "addopts=",
   "-x",
   "-q",
   "--no-cov",
   "--disable-warnings",
-  "-W", "ignore",
+  "-W",
+  "ignore",
   "--tb=no",
   "--no-header",
   "--no-summary",

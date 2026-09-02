@@ -186,7 +186,7 @@ These are plain strings (or string-returning helpers), so they can be passed dir
 *   `scroll_up(n)`                   – Scroll page up by `n` lines.
 *   `scroll_down(n)`                 – Scroll page down by `n` lines.
 *   `title(text)`                    – Set the terminal window / tab title (OSC 2).
-*   `cursor_shape(shape)`            – Change cursor shape (DECSCUSR 1-6).
+*   `cursor_shape(shape)`            – Change cursor shape (`DECSCUSR` 1-6).
 *   `clipboard_copy(text)`           – Copy text to system clipboard via OSC 52.
 *   `cwd(path)`                      – Notify terminal of current working directory via OSC 7.
 *   `save()` / `restore()`           – Save/restore cursor position (ANSI.SYS).
@@ -250,6 +250,16 @@ Used as a fast path in `_build_open_close` to avoid per-call list and string all
 
 _CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
 """RGB channel steps for the 6×6×6 color cube in 256-color palettes."""  # ruff:ignore[ambiguous-unicode-character-string]
+
+_CURSOR_SHAPES: Final[dict[str, int]] = {
+    "blinking_bar": 5,
+    "blinking_block": 1,
+    "blinking_underline": 3,
+    "steady_bar": 6,
+    "steady_block": 2,
+    "steady_underline": 4,
+}
+"""Mapping from cursor shape description names to their corresponding `DECSCUSR` numeric codes."""
 
 
 # ***************************************************** INTERNAL HELPERS ******************************************************
@@ -1791,13 +1801,13 @@ class Term:
     BRACKETED_PASTE_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?2004l"
     """Disable bracketed paste mode."""
     LINE_WRAP_ENABLE: ClassVar[str] = f"{ANSI.CHAR}[?7h"
-    """Enable line wrapping (DECAWM)."""
+    """Enable line wrapping (`DECAWM`)."""
     LINE_WRAP_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?7l"
-    """Disable line wrapping (DECAWM)."""
+    """Disable line wrapping (`DECAWM`)."""
     RESET: ClassVar[str] = f"{ANSI.CHAR}c"
     """Hard reset to initial state (RIS)."""
     SOFT_RESET: ClassVar[str] = f"{ANSI.CHAR}[!p"
-    """Soft terminal reset to sensible defaults (DECSTR)."""
+    """Soft terminal reset to sensible defaults (`DECSTR`)."""
 
     @staticmethod
     def up(n: int = 1, /) -> str:
@@ -1937,7 +1947,7 @@ class Term:
         ],
         /,
     ) -> str:
-        """Set the terminal cursor shape using DECSCUSR.\n
+        """Set the terminal cursor shape using `DECSCUSR`.\n
         ----------------------------------------------------------------------------------------------------
         *   `shape` – An integer in range [1, 6] inclusive, or a string name of the shape:
             - `1` `"blinking_block"`
@@ -1947,17 +1957,10 @@ class Term:
             - `5` `"blinking_bar"`
             - `6` `"steady_bar"`"""
 
-        shape_map: dict[str, int] = {
-            "blinking_block": 1,
-            "steady_block": 2,
-            "blinking_underline": 3,
-            "steady_underline": 4,
-            "blinking_bar": 5,
-            "steady_bar": 6,
-        }
-
-        if (shape_num := shape_map.get(shape) if isinstance(shape, str) else shape) not in {1, 2, 3, 4, 5, 6}:
-            raise ValueError(f"Expected cursor shape in [1, 6] inclusive, or one of {list(shape_map.keys())!r}, got {shape!r}")
+        if (shape_num := _CURSOR_SHAPES.get(shape) if isinstance(shape, str) else shape) not in {1, 2, 3, 4, 5, 6}:
+            raise ValueError(
+                f"Expected cursor shape in [1, 6] inclusive, or one of {list(_CURSOR_SHAPES.keys())!r}, got {shape!r}"
+            )
 
         return f"{ANSI.CHAR}[{shape_num} q"
 

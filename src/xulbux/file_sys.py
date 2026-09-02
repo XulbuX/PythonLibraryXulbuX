@@ -103,7 +103,7 @@ def resolve_path(
         else:
             search_dirs.extend([Path(path) for path in search_in])
 
-    return _ExtendPathHelper(path, search_dirs=search_dirs, fuzzy_match=fuzzy_match, raise_error=raise_error)()
+    return _ResolvePathHelper(path, search_dirs=search_dirs, fuzzy_match=fuzzy_match, raise_error=raise_error)()
 
 
 def resolve_or_create_path(
@@ -268,8 +268,8 @@ def remove(path: Path | str, /, *, only_content: bool = False) -> None:
         raise NotADirectoryError(f"Cannot remove only_content of non-directory {path_obj!r}")
 
 
-class _ExtendPathHelper:
-    """Internal, callable helper class to find and extend a relative path to an absolute path."""
+class _ResolvePathHelper:
+    """Internal, callable helper class to find and resolve a relative path to an absolute path."""
 
     def __init__(self, rel_path: Path, /, search_dirs: list[Path], *, fuzzy_match: bool, raise_error: bool) -> None:
         self.rel_path: Path = rel_path

@@ -48,6 +48,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
 *   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
+*   **Changelog Maintenance:** When modifying or removing public APIs, behaviors, parameters, or constants that existed in the previous release, briefly document the change under the current release section in `CHANGELOG.md`. Newly introduced modules or features should only be noted in their final released state as additions — never log internal development iterations, intermediary adjustments, or WIP refactors (the changelog is a release summary, not a dev log).
 
 ## 7. Dependency Management
 

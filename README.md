@@ -176,12 +176,11 @@ This is what it could look like using this library for a simple but ultra good-l
 import xulbux as xx
 from xulbux import S, hexa
 from xulbux.base.consts import CHARS
-from xulbux.color import fg_for_on_bg
 
 
 def main() -> None:
 
-    # Let the user enter a hexa color in any hexa format.
+    # Let the user enter a hexa color in any format:
     input_clr = xx.console.input(
         (S.BOLD("Enter a HEXA color in any format"), " > "),
         start="\n",
@@ -190,34 +189,34 @@ def main() -> None:
         allowed_chars=CHARS.HEX_DIGITS,
     )
 
-    # Announce indexing the input color.
+    # Announce indexing the input color:
     xx.console.log("INDEX", "Indexing the input HEXA color...", start="\n", title_bg_color=S.BG.BR.BLUE)
 
     try:
-        # Try to initialize the input string as a `hexa()` object.
+        # Try to initialize the input string as a `hexa()` object:
         hexa_color = hexa(input_clr)
 
     except ValueError:
-        # Announce the invalid input color and exit the program.
+        # Announce the invalid input color and exit the program:
         xx.console.fail("The input HEXA color is invalid.", end="\n\n", exit=True)
 
-    # Announce starting the conversion.
+    # Announce starting the conversion:
     xx.console.log("CONVERT", "Converting the HEXA color into different types...", title_bg_color=S.BG.BR.MAGENTA)
 
-    # Convert the hexa color into the two other color styles.
+    # Convert the hexa color into the two other color styles:
     rgba_color = hexa_color.as_rgba()
     hsla_color = hexa_color.as_hsla()
 
-    # Announce the successful conversion.
+    # Announce the successful conversion:
     xx.console.done("Successfully converted color into different types.", end="\n\n")
 
-    # Pretty print the color in different formats.
+    # Pretty print the color in different formats:
     xx.console.log_box_bordered(
         (S.BOLD("HEXA: "), (S.ITALIC | S.BR.WHITE)(str(hexa_color))),
         (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
         (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
         "{hr}",
-        (S.hex(fg_for_on_bg(hexa_color)) | S.BG.hex(hexa_color))(" ... .... . -. .- -. .. --. .- -. ... "),
+        (S.hex(hexa_color).as_text_fg() | S.BG.hex(hexa_color))(" ... .... . -. .- -. .. --. .- -. ... "),
         border_style=S.DIM,
         end="\n\n",
     )

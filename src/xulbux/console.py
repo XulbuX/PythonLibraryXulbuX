@@ -1236,7 +1236,7 @@ def get_encoding() -> str:
         return "utf-8"
 
 
-def supports_color() -> bool:
+def has_color_support() -> bool:
     """Whether the terminal supports ANSI color codes or not."""
 
     if not is_tty():
@@ -1310,11 +1310,11 @@ def pause_exit(
         raise SystemExit(exit_code)
 
 
-def cls() -> None:
+def clear() -> None:
     """Will clear the terminal in addition to completely resetting the ANSI formats."""
 
-    if _shutil.which("cls"):
-        _subprocess.run(["cls"])
+    if _sys.platform == "win32":
+        _subprocess.run("cls", shell=True)
     elif _shutil.which("clear"):
         _subprocess.run(["clear"])
     print("\033[0m", end="", flush=True)
@@ -1419,16 +1419,15 @@ def debug(
     exit: bool = False,
     exit_code: int = 0,
 ) -> None:
-    """A preset for `log()`: `DEBUG` log message with the options to pause<br>
-    at the message and exit the program after the message was printed.\n
-    If `active` is false, no debug message will be printed."""
+    """A preset for `log()`: `DEBUG` log message with the option<br>
+    to deactivate it with the parameter `active` (e.g., set `active=self.debug`)."""
 
     if active:
         _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
 
 
 def info(
-    prompt: TextRenderable | object = "Program running.",
+    prompt: TextRenderable | object = "Program point reached.",
     /,
     *,
     start: str = "",
@@ -1438,8 +1437,7 @@ def info(
     exit: bool = False,
     exit_code: int = 0,
 ) -> None:
-    """A preset for `log()`: `INFO` log message with the options to pause<br>
-    at the message and exit the program after the message was printed."""
+    """A preset for `log()`: `INFO` log message."""
 
     _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit, exit_code)
 
@@ -1453,9 +1451,9 @@ def done(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True],
+    exit: Literal[False] = ...,
     exit_code: int = ...,
-) -> NoReturn: ...
+) -> None: ...
 @overload
 def done(
     prompt: TextRenderable | object = ...,
@@ -1465,9 +1463,9 @@ def done(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False] = ...,
+    exit: Literal[True],
     exit_code: int = ...,
-) -> None: ...
+) -> NoReturn: ...
 @overload
 def done(
     prompt: TextRenderable | object = ...,
@@ -1483,7 +1481,7 @@ def done(
 
 
 def done(
-    prompt: TextRenderable | object = "Program finished.",
+    prompt: TextRenderable | object = "Operation completed successfully.",
     /,
     *,
     start: str = "",
@@ -1493,8 +1491,7 @@ def done(
     exit: bool = False,
     exit_code: int = 0,
 ) -> None:
-    """A preset for `log()`: `DONE` log message with the options to pause<br>
-    at the message and exit the program after the message was printed."""
+    """A preset for `log()`: `DONE` log message."""
 
     _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit, exit_code)
 
@@ -1508,9 +1505,9 @@ def warn(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True],
+    exit: Literal[False] = ...,
     exit_code: int = ...,
-) -> NoReturn: ...
+) -> None: ...
 @overload
 def warn(
     prompt: TextRenderable | object = ...,
@@ -1520,9 +1517,9 @@ def warn(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False] = ...,
+    exit: Literal[True],
     exit_code: int = ...,
-) -> None: ...
+) -> NoReturn: ...
 @overload
 def warn(
     prompt: TextRenderable | object = ...,
@@ -1538,7 +1535,7 @@ def warn(
 
 
 def warn(
-    prompt: TextRenderable | object = "Important message.",
+    prompt: TextRenderable | object = "Warning, unexpected behavior.",
     /,
     *,
     start: str = "",
@@ -1546,10 +1543,9 @@ def warn(
     default_color: FgColorStyle | None = None,
     pause: bool = False,
     exit: bool = False,
-    exit_code: int = 1,
+    exit_code: int = 0,
 ) -> None:
-    """A preset for `log()`: `WARN` log message with the options to pause<br>
-    at the message and exit the program after the message was printed."""
+    """A preset for `log()`: `WARN` log message."""
 
     _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
 
@@ -1563,9 +1559,9 @@ def fail(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True] = ...,
+    exit: Literal[False] = ...,
     exit_code: int = ...,
-) -> NoReturn: ...
+) -> None: ...
 @overload
 def fail(
     prompt: TextRenderable | object = ...,
@@ -1575,9 +1571,9 @@ def fail(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False],
+    exit: Literal[True],
     exit_code: int = ...,
-) -> None: ...
+) -> NoReturn: ...
 @overload
 def fail(
     prompt: TextRenderable | object = ...,
@@ -1593,18 +1589,17 @@ def fail(
 
 
 def fail(
-    prompt: TextRenderable | object = "Program error.",
+    prompt: TextRenderable | object = "Operation failed, an error occurred.",
     /,
     *,
     start: str = "",
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = True,
+    exit: bool = False,
     exit_code: int = 1,
 ) -> None:
-    """A preset for `log()`: `FAIL` log message with the options to pause<br>
-    at the message and exit the program after the message was printed."""
+    """A preset for `log()`: `FAIL` log message."""
 
     _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit, exit_code)
 
@@ -1618,9 +1613,9 @@ def exit(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True] = ...,
+    exit: Literal[False] = ...,
     exit_code: int = ...,
-) -> NoReturn: ...
+) -> None: ...
 @overload
 def exit(
     prompt: TextRenderable | object = ...,
@@ -1630,9 +1625,9 @@ def exit(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False],
+    exit: Literal[True],
     exit_code: int = ...,
-) -> None: ...
+) -> NoReturn: ...
 @overload
 def exit(
     prompt: TextRenderable | object = ...,
@@ -1661,8 +1656,7 @@ def exit(
     """A preset for `log()`: `EXIT` log message with the options to pause<br>
     at the message and exit the program after the message was printed."""
 
-    log("EXIT", prompt, start=start, end=end, title_bg_color=S.BG.BR.MAGENTA, default_color=default_color)
-    pause_exit("", pause=pause, exit=exit, exit_code=exit_code)
+    _log_preset("EXIT", prompt, S.BG.BR.MAGENTA, start, end, default_color, pause, exit, exit_code)
 
 
 def log_box_filled(
@@ -2313,6 +2307,8 @@ def _prepare_log_box(
 
 
 def _multiline_input_submit(event: KeyPressEvent, /) -> None:
+    """Submit handler for multiline prompt_toolkit input buffers."""
+
     event.app.exit(result=event.app.current_buffer.document.text)
 
 
@@ -2457,29 +2453,41 @@ class _ConsoleInputHelper:
                         buffer.delete(1)
 
     def handle_delete(self, event: KeyPressEvent, /) -> None:
+        """Handle the Delete key press event."""
+
         self.remove_text_event(event)
 
     def handle_backspace(self, event: KeyPressEvent, /) -> None:
+        """Handle the Backspace key press event."""
+
         self.remove_text_event(event, is_backspace=True)
 
     @staticmethod
     def handle_control_a(event: KeyPressEvent, /) -> None:
+        """Handle the Ctrl+A key combination to select all text."""
+
         buffer = event.app.current_buffer
         buffer.cursor_position = 0
         buffer.start_selection()
         buffer.cursor_position = len(buffer.text)
 
     def handle_paste(self, event: KeyPressEvent, /) -> None:
+        """Handle clipboard paste events, respecting allow_paste setting."""
+
         if self.allow_paste:
             self.insert_text_event(event)
         else:
             self.tried_pasting = True
 
     def handle_any(self, event: KeyPressEvent, /) -> None:
+        """Catch-all handler for general keypress character insertions."""
+
         self.insert_text_event(event)
 
 
 class _ConsoleInputValidator(Validator):
+    """Internal prompt_toolkit validator checking minimum length and custom validation rules."""
+
     __slots__: tuple[str, ...] = ("get_text", "mask_char", "min_len", "validator")
 
     def __init__(
@@ -2507,6 +2515,8 @@ class _ConsoleInputValidator(Validator):
 
 
 class _StdoutInterceptorMixin:
+    """Mixin class providing stdout interception and buffering during terminal animations."""
+
     __slots__: tuple[str, ...] = ("_buffer", "_last_line_len", "_original_stdout", "active")
 
     active: bool
@@ -2515,11 +2525,15 @@ class _StdoutInterceptorMixin:
     _last_line_len: int
 
     def _start_intercepting(self) -> None:
+        """Begin intercepting stdout writes to buffer them during animation updates."""
+
         self.active = True
         self._original_stdout = cast("TextIO", _sys.stdout)
         _sys.stdout = _InterceptedOutput(self, self._original_stdout)
 
     def _stop_intercepting(self) -> None:
+        """Stop intercepting stdout writes and restore the original stdout stream."""
+
         if self._original_stdout:
             self._flush_buffer()
             _sys.stdout = self._original_stdout
@@ -2530,15 +2544,21 @@ class _StdoutInterceptorMixin:
         self._reset_state()
 
     def _emergency_cleanup(self) -> None:
+        """Safely restore stdout in case of an unexpected exception."""
+
         with suppress(Exception):
             self._stop_intercepting()
 
     def _clear_intercept_line(self) -> None:
+        """Clear the current line where animation or progress is displayed."""
+
         if self._last_line_len > 0 and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r")
             self._original_stdout.flush()
 
     def _flush_buffer(self) -> None:
+        """Write all buffered stdout content directly to the original stdout stream."""
+
         if self._buffer and self._original_stdout:
             self._clear_intercept_line()
             for content in self._buffer:
@@ -2547,9 +2567,13 @@ class _StdoutInterceptorMixin:
             self._buffer.clear()
 
     def _redraw_display(self) -> None:
+        """Redraw the active animation display after flushing buffered stdout output."""
+
         pass
 
     def _reset_state(self) -> None:
+        """Reset internal indicator state when stopping interception."""
+
         pass
 
 
@@ -2564,6 +2588,8 @@ class _InterceptedOutput:
         self.original_stdout: TextIO = original_stdout
 
     def write(self, content: str, /) -> int:
+        """Buffer incoming write content instead of printing directly over the active indicator."""
+
         try:
             if content and content != "\r":
                 self.status_indicator._buffer.append(content)
@@ -2573,6 +2599,8 @@ class _InterceptedOutput:
             raise
 
     def flush(self) -> None:
+        """Flush buffered output and redraw the active progress or animation display."""
+
         try:
             if self.status_indicator.active and self.status_indicator._buffer:
                 self.status_indicator._flush_buffer()
@@ -2854,6 +2882,8 @@ class ProgressBar(_StdoutInterceptorMixin):
             self.hide_progress()
 
     def _draw_progress_bar(self, current: int, total: int, /, label: S | str | None = None) -> None:
+        """Render and print the formatted progress bar at the current step."""
+
         if total <= 0 or not self._original_stdout:
             return
 
@@ -2876,6 +2906,8 @@ class ProgressBar(_StdoutInterceptorMixin):
     def _get_formatted_info_and_bar_width(
         self, format: list[str], current: int, total: int, percentage: float, /, label: S | str | None = None
     ) -> tuple[str, int]:
+        """Compute the rendered text components and remaining space for the progress bar."""
+
         fmt_parts: list[str] = []
         label_ansi = _to_styled_text(label).ansi if label is not None else ""
 
@@ -2901,6 +2933,8 @@ class ProgressBar(_StdoutInterceptorMixin):
         return fmt_str, bar_width
 
     def _create_bar(self, current: int, total: int, bar_width: int, /) -> str:
+        """Generate the visual bar characters representing the progress proportion."""
+
         progress = current / total if total > 0 else 0
         bar: list[str] = []
 
@@ -2917,10 +2951,14 @@ class ProgressBar(_StdoutInterceptorMixin):
         return "".join(bar)
 
     def _reset_state(self) -> None:
+        """Reset internal progress bar tracking state."""
+
         self._last_update_time = 0.0
         self._current_progress_str = ""
 
     def _redraw_display(self) -> None:
+        """Redraw the current progress bar display on the terminal."""
+
         if self._current_progress_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_progress_str}")
             self._original_stdout.flush()
@@ -3195,9 +3233,13 @@ class Throbber(_StdoutInterceptorMixin):
                 self._stop_event.wait(self.interval)
 
     def _reset_state(self) -> None:
+        """Reset internal throbber animation tracking state."""
+
         self._current_animation_str = ""
 
     def _redraw_display(self) -> None:
+        """Redraw the current throbber animation frame on the terminal."""
+
         if self._current_animation_str and self._original_stdout:
             self._original_stdout.write(f"{ANSI.CHAR}[2K\r{self._current_animation_str}")
             self._original_stdout.flush()

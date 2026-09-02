@@ -9,17 +9,17 @@ from xulbux.console import (
     _multiline_input_submit,
     _read_single_key,
     _to_styled_text,
-    cls,
+    clear,
     confirm,
     get_encoding,
     get_height,
     get_size,
     get_width,
+    has_color_support,
     input,
     is_tty,
     multiline_input,
     pause_exit,
-    supports_color,
 )
 import pytest
 from prompt_toolkit.document import Document
@@ -63,10 +63,10 @@ def test_terminal_dimensions_and_environment() -> None:
         assert get_encoding() == "utf-8"
 
 
-def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
+def test_has_color_support_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:
     # When not a TTY:
     with patch("xulbux.console.is_tty", return_value=False):
-        assert supports_color() is False
+        assert has_color_support() is False
 
     mock_ctypes = mock_ctypes_windll()
 
@@ -80,7 +80,7 @@ def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Calla
         patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
         patch.object(mock_ctypes.kernel32, "GetConsoleMode", side_effect=mock_get_console_mode),
     ):
-        assert supports_color() is True
+        assert has_color_support() is True
 
     # Windows VT mode disabled:
     def mock_get_console_mode_disabled(handle: int, mode_ptr: MagicMock) -> int:
@@ -92,7 +92,7 @@ def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Calla
         patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
         patch.object(mock_ctypes.kernel32, "GetConsoleMode", side_effect=mock_get_console_mode_disabled),
     ):
-        assert supports_color() is False
+        assert has_color_support() is False
 
     # Windows VT check returning False (0):
     with (
@@ -100,42 +100,42 @@ def test_supports_color_windows(mock_os_windows: None, mock_ctypes_windll: Calla
         patch.object(mock_ctypes.kernel32, "GetStdHandle", return_value=1),
         patch.object(mock_ctypes.kernel32, "GetConsoleMode", return_value=0),
     ):
-        assert supports_color() is False
+        assert has_color_support() is False
 
     # Windows VT check exception:
     with (
         patch("xulbux.console.is_tty", return_value=True),
         patch.object(mock_ctypes.kernel32, "GetStdHandle", side_effect=Exception),
     ):
-        assert supports_color() is False
+        assert has_color_support() is False
 
 
-def test_supports_color_posix(mock_os_linux: None) -> None:
+def test_has_color_support_posix(mock_os_linux: None) -> None:
     with (
         patch("xulbux.console.is_tty", return_value=True),
         patch.dict("os.environ", {"TERM": "xterm-256color"}),
     ):
-        assert supports_color() is True
+        assert has_color_support() is True
 
 
-def test_cls_terminal() -> None:
-    def mock_which_cls(cmd: str) -> bool:
-        return cmd == "cls"
+def test_clear_terminal() -> None:
+    # Windows platform:
+    with patch("sys.platform", "win32"), patch("subprocess.run") as mock_sub_win:
+        clear()
+        mock_sub_win.assert_called_once_with("cls", shell=True)
 
-    def mock_which_clear(cmd: str) -> bool:
-        return cmd == "clear"
-
-    with patch("shutil.which", side_effect=mock_which_cls), patch("subprocess.run") as mock_sub:
-        cls()
-        mock_sub.assert_called_once_with(["cls"])
-
-    with patch("shutil.which", side_effect=mock_which_clear), patch("subprocess.run") as mock_sub_posix:
-        cls()
+    # POSIX with clear binary:
+    with (
+        patch("sys.platform", "linux"),
+        patch("shutil.which", return_value="/usr/bin/clear"),
+        patch("subprocess.run") as mock_sub_posix,
+    ):
+        clear()
         mock_sub_posix.assert_called_once_with(["clear"])
 
-    # When neither command exists:
-    with patch("shutil.which", return_value=None), patch("subprocess.run") as mock_sub_none:
-        cls()
+    # When clear command does not exist on POSIX:
+    with patch("sys.platform", "linux"), patch("shutil.which", return_value=None), patch("subprocess.run") as mock_sub_none:
+        clear()
         mock_sub_none.assert_not_called()
 
 

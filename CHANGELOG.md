@@ -19,58 +19,78 @@
 
 ## … `v2.0` Major Release 💎
 
-*   Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
-*   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
-*   Reformat all docstrings of the whole library to be consistent in style and structure, and to use proper sentences instead of just phrases.
-*   Improved the performance of `console.log()` by restructuring the way it processes formatting and output.
-*   Improved the performance of `string.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
-*   Improved the performance of `data.remove_duplicates()` for lists and tuples:<br>
-    Hashable items now deduplicate in $ O(n) $ using `dict.fromkeys()`, with an $ O(n^2) $ equality-check fallback only for unhashable items (*lists, dicts, sets*).
-*   The `console.log()` method no longer forces the title to be all uppercase, giving the user a bit more freedom in how they want to format their title.
-*   Added two ney public constants `FRAMES_STANDARD` and `FRAMES_WINDMILL` to the `console` module, which are usable as `frames` presets for the `Throbber` class.
-*   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
-*   Rewrote a big part of the already existing tests and added lots of new tests to bring the library's test coverage to 100%, and having all tests written consistently in the same style and structure.
-*   Corrected and refined type hints across the library for better accuracy.
+*   **Quality & Consistency:**
+    -   Unified all error messages throughout the whole library, to always pass the given value if the error is caused by that value being invalid.
+    -   Reformatted all docstrings across the library to be consistent in style and structure, and to use proper sentences.
+    -   Corrected and refined static type hints across the entire library for strict MyPyC compatibility.
+    -   Rewrote existing tests and added comprehensive new tests to achieve 100% test coverage with consistent structure.
+*   **Performance Optimizations:**
+    -   Improved the performance of `console.log()` by restructuring formatting and output pipelines.
+    -   Improved the performance of `string.normalize_spaces()` by using `str.translate()` instead of multiple `str.replace()` calls.
+    -   Improved the performance of `data.remove_duplicates()` for lists and tuples:<br>
+        Hashable items now deduplicate in $O(n)$ using `dict.fromkeys()`, with an $O(n^2)$ equality-check fallback only for unhashable items (*lists, dicts, sets*).
+*   **Feature Enhancements:**
+    -   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
+    -   Added two new public constants `FRAMES_STANDARD` and `FRAMES_WINDMILL` to the `console` module, usable as `frames` presets for the `Throbber` class.
+    -   `console.log()` no longer forces the title to be uppercase, allowing customizable capitalization.
+    -   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
 
 **BREAKING CHANGES:**
 
-*   **Dropped support for Python 3.10 and 3.11.** The library now requires Python 3.12 or higher.
-*   **Architectural Refactor:** Removed default module classes (`Console`, `System`, `FileSys`, `Data`, `String`, `Code`, `EnvPath`, `Json`, `Regex`, `File`) that acted as namespaces:
-    -   All methods are now accessible directly as module-level functions (e.g., `xulbux.console.log` instead of `xulbux.console.Console.log`).
-    -   Properties like `console.w` and `system.is_elevated` have been converted into standard getter functions like `get_width()` and `is_elevated()` to circumvent a MyPyC segmentation fault.
-*   **Removed the `format_codes` module and bracket syntax.** Replaced the legacy styling API with a new, strictly typed, operator-based styling engine in the new `ansi` module (*this also includes the removal of legacy format-code constants and methods from* `xulbux.base.consts`):
-    -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
-    -   The `S(*segments, sep="")` class also directly builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
-    -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
-*   `data.render()` now returns an `S` object instead of a plain `str`, and its `syntax_highlighting` dictionary now takes `S` style attributes (*or combined style groups*) instead of the old format-code strings, e.g., `{"str": S.YELLOW, "type": S.ITALIC | S.BR.BLUE}`. The default styles are unchanged in appearance.
-*   Replaced `get_args` and `_ConsoleArgsParseHelper` with fully typed `ArgumentParser` and `ParsedArgData` classes.
-*   Removed the `data.print()` method, since `data.render()` now returns an `S` object, so you can simply call `data.render(…).print()` instead.
-*   `data.render(as_json=True)` now natively converts special Python objects into valid JSON strings without creating proprietary special-objects for them, allowing standard lossless serialization compatible across external web APIs.
-*   Removed `serialize_bytes()` and `deserialize_bytes()` from the `data` module, as bytes serialization is now handled natively and transparently.
-*   Migrated the entire `console` module off the removed `format_codes` module and onto the new operator-based styling API:
-    -   All prompts/messages/content now accept `Renderable` and `TextRenderable` types instead of just plain strings, allowing for rich text formatting and styling utilizing the new styling API.
-    -   All color parameters now accept `ColorStyle` types instead of strings, `rgba`, or `hexa` objects, allowing for type-safer color specifications, including console default colors.
-*   The param `border_chars` of `console.log_box_bordered()` now takes a string of 11 characters instead of a tuple of 11 characters.
-*   Replaced type tuples like `DataObjTT`, meant for `isinstance` checks, with type guard functions like `is_data_obj()`, which are more explicit and type-safe, across the library.
-*   Changed `IndexIterable` to `SeqOrSet[T]` as index iterable is a misnomer, and added `is_seq_or_set()` to check if an object is a sequence or set, optionally also checking the type of its items.
-*   Renamed `r`, `g`, `b`, `h`, `s`, `l` and `a` to `red`, `green`, `blue`, `hue`, `sat`, `light` and `alpha` everywhere in the library, to follow the no-single-letter-names convention.
-*   Renamed `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()`, and `.to_hexa()` methods to `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()`, and `.as_hexa()`.
-*   Renamed `str_to_rgba()` and `str_to_hsla()` in `color` to `extract_rgba()` and `extract_hsla()`.
-*   Renamed `data.chars_count()` to `count_chars()`.
-*   Removed the `env_path` module and moved its functions into `system` as `get_env_path()`, `has_env_path()`, `add_env_path()`, and `remove_env_path()`.
-*   Removed the `file` module and moved its functions into `file_sys` as `create_file()` and `rename_file_ext()`.
-*   Removed the `code` module and moved its functions into `string` as `add_indent()`, `get_tab_spaces()`, `change_tab_size()`, `extract_func_calls()`, and `is_js()`.
-*   Renamed `string.single_char_repeats()` to `count_char_repeats()`.
-*   Renamed `string.split_count()` to `chunk()`.
-*   Renamed the `ANSI.SEQ_COLOR` lib constant to `ANSI.SEQ_FG_COLOR` to match the naming pattern of all other `ANSI` constants.
-*   Renamed the function `color.text_color_for_on_bg()` to `fg_for_on_bg()` as this name describes its purpose just as well, but is shorter and easier to type.
-*   Renamed the `bar_format` and `limited_bar_format` params, and `set_bar_format()` method of `ProgressBar` to simply `format`, `limited_format` and `set_format()`, since the class is already called `ProgressBar`.
-*   Renamed the `throbber_format` param of `Throbber` to simply `format`, since the class is already called `Throbber`.
-*   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support its old format string syntax.
-*   Removed the redundant `console.get_user()` function in favor of `system.get_username()`.
-*   Removed the `reset_ansi` param from all funcs where you can simply add a `S.RESET` at the end of your string to achieve the same effect.
-*   Removed the `format_linebreaks` param from `console.log()`, as the whole point of the `log()` method is to get a nicely formatted log message.
-*   Removed the `AnyRgba`, `AnyHsla` and `AnyHexa` type aliases as you should simply use the types `object` or `Any` for the same effect.
+*   **Python Version Support:**
+    *   Dropped support for Python 3.10 and 3.11. **The library now requires Python 3.12 or higher.**
+*   **Architectural & Namespace Refactor:**
+    *   Removed default module classes (`Console`, `System`, `FileSys`, `Data`, `String`, `Code`, `EnvPath`, `Json`, `Regex`, `File`) that acted as namespaces; all methods are now accessible directly as module-level functions (e.g., `xulbux.console.log`).
+    *   Properties like `console.w` and `system.is_elevated` have been converted into standard getter functions like `get_width()` and `is_elevated()` to circumvent a MyPyC segmentation fault.
+    *   Consolidated module structure:
+        -   Moved `code` functions into `string` (`add_indent()`, `get_tab_spaces()`, `change_tab_spaces()`, `extract_func_calls()`, `is_js()`).
+        -   Moved `env_path` functions into `system` (`get_env_path()`, `has_env_path()`, `add_env_path()`, `remove_env_path()`).
+        -   Moved `file` functions into `file_sys` (`create_file()`, `rename_file_ext()`).
+*   **New Operator-Based Styling Engine (`ansi` module):**
+    *   Removed the `format_codes` module and bracket syntax in favor of the new operator-based styling engine in the `ansi` module (*including the removal of legacy format-code constants from* `xulbux.base.consts`):
+        -   The new `S` class exposes every ANSI style/color attribute and uses `|` to combine styles and `()` to apply them to text, e.g., `(S.BOLD | S.RED)("hi")` and `S.hex("#F67")("hi")`.
+        -   The `S(*segments, sep="")` class also directly builds the ANSI string on construction and exposes `.ansi`, `.raw`, `.code_positions`, `.raw_code_positions`, `.print()` and `.input()`.
+        -   A companion `Term` class provides commonly used cursor- and screen-control sequences (`Term.HIDE_CURSOR`, `Term.up(n)`, `Term.move(row, col)`, `Term.title(text)`, …).
+    *   Migrated the entire `console` module to the new styling API:
+        -   All prompts, messages, and content now accept `Renderable` and `TextRenderable` types.
+        -   All color parameters now accept `ColorStyle` types instead of strings, `rgba`, or `hexa` objects.
+    *   `data.render()` now returns an `S` object, and its `syntax_highlighting` dictionary takes `S` styles.
+    *   Removed the `xulbux-lib fc` CLI command, since the new styling API doesn't support the old format string syntax.
+*   **Data & Type Modernization:**
+    -   Replaced `get_args` and `_ConsoleArgsParseHelper` with fully typed `ArgumentParser` and `ParsedArgData` classes.
+    -   `data.render(as_json=True)` now natively converts special Python objects into valid JSON strings without proprietary representations.
+    -   Replaced the separator-based path ID format (e.g., `"1>011"`) in `data.get_path_id()` with a compact, separator-free uppercase hexadecimal encoding (e.g., `"1011"`, `"10C"`).
+    -   Replaced runtime type tuples like `DataObjTT` with type guard functions like `is_data_obj()`.
+    -   Changed `IndexIterable` to `SeqOrSet[T]`, and added `is_seq_or_set()`.
+*   **Renamed Functions & Methods:**
+    *   **`color`:**
+        -   `text_color_for_on_bg()` (and `fg_for_on_bg()`) → `get_text_fg()`.
+        -   `luminance()` → `get_luminance()`.
+        -   `str_to_rgba()` and `str_to_hsla()` → `extract_rgba()` and `extract_hsla()`.
+        -   `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()`, `.to_hexa()` → `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()`, `.as_hexa()`.
+    *   **`console`:**
+        -   `cls()` → `clear()` (with fixed cross-platform terminal clearing on Windows and Unix).
+        -   `supports_color()` → `has_color_support()`.
+        -   `ProgressBar`: `bar_format`, `limited_bar_format`, `set_bar_format()` → `format`, `limited_format`, `set_format()`.
+        -   `Throbber`: `throbber_format` → `format`.
+    *   **`data` & `string`:**
+        -   `data.chars_count()` → `data.count_chars()`.
+        -   `string.single_char_repeats()` → `string.count_char_repeats()`.
+        -   `string.split_count()` → `string.chunk()`.
+        -   `string.change_tab_size()` → `string.change_tab_spaces()`.
+    *   **Parameters & Constants:**
+        -   `ANSI.SEQ_COLOR` → `ANSI.SEQ_FG_COLOR`.
+        -   Single-letter color channel parameters `r`, `g`, `b`, `h`, `s`, `l`, `a` → `red`, `green`, `blue`, `hue`, `sat`, `light`, `alpha`.
+        -   `string.decompose()`: parameter `case_string` → `string`.
+        -   `data.is_equal()`: parameters `data1, data2` → `data_a, data_b`.
+        -   `console.log_box_bordered()`: parameter `border_chars` now takes a string of 11 characters instead of a tuple of 11 characters.
+*   **Removals:**
+    -   Removed `data.print()` (use `data.render(…).print()`).
+    -   Removed `serialize_bytes()` and `deserialize_bytes()` from `data` (bytes serialization is now handled natively).
+    -   Removed `console.get_user()` in favor of `system.get_username()`.
+    -   Removed `reset_ansi` parameter almost everywhere (append `S.RESET` directly if needed).
+    -   Removed `format_linebreaks` parameter from `console.log()`.
+    -   Removed `AnyRgba`, `AnyHsla`, and `AnyHexa` type aliases.
 
 
 <span id="v1-9-7" />

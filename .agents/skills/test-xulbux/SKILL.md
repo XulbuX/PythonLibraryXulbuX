@@ -33,8 +33,8 @@ Tests are structured cleanly to mirror the `src/xulbux/` layout:
     *Examples:*
     *   `test_format_table_with_custom_headers()`
     *   `test_rgba_from_hex_invalid_length_raises_value_error()`
-    *   `test_supports_color_windows_vt_mode_disabled()`
-    *   `test_extend_path_missing_paths()`
+    *   `test_has_color_support_windows_vt_mode_disabled()`
+    *   `test_resolve_path_missing_paths()`
 2.  **Zero Duplication:** Consolidate repetitive assertions into `@pytest.mark.parametrize` tables or clean helper fixtures instead of duplicating test functions.
 3.  **No Agent Monologue or Notes:** Test files must contain only clean, readable code. Never include conversational notes, agent thoughts, or messy comment chatter.
 4.  **Comments & Separators:**
@@ -45,7 +45,7 @@ Tests are structured cleanly to mirror the `src/xulbux/` layout:
         ```
 
     *   Tests should be self-explanatory from their directory, file, and function names. Keep inline comments minimal and focused.
-5.  **Type Ignore Formatting:** When using `# pyright:ignore[…]` or `# type:ignore[…]`, **NEVER** put spaces after commas between rule names (e.g. `# pyright:ignore[attr-defined,reportUnknownMemberType]`).
+5.  **Type Ignore Formatting:** When using `# pyright:ignore[…]` or `# type:ignore[…]`, **NEVER** put spaces after commas between rule names (e.g., `# pyright:ignore[attr-defined,reportUnknownMemberType]`).
 
 ---
 

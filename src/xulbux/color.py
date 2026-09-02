@@ -18,11 +18,14 @@ if TYPE_CHECKING:
 
 
 _SRGB_LINEAR_LUT: tuple[float, ...] = tuple([
-    (ch / 255.0 / 12.92) if (ch / 255.0 <= 0.03928) else (((ch / 255.0 + 0.055) / 1.055) ** 2.4) for ch in range(256)
+    ((ch / 255.0) / 12.92) if (ch / 255.0) <= 0.04045 else (((ch / 255.0) + 0.055) / 1.055) ** 2.4 for ch in range(256)
 ])
+"""Lookup table mapping 8-bit sRGB channel values in range [0, 255] to linear RGB space values."""
 
 
 class _ColorBase:
+    """Internal base class providing common operator overloading and conversions for color models."""
+
     __slots__: tuple[str, ...] = ("alpha",)
     alpha: float | None
 
@@ -213,9 +216,9 @@ class rgba(_ColorBase):
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `luminance()`.
+        # The `method` param is validated in `get_luminance()`.
 
-        gray = int(luminance(self.red, self.green, self.blue, method=method))
+        gray = int(get_luminance(self.red, self.green, self.blue, method=method))
         return rgba(gray, gray, gray, self.alpha, _validate=False)
 
     def blend(self, other: Rgba, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> rgba:
@@ -485,10 +488,10 @@ class hsla(_ColorBase):
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `luminance()`.
+        # The `method` param is validated in `get_luminance()`.
 
         red, green, blue = self._hsl_to_rgb(self.hue, self.sat, self.light)
-        light = int(luminance(red, green, blue, output_type=None, method=method))
+        light = int(get_luminance(red, green, blue, output_type=None, method=method))
         hue, sat, light_val, _ = rgba(light, light, light, _validate=False).as_hsla().as_tuple()
         return hsla(hue, sat, light_val, self.alpha, _validate=False)
 
@@ -561,6 +564,8 @@ class hsla(_ColorBase):
 
     @staticmethod
     def _hue_to_rgb(chroma_min: float, chroma_max: float, hue_pos: float) -> float:
+        """Internal helper to convert a hue position to an RGB channel value."""
+
         if hue_pos < 0:
             hue_pos += 1
         if hue_pos > 1:
@@ -816,9 +821,9 @@ class hexa(_ColorBase):
             -   `"simple"` simple arithmetic mean (less accurate)
             -   `"bt601"` ITU-R BT.601 standard (older TV standard)"""
 
-        # The `method` param is validated in `luminance()`.
+        # The `method` param is validated in `get_luminance()`.
 
-        gray = int(luminance(self.red, self.green, self.blue, method=method))
+        gray = int(get_luminance(self.red, self.green, self.blue, method=method))
         return hexa(_red=gray, _green=gray, _blue=gray, _alpha=self.alpha)
 
     def blend(self, other: Hexa, /, ratio: float = 0.5, *, additive_alpha: bool = False) -> hexa:
@@ -1068,9 +1073,9 @@ def has_alpha(color: Rgba | Hsla | Hexa, /) -> bool:
                 color = color[2:]
             return len(color) == 4 or len(color) == 8
 
-        # It must be an int if it's a valid hexa and not a string (hexa object handled above)
-        hex_length = len(f"{cast('int', color):X}")
-        return hex_length == 4 or hex_length == 8
+        # It must be an int if it's a valid hexa and not a string (hexa object handled above).
+        # Integers <= 0xFFFFFF represent 24-bit RGB (no alpha); integers > 0xFFFFFF represent 32-bit RGBA:
+        return cast("int", color) > 0xFFFFFF
 
     if isinstance(color, str):
         if parsed_rgba := extract_rgba(color, only_first=True):
@@ -1295,7 +1300,7 @@ def hex_int_to_rgba(hex_int: int, /, *, preserve_original: bool = False) -> rgba
 
 
 @overload
-def luminance(
+def get_luminance(
     red: int,
     green: int,
     blue: int,
@@ -1305,7 +1310,7 @@ def luminance(
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> int: ...
 @overload
-def luminance(
+def get_luminance(
     red: int,
     green: int,
     blue: int,
@@ -1315,7 +1320,7 @@ def luminance(
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> float: ...
 @overload
-def luminance(
+def get_luminance(
     red: int,
     green: int,
     blue: int,
@@ -1325,7 +1330,7 @@ def luminance(
     method: Literal["wcag2", "wcag3", "simple", "bt601"] = "wcag2",
 ) -> int: ...
 @overload
-def luminance(
+def get_luminance(
     red: int,
     green: int,
     blue: int,
@@ -1336,7 +1341,7 @@ def luminance(
 ) -> int | float: ...
 
 
-def luminance(
+def get_luminance(
     red: int,
     green: int,
     blue: int,
@@ -1384,16 +1389,16 @@ def luminance(
 
 
 @overload
-def fg_for_on_bg(text_bg_color: rgba, /) -> rgba: ...
+def get_text_fg(text_bg_color: rgba, /) -> rgba: ...
 @overload
-def fg_for_on_bg(text_bg_color: hexa, /) -> hexa: ...
+def get_text_fg(text_bg_color: hexa, /) -> hexa: ...
 @overload
-def fg_for_on_bg(text_bg_color: int, /) -> int: ...
+def get_text_fg(text_bg_color: int, /) -> int: ...
 @overload
-def fg_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int: ...
+def get_text_fg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int: ...
 
 
-def fg_for_on_bg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
+def get_text_fg(text_bg_color: Rgba | Hexa, /) -> rgba | hexa | int:
     """Returns either black or white text color for optimal contrast on the given background color.\n
     ----------------------------------------------------------------------------------------------------
     *   `text_bg_color` – The background color (can be in RGBA or HEXA format)."""

@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import PropertyMock, patch
 import xulbux.file_sys as _file_sys_module
 from xulbux.base.exceptions import PathNotFoundError
-from xulbux.file_sys import _ExtendPathHelper
+from xulbux.file_sys import _ResolvePathHelper
 import pytest
 
 
@@ -181,7 +181,7 @@ def test_extend_path_env_vars_and_absolute_handling() -> None:
         patch("pathlib.Path.is_absolute", return_value=True),
         patch("pathlib.Path.drive", new_callable=PropertyMock, return_value=""),
     ):
-        helper = _ExtendPathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
+        helper = _ResolvePathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
         with contextlib.suppress(Exception):
             helper()
 
@@ -189,7 +189,7 @@ def test_extend_path_env_vars_and_absolute_handling() -> None:
         patch("pathlib.Path.is_absolute", return_value=True),
         patch("pathlib.Path.drive", new_callable=PropertyMock, return_value="C:"),
     ):
-        helper_drive = _ExtendPathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
+        helper_drive = _ResolvePathHelper(Path("dummy_path"), search_dirs=[], fuzzy_match=False, raise_error=False)
         with contextlib.suppress(Exception):
             helper_drive()
 
@@ -197,10 +197,10 @@ def test_extend_path_env_vars_and_absolute_handling() -> None:
 def test_find_path_traversal_when_parent_is_file(tmp_path: Path) -> None:
     file_path = tmp_path / "sample_file.txt"
     file_path.touch()
-    helper = _ExtendPathHelper(Path("sample_file.txt/nested"), search_dirs=[tmp_path], fuzzy_match=True, raise_error=False)
+    helper = _ResolvePathHelper(Path("sample_file.txt/nested"), search_dirs=[tmp_path], fuzzy_match=True, raise_error=False)
     assert helper() == file_path
 
 
 def test_get_closest_match_permission_error() -> None:
     with patch.object(Path, "iterdir", side_effect=PermissionError("Mocked access error")):
-        assert _ExtendPathHelper.get_closest_match(Path("."), "target_name") is None
+        assert _ResolvePathHelper.get_closest_match(Path("."), "target_name") is None

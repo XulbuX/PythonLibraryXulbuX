@@ -25,30 +25,30 @@ def test_get_tab_spaces_detection() -> None:
     assert _string_module.get_tab_spaces("no_indent_here\nstill_none") == 0
 
 
-def test_change_tab_size_rescaling() -> None:
+def test_change_tab_spaces_rescaling() -> None:
     sample = "def test():\n  print('test')\n  if True:\n    print('nested')"
     expected = "def test():\n    print('test')\n    if True:\n        print('nested')"
-    assert _string_module.change_tab_size(sample, 4) == expected
+    assert _string_module.change_tab_spaces(sample, 4) == expected
 
 
-def test_change_tab_size_when_tab_size_matches_or_zero() -> None:
+def test_change_tab_spaces_when_tab_spaces_matches_or_zero() -> None:
     sample_same = "def test():\n    print('test')"
-    assert _string_module.change_tab_size(sample_same, 4) == sample_same
+    assert _string_module.change_tab_spaces(sample_same, 4) == sample_same
 
     sample_unindented = "def test():\nprint('test')"
-    assert _string_module.change_tab_size(sample_unindented, 4) == sample_unindented
+    assert _string_module.change_tab_spaces(sample_unindented, 4) == sample_unindented
 
 
-def test_change_tab_size_with_remove_empty_lines() -> None:
+def test_change_tab_spaces_with_remove_empty_lines() -> None:
     sample = "def test():\n\n  print('test')"
     expected = "def test():\n    print('test')"
-    assert _string_module.change_tab_size(sample, 4, remove_empty_lines=True) == expected
+    assert _string_module.change_tab_spaces(sample, 4, remove_empty_lines=True) == expected
 
     sample_same = "def test():\n\n    print('test')"
     expected_same = "def test():\n    print('test')"
-    assert _string_module.change_tab_size(sample_same, 4, remove_empty_lines=True) == expected_same
+    assert _string_module.change_tab_spaces(sample_same, 4, remove_empty_lines=True) == expected_same
 
 
-def test_change_tab_size_with_negative_size_raises_value_error() -> None:
+def test_change_tab_spaces_with_negative_spaces_raises_value_error() -> None:
     with pytest.raises(ValueError, match="must be non-negative"):
-        _string_module.change_tab_size("code", -1)
+        _string_module.change_tab_spaces("code", -1)

@@ -115,7 +115,12 @@ def test_has_alpha() -> None:
     assert _color_module.has_alpha("FF0000") is False
     assert _color_module.has_alpha("FF0000FF") is True
     assert _color_module.has_alpha(0xFF0000) is False
+    assert _color_module.has_alpha(0x1234) is False
+    assert _color_module.has_alpha(0x0) is False
+    assert _color_module.has_alpha(0xFFFFFF) is False
+    assert _color_module.has_alpha(0x1000000) is True
     assert _color_module.has_alpha(0xFF0000FF) is True
+    assert _color_module.has_alpha(0xFFFFFFFF) is True
     assert _color_module.has_alpha("hsl(0,100%,50%)") is False
     assert _color_module.has_alpha("hsla(0,100%,50%,.5)") is True
     assert _color_module.has_alpha("rgb(0,0,0)") is False
@@ -197,40 +202,40 @@ def test_str_to_hsla() -> None:
     assert _color_module.extract_hsla("No colors here", only_first=True) is None
 
 
-def test_luminance() -> None:
-    assert _color_module.luminance(255, 0, 0) == 54
-    assert _color_module.luminance(255, 0, 0, output_type=int) == 21
-    assert 0.20 < _color_module.luminance(255, 0, 0, output_type=float) < 0.22
-    assert _color_module.luminance(0, 0, 0) == 0
-    assert _color_module.luminance(255, 255, 255) == 255
-    assert _color_module.luminance(128, 128, 128) == 55
+def test_get_luminance() -> None:
+    assert _color_module.get_luminance(255, 0, 0) == 54
+    assert _color_module.get_luminance(255, 0, 0, output_type=int) == 21
+    assert 0.20 < _color_module.get_luminance(255, 0, 0, output_type=float) < 0.22
+    assert _color_module.get_luminance(0, 0, 0) == 0
+    assert _color_module.get_luminance(255, 255, 255) == 255
+    assert _color_module.get_luminance(128, 128, 128) == 55
 
-    assert _color_module.luminance(255, 0, 0, method="simple") == 85
-    assert _color_module.luminance(255, 0, 0, method="bt601") == 76
-    assert _color_module.luminance(255, 0, 0, method="wcag3") == 54
+    assert _color_module.get_luminance(255, 0, 0, method="simple") == 85
+    assert _color_module.get_luminance(255, 0, 0, method="bt601") == 76
+    assert _color_module.get_luminance(255, 0, 0, method="wcag3") == 54
     with pytest.raises(ValueError):
-        _color_module.luminance(256, 0, 0)
+        _color_module.get_luminance(256, 0, 0)
 
 
-def test_fg_for_on_bg() -> None:
-    text_color_dark = _color_module.fg_for_on_bg(rgba(0, 0, 0))
+def test_get_text_fg() -> None:
+    text_color_dark = _color_module.get_text_fg(rgba(0, 0, 0))
     assert isinstance(text_color_dark, rgba)
     assert text_color_dark.as_tuple() == (255, 255, 255, None)
 
-    text_color_light = _color_module.fg_for_on_bg(rgba(255, 255, 255))
+    text_color_light = _color_module.get_text_fg(rgba(255, 255, 255))
     assert isinstance(text_color_light, rgba)
     assert text_color_light.as_tuple() == (0, 0, 0, None)
 
-    text_color_hexa_dark = _color_module.fg_for_on_bg(hexa("#000000"))
+    text_color_hexa_dark = _color_module.get_text_fg(hexa("#000000"))
     assert isinstance(text_color_hexa_dark, hexa)
     assert str(text_color_hexa_dark) == "#FFFFFF"
 
-    text_color_hexa_light = _color_module.fg_for_on_bg(hexa("#FFFFFF"))
+    text_color_hexa_light = _color_module.get_text_fg(hexa("#FFFFFF"))
     assert isinstance(text_color_hexa_light, hexa)
     assert str(text_color_hexa_light) == "#000000"
 
-    assert _color_module.fg_for_on_bg(0x000000) == 0xFFFFFF
-    assert _color_module.fg_for_on_bg(0xFFFFFF) == 0x000000
+    assert _color_module.get_text_fg(0x000000) == 0xFFFFFF
+    assert _color_module.get_text_fg(0xFFFFFF) == 0x000000
 
 
 def test_adjust_lightness() -> None:

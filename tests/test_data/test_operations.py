@@ -34,6 +34,12 @@ def test_strip_nested_collections() -> None:
     nested_structure = [" a ", [" b ", " c"]]
     assert _data_module.strip(nested_structure) == ["a", ["b", "c"]]
 
+    mixed_structure = {"  key  ": 123, 456: "  val  ", "flag": True, "none": None}
+    assert _data_module.strip(mixed_structure) == {"key": 123, 456: "val", "flag": True, "none": None}
+
+    mixed_list = ["  a  ", 42, False, None, ["  nested  ", 3.14]]
+    assert _data_module.strip(mixed_list) == ["a", 42, False, None, ["nested", 3.14]]
+
 
 @pytest.mark.parametrize(
     "input_data, spaces_are_empty, expected_output",

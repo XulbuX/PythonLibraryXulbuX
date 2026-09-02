@@ -25,7 +25,7 @@ __email__: Final[str] = "hi@xul.is"
 __license__: Final[str] = "MIT"
 __copyright__: Final[str] = "Copyright (c) 2024 XulbuX"
 
-__requires_python__: Final[str] = ">=3.10.0"
+__requires_python__: Final[str] = ">=3.12.0"
 __dependencies__: Final[list[str]] = [
     "prompt_toolkit>=3.0.41",
     "regex>=2023.10.3",
@@ -67,6 +67,9 @@ __all__ = [
     "system",
 ]
 
+_ALL_SET: Final[set[str]] = set(__all__)
+"""Pre-computed set of `__all__` for fast `O(1)` membership testing during lazy attribute access."""
+
 _SUBMODULES: Final[dict[str, str]] = {
     "S": "ansi",
     "Term": "ansi",
@@ -89,7 +92,7 @@ def __getattr__(name: str) -> Any:
     ----------------------------------------------------------------------------------------------------
     *   `name` – The name of the submodule or attribute to access."""
 
-    if name in __all__:
+    if name in _ALL_SET:
         import importlib
 
         if name in _SUBMODULES:

@@ -5,12 +5,12 @@ import pytest
 
 
 def test_is_equal_identical_and_differing_structures() -> None:
-    dict1 = {"k1": [1, 2], "k2": "value"}
-    dict2 = {"k1": [1, 2], "k2": "value"}
-    dict3 = {"k1": [1, 3], "k2": "value"}
+    dict_a = {"k1": [1, 2], "k2": "value"}
+    dict_b = {"k1": [1, 2], "k2": "value"}
+    dict_c = {"k1": [1, 3], "k2": "value"}
 
-    assert _data_module.is_equal(dict1, dict2) is True
-    assert _data_module.is_equal(dict1, dict3) is False
+    assert _data_module.is_equal(dict_a, dict_b) is True
+    assert _data_module.is_equal(dict_a, dict_c) is False
     assert _data_module.is_equal({"a": 1}, ["a", 1]) is False
     assert _data_module.is_equal({"a": 1}, {"a": 2, "b": 3}) is False
     assert _data_module.is_equal({"a": 1}, {"b": 1}) is False
@@ -42,16 +42,21 @@ def test_get_path_id_single_and_multiple() -> None:
         }
     }
 
-    assert _data_module.get_path_id(sample_data, "healthy->fruit->0") == "1>000"
-    assert _data_module.get_path_id(sample_data, "healthy->fruit->apples") == "1>000"
-    assert _data_module.get_path_id(sample_data, "healthy->vegetables->1") == "1>011"
+    assert _data_module.get_path_id(sample_data, "healthy->fruit->0") == "1000"
+    assert _data_module.get_path_id(sample_data, "healthy->fruit->apples") == "1000"
+    assert _data_module.get_path_id(sample_data, "healthy->vegetables->1") == "1011"
 
     multiple_results = _data_module.get_path_id(sample_data, ["healthy->fruit->0", "healthy->vegetables->1"])
-    assert multiple_results == ["1>000", "1>011"]
+    assert multiple_results == ["1000", "1011"]
 
     single_in_list = _data_module.get_path_id(sample_data, ["healthy->fruit->0"])
-    assert single_in_list == "1>000"
+    assert single_in_list == "1000"
     assert _data_module.get_path_id(sample_data, []) is None
+
+    # Test hexadecimal indices (e.g., index 12 -> `C`, index 255 -> `FF`):
+    large_list_data = {"items": list(range(300))}
+    assert _data_module.get_path_id(large_list_data, "items->12") == "10C"
+    assert _data_module.get_path_id(large_list_data, "items->255") == "200FF"
 
 
 def test_get_path_id_errors_and_ignore_not_found() -> None:
@@ -75,7 +80,7 @@ def test_get_path_id_errors_and_ignore_not_found() -> None:
     with pytest.raises(IndexError):
         _data_module.get_path_id([1, 2], "3")
 
-    assert str(_data_module.get_path_id({"a": 1}, "a->b", ignore_not_found=True)) == "1>0"
+    assert str(_data_module.get_path_id({"a": 1}, "a->b", ignore_not_found=True)) == "10"
 
 
 def test_get_value_by_path_id() -> None:
@@ -98,6 +103,12 @@ def test_get_value_by_path_id() -> None:
     assert multi_path_id is not None
     assert _data_module.get_value_by_path_id(multi_key_dict, multi_path_id, get_key=True) == "fruit"
 
+    # Hex `path_id` retrieval:
+    large_list_data = {"items": list(range(300))}
+    hex_path_id = _data_module.get_path_id(large_list_data, "items->255")
+    assert hex_path_id == "200FF"
+    assert _data_module.get_value_by_path_id(large_list_data, hex_path_id) == 255
+
 
 def test_get_value_by_path_id_errors() -> None:
     path_id = _data_module.get_path_id([[1]], "0->0")
@@ -106,7 +117,7 @@ def test_get_value_by_path_id_errors() -> None:
         _data_module.get_value_by_path_id([[1]], path_id, get_key=True)
 
     with pytest.raises(TypeError, match="Unsupported type"):
-        _data_module.get_value_by_path_id({"a": 1}, "1>02")
+        _data_module.get_value_by_path_id({"a": 1}, "102")
 
     class IncompleteDict(dict[str, Any]):
         def items(self) -> Any:  # type:ignore[override]
@@ -134,13 +145,13 @@ def test_set_value_by_path_id() -> None:
     assert updated_list[0][1] == 99
 
     single_dict = {"a": 1}
-    assert _data_module.set_value_by_path_id(single_dict, {"1>0": 2}) == {"a": 2}
+    assert _data_module.set_value_by_path_id(single_dict, {"10": 2}) == {"a": 2}
 
     single_list = [10, 20]
-    assert _data_module.set_value_by_path_id(single_list, {"1>0": 99}) == [99, 20]
+    assert _data_module.set_value_by_path_id(single_list, {"10": 99}) == [99, 20]
 
     single_tuple = (10, 20)
-    assert _data_module.set_value_by_path_id(single_tuple, {"1>0": 99}) == (99, 20)
+    assert _data_module.set_value_by_path_id(single_tuple, {"10": 99}) == (99, 20)
 
     res = _set_nested_val(1, [0, 0], 2)  # type:ignore[arg-type]
     assert res == 1
@@ -157,7 +168,10 @@ def test_set_value_by_path_id_invalid_formats() -> None:
         _data_module.set_value_by_path_id({"a": 1}, {"invalid": 1})
 
     with pytest.raises(ValueError, match="is an invalid format"):
-        _data_module.set_value_by_path_id({"a": 1}, {"1>a": 1})
+        _data_module.set_value_by_path_id({"a": 1}, {"1G": 1})
 
     with pytest.raises(ValueError, match="is an invalid format"):
-        _data_module.set_value_by_path_id({"a": 1}, {"2>0": 1})
+        _data_module.set_value_by_path_id({"a": 1}, {"20": 1})
+
+    with pytest.raises(ValueError, match="is an invalid format"):
+        _data_module.set_value_by_path_id({"a": 1}, {"0": 1})

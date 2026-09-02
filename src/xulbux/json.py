@@ -59,7 +59,7 @@ def read(
         json_path = json_path.with_suffix(".json")
     file_path = _file_sys_module.resolve_path(json_path) or json_path
 
-    with open(file_path) as file:
+    with open(file_path, encoding="utf-8") as file:
         content = file.read()
 
     try:
