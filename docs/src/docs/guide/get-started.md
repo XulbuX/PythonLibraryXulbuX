@@ -89,7 +89,7 @@ def main() -> None:
         (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
         (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),
         "{hr}",
-        (S.hex(hexa_color).as_text_fg() | S.BG.hex(hexa_color))(" ... .... . -. .- -. .. --. .- -. ... "),
+        S.BG.hex(hexa_color).with_text_fg()(" ... .... . -. .- -. .. --. .- -. ... "),
         border_style=S.DIM,
         end="\n\n",
     )

@@ -178,6 +178,9 @@ def test_hexa_with_alpha_and_complementary() -> None:
     color1 = hexa("#FF0000")
     color_alpha = color1.with_alpha(0.5)
     assert color_alpha.alpha is not None and math.isclose(color_alpha.alpha, 0.5)
+    color_no_alpha = color_alpha.with_alpha(None)
+    assert color_no_alpha.alpha is None
+
     with pytest.raises(ValueError):
         color1.with_alpha(1.5)
 

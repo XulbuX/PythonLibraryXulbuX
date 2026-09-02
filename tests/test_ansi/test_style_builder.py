@@ -639,3 +639,27 @@ def test_as_text_methods() -> None:
     assert (S.BOLD | S.color256(0)).as_text_bg() == S.BG.rgb(255, 255, 255)
     assert (S.BOLD | S.color256(231)).as_text_bg() == S.BG.rgb(0, 0, 0)
     assert (S.BOLD | S.DIM).as_text_bg() == S.BG.rgb(0, 0, 0)
+
+
+def test_with_text_methods() -> None:
+    # Standard ANSI styles:
+    assert S.BG.BLACK.with_text_fg() == (S.BG.BLACK | S.rgb(255, 255, 255))
+    assert S.BG.WHITE.with_text_fg() == (S.BG.WHITE | S.rgb(0, 0, 0))
+    assert S.BLACK.with_text_bg() == (S.BLACK | S.BG.rgb(255, 255, 255))
+    assert S.WHITE.with_text_bg() == (S.WHITE | S.BG.rgb(0, 0, 0))
+
+    # True color styles:
+    assert S.BG.hex("#000000").with_text_fg() == (S.BG.hex("#000000") | S.rgb(255, 255, 255))
+    assert S.BG.hex("#FFFFFF").with_text_fg() == (S.BG.hex("#FFFFFF") | S.rgb(0, 0, 0))
+    assert S.hex("#000000").with_text_bg() == (S.hex("#000000") | S.BG.rgb(255, 255, 255))
+    assert S.hex("#FFFFFF").with_text_bg() == (S.hex("#FFFFFF") | S.BG.rgb(0, 0, 0))
+
+    # 256-color palette styles:
+    assert S.BG.color256(0).with_text_fg() == (S.BG.color256(0) | S.rgb(255, 255, 255))
+    assert S.BG.color256(231).with_text_fg() == (S.BG.color256(231) | S.rgb(0, 0, 0))
+    assert S.color256(0).with_text_bg() == (S.color256(0) | S.BG.rgb(255, 255, 255))
+    assert S.color256(231).with_text_bg() == (S.color256(231) | S.BG.rgb(0, 0, 0))
+
+    # StyleGroup:
+    assert (S.BOLD | S.BG.BLACK).with_text_fg() == (S.BOLD | S.BG.BLACK | S.rgb(255, 255, 255))
+    assert (S.BOLD | S.BLACK).with_text_bg() == (S.BOLD | S.BLACK | S.BG.rgb(255, 255, 255))

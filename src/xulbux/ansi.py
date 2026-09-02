@@ -971,6 +971,11 @@ class _FgColorStyle(_ColorStyle):
 
         return _BgColorStyle(self._red, self._green, self._blue)
 
+    def with_text_bg(self) -> _StyleGroup:
+        """Returns a style group combining this foreground color with an optimal high-contrast text background."""
+
+        return self | self.as_text_bg()
+
 
 class _BgColorStyle(_ColorStyle):
     """A 24-bit true-color background style."""
@@ -989,6 +994,11 @@ class _BgColorStyle(_ColorStyle):
         """Convert to the corresponding background color style."""
 
         return self
+
+    def with_text_fg(self) -> _StyleGroup:
+        """Returns a style group combining this background color with an optimal high-contrast text foreground."""
+
+        return self | self.as_text_fg()
 
 
 class _FgStyle(_Style):
@@ -1016,6 +1026,11 @@ class _FgStyle(_Style):
 
         return _BgColorStyle(255, 255, 255) if self._value in {30, 90} else _BgColorStyle(0, 0, 0)
 
+    def with_text_bg(self) -> _StyleGroup:
+        """Returns a style group combining this foreground color with an optimal high-contrast text background."""
+
+        return self | self.as_text_bg()
+
 
 class _BgStyle(_Style):
     """A single ANSI background color code."""
@@ -1041,6 +1056,11 @@ class _BgStyle(_Style):
         """Returns black or white background color for optimal contrast behind this background."""
 
         return _BgColorStyle(255, 255, 255) if self._value in {40, 100} else _BgColorStyle(0, 0, 0)
+
+    def with_text_fg(self) -> _StyleGroup:
+        """Returns a style group combining this background color with an optimal high-contrast text foreground."""
+
+        return self | self.as_text_fg()
 
 
 class _Color256Style(_SBase):
@@ -1157,6 +1177,11 @@ class _FgColor256Style(_Color256Style):
 
         return _BgColor256Style(self._code)
 
+    def with_text_bg(self) -> _StyleGroup:
+        """Returns a style group combining this foreground color with an optimal high-contrast text background."""
+
+        return self | self.as_text_bg()
+
 
 class _BgColor256Style(_Color256Style):
     """A 256-color palette background style."""
@@ -1175,6 +1200,11 @@ class _BgColor256Style(_Color256Style):
         """Convert to the corresponding background color style."""
 
         return self
+
+    def with_text_fg(self) -> _StyleGroup:
+        """Returns a style group combining this background color with an optimal high-contrast text foreground."""
+
+        return self | self.as_text_fg()
 
 
 class _Link(_SBase):
@@ -1328,6 +1358,16 @@ class _StyleGroup(_SBase):
                 return code.as_text_bg()
 
         return _BgColorStyle(0, 0, 0)
+
+    def with_text_fg(self) -> _StyleGroup:
+        """Returns a new style group combining this group with an optimal high-contrast text foreground."""
+
+        return self | self.as_text_fg()
+
+    def with_text_bg(self) -> _StyleGroup:
+        """Returns a new style group combining this group with an optimal high-contrast text background."""
+
+        return self | self.as_text_bg()
 
 
 # ***************************************************** NAMESPACE HELPERS *****************************************************

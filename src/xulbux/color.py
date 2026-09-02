@@ -277,11 +277,11 @@ class rgba(_ColorBase):
 
         return self.red == self.green == self.blue
 
-    def with_alpha(self, alpha: float, /) -> rgba:
-        """Returns a new color with the specified alpha value."""
+    def with_alpha(self, alpha: float | None, /) -> rgba:
+        """Returns a new color with the specified alpha value, or `None` to clear alpha."""
 
-        if not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive or None, got {alpha!r}")
 
         return rgba(self.red, self.green, self.blue, alpha, _validate=False)
 
@@ -530,11 +530,11 @@ class hsla(_ColorBase):
 
         return self.sat == 0
 
-    def with_alpha(self, alpha: float, /) -> hsla:
-        """Returns a new color with the specified alpha value."""
+    def with_alpha(self, alpha: float | None, /) -> hsla:
+        """Returns a new color with the specified alpha value, or `None` to clear alpha."""
 
-        if not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive or None, got {alpha!r}")
 
         return hsla(self.hue, self.sat, self.light, alpha, _validate=False)
 
@@ -864,11 +864,11 @@ class hexa(_ColorBase):
 
         return self.red == self.green == self.blue
 
-    def with_alpha(self, alpha: float, /) -> hexa:
-        """Returns a new color with the specified alpha value."""
+    def with_alpha(self, alpha: float | None, /) -> hexa:
+        """Returns a new color with the specified alpha value, or `None` to clear alpha."""
 
-        if not (0.0 <= alpha <= 1.0):
-            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive, got {alpha!r}")
+        if alpha is not None and not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"The 'alpha' parameter must be in range [0.0, 1.0] inclusive or None, got {alpha!r}")
 
         return hexa(_red=self.red, _green=self.green, _blue=self.blue, _alpha=alpha)
 
