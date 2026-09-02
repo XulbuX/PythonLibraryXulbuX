@@ -10,14 +10,13 @@ from xulbux.console import (
     _render_log_title,
     _resolve_title_colors,
     _split_hr_parts,
+    box,
     debug,
     done,
     exit,
     fail,
     info,
     log,
-    log_box_bordered,
-    log_box_filled,
     warn,
 )
 import pytest
@@ -79,45 +78,29 @@ def test_log_invalid_arguments() -> None:
         log("TITLE", "Msg", title_mx=-1)
 
 
-def test_log_box_filled() -> None:
+def test_box_filled_and_bordered() -> None:
     stream = io.StringIO()
     with patch("sys.stdout", stream):
-        log_box_filled(
+        # Filled box without border:
+        box(
             "Line 1",
             "Line 2",
-            box_bg_color=S.BG.BLUE,
+            bg=S.BG.BLUE,
             default_color=S.WHITE,
             w_padding=2,
             w_full=False,
             indent=2,
         )
 
-        # Full width log box:
-        log_box_filled("Full width box", box_bg_color=None, w_full=True)
+        # Inverted default background:
+        box("Inverted box", bg=True, w_full=True)
 
-        # Auto-contrast foreground on dark background:
-        log_box_filled("Dark box text", box_bg_color=S.BG.BLACK)
-
-    output = stream.getvalue()
-    assert "Line 1" in output
-    assert "Line 2" in output
-    assert "Full width box" in output
-    assert "Dark box text" in output
-
-    with pytest.raises(ValueError, match="w_padding"):
-        log_box_filled("Error", w_padding=-1)
-    with pytest.raises(ValueError, match="indent"):
-        log_box_filled("Error", indent=-1)
-
-
-def test_log_box_bordered() -> None:
-    stream = io.StringIO()
-    with patch("sys.stdout", stream):
-        log_box_bordered(
+        # Bordered box:
+        box(
             "Section 1",
             "{hr}",
             "Section 2",
-            border_type="rounded",
+            border="rounded",
             border_style=S.CYAN,
             default_color=S.WHITE,
             w_padding=1,
@@ -125,34 +108,63 @@ def test_log_box_bordered() -> None:
         )
 
         # Standard, strong, and double borders:
-        log_box_bordered("Standard", border_type="standard")
-        log_box_bordered("Strong", border_type="strong")
-        log_box_bordered("Double", border_type="double")
+        box("Standard", border="standard")
+        box("Strong", border="strong")
+        box("Double", border="double")
 
         # Custom 11-character border:
         custom_borders = "+-+|+-+|+-+"
-        log_box_bordered("Custom border", border_chars=custom_borders)
+        box("Custom border", border_chars=custom_borders)
+
+        # Border with None style:
+        box("Border without style", border="rounded", border_style=None)
+
+        # Borderless with background:
+        box("Top BG Custom", "{hr}", "Bottom BG Custom", bg=S.BG.BLUE)
+
+        # Borderless without background:
+        box("Top", "{hr}", "Bottom", border=None, bg=None)
 
     output = stream.getvalue()
+    assert "Line 1" in output
+    assert "Line 2" in output
+    assert "Inverted box" in output
     assert "Section 1" in output
     assert "Section 2" in output
     assert "Standard" in output
     assert "Strong" in output
     assert "Double" in output
     assert "Custom border" in output
+    assert "Top BG Custom" in output
+    assert "Top" in output
 
 
-def test_log_box_bordered_validation() -> None:
+def test_box_return_s_object() -> None:
+    res = box("Returned Box", "{hr}", "Line 2", border="rounded", print=False)
+    assert isinstance(res, S)
+    assert "Returned Box" in res.raw
+    assert "Line 2" in res.raw
+
+    res_filled = box("Filled Returned", bg=S.BG.GREEN, print=False)
+    assert isinstance(res_filled, S)
+    assert "Filled Returned" in res_filled.raw
+
+
+def test_box_validation() -> None:
     with pytest.raises(ValueError, match="w_padding"):
-        log_box_bordered("Error", w_padding=-1)
+        box("Error", w_padding=-1)
     with pytest.raises(ValueError, match="indent"):
-        log_box_bordered("Error", indent=-1)
+        box("Error", indent=-1)
     with pytest.raises(ValueError, match="exactly 11 characters"):
-        log_box_bordered("Error", border_chars="+-")
+        box("Error", border_chars="+-")
     with pytest.raises(ValueError, match="border_style"):
-        log_box_bordered("Error", border_style=S.BG.RED)
+        box("Error", border_style=S.BG.RED)
     with pytest.raises(ValueError, match="border_style"):
-        log_box_bordered("Error", border_style=object())  # type:ignore[arg-type]
+        box("Error", border_style=object())  # type:ignore[arg-type,call-overload]
+    with pytest.raises(ValueError, match="border"):
+        box("Error", border="invalid")  # type:ignore[arg-type,call-overload]
+    with pytest.raises(ValueError, match="bg"):
+        box("Error", bg="invalid")  # type:ignore[arg-type,call-overload]
 
 
 def test_style_resolution_and_persistence_helpers() -> None:

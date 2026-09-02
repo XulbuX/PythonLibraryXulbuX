@@ -70,6 +70,7 @@
         -   `.values()`, `.dict()`, `.to_rgba()`, `.to_hsla()`, `.to_hexa()` → `.as_tuple()`, `.as_dict()`, `.as_rgba()`, `.as_hsla()`, `.as_hexa()`.
     *   **`console`:**
         -   `cls()` → `clear()` (with fixed cross-platform terminal clearing on Windows and Unix).
+        -   `log_box_filled()` and `log_box_bordered()` → unified into `box()`.
         -   `supports_color()` → `has_color_support()`.
         -   `ProgressBar`: `bar_format`, `limited_bar_format`, `set_bar_format()` → `format`, `limited_format`, `set_format()`.
         -   `Throbber`: `throbber_format` → `format`.

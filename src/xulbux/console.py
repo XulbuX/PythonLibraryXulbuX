@@ -1659,158 +1659,26 @@ def exit(
     _log_preset("EXIT", prompt, S.BG.BR.MAGENTA, start, end, default_color, pause, exit, exit_code)
 
 
-def log_box_filled(
-    *lines: TextRenderable | object,
-    start: str = "",
-    end: str = "\n",
-    box_bg_color: BgColorStyle | None = None,
-    default_color: FgColorStyle | None = None,
-    w_padding: int = 2,
-    w_full: bool = False,
-    indent: int = 0,
-) -> None:
-    """Will print a box with a colored background, containing a log message.\n
-    ----------------------------------------------------------------------------------------------------
-    *   `*lines` – The box content (one object per line).
-    *   `start` – Something to print before the log box is printed (e.g., `\\n`).
-    *   `end` – Something to print after the log box is printed (e.g., `\\n`).
-    *   `box_bg_color` – The background color of the box<br>
-        (an `S` background color style).
-    *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
-    *   `w_padding` – The horizontal padding (in chars) to the box content.
-    *   `w_full` – Whether to make the box be the full terminal width or not.
-    *   `indent` – The indentation of the box (in chars).\n
-    ----------------------------------------------------------------------------------------------------
-    #### Example Usage
+def _resolve_box_border(
+    border: Literal["standard", "rounded", "strong", "double"] | None,
+    border_chars: str | None,
+    border_style: AnyStyle | None,
+) -> tuple[bool, str, str]:
+    """Internal helper to validate and resolve the box border character set and style sequence."""
 
-    ```python
-    import xulbux as xx
-    from xulbux import S
+    if border is None:
+        return False, "", ""
+    elif border not in {"standard", "rounded", "strong", "double"}:
+        raise ValueError(
+            "The 'border' parameter must be True, False, None, or one of ['standard', 'rounded', 'strong', 'double'], "
+            f"got {border!r}"
+        )
+    elif border_chars is not None and len(border_chars) != 11:
+        raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
 
-    xx.console.log_box_filled(
-        S.BOLD("Build Success"),
-        "Compiled 14 modules without errors.",
-        box_bg_color=S.BG.GREEN,
-        default_color=S.BLACK,
-    )
-    ```
-
-    <!-- DOCS: <TerminalOutput>
-    <span class="bg-green">                                      </span>
-    <span class="bg-green">  <span class="b black">Build Success</span>                         </span>
-    <span class="bg-green">  <span class="black">Compiled 14 modules without errors.</span>  </span>
-    <span class="bg-green">                                      </span>
-    </TerminalOutput> -->"""
-
-    if w_padding < 0:
-        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
-    if indent < 0:
-        raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
-
-    if default_color is not None:
-        fg_style = _as_fg_color_style(default_color, param_name="default_color")
-    elif box_bg_color is not None:
-        fg_style = _as_bg_color_style(box_bg_color, param_name="box_bg_color").as_text_fg()
-    else:
-        fg_style = S.hex("#000")
-
-    # If no box BG color is set, use the console foreground color as the box BG (via inversion):
-    bg_st: AnyStyle = (
-        (S.RESET_FG | S.INVERSE | fg_style)
-        if box_bg_color is None
-        else _as_bg_color_style(box_bg_color, param_name="box_bg_color")
-    )
-
-    open_seq = (fg_style | bg_st).ansi
-    bg_open = bg_st.ansi
-    reset = S.RESET.ansi
-
-    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines)
-
-    spaces_l = " " * indent
-    pady = " " * (get_width() if w_full else max_line_len + (2 * w_padding))
-    pad_w_full = (get_width() - (max_line_len + (2 * w_padding))) if w_full else 0
-
-    box_lines: list[str] = [f"{spaces_l}{open_seq}{pady}{reset}"]
-
-    for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
-        right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
-        box_lines.append(f"{spaces_l}{open_seq}{' ' * w_padding}{_persist_style(ansi_line, bg_open)}{right_pad}{reset}")
-
-    box_lines.append(f"{spaces_l}{open_seq}{pady}{reset}")
-
-    S(start, "\n".join(box_lines)).print(end=end)
-
-
-def log_box_bordered(
-    *lines: TextRenderable | object,
-    start: str = "",
-    end: str = "\n",
-    border_type: Literal["standard", "rounded", "strong", "double"] = "rounded",
-    border_style: AnyStyle = S.BR.BLACK,
-    default_color: FgColorStyle | None = None,
-    w_padding: int = 1,
-    w_full: bool = False,
-    indent: int = 0,
-    border_chars: str | None = None,
-) -> None:
-    """Will print a bordered box, containing a log message.\n
-    ----------------------------------------------------------------------------------------------------
-    *   `*lines` – The box content (one object per line).<br>
-        By adding `{hr}` in the `*lines`, you can insert horizontal rules to split the box content.
-    *   `start` – Something to print before the log box is printed (e.g., `\\n`).
-    *   `end` – Something to print after the log box is printed (e.g., `\\n`).
-    *   `border_type` – One of the predefined border character sets.
-    *   `border_style` – The style of the border (an `S` non-background style).
-    *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
-    *   `w_padding` – The horizontal padding (in chars) to the box content.
-    *   `w_full` – Whether to make the box be the full terminal width or not.
-    *   `indent` – The indentation of the box (in chars).
-    *   `border_chars` – Define your own border characters set (overwrites `border_type`).\n
-    ----------------------------------------------------------------------------------------------------
-    The `border_type` can be one of the following:
-    *   `"standard"` = `"┌─┐│┘─└│├─┤"`
-    *   `"rounded"` = `"╭─╮│╯─╰│├─┤"`
-    *   `"strong"` = `"┏━┓┃┛━┗┃┣━┫"`
-    *   `"double"` = `"╔═╗║╝═╚║╠═╣"`
-
-    The order of the characters is always:
-    1.  top-left corner
-    2.  top border
-    3.  top-right corner
-    4.  right border
-    5.  bottom-right corner
-    6.  bottom border
-    7.  bottom-left corner
-    8.  left border
-    9.  left horizontal rule connector
-    10. horizontal rule
-    11. right horizontal rule connector\n
-    ----------------------------------------------------------------------------------------------------
-    #### Example Usage
-
-    ```python
-    import xulbux as xx
-    from xulbux import S
-
-    xx.console.log_box_bordered(
-        S.BOLD("A Title"),
-        "{hr}",
-        "Some content.",
-        "Some more content.",
-    )
-    ```
-
-    <!-- DOCS: <TerminalOutput>
-    <span class="br-black">╭────────────────────╮</span>
-    <span class="br-black">│</span> <span class="b">A Title           </span> <span class="br-black">│</span>
-    <span class="br-black">├────────────────────┤</span>
-    <span class="br-black">│</span> Some content.      <span class="br-black">│</span>
-    <span class="br-black">│</span> Some more content. <span class="br-black">│</span>
-    <span class="br-black">╰────────────────────╯</span>
-    </TerminalOutput> -->"""
-
-    if is_any_style(border_style) and not is_bg_color_style(border_style):
+    if border_style is None:
+        border_open = ""
+    elif is_any_style(border_style) and not is_bg_color_style(border_style):
         border_open = border_style.ansi
     else:
         raise ValueError(
@@ -1818,49 +1686,317 @@ def log_box_bordered(
             f"(e.g., 'S.DIM | S.BR.BLUE', 'S.hex(\"#67F\")'), got {border_style!r}"
         )
 
-    if w_padding < 0:
-        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
-    if indent < 0:
-        raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
-    if border_chars is not None and len(border_chars) != 11:
-        raise ValueError(f"The 'border_chars' parameter must contain exactly 11 characters, got {len(border_chars)}")
+    borders = {"standard": "┌─┐│┘─└│├─┤", "rounded": "╭─╮│╯─╰│├─┤", "strong": "┏━┓┃┛━┗┃┣━┫", "double": "╔═╗║╝═╚║╠═╣"}
+    chars = borders.get(border, "") if border_chars is None else border_chars
 
-    content_open = _as_fg_color_style(default_color, param_name="default_color").ansi if default_color is not None else ""
+    return True, chars, border_open
+
+
+def _resolve_box_bg(
+    bg: BgColorStyle | bool | None,
+    default_color: FgColorStyle | None,
+) -> tuple[bool, str, str]:
+    """Internal helper to validate and resolve the box background and foreground style sequences."""
+
+    if bg is None or bg is False:
+        has_bg = False
+        bg_open = ""
+    elif bg is True:
+        has_bg = True
+        bg_open = (S.RESET_FG | S.INVERSE).ansi
+    else:
+        has_bg = True
+        bg_open = _as_bg_color_style(bg, param_name="bg").ansi
+
+    if default_color is not None:
+        content_open = _as_fg_color_style(default_color, param_name="default_color").ansi
+    elif has_bg and is_bg_color_style(bg):
+        content_open = bg.as_text_fg().ansi
+    else:
+        content_open = ""
+
+    return has_bg, bg_open, content_open
+
+
+def _render_bordered_box(
+    ansi_lines: list[str],
+    plain_lines: list[str],
+    max_line_len: int,
+    chars: str,
+    border_open: str,
+    content_open: str,
+    padding: int,
+    indent_spaces: str,
+    w_full: bool,
+    start: str,
+) -> S:
+    """Internal helper to render a bordered box."""
+
     reset = S.RESET.ansi
+    inner_w = max((get_width() - len(indent_spaces) - 2) if w_full else (max_line_len + (2 * padding)), 0)
+    pad_w_full = (inner_w - (max_line_len + (2 * padding))) if w_full else 0
 
-    borders = {
-        "standard": "┌─┐│┘─└│├─┤",
-        "rounded": "╭─╮│╯─╰│├─┤",
-        "strong": "┏━┓┃┛━┗┃┣━┫",
-        "double": "╔═╗║╝═╚║╠═╣",
-    }
-    border_chars = borders.get(border_type, borders["standard"]) if border_chars is None else border_chars
+    border_t_line = chars[1] * inner_w
+    border_b_line = chars[5] * inner_w
+    h_rule_line = chars[9] * inner_w
 
-    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines, has_rules=True)
-
-    spaces_l = " " * indent
-    pad_w_full = (get_width() - (max_line_len + (2 * w_padding)) - (len(border_chars[1] * 2))) if w_full else 0
-
-    border_t_line = border_chars[1] * (get_width() - (len(border_chars[1] * 2)) if w_full else max_line_len + (2 * w_padding))
-    border_b_line = border_chars[5] * (get_width() - (len(border_chars[5] * 2)) if w_full else max_line_len + (2 * w_padding))
-    h_rule_line = border_chars[9] * (get_width() - (len(border_chars[9] * 2)) if w_full else max_line_len + (2 * w_padding))
-
-    border_l = f"{border_open}{border_chars[7]}{reset}"
-    border_r = f"{border_open}{border_chars[3]}{reset}"
-    border_t = f"{spaces_l}{border_open}{border_chars[0]}{border_t_line}{border_chars[2]}{reset}"
-    border_b = f"{spaces_l}{border_open}{border_chars[6]}{border_b_line}{border_chars[4]}{reset}"
-
-    h_rule = f"{spaces_l}{border_open}{border_chars[8]}{h_rule_line}{border_chars[10]}{reset}"
+    border_l = f"{border_open}{chars[7]}{reset}"
+    border_r = f"{border_open}{chars[3]}{reset}"
+    border_t = f"{indent_spaces}{border_open}{chars[0]}{border_t_line}{chars[2]}{reset}"
+    border_b = f"{indent_spaces}{border_open}{chars[6]}{border_b_line}{chars[4]}{reset}"
+    h_rule = f"{indent_spaces}{border_open}{chars[8]}{h_rule_line}{chars[10]}{reset}"
 
     box_lines: list[str] = []
+    left_pad = " " * padding
+
     for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
         if _PATTERNS.hr.match(plain_line):
             box_lines.append(h_rule)
             continue
-        right_pad = " " * ((w_padding + max_line_len - len(plain_line)) + pad_w_full)
-        box_lines.append(f"{spaces_l}{border_l}{' ' * w_padding}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
-    S(f"{start}{border_t}{reset}\n", "\n".join(box_lines), ("\n" if box_lines else ""), f"{border_b}{reset}").print(end=end)
+        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        box_lines.append(f"{indent_spaces}{border_l}{left_pad}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
+
+    return S(f"{start}{border_t}\n", "\n".join(box_lines), ("\n" if box_lines else ""), f"{border_b}{reset}")
+
+
+def _render_filled_box(
+    ansi_lines: list[str],
+    plain_lines: list[str],
+    max_line_len: int,
+    bg_open: str,
+    content_open: str,
+    padding: int,
+    indent_spaces: str,
+    w_full: bool,
+    start: str,
+) -> S:
+    """Internal helper to render a filled background box."""
+
+    reset = S.RESET.ansi
+    box_w = max((get_width() - len(indent_spaces)) if w_full else (max_line_len + (2 * padding)), 0)
+    pad_w_full = (box_w - (max_line_len + (2 * padding))) if w_full else 0
+    pady = " " * box_w
+
+    box_lines: list[str] = [f"{indent_spaces}{bg_open}{pady}{reset}"]
+    left_pad = " " * padding
+
+    for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
+        if _PATTERNS.hr.match(plain_line):
+            box_lines.append(f"{indent_spaces}{bg_open}{pady}{reset}")
+            continue
+
+        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        box_lines.append(
+            f"{indent_spaces}{bg_open}{left_pad}{content_open}"
+            f"{_persist_style(ansi_line, bg_open)}{reset}{bg_open}{right_pad}{reset}"
+        )
+
+    box_lines.append(f"{indent_spaces}{bg_open}{pady}{reset}")
+
+    return S(start, "\n".join(box_lines))
+
+
+def _render_plain_box(
+    ansi_lines: list[str],
+    plain_lines: list[str],
+    max_line_len: int,
+    content_open: str,
+    padding: int,
+    indent_spaces: str,
+    w_full: bool,
+    start: str,
+) -> S:
+    """Internal helper to render a plain box without border or background."""
+
+    reset = S.RESET.ansi
+    box_w = max((get_width() - len(indent_spaces)) if w_full else (max_line_len + (2 * padding)), 0)
+    pad_w_full = (box_w - (max_line_len + (2 * padding))) if w_full else 0
+
+    box_lines: list[str] = []
+    left_pad = " " * padding
+
+    for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
+        if _PATTERNS.hr.match(plain_line):
+            box_lines.append("")
+            continue
+
+        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        box_lines.append(f"{indent_spaces}{left_pad}{content_open}{ansi_line}{reset}{right_pad}")
+
+    return S(start, "\n".join(box_lines))
+
+
+@overload
+def box(
+    *lines: TextRenderable | object,
+    border: Literal["standard", "rounded", "strong", "double"] | None = ...,
+    border_style: AnyStyle | None = ...,
+    bg: BgColorStyle | bool | None = ...,
+    default_color: FgColorStyle | None = ...,
+    w_padding: int | None = ...,
+    w_full: bool = ...,
+    indent: int = ...,
+    border_chars: str | None = ...,
+    start: str = ...,
+    end: str = ...,
+    print: Literal[True] = ...,
+) -> None: ...
+@overload
+def box(
+    *lines: TextRenderable | object,
+    border: Literal["standard", "rounded", "strong", "double"] | None = ...,
+    border_style: AnyStyle | None = ...,
+    bg: BgColorStyle | bool | None = ...,
+    default_color: FgColorStyle | None = ...,
+    w_padding: int | None = ...,
+    w_full: bool = ...,
+    indent: int = ...,
+    border_chars: str | None = ...,
+    start: str = ...,
+    end: str = ...,
+    print: Literal[False],
+) -> S: ...
+@overload
+def box(
+    *lines: TextRenderable | object,
+    border: Literal["standard", "rounded", "strong", "double"] | None = ...,
+    border_style: AnyStyle | None = ...,
+    bg: BgColorStyle | bool | None = ...,
+    default_color: FgColorStyle | None = ...,
+    w_padding: int | None = ...,
+    w_full: bool = ...,
+    indent: int = ...,
+    border_chars: str | None = ...,
+    start: str = ...,
+    end: str = ...,
+    print: bool,
+) -> S | None: ...
+
+
+def box(
+    *lines: TextRenderable | object,
+    border: Literal["standard", "rounded", "strong", "double"] | None = "rounded",
+    border_style: AnyStyle | None = None,
+    bg: BgColorStyle | bool | None = None,
+    default_color: FgColorStyle | None = None,
+    w_padding: int | None = None,
+    w_full: bool = False,
+    indent: int = 0,
+    border_chars: str | None = None,
+    start: str = "",
+    end: str = "\n",
+    print: bool = True,
+) -> S | None:
+    """Will format and print or return a styled box with either a border or a background fill.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `*lines` – The box content (one object per line).<br>
+        By adding `{hr}` in the `*lines`, you can insert horizontal rules to split the box content.
+    *   `border` – The border type (`"rounded"`, `"standard"`, `"strong"`, `"double"`),<br>
+        or `None` to disable borders.
+    *   `border_style` – The style of the border (an `S` non-background style).
+    *   `bg` – Background fill: `None` for transparent, `True` for default console background,<br>
+        or an `S` background color style (e.g., `S.BG.GREEN`, `S.BG.hex("#222")`).
+    *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
+    *   `w_padding` – The horizontal padding (in chars) to the box content.
+    *   `w_full` – Whether to make the box be the full terminal width or not.
+    *   `indent` – The indentation of the box (in chars).
+    *   `border_chars` – Define your own 11-character border set (overwrites `border`).
+    *   `start` – Something to print/prepend before the box (e.g., `\\n`).
+    *   `end` – Something to print after the box (e.g., `\\n`).
+    *   `print` – Whether to print the box to stdout (`True`), or return the `S` object (`False`).\n
+    ----------------------------------------------------------------------------------------------------
+    The `border` can be one of the following:
+    *   `"standard"` = `"┌─┐│┘─└│├─┤"`
+    *   `"rounded"` = `"╭─╮│╯─╰│├─┤"`
+    *   `"strong"` = `"┏━┓┃┛━┗┃┣━┫"`
+    *   `"double"` = `"╔═╗║╝═╚║╠═╣"`\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    **Bordered box:**
+
+    ```python
+    import xulbux as xx
+    from xulbux import S
+
+    xx.console.box(
+        S.BOLD("A Title"),
+        "{hr}",
+        "Some content.",
+        "Some more content.",
+    )
+    ```
+
+    **Filled box with background color:**
+
+    ```python
+    xx.console.box(
+        S.BOLD("Build Success"),
+        "Compiled 14 modules without errors.",
+        bg=S.BG.GREEN,
+        default_color=S.BLACK,
+    )
+    ```"""
+
+    has_border, chars, border_open = _resolve_box_border(border if bg is None else None, border_chars, border_style)
+    has_bg, bg_open, content_open = _resolve_box_bg(bg, default_color)
+
+    if w_padding is None:
+        padding = 1 if has_border else 2
+    elif w_padding < 0:
+        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
+    else:
+        padding = w_padding
+
+    if indent < 0:
+        raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
+
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines, has_rules=True)
+    indent_spaces = " " * indent
+
+    if has_border:
+        rendered_box = _render_bordered_box(
+            ansi_lines,
+            plain_lines,
+            max_line_len,
+            chars,
+            border_open,
+            content_open,
+            padding,
+            indent_spaces,
+            w_full,
+            start,
+        )
+    elif has_bg:
+        rendered_box = _render_filled_box(
+            ansi_lines,
+            plain_lines,
+            max_line_len,
+            bg_open,
+            content_open,
+            padding,
+            indent_spaces,
+            w_full,
+            start,
+        )
+    else:
+        rendered_box = _render_plain_box(
+            ansi_lines,
+            plain_lines,
+            max_line_len,
+            content_open,
+            padding,
+            indent_spaces,
+            w_full,
+            start,
+        )
+
+    if print:
+        rendered_box.print(end=end)
+        return None
+
+    return rendered_box
 
 
 def confirm(

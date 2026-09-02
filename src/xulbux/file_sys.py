@@ -340,14 +340,18 @@ class _ResolvePathHelper:
         return current_path if current_path.exists() and current_path != base_dir else None
 
     @staticmethod
-    def get_closest_match(dir: Path, path_part: str, /) -> str | None:
+    def get_closest_match(directory: Path, path_part: str, /) -> str | None:
         """Internal method to get the closest matching file or folder name<br>
         in the given directory for the given path part."""
 
         try:
             return (
                 matches[0]
-                if (matches := _difflib.get_close_matches(path_part, [item.name for item in dir.iterdir()], n=1, cutoff=0.6))
+                if (
+                    matches := _difflib.get_close_matches(
+                        path_part, [item.name for item in directory.iterdir()], n=1, cutoff=0.6
+                    )
+                )
                 else None
             )
 

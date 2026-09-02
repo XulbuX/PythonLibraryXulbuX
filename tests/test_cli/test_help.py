@@ -47,6 +47,13 @@ def test_is_latest_version_evaluations() -> None:
             assert is_latest_version() is None
 
 
+def test_is_latest_version_with_provided_version() -> None:
+    with patch("xulbux.cli.help.__version__", "1.0.0"):
+        assert is_latest_version("1.0.0") is True
+        assert is_latest_version("2.0.0") is False
+        assert is_latest_version("0.9.0") is True
+
+
 def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]) -> None:
     mock_pause = MagicMock()
     with patch("xulbux.console.pause_exit", mock_pause):
@@ -55,8 +62,8 @@ def test_show_help_prints_and_pauses(capsys: pytest.CaptureFixture[str]) -> None
     captured = capsys.readouterr()
     assert __version__ in captured.out
     assert "Commands:" in captured.out
-    assert "Usage:" in captured.out
-    assert "Documentation:" in captured.out
+    assert "Modules:" in captured.out
+    assert "Resources:" in captured.out
     mock_pause.assert_called_once()
 
 

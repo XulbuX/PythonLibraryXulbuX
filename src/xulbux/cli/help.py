@@ -18,7 +18,7 @@ def get_latest_version() -> str | None:
     with _request.urlopen(PACKAGE_META_URL) as response:
         try:
             return (
-                ".".join(clean_version.split("."))
+                clean_version
                 if (clean_version := (_json.load(response)["info"]["version"] or "").lower().lstrip("v"))
                 else None
             )
@@ -26,16 +26,22 @@ def get_latest_version() -> str | None:
             return None
 
 
-def is_latest_version() -> bool | None:
+def is_latest_version(latest_version: str | None = None) -> bool | None:
     """Checks if the currently installed version of the library is the latest one available on PyPI.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `latest_version` – Optional already fetched latest version
+        to avoid duplicate network requests.\n
     ----------------------------------------------------------------------------------------------------
     Returns `None` if the check failed."""
 
     try:
-        if (latest := get_latest_version()) in {"", None}:
+        if latest_version is None:
+            latest_version = get_latest_version()
+
+        if not latest_version:
             return None
 
-        latest_v_parts = tuple([int(part) for part in (latest or "").lower().lstrip("v").split(".")])
+        latest_v_parts = tuple([int(part) for part in latest_version.lower().lstrip("v").split(".")])
         installed_v_parts = tuple([int(part) for part in __version__.lower().lstrip("v").split(".")])
 
         return latest_v_parts <= installed_v_parts
@@ -55,15 +61,10 @@ def show_help() -> None:
     # Styles used in the help message:
     border_st = S.DIM | S.BR.BLACK
     cmd_st = S.BR.RED
-    const_st = S.MAGENTA
     heading_st = S.BOLD | S.BR.WHITE
-    import_st = S.BLUE
-    lib_st = S.BR.BLUE
-    meta_st = S.DIM | S.BR.WHITE
     module_st = S.BR.MAGENTA
     notice_st = S.BR.CYAN
-    obj_st = S.BR.CYAN
-    punct_st = S.BR.BLACK
+    src_st = S.BR.BLUE
     txt_st = S.WHITE
 
     # The local version of the library:
@@ -75,11 +76,12 @@ def show_help() -> None:
 
     # fmt:off
     # Attach a notice if the installed version is not the latest one available on PyPI:
-    if notice_ver := ver if is_latest_version() is False and (ver := get_latest_version()) else None:
+    latest_ver = get_latest_version()
+    if is_latest_version(latest_ver) is False and latest_ver:
         version_msg = (
-            (version_msg[0], (S.DIM | notice_st)("─" * (len(notice_ver) + 15), "╮")),
-            (version_msg[1], (notice_st(" ↑ ", S.link("https://pypi.org/pypi/xulbux")("v", S.BOLD(notice_ver)), " available "), (S.DIM | notice_st)("│"))),  # ruff:ignore[line-too-long]
-            (version_msg[2], (S.DIM | notice_st)("─" * (len(notice_ver) + 15), "╯")),
+            (version_msg[0], (S.DIM | notice_st)("─" * (len(latest_ver) + 15), "╮")),
+            (version_msg[1], (notice_st(" ↑ ", S.link("https://pypi.org/pypi/xulbux")("v", S.BOLD(latest_ver)), " available "), (S.DIM | notice_st)("│"))),  # ruff:ignore[line-too-long]
+            (version_msg[2], (S.DIM | notice_st)("─" * (len(latest_ver) + 15), "╯")),
         )
 
     # ruff:ignore[line-too-long]
@@ -96,26 +98,39 @@ def show_help() -> None:
         ("  ", (S.ITALIC | xx_secondary)("Simplify common programming tasks!")),
         "",
         ("  ", heading_st("Commands:")),
-        ("  ", border_st("╭─────────────────────────────────────────────────────╮")),
-        ("  ", border_st("│ "), cmd_st("xulbux-lib       "), txt_st(" Show library info and usage."), border_st("      │")),
-        ("  ", border_st("│ "), cmd_st("xulbux-lib ", S.BOLD("ansi  ")), txt_st(" Preview all possible ANSI styles."), border_st(" │")),
-        ("  ", border_st("│ "), cmd_st("xulbux-lib ", S.BOLD("c256  ")), txt_st(" Show a map of all 256 colors."), border_st("     │")),
-        ("  ", border_st("│ "), cmd_st("xulbux-lib ", S.BOLD("tc    ")), txt_st(" Show a true-color gradient map."), border_st("   │")),
-        ("  ", border_st("╰─────────────────────────────────────────────────────╯")),
-        ("  ", heading_st("Usage:")),
-        ("  ", border_st("╭─────────────────────────────────────────────────────╮")),
-        ("  ", border_st("│ "), punct_st("# ", S.ITALIC("Library Constants")), border_st("                                 │")),
-        ("  ", border_st("│ "), import_st("from "), lib_st("xulbux"), (S.DIM | lib_st)("."), lib_st("base"), (S.DIM | lib_st)("."), lib_st("consts "), import_st("import "), const_st("COLOR"), punct_st(", "), const_st("CHARS"), punct_st(", "), const_st("ANSI"), border_st("   │")),
-        ("  ", border_st("│ "), punct_st("# ", S.ITALIC("Modules")), border_st("                                           │")),
-        ("  ", border_st("│ "), import_st("from "), lib_st("xulbux "), import_st("import "), module_st("ansi"), punct_st(", "), module_st("code"), punct_st(", "), module_st("color"), punct_st(", "), meta_st("..."), border_st("           │")),
-        ("  ", border_st("│ "), punct_st("# ", S.ITALIC("Module Specific Imports")), border_st("                           │")),
-        ("  ", border_st("│ "), import_st("from "), lib_st("xulbux"), (S.DIM | lib_st)("."), lib_st("color "), import_st("import "), obj_st("rgba"), punct_st(", "), obj_st("hsla"), punct_st(", "), obj_st("hexa"), border_st("           │")),
-        ("  ", border_st("╰─────────────────────────────────────────────────────╯")),
-        ("  ", heading_st("Documentation:")),
-        ("  ", border_st("╭─────────────────────────────────────────────────────╮")),
-        ("  ", border_st("│ "), txt_st("For more information see the documentation:"), border_st("         │")),
-        ("  ", border_st("│ "), (S.BR.BLUE | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), border_st("             │")),
-        ("  ", border_st("╰─────────────────────────────────────────────────────╯")),
+        _console_module.box(
+            (cmd_st("xulbux-lib         "), txt_st("Show library info and usage.       ")),
+            (cmd_st("xulbux-lib ", S.BOLD("ansi    ")), txt_st("Preview all possible ANSI styles.  ")),
+            (cmd_st("xulbux-lib ", S.BOLD("c256    ")), txt_st("Show a map of all 256 colors.      ")),
+            (cmd_st("xulbux-lib ", S.BOLD("tc      ")), txt_st("Show a true-color gradient map.    ")),
+            border_style=border_st,
+            indent=2,
+            print=False,
+        ),
+        ("  ", heading_st("Modules:")),
+        _console_module.box(
+            (module_st("ansi        "), txt_st("Rich ANSI terminal styling & Term.        ")),
+            (module_st("color       "), txt_st("RGBA, HSLA & HEXA color models.           ")),
+            (module_st("console     "), txt_st("Loggers, boxes, inputs, progress bars.    ")),
+            (module_st("data        "), txt_st("Deep merge, render, path IDs, cleanup.    ")),
+            (module_st("file_sys    "), txt_st("Path resolution & file operations.        ")),
+            (module_st("json        "), txt_st("Comment-aware JSON read/write/update.     ")),
+            (module_st("regex       "), txt_st("Dynamic regex generators & LazyRegex.     ")),
+            (module_st("string      "), txt_st("Casing, indentation, JS detection.        ")),
+            (module_st("system      "), txt_st("Elevation, env paths, dependencies.       ")),
+            border_style=border_st,
+            indent=2,
+            print=False,
+        ),
+        ("  ", heading_st("Resources:")),
+        _console_module.box(
+            (src_st("Docs        "), (txt_st | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), "   "),
+            (src_st("GitHub      "), (txt_st | S.link("https://github.com/xulbux/python-lib-xulbux"))("github.com/xulbux/python-lib-xulbux"), "       "),
+            (src_st("PyPI        "), (txt_st | S.link("https://pypi.org/project/xulbux"))("pypi.org/project/xulbux"), "                   "),
+            border_style=border_st,
+            indent=2,
+            print=False,
+        ),
         "",
         sep="\n",
     ).print()

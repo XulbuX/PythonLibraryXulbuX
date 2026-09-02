@@ -112,7 +112,3 @@ def test_s_render_dispatch_and_fallbacks() -> None:
     )
     assert "CustomStr" in rendered.raw
     assert "Sequence" in rendered.raw
-
-    parts: list[str] = []
-    S._render("direct_render", parts)
-    assert parts == ["direct_render"]

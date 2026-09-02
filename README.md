@@ -211,7 +211,7 @@ def main() -> None:
     xx.console.done("Successfully converted color into different types.", end="\n\n")
 
     # Pretty print the color in different formats:
-    xx.console.log_box_bordered(
+    xx.console.box(
         (S.BOLD("HEXA: "), (S.ITALIC | S.BR.WHITE)(str(hexa_color))),
         (S.BOLD("RGBA: "), (S.ITALIC | S.BR.WHITE)(str(rgba_color))),
         (S.BOLD("HSLA: "), (S.ITALIC | S.BR.WHITE)(str(hsla_color))),

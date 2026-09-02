@@ -1639,17 +1639,6 @@ class S(_SBase):
 
         self.ansi = "".join(ansi_parts)
 
-    @staticmethod
-    def _render(segment: object, ansi_parts: list[str]) -> None:
-        """Internal method to recursively render a `segment`, dispatching by runtime type.\n
-        ----------------------------------------------------------------------------------------------------
-        Strings are emitted as raw text; `S` segments emit their `ansi` string;<br>
-        `tuple` segments are flattened in order.<br>
-        Bare style objects (`_Style`, `_ColorStyle`, `_Link`, `_StyleGroup`)<br>
-        emit only their opening sequence with no matching close."""
-
-        _render_segment(segment, ansi_parts)
-
 
 # **************************************************** PUBLIC TYPE HELPERS ****************************************************
 
