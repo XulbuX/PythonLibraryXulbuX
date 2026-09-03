@@ -691,10 +691,23 @@ class _SBase:
                 current_offset += 1
                 continue
 
-            for line in _textwrap.wrap(paragraph, width=width, replace_whitespace=False, drop_whitespace=False):
+            for line_idx, line in enumerate(
+                _textwrap.wrap(paragraph, width=width, replace_whitespace=False, drop_whitespace=False)
+            ):
                 line_len = len(line)
-                result.append(self._slice(current_offset, current_offset + line_len, raw_text, raw_code_positions))
+                lead_strip = (line_len - len(line.lstrip(" \t"))) if line_idx > 0 else 0
+                trail_strip = line_len - len(line.rstrip(" \t"))
+
+                slice_start = current_offset + lead_strip
+                slice_stop = current_offset + line_len - trail_strip
+
+                if slice_start < slice_stop:
+                    result.append(self._slice(slice_start, slice_stop, raw_text, raw_code_positions))
+                else:
+                    result.append(S(""))
+
                 current_offset += line_len
+
             current_offset += 1
 
         return result

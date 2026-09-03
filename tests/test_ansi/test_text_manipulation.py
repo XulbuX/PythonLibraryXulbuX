@@ -79,6 +79,26 @@ def test_styled_text_wrap() -> None:
     assert len((S.BOLD | S.RED).wrap(10)) >= 1
 
 
+def test_styled_text_wrap_drops_leading_whitespace_on_continuation_lines() -> None:
+    text = "Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) (default: 2)"
+    wrapped = S(text).wrap(54)
+    assert len(wrapped) == 2
+    assert wrapped[0].raw == "Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart)"
+    assert wrapped[1].raw == "(default: 2)"
+
+    # Continuation lines drop leading whitespace, but initial indent is preserved:
+    indented = "    Indented line should keep its initial indent but wrap cleanly."
+    wrapped_indented = S(indented).wrap(30)
+    assert wrapped_indented[0].raw.startswith("    Indented")
+    assert not wrapped_indented[1].raw.startswith(" ")
+
+    # Styled text preserves color across wrap without leading space:
+    styled = S.RED("Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ") + S.BLUE("(default: 2)")
+    wrapped_styled = styled.wrap(54)
+    assert wrapped_styled[1].raw == "(default: 2)"
+    assert "\x1b[34m" in wrapped_styled[1].ansi
+
+
 def test_code_positions_properties() -> None:
     styled = S("Hello ", S.RED("Red"), " World")
     positions = styled.code_positions
