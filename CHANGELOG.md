@@ -33,6 +33,8 @@
     -   Added a `@deprecated` decorator to `xulbux.base.decorators` that conditionally imports from `warnings` on Python 3.13+ and `typing_extensions` on older versions.
     -   Added two new public constants `FRAMES_STANDARD` and `FRAMES_WINDMILL` to the `console` module, usable as `frames` presets for the `Throbber` class.
     -   `console.log()` no longer forces the title to be uppercase, allowing customizable capitalization.
+    -   Added support for fixed `width` and automatic content wrapping in `console.box()`, wrapping text lines that exceed the box width while preserving ANSI styles and `{hr}` rules.
+    -   Added support for content alignment in `console.box()` via `align: Literal["left", "center", "right"] = "left"`.
     -   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
 
 **BREAKING CHANGES:**
@@ -85,7 +87,9 @@
         -   `string.decompose()`: parameter `case_string` → `string`.
         -   `data.is_equal()`: parameters `data1, data2` → `data_a, data_b`.
         -   `console.log_box_bordered()`: parameter `border_chars` now takes a string of 11 characters instead of a tuple of 11 characters.
+        -   `console.box()`: parameter `w_full` → `width: int | Literal["full"] | None = None`.
 *   **Removals:**
+    -   Removed `w_padding` parameter from `console.box()` in favor of automatic contextual padding.
     -   Removed `data.print()` (use `data.render(…).print()`).
     -   Removed `serialize_bytes()` and `deserialize_bytes()` from `data` (bytes serialization is now handled natively).
     -   Removed `console.get_user()` in favor of `system.get_username()`.

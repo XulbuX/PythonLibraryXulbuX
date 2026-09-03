@@ -67,6 +67,11 @@ def show_help() -> None:
     src_st = S.BR.BLUE
     txt_st = S.WHITE
 
+    def _box(*args: TextRenderable) -> S:
+        """Helper function to create a help screen box with the given content."""
+
+        return _console_module.box(*args, border_style=border_st, width=58, indent=2, print=False)
+
     # The local version of the library:
     version_msg: tuple[TextRenderable, TextRenderable, TextRenderable] = (
         xx_secondary("▄" * (len(__version__) + 7)),
@@ -84,7 +89,6 @@ def show_help() -> None:
             (version_msg[2], (S.DIM | notice_st)("─" * (len(latest_ver) + 15), "╯")),
         )
 
-    # ruff:ignore[line-too-long]
     S(
         S.RESET,
         (
@@ -98,38 +102,29 @@ def show_help() -> None:
         ("  ", (S.ITALIC | xx_secondary)("Simplify common programming tasks!")),
         "",
         ("  ", heading_st("Commands:")),
-        _console_module.box(
-            (cmd_st("xulbux-lib         "), txt_st("Show library info and usage.       ")),
-            (cmd_st("xulbux-lib ", S.BOLD("ansi    ")), txt_st("Preview all possible ANSI styles.  ")),
-            (cmd_st("xulbux-lib ", S.BOLD("c256    ")), txt_st("Show a map of all 256 colors.      ")),
-            (cmd_st("xulbux-lib ", S.BOLD("tc      ")), txt_st("Show a true-color gradient map.    ")),
-            border_style=border_st,
-            indent=2,
-            print=False,
+        _box(
+            (cmd_st("xulbux-lib        "), txt_st("Show library info and usage.")),
+            (cmd_st("xulbux-lib ", S.BOLD("ansi   ")), txt_st("Preview all possible ANSI styles.")),
+            (cmd_st("xulbux-lib ", S.BOLD("c256   ")), txt_st("Show a map of all 256 colors.")),
+            (cmd_st("xulbux-lib ", S.BOLD("tc     ")), txt_st("Show a true-color gradient map.")),
         ),
         ("  ", heading_st("Modules:")),
-        _console_module.box(
-            (module_st("ansi        "), txt_st("Rich ANSI terminal styling & Term.        ")),
-            (module_st("color       "), txt_st("RGBA, HSLA & HEXA color models.           ")),
-            (module_st("console     "), txt_st("Loggers, boxes, inputs, progress bars.    ")),
-            (module_st("data        "), txt_st("Deep merge, render, path IDs, cleanup.    ")),
-            (module_st("file_sys    "), txt_st("Path resolution & file operations.        ")),
-            (module_st("json        "), txt_st("Comment-aware JSON read/write/update.     ")),
-            (module_st("regex       "), txt_st("Dynamic regex generators & LazyRegex.     ")),
-            (module_st("string      "), txt_st("Casing, indentation, JS detection.        ")),
-            (module_st("system      "), txt_st("Elevation, env paths, dependencies.       ")),
-            border_style=border_st,
-            indent=2,
-            print=False,
+        _box(
+            (module_st("ansi       "), txt_st("Rich ANSI terminal styling & Term.")),
+            (module_st("color      "), txt_st("RGBA, HSLA & HEXA color models.")),
+            (module_st("console    "), txt_st("Loggers, boxes, inputs, progress bars.")),
+            (module_st("data       "), txt_st("Deep merge, render, path IDs, cleanup.")),
+            (module_st("file_sys   "), txt_st("Path resolution & file operations.")),
+            (module_st("json       "), txt_st("Comment-aware JSON read/write/update.")),
+            (module_st("regex      "), txt_st("Dynamic regex generators & LazyRegex.")),
+            (module_st("string     "), txt_st("Casing, indentation, JS detection.")),
+            (module_st("system     "), txt_st("Elevation, env paths, dependencies.")),
         ),
         ("  ", heading_st("Resources:")),
-        _console_module.box(
-            (src_st("Docs        "), (txt_st | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs"), "   "),
-            (src_st("GitHub      "), (txt_st | S.link("https://github.com/xulbux/python-lib-xulbux"))("github.com/xulbux/python-lib-xulbux"), "       "),
-            (src_st("PyPI        "), (txt_st | S.link("https://pypi.org/project/xulbux"))("pypi.org/project/xulbux"), "                   "),
-            border_style=border_st,
-            indent=2,
-            print=False,
+        _box(
+            (src_st("Docs       "), (txt_st | S.link("https://xulbux.github.io/python-lib-xulbux/docs"))("xulbux.github.io/python-lib-xulbux/docs")),
+            (src_st("GitHub     "), (txt_st | S.link("https://github.com/xulbux/python-lib-xulbux"))("github.com/xulbux/python-lib-xulbux")),
+            (src_st("PyPI       "), (txt_st | S.link("https://pypi.org/project/xulbux"))("pypi.org/project/xulbux")),
         ),
         "",
         sep="\n",

@@ -87,13 +87,12 @@ def test_box_filled_and_bordered() -> None:
             "Line 2",
             bg=S.BG.BLUE,
             default_color=S.WHITE,
-            w_padding=2,
-            w_full=False,
+            width=None,
             indent=2,
         )
 
         # Inverted default background:
-        box("Inverted box", bg=True, w_full=True)
+        box("Inverted box", bg=True, width="full")
 
         # Bordered box:
         box(
@@ -103,8 +102,7 @@ def test_box_filled_and_bordered() -> None:
             border="rounded",
             border_style=S.CYAN,
             default_color=S.WHITE,
-            w_padding=1,
-            w_full=False,
+            width=None,
         )
 
         # Standard, strong, and double borders:
@@ -125,6 +123,25 @@ def test_box_filled_and_bordered() -> None:
         # Borderless without background:
         box("Top", "{hr}", "Bottom", border=None, bg=None)
 
+        # Fixed width bordered, filled, and plain boxes:
+        box("Fixed width bordered", width=30)
+        box("Fixed width filled", bg=S.BG.MAGENTA, width=30)
+        box("Fixed width plain", border=None, bg=None, width=30)
+
+        # Fixed width with text wrapping and HR:
+        box(
+            "This is a longer line of content that will definitely wrap across multiple lines inside the box.",
+            "{hr}",
+            "Second section with wrapped content as well.",
+            width=30,
+        )
+
+        # Styled text wrapping:
+        box(
+            S.GREEN("Styled green text that should wrap cleanly into multiple lines without breaking styles."),
+            width=25,
+        )
+
     output = stream.getvalue()
     assert "Line 1" in output
     assert "Line 2" in output
@@ -137,6 +154,53 @@ def test_box_filled_and_bordered() -> None:
     assert "Custom border" in output
     assert "Top BG Custom" in output
     assert "Top" in output
+    assert "Fixed width bordered" in output
+
+
+def test_box_fixed_width_dimensions() -> None:
+    # Bordered box with fixed width:
+    res = box("Short text", width=40, print=False)
+    for line in res.raw.split("\n"):
+        assert len(line) == 40
+
+    # Filled box with fixed width:
+    res_filled = box("Short text", bg=S.BG.GREEN, width=40, print=False)
+    for line in res_filled.raw.split("\n"):
+        assert len(line) == 40
+
+    # Plain box with fixed width:
+    res_plain = box("Short text", border=None, bg=None, width=40, print=False)
+    for line in res_plain.raw.split("\n"):
+        assert len(line) == 40
+
+    # Plain box without width has zero padding (no leading indentation):
+    res_plain_zero_pad = box("No leading spaces", border=None, bg=None, print=False)
+    assert res_plain_zero_pad.raw == "No leading spaces"
+
+    # Auto width (width=None) caps at terminal width:
+    with patch("xulbux.console.get_width", return_value=35):
+        long_auto = "This line is very long and should automatically wrap at the terminal width without breaking the box."
+        res_auto = box(long_auto, border="rounded", print=False)
+        for line in res_auto.raw.split("\n"):
+            assert len(line) <= 35
+
+    # Multi-line wrapping with fixed width:
+    long_text = "This is a long sentence that should be wrapped onto multiple lines cleanly."
+    res_wrapped = box(long_text, width=30, print=False)
+    lines = res_wrapped.raw.split("\n")
+    assert len(lines) > 3
+    for line in lines:
+        assert len(line) == 30
+
+    # Styled content wrapping:
+    styled_long = S.RED("This is a styled sentence that will wrap onto multiple lines inside the box.")
+    res_styled = box(styled_long, width=25, print=False)
+    for line in res_styled.raw.split("\n"):
+        assert len(line) == 25
+
+    # Full width:
+    res_full = box("Full width box", width="full", print=False)
+    assert len(res_full.raw.split("\n")[0]) > 0
 
 
 def test_box_return_s_object() -> None:
@@ -151,8 +215,6 @@ def test_box_return_s_object() -> None:
 
 
 def test_box_validation() -> None:
-    with pytest.raises(ValueError, match="w_padding"):
-        box("Error", w_padding=-1)
     with pytest.raises(ValueError, match="indent"):
         box("Error", indent=-1)
     with pytest.raises(ValueError, match="exactly 11 characters"):
@@ -165,6 +227,65 @@ def test_box_validation() -> None:
         box("Error", border="invalid")  # type:ignore[arg-type,call-overload]
     with pytest.raises(ValueError, match="bg"):
         box("Error", bg="invalid")  # type:ignore[arg-type,call-overload]
+    with pytest.raises(ValueError, match="width"):
+        box("Error", width=-1)
+    with pytest.raises(ValueError, match="width"):
+        box("Error", width=3)  # too small: min is 2 + 2*1 + 1 = 5
+    with pytest.raises(ValueError, match="width"):
+        box("Error", width="invalid")  # type:ignore[arg-type,call-overload]
+    with pytest.raises(ValueError, match="width"):
+        box("Error", width=True)  # type:ignore[arg-type,call-overload]
+    with pytest.raises(ValueError, match="align"):
+        box("Error", align="invalid")  # type:ignore[arg-type,call-overload]
+
+
+def test_box_alignment() -> None:
+    # Left, center, right alignment in bordered box:
+    res_l = box("Hi", width=20, align="left", print=False)
+    line_l = res_l.raw.split("\n")[1]
+    assert line_l == "│ Hi               │"
+
+    res_r = box("Hi", width=20, align="right", print=False)
+    line_r = res_r.raw.split("\n")[1]
+    assert line_r == "│               Hi │"
+
+    res_c = box("Hi", width=20, align="center", print=False)
+    line_c = res_c.raw.split("\n")[1]
+    assert line_c == "│        Hi        │"
+
+    # Trailing whitespace stripped on right and center alignment:
+    res_r_spaces = box("Hi   ", width=20, align="right", print=False)
+    assert res_r_spaces.raw.split("\n")[1] == "│               Hi │"
+
+    res_c_spaces = box("Hi   ", width=20, align="center", print=False)
+    assert res_c_spaces.raw.split("\n")[1] == "│        Hi        │"
+
+    # Styled trailing whitespace stripped on right alignment:
+    res_r_styled = box(S.RED("Hi   "), width=20, align="right", print=False)
+    assert res_r_styled.raw.split("\n")[1] == "│               Hi │"
+
+    # Wrapped lines strip trailing whitespace on right alignment:
+    long_txt = "This is a sentence that wraps nicely across lines."
+    res_wrap_r = box(long_txt, width=25, align="right", print=False)
+    for line in res_wrap_r.raw.split("\n")[1:-1]:
+        assert line.endswith(" │")
+        assert not line.endswith("  │")
+
+    # Alignment in filled box:
+    res_filled_c = box("Hi", bg=S.BG.GREEN, width=20, align="center", print=False)
+    line_fc = res_filled_c.raw.split("\n")[1]
+    assert line_fc == "         Hi         "
+
+    res_filled_r = box("Hi", bg=S.BG.GREEN, width=20, align="right", print=False)
+    line_fr = res_filled_r.raw.split("\n")[1]
+    assert line_fr == "                Hi  "
+
+    # Alignment in plain box:
+    res_plain_c = box("Hi", border=None, bg=None, width=20, align="center", print=False)
+    assert res_plain_c.raw == "         Hi         "
+
+    res_plain_r = box("Hi", border=None, bg=None, width=20, align="right", print=False)
+    assert res_plain_r.raw == "                  Hi"
 
 
 def test_style_resolution_and_persistence_helpers() -> None:
@@ -250,3 +371,13 @@ def test_split_hr_parts_and_prepare_log_box() -> None:
     )
     assert len(ansi_lines) == 4
     assert max_w > 0
+
+    # _prepare_log_box with wrap_width:
+    ansi_w, plain_w, max_len_w = _prepare_log_box(
+        [S.RED("Styled line that is very long"), "A plain string that is very long", "{hr}"],
+        has_rules=True,
+        wrap_width=10,
+    )
+    assert len(ansi_w) > 3
+    assert len(plain_w) == len(ansi_w)
+    assert max_len_w <= 10

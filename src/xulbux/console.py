@@ -1714,6 +1714,24 @@ def _resolve_box_bg(
     return has_bg, bg_open, content_open
 
 
+def _calc_box_padding(
+    line_len: int,
+    inner_w: int,
+    padding: int,
+    align: Literal["left", "center", "right"],
+) -> tuple[str, str]:
+    """Internal helper to calculate left and right padding spaces for a box line."""
+
+    remaining = inner_w - (2 * padding) - line_len
+
+    if align == "left":
+        return " " * padding, " " * (padding + remaining)
+    elif align == "right":
+        return " " * (padding + remaining), " " * padding
+
+    return " " * (padding + (half := remaining // 2)), " " * (padding + remaining - half)
+
+
 def _render_bordered_box(
     ansi_lines: list[str],
     plain_lines: list[str],
@@ -1723,14 +1741,14 @@ def _render_bordered_box(
     content_open: str,
     padding: int,
     indent_spaces: str,
-    w_full: bool,
+    target_width: int | None,
+    align: Literal["left", "center", "right"],
     start: str,
 ) -> S:
     """Internal helper to render a bordered box."""
 
     reset = S.RESET.ansi
-    inner_w = max((get_width() - len(indent_spaces) - 2) if w_full else (max_line_len + (2 * padding)), 0)
-    pad_w_full = (inner_w - (max_line_len + (2 * padding))) if w_full else 0
+    inner_w = (target_width - 2) if target_width is not None else (max_line_len + (2 * padding))
 
     border_t_line = chars[1] * inner_w
     border_b_line = chars[5] * inner_w
@@ -1743,14 +1761,13 @@ def _render_bordered_box(
     h_rule = f"{indent_spaces}{border_open}{chars[8]}{h_rule_line}{chars[10]}{reset}"
 
     box_lines: list[str] = []
-    left_pad = " " * padding
 
     for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
         if _PATTERNS.hr.match(plain_line):
             box_lines.append(h_rule)
             continue
 
-        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        left_pad, right_pad = _calc_box_padding(len(plain_line), inner_w, padding, align)
         box_lines.append(f"{indent_spaces}{border_l}{left_pad}{content_open}{ansi_line}{reset}{right_pad}{border_r}")
 
     return S(f"{start}{border_t}\n", "\n".join(box_lines), ("\n" if box_lines else ""), f"{border_b}{reset}")
@@ -1764,25 +1781,24 @@ def _render_filled_box(
     content_open: str,
     padding: int,
     indent_spaces: str,
-    w_full: bool,
+    target_width: int | None,
+    align: Literal["left", "center", "right"],
     start: str,
 ) -> S:
     """Internal helper to render a filled background box."""
 
     reset = S.RESET.ansi
-    box_w = max((get_width() - len(indent_spaces)) if w_full else (max_line_len + (2 * padding)), 0)
-    pad_w_full = (box_w - (max_line_len + (2 * padding))) if w_full else 0
+    box_w = target_width if target_width is not None else (max_line_len + (2 * padding))
     pady = " " * box_w
 
     box_lines: list[str] = [f"{indent_spaces}{bg_open}{pady}{reset}"]
-    left_pad = " " * padding
 
     for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
         if _PATTERNS.hr.match(plain_line):
             box_lines.append(f"{indent_spaces}{bg_open}{pady}{reset}")
             continue
 
-        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        left_pad, right_pad = _calc_box_padding(len(plain_line), box_w, padding, align)
         box_lines.append(
             f"{indent_spaces}{bg_open}{left_pad}{content_open}"
             f"{_persist_style(ansi_line, bg_open)}{reset}{bg_open}{right_pad}{reset}"
@@ -1800,24 +1816,23 @@ def _render_plain_box(
     content_open: str,
     padding: int,
     indent_spaces: str,
-    w_full: bool,
+    target_width: int | None,
+    align: Literal["left", "center", "right"],
     start: str,
 ) -> S:
     """Internal helper to render a plain box without border or background."""
 
     reset = S.RESET.ansi
-    box_w = max((get_width() - len(indent_spaces)) if w_full else (max_line_len + (2 * padding)), 0)
-    pad_w_full = (box_w - (max_line_len + (2 * padding))) if w_full else 0
+    box_w = target_width if target_width is not None else (max_line_len + (2 * padding))
 
     box_lines: list[str] = []
-    left_pad = " " * padding
 
     for ansi_line, plain_line in zip(ansi_lines, plain_lines, strict=False):
         if _PATTERNS.hr.match(plain_line):
             box_lines.append("")
             continue
 
-        right_pad = " " * ((padding + max_line_len - len(plain_line)) + pad_w_full)
+        left_pad, right_pad = _calc_box_padding(len(plain_line), box_w, padding, align)
         box_lines.append(f"{indent_spaces}{left_pad}{content_open}{ansi_line}{reset}{right_pad}")
 
     return S(start, "\n".join(box_lines))
@@ -1830,8 +1845,8 @@ def box(
     border_style: AnyStyle | None = ...,
     bg: BgColorStyle | bool | None = ...,
     default_color: FgColorStyle | None = ...,
-    w_padding: int | None = ...,
-    w_full: bool = ...,
+    width: int | Literal["full"] | None = ...,
+    align: Literal["left", "center", "right"] = ...,
     indent: int = ...,
     border_chars: str | None = ...,
     start: str = ...,
@@ -1845,8 +1860,8 @@ def box(
     border_style: AnyStyle | None = ...,
     bg: BgColorStyle | bool | None = ...,
     default_color: FgColorStyle | None = ...,
-    w_padding: int | None = ...,
-    w_full: bool = ...,
+    width: int | Literal["full"] | None = ...,
+    align: Literal["left", "center", "right"] = ...,
     indent: int = ...,
     border_chars: str | None = ...,
     start: str = ...,
@@ -1860,8 +1875,8 @@ def box(
     border_style: AnyStyle | None = ...,
     bg: BgColorStyle | bool | None = ...,
     default_color: FgColorStyle | None = ...,
-    w_padding: int | None = ...,
-    w_full: bool = ...,
+    width: int | Literal["full"] | None = ...,
+    align: Literal["left", "center", "right"] = ...,
     indent: int = ...,
     border_chars: str | None = ...,
     start: str = ...,
@@ -1876,8 +1891,8 @@ def box(
     border_style: AnyStyle | None = None,
     bg: BgColorStyle | bool | None = None,
     default_color: FgColorStyle | None = None,
-    w_padding: int | None = None,
-    w_full: bool = False,
+    width: int | Literal["full"] | None = None,
+    align: Literal["left", "center", "right"] = "left",
     indent: int = 0,
     border_chars: str | None = None,
     start: str = "",
@@ -1894,8 +1909,9 @@ def box(
     *   `bg` – Background fill: `None` for transparent, `True` for default console background,<br>
         or an `S` background color style (e.g., `S.BG.GREEN`, `S.BG.hex("#222")`).
     *   `default_color` – The default text color of the `*lines` (an `S` foreground style).
-    *   `w_padding` – The horizontal padding (in chars) to the box content.
-    *   `w_full` – Whether to make the box be the full terminal width or not.
+    *   `width` – The fixed outer box width (in chars), `"full"` for full terminal width,<br>
+        or `None` to shrinkwrap up to the terminal width.
+    *   `align` – The content alignment (`"left"`, `"center"`, `"right"`).
     *   `indent` – The indentation of the box (in chars).
     *   `border_chars` – Define your own 11-character border set (overwrites `border`).
     *   `start` – Something to print/prepend before the box (e.g., `\\n`).
@@ -1957,17 +1973,33 @@ def box(
     has_border, chars, border_open = _resolve_box_border(border if bg is None else None, border_chars, border_style)
     has_bg, bg_open, content_open = _resolve_box_bg(bg, default_color)
 
-    if w_padding is None:
-        padding = 1 if has_border else 2
-    elif w_padding < 0:
-        raise ValueError(f"The 'w_padding' parameter must be a non-negative integer, got {w_padding!r}")
-    else:
-        padding = w_padding
+    if align not in {"left", "center", "right"}:
+        raise ValueError(f"The 'align' parameter must be one of ['left', 'center', 'right'], got {align!r}")
 
     if indent < 0:
         raise ValueError(f"The 'indent' parameter must be a non-negative integer, got {indent!r}")
 
-    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines, has_rules=True)
+    padding = 1 if has_border else (2 if has_bg else 0)
+    min_box_w = (2 if has_border else 0) + (2 * padding) + 1
+    max_console_w = max(get_width() - indent, min_box_w)
+    target_width: int | None = None
+
+    if width == "full":
+        target_width = max_console_w
+    elif type(width) is int:
+        if width < min_box_w:
+            raise ValueError(f"The 'width' parameter must be an integer >= {min_box_w} or 'full', got {width!r}")
+        target_width = width
+    elif width is not None:
+        raise ValueError(f"The 'width' parameter must be a positive integer or 'full', got {width!r}")
+
+    wrap_width = (
+        (target_width - (2 if has_border else 0) - (2 * padding))
+        if target_width is not None
+        else max(max_console_w - (2 if has_border else 0) - (2 * padding), 1)
+    )
+
+    ansi_lines, plain_lines, max_line_len = _prepare_log_box(lines, has_rules=True, wrap_width=wrap_width, align=align)
     indent_spaces = " " * indent
 
     if has_border:
@@ -1980,7 +2012,8 @@ def box(
             content_open,
             padding,
             indent_spaces,
-            w_full,
+            target_width,
+            align,
             start,
         )
     elif has_bg:
@@ -1992,7 +2025,8 @@ def box(
             content_open,
             padding,
             indent_spaces,
-            w_full,
+            target_width,
+            align,
             start,
         )
     else:
@@ -2003,7 +2037,8 @@ def box(
             content_open,
             padding,
             indent_spaces,
-            w_full,
+            target_width,
+            align,
             start,
         )
 
@@ -2427,8 +2462,54 @@ def _split_hr_parts(val_str: str, /) -> list[str]:
     return result_parts
 
 
+def _trim_line_end(
+    ansi_line: str,
+    plain_line: str,
+    align: Literal["left", "center", "right"],
+) -> tuple[str, str]:
+    """Internal helper to strip trailing whitespace for right- or center-aligned box lines."""
+
+    if align in {"right", "center"} and len(plain_line) > len(plain_line.rstrip()):
+        trimmed_len = len(plain_line.rstrip())
+        return S(ansi_line)[:trimmed_len].ansi, plain_line[:trimmed_len]
+
+    return ansi_line, plain_line
+
+
+def _append_box_line(
+    ansi_line: str,
+    plain_line: str,
+    ansi_lines: list[str],
+    plain_lines: list[str],
+    wrap_width: int | None,
+    has_rules: bool,
+    align: Literal["left", "center", "right"] = "left",
+) -> None:
+    """Internal helper to append a box line, wrapping text if necessary."""
+
+    if has_rules and _PATTERNS.hr.match(plain_line):
+        ansi_lines.append(ansi_line)
+        plain_lines.append(plain_line)
+
+    elif wrap_width is not None and len(plain_line) > wrap_width:
+        for wrapped_line in S(ansi_line).wrap(wrap_width):
+            w_ansi, w_plain = _trim_line_end(wrapped_line.ansi, wrapped_line.raw, align)
+            ansi_lines.append(w_ansi)
+            plain_lines.append(w_plain)
+
+    else:
+        ansi_line, plain_line = _trim_line_end(ansi_line, plain_line, align)
+        ansi_lines.append(ansi_line)
+        plain_lines.append(plain_line)
+
+
 def _prepare_log_box(
-    values: Sequence[TextRenderable | object], /, *, has_rules: bool = False
+    values: Sequence[TextRenderable | object],
+    /,
+    *,
+    has_rules: bool = False,
+    wrap_width: int | None = None,
+    align: Literal["left", "center", "right"] = "left",
 ) -> tuple[list[str], list[str], int]:
     """Prepares the log box content, returning the ANSI lines,<br>
     their plain-text counterparts, and the maximum visible line length."""
@@ -2440,8 +2521,7 @@ def _prepare_log_box(
         if is_text_renderable(val) and not isinstance(val, str):
             st = val if isinstance(val, S) else S(*val)
             for ansi_line, plain_line in zip(st.ansi.split("\n"), st.raw.split("\n"), strict=False):
-                ansi_lines.append(ansi_line)
-                plain_lines.append(plain_line)
+                _append_box_line(ansi_line, plain_line, ansi_lines, plain_lines, wrap_width, has_rules, align)
             continue
 
         val_str: str = str(val)
@@ -2449,10 +2529,12 @@ def _prepare_log_box(
 
         for part in parts:
             for line in part.splitlines():
-                ansi_lines.append(line)
-                plain_lines.append(line)
+                _append_box_line(line, line, ansi_lines, plain_lines, wrap_width, has_rules, align)
 
-    max_line_len = max([len(line) for line in plain_lines], default=0)
+    max_line_len = max(
+        [len(line) for line in plain_lines if not (has_rules and _PATTERNS.hr.match(line))],
+        default=0,
+    )
 
     return ansi_lines, plain_lines, max_line_len
 
