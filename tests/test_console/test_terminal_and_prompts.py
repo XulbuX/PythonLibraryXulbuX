@@ -1,3 +1,4 @@
+import io
 import os
 from collections.abc import Callable
 from unittest.mock import MagicMock, patch
@@ -119,24 +120,10 @@ def test_has_color_support_posix(mock_os_linux: None) -> None:
 
 
 def test_clear_terminal() -> None:
-    # Windows platform:
-    with patch("sys.platform", "win32"), patch("subprocess.run") as mock_sub_win:
+    buffer = io.StringIO()
+    with patch("sys.stdout", buffer):
         clear()
-        mock_sub_win.assert_called_once_with("cls", shell=True)
-
-    # POSIX with clear binary:
-    with (
-        patch("sys.platform", "linux"),
-        patch("shutil.which", return_value="/usr/bin/clear"),
-        patch("subprocess.run") as mock_sub_posix,
-    ):
-        clear()
-        mock_sub_posix.assert_called_once_with(["clear"])
-
-    # When clear command does not exist on POSIX:
-    with patch("sys.platform", "linux"), patch("shutil.which", return_value=None), patch("subprocess.run") as mock_sub_none:
-        clear()
-        mock_sub_none.assert_not_called()
+    assert buffer.getvalue() == "\033[2J\033[3J\033[H\033[0m"
 
 
 def test_pause_and_pause_exit() -> None:

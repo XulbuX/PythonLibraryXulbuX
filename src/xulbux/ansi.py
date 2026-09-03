@@ -140,14 +140,14 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
     -   `S.BG.BLACK`, `S.BG.RED`, `S.BG.GREEN`, …
 *   Bright background colors (`S.BG.BR.*`):
     -   `S.BG.BR.RED`, `S.BG.BR.GREEN`, …
-*   256-color palette (foreground / background):
-    -   `S.color256(196)`
-    -   `S.BG.color256(21)`
 *   24-bit true-color (foreground / background):
     -   `S.rgb(255, 96, 112)`
     -   `S.hex("#FF6070")`  or  `S.hex("F67")`
-    -   `S.BG.rgb(0, 0, 0)`
-    -   `S.BG.hex("#000")`
+    -   `S.BG.rgb(0, 100, 255)`
+    -   `S.BG.hex("#0064FF")`  or  `S.BG.hex("06F")`
+*   256-color palette (foreground / background):
+    -   `S.color256(210)`
+    -   `S.BG.color256(69)`
 *   Hyperlinks (OSC 8):
     -   `S.link("https://example.com")("click here")`
     -   `(S.link("…") | S.BR.BLUE)("click here")`
@@ -165,32 +165,33 @@ logical line and joined by `sep`. An empty string argument `""` therefore produc
 These are plain strings (or string-returning helpers), so they can be passed directly into a<br>
 `S(…)` call or written to `sys.stdout`:
 
-*   `CLEAR_LINE`                     – Erase the entire current line.
-*   `CLEAR_LINE_TO_END`              – Erase from the cursor to the end of the line.
-*   `CLEAR_LINE_TO_START`            – Erase from the line start to the cursor.
-*   `CLEAR_SCREEN`                   – Erase the whole screen.
-*   `CLEAR_SCREEN_TO_END`            – Erase from the cursor to the end of the screen.
-*   `CLEAR_SCREEN_TO_START`          – Erase from the screen start to the cursor.
-*   `CLEAR_SCROLLBACK`               – Erase the scrollback buffer.
-*   `HIDE_CURSOR`                    – Hide the cursor.
-*   `SHOW_CURSOR`                    – Show the cursor.
-*   `ALT_SCREEN`                     – Enter the alternate screen buffer.
-*   `MAIN_SCREEN`                    – Leave the alternate screen buffer.
-*   `BELL`                           – Terminal bell signal (`\\x07`).
-*   `up(n)`                          – Move the cursor up by `n` rows.
-*   `down(n)`                        – Move the cursor down by `n` rows.
-*   `right(n)`                       – Move the cursor right by `n` columns.
-*   `left(n)`                        – Move the cursor left by `n` columns.
-*   `column(col)`                    – Move the cursor to an absolute column position (1-based).
-*   `move(row, col)`                 – Move the cursor to an absolute `(row, col)` position.
-*   `scroll_up(n)`                   – Scroll page up by `n` lines.
-*   `scroll_down(n)`                 – Scroll page down by `n` lines.
-*   `title(text)`                    – Set the terminal window / tab title (OSC 2).
-*   `cursor_shape(shape)`            – Change cursor shape (`DECSCUSR` 1-6).
-*   `clipboard_copy(text)`           – Copy text to system clipboard via OSC 52.
-*   `cwd(path)`                      – Notify terminal of current working directory via OSC 7.
-*   `save()` / `restore()`           – Save/restore cursor position (ANSI.SYS).
-*   `save_dec()` / `restore_dec()`   – Save/restore cursor position (DEC `ESC 7`/`8`).
+*   `CLEAR_LINE`                         – Erase the entire current line.
+*   `CLEAR_LINE_TO_END`                  – Erase from the cursor to the end of the line.
+*   `CLEAR_LINE_TO_START`                – Erase from the line start to the cursor.
+*   `CLEAR_SCREEN`                       – Erase the whole screen.
+*   `CLEAR_SCREEN_TO_END`                – Erase from the cursor to the end of the screen.
+*   `CLEAR_SCREEN_TO_START`              – Erase from the screen start to the cursor.
+*   `CLEAR_SCROLLBACK`                   – Erase the scrollback buffer.
+*   `CUR_HIDE` / `CUR_SHOW`              – Hide/show the cursor.
+*   `CUR_HOME`                           – Move cursor to home position (0, 0).
+*   `CUR_SAVE` / `CUR_RESTORE`           – Save/restore cursor position (ANSI.SYS).
+*   `CUR_SAVE_DEC` / `CUR_RESTORE_DEC`   – Save/restore cursor position (DEC ESC 7/8).
+*   `ALT_SCREEN`                         – Enter the alternate screen buffer.
+*   `MAIN_SCREEN`                        – Leave the alternate screen buffer.
+*   `BELL`                               – Terminal bell signal (`\\x07`).
+*   `up(n)`                              – Move the cursor up by `n` rows.
+*   `down(n)`                            – Move the cursor down by `n` rows.
+*   `right(n)`                           – Move the cursor right by `n` columns.
+*   `left(n)`                            – Move the cursor left by `n` columns.
+*   `row(row)`                           – Move the cursor to an absolute row position (1-based, VPA).
+*   `col(col)`                           – Move the cursor to an absolute column position (1-based, CHA).
+*   `move(row, col)`                     – Move the cursor to an absolute `(row, col)` position.
+*   `scroll_up(n)`                       – Scroll page up by `n` lines.
+*   `scroll_down(n)`                     – Scroll page down by `n` lines.
+*   `title(text)`                        – Set the terminal window / tab title (OSC 2).
+*   `cursor_shape(shape)`                – Change cursor shape (DECSCUSR 1-6).
+*   `clipboard_copy(text)`               – Copy text to system clipboard via OSC 52.
+*   `cwd(path)`                          – Notify terminal of current working directory via OSC 7.
 """
 
 from __future__ import annotations
@@ -259,7 +260,7 @@ _CURSOR_SHAPES: Final[dict[str, int]] = {
     "steady_block": 2,
     "steady_underline": 4,
 }
-"""Mapping from cursor shape description names to their corresponding `DECSCUSR` numeric codes."""
+"""Mapping from cursor shape description names to their corresponding DECSCUSR numeric codes."""
 
 
 # ***************************************************** INTERNAL HELPERS ******************************************************
@@ -1789,7 +1790,7 @@ class Term:
     from xulbux import Term
 
     # Switch to alternate screen and hide cursor:
-    sys.stdout.write(Term.ALT_SCREEN + Term.HIDE_CURSOR)
+    sys.stdout.write(Term.ALT_SCREEN + Term.CUR_HIDE)
     sys.stdout.flush()
 
     # Move cursor up 2 rows and clear line:
@@ -1797,7 +1798,7 @@ class Term:
     sys.stdout.flush()
 
     # Restore main screen and cursor:
-    sys.stdout.write(Term.SHOW_CURSOR + Term.MAIN_SCREEN)
+    sys.stdout.write(Term.CUR_SHOW + Term.MAIN_SCREEN)
     sys.stdout.flush()
     ```"""
 
@@ -1817,10 +1818,20 @@ class Term:
     """Erase from the beginning of the screen up to the cursor."""
     CLEAR_SCROLLBACK: ClassVar[str] = f"{ANSI.CHAR}[3J"
     """Erase the terminal scrollback history buffer."""
-    HIDE_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25l"
+    CUR_HIDE: ClassVar[str] = f"{ANSI.CHAR}[?25l"
     """Hide the cursor."""
-    SHOW_CURSOR: ClassVar[str] = f"{ANSI.CHAR}[?25h"
+    CUR_SHOW: ClassVar[str] = f"{ANSI.CHAR}[?25h"
     """Show the cursor."""
+    CUR_HOME: ClassVar[str] = f"{ANSI.CHAR}[H"
+    """Move the cursor to the home position (0,0) (CUP/HVP)."""
+    CUR_SAVE: ClassVar[str] = f"{ANSI.CHAR}[s"
+    """Save the current cursor position (ANSI.SYS / SCO)."""
+    CUR_RESTORE: ClassVar[str] = f"{ANSI.CHAR}[u"
+    """Restore the previously saved cursor position (ANSI.SYS / SCO)."""
+    CUR_SAVE_DEC: ClassVar[str] = f"{ANSI.CHAR}7"
+    """Save cursor position and attributes (DEC private sequence ESC 7)."""
+    CUR_RESTORE_DEC: ClassVar[str] = f"{ANSI.CHAR}8"
+    """Restore cursor position and attributes (DEC private sequence ESC 8)."""
     ALT_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049h"
     """Enter the alternate screen buffer."""
     MAIN_SCREEN: ClassVar[str] = f"{ANSI.CHAR}[?1049l"
@@ -1830,13 +1841,13 @@ class Term:
     BRACKETED_PASTE_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?2004l"
     """Disable bracketed paste mode."""
     LINE_WRAP_ENABLE: ClassVar[str] = f"{ANSI.CHAR}[?7h"
-    """Enable line wrapping (`DECAWM`)."""
+    """Enable line wrapping (DECAWM)."""
     LINE_WRAP_DISABLE: ClassVar[str] = f"{ANSI.CHAR}[?7l"
-    """Disable line wrapping (`DECAWM`)."""
+    """Disable line wrapping (DECAWM)."""
     RESET: ClassVar[str] = f"{ANSI.CHAR}c"
     """Hard reset to initial state (RIS)."""
     SOFT_RESET: ClassVar[str] = f"{ANSI.CHAR}[!p"
-    """Soft terminal reset to sensible defaults (`DECSTR`)."""
+    """Soft terminal reset to sensible defaults (DECSTR)."""
 
     @staticmethod
     def up(n: int = 1, /) -> str:
@@ -1875,7 +1886,13 @@ class Term:
         return f"{ANSI.CHAR}[{n}E"
 
     @staticmethod
-    def column(col: int = 1, /) -> str:
+    def row(row: int = 1, /) -> str:
+        """Move the cursor to absolute row `row` in the current column (1-based, VPA)."""
+
+        return f"{ANSI.CHAR}[{row}d"
+
+    @staticmethod
+    def col(col: int = 1, /) -> str:
         """Move the cursor to absolute column `col` in the current row (1-based, CHA)."""
 
         return f"{ANSI.CHAR}[{col}G"
@@ -1885,12 +1902,6 @@ class Term:
         """Move the cursor to absolute position `(row, col)` (1-based, CUP)."""
 
         return f"{ANSI.CHAR}[{row};{col}H"
-
-    @staticmethod
-    def home() -> str:
-        """Move the cursor to the home position (0,0) (CUP/HVP)."""
-
-        return f"{ANSI.CHAR}[H"
 
     @staticmethod
     def insert_lines(n: int = 1, /) -> str:
@@ -1929,30 +1940,6 @@ class Term:
         return f"{ANSI.CHAR}[{n}T"
 
     @staticmethod
-    def save() -> str:
-        """Save the current cursor position (ANSI.SYS / SCO)."""
-
-        return f"{ANSI.CHAR}[s"
-
-    @staticmethod
-    def restore() -> str:
-        """Restore the previously saved cursor position (ANSI.SYS / SCO)."""
-
-        return f"{ANSI.CHAR}[u"
-
-    @staticmethod
-    def save_dec() -> str:
-        """Save cursor position and attributes (DEC private sequence `ESC 7`)."""
-
-        return f"{ANSI.CHAR}7"
-
-    @staticmethod
-    def restore_dec() -> str:
-        """Restore cursor position and attributes (DEC private sequence `ESC 8`)."""
-
-        return f"{ANSI.CHAR}8"
-
-    @staticmethod
     def title(text: str, /) -> str:
         """Set the terminal window / tab title (OSC 2)."""
 
@@ -1976,7 +1963,7 @@ class Term:
         ],
         /,
     ) -> str:
-        """Set the terminal cursor shape using `DECSCUSR`.\n
+        """Set the terminal cursor shape (DECSCUSR).\n
         ----------------------------------------------------------------------------------------------------
         *   `shape` – An integer in range [1, 6] inclusive, or a string name of the shape:
             - `1` `"blinking_block"`
@@ -1995,14 +1982,14 @@ class Term:
 
     @staticmethod
     def clipboard_copy(text: str, /) -> str:
-        """Copy `text` to the system clipboard via OSC 52."""
+        """Copy `text` to the system clipboard (OSC 52)."""
 
         encoded = _base64.b64encode(text.encode("utf-8")).decode("ascii")
         return f"{ANSI.CHAR}]52;c;{encoded}{ANSI.CHAR}\\"
 
     @staticmethod
     def cwd(path: str | Path, /) -> str:
-        """Notify the terminal of the current working directory via OSC 7."""
+        """Notify the terminal of the current working directory (OSC 7)."""
 
         uri = path.resolve().as_uri() if isinstance(path, Path) else path
         return f"{ANSI.CHAR}]7;{uri}{ANSI.CHAR}\\"

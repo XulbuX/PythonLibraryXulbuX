@@ -17,8 +17,8 @@ def test_term_control_constants() -> None:
     assert f"{ANSI.CHAR}[0J" == Term.CLEAR_SCREEN_TO_END
     assert f"{ANSI.CHAR}[1J" == Term.CLEAR_SCREEN_TO_START
     assert f"{ANSI.CHAR}[3J" == Term.CLEAR_SCROLLBACK
-    assert f"{ANSI.CHAR}[?25l" == Term.HIDE_CURSOR
-    assert f"{ANSI.CHAR}[?25h" == Term.SHOW_CURSOR
+    assert f"{ANSI.CHAR}[?25l" == Term.CUR_HIDE
+    assert f"{ANSI.CHAR}[?25h" == Term.CUR_SHOW
     assert f"{ANSI.CHAR}[?1049h" == Term.ALT_SCREEN
     assert f"{ANSI.CHAR}[?1049l" == Term.MAIN_SCREEN
     assert Term.BELL == "\x07"
@@ -28,6 +28,11 @@ def test_term_control_constants() -> None:
     assert f"{ANSI.CHAR}[?7l" == Term.LINE_WRAP_DISABLE
     assert f"{ANSI.CHAR}c" == Term.RESET
     assert f"{ANSI.CHAR}[!p" == Term.SOFT_RESET
+    assert f"{ANSI.CHAR}[H" == Term.CUR_HOME
+    assert f"{ANSI.CHAR}[s" == Term.CUR_SAVE
+    assert f"{ANSI.CHAR}[u" == Term.CUR_RESTORE
+    assert f"{ANSI.CHAR}7" == Term.CUR_SAVE_DEC
+    assert f"{ANSI.CHAR}8" == Term.CUR_RESTORE_DEC
 
 
 def test_term_cursor_methods() -> None:
@@ -37,9 +42,11 @@ def test_term_cursor_methods() -> None:
     assert Term.right(5) == f"{ANSI.CHAR}[5C"
     assert Term.prev_line(1) == f"{ANSI.CHAR}[1F"
     assert Term.next_line(2) == f"{ANSI.CHAR}[2E"
-    assert Term.column(10) == f"{ANSI.CHAR}[10G"
+    assert Term.row(10) == f"{ANSI.CHAR}[10d"
+    assert Term.row() == f"{ANSI.CHAR}[1d"
+    assert Term.col(10) == f"{ANSI.CHAR}[10G"
+    assert Term.col() == f"{ANSI.CHAR}[1G"
     assert Term.move(10, 20) == f"{ANSI.CHAR}[10;20H"
-    assert Term.home() == f"{ANSI.CHAR}[H"
     assert Term.insert_lines(2) == f"{ANSI.CHAR}[2L"
     assert Term.delete_lines(3) == f"{ANSI.CHAR}[3M"
     assert Term.insert_chars(4) == f"{ANSI.CHAR}[4@"
@@ -47,10 +54,6 @@ def test_term_cursor_methods() -> None:
     assert Term.scroll_up(2) == f"{ANSI.CHAR}[2S"
     assert Term.scroll_down(3) == f"{ANSI.CHAR}[3T"
     assert Term.title("Terminal Title") == f"{ANSI.CHAR}]2;Terminal Title\x07"
-    assert Term.save() == f"{ANSI.CHAR}[s"
-    assert Term.restore() == f"{ANSI.CHAR}[u"
-    assert Term.save_dec() == f"{ANSI.CHAR}7"
-    assert Term.restore_dec() == f"{ANSI.CHAR}8"
 
 
 def test_term_cursor_shape() -> None:
@@ -80,7 +83,7 @@ def test_term_clipboard_and_cwd() -> None:
     assert cwd_path_res.endswith(f"{ANSI.CHAR}\\")
 
     # Verify SEQ_PATTERN strips new sequences properly in S.raw:
-    styled_with_dec = S(Term.save_dec(), "hello", Term.restore_dec())
+    styled_with_dec = S(Term.CUR_SAVE_DEC, "hello", Term.CUR_RESTORE_DEC)
     assert styled_with_dec.raw == "hello"
 
 

@@ -28,8 +28,6 @@ from .regex import LazyRegex
 import ctypes as _ctypes
 import os as _os
 import re as _re
-import shutil as _shutil
-import subprocess as _subprocess
 import sys as _sys
 import threading as _threading
 import time as _time
@@ -1311,13 +1309,11 @@ def pause_exit(
 
 
 def clear() -> None:
-    """Will clear the terminal in addition to completely resetting the ANSI formats."""
+    """Clear the terminal screen and scrollback buffer, and reset ANSI formatting."""
 
-    if _sys.platform == "win32":
-        _subprocess.run("cls", shell=True)
-    elif _shutil.which("clear"):
-        _subprocess.run(["clear"])
-    print("\033[0m", end="", flush=True)
+    out = _sys.stdout
+    out.write("\033[2J\033[3J\033[H\033[0m")
+    out.flush()
 
 
 def log(
