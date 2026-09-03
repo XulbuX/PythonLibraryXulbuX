@@ -493,7 +493,6 @@ body .vp-doc > div > .api-item {
 
 /* Custom brighter background for terminal blocks (always dark). */
 .vp-doc .ext-terminal {
-  --vp-code-block-selection: var(--dark-vp-code-block-selection);
   --vp-code-lang-color: var(--dark-vp-c-text-3);
   --vp-code-copy-code-active-text: var(--dark-vp-c-text-2);
   --vp-code-copy-code-border-color: color-mix(
@@ -527,10 +526,185 @@ body .vp-doc > div > .api-item {
   box-shadow: inset 0 0 16px 8px var(--dark-vp-c-bg-elv) !important;
 }
 
+/* Classic Inverted Terminal Selection */
+.vp-doc div.ext-terminal pre *::selection {
+  color: var(--term-bg) !important;
+  background-color: var(--term-base-fg) !important;
+}
+.vp-doc div.ext-terminal::selection,
+.vp-doc div.ext-terminal pre::selection,
+.vp-doc div.ext-terminal pre > code::selection,
+.vp-doc div.ext-terminal pre br::selection {
+  background-color: transparent !important;
+}
+
 /* Terminal Output Styles */
 .term {
-  color: var(--dark-vp-c-text-1) !important;
-  line-height: 1.3rem !important;
+  --term-base-fg: var(--term-white);
+  --term-fg: var(--term-base-fg);
+  --term-bg: var(--dark-vp-c-bg-elv);
+  line-height: 1.1rem !important;
+  color: var(--term-fg) !important;
+
+  .black {
+    --term-base-fg: var(--term-black);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-black {
+    --term-base-fg: var(--term-br-black);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-black {
+    --term-bg: var(--term-black);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-black {
+    --term-bg: var(--term-br-black);
+    background-color: var(--term-bg) !important;
+  }
+  .red {
+    --term-base-fg: var(--term-red);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-red {
+    --term-base-fg: var(--term-br-red);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-red {
+    --term-bg: var(--term-red);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-red {
+    --term-bg: var(--term-br-red);
+    background-color: var(--term-bg) !important;
+  }
+  .green {
+    --term-base-fg: var(--term-green);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-green {
+    --term-base-fg: var(--term-br-green);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-green {
+    --term-bg: var(--term-green);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-green {
+    --term-bg: var(--term-br-green);
+    background-color: var(--term-bg) !important;
+  }
+  .yellow {
+    --term-base-fg: var(--term-yellow);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-yellow {
+    --term-base-fg: var(--term-br-yellow);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-yellow {
+    --term-bg: var(--term-yellow);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-yellow {
+    --term-bg: var(--term-br-yellow);
+    background-color: var(--term-bg) !important;
+  }
+  .blue {
+    --term-base-fg: var(--term-blue);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-blue {
+    --term-base-fg: var(--term-br-blue);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-blue {
+    --term-bg: var(--term-blue);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-blue {
+    --term-bg: var(--term-br-blue);
+    background-color: var(--term-bg) !important;
+  }
+  .magenta {
+    --term-base-fg: var(--term-magenta);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-magenta {
+    --term-base-fg: var(--term-br-magenta);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-magenta {
+    --term-bg: var(--term-magenta);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-magenta {
+    --term-bg: var(--term-br-magenta);
+    background-color: var(--term-bg) !important;
+  }
+  .cyan {
+    --term-base-fg: var(--term-cyan);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-cyan {
+    --term-base-fg: var(--term-br-cyan);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-cyan {
+    --term-bg: var(--term-cyan);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-cyan {
+    --term-bg: var(--term-br-cyan);
+    background-color: var(--term-bg) !important;
+  }
+  .white {
+    --term-base-fg: var(--term-white);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-white {
+    --term-base-fg: var(--term-br-white);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-white {
+    --term-bg: var(--term-white);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-white {
+    --term-bg: var(--term-br-white);
+    background-color: var(--term-bg) !important;
+  }
+
+  .\#000 {
+    --term-base-fg: #000;
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .\#FFF {
+    --term-base-fg: #fff;
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-\#F67 {
+    --term-bg: #f67;
+    background-color: var(--term-bg) !important;
+  }
 
   .i {
     font-style: italic;
@@ -542,114 +716,7 @@ body .vp-doc > div > .api-item {
     text-decoration: underline;
   }
   .dim {
-    opacity: 0.64;
-  }
-
-  .black {
-    color: var(--term-black) !important;
-  }
-  .br-black {
-    color: var(--term-br-black) !important;
-  }
-  .bg-black {
-    background-color: var(--term-black) !important;
-  }
-  .bg-br-black {
-    background-color: var(--term-br-black) !important;
-  }
-  .red {
-    color: var(--term-red) !important;
-  }
-  .br-red {
-    color: var(--term-br-red) !important;
-  }
-  .bg-red {
-    background-color: var(--term-red) !important;
-  }
-  .bg-br-red {
-    background-color: var(--term-br-red) !important;
-  }
-  .green {
-    color: var(--term-green) !important;
-  }
-  .br-green {
-    color: var(--term-br-green) !important;
-  }
-  .bg-green {
-    background-color: var(--term-green) !important;
-  }
-  .bg-br-green {
-    background-color: var(--term-br-green) !important;
-  }
-  .yellow {
-    color: var(--term-yellow) !important;
-  }
-  .br-yellow {
-    color: var(--term-br-yellow) !important;
-  }
-  .bg-yellow {
-    background-color: var(--term-yellow) !important;
-  }
-  .bg-br-yellow {
-    background-color: var(--term-br-yellow) !important;
-  }
-  .blue {
-    color: var(--term-blue) !important;
-  }
-  .br-blue {
-    color: var(--term-br-blue) !important;
-  }
-  .bg-blue {
-    background-color: var(--term-blue) !important;
-  }
-  .bg-br-blue {
-    background-color: var(--term-br-blue) !important;
-  }
-  .magenta {
-    color: var(--term-magenta) !important;
-  }
-  .br-magenta {
-    color: var(--term-br-magenta) !important;
-  }
-  .bg-magenta {
-    background-color: var(--term-magenta) !important;
-  }
-  .bg-br-magenta {
-    background-color: var(--term-br-magenta) !important;
-  }
-  .cyan {
-    color: var(--term-cyan) !important;
-  }
-  .br-cyan {
-    color: var(--term-br-cyan) !important;
-  }
-  .bg-cyan {
-    background-color: var(--term-cyan) !important;
-  }
-  .bg-br-cyan {
-    background-color: var(--term-br-cyan) !important;
-  }
-  .white {
-    color: var(--term-white) !important;
-  }
-  .br-white {
-    color: var(--term-br-white) !important;
-  }
-  .bg-white {
-    background-color: var(--term-white) !important;
-  }
-  .bg-br-white {
-    background-color: var(--term-br-white) !important;
-  }
-
-  .\#000 {
-    color: #000 !important;
-  }
-  .\#FFF {
-    color: #fff !important;
-  }
-
-  .bg-\#F67 {
-    background-color: #f67 !important;
+    --term-fg: color-mix(in srgb, var(--term-base-fg) 50%, var(--dark-vp-c-bg-elv));
+    color: var(--term-fg) !important;
   }
 }

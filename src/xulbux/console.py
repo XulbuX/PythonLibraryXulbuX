@@ -1921,19 +1921,38 @@ def box(
         "{hr}",
         "Some content.",
         "Some more content.",
+        border_style=S.DIM,
     )
     ```
+
+    <!-- DOCS: <TerminalOutput>
+    <span class="dim">╭────────────────────╮</span>
+    <span class="dim">│</span><span class="b"> A Title            </span><span class="dim">│</span>
+    <span class="dim">├────────────────────┤</span>
+    <span class="dim">│</span> Some content.      <span class="dim">│</span>
+    <span class="dim">│</span> Some more content. <span class="dim">│</span>
+    <span class="dim">╰────────────────────╯</span>
+    </TerminalOutput> -->
 
     **Filled box with background color:**
 
     ```python
+    import xulbux as xx
+    from xulbux import S
+
     xx.console.box(
         S.BOLD("Build Success"),
         "Compiled 14 modules without errors.",
         bg=S.BG.GREEN,
-        default_color=S.BLACK,
     )
-    ```"""
+    ```
+
+    <!-- DOCS: <TerminalOutput>
+    <span class="#000 bg-br-green">                                       </span>
+    <span class="b #000 bg-br-green">  Build Success                        </span>
+    <span class="#000 bg-br-green">  Compiled 14 modules without errors.  </span>
+    <span class="#000 bg-br-green">                                       </span>
+    </TerminalOutput> -->"""
 
     has_border, chars, border_open = _resolve_box_border(border if bg is None else None, border_chars, border_style)
     has_bg, bg_open, content_open = _resolve_box_bg(bg, default_color)
