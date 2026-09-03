@@ -176,8 +176,7 @@ def create_file(file_path: Path | str, content: str = "", /, *, force: bool = Fa
 
     if path.exists() and not force:
         with open(path, encoding="utf-8") as existing_file:
-            existing_content = existing_file.read()
-            if existing_content == content:
+            if existing_file.read() == content:
                 raise SameContentFileExistsError("Already created this file (nothing changed)")
         raise FileExistsError("File already exists")
 

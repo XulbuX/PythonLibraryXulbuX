@@ -46,12 +46,12 @@ class PyOnlyFinder:
             return None
 
         parts = fullname.split(".")
-        py_path = SRC_DIR.joinpath(*parts).with_suffix(".py")
 
-        if not py_path.exists():
-            py_path = SRC_DIR.joinpath(*parts, "__init__.py")
-            if not py_path.exists():
-                return None
+        if (
+            not (py_path := SRC_DIR.joinpath(*parts).with_suffix(".py")).exists()
+            and not (py_path := SRC_DIR.joinpath(*parts, "__init__.py")).exists()
+        ):
+            return None
 
         return importlib.util.spec_from_file_location(
             fullname, str(py_path), loader=importlib.machinery.SourceFileLoader(fullname, str(py_path))
@@ -499,9 +499,9 @@ def get_base_sidebar(docs_src_dir: Path) -> list[Any]:
     """Returns the base sidebar structure from the `.vitepress/sidebar.json` file in<br>
     the `docs/src` directory, or an empty list if the file doesn't exist or is invalid."""
 
-    src_sidebar_file = docs_src_dir / SIDEBAR_REL_PATH
-
-    if src_sidebar_file.exists() and (src_content := src_sidebar_file.read_text(encoding="utf-8").strip()):
+    if (src_sidebar_file := docs_src_dir / SIDEBAR_REL_PATH).exists() and (
+        src_content := src_sidebar_file.read_text(encoding="utf-8").strip()
+    ):
         with suppress(json.JSONDecodeError):
             parsed = json.loads(src_content)
             if isinstance(parsed, list):

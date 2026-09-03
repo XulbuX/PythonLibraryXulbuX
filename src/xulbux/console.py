@@ -1044,9 +1044,7 @@ class ArgumentParser:
     ) -> int:
         """Internal helper to consume positional tokens for a specific positional argument configuration."""
 
-        nargs = cfg["nargs"]
-
-        if isinstance(nargs, int):
+        if isinstance(nargs := cfg["nargs"], int):
             if available >= nargs and token_idx + nargs <= num_tokens:
                 parsed_data[name]["values"] = arg_tokens[token_idx : token_idx + nargs]
                 parsed_data[name]["exists"] = True

@@ -377,8 +377,7 @@ if __name__ == "__main__":
             from mypyc.build import mypycify
 
             print("\nCompiling with mypyc...\n", flush=True)
-            source_files = find_python_files("src/xulbux")
-            ext_modules = mypycify(source_files, opt_level="3")
+            ext_modules = mypycify(find_python_files("src/xulbux"), opt_level="3")
             print("\nMypyc compilation complete.\n", flush=True)
 
             generate_stubs_for_package()

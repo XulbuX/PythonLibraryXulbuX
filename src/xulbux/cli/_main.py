@@ -18,8 +18,7 @@ def main() -> None:
         case "tc":
             from .true_color import show_true_color
 
-            color_arg = _sys.argv[2] if len(_sys.argv) > 2 else None
-            show_true_color(color_arg)
+            show_true_color(_sys.argv[2] if len(_sys.argv) > 2 else None)
 
         case _:
             from .help import show_help

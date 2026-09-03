@@ -471,9 +471,7 @@ class _SystemCheckLibsHelper:
         self.confirm_install: bool = confirm_install
 
     def __call__(self) -> list[str] | None:
-        missing = self.find_missing_libs()
-
-        if not missing:
+        if not (missing := self.find_missing_libs()):
             return None
         elif not self.install_missing:
             return missing

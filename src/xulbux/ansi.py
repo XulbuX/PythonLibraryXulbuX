@@ -621,8 +621,7 @@ class _SBase:
         <span class="red">Text</span>......
         </TerminalOutput> -->"""
 
-        raw_len = len(self.raw)
-        if raw_len >= width:
+        if (raw_len := len(self.raw)) >= width:
             return cast("S", self) if type(self) is S else S(self)
 
         return self + fill_char * (width - raw_len)
@@ -643,8 +642,7 @@ class _SBase:
         ......<span class="green">Text</span>
         </TerminalOutput> -->"""
 
-        raw_len = len(self.raw)
-        if raw_len >= width:
+        if (raw_len := len(self.raw)) >= width:
             return cast("S", self) if type(self) is S else S(self)
 
         return fill_char * (width - raw_len) + self
@@ -665,8 +663,7 @@ class _SBase:
         ---<span class="b">Text</span>---
         </TerminalOutput> -->"""
 
-        raw_len = len(self.raw)
-        if raw_len >= width:
+        if (raw_len := len(self.raw)) >= width:
             return cast("S", self) if type(self) is S else S(self)
 
         total_pad = width - raw_len
@@ -681,8 +678,7 @@ class _SBase:
         ----------------------------------------------------------------------------------------------------
         *   `width` – The maximum visible width of each line."""
 
-        raw_text = self.raw
-        if not raw_text or width <= 0:
+        if not (raw_text := self.raw) or width <= 0:
             return [cast("S", self) if type(self) is S else S(self)]
 
         raw_code_positions = self.raw_code_positions

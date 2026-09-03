@@ -46,8 +46,7 @@ def test_is_seq_or_set_with_item_type_matching() -> None:
 
 
 def test_all_text_chars_instantiation() -> None:
-    sentinel = AllTextChars()
-    assert isinstance(sentinel, AllTextChars)
+    assert isinstance(AllTextChars(), AllTextChars)
 
 
 def test_progress_updater_protocol() -> None:

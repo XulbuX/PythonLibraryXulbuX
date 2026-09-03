@@ -58,8 +58,7 @@ def test_deprecated_branch_for_python_3_13_plus() -> None:
         def sample_func() -> int:
             return 123
 
-        result = decorator(sample_func)
-        assert result is sample_func
+        assert decorator(sample_func) is sample_func
         mock_dep_factory.assert_called_once_with("Deprecated in 3.13")
 
 
@@ -69,8 +68,7 @@ def test_deprecated_fallback_for_python_under_3_13_without_typing_extensions() -
 
     with patch.object(sys, "version_info", (3, 12)), patch.dict(sys.modules, {"typing_extensions": None}):
         decorator = deprecated("Deprecated feature")
-        result = decorator(SampleClass)
-        assert result is SampleClass
+        assert decorator(SampleClass) is SampleClass
         assert getattr(SampleClass, "__deprecated__", None) == "Deprecated feature"
 
 
@@ -99,5 +97,4 @@ def test_deprecated_wrapper_for_immutable_class() -> None:
         pass
 
     decorator = deprecated("Deprecated class")
-    result = decorator(ImmutableClass)
-    assert result is ImmutableClass
+    assert decorator(ImmutableClass) is ImmutableClass

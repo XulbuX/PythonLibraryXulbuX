@@ -14,8 +14,7 @@ def test_paths_as_path_and_as_list() -> None:
 
 
 def test_has_path_detection() -> None:
-    current_paths = _system_module.get_env_path(as_list=True)
-    if current_paths:
+    if current_paths := _system_module.get_env_path(as_list=True):
         assert _system_module.has_env_path(current_paths[0]) is True
 
     assert _system_module.has_env_path(Path("non_existent_folder_xyz_12345")) is False
@@ -98,8 +97,7 @@ def test_persistent_unix_add_and_remove(mock_os_linux: None, mock_subprocess_run
 
 
 def test_persistent_add_already_existing_path_in_list(mock_os_linux: None, mock_subprocess_run: MagicMock) -> None:
-    existing_paths = _system_module.get_env_path(as_list=True)
-    if existing_paths:
+    if existing_paths := _system_module.get_env_path(as_list=True):
         with (
             patch.dict("os.environ"),
             patch("builtins.open"),

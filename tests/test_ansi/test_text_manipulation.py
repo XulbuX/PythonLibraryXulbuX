@@ -64,27 +64,19 @@ def test_styled_text_wrap() -> None:
         assert line.ansi.startswith("\x1b[31m")
 
     # Edge cases for wrap:
-    empty_lines = S("Line 1\n\nLine 2").wrap(20)
-    assert len(empty_lines) == 3
-
-    short_line = S("Short").wrap(20)
-    assert len(short_line) == 1
-
-    zero_width = S("Text").wrap(0)
-    assert len(zero_width) == 1
+    assert len(S("Line 1\n\nLine 2").wrap(20)) == 3
+    assert len(S("Short").wrap(20)) == 1
+    assert len(S("Text").wrap(0)) == 1
 
     # Whitespace only line where textwrap returns empty in multi-line text:
-    spaces_line = S("   \nvalid text").wrap(5)
-    assert len(spaces_line) >= 2
+    assert len(S("   \nvalid text").wrap(5)) >= 2
 
     # Chunk not found in paragraph offset fallback:
     with patch("textwrap.wrap", return_value=["xyz"]):
-        fallback_wrap = S("abc\ndef").wrap(5)
-        assert len(fallback_wrap) >= 1
+        assert len(S("abc\ndef").wrap(5)) >= 1
 
     # StyleGroup wrap:
-    group_wrapped = (S.BOLD | S.RED).wrap(10)
-    assert len(group_wrapped) >= 1
+    assert len((S.BOLD | S.RED).wrap(10)) >= 1
 
 
 def test_code_positions_properties() -> None:
@@ -101,8 +93,7 @@ def test_code_positions_properties() -> None:
 
 
 def test_s_raw_removes_ansi() -> None:
-    ansi_str = "\x1b[1;31mError\x1b[0m: \x1b[4mDetails\x1b[24m"
-    assert S(ansi_str).raw == "Error: Details"
+    assert S("\x1b[1;31mError\x1b[0m: \x1b[4mDetails\x1b[24m").raw == "Error: Details"
 
 
 def test_styled_text_slice_with_step() -> None:
@@ -116,8 +107,7 @@ def test_styled_text_slice_with_step() -> None:
 def test_styled_text_input_prompt() -> None:
     styled_prompt = S.GREEN("Enter name: ")
     with patch("builtins.input", return_value="Alice") as mock_input:
-        user_response = styled_prompt.input(reset_ansi=True)
-        assert user_response == "Alice"
+        assert styled_prompt.input(reset_ansi=True) == "Alice"
         mock_input.assert_called_once_with(styled_prompt.ansi)
 
     # Input without reset_ansi:

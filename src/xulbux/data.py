@@ -125,8 +125,7 @@ def remove_duplicates[DataObj: DataObjType](data: DataObj, /) -> DataObj:
     else:
         processed_elements: set[Any] = set()
         for item in data:
-            processed_item = remove_duplicates(item) if is_data_obj(item) else item
-            processed_elements.add(processed_item)
+            processed_elements.add(remove_duplicates(item) if is_data_obj(item) else item)
         return type(data)(processed_elements)
 
 

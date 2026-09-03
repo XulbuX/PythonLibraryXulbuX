@@ -83,19 +83,13 @@ def test_term_clipboard_and_cwd() -> None:
     assert cwd_path_res.endswith(f"{ANSI.CHAR}\\")
 
     # Verify SEQ_PATTERN strips new sequences properly in S.raw:
-    styled_with_dec = S(Term.CUR_SAVE_DEC, "hello", Term.CUR_RESTORE_DEC)
-    assert styled_with_dec.raw == "hello"
+    assert S(Term.CUR_SAVE_DEC, "hello", Term.CUR_RESTORE_DEC).raw == "hello"
 
 
 def test_rgb_and_hex_overloads() -> None:
-    rgb_from_rgba = S.rgb(rgba(255, 0, 0))
-    assert rgb_from_rgba("text").ansi == "\x1b[38;2;255;0;0mtext\x1b[39m"
-
-    hex_from_hexa = S.hex(hexa("#00FF00"))
-    assert hex_from_hexa("text").ansi == "\x1b[38;2;0;255;0mtext\x1b[39m"
-
-    link_from_path = S.link(Path("tests/test_ansi"))
-    assert "tests/test_ansi" in link_from_path("Link").ansi
+    assert S.rgb(rgba(255, 0, 0))("text").ansi == "\x1b[38;2;255;0;0mtext\x1b[39m"
+    assert S.hex(hexa("#00FF00"))("text").ansi == "\x1b[38;2;0;255;0mtext\x1b[39m"
+    assert "tests/test_ansi" in S.link(Path("tests/test_ansi"))("Link").ansi
 
 
 def test_terminal_configuration_windows(mock_os_windows: None, mock_ctypes_windll: Callable[..., MagicMock]) -> None:

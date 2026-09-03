@@ -59,7 +59,6 @@ def show_help() -> None:
     xx_secondary = S.hex("#9095FF")
 
     # Styles used in the help message:
-    border_st = S.DIM | S.BR.BLACK
     cmd_st = S.BR.RED
     heading_st = S.BOLD | S.BR.WHITE
     module_st = S.BR.MAGENTA
@@ -70,7 +69,7 @@ def show_help() -> None:
     def _box(*args: TextRenderable) -> S:
         """Helper function to create a help screen box with the given content."""
 
-        return _console_module.box(*args, border_style=border_st, width=58, indent=2, print=False)
+        return _console_module.box(*args, border_style=S.DIM | S.BR.BLACK, width=58, indent=2, print=False)
 
     # The local version of the library:
     version_msg: tuple[TextRenderable, TextRenderable, TextRenderable] = (
@@ -81,8 +80,7 @@ def show_help() -> None:
 
     # fmt:off
     # Attach a notice if the installed version is not the latest one available on PyPI:
-    latest_ver = get_latest_version()
-    if is_latest_version(latest_ver) is False and latest_ver:
+    if (latest_ver := get_latest_version()) and is_latest_version(latest_ver) is False:
         version_msg = (
             (version_msg[0], (S.DIM | notice_st)("─" * (len(latest_ver) + 15), "╮")),
             (version_msg[1], (notice_st(" ↑ ", S.link("https://pypi.org/pypi/xulbux")("v", S.BOLD(latest_ver)), " available "), (S.DIM | notice_st)("│"))),  # ruff:ignore[line-too-long]
