@@ -43,7 +43,9 @@ def test_get_path_id_single_and_multiple() -> None:
     }
 
     assert _data_module.get_path_id(sample_data, "healthy->fruit->0") == "1000"
-    assert _data_module.get_path_id(sample_data, "healthy->fruit->apples") == "1000"
+    assert _data_module.get_path_id(sample_data, "healthy->fruit->-1") == "1002"
+    with pytest.raises(TypeError, match="invalid for 'list', expected an integer"):
+        _data_module.get_path_id(sample_data, "healthy->fruit->apples")
     assert _data_module.get_path_id(sample_data, "healthy->vegetables->1") == "1011"
 
     multiple_results = _data_module.get_path_id(sample_data, ["healthy->fruit->0", "healthy->vegetables->1"])
@@ -68,17 +70,35 @@ def test_get_path_id_errors_and_ignore_not_found() -> None:
     assert _data_module.get_path_id([1, 2], "missing", ignore_not_found=True) is None
     assert _data_module.get_path_id({"a": 1}, "1", ignore_not_found=True) is None
 
-    with pytest.raises(TypeError):
+    with pytest.raises(KeyError, match="Key '1' not found in dict"):
         _data_module.get_path_id({"a": 1}, "1")
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="Key 'b' not found in dict"):
         _data_module.get_path_id({"a": 1}, "b")
 
-    with pytest.raises(ValueError):
+    # Non-string and numeric dict keys:
+    int_keyed_dict = {1: "one", 2: "two"}
+    assert _data_module.get_path_id(int_keyed_dict, "1") == "10"
+    assert _data_module.get_path_id(int_keyed_dict, "2") == "11"
+    updated_int_dict = _data_module.set_value_by_path_id(int_keyed_dict, {"10": "ONE"})
+    assert updated_int_dict == {1: "ONE", 2: "two"}
+
+    numeric_str_dict = {"200": "OK", "404": "Not Found"}
+    assert _data_module.get_path_id(numeric_str_dict, "200") == "10"
+    assert _data_module.get_path_id(numeric_str_dict, "404") == "11"
+
+    other_keys_dict = {True: "yes", 1.5: "float"}
+    assert _data_module.get_path_id(other_keys_dict, "True") == "10"
+    assert _data_module.get_path_id(other_keys_dict, "1.5") == "11"
+
+    with pytest.raises(TypeError, match="invalid for 'list', expected an integer"):
         _data_module.get_path_id([1, 2], "missing")
 
     with pytest.raises(IndexError):
         _data_module.get_path_id([1, 2], "3")
+
+    with pytest.raises(IndexError):
+        _data_module.get_path_id([1, 2], "-5")
 
     assert str(_data_module.get_path_id({"a": 1}, "a->b", ignore_not_found=True)) == "10"
 

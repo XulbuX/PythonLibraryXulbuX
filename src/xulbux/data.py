@@ -240,7 +240,7 @@ def is_equal(
     dict_b = {"user": "alice", "timestamp": 1700000000, "role": "admin"}
 
     # Compare while ignoring volatile fields:
-    same = xx.data.is_equal(dict_a, dict_b, ignore_paths="timestamp")
+    result = xx.data.is_equal(dict_a, dict_b, ignore_paths="timestamp")
     ```
 
     <!-- DOCS: <AttachedCode> -->
@@ -340,7 +340,7 @@ def get_path_id(
     Generated Path ID:
 
     ```python
-    "1>011"
+    "1011"
     ```
     <!-- DOCS: </AttachedCode> -->"""
 
@@ -530,14 +530,14 @@ def render(
 
     <!-- DOCS: <TerminalOutput>
     <span class="br-black">{</span>
-      <span class="br-black">"</span><span class="br-blue">name</span><span class="br-black">": \
+    <span class="br-black">  "</span><span class="br-blue">name</span><span class="br-black">": \
 "</span><span class="br-blue">xulbux</span><span class="br-black">",</span>
-      <span class="br-black">"</span><span class="br-blue">version</span><span class="br-black">": \
+    <span class="br-black">  "</span><span class="br-blue">version</span><span class="br-black">": \
 </span><span class="br-magenta">2.0</span><span class="br-black">,</span>
-      <span class="br-black">"</span><span class="br-blue">items</span><span class="br-black">": \
+    <span class="br-black">  "</span><span class="br-blue">items</span><span class="br-black">": \
 ["</span><span class="br-blue">ansi</span><span class="br-black">", \
 "</span><span class="br-blue">data</span><span class="br-black">"],</span>
-      <span class="br-black">"</span><span class="br-blue">ok</span><span class="br-black">": \
+    <span class="br-black">  "</span><span class="br-blue">ok</span><span class="br-black">": \
 </span><span class="magenta">True</span>
     <span class="br-black">}</span>
     </TerminalOutput> -->"""
@@ -765,45 +765,44 @@ class _DataGetPathIdHelper:
     def process_dict_key(self, key: str, /) -> int | None:
         """Process a key for dictionary data. Returns the index or `None` if not found."""
 
-        if key.isdigit():
-            if self.ignore_not_found:
-                return None
-            raise TypeError(f"Key '{key}' is invalid for a dict type")
+        dict_keys = list(self.current_data.keys())
 
-        try:
-            idx = list(self.current_data.keys()).index(key)
+        if key in self.current_data:
             self.current_data = self.current_data[key]
-            return idx
+            return dict_keys.index(key)
 
-        except (ValueError, KeyError):
-            if self.ignore_not_found:
-                return None
-            raise KeyError(f"Key '{key}' not found in dict") from None
+        for dict_key in dict_keys:
+            if str(dict_key) == key:
+                self.current_data = self.current_data[dict_key]
+                return dict_keys.index(dict_key)
+
+        if self.ignore_not_found:
+            return None
+        raise KeyError(f"Key '{key}' not found in dict") from None
 
     def process_iterable_key(self, key: str, /) -> int | None:
-        """Process a key for iterable data. Returns the index or `None` if not found."""
+        """Process an index for iterable data. Returns the index or `None` if not found."""
 
-        idx = -1
         try:
-            idx = int(key)
-            self.current_data = list(self.current_data)[idx]
-            return idx
+            index = int(key)
+        except ValueError:
+            if self.ignore_not_found:
+                return None
+            raise TypeError(
+                f"Index '{key}' is invalid for '{type(self.current_data).__name__}', expected an integer"
+            ) from None
+
+        try:
+            items = list(self.current_data)
+            if index < 0:
+                index += len(items)
+            self.current_data = items[index]
+            return index
 
         except IndexError:
             if self.ignore_not_found:
                 return None
-            raise IndexError(f"Index {idx} out of range") from None
-
-        except ValueError:
-            try:
-                idx = list(self.current_data).index(key)
-                self.current_data = list(self.current_data)[idx]
-                return idx
-
-            except ValueError:
-                if self.ignore_not_found:
-                    return None
-                raise ValueError(f"Value '{key}' not found in '{type(self.current_data).__name__}'") from None
+            raise IndexError(f"Index {int(key)} out of range") from None
 
 
 class _DataRenderHelper:

@@ -130,55 +130,51 @@ def update(
     without needing to know the rest of the data.\n
     ----------------------------------------------------------------------------------------------------
     *   `json_file` – The path (relative or absolute) to the JSON file to update.
-    *   `update_values` – A dictionary with the paths to the values to update<br>
-        and the new values to set (see explanation below – section 2).
+    *   `update_values` – A dictionary where keys are the paths to the values to update<br>
+        and values are the new values to set. Dictionaries are addressed by key name,<br>
+        and sequences by integer index. Missing paths will automatically be created.
     *   `comment_start` – The string that indicates the start of a comment.
     *   `comment_end` – The string that indicates the end of a comment.
     *   `path_sep` – The separator used inside the value-paths in `update_values`.\n
     ----------------------------------------------------------------------------------------------------
-    For more detailed information about the comment handling,<br>
-    see the `_data_module.remove_comments()` method documentation.\n
-    ----------------------------------------------------------------------------------------------------
-    The `update_values` is a dictionary, where the keys are the paths<br>
-    to the data to update, and the values are the new values to set.\n
-    For example for this JSON data:
-    ```python
-    {
-        "healthy": {
-            "fruits": ["apples", "bananas", "oranges"],
-            "vegetables": ["carrots", "broccoli", "celery"]
-        }
-    }
-    ```
-    … the `update_values` dictionary could look like this:
-    ```python
-    {
-        # Change first list-value under `fruits` to "strawberries":
-        "healthy->fruits->0": "strawberries",
-        # Change value of key `vegetables` to [1, 2, 3]:
-        "healthy->vegetables": [1, 2, 3]
-    }
-    ```
-    In this example, if you want to change the value of `"apples"`,<br>
-    you can use `healthy->fruits->apples` as the value-path.\n
-    If you don't know that the first list item is `"apples"`,<br>
-    you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
-    ⇾ If the given value-path doesn't exist, it will be created.\n
+    For more detailed information about comment handling,<br>
+    see the `data.remove_comments()` method documentation.\n
     ----------------------------------------------------------------------------------------------------
     #### Example Usage
 
     ```python
     import xulbux as xx
 
-    # Update nested values in a JSON file without altering other keys:
+    data = {
+        "healthy": {
+            "fruits": ["apples", "bananas", "oranges"],
+            "vegetables": ["carrots", "broccoli", "celery"],
+        },
+    }
+    xx.json.create("diet.json", data, force=True)
+
+    # Update nested list values by index and dict values by key name:
     xx.json.update(
-        "config.json",
+        "diet.json",
         {
-            "server->port": 8080,
-            "server->ssl->enabled": True,
+            "healthy->fruits->0": "strawberries",
+            "healthy->vegetables": ["spinach", "kale"],
         },
     )
-    ```"""
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Updated JSON Data:
+
+    ```python
+    {
+        "healthy": {
+            "fruits": ["strawberries", "bananas", "oranges"],
+            "vegetables": ["spinach", "kale"],
+        }
+    }
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
     processed_data, data = read(json_file, comment_start=comment_start, comment_end=comment_end, return_original=True)
 
