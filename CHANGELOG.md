@@ -96,6 +96,7 @@
     -   Removed `reset_ansi` parameter almost everywhere (append `S.RESET` directly if needed).
     -   Removed `format_linebreaks` parameter from `console.log()`.
     -   Removed `AnyRgba`, `AnyHsla`, and `AnyHexa` type aliases.
+    -   Removed `COLOR` class presets from `xulbux.base.consts`.
 
 
 <span id="v1-9-7" />

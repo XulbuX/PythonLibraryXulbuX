@@ -76,7 +76,7 @@ Certain things aren't exposed under the `xulbux` package directly.<br>
 They can be imported from their respective submodules, for example:
 
 ```python
-from xulbux.base.consts import COLOR
+from xulbux.base.consts import CHARS
 from xulbux.base.types import PathsList
 ```
 

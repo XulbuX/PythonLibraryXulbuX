@@ -1,12 +1,4 @@
-from xulbux.base.consts import ANSI, CHARS, COLOR
-
-
-def test_color_presets_are_valid_hex() -> None:
-    assert COLOR.WHITE == "#F1F2FF"
-    assert COLOR.BLACK == "#202125"
-    assert COLOR.RED == "#FF606A"
-    assert COLOR.GREEN == "#7EE787"
-    assert COLOR.BLUE == "#8085FF"
+from xulbux.base.consts import ANSI, CHARS
 
 
 def test_chars_constants() -> None:

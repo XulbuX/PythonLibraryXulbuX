@@ -22,7 +22,9 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
 
 ### Formatting & Line Wraps
 
-1.  **Spacing After Docstring:** There must ALWAYS be exactly **ONE empty line** between a docstring and the following code/content of a function, method, or class. (The only exception is inline variable/attribute documentation, such as variable definitions inside `__init__` methods, where no empty line is placed between adjacent variable definitions).
+1.  **Spacing After Docstring:** There must ALWAYS be exactly **ONE empty line** between a docstring and the following code/content of a function, method, or class.
+    *   **Exception (Adjacent Variable & Attribute Definitions):** When documenting a sequence of variables, constants, or class attributes (e.g., class attributes in classes, `NamedTuple`s, `dataclass`es, `TypedDict`s, `__init__` attributes, or grouped type aliases/constants), do **NOT** place an empty line between an attribute's docstring and the next adjacent attribute definition. Each attribute and its docstring must form a tight, contiguous block on adjacent lines.
+    *   **Visual Grouping via Section Separators:** To organize and visually separate distinct logical categories or clusters of constants/attributes (e.g., standard colors vs. namespaces, or character sets by type), use **internal section separators** (65 characters wide) rather than bare empty lines. The section separator naturally has an empty line before and after it, providing clean, labeled visual separation while keeping all attributes within each section contiguous.
 2.  **Text Width:** The content of a docstring MUST be wrapped to a maximum width of **99 characters**.
 3.  **Line Breaks:** Use `<br>` for line wraps within a paragraph, not `\n`. Only use `\n` if there should be a larger space (like a paragraph break) after the wrap.
 4.  **Horizontal Rules (HRs):** HRs (`----------------------------------------------------------------------------------------------------`) must ALWAYS be exactly **100 characters** long, regardless of how wide the text content is.

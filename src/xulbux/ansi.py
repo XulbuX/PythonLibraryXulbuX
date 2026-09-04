@@ -1407,8 +1407,7 @@ class _BgBrNS:
 class _BgNS:
     """Namespace for background styles and colors, reachable as `S.BG.*`."""
 
-    BR: ClassVar[type[_BgBrNS]] = _BgBrNS
-    """Access bright background colors (e.g., `S.BG.BR.RED`)."""
+    # ********************* STANDARD BG COLORS **********************
 
     BLACK: ClassVar[_BgStyle] = _BgStyle(40)
     """Black background."""
@@ -1426,6 +1425,11 @@ class _BgNS:
     """Cyan background."""
     WHITE: ClassVar[_BgStyle] = _BgStyle(47)
     """White background."""
+
+    # ***************** BRIGHT BG COLORS NAMESPACE ******************
+
+    BR: ClassVar[type[_BgBrNS]] = _BgBrNS
+    """Access bright background colors (e.g., `S.BG.BR.RED`)."""
 
     # ********************** CUSTOM BG COLORS ***********************
 
