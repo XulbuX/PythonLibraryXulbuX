@@ -88,6 +88,8 @@
         -   `data.is_equal()`: parameters `data1, data2` → `data_a, data_b`.
         -   `console.log_box_bordered()`: parameter `border_chars` now takes a string of 11 characters instead of a tuple of 11 characters.
         -   `console.box()`: parameter `w_full` → `width: int | Literal["full"] | None = None`.
+        -   `console.pause_exit()` and log presets (`debug()`, `info()`, `done()`, `warn()`, `fail()`): Replaced `exit: bool` and `exit_code: int` with `exit_code: int | None = None` (`None` to not exit, or an integer exit code).
+        -   `console.exit()`: Removed redundant `exit` boolean toggle parameter in favor of always exiting with `exit_code: int`, typed as `NoReturn`.
 *   **Removals:**
     -   Removed `w_padding` parameter from `console.box()` in favor of automatic contextual padding.
     -   Removed `data.print()` (use `data.render(…).print()`).

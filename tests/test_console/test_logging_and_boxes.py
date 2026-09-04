@@ -29,11 +29,13 @@ def test_log_functions_presets() -> None:
         log("TITLE", "Hello Log", title_bg_color=S.BG.RED, default_color=S.GREEN)
 
         # Presets:
-        debug("Debug message", active=True, pause=False, exit=False)
-        debug("Inactive debug", active=False)
-        info("Info message", pause=False, exit=False)
-        done("Done message", pause=False, exit=False)
-        warn("Warn message", pause=False, exit=False)
+        debug("Debug message", active=True, pause=False, exit_code=None)
+        debug("Inactive debug", active=False, exit_code=10)
+        info("Info message", pause=False, exit_code=None)
+        done("Done message", pause=False, exit_code=None)
+        warn("Warn message", pause=False, exit_code=None)
+        fail("Fail message", pause=False)
+        fail("Fail message none", pause=False, exit_code=None)
 
     output = stream.getvalue()
     assert "TITLE" in output
@@ -41,19 +43,46 @@ def test_log_functions_presets() -> None:
     assert "INFO" in output
     assert "DONE" in output
     assert "WARN" in output
+    assert "FAIL" in output
     assert "Inactive debug" not in output
 
 
 def test_log_error_presets_fail_and_exit() -> None:
-    # Fail with system exit:
+    # Fail with system exit (explicit code):
     with pytest.raises(SystemExit) as exc_info:
-        fail("Fatal failure", pause=False, exit=True, exit_code=3)
+        fail("Fatal failure", pause=False, exit_code=3)
     assert exc_info.value.code == 3
 
-    # Exit preset with system exit:
-    with pytest.raises(SystemExit) as exc_info_exit:
-        exit("Exiting program", pause=False, exit=True, exit_code=0)
-    assert exc_info_exit.value.code == 0
+    with pytest.raises(SystemExit) as exc_info_one:
+        fail("Fatal failure code 1", pause=False, exit_code=1)
+    assert exc_info_one.value.code == 1
+
+    # Exit preset with system exit (defaulting code):
+    with pytest.raises(SystemExit) as exc_info_default:
+        exit("Exiting program", pause=False)
+    assert exc_info_default.value.code == 0
+
+    # Exit preset with system exit (explicit code):
+    with pytest.raises(SystemExit) as exc_info:
+        exit("Exiting program", pause=False, exit_code=5)
+    assert exc_info.value.code == 5
+
+    # Presets with system exit:
+    with pytest.raises(SystemExit) as exc_info:
+        debug("Debug exit", active=True, pause=False, exit_code=10)
+    assert exc_info.value.code == 10
+
+    with pytest.raises(SystemExit) as exc_info:
+        info("Info exit", pause=False, exit_code=11)
+    assert exc_info.value.code == 11
+
+    with pytest.raises(SystemExit) as exc_info:
+        done("Done exit", pause=False, exit_code=12)
+    assert exc_info.value.code == 12
+
+    with pytest.raises(SystemExit) as exc_info:
+        warn("Warn exit", pause=False, exit_code=13)
+    assert exc_info.value.code == 13
 
 
 def test_log_empty_title_and_colors() -> None:

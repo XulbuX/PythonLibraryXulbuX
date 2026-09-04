@@ -127,15 +127,25 @@ def test_clear_terminal() -> None:
 
 
 def test_pause_and_pause_exit() -> None:
-    # `pause_exit` without exiting:
+    # `pause_exit` without exiting (default):
     with patch("xulbux.console._read_single_key") as mock_read:
-        pause_exit("Done", pause=True, exit=False)
+        pause_exit("Done", pause=True)
+        mock_read.assert_called_once()
+
+    # `pause_exit` without exiting (explicit None):
+    with patch("xulbux.console._read_single_key") as mock_read:
+        pause_exit("Done", pause=True, exit_code=None)
         mock_read.assert_called_once()
 
     # `pause_exit` with exiting:
     with patch("xulbux.console._read_single_key"), pytest.raises(SystemExit) as exc_info:
-        pause_exit("Exiting", pause=False, exit=True, exit_code=42)
+        pause_exit("Exiting", pause=False, exit_code=42)
     assert exc_info.value.code == 42
+
+    # `pause_exit` with exit_code=0:
+    with patch("xulbux.console._read_single_key"), pytest.raises(SystemExit) as exc_info_zero:
+        pause_exit("Exiting", pause=False, exit_code=0)
+    assert exc_info_zero.value.code == 0
 
 
 def test_read_single_key_non_tty() -> None:

@@ -71,7 +71,7 @@ def main() -> None:
 
     except ValueError:
         # Announce the invalid input color and exit the program:
-        xx.console.fail("The input HEXA color is invalid.", end="\n\n", exit=True)
+        xx.console.fail("The input HEXA color is invalid.", end="\n\n", exit_code=1)
 
     # Announce starting the conversion:
     xx.console.log("CONVERT", "Converting the HEXA color into different types...", title_bg_color=S.BG.BR.MAGENTA)

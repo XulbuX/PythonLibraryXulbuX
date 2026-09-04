@@ -1259,17 +1259,7 @@ def pause_exit(
     /,
     *,
     pause: bool = ...,
-    exit: Literal[True],
-    exit_code: int = ...,
-) -> NoReturn: ...
-@overload
-def pause_exit(
-    prompt: TextRenderable | object = ...,
-    /,
-    *,
-    pause: bool = ...,
-    exit: Literal[False] = ...,
-    exit_code: int = ...,
+    exit_code: None = ...,
 ) -> None: ...
 @overload
 def pause_exit(
@@ -1277,8 +1267,15 @@ def pause_exit(
     /,
     *,
     pause: bool = ...,
-    exit: bool,
-    exit_code: int = ...,
+    exit_code: int,
+) -> NoReturn: ...
+@overload
+def pause_exit(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    pause: bool = ...,
+    exit_code: int | None = ...,
 ) -> None: ...
 
 
@@ -1287,22 +1284,19 @@ def pause_exit(
     /,
     *,
     pause: bool = True,
-    exit: bool = False,
-    exit_code: int = 0,
+    exit_code: int | None = None,
 ) -> None:
     """Will print the `prompt` and then pause and/or exit the program based on the given options.\n
     ----------------------------------------------------------------------------------------------------
     *   `prompt` – The message to print before pausing/exiting (any object, or a `S` object).
     *   `pause` – Whether to pause and wait for a key press after printing the prompt.
-    *   `exit` – Whether to exit the program after printing
-        the prompt (and pausing if `pause` is true).
-    *   `exit_code` – The exit code to use when exiting the program."""
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
     _to_styled_text(prompt).print(end="", flush=True)
 
     if pause:
         _read_single_key()
-    if exit:
+    if exit_code is not None:
         raise SystemExit(exit_code)
 
 
@@ -1385,6 +1379,7 @@ def log(
         S(f"{start}{mx}", title_ansi, f"{mx}{tab}", joined_prompt).print(end=end)
 
 
+@overload
 def _log_preset(
     title: str,
     prompt: TextRenderable | object,
@@ -1393,12 +1388,98 @@ def _log_preset(
     end: str,
     default_color: FgColorStyle | None,
     pause: bool,
-    do_exit: bool,
+    exit_code: None = ...,
+    /,
+) -> None: ...
+@overload
+def _log_preset(
+    title: str,
+    prompt: TextRenderable | object,
+    title_bg_color: BgColorStyle | None,
+    start: str,
+    end: str,
+    default_color: FgColorStyle | None,
+    pause: bool,
     exit_code: int,
+    /,
+) -> NoReturn: ...
+@overload
+def _log_preset(
+    title: str,
+    prompt: TextRenderable | object,
+    title_bg_color: BgColorStyle | None,
+    start: str,
+    end: str,
+    default_color: FgColorStyle | None,
+    pause: bool,
+    exit_code: int | None = ...,
+    /,
+) -> None: ...
+
+
+def _log_preset(
+    title: str,
+    prompt: TextRenderable | object,
+    title_bg_color: BgColorStyle | None,
+    start: str,
+    end: str,
+    default_color: FgColorStyle | None,
+    pause: bool,
+    exit_code: int | None = None,
     /,
 ) -> None:
     log(title, prompt, start=start, end=end, title_bg_color=title_bg_color, default_color=default_color)
-    pause_exit("", pause=pause, exit=do_exit, exit_code=exit_code)
+    pause_exit("", pause=pause, exit_code=exit_code)
+
+
+@overload
+def debug(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    active: Literal[False],
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: int | None = ...,
+) -> None: ...
+@overload
+def debug(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    active: Literal[True] = ...,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: int,
+) -> NoReturn: ...
+@overload
+def debug(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    active: bool = ...,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: None = ...,
+) -> None: ...
+@overload
+def debug(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    active: bool = ...,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: int | None = ...,
+) -> None: ...
 
 
 def debug(
@@ -1410,14 +1491,55 @@ def debug(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = False,
-    exit_code: int = 0,
+    exit_code: int | None = None,
 ) -> None:
-    """A preset for `log()`: `DEBUG` log message with the option<br>
-    to deactivate it with the parameter `active` (e.g., set `active=self.debug`)."""
+    """A preset for `log()`: `DEBUG` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `active` – Whether to execute the debug log, pause, and exit or not.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
     if active:
-        _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
+        _log_preset("DEBUG", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit_code)
+
+
+@overload
+def info(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: None = ...,
+) -> None: ...
+@overload
+def info(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: int,
+) -> NoReturn: ...
+@overload
+def info(
+    prompt: TextRenderable | object = ...,
+    /,
+    *,
+    start: str = ...,
+    end: str = ...,
+    default_color: FgColorStyle | None = ...,
+    pause: bool = ...,
+    exit_code: int | None = ...,
+) -> None: ...
 
 
 def info(
@@ -1428,12 +1550,18 @@ def info(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = False,
-    exit_code: int = 0,
+    exit_code: int | None = None,
 ) -> None:
-    """A preset for `log()`: `INFO` log message."""
+    """A preset for `log()`: `INFO` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
-    _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit, exit_code)
+    _log_preset("INFO", prompt, S.BG.BR.BLUE, start, end, default_color, pause, exit_code)
 
 
 @overload
@@ -1445,8 +1573,7 @@ def done(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False] = ...,
-    exit_code: int = ...,
+    exit_code: None = ...,
 ) -> None: ...
 @overload
 def done(
@@ -1457,8 +1584,7 @@ def done(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True],
-    exit_code: int = ...,
+    exit_code: int,
 ) -> NoReturn: ...
 @overload
 def done(
@@ -1469,8 +1595,7 @@ def done(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: bool,
-    exit_code: int = ...,
+    exit_code: int | None = ...,
 ) -> None: ...
 
 
@@ -1482,12 +1607,18 @@ def done(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = False,
-    exit_code: int = 0,
+    exit_code: int | None = None,
 ) -> None:
-    """A preset for `log()`: `DONE` log message."""
+    """A preset for `log()`: `DONE` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
-    _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit, exit_code)
+    _log_preset("DONE", prompt, S.BG.BR.GREEN, start, end, default_color, pause, exit_code)
 
 
 @overload
@@ -1499,8 +1630,7 @@ def warn(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False] = ...,
-    exit_code: int = ...,
+    exit_code: None = ...,
 ) -> None: ...
 @overload
 def warn(
@@ -1511,8 +1641,7 @@ def warn(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True],
-    exit_code: int = ...,
+    exit_code: int,
 ) -> NoReturn: ...
 @overload
 def warn(
@@ -1523,8 +1652,7 @@ def warn(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: bool,
-    exit_code: int = ...,
+    exit_code: int | None = ...,
 ) -> None: ...
 
 
@@ -1536,12 +1664,18 @@ def warn(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = False,
-    exit_code: int = 0,
+    exit_code: int | None = None,
 ) -> None:
-    """A preset for `log()`: `WARN` log message."""
+    """A preset for `log()`: `WARN` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
-    _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit, exit_code)
+    _log_preset("WARN", prompt, S.BG.BR.YELLOW, start, end, default_color, pause, exit_code)
 
 
 @overload
@@ -1553,8 +1687,7 @@ def fail(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[False] = ...,
-    exit_code: int = ...,
+    exit_code: None = ...,
 ) -> None: ...
 @overload
 def fail(
@@ -1565,8 +1698,7 @@ def fail(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: Literal[True],
-    exit_code: int = ...,
+    exit_code: int,
 ) -> NoReturn: ...
 @overload
 def fail(
@@ -1577,8 +1709,7 @@ def fail(
     end: str = ...,
     default_color: FgColorStyle | None = ...,
     pause: bool = ...,
-    exit: bool,
-    exit_code: int = ...,
+    exit_code: int | None = ...,
 ) -> None: ...
 
 
@@ -1590,50 +1721,18 @@ def fail(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = False,
-    exit_code: int = 1,
+    exit_code: int | None = None,
 ) -> None:
-    """A preset for `log()`: `FAIL` log message."""
+    """A preset for `log()`: `FAIL` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program, or `None` to not exit."""
 
-    _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit, exit_code)
-
-
-@overload
-def exit(
-    prompt: TextRenderable | object = ...,
-    /,
-    *,
-    start: str = ...,
-    end: str = ...,
-    default_color: FgColorStyle | None = ...,
-    pause: bool = ...,
-    exit: Literal[False] = ...,
-    exit_code: int = ...,
-) -> None: ...
-@overload
-def exit(
-    prompt: TextRenderable | object = ...,
-    /,
-    *,
-    start: str = ...,
-    end: str = ...,
-    default_color: FgColorStyle | None = ...,
-    pause: bool = ...,
-    exit: Literal[True],
-    exit_code: int = ...,
-) -> NoReturn: ...
-@overload
-def exit(
-    prompt: TextRenderable | object = ...,
-    /,
-    *,
-    start: str = ...,
-    end: str = ...,
-    default_color: FgColorStyle | None = ...,
-    pause: bool = ...,
-    exit: bool,
-    exit_code: int = ...,
-) -> None: ...
+    _log_preset("FAIL", prompt, S.BG.BR.RED, start, end, default_color, pause, exit_code)
 
 
 def exit(
@@ -1644,13 +1743,18 @@ def exit(
     end: str = "\n",
     default_color: FgColorStyle | None = None,
     pause: bool = False,
-    exit: bool = True,
     exit_code: int = 0,
-) -> None:
-    """A preset for `log()`: `EXIT` log message with the options to pause<br>
-    at the message and exit the program after the message was printed."""
+) -> NoReturn:
+    """A preset for `log()`: `EXIT` log message.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `prompt` – The log message.
+    *   `start` – Something to print before the log is printed.
+    *   `end` – Something to print after the log is printed (e.g., `\\n`).
+    *   `default_color` – The default text color of the `prompt` (an `S` foreground style).
+    *   `pause` – Whether to pause and wait for a key press after printing the log.
+    *   `exit_code` – The exit code to use when exiting the program."""
 
-    _log_preset("EXIT", prompt, S.BG.BR.MAGENTA, start, end, default_color, pause, exit, exit_code)
+    _log_preset("EXIT", prompt, S.BG.BR.MAGENTA, start, end, default_color, pause, exit_code)
 
 
 def _resolve_box_border(
