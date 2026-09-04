@@ -9,7 +9,7 @@ This entire library (including all Python files across all subdirectories of `sr
 
 ## 2. Validation & Testing
 
-After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved. Test coverage must always remain at exactly 100%. Use the `test` skill for testing guidelines and commands, and the `build` skill for compilation and stub generation.
+After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved (zero errors, zero warnings, and zero lint issues). Test coverage must always remain at exactly 100% across all platforms (Windows and Unix). Use the `test` skill for testing guidelines and commands, and the `build` skill for compilation and stub generation.
 
 ## 3. Ask, Don't Assume
 
@@ -51,8 +51,9 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 ## 6. Documentation & Markdown Formatting
 
-*   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
+*   **Mandatory Documentation:** Everything in the library's source code (including private variables, constants, functions, classes, and helper constructs) requires at least a one-line docstring quickly describing what it does or what it is for. The only exceptions are internal dunderscore methods where a docstring is truly redundant.
 *   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment/separator conventions.
+*   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
 *   **Changelog Maintenance:** When modifying or removing public APIs, behaviors, parameters, or constants that existed in the previous release, briefly document the change under the current release section in `CHANGELOG.md`. Newly introduced modules or features should only be noted in their final released state as additions — never log internal development iterations, intermediary adjustments, or WIP refactors (the changelog is a release summary, not a dev log).
 
 ## 7. Dependency Management
@@ -69,7 +70,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 To keep agent guidelines clean, maintainable, and free of contradictions, adhere strictly to the Single Source of Truth (SSOT) principle:
 *   **Define Once:** Every rule, standard, or guideline must be defined in exactly ONE canonical location:
-    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, performance and MyPyC idioms, code structure, naming conventions, dependency management, exports).
+    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, mandatory documentation, performance and MyPyC idioms, code structure, naming conventions, dependency management, exports).
     *   **Skills (`.agents/skills/<skill>/SKILL.md`):** Specialized domain-specific workflows and detailed formatting specifications (`docs` for docstrings, comments, and section separators; `test` for test suite layout, mocks, and test execution; `build` for compilation and stub generation).
 *   **Reference, Never Duplicate:** When a rule defined in one location also applies in another, do NOT duplicate or re-explain the rule. Instead, reference and point directly to its canonical definition in the respective skill or `AGENTS.md`.
 *   **Synchronize References:** If a canonical rule is updated or moved, verify that all external references pointing to it are kept accurate.

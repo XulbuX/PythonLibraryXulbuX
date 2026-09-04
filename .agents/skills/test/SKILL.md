@@ -5,7 +5,7 @@ description: Strict guidelines and commands for running tests and maintaining 10
 
 # test
 
-Use this skill to create, organize, run, and maintain tests in the `xulbux` library. Test coverage must always be exactly **100%** on both Windows and Unix (Linux / macOS), and all tests must be clean, logically organized, and maintainable.
+In accordance with the 100% test coverage policy in `AGENTS.md` Section 2, use this skill to create, organize, run, and maintain tests in the `xulbux` library. All tests must be clean, logically organized, and maintainable.
 
 ---
 

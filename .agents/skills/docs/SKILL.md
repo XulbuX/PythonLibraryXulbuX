@@ -11,8 +11,8 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
 
 ### General Rules
 
-1.  **Mandatory Documentation:** Everything in the library's source code (including private variables, functions, classes, and helper constructs) requires at least a one-line docstring quickly describing what it does or what it is for. The only exceptions are internal dunderscore methods where a docstring is truly redundant.
-2.  **Private Constants & Caches:** Private constants and module-level variables (e.g., regex patterns, lookup dictionaries, internal caches) should always be placed directly below the imports at the very top of the file and include a concise docstring.
+1.  **Mandatory Policy:** Follow `AGENTS.md` Section 6 for library-wide mandatory documentation requirements.
+2.  **Private Constants & Caches:** Document private constants and module-level variables (placed directly below imports per `AGENTS.md` Section 5) with a concise docstring.
 3.  **Parameters (`__init__` vs Classes):** For classes that take parameters, document the parameters in the **class's docstring**. Do NOT add a docstring to the `__init__` method itself. (This ensures params are displayed in the signature of the class in the docs).
 4.  **Parameters List:** Docstrings for signatures that have params MUST list those params in the exact same order as the signature, **without type-hints**, and quickly describe what each param is for.
 5.  **Returns & Yields:** Do **NOT** describe the return/yield value unless it is special, complex, or cannot be inferred from the type hinting.
