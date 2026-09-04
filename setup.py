@@ -31,6 +31,7 @@ def clean_project_files(patterns: set[str], message: str) -> None:
     Prints a formatted success message if any files were deleted."""
 
     deleted_count = 0
+
     for pattern in patterns:
         for file in (PROJECT_ROOT / "src").rglob(pattern):
             with suppress(OSError):
@@ -47,6 +48,8 @@ class StubGen(ast.NodeTransformer):
     def __init__(self, shadowed_names: set[str] | None = None) -> None:
         super().__init__()
         self.shadowed_names: set[str] = shadowed_names or set()
+        self.unwrapped_contextmanager: bool = False
+        self.unwrapped_async_contextmanager: bool = False
 
     @classmethod
     def generate_stubs(cls, py_files: Iterable[Path]) -> None:
@@ -128,7 +131,10 @@ class StubGen(ast.NodeTransformer):
 
     @staticmethod
     def _get_type_checking_shadowed_names(tree: ast.AST) -> set[str]:
+        """Returns a set of names that are shadowed by imports within `if TYPE_CHECKING:` blocks."""
+
         shadowed_names: set[str] = set()
+
         for node in ast.walk(tree):
             if isinstance(node, ast.If) and (
                 (isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING")
@@ -147,8 +153,11 @@ class StubGen(ast.NodeTransformer):
         return shadowed_names
 
     def _is_overload_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@overload`."""
+
         if isinstance(dec, ast.Name) and dec.id == "overload":
             return True
+
         return bool(
             isinstance(dec, ast.Attribute)
             and isinstance(dec.value, ast.Name)
@@ -156,8 +165,58 @@ class StubGen(ast.NodeTransformer):
             and dec.attr == "overload"
         )
 
+    def _is_contextmanager_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@contextmanager`."""
+
+        if isinstance(dec, ast.Name) and dec.id == "contextmanager":
+            return True
+
+        return bool(
+            isinstance(dec, ast.Attribute)
+            and isinstance(dec.value, ast.Name)
+            and dec.value.id == "contextlib"
+            and dec.attr == "contextmanager"
+        )
+
+    def _is_async_contextmanager_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@asynccontextmanager`."""
+
+        if isinstance(dec, ast.Name) and dec.id == "asynccontextmanager":
+            return True
+
+        return bool(
+            isinstance(dec, ast.Attribute)
+            and isinstance(dec.value, ast.Name)
+            and dec.value.id == "contextlib"
+            and dec.attr == "asynccontextmanager"
+        )
+
+    def _unwrap_cm_returns(self, node: ast.FunctionDef | ast.AsyncFunctionDef, wrapper_class: str) -> None:
+        """Unwraps a generator return type to a direct context manager return type for stubs."""
+
+        if node.returns is None:
+            node.returns = ast.Name(id=wrapper_class, ctx=ast.Load())
+            return
+
+        yield_type: ast.expr = node.returns
+
+        if isinstance(node.returns, ast.Subscript):
+            if isinstance(node.returns.slice, ast.Tuple) and node.returns.slice.elts:
+                yield_type = node.returns.slice.elts[0]
+            else:
+                yield_type = node.returns.slice
+
+        node.returns = ast.Subscript(
+            value=ast.Name(id=wrapper_class, ctx=ast.Load()),
+            slice=yield_type,
+            ctx=ast.Load(),
+        )
+
     def _strip_unnecessary_impls(self, body: list[ast.stmt]) -> list[ast.stmt]:
+        """Strips unnecessary implementation details from the AST body for stub generation."""
+
         overloaded_names: set[str] = set()
+
         for stmt in body:
             if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)) and any(
                 self._is_overload_dec(dec) for dec in stmt.decorator_list
@@ -165,6 +224,7 @@ class StubGen(ast.NodeTransformer):
                 overloaded_names.add(stmt.name)
 
         new_body: list[ast.stmt] = []
+
         for stmt in body:
             if (
                 isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -192,24 +252,33 @@ class StubGen(ast.NodeTransformer):
         return new_body
 
     def _is_simple_constant(self, node: ast.expr) -> bool:
+        """Returns True if the node is a simple constant (int, float, complex, str, bool, None)."""
+
         if isinstance(node, ast.Constant):
             return True
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub) and isinstance(node.operand, ast.Constant):
             return isinstance(node.operand.value, (int, float, complex))
+
         return False
 
     def _strip_complex_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        """Replaces complex default values in function arguments with `...` for stub generation."""
+
         for i, default in enumerate(node.args.defaults):
             if not self._is_simple_constant(default):
                 node.args.defaults[i] = ast.Constant(value=Ellipsis)
+
         for i, kw_default in enumerate(node.args.kw_defaults):
             if kw_default is not None and not self._is_simple_constant(kw_default):
                 node.args.kw_defaults[i] = ast.Constant(value=Ellipsis)
 
     def visit_Module(self, node: ast.Module) -> ast.Module:
+        """Visits the module node, strips unnecessary implementations, and organizes imports."""
+
         self.generic_visit(node)
         if ast.get_docstring(node):
             node.body = node.body[1:]
+
         node.body = self._strip_unnecessary_impls(node.body)
 
         # Remove module-level `__getattr__` from stubs to prevent type checker issues:
@@ -219,9 +288,28 @@ class StubGen(ast.NodeTransformer):
             if not (isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)) and stmt.name == "__getattr__")
         ]
 
-        # Bring all import statements to the top:
+        if self.unwrapped_contextmanager:
+            node.body.append(
+                ast.ImportFrom(
+                    module="contextlib",
+                    names=[ast.alias(name="AbstractContextManager", asname="AbstractContextManager")],
+                    level=0,
+                )
+            )
+
+        if self.unwrapped_async_contextmanager:
+            node.body.append(
+                ast.ImportFrom(
+                    module="contextlib",
+                    names=[ast.alias(name="AbstractAsyncContextManager", asname="AbstractAsyncContextManager")],
+                    level=0,
+                )
+            )
+
         imports: list[ast.stmt] = []
         others: list[ast.stmt] = []
+
+        # Bring all import statements to the top:
         for stmt in node.body:
             if isinstance(stmt, (ast.Import, ast.ImportFrom)):
                 imports.append(stmt)
@@ -232,7 +320,10 @@ class StubGen(ast.NodeTransformer):
         return node
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # ruff:ignore[complex-structure]
+        """Visits the class node, extracts instance variables from `__init__`, and organizes class body."""
+
         existing_vars: set[str] = set()
+
         for stmt in node.body:
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
                 existing_vars.add(stmt.target.id)
@@ -242,6 +333,7 @@ class StubGen(ast.NodeTransformer):
                         existing_vars.add(target.id)
 
         extracted_vars: list[ast.stmt] = []
+
         for stmt in node.body:
             if isinstance(stmt, ast.FunctionDef) and stmt.name == "__init__":
                 for init_stmt in stmt.body:
@@ -274,9 +366,11 @@ class StubGen(ast.NodeTransformer):
         # Sort `node.body` to put dunder variables at the top:
         for stmt in node.body:
             is_dunder = False
+
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
                 if stmt.target.id.startswith("__") and stmt.target.id.endswith("__"):
                     is_dunder = True
+
             elif isinstance(stmt, ast.Assign):
                 for target in stmt.targets:
                     if isinstance(target, ast.Name) and target.id.startswith("__") and target.id.endswith("__"):
@@ -295,26 +389,49 @@ class StubGen(ast.NodeTransformer):
         return node
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+        """Visits the function node, strips unnecessary implementations, and organizes function body."""
+
+        if any(self._is_contextmanager_dec(dec) for dec in node.decorator_list):
+            node.decorator_list = [dec for dec in node.decorator_list if not self._is_contextmanager_dec(dec)]
+            self._unwrap_cm_returns(node, "AbstractContextManager")
+            self.unwrapped_contextmanager = True
+
         self.generic_visit(node)
         node.body = [ast.parse("...").body[0]]
         self._strip_complex_defaults(node)
+
         return node
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+        """Visits the async function node, strips unnecessary implementations, and organizes function body."""
+
+        if any(self._is_async_contextmanager_dec(dec) for dec in node.decorator_list):
+            node.decorator_list = [dec for dec in node.decorator_list if not self._is_async_contextmanager_dec(dec)]
+            self._unwrap_cm_returns(node, "AbstractAsyncContextManager")
+            self.unwrapped_async_contextmanager = True
+
         self.generic_visit(node)
         node.body = [ast.parse("...").body[0]]
         self._strip_complex_defaults(node)
+
         return node
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AnnAssign | None:
+        """Visits the annotated assignment node and removes its value for stub generation."""
+
         if isinstance(node.target, ast.Name) and node.target.id in self.shadowed_names:
             return None
+
         self.generic_visit(node)
         node.value = None
+
         return node
 
     def visit_If(self, node: ast.If):
+        """Visits the if statement node and removes the body of `if TYPE_CHECKING:` blocks for stub generation."""
+
         self.generic_visit(node)
+
         if (isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING") or (
             isinstance(node.test, ast.Attribute)
             and isinstance(node.test.value, ast.Name)
@@ -322,40 +439,54 @@ class StubGen(ast.NodeTransformer):
             and node.test.attr == "TYPE_CHECKING"
         ):
             return node.body
+
         return node
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
+        """Visits the import-from statement node and removes `TYPE_CHECKING` imports for stub generation."""
+
         self.generic_visit(node)
+
         if node.module in {"typing", "typing_extensions"}:
             node.names = [n for n in node.names if n.name != "TYPE_CHECKING"]
             if not node.names:
                 return None
+
         else:
             for alias in node.names:
                 if alias.asname is None and alias.name != "*":
                     alias.asname = alias.name
+
         return node
 
     def visit_Import(self, node: ast.Import):
+        """Visits the import statement node and ensures all imports have explicit aliases for stub generation."""
+
         self.generic_visit(node)
+
         for alias in node.names:
             if alias.asname is None and alias.name != "*":
                 alias.asname = alias.name
+
         return node
 
     def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
+        """Visits the subscript node and unwraps single-element tuples in subscript slices for stub generation."""
+
         self.generic_visit(node)
+
         # Unwrap single-element tuples in subscript slices (removes trailing commas like in `Final[A,]`):
         if isinstance(node.slice, ast.Tuple) and len(node.slice.elts) == 1:
             node.slice = node.slice.elts[0]
+
         return node
 
 
 def generate_stubs_for_package() -> None:
-    """Generate typing stubs (`.pyi`) for the package."""
+    """Generates typing stubs (`.pyi`) for the entire package."""
+
     try:
         StubGen.generate_stubs(PROJECT_SRC.rglob("*.py"))
-
     except Exception as exc:
         print(f"[WARNING] Could not generate stubs:\n  {'\n  '.join(str(exc).splitlines())}\n", flush=True)
 
