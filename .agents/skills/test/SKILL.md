@@ -1,9 +1,9 @@
 ---
-name: test-xulbux
+name: test
 description: Strict guidelines and commands for running tests and maintaining 100% test coverage in the xulbux library.
 ---
 
-# test-xulbux
+# test
 
 Use this skill to create, organize, run, and maintain tests in the `xulbux` library. Test coverage must always be exactly **100%** on both Windows and Unix (Linux / macOS), and all tests must be clean, logically organized, and maintainable.
 
@@ -38,14 +38,9 @@ Tests are structured cleanly to mirror the `src/xulbux/` layout:
 2.  **Zero Duplication:** Consolidate repetitive assertions into `@pytest.mark.parametrize` tables or clean helper fixtures instead of duplicating test functions.
 3.  **No Agent Monologue or Notes:** Test files must contain only clean, readable code. Never include conversational notes, agent thoughts, or messy comment chatter.
 4.  **Comments & Separators:**
-    *   If section separators are used in test files, format them as 127-character-wide uppercase header bars:
-
-        ```python
-        # ****************************************************** Throbber TESTS *******************************************************
-        ```
-
+    *   If section separators are used in test files, strictly follow the top-level section separator rules defined in the `docs` skill.
     *   Tests should be self-explanatory from their directory, file, and function names. Keep inline comments minimal and focused.
-5.  **Type Ignore Formatting:** When using `# pyright:ignore[…]` or `# type:ignore[…]`, **NEVER** put spaces after commas between rule names (e.g., `# pyright:ignore[attr-defined,reportUnknownMemberType]`).
+5.  **Type Ignore Formatting:** Follow the strict typing and ignore rules in `AGENTS.md` Section 1.
 
 ---
 
@@ -67,9 +62,7 @@ All tests must pass on **both Windows and Unix** without platform-dependent cras
 
 ## 4. Coding Standards & MyPyC Idioms in Tests
 
--   **Strict Typing:** All test functions, fixtures, and helpers must be fully type-hinted (`def test_…() -> None:`).
--   **No Generator Expressions in Iteration Builtins:** Never pass generator expressions to `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`. Use list comprehensions `[…]` or unrolled loops.
--   **Descriptive Variable Names:** No single-letter variable names (except `i`, `j` for loop indices and `n` for counts/math).
+All test files, fixtures, and helpers must strictly adhere to the repository-wide coding standards and MyPyC idioms defined in `AGENTS.md` (Section 1 for strict typing, Section 4 for performance and MyPyC idioms, and Section 5 for naming conventions).
 
 ---
 

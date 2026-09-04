@@ -1,4 +1,6 @@
-"""CLI module for xulbux-lib."""
+"""
+CLI module for xulbux-lib.
+"""
 
 from ._main import main
 

@@ -5,10 +5,11 @@ When working on this repository, any AI agent or automated assistant must adhere
 ## 1. Strict Typing (MyPyC Compatibility)
 
 This entire library (including all Python files across all subdirectories of `src/xulbux/`, such as `base/`, `cli/`, etc.) is compiled to C using **MyPyC**. Therefore, **EVERYTHING** must be meticulously and strictly type-hinted. Do not ever use `Any` unless it is fundamentally impossible to type-hint otherwise. All changes must be fully statically analyzable to compile correctly.
+*   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden across the library. When suppression is fundamentally unavoidable, only specific `# pyright:ignore[…]` comments with explicit rule IDs and no spaces after commas between rule names (e.g., `# pyright:ignore[reportUnknownMemberType,reportAttributeAccessIssue]`) are permitted.
 
 ## 2. Validation & Testing
 
-After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved. Test coverage must always remain at exactly 100%. Use the `test-xulbux` skill for testing guidelines and commands, and the `build-xulbux` skill for compilation and stub generation.
+After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved. Test coverage must always remain at exactly 100%. Use the `test` skill for testing guidelines and commands, and the `build` skill for compilation and stub generation.
 
 ## 3. Ask, Don't Assume
 
@@ -50,7 +51,7 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 ## 6. Documentation & Markdown Formatting
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
-*   **Docstrings & Comments:** Follow the `docs-xulbux` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
+*   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment/separator conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
 *   **Changelog Maintenance:** When modifying or removing public APIs, behaviors, parameters, or constants that existed in the previous release, briefly document the change under the current release section in `CHANGELOG.md`. Newly introduced modules or features should only be noted in their final released state as additions — never log internal development iterations, intermediary adjustments, or WIP refactors (the changelog is a release summary, not a dev log).
 
 ## 7. Dependency Management
@@ -62,3 +63,12 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 *   **Top-level Exports:** Everything (modules and classes) should be exported in the main `src/xulbux/__init__.py` file (and therefore also listed in `__all__` and `_SUBMODULES`).
     *   **Exceptions:** Custom types (type aliases, TypedDicts, etc.) and anything inside the `base` module (like `base.exceptions` or `base.consts`) should **not** be exported to the top-level namespace to keep it clean.
+
+## 9. Rule & Skill Authoring (Single Source of Truth)
+
+To keep agent guidelines clean, maintainable, and free of contradictions, adhere strictly to the Single Source of Truth (SSOT) principle:
+*   **Define Once:** Every rule, standard, or guideline must be defined in exactly ONE canonical location:
+    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, performance and MyPyC idioms, code structure, naming conventions, dependency management, exports).
+    *   **Skills (`.agents/skills/<skill>/SKILL.md`):** Specialized domain-specific workflows and detailed formatting specifications (`docs` for docstrings, comments, and section separators; `test` for test suite layout, mocks, and test execution; `build` for compilation and stub generation).
+*   **Reference, Never Duplicate:** When a rule defined in one location also applies in another, do NOT duplicate or re-explain the rule. Instead, reference and point directly to its canonical definition in the respective skill or `AGENTS.md`.
+*   **Synchronize References:** If a canonical rule is updated or moved, verify that all external references pointing to it are kept accurate.

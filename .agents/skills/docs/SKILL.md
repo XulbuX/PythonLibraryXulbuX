@@ -1,9 +1,9 @@
 ---
-name: docs-xulbux
+name: docs
 description: Strict guidelines for writing documentation, docstrings, special docs components, and comments in the xulbux library.
 ---
 
-# docs-xulbux
+# docs
 
 When working in the `xulbux` repository, any AI agent or automated assistant MUST adhere strictly to the following rules regarding documentation, docstrings, and code comments.
 
@@ -27,7 +27,8 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
 3.  **Line Breaks:** Use `<br>` for line wraps within a paragraph, not `\n`. Only use `\n` if there should be a larger space (like a paragraph break) after the wrap.
 4.  **Horizontal Rules (HRs):** HRs (`----------------------------------------------------------------------------------------------------`) must ALWAYS be exactly **100 characters** long, regardless of how wide the text content is.
 5.  **HR Padding:** If the next line is a HR, the current line must end in `\n` to prevent rendering glitches.
-6.  **Styling & Tags:**
+6.  **Quotes Placement:** For all functions, methods, classes, and attributes, the first line of docstring content MUST start immediately on the same line as the opening `"""` (e.g., `"""A short description…`), never on a new line below it. Similarly, the closing `"""` MUST be placed directly at the end of the last line of content on the same line (e.g., `…end of content."""`), never on its own separate line below it. (See [Module Docstrings](#module-docstrings) below for the only exception).
+7.  **Styling & Tags:**
     *   **Bold:** Use Markdown `**bold text**`.
     *   **Italics:** Do **NOT** use italics (it breaks in some IDEs).
     *   **Inline Code/Expressions:** Use backticks `` ` `` for variables, expression parts, and inline code.
@@ -65,10 +66,21 @@ Raises `SomeError` if some condition is met during execution.\n
 
 ### Module Docstrings
 
-The HR and text width rules above do **NOT** apply to module-level docstrings (the docstrings placed at the very top of a module file):
+The HR, text width, and quote placement rules above do **NOT** apply to module-level docstrings (the docstrings placed at the very top of a module file):
 
+-   **Quotes Placement:** Unlike other docstrings, module docstrings MUST have the starting `"""` on its own line, with the first content line starting on the line below it. The closing `"""` MUST also be placed on its own line directly below the last content line (with no extra blank line before `"""`).
 -   **Text Width:** Content in module docstrings has a maximum width of **127 characters** (matching the repo's max linting line-length).
 -   **Horizontal Rules:** Use standard Markdown `---` (three characters wide) with an empty line before and after them, following standard Markdown linting rules.
+
+**Example Module Docstring:**
+
+```python
+"""
+A concise description of what this module provides.
+
+Additional paragraphs or sections separated by markdown horizontal rules.
+"""
+```
 
 ## 2. Special Docs Components
 
@@ -144,24 +156,38 @@ Used to display the output of a terminal-outputting code example. Note that this
     *   For multi-line comments (max 2 lines), preceding lines can end normally in a period `.`, and only the last line must end with a colon `:`.
 4.  **Inline Comments:** If a comment is written on the same line, behind code, always end it with a period `.`.
 5.  **Numbered Comments:** When writing numbered step comments (e.g., step-by-step logic), ALWAYS format numbers with square brackets like `[1]`, `[2]`, `[3]`, etc. (e.g., `# [1] Parse input:`, `# [2] Validate options:`), NEVER with trailing periods like `1.`, `2.`, etc.
+6.  **Type Ignore Pragmas:** Follow the strict typing and ignore rules in `AGENTS.md` Section 1.
 
 ### Section Separators
 
 Section separators help organize the code and must follow strict width and casing rules.
 
+-   **Goal & Centering:** The primary goal is to always have the text perfectly centered within the `*` characters, with an equal amount of `*` characters on the left and right sides of the text (`# <*s> <TEXT> <*s>`).
 -   **Top-Level Separators:** These must be exactly **127 characters** wide (the max linting line-length).
--   **Internal Separators (Inside definitions):** These must be exactly **65 characters** wide.
--   **Text Formatting:** The text within the separator must be **ALL UPPERCASE**, except for inline-code which should just use normal casing (do not encase it in backticks in the separator).
--   **Padding:** Pad with `*`. If both sides cannot have the exact same number of `*` characters to equal the target width, the left side should have **one less** `*` character than the right side.
+-   **Internal Separators (Inside definitions):** These must be exactly **65 characters** wide (measuring the comment itself from `#`).
+-   **Text Formatting:** The text within the separator must be **ALL UPPERCASE**, except for inline-code which should just use normal casing (do not encase it in backticks in the separator). The text must be padded with a single space on each side before the `*` characters.
+-   **Padding & Parity:** Pad with `*` characters to reach the exact required character width. Because the separator must be of an exact character width, it may happen that the length of the text does not allow for an even number of total `*` characters to divide equally across both sides. In such a case, the left `*`s part must have exactly **ONE `*` less** than the right `*`s side (`len(left) == len(right) - 1`) to reach the required total character count.
 
-**Example (Top-Level - 127 characters wide):**
+**Example (Top-Level - 127 characters wide, odd total `*` padding → left has one less `*`):**
 
 ```python
 # ****************************************************** Throbber TESTS *******************************************************
 ```
 
-**Example (Internal - 65 characters wide):**
+**Example (Top-Level - 127 characters wide, even total `*` padding → equal `*` count on both sides):**
+
+```python
+# ********************************************************* CONSTANTS *********************************************************
+```
+
+**Example (Internal - 65 characters wide, even total `*` padding → equal `*` count on both sides):**
 
 ```python
 # ******************** CUSTOM COLORS & LINKS ********************
+```
+
+**Example (Internal - 65 characters wide, odd total `*` padding → left has one less `*`):**
+
+```python
+# ************************* PROPERTIES **************************
 ```
