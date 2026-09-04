@@ -32,6 +32,7 @@ When working in the `xulbux` repository, any AI agent or automated assistant MUS
     *   **Bold:** Use Markdown `**bold text**`.
     *   **Italics:** Do **NOT** use italics (it breaks in some IDEs).
     *   **Inline Code/Expressions:** Use backticks `` ` `` for variables, expression parts, and inline code.
+    *   **Ellipsis Character:** Always use the single Unicode character `…` instead of three dots `...` in docstrings, comments, and documentation text (follow `AGENTS.md` Section 5 for full ellipsis rules).
     *   **Headers:** Use `#### Some Title` (Markdown H4) only for section headers, and only as the first thing inside a docstring's section.
     *   **HTML:** Do NOT use any HTML tags besides `<br>` and the special docs components defined below.
 

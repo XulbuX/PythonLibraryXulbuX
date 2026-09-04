@@ -47,11 +47,12 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 *   **Single-Use Variables & Inlining:** Avoid assigning values to temporary variables that are only accessed once. Pass expressions directly into the consuming function, return statement, or assertion (e.g., `print(process_whatever(arg))` instead of `result = process_whatever(arg); print(result)`).
     *   **Exceptions:** Assigning a single-use variable is acceptable and encouraged when inlining would cause an expression to become overly convoluted, hurt readability, or force an otherwise clean call across four or more lines (e.g., complex ternaries like in `color.rgba.invert`), or when caching a costly property or calculation outside a loop to avoid redundant re-evaluations during iteration.
 *   **Organization:** When introducing large data structures (like hardcoded iterables or dictionaries), keep them strictly organized and structured. Default to sorting elements alphabetically unless a specific logical order is required.
+*   **Ellipsis Usage (`…` vs `...`):** Always use the single Unicode ellipsis character `…` instead of three consecutive dots `...` in all documentation, docstrings, comments, and string truncations (even in console/terminal output). The ONLY exceptions are active processing-indicating prints in the console (e.g., `Loading...`, `Connecting...`), which must use three ASCII dots `...`, and native Python syntax ellipsis in code (`...`).
 
 ## 6. Documentation & Markdown Formatting
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
-*   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment/separator conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
+*   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, custom docs components, and comment/separator conventions.
 *   **Changelog Maintenance:** When modifying or removing public APIs, behaviors, parameters, or constants that existed in the previous release, briefly document the change under the current release section in `CHANGELOG.md`. Newly introduced modules or features should only be noted in their final released state as additions — never log internal development iterations, intermediary adjustments, or WIP refactors (the changelog is a release summary, not a dev log).
 
 ## 7. Dependency Management
