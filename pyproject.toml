@@ -1,155 +1,160 @@
 [build-system]
-requires = [
-  "setuptools>=80.0.0",
-  "wheel>=0.45.0",
-  "mypy>=1.19.0",
-  "mypy-extensions>=1.1.0",
-  # TYPES FOR MyPy
-  "types-regex",
-  "prompt_toolkit>=3.0.41",
-]
 build-backend = "setuptools.build_meta"
+requires = [
+  "mypy-extensions>=1.1.0",
+  "mypy>=1.19.0",
+  "prompt_toolkit>=3.0.41",
+  "ruff>=0.15.0",
+  "setuptools>=80.0.0",
+  "types-regex",
+  "types-setuptools",
+  "wheel>=0.45.0",
+]
 
 [project]
 name = "xulbux"
-version = "1.9.7"
+version = "2.0.0"
 description = "A Python library to simplify common programming tasks."
 readme = "README.md"
-authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
-maintainers = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
+authors = [{ name = "XulbuX", email = "hi@xul.is" }]
+maintainers = [{ name = "XulbuX", email = "hi@xul.is" }]
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.10.0"
-dependencies = ["prompt_toolkit>=3.0.41", "regex>=2023.10.3"]
+requires-python = ">=3.12.0"
+dependencies = [
+  "prompt_toolkit>=3.0.41",
+  "regex>=2023.10.3",
+  "typing-extensions>=4.10.0; python_version < '3.13'",
+]
 optional-dependencies = { dev = [
-  "flake8-pyproject>=1.2.3",
-  "flake8>=6.1.0",
-  "pyright>=1.1.408",
-  "pytest>=7.4.2",
-  "toml>=0.10.2",
+  "mutmut>=3.7",
+  "pyright>=1.1.411",
+  "pytest>=9.0",
+  "pytest-cov>=7.0",
+  "ruff>=0.16",
 ] }
 classifiers = [
   "Development Status :: 5 - Production/Stable",
-  "Programming Language :: Python :: 3.14",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.10",
-  "Operating System :: OS Independent",
   "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = [
-  "args",
-  "arguments",
-  "attributes",
-  "classes",
-  "client",
-  "cmd",
-  "code",
-  "codes",
   "color",
-  "commands",
   "console",
-  "constants",
-  "consts",
-  "conversion",
-  "convert",
-  "data",
-  "debug",
-  "easier",
-  "env",
-  "environment",
-  "error",
-  "file",
-  "format",
+  "data-structures",
+  "file-system",
   "formatting",
-  "functions",
-  "helper",
-  "hex",
-  "hexa",
-  "hsl",
-  "hsla",
-  "info",
-  "input",
-  "json",
-  "library",
-  "log",
-  "logging",
-  "methods",
-  "nice",
-  "operations",
-  "path",
-  "presets",
-  "pretty",
-  "printing",
-  "properties",
-  "python",
-  "re",
-  "regex",
-  "rgb",
-  "rgba",
-  "string",
-  "structures",
-  "system",
-  "tools",
-  "types",
+  "string-manipulation",
+  "styling",
   "utility",
-  "warn",
-  "warning",
-  "xulbux",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/xulbux/python-lib-xulbux"
-"Documentation" = "https://github.com/xulbux/python-lib-xulbux/wiki"
-"Source Code" = "https://github.com/xulbux/python-lib-xulbux/tree/main/src"
-"Changelog" = "https://github.com/xulbux/python-lib-xulbux/blob/main/CHANGELOG.md"
 "Bug Reports" = "https://github.com/xulbux/python-lib-xulbux/issues"
-"Stats" = "https://clickpy.clickhouse.com/dashboard/xulbux"
+"Changelog" = "https://github.com/xulbux/python-lib-xulbux/blob/main/CHANGELOG.md"
+"Documentation" = "https://xulbux.github.io/python-lib-xulbux/docs"
+"Homepage" = "https://xulbux.github.io/python-lib-xulbux"
 "License" = "https://github.com/xulbux/python-lib-xulbux/blob/main/LICENSE"
+"Source Code" = "https://github.com/xulbux/python-lib-xulbux/tree/main/src"
+"Stats" = "https://clickpy.clickhouse.com/dashboard/xulbux"
 
 [project.scripts]
 xulbux-lib = "xulbux.cli:main"
 
-[tool.flake8]
-max-complexity = 12
-max-line-length = 127
-select = ["E", "F", "W", "C90"]
-extend-ignore = ["E124", "E203", "E266", "E502", "W503"]
-per-file-ignores = ["__init__.py:F403,F405", "types.py:E302,E305"]
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+  "@overload",
+  "#\\s+coverage:ignore\\[.*\\]", # coverage:ignore[reason]
+  "def __repr__",
+  "if __name__ == .__main__.:",
+  "if self.debug:",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/xulbux"]
+
+[tool.mutmut]
+pytest_add_cli_args = [
+  "-o",
+  "addopts=",
+  "-x",
+  "-q",
+  "--no-cov",
+  "--disable-warnings",
+  "-W",
+  "ignore",
+  "--tb=no",
+  "--no-header",
+  "--no-summary",
+]
+source_paths = ["src/xulbux/"]
+
+[tool.mypy]
+exclude_gitignore = true
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportDeprecated = "warning"
+reportPrivateUsage = "none"
+include = ["src"]
+exclude = [".venv", "build", "mutants"]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q --cov=xulbux --cov-report=term-missing"
+minversion = "7.0"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+preview = true
+line-length = 127
+target-version = "py312"
+extend-exclude = ["*.md", "mutants"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = [
+  "B",   # flake8-bugbear (finds likely bugs & design problems)
+  "C4",  # flake8-comprehensions (helps write better comprehensions)
+  "C90", # mccabe complexity (checks cyclomatic complexity)
+  "E",   # pycodestyle errors (checks PEP 8 style errors)
+  "F",   # pyflakes (checks for logical errors)
+  "I",   # isort (sorts imports)
+  "RUF", # Ruff-specific linting rules
+  "SIM", # flake8-simplify (helps simplify code)
+  "TCH", # flake8-type-checking (manages type-checking imports)
+  "UP",  # pyupgrade (upgrades syntax for newer Python versions)
+  "W",   # pycodestyle warnings (checks PEP 8 style warnings)
+]
+ignore = ["ambiguous-unicode-character-docstring"]
+mccabe = { max-complexity = 12 }
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+no-lines-before = ["first-party", "third-party"]
+section-order = [
+  "future",
+  "local-folder",
+  "standard-library",
+  "first-party",
+  "third-party",
+]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 
+[tool.setuptools.package-data]
+xulbux = ["*.pyi", "**/*.pyi", "py.typed"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-xulbux = ["py.typed", "*.pyi", "**/*.pyi"]
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q"
-pythonpath = ["src"]
-testpaths = [
-  "tests/test_code.py",
-  "tests/test_color_types.py",
-  "tests/test_color.py",
-  "tests/test_console.py",
-  "tests/test_data.py",
-  "tests/test_env_path.py",
-  "tests/test_file_sys.py",
-  "tests/test_file.py",
-  "tests/test_format_codes.py",
-  "tests/test_json.py",
-  "tests/test_metadata_consistency.py",
-  "tests/test_regex.py",
-  "tests/test_string.py",
-  "tests/test_system.py",
-]
-
-[tool.pyright]
-include = ["src", "tests"]
-typeCheckingMode = "strict"
-reportPrivateUsage = "none"

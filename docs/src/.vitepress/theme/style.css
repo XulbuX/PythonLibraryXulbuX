@@ -1,0 +1,722 @@
+@import './fonts.css';
+
+/********************************************************* VARIABLES *********************************************************/
+
+:root {
+  --vp-layout-max-width: 100dvw;
+  --vp-font-family-mono:
+    'JetBrains Mono NF', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  /* Terminal Theme */
+  --term-black: #303134;
+  --term-br-black: #66676a;
+  --term-red: #ff6467;
+  --term-br-red: #ff9597;
+  --term-green: #58f7bd;
+  --term-br-green: #90ffd1;
+  --term-yellow: #ffba75;
+  --term-br-yellow: #ffda96;
+  --term-blue: #7c86ff;
+  --term-br-blue: #94a6ff;
+  --term-magenta: #b196ff;
+  --term-br-magenta: #d3a9fe;
+  --term-cyan: #53eafd;
+  --term-br-cyan: #81f3ff;
+  --term-white: #eaebee;
+  --term-br-white: #fbfcff;
+
+  /* Light Theme */
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #fafafa;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f0f0f0;
+  --vp-c-border: #ededed;
+  --vp-c-divider: #ededed;
+  --vp-c-gutter: #ededed;
+  --vp-code-bg: #f0f0f0;
+  --vp-code-block-bg: #fafafa;
+  --vp-code-block-selection: color-mix(in srgb, var(--vp-c-text-1) 10%, transparent);
+
+  --vp-c-text-1: rgba(0 0 0 / 0.88);
+  --vp-c-text-2: rgba(0 0 0 / 0.6);
+  --vp-c-text-3: rgba(0 0 0 / 0.38);
+
+  --base-brand: #7e52ff;
+  --vp-c-brand-1: var(--base-brand);
+  --vp-c-brand-2: color-mix(in srgb, var(--base-brand), white 20%);
+  --vp-c-brand-3: color-mix(in srgb, var(--base-brand), white 40%);
+
+  /* Button Overrides */
+  --vp-button-brand-bg: var(--vp-c-brand-1);
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-hover-bg: color-mix(in srgb, var(--vp-c-brand-2), var(--vp-c-brand-1) 50%);
+  --vp-button-brand-active-bg: var(--vp-c-brand-2);
+
+  --vp-button-alt-bg: var(--vp-c-bg-soft);
+  --vp-button-alt-text: var(--vp-c-text-1);
+  --vp-button-alt-hover-bg: color-mix(in srgb, var(--vp-c-border), var(--vp-c-bg-soft) 50%);
+  --vp-button-alt-active-bg: var(--vp-c-border);
+
+  --vp-button-sponsor-bg: var(--vp-c-bg-soft);
+  --vp-button-sponsor-text: var(--vp-c-text-1);
+  --vp-button-sponsor-hover-bg: color-mix(in srgb, var(--vp-c-border), var(--vp-c-bg-soft) 50%);
+  --vp-button-sponsor-active-bg: var(--vp-c-border);
+
+  /* Dark Theme*/
+  --dark-vp-c-bg: #101010;
+  --dark-vp-c-bg-alt: #000000;
+  --dark-vp-c-bg-elv: #1a1a1a;
+  --dark-vp-c-bg-soft: #1a1a1a;
+  --dark-vp-c-border: #262626;
+  --dark-vp-c-divider: #262626;
+  --dark-vp-c-gutter: #262626;
+  --dark-vp-code-bg: #262626;
+  --dark-vp-code-block-bg: #000000;
+  --dark-vp-code-block-selection: color-mix(in srgb, var(--dark-vp-c-text-1) 18%, transparent);
+
+  --dark-vp-c-text-1: rgba(255 255 255 / 0.9);
+  --dark-vp-c-text-2: rgba(255 255 255 / 0.6);
+  --dark-vp-c-text-3: rgba(255 255 255 / 0.38);
+
+  --dark-vp-c-brand-1: color-mix(in srgb, var(--base-brand), white 40%);
+  --dark-vp-c-brand-2: color-mix(in srgb, var(--base-brand), white 20%);
+  --dark-vp-c-brand-3: var(--base-brand);
+
+  --dark-vp-button-brand-bg: var(--dark-vp-c-brand-3);
+  --dark-vp-button-brand-text: #ffffff;
+  --dark-vp-button-brand-hover-bg: color-mix(
+    in srgb,
+    var(--dark-vp-c-brand-2),
+    var(--dark-vp-c-brand-3) 50%
+  );
+  --dark-vp-button-brand-active-bg: var(--dark-vp-c-brand-2);
+}
+
+.dark {
+  /* Dark Theme */
+  --vp-c-bg: var(--dark-vp-c-bg);
+  --vp-c-bg-alt: var(--dark-vp-c-bg-alt);
+  --vp-c-bg-elv: var(--dark-vp-c-bg-elv);
+  --vp-c-bg-soft: var(--dark-vp-c-bg-soft);
+  --vp-c-border: var(--dark-vp-c-border);
+  --vp-c-divider: var(--dark-vp-c-divider);
+  --vp-c-gutter: var(--dark-vp-c-gutter);
+  --vp-code-bg: var(--dark-vp-code-bg);
+  --vp-code-block-bg: var(--dark-vp-code-block-bg);
+  --vp-code-block-selection: var(--dark-vp-code-block-selection);
+
+  --vp-c-text-1: var(--dark-vp-c-text-1);
+  --vp-c-text-2: var(--dark-vp-c-text-2);
+  --vp-c-text-3: var(--dark-vp-c-text-3);
+
+  --vp-c-brand-1: var(--dark-vp-c-brand-1);
+  --vp-c-brand-2: var(--dark-vp-c-brand-2);
+  --vp-c-brand-3: var(--dark-vp-c-brand-3);
+
+  /* Different color usage for primary buttons in dark mode. */
+  --vp-button-brand-bg: var(--dark-vp-button-brand-bg);
+  --vp-button-brand-text: var(--dark-vp-button-brand-text);
+  --vp-button-brand-hover-bg: var(--dark-vp-button-brand-hover-bg);
+  --vp-button-brand-active-bg: var(--dark-vp-button-brand-active-bg);
+}
+
+/************************************************* TYPOGRAPHY & GLOBAL STYLES ************************************************/
+
+::selection {
+  background-color: color-mix(in srgb, var(--vp-c-brand-2) 40%, transparent);
+}
+
+/* Custom Inline Code Colors */
+.vp-doc :not(pre, h1, h2, h3, h4, h5, h6, a) > code {
+  color: color-mix(in srgb, var(--vp-c-text-2), var(--vp-c-text-1) 50%) !important;
+}
+.vp-doc :is(h1, h2, h3, h4, h5, h6) > code {
+  color: var(--vp-c-brand-1) !important;
+}
+
+/* Font Ligatures for Code Blocks */
+code,
+kbd,
+samp,
+pre,
+[class*='language-'],
+[class*='language-'] * {
+  letter-spacing: normal !important;
+  font-feature-settings:
+    'calt' 1,
+    'liga' 1 !important;
+  font-variant-ligatures: normal !important;
+}
+
+/******************************************************* GLOBAL LAYOUT *******************************************************/
+
+/* Wide Docs Layout for API Columns */
+body .VPDoc,
+body .VPDoc .container,
+body .VPDoc.has-sidebar .container,
+body .VPDoc .content,
+body .VPDoc.has-sidebar .content,
+body .VPDoc .content-container,
+body .VPDoc.has-sidebar .content-container,
+body .vp-doc,
+body .vp-doc > div {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Restrict regular markdown elements back to optimal typographic line length. */
+body .vp-doc > div > *,
+body .vp-doc > div > div[class*='language-'],
+body .vp-doc > div > .custom-block {
+  max-width: 48rem;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+body .vp-doc > div > .api-item {
+  max-width: none;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/****************************************************** API GRID SYSTEM ******************************************************/
+
+/* API Item Two-Column Layout */
+.api-item {
+  gap: 2rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  grid-template-columns: 1fr;
+  display: grid;
+  align-items: start;
+  justify-content: center;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+@media (min-width: 960px) {
+  .api-item {
+    grid-template-rows: auto 1fr;
+    /* Responsive columns: left tries for 420px, right tries for 48rem, both can shrink. */
+    grid-template-columns: minmax(300px, 420px) minmax(400px, 48rem);
+  }
+  .api-item > h3,
+  .api-item > h4 {
+    grid-row: 1;
+    grid-column: 2;
+    margin-top: 0 !important;
+  }
+
+  .api-signature-col {
+    top: calc(var(--vp-nav-height, 64px) + 2rem);
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    position: sticky;
+  }
+
+  .api-docs-col {
+    grid-row: 2;
+    grid-column: 2;
+  }
+}
+
+.api-signature-col,
+.api-docs-col {
+  min-width: 0; /* Prevent long code blocks from forcing the grid to blow out. */
+}
+
+.api-signature-col > div[class*='language-'] {
+  margin: 0 !important;
+}
+
+/********************************************************* SCROLLBARS ********************************************************/
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--vp-c-text-1) 24%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--vp-c-text-1) 24%, transparent);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--vp-c-text-1) 32%, transparent);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/************************************************** API CLASS NAMES & LINKS **************************************************/
+
+.api-item h4 code a.class-prefix::before {
+  content: attr(data-class-prefix);
+}
+.api-item h4 code a.class-prefix {
+  z-index: 0;
+  opacity: 0.64;
+  font-weight: 500;
+  position: relative;
+  text-decoration: none;
+  border-bottom: 0.1rem dashed color-mix(in srgb, currentColor 64%, transparent);
+  transition:
+    opacity 200ms,
+    color 200ms,
+    border-color 200ms;
+}
+.api-item h4 code a.class-prefix:hover,
+.api-item h4 code a.class-prefix:active {
+  opacity: 1;
+  color: inherit !important;
+  border-bottom: 0.1rem solid currentColor;
+}
+
+.vp-doc .api-link {
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 0.1rem dashed color-mix(in srgb, currentColor 40%, transparent);
+  transition:
+    color 200ms,
+    border-color 200ms;
+}
+.vp-doc .api-link:hover {
+  color: inherit !important;
+  border-bottom: 0.1rem solid currentColor;
+}
+
+@keyframes target-flash {
+  0%,
+  20% {
+    color: var(--vp-button-brand-text) !important;
+    background-color: var(--vp-button-brand-hover-bg) !important;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.vp-doc :is(h1, h2, h3, h4, h5, h6).target-highlight > code,
+.vp-doc :is(h1, h2, h3, h4, h5, h6).target-highlight > code * {
+  color: var(--vp-button-brand-text) !important;
+  background-color: var(--vp-button-brand-hover-bg) !important;
+  transition:
+    background-color 200ms,
+    color 200ms;
+}
+
+.vp-doc :is(h1, h2, h3, h4, h5, h6):target > code,
+.vp-doc :is(h1, h2, h3, h4, h5, h6):target > code * {
+  animation: target-flash 1.5s ease-out;
+}
+
+/*************************************************** CODE BLOCKS & VIGNETTE **************************************************/
+
+/* Keep syntax highlighting colors in code block selection. */
+.vp-doc div[class*='language-'] pre *::selection,
+.vp-doc div[class*='language-'] pre::selection {
+  color: inherit !important;
+  background-color: var(--vp-code-block-selection);
+}
+
+/* Move scrolling to the `<pre>` so we can overlay a fixed vignette on the wrapper. */
+.vp-doc div[class*='language-'] {
+  position: relative;
+  overflow: hidden !important;
+  border: 1px solid color-mix(in srgb, var(--vp-c-bg), var(--vp-c-border) 70%);
+}
+
+.vp-doc div[class*='language-'] > pre {
+  z-index: 1;
+  position: relative;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-color: transparent transparent;
+}
+
+/* Hide the scrollbar for code blocks. */
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-thumb,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-track,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-corner,
+.vp-doc div[class*='language-'] > pre::-webkit-scrollbar-button {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+.vp-doc div[class*='language-'] > pre {
+  scrollbar-width: none !important;
+}
+
+/* Fade-out Vignette Effect */
+.vp-doc div[class*='language-']::after {
+  content: '';
+  z-index: 2;
+  inset: 0;
+  position: absolute;
+  pointer-events: none;
+  box-shadow: inset 0 0 16px 8px var(--vp-code-block-bg);
+}
+
+/* Ensure copy button and language indicator sit above the vignette: */
+.vp-doc div[class*='language-'] > span.lang {
+  z-index: 3 !important;
+  pointer-events: none !important;
+}
+.vp-doc div[class*='language-'] > button.copy {
+  z-index: 4 !important;
+}
+
+/* Custom Scroll Buttons */
+.vp-doc div[class*='language-'] > .scroll-btn {
+  z-index: 3 !important;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  pointer-events: none;
+  justify-content: center;
+  color: var(--vp-code-copy-code-active-text);
+  border: 1px solid var(--vp-code-copy-code-border-color);
+  background-color: var(--vp-code-copy-code-bg);
+  transition:
+    opacity 200ms,
+    color 200ms,
+    background-color 200ms;
+}
+
+.vp-doc div[class*='language-']:hover > .scroll-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.vp-doc div[class*='language-'] > .scroll-btn.visible:hover {
+  opacity: 1 !important;
+  border-color: var(--vp-code-copy-code-hover-border-color);
+  background-color: var(--vp-code-copy-code-hover-bg);
+}
+
+.vp-doc div[class*='language-'] > .scroll-btn-left {
+  left: 12px;
+}
+.vp-doc div[class*='language-'] > .scroll-btn-right {
+  left: 36px; /* Next to the left button. */
+}
+
+.vp-doc div[class*='language-']:hover > .scroll-btn.visible.disabled {
+  cursor: default;
+  pointer-events: none !important;
+  color: color-mix(in srgb, var(--vp-code-copy-code-active-text) 40%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--vp-code-copy-code-border-color) 50%,
+    transparent
+  ) !important;
+  background-color: color-mix(in srgb, var(--vp-code-copy-code-bg) 50%, transparent) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+}
+
+/* Hide focus ring for code blocks. */
+.vp-doc div[class*='language-']:focus,
+.vp-doc div[class*='language-']:focus-within,
+.vp-doc div[class*='language-'] > pre:focus,
+.vp-doc div[class*='language-'] > pre:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/*************************************************** ATTACHED CODE/TERMINAL **************************************************/
+
+/* Merge code block with an adjacent terminal output. */
+.vp-doc div[class*='language-']:has(+ .ext-terminal),
+.vp-doc div[class*='language-']:has(+ .ext-attached-code) {
+  margin-bottom: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom: none !important;
+  clip-path: inset(-30px -30px 0 -30px);
+}
+
+.vp-doc div[class*='language-'] + .ext-terminal {
+  margin-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  clip-path: inset(0 -30px -30px -30px);
+}
+
+.vp-doc .ext-attached-code {
+  margin-top: 0 !important;
+  position: relative;
+}
+
+/* The inner code block inside AttachedCode. */
+.vp-doc .ext-attached-code > div[class*='language-'] {
+  margin-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-top: 1px solid color-mix(in srgb, var(--vp-c-bg), var(--vp-c-border) 70%) !important;
+  clip-path: inset(0 -30px -30px -30px);
+}
+
+/* Custom Title */
+.vp-doc .ext-attached-code .attached-title {
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  padding: 0 8px;
+  font-size: 12px;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+  background-color: var(--vp-code-block-bg);
+}
+
+/* Custom brighter background for terminal blocks (always dark). */
+.vp-doc .ext-terminal {
+  --vp-code-lang-color: var(--dark-vp-c-text-3);
+  --vp-code-copy-code-active-text: var(--dark-vp-c-text-2);
+  --vp-code-copy-code-border-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-text-3),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  --vp-code-copy-code-bg: var(--dark-vp-c-divider);
+  --vp-code-copy-code-hover-border-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-text-3),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  --vp-code-copy-code-hover-bg: color-mix(
+    in srgb,
+    var(--dark-vp-c-divider),
+    var(--dark-vp-c-bg-elv) 70%
+  );
+  border-color: var(--dark-vp-c-border) !important;
+  border-top-color: color-mix(
+    in srgb,
+    var(--dark-vp-c-border),
+    var(--dark-vp-c-bg-elv) 32%
+  ) !important;
+}
+.vp-doc .ext-terminal,
+.vp-doc .ext-terminal > pre {
+  background-color: var(--dark-vp-c-bg-elv) !important;
+}
+.vp-doc .ext-terminal::after {
+  box-shadow: inset 0 0 16px 8px var(--dark-vp-c-bg-elv) !important;
+}
+
+/* Classic Inverted Terminal Selection */
+.vp-doc div.ext-terminal pre *::selection {
+  color: var(--term-bg) !important;
+  background-color: var(--term-base-fg) !important;
+}
+.vp-doc div.ext-terminal::selection,
+.vp-doc div.ext-terminal pre::selection,
+.vp-doc div.ext-terminal pre > code::selection,
+.vp-doc div.ext-terminal pre br::selection {
+  background-color: transparent !important;
+}
+
+/* Terminal Output Styles */
+.term {
+  --term-base-fg: var(--term-white);
+  --term-fg: var(--term-base-fg);
+  --term-bg: var(--dark-vp-c-bg-elv);
+  line-height: 1.1rem !important;
+  color: var(--term-fg) !important;
+
+  .black {
+    --term-base-fg: var(--term-black);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-black {
+    --term-base-fg: var(--term-br-black);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-black {
+    --term-bg: var(--term-black);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-black {
+    --term-bg: var(--term-br-black);
+    background-color: var(--term-bg) !important;
+  }
+  .red {
+    --term-base-fg: var(--term-red);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-red {
+    --term-base-fg: var(--term-br-red);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-red {
+    --term-bg: var(--term-red);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-red {
+    --term-bg: var(--term-br-red);
+    background-color: var(--term-bg) !important;
+  }
+  .green {
+    --term-base-fg: var(--term-green);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-green {
+    --term-base-fg: var(--term-br-green);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-green {
+    --term-bg: var(--term-green);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-green {
+    --term-bg: var(--term-br-green);
+    background-color: var(--term-bg) !important;
+  }
+  .yellow {
+    --term-base-fg: var(--term-yellow);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-yellow {
+    --term-base-fg: var(--term-br-yellow);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-yellow {
+    --term-bg: var(--term-yellow);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-yellow {
+    --term-bg: var(--term-br-yellow);
+    background-color: var(--term-bg) !important;
+  }
+  .blue {
+    --term-base-fg: var(--term-blue);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-blue {
+    --term-base-fg: var(--term-br-blue);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-blue {
+    --term-bg: var(--term-blue);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-blue {
+    --term-bg: var(--term-br-blue);
+    background-color: var(--term-bg) !important;
+  }
+  .magenta {
+    --term-base-fg: var(--term-magenta);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-magenta {
+    --term-base-fg: var(--term-br-magenta);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-magenta {
+    --term-bg: var(--term-magenta);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-magenta {
+    --term-bg: var(--term-br-magenta);
+    background-color: var(--term-bg) !important;
+  }
+  .cyan {
+    --term-base-fg: var(--term-cyan);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-cyan {
+    --term-base-fg: var(--term-br-cyan);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-cyan {
+    --term-bg: var(--term-cyan);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-cyan {
+    --term-bg: var(--term-br-cyan);
+    background-color: var(--term-bg) !important;
+  }
+  .white {
+    --term-base-fg: var(--term-white);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .br-white {
+    --term-base-fg: var(--term-br-white);
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-white {
+    --term-bg: var(--term-white);
+    background-color: var(--term-bg) !important;
+  }
+  .bg-br-white {
+    --term-bg: var(--term-br-white);
+    background-color: var(--term-bg) !important;
+  }
+
+  .\#000 {
+    --term-base-fg: #000;
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .\#FFF {
+    --term-base-fg: #fff;
+    --term-fg: var(--term-base-fg);
+    color: var(--term-fg) !important;
+  }
+  .bg-\#F67 {
+    --term-bg: #f67;
+    background-color: var(--term-bg) !important;
+  }
+
+  .i {
+    font-style: italic;
+  }
+  .b {
+    font-weight: 900;
+  }
+  .u {
+    text-decoration: underline;
+  }
+  .dim {
+    --term-fg: color-mix(in srgb, var(--term-base-fg) 50%, var(--dark-vp-c-bg-elv));
+    color: var(--term-fg) !important;
+  }
+}

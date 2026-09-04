@@ -1,100 +1,535 @@
-from setuptools import setup
-from pathlib import Path
-import subprocess
-import shutil
-import sys
+import ast
 import os
-
+import re
+import subprocess
+import sys
+from collections.abc import Iterable
+from contextlib import suppress
+from pathlib import Path
+from setuptools import setup
 
 PROJECT_ROOT = Path(__file__).parent
 PROJECT_SRC = PROJECT_ROOT / "src" / "xulbux"
 
 
 def find_python_files(directory: str) -> list[str]:
+    """Recursively finds all Python source files in the
+    specified directory, excluding `__init__.py` files."""
+
     python_files: list[str] = []
+
     for file in Path(directory).rglob("*.py"):
         if file.name == "__init__.py":
             continue
         python_files.append(str(file))
+
     return python_files
 
 
-def generate_stubs_for_package():
-    print("\nGenerating stub files with stubgen...\n")
+def clean_project_files(patterns: set[str], message: str) -> None:
+    """Removes all files matching the given glob patterns from the source directory.<br>
+    Prints a formatted success message if any files were deleted."""
 
-    try:
-        skip_stubgen = {
-            PROJECT_SRC / "base" / "types.py",  # COMPLEX TYPE DEFINITIONS
-            PROJECT_SRC / "__init__.py",  # PRESERVE PACKAGE METADATA CONSTANTS
-        }
+    deleted_count = 0
 
-        generated_count = 0
-        skipped_count = 0
+    for pattern in patterns:
+        for file in (PROJECT_ROOT / "src").rglob(pattern):
+            with suppress(OSError):
+                file.unlink()
+                deleted_count += 1
 
-        for py_file in PROJECT_SRC.rglob("*.py"):
-            pyi_file = py_file.with_suffix(".pyi")
-            rel_path = py_file.relative_to(PROJECT_SRC.parent)
+    if deleted_count > 0:
+        print(message.format(n=deleted_count, s="" if deleted_count == 1 else "s"), flush=True)
 
-            if py_file in skip_stubgen:
-                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
-                print(f"  copied {rel_path.with_suffix('.pyi')} (preserving type definitions)")
-                skipped_count += 1
+
+class StubGen(ast.NodeTransformer):
+    """An AST transformer that generates `.pyi` stub files by stripping implementations."""
+
+    def __init__(self, shadowed_names: set[str] | None = None) -> None:
+        super().__init__()
+        self.shadowed_names: set[str] = shadowed_names or set()
+        self.unwrapped_contextmanager: bool = False
+        self.unwrapped_async_contextmanager: bool = False
+
+    @classmethod
+    def generate_stubs(cls, py_files: Iterable[Path]) -> None:
+        """Generate typing stubs (`.pyi`) for the provided Python files.<br>
+        Certain files are copied as-is to preserve specific decorators and type hints."""
+
+        print("\nGenerating stub files...\n", flush=True)
+
+        generated_files: list[Path] = []
+        generated_count: int = 0
+        copied_count: int = 0
+
+        for py_file in py_files:
+            pyi_file: Path = py_file.with_suffix(".pyi")
+            rel_path: Path = py_file.relative_to(PROJECT_SRC.parent)
+
+            # Skip files with no content:
+            if not py_file.read_text("utf-8").strip():
+                pyi_file.write_text("", encoding="utf-8")
+                copied_count += 1
+                print(f"  created {rel_path} (copied: empty file)", flush=True)
                 continue
 
-            stubgen_exe = (
-                shutil.which("stubgen")
-                or str(Path(sys.executable).parent / ("stubgen.exe" if sys.platform == "win32" else "stubgen"))
-            )
-            result = subprocess.run(
-                [stubgen_exe, str(py_file), "-o", "src", "--include-private", "--export-less"],
-                capture_output=True,
-                text=True,
-            )
-
-            if result.returncode == 0:
-                print(f"  generated {rel_path.with_suffix('.pyi')}")
+            try:
+                out_file = cls._generate_stub_from(py_file, pyi_file.parent)
+                generated_files.append(out_file.resolve())
                 generated_count += 1
-            else:
-                print(f"  failed {rel_path}")
-                if result.stderr:
-                    print(f"    {result.stderr.strip()}")
+                print(f"  created {rel_path.with_suffix('.pyi')} (generated)", flush=True)
 
-        print(f"\nStub generation complete. ({generated_count} generated, {skipped_count} copied)\n")
+            except Exception as exc:
+                pyi_file.write_text(py_file.read_text(encoding="utf-8"), encoding="utf-8")
+                copied_count += 1
+                print(f"  created {rel_path.with_suffix('.pyi')} (copied: {exc})", flush=True)
 
-    except Exception as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
-        print(f"[WARNING] Could not generate stubs:\n  {fmt_error}\n")
+        if generated_files:
+            # fmt:off
+            # Format all generated stubs with Ruff in one call:
+            subprocess.run(
+                [sys.executable, "-m", "ruff", "check", *generated_files,
+                 "--fix", "--select", "I,F401,F841,UP", "--config", "lint.isort.lines-between-types=0", "--config",
+                 "lint.isort.no-lines-before=['future', 'standard-library', 'third-party', 'first-party', 'local-folder']"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            subprocess.run(
+                [sys.executable, "-m", "ruff", "format", *generated_files,
+                 "--line-length", "9999", "--config", "format.skip-magic-trailing-comma=true"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            # fmt:on
 
+        print(f"\nStub generation complete. ({generated_count} generated, {copied_count} copied)\n\n", flush=True)
 
-def delete_project_stub_files():
-    deleted = [f for f in PROJECT_SRC.rglob("*.pyi") if f.unlink() or True]
-    print(f"\nCleaned up {len(deleted)} stub file(s) from project directory.\n")
+    @classmethod
+    def _generate_stub_from(cls, source_file: Path, output_dir: Path) -> Path:
+        """Generates a stub file in the specified output directory from the given source file."""
 
+        # Transform the source file content into a stub using the AST transformer:
+        src_code = source_file.read_text("utf-8")
+        tree = ast.parse(src_code)
 
-ext_modules = []
+        shadowed_names = cls._get_type_checking_shadowed_names(tree)
 
-# OPTIONALLY USE MYPYC COMPILATION
-if os.environ.get("XULBUX_USE_MYPYC", "1") == "1":
-    try:
-        from mypyc.build import mypycify
+        transformer = cls(shadowed_names=shadowed_names)
+        transformed_tree = transformer.visit(tree)
+        source = ast.unparse(transformed_tree)
 
-        print("\nCompiling with mypyc...\n")
-        source_files = find_python_files("src/xulbux")
-        ext_modules = mypycify(source_files, opt_level="3")
-        print("\nMypyc compilation complete.\n")
+        # Remove all empty lines inserted by `ast.unparse`; Ruff will format it correctly:
+        source = re.sub(r"\n{2,}", r"\n", source)
 
-        generate_stubs_for_package()
+        # Write the generated stub content to the output file:
+        out_file = output_dir / source_file.with_suffix(".pyi").name
+        out_file.write_text(source, encoding="utf-8")
 
-    except (ImportError, Exception) as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
-        print(
-            f"\n[WARNING] mypyc compilation disabled (not available or failed):\n  {fmt_error}\n"
-            "\nInstalling as pure Python package...\n"
+        return out_file
+
+    @staticmethod
+    def _get_type_checking_shadowed_names(tree: ast.AST) -> set[str]:
+        """Returns a set of names that are shadowed by imports within `if TYPE_CHECKING:` blocks."""
+
+        shadowed_names: set[str] = set()
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.If) and (
+                (isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING")
+                or (
+                    isinstance(node.test, ast.Attribute)
+                    and isinstance(node.test.value, ast.Name)
+                    and node.test.value.id == "typing"
+                    and node.test.attr == "TYPE_CHECKING"
+                )
+            ):
+                for subnode in ast.walk(node):
+                    if isinstance(subnode, (ast.ImportFrom, ast.Import)):
+                        for alias in subnode.names:
+                            shadowed_names.add(alias.asname or alias.name)
+
+        return shadowed_names
+
+    def _is_overload_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@overload`."""
+
+        if isinstance(dec, ast.Name) and dec.id == "overload":
+            return True
+
+        return bool(
+            isinstance(dec, ast.Attribute)
+            and isinstance(dec.value, ast.Name)
+            and dec.value.id in {"typing", "typing_extensions"}
+            and dec.attr == "overload"
         )
 
-setup(
-    name="xulbux",
-    ext_modules=ext_modules,
-)
+    def _is_contextmanager_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@contextmanager`."""
 
-delete_project_stub_files()
+        if isinstance(dec, ast.Name) and dec.id == "contextmanager":
+            return True
+
+        return bool(
+            isinstance(dec, ast.Attribute)
+            and isinstance(dec.value, ast.Name)
+            and dec.value.id == "contextlib"
+            and dec.attr == "contextmanager"
+        )
+
+    def _is_async_contextmanager_dec(self, dec: ast.expr) -> bool:
+        """Returns True if the decorator expression is `@asynccontextmanager`."""
+
+        if isinstance(dec, ast.Name) and dec.id == "asynccontextmanager":
+            return True
+
+        return bool(
+            isinstance(dec, ast.Attribute)
+            and isinstance(dec.value, ast.Name)
+            and dec.value.id == "contextlib"
+            and dec.attr == "asynccontextmanager"
+        )
+
+    def _unwrap_cm_returns(self, node: ast.FunctionDef | ast.AsyncFunctionDef, wrapper_class: str) -> None:
+        """Unwraps a generator return type to a direct context manager return type for stubs."""
+
+        if node.returns is None:
+            node.returns = ast.Name(id=wrapper_class, ctx=ast.Load())
+            return
+
+        yield_type: ast.expr = node.returns
+
+        if isinstance(node.returns, ast.Subscript):
+            if isinstance(node.returns.slice, ast.Tuple) and node.returns.slice.elts:
+                yield_type = node.returns.slice.elts[0]
+            else:
+                yield_type = node.returns.slice
+
+        node.returns = ast.Subscript(
+            value=ast.Name(id=wrapper_class, ctx=ast.Load()),
+            slice=yield_type,
+            ctx=ast.Load(),
+        )
+
+    def _strip_unnecessary_impls(self, body: list[ast.stmt]) -> list[ast.stmt]:
+        """Strips unnecessary implementation details from the AST body for stub generation."""
+
+        overloaded_names: set[str] = set()
+
+        for stmt in body:
+            if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)) and any(
+                self._is_overload_dec(dec) for dec in stmt.decorator_list
+            ):
+                overloaded_names.add(stmt.name)
+
+        new_body: list[ast.stmt] = []
+
+        for stmt in body:
+            if (
+                isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and stmt.name in overloaded_names
+                and not any(self._is_overload_dec(dec) for dec in stmt.decorator_list)
+            ):
+                continue  # Drop the implementation function entirely.
+
+            if isinstance(stmt, ast.Expr) and not (isinstance(stmt.value, ast.Constant) and stmt.value.value is Ellipsis):
+                continue  # Drop docstrings, function calls, and meaningless expressions.
+
+            if isinstance(stmt, (ast.Assert, ast.Delete)):
+                continue
+
+            if isinstance(stmt, ast.Assign):
+                if all(isinstance(target, ast.Attribute) for target in stmt.targets):
+                    continue  # Drop post-class attribute assignments; they are already declared on the class.
+                if not (len(targets := [ast.unparse(tg) for tg in stmt.targets]) == 1 and targets[0] == "__all__"):
+                    raise ValueError(
+                        f"Constant(s) '{', '.join(targets)}' missing explicit type-hint. All variables must be strictly typed."
+                    )
+
+            new_body.append(stmt)
+
+        return new_body
+
+    def _is_simple_constant(self, node: ast.expr) -> bool:
+        """Returns True if the node is a simple constant (int, float, complex, str, bool, None)."""
+
+        if isinstance(node, ast.Constant):
+            return True
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub) and isinstance(node.operand, ast.Constant):
+            return isinstance(node.operand.value, (int, float, complex))
+
+        return False
+
+    def _strip_complex_defaults(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        """Replaces complex default values in function arguments with `...` for stub generation."""
+
+        for i, default in enumerate(node.args.defaults):
+            if not self._is_simple_constant(default):
+                node.args.defaults[i] = ast.Constant(value=Ellipsis)
+
+        for i, kw_default in enumerate(node.args.kw_defaults):
+            if kw_default is not None and not self._is_simple_constant(kw_default):
+                node.args.kw_defaults[i] = ast.Constant(value=Ellipsis)
+
+    def visit_Module(self, node: ast.Module) -> ast.Module:
+        """Visits the module node, strips unnecessary implementations, and organizes imports."""
+
+        self.generic_visit(node)
+        if ast.get_docstring(node):
+            node.body = node.body[1:]
+
+        node.body = self._strip_unnecessary_impls(node.body)
+
+        # Remove module-level `__getattr__` from stubs to prevent type checker issues:
+        node.body = [
+            stmt
+            for stmt in node.body
+            if not (isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)) and stmt.name == "__getattr__")
+        ]
+
+        if self.unwrapped_contextmanager:
+            node.body.append(
+                ast.ImportFrom(
+                    module="contextlib",
+                    names=[ast.alias(name="AbstractContextManager", asname="AbstractContextManager")],
+                    level=0,
+                )
+            )
+
+        if self.unwrapped_async_contextmanager:
+            node.body.append(
+                ast.ImportFrom(
+                    module="contextlib",
+                    names=[ast.alias(name="AbstractAsyncContextManager", asname="AbstractAsyncContextManager")],
+                    level=0,
+                )
+            )
+
+        imports: list[ast.stmt] = []
+        others: list[ast.stmt] = []
+
+        # Bring all import statements to the top:
+        for stmt in node.body:
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                imports.append(stmt)
+            else:
+                others.append(stmt)
+
+        node.body = imports + others
+        return node
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # ruff:ignore[complex-structure]
+        """Visits the class node, extracts instance variables from `__init__`, and organizes class body."""
+
+        existing_vars: set[str] = set()
+
+        for stmt in node.body:
+            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                existing_vars.add(stmt.target.id)
+            elif isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name):
+                        existing_vars.add(target.id)
+
+        extracted_vars: list[ast.stmt] = []
+
+        for stmt in node.body:
+            if isinstance(stmt, ast.FunctionDef) and stmt.name == "__init__":
+                for init_stmt in stmt.body:
+                    if (
+                        isinstance(init_stmt, ast.AnnAssign)
+                        and isinstance(init_stmt.target, ast.Attribute)
+                        and isinstance(init_stmt.target.value, ast.Name)
+                        and init_stmt.target.value.id == "self"
+                        and init_stmt.target.attr not in existing_vars
+                    ):
+                        var_name = init_stmt.target.attr
+                        new_assign = ast.AnnAssign(
+                            target=ast.Name(id=var_name, ctx=ast.Store()),
+                            annotation=init_stmt.annotation,
+                            value=None,
+                            simple=1,
+                        )
+                        extracted_vars.append(new_assign)
+                        existing_vars.add(var_name)
+
+        self.generic_visit(node)
+        if ast.get_docstring(node):
+            node.body = node.body[1:]
+
+        node.body = extracted_vars + self._strip_unnecessary_impls(node.body)
+
+        dunder_vars: list[ast.stmt] = []
+        other_stmts: list[ast.stmt] = []
+
+        # Sort `node.body` to put dunder variables at the top:
+        for stmt in node.body:
+            is_dunder = False
+
+            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                if stmt.target.id.startswith("__") and stmt.target.id.endswith("__"):
+                    is_dunder = True
+
+            elif isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id.startswith("__") and target.id.endswith("__"):
+                        is_dunder = True
+                        break
+
+            if is_dunder:
+                dunder_vars.append(stmt)
+            else:
+                other_stmts.append(stmt)
+
+        node.body = dunder_vars + other_stmts
+        if not node.body:
+            node.body = [ast.parse("...").body[0]]
+
+        return node
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+        """Visits the function node, strips unnecessary implementations, and organizes function body."""
+
+        if any(self._is_contextmanager_dec(dec) for dec in node.decorator_list):
+            node.decorator_list = [dec for dec in node.decorator_list if not self._is_contextmanager_dec(dec)]
+            self._unwrap_cm_returns(node, "AbstractContextManager")
+            self.unwrapped_contextmanager = True
+
+        self.generic_visit(node)
+        node.body = [ast.parse("...").body[0]]
+        self._strip_complex_defaults(node)
+
+        return node
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+        """Visits the async function node, strips unnecessary implementations, and organizes function body."""
+
+        if any(self._is_async_contextmanager_dec(dec) for dec in node.decorator_list):
+            node.decorator_list = [dec for dec in node.decorator_list if not self._is_async_contextmanager_dec(dec)]
+            self._unwrap_cm_returns(node, "AbstractAsyncContextManager")
+            self.unwrapped_async_contextmanager = True
+
+        self.generic_visit(node)
+        node.body = [ast.parse("...").body[0]]
+        self._strip_complex_defaults(node)
+
+        return node
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AnnAssign | None:
+        """Visits the annotated assignment node and removes its value for stub generation."""
+
+        if isinstance(node.target, ast.Name) and node.target.id in self.shadowed_names:
+            return None
+
+        self.generic_visit(node)
+        node.value = None
+
+        return node
+
+    def visit_If(self, node: ast.If):
+        """Visits the if statement node and removes the body of `if TYPE_CHECKING:` blocks for stub generation."""
+
+        self.generic_visit(node)
+
+        if (isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING") or (
+            isinstance(node.test, ast.Attribute)
+            and isinstance(node.test.value, ast.Name)
+            and node.test.value.id == "typing"
+            and node.test.attr == "TYPE_CHECKING"
+        ):
+            return node.body
+
+        return node
+
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        """Visits the import-from statement node and removes `TYPE_CHECKING` imports for stub generation."""
+
+        self.generic_visit(node)
+
+        if node.module in {"typing", "typing_extensions"}:
+            node.names = [n for n in node.names if n.name != "TYPE_CHECKING"]
+            if not node.names:
+                return None
+
+        else:
+            for alias in node.names:
+                if alias.asname is None and alias.name != "*":
+                    alias.asname = alias.name
+
+        return node
+
+    def visit_Import(self, node: ast.Import):
+        """Visits the import statement node and ensures all imports have explicit aliases for stub generation."""
+
+        self.generic_visit(node)
+
+        for alias in node.names:
+            if alias.asname is None and alias.name != "*":
+                alias.asname = alias.name
+
+        return node
+
+    def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
+        """Visits the subscript node and unwraps single-element tuples in subscript slices for stub generation."""
+
+        self.generic_visit(node)
+
+        # Unwrap single-element tuples in subscript slices (removes trailing commas like in `Final[A,]`):
+        if isinstance(node.slice, ast.Tuple) and len(node.slice.elts) == 1:
+            node.slice = node.slice.elts[0]
+
+        return node
+
+
+def generate_stubs_for_package() -> None:
+    """Generates typing stubs (`.pyi`) for the entire package."""
+
+    try:
+        StubGen.generate_stubs(PROJECT_SRC.rglob("*.py"))
+    except Exception as exc:
+        print(f"[WARNING] Could not generate stubs:\n  {'\n  '.join(str(exc).splitlines())}\n", flush=True)
+
+
+if __name__ == "__main__":
+    # If the user runs the setup script with the `--gen-stubs` flag,
+    # generate stub files and exit without building the package:
+    if "--gen-stubs" in sys.argv:
+        generate_stubs_for_package()
+        raise SystemExit(0)
+
+    ext_modules = []
+
+    # Only compile and generate stubs when actually building, not during metadata-only
+    # phases (egg_info, dist_info) that pip invokes as part of PEP 517 preparation:
+    _BUILD_COMMANDS = {"bdist_wheel", "build_ext", "build", "develop", "editable_wheel", "install"}
+    _is_building = bool(set(sys.argv[1:]) & _BUILD_COMMANDS)
+
+    # Optionally use MyPyC compilation:
+    if os.environ.get("XULBUX_USE_MYPYC", "1") == "1" and _is_building:
+        try:
+            from mypyc.build import mypycify
+
+            print("\nCompiling with mypyc...\n", flush=True)
+            ext_modules = mypycify(find_python_files("src/xulbux"), opt_level="3")
+            print("\nMypyc compilation complete.\n", flush=True)
+
+            generate_stubs_for_package()
+
+        except (ImportError, Exception) as exc:
+            print(
+                "\n[WARNING] mypyc compilation disabled (not available or failed):\n"
+                f"  {'\n  '.join(str(exc).splitlines())}\n"
+                "\nInstalling as pure Python package...\n",
+                flush=True,
+            )
+
+    setup(name="xulbux", ext_modules=ext_modules)
+
+    if _is_building:
+        clean_project_files({"*.pyi"}, "\nCleaned up {n} stub file{s} from project directory.\n")
+
+        if "--inplace" in sys.argv:
+            clean_project_files(
+                {"*.pyd", "*.so", "*.c"}, "\nCleaned up {n} compiled extension file{s} from project directory.\n"
+            )

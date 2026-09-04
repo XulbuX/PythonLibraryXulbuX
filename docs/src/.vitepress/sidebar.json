@@ -1,0 +1,9 @@
+[
+  {
+    "text": "Guide",
+    "items": [
+      { "text": "Getting Started", "link": "/docs/guide/get-started" },
+      { "text": "CLI Commands", "link": "/docs/guide/commands" }
+    ]
+  }
+]

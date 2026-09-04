@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "pedantic": "off",
+    "perf": "warn",
+    "restriction": "warn",
+    "style": "warn",
+    "suspicious": "warn"
+  },
+  "env": { "builtin": true },
+  "globals": {},
+  "ignorePatterns": ["src/docs/*"],
+  "plugins": ["eslint", "oxc", "typescript", "unicorn", "vue"],
+  "rules": {
+    "capitalized-comments": "off",
+    "eslint/no-ternary": "off",
+    "func-style": ["error", "declaration"],
+    "id-length": ["warn", { "exceptions": ["_", "K", "T"] }],
+    "import/no-nodejs-modules": ["error", { "allow": ["node:path"] }],
+    "import/unambiguous": "off",
+    "max-params": "off",
+    "max-statements": "off",
+    "no-magic-numbers": "off",
+    "no-undefined": "off",
+    "one-var": "off",
+    "oxc/no-async-await": "off",
+    "oxc/no-optional-chaining": "off",
+    "oxc/no-rest-spread-properties": "off",
+    "sort-imports": "off",
+    "typescript/consistent-type-definitions": "error",
+    "typescript/explicit-function-return-type": "off",
+    "typescript/explicit-module-boundary-types": "off",
+    "typescript/no-empty-object-type": ["error", { "allowInterfaces": "with-single-extends" }],
+    "unicorn/filename-case": ["error", { "cases": { "camelCase": true, "pascalCase": true } }],
+    "unicorn/number-literal-case": "off",
+    "vue/define-props-destructuring": "off",
+    "vue/max-props": "off"
+  }
+}

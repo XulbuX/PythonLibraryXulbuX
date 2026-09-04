@@ -1,45 +1,117 @@
-__package_name__ = "xulbux"
-__version__ = "1.9.7"
-__description__ = "A Python library to simplify common programming tasks."
-__status__ = "Production/Stable"
+# ruff:file-ignore[non-empty-init-module]
+from __future__ import annotations
 
-__url__ = "https://github.com/xulbux/python-lib-xulbux"
+TYPE_CHECKING: bool = False
+"""Flag indicating whether type checking is active during static analysis."""
 
-__author__ = "XulbuX"
-__email__ = "xulbux.real@gmail.com"
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2024 XulbuX"
+if TYPE_CHECKING:
+    from . import ansi, cli, color, console, data, file_sys, json, regex, string, system
+    from .ansi import S, Term
+    from .color import hexa, hsla, rgba
+    from .console import ArgumentParser, ParsedArgData, ParsedArgs, ProgressBar, Throbber
+    from .regex import LazyRegex
 
-__requires_python__ = ">=3.10.0"
-__dependencies__ = [
+    from typing import Any, Final
+
+__package_name__: Final[str] = "xulbux"
+__version__: Final[str] = "2.0.0"
+__description__: Final[str] = "A Python library to simplify common programming tasks."
+__status__: Final[str] = "Production/Stable"
+
+__url__: Final[str] = "https://xulbux.github.io/python-lib-xulbux"
+
+__author__: Final[str] = "XulbuX"
+__email__: Final[str] = "hi@xul.is"
+__license__: Final[str] = "MIT"
+__copyright__: Final[str] = "Copyright (c) 2024 XulbuX"
+
+__requires_python__: Final[str] = ">=3.12.0"
+__dependencies__: Final[list[str]] = [
     "prompt_toolkit>=3.0.41",
     "regex>=2023.10.3",
+    "typing-extensions>=4.10.0; python_version < '3.13'",
 ]
 
 __all__ = [
-    "Code",
-    "Color",
-    "Console",
-    "Data",
-    "EnvPath",
-    "File",
-    "FileSys",
-    "FormatCodes",
-    "Json",
-    "Regex",
-    "String",
-    "System",
+    "ArgumentParser",
+    "LazyRegex",
+    "ParsedArgData",
+    "ParsedArgs",
+    "ProgressBar",
+    "S",
+    "Term",
+    "Throbber",
+    "__author__",
+    "__copyright__",
+    "__dependencies__",
+    "__description__",
+    "__email__",
+    "__license__",
+    "__package_name__",
+    "__requires_python__",
+    "__status__",
+    "__url__",
+    "__version__",
+    "ansi",
+    "cli",
+    "color",
+    "console",
+    "data",
+    "file_sys",
+    "hexa",
+    "hsla",
+    "json",
+    "regex",
+    "rgba",
+    "string",
+    "system",
 ]
 
-from .code import Code
-from .color import Color
-from .console import Console
-from .data import Data
-from .env_path import EnvPath
-from .file import File
-from .file_sys import FileSys
-from .format_codes import FormatCodes
-from .json import Json
-from .regex import Regex
-from .string import String
-from .system import System
+_ALL_SET: Final[set[str]] = set(__all__)
+"""Pre-computed set of `__all__` for fast `O(1)` membership testing during lazy attribute access."""
+
+_SUBMODULES: Final[dict[str, str]] = {
+    "S": "ansi",
+    "Term": "ansi",
+    "hexa": "color",
+    "hsla": "color",
+    "rgba": "color",
+    "ArgumentParser": "console",
+    "ParsedArgData": "console",
+    "ParsedArgs": "console",
+    "ProgressBar": "console",
+    "Throbber": "console",
+    "LazyRegex": "regex",
+}
+"""Mapping of top-level exported class names to their originating submodule for lazy-loading."""
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-loads submodules and submodule attributes when accessed.<br>
+    This allows for faster initial import times and reduces memory usage.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `name` – The name of the submodule or attribute to access."""
+
+    if name in _ALL_SET:
+        import importlib
+
+        if name in _SUBMODULES:
+            module = importlib.import_module(f".{_SUBMODULES[name]}", package=__package__)
+            globals()[name] = (val := getattr(module, name))
+
+            return val
+
+        # Otherwise, it must be a top-level module (e.g., `console`, `string`, …):
+        module = importlib.import_module(f".{name}", package=__package__)
+        globals()[name] = module
+
+        return module
+
+    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    """Returns the list of attributes available in this module,<br>
+    including submodules and submodule attributes."""
+
+    return __all__

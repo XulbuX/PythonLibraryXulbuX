@@ -1,153 +1,231 @@
 """
-This module contains all custom type definitions used throughout the library.
+Provides custom type definitions and TypeVars used throughout the library.
+
+Includes type aliases for complex structures and protocol definitions.
 """
 
-from typing import Annotated, TypeAlias, TypedDict, Optional, Protocol, Literal, Union, Any
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, NotRequired, Protocol, TypedDict, cast, overload
 
-# yapf: disable
+if TYPE_CHECKING:
+    import sys
+    from collections.abc import Iterable
+    from xulbux.ansi import Renderable
+
+    if sys.version_info >= (3, 13):
+        from typing import TypeIs
+    else:
+        from typing_extensions import TypeIs
 
 
-################################################## Annotated ##################################################
+# ******************************************************** PRIMITIVES *********************************************************
 
-Int_0_100 = Annotated[int, "Integer constrained to the range [0, 100] inclusive."]
+type Int_0_100 = int
 """Integer constrained to the range [0, 100] inclusive."""
-Int_0_255 = Annotated[int, "Integer constrained to the range [0, 255] inclusive."]
+type Int_0_255 = int
 """Integer constrained to the range [0, 255] inclusive."""
-Int_0_360 = Annotated[int, "Integer constrained to the range [0, 360] inclusive."]
+type Int_0_360 = int
 """Integer constrained to the range [0, 360] inclusive."""
-Float_0_1 = Annotated[float, "Float constrained to the range [0.0, 1.0] inclusive."]
+type Float_0_1 = float
 """Float constrained to the range [0.0, 1.0] inclusive."""
 
-FormattableString = Annotated[str, "String made to be formatted with the `.format()` method."]
+type FormattableString = str
 """String made to be formatted with the `.format()` method."""
 
 
-################################################## TypeAlias ##################################################
+# ************************************************** COLLECTIONS & ITERABLES **************************************************
 
-PathsList: TypeAlias = Union[list[Path], list[str], list[Union[Path, str]]]
-"""Union of all supported list types for a list of paths."""
+type PathsList = list[Path] | list[str] | list[Path | str] | tuple[Path, ...] | tuple[str, ...] | tuple[Path | str, ...]
+"""Union of all supported collection types for paths."""
 
-DataObj: TypeAlias = Union[list[Any], tuple[Any, ...], set[Any], frozenset[Any], dict[Any, Any]]
+
+def is_paths_list(obj: object, /) -> TypeIs[PathsList]:
+    """Returns true if `obj` is an instance that matches the `PathsList` type."""
+
+    if isinstance(obj, (list, tuple)):
+        # Don't use `all()` as for-loop is more performant:
+        for item in cast("list[Any] | tuple[Any, ...]", obj):  # ruff:ignore[reimplemented-builtin]
+            if not isinstance(item, (Path, str)):
+                return False
+        return True
+
+    return False
+
+
+type DataObj = list[Any] | tuple[Any, ...] | set[Any] | frozenset[Any] | dict[Any, Any]
 """Union of supported data structures used in the `data` module."""
-DataObjTT = (list, tuple, set, frozenset, dict)
-"""Tuple of supported data structures used in the `data` module."""
 
-IndexIterable: TypeAlias = Union[list[Any], tuple[Any, ...], set[Any], frozenset[Any]]
-"""Union of all iterable types that support indexing operations."""
-IndexIterableTT = (list, tuple, set, frozenset)
-"""Tuple of all iterable types that support indexing operations."""
+
+def is_data_obj(obj: object, /) -> TypeIs[DataObj]:
+    """Returns true if `obj` is an instance that matches the `DataObj` type."""
+
+    return isinstance(obj, (list, tuple, set, frozenset, dict))
+
+
+type SeqOrSet[T] = list[T] | tuple[T, ...] | set[T] | frozenset[T]
+"""Union of all built-in sequence and set types (`list`, `tuple`, `set`, `frozenset`)."""
+
+
+@overload
+def is_seq_or_set(obj: object, /) -> TypeIs[SeqOrSet[Any]]: ...
+@overload
+def is_seq_or_set[T](obj: object, item_type: type[T] | tuple[type[T], ...], /) -> TypeIs[SeqOrSet[T]]: ...
+@overload
+def is_seq_or_set(obj: object, item_type: None, /) -> TypeIs[SeqOrSet[Any]]: ...
+
+
+def is_seq_or_set(obj: object, item_type: type[Any] | tuple[type[Any], ...] | None = None, /) -> bool:
+    """Returns true if `obj` is an instance that matches the `SeqOrSet` type,<br>
+    optionally checking if all contained elements are instances of `item_type`.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `obj` – The object to check.
+    *   `item_type` – An optional type or tuple of types to check each contained element against."""
+
+    if not isinstance(obj, (list, tuple, set, frozenset)):
+        return False
+    elif item_type is None:
+        return True
+
+    # Don't use `all()` as for-loop is more performant:
+    for item in cast("Iterable[Any]", obj):  # ruff:ignore[reimplemented-builtin]
+        if not isinstance(item, item_type):
+            return False
+
+    return True
+
+
+# ********************************************************** COLORS ***********************************************************
+
 
 class _RgbaObj(Protocol):
     """Protocol for rgba-like color objects (structurally matches `rgba`)."""
-    r: int
-    g: int
-    b: int
-    a: Optional[float]
+
+    red: int
+    green: int
+    blue: int
+    alpha: float | None
+
 
 class _HslaObj(Protocol):
     """Protocol for hsla-like color objects (structurally matches `hsla`)."""
-    h: int
-    s: int
-    l: int
-    a: Optional[float]
+
+    hue: int
+    sat: int
+    light: int
+    alpha: float | None
+
 
 class _HexaObj(Protocol):
     """Protocol for hexa-like color objects (structurally matches `hexa`)."""
-    r: int
-    g: int
-    b: int
-    a: Optional[float]
 
-Rgba: TypeAlias = Union[
-    tuple[Int_0_255, Int_0_255, Int_0_255],
-    tuple[Int_0_255, Int_0_255, Int_0_255, Optional[Float_0_1]],
-    list[Int_0_255],
-    list[Union[Int_0_255, Optional[Float_0_1]]],
-    "RgbaDict",
-    _RgbaObj,
-    str,
-]
-"""Matches all supported RGBA color value formats."""
-Hsla: TypeAlias = Union[
-    tuple[Int_0_360, Int_0_100, Int_0_100],
-    tuple[Int_0_360, Int_0_100, Int_0_100, Optional[Float_0_1]],
-    list[Union[Int_0_360, Int_0_100]],
-    list[Union[Int_0_360, Int_0_100, Optional[Float_0_1]]],
-    "HslaDict",
-    _HslaObj,
-    str,
-]
-"""Matches all supported HSLA color value formats."""
-Hexa: TypeAlias = Union[str, int, _HexaObj]
-"""Matches all supported HEXA color value formats."""
+    red: int
+    green: int
+    blue: int
+    alpha: float | None
 
-AnyRgba: TypeAlias = Any
-"""Generic type alias for RGBA color values in any format (type checking disabled)."""
-AnyHsla: TypeAlias = Any
-"""Generic type alias for HSLA color values in any format (type checking disabled)."""
-AnyHexa: TypeAlias = Any
-"""Generic type alias for HEXA color values in any format (type checking disabled)."""
-
-ArgParseConfig: TypeAlias = Union[set[str], "ArgConfigWithDefault", Literal["before", "after"]]
-"""Matches the command-line-parsing configuration of a single argument."""
-ArgParseConfigs: TypeAlias = dict[str, ArgParseConfig]
-"""Matches the command-line-parsing configurations of multiple arguments, packed in a dictionary."""
-
-
-################################################## Sentinel ##################################################
-
-class AllTextChars:
-    """Sentinel class indicating all characters are allowed."""
-    ...
-
-
-################################################## TypedDict ##################################################
-
-class ArgConfigWithDefault(TypedDict):
-    """Configuration schema for a flagged command-line argument that has a specified default value."""
-    flags: set[str]
-    default: str
-
-class ArgData(TypedDict):
-    """Schema for the resulting data of parsing a single command-line argument."""
-    exists: bool
-    is_pos: bool
-    values: list[str]
-    flag: Optional[str]
 
 class RgbaDict(TypedDict):
     """Dictionary schema for RGBA color components."""
-    r: Int_0_255
-    g: Int_0_255
-    b: Int_0_255
-    a: Optional[Float_0_1]
+
+    red: Int_0_255
+    """The red channel in range [0, 255] inclusive."""
+    green: Int_0_255
+    """The green channel in range [0, 255] inclusive."""
+    blue: Int_0_255
+    """The blue channel in range [0, 255] inclusive."""
+    alpha: NotRequired[Float_0_1 | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
+
 
 class HslaDict(TypedDict):
     """Dictionary schema for HSLA color components."""
-    h: Int_0_360
-    s: Int_0_100
-    l: Int_0_100
-    a: Optional[Float_0_1]
+
+    hue: Int_0_360
+    """The hue channel in range [0, 360] inclusive."""
+    sat: Int_0_100
+    """The saturation channel in range [0, 100] inclusive."""
+    light: Int_0_100
+    """The lightness channel in range [0, 100] inclusive."""
+    alpha: NotRequired[Float_0_1 | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
+
 
 class HexaDict(TypedDict):
     """Dictionary schema for HEXA color components."""
-    r: str
-    g: str
-    b: str
-    a: Optional[str]
+
+    red: str
+    """The red channel in range [0, 255] inclusive."""
+    green: str
+    """The green channel in range [0, 255] inclusive."""
+    blue: str
+    """The blue channel in range [0, 255] inclusive."""
+    alpha: NotRequired[str | None]
+    """The alpha channel in range [0.0, 1.0] inclusive or `None` if not set."""
+
+
+type Rgba = (
+    tuple[Int_0_255, Int_0_255, Int_0_255]
+    | tuple[Int_0_255, Int_0_255, Int_0_255, Float_0_1 | None]
+    | list[Int_0_255]
+    | list[Int_0_255 | Float_0_1 | None]
+    | RgbaDict
+    | _RgbaObj
+    | str
+)
+"""Matches all supported RGBA color value formats."""
+
+type Hsla = (
+    tuple[Int_0_360, Int_0_100, Int_0_100]
+    | tuple[Int_0_360, Int_0_100, Int_0_100, Float_0_1 | None]
+    | list[Int_0_360 | Int_0_100]
+    | list[Int_0_360 | Int_0_100 | Float_0_1 | None]
+    | HslaDict
+    | _HslaObj
+    | str
+)
+"""Matches all supported HSLA color value formats."""
+
+type Hexa = str | int | _HexaObj
+"""Matches all supported HEXA color value formats."""
+
+
+# **************************************************** SYSTEM & UTILITIES *****************************************************
+
+
+class AllTextChars:
+    """Sentinel class indicating all characters are allowed."""
+
+    __slots__: tuple[str, ...] = ()
+
 
 class MissingLibsMsgs(TypedDict):
-    """Configuration schema for custom messages in `System.check_libs()` when checking library dependencies."""
+    """Configuration schema for custom messages in `system.check_libs()` when checking library dependencies."""
+
     found_missing: str
+    """Message to display when one or more libraries are missing."""
     should_install: str
+    """Confirmation message to ask the user if they want to install the missing libraries."""
 
-
-################################################## Protocol ##################################################
 
 class ProgressUpdater(Protocol):
-    """Protocol for a progress updater function used in console progress bars."""
+    """Protocol for a progress updater function used in terminal progress bars."""
 
-    def __call__(self, current: Optional[int] = None, label: Optional[str] = None) -> None:
+    @overload
+    def __call__(self, current: int) -> None:
+        """Update the current progress value."""
+        ...
+
+    @overload
+    def __call__(self, current: int, label: Renderable) -> None:
+        """Update the current progress value and label."""
+        ...
+
+    @overload
+    def __call__(self, *, label: Renderable) -> None:
+        """Update the progress label only (keyword-only)."""
+
+    def __call__(self, current: int | None = None, label: Renderable | None = None) -> None:
         """Update the current progress value and/or label."""
         ...

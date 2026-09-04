@@ -1,227 +1,233 @@
 """
-This module provides the `Json` class, which includes methods to read,
-create and update JSON files, with support for comments inside the JSON data.
+Provides enhanced JSON file operations with support for comments.
+
+Features include robust reading, validation, formatting, and
+graceful fallback handling when updating complex JSON structures.
 """
 
-from .base.types import DataObj
-from .file_sys import FileSys
-from .data import Data
-from .file import File
+from . import data as _data_module
+from . import file_sys as _file_sys_module
 
-from typing import Literal, Any, overload, cast
-from pathlib import Path
 import json as _json
+from pathlib import Path
+from typing import Any, Literal, cast, overload
 
 
-class Json:
-    """This class provides methods to read, create and update JSON files,
-    with support for comments inside the JSON data."""
+@overload
+def read(
+    json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[True]
+) -> tuple[dict[str, Any], dict[str, Any]]: ...
+@overload
+def read(
+    json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: Literal[False] = False
+) -> dict[str, Any]: ...
+@overload
+def read(
+    json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: bool
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]: ...
 
-    @overload
-    @classmethod
-    def read(
-        cls,
-        json_file: Path | str,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        return_original: Literal[True],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        ...
 
-    @overload
-    @classmethod
-    def read(
-        cls,
-        json_file: Path | str,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        return_original: Literal[False] = False,
-    ) -> dict[str, Any]:
-        ...
-
-    @classmethod
-    def read(
-        cls,
-        json_file: Path | str,
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        return_original: bool = False,
-    ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
-        """Read JSON files, ignoring comments.\n
-        ------------------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to read
-        - `comment_start` -⠀the string that indicates the start of a comment
-        - `comment_end` -⠀the string that indicates the end of a comment
-        - `return_original` -⠀if true, the original JSON data is returned additionally:<br>
-          ```python
+def read(
+    json_file: Path | str, /, *, comment_start: str = ">>", comment_end: str = "<<", return_original: bool = False
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
+    """Read JSON files, ignoring comments.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `json_file` – The path (relative or absolute) to the JSON file to read.
+    *   `comment_start` – The string that indicates the start of a comment.
+    *   `comment_end` – The string that indicates the end of a comment.
+    *   `return_original` – If true, the original JSON data is returned additionally:
+        ```python
         (processed_json, original_json)
-          ```\n
-        ------------------------------------------------------------------------------------
-        For more detailed information about the comment handling,
-        see the `Data.remove_comments()` method documentation."""
-        if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
-            json_path = json_path.with_suffix(".json")
-        file_path = FileSys.extend_or_make_path(json_path, prefer_script_dir=True)
+        ```\n
+    ----------------------------------------------------------------------------------------------------
+    For more detailed information about the comment handling,<br>
+    see the `_data_module.remove_comments()` method documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
 
-        with open(file_path, "r") as file:
-            content = file.read()
+    ```python
+    import xulbux as xx
 
-        try:
-            data = _json.loads(content)
-        except _json.JSONDecodeError as e:
-            fmt_error = "\n  ".join(str(e).splitlines())
-            raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {fmt_error}") from e
+    # Read JSON and strip comments:
+    config = xx.json.read("config.json")
 
-        if not (processed_data := dict(Data.remove_comments(data, comment_start=comment_start, comment_end=comment_end))):
-            raise ValueError(f"The JSON file {file_path!r} is empty or contains only comments.")
+    # Read both stripped and raw original data with comments:
+    clean_data, raw_data = xx.json.read("config.json", return_original=True)
+    ```"""
 
-        return (processed_data, data) if return_original else processed_data
+    if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
+        json_path = json_path.with_suffix(".json")
+    file_path = _file_sys_module.resolve_path(json_path) or json_path
 
-    @classmethod
-    def create(
-        cls,
-        json_file: Path | str,
-        data: dict[str, Any],
-        /,
-        *,
-        indent: int = 2,
-        compactness: Literal[0, 1, 2] = 1,
-        force: bool = False,
-    ) -> Path:
-        """Create a nicely formatted JSON file from a dictionary.\n
-        ---------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to create
-        - `data` -⠀the dictionary data to write to the JSON file
-        - `indent` -⠀the amount of spaces to use for indentation
-        - `compactness` -⠀can be `0`, `1` or `2` and indicates how compact
-          the data should be formatted (see `Data.render()` for more info)
-        - `force` -⠀if true, will overwrite existing files
-          without throwing an error (errors explained below)\n
-        ---------------------------------------------------------------------------
-        The method will throw a `FileExistsError` if a file with the same
-        name already exists and a `SameContentFileExistsError` if a file
-        with the same name and same content already exists."""
-        if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
-            json_path = json_path.with_suffix(".json")
+    with open(file_path, encoding="utf-8") as file:
+        content = file.read()
 
-        file_path = FileSys.extend_or_make_path(json_path, prefer_script_dir=True)
-        File.create(
-            file_path,
-            Data.render(data, indent=indent, compactness=compactness, as_json=True, syntax_highlighting=False),
-            force=force,
-        )
+    try:
+        data = _json.loads(content)
+    except _json.JSONDecodeError as exc:
+        raise ValueError(f"Error parsing JSON in {file_path!r}:\n  {'\n  '.join(str(exc).splitlines())}") from exc
 
-        return file_path
+    if not (processed_data := dict(_data_module.remove_comments(data, comment_start=comment_start, comment_end=comment_end))):
+        raise ValueError(f"The JSON file {file_path!r} contains no data")
 
-    @classmethod
-    def update(
-        cls,
-        json_file: Path | str,
-        update_values: dict[str, Any],
-        /,
-        *,
-        comment_start: str = ">>",
-        comment_end: str = "<<",
-        path_sep: str = "->",
-    ) -> None:
-        """Update single/multiple values inside JSON files,
-        without needing to know the rest of the data.\n
-        -----------------------------------------------------------------------------------
-        - `json_file` -⠀the path (relative or absolute) to the JSON file to update
-        - `update_values` -⠀a dictionary with the paths to the values to update
-          and the new values to set (see explanation below – section 2)
-        - `comment_start` -⠀the string that indicates the start of a comment
-        - `comment_end` -⠀the string that indicates the end of a comment
-        - `path_sep` -⠀the separator used inside the value-paths in `update_values`\n
-        -----------------------------------------------------------------------------------
-        For more detailed information about the comment handling,
-        see the `Data.remove_comments()` method documentation.\n
-        -----------------------------------------------------------------------------------
-        The `update_values` is a dictionary, where the keys are the paths
-        to the data to update, and the values are the new values to set.\n
-        For example for this JSON data:
-        ```python
+    return (processed_data, data) if return_original else processed_data
+
+
+def create(
+    json_file: Path | str, data: dict[str, Any], /, *, indent: int = 2, compactness: Literal[0, 1, 2] = 1, force: bool = False
+) -> Path:
+    """Create a nicely formatted JSON file from a dictionary.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `json_file` – The path (relative or absolute) to the JSON file to create.
+    *   `data` – The dictionary data to write to the JSON file.
+    *   `indent` – The amount of spaces to use for indentation.
+    *   `compactness` – Can be `0`, `1` or `2` and indicates how compact<br>
+        the data should be formatted (see `_data_module.render()` for more info).
+    *   `force` – If true, will overwrite existing files<br>
+        without throwing an error (errors explained below).\n
+    ----------------------------------------------------------------------------------------------------
+    The method will throw a `FileExistsError` if a file with the same<br>
+    name already exists and a `SameContentFileExistsError` if a file<br>
+    with the same name and same content already exists.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {
+        "app": "my-tool",
+        "version": "1.0.0",
+        "settings": {"debug": True, "workers": 4},
+    }
+
+    file_path = xx.json.create("config.json", data, indent=2, force=True)
+    ```"""
+
+    if (json_path := Path(json_file) if isinstance(json_file, str) else json_file).suffix != ".json":
+        json_path = json_path.with_suffix(".json")
+
+    file_path = _file_sys_module.resolve_or_create_path(json_path, prefer_script_dir=True)
+    _file_sys_module.create_file(
+        file_path,
+        _data_module.render(data, indent=indent, compactness=compactness, as_json=True, syntax_highlighting=False).raw,
+        force=force,
+    )
+
+    return file_path
+
+
+def update(
+    json_file: Path | str,
+    update_values: dict[str, Any],
+    /,
+    *,
+    comment_start: str = ">>",
+    comment_end: str = "<<",
+    path_sep: str = "->",
+) -> None:
+    """Update single/multiple values inside JSON files,<br>
+    without needing to know the rest of the data.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `json_file` – The path (relative or absolute) to the JSON file to update.
+    *   `update_values` – A dictionary where keys are the paths to the values to update<br>
+        and values are the new values to set. Dictionaries are addressed by key name,<br>
+        and sequences by integer index. Missing paths will automatically be created.
+    *   `comment_start` – The string that indicates the start of a comment.
+    *   `comment_end` – The string that indicates the end of a comment.
+    *   `path_sep` – The separator used inside the value-paths in `update_values`.\n
+    ----------------------------------------------------------------------------------------------------
+    For more detailed information about comment handling,<br>
+    see the `data.remove_comments()` method documentation.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    import xulbux as xx
+
+    data = {
+        "healthy": {
+            "fruits": ["apples", "bananas", "oranges"],
+            "vegetables": ["carrots", "broccoli", "celery"],
+        },
+    }
+    xx.json.create("diet.json", data, force=True)
+
+    # Update nested list values by index and dict values by key name:
+    xx.json.update(
+        "diet.json",
         {
-            "healthy": {
-                "fruits": ["apples", "bananas", "oranges"],
-                "vegetables": ["carrots", "broccoli", "celery"]
-            }
-        }
-        ```
-        … the `update_values` dictionary could look like this:
-        ```python
-        {
-            # CHANGE FIRST LIST-VALUE UNDER 'fruits' TO "strawberries"
             "healthy->fruits->0": "strawberries",
-            # CHANGE VALUE OF KEY 'vegetables' TO [1, 2, 3]
-            "healthy->vegetables": [1, 2, 3]
+            "healthy->vegetables": ["spinach", "kale"],
+        },
+    )
+    ```
+
+    <!-- DOCS: <AttachedCode> -->
+    Updated JSON Data:
+
+    ```python
+    {
+        "healthy": {
+            "fruits": ["strawberries", "bananas", "oranges"],
+            "vegetables": ["spinach", "kale"],
         }
-        ```
-        In this example, if you want to change the value of `"apples"`,
-        you can use `healthy->fruits->apples` as the value-path.<br>
-        If you don't know that the first list item is `"apples"`,
-        you can use the items list index inside the value-path, so `healthy->fruits->0`.\n
-        ⇾ If the given value-path doesn't exist, it will be created."""
-        processed_data, data = cls.read(
-            json_file,
-            comment_start=comment_start,
-            comment_end=comment_end,
-            return_original=True,
-        )
+    }
+    ```
+    <!-- DOCS: </AttachedCode> -->"""
 
-        update: dict[str, Any] = {}
-        for val_path, new_val in update_values.items():
-            try:
-                if (path_id := Data.get_path_id(cast(DataObj, processed_data), val_path, path_sep=path_sep)) is not None:
-                    update[path_id] = new_val
-                else:
-                    data = cls._create_nested_path(data, val_path.split(path_sep), new_val)
-            except Exception:
-                data = cls._create_nested_path(data, val_path.split(path_sep), new_val)
+    processed_data, data = read(json_file, comment_start=comment_start, comment_end=comment_end, return_original=True)
 
-        if update:
-            data = Data.set_value_by_path_id(data, update)
+    update: dict[str, Any] = {}
+    for val_path, new_val in update_values.items():
+        try:
+            if (path_id := _data_module.get_path_id(processed_data, val_path, path_sep=path_sep)) is not None:
+                update[path_id] = new_val
+            else:
+                data = _create_nested_path(data, val_path.split(path_sep), new_val)
+        except Exception:
+            data = _create_nested_path(data, val_path.split(path_sep), new_val)
 
-        cls.create(json_file, data, force=True)
+    if update:
+        data = _data_module.set_value_by_path_id(data, update)
 
-    @staticmethod
-    def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: Any, /) -> dict[str, Any]:
-        """Internal method that creates nested dictionaries/lists based on the
-        given path keys and sets the specified value at the end of the path."""
-        last_idx, current = len(path_keys) - 1, data_obj
+    create(json_file, data, force=True)
 
-        for i, key in enumerate(path_keys):
-            if i == last_idx:
-                if isinstance(current, dict):
-                    current[key] = value
-                elif isinstance(current, list) and key.isdigit():
-                    idx = int(key)
-                    while len(cast(list[Any], current)) <= idx:
-                        cast(list[Any], current).append(None)
-                    current[idx] = value
-                else:
-                    raise TypeError(f"Cannot set key '{key}' on {type(cast(Any, current))}")
+
+def _create_nested_path(data_obj: dict[str, Any], path_keys: list[str], value: Any, /) -> dict[str, Any]:
+    """Internal method that creates nested dictionaries/lists based on the<br>
+    given path keys and sets the specified value at the end of the path."""
+
+    last_idx, current = len(path_keys) - 1, data_obj
+
+    for i, key in enumerate(path_keys):
+        if i == last_idx:
+            if isinstance(current, dict):
+                current[key] = value
+
+            elif isinstance(current, list) and key.isdigit():
+                while len(cast("list[Any]", current)) <= (idx := int(key)):
+                    cast("list[Any]", current).append(None)
+                current[idx] = value
 
             else:
-                next_key = path_keys[i + 1]
-                if isinstance(current, dict):
-                    if key not in current:
-                        current[key] = [] if next_key.isdigit() else {}
-                    current = cast(dict[str, Any], current)[key]  # type: ignore[unnecessary-cast]
-                elif isinstance(current, list) and key.isdigit():
-                    idx = int(key)
-                    while len(cast(list[Any], current)) <= idx:
-                        cast(list[Any], current).append(None)
-                    if current[idx] is None:
-                        current[idx] = [] if next_key.isdigit() else {}
-                    current = cast(list[Any], current)[idx]
-                else:
-                    raise TypeError(f"Cannot navigate through {type(cast(Any, current))}")
+                raise TypeError(f"Cannot set key '{key}' on {type(cast('Any', current))}")
 
-        return data_obj
+        else:
+            next_key = path_keys[i + 1]
+            if isinstance(current, dict):
+                if key not in current:
+                    current[key] = [] if next_key.isdigit() else {}
+                current = cast("dict[str, Any]", current)[key]  # pyright:ignore[reportUnnecessaryCast]
+
+            elif isinstance(current, list) and key.isdigit():
+                while len(cast("list[Any]", current)) <= (idx := int(key)):
+                    cast("list[Any]", current).append(None)
+                if current[idx] is None:
+                    current[idx] = [] if next_key.isdigit() else {}
+                current = cast("list[Any]", current)[idx]
+
+            else:
+                raise TypeError(f"Cannot navigate through {type(cast('Any', current))}")
+
+    return data_obj
