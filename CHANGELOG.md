@@ -35,6 +35,9 @@
     -   `console.log()` no longer forces the title to be uppercase, allowing customizable capitalization.
     -   Added support for fixed `width` and automatic content wrapping in `console.box()`, wrapping text lines that exceed the box width while preserving ANSI styles and `{hr}` rules.
     -   Added support for content alignment in `console.box()` via `align: Literal["left", "center", "right"] = "left"`.
+    -   Added `KEYS` constants in `xulbux.base.consts` exposing standardized sequences and sets for directional arrows, navigation, actions, and function keys.
+    -   Added `console.raw_mode()` context manager for terminal unbuffered raw mode with enhanced key protocols.
+    -   Added `console.read_key()` for reading single key presses and ANSI escape sequences in the terminal with cross-platform support.
     -   Implemented a custom stub generator for improved `.pyi` type stub generation during the build process.
 
 **BREAKING CHANGES:**

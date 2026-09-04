@@ -17,6 +17,18 @@ def test_get_latest_version_successful_response() -> None:
         assert get_latest_version() == "2.0.0"
 
 
+def test_get_latest_version_empty_version() -> None:
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.__enter__.return_value = mock_response
+
+    with (
+        patch("urllib.request.urlopen", return_value=mock_response),
+        patch("json.load", return_value={"info": {"version": ""}}),
+    ):
+        assert get_latest_version() is None
+
+
 def test_get_latest_version_invalid_json() -> None:
     mock_response = MagicMock()
     mock_response.status = 200
@@ -26,6 +38,26 @@ def test_get_latest_version_invalid_json() -> None:
         patch("urllib.request.urlopen", return_value=mock_response),
         patch("json.load", side_effect=json.JSONDecodeError("msg", "doc", 0)),
     ):
+        assert get_latest_version() is None
+
+
+def test_get_latest_version_network_error() -> None:
+    with patch("urllib.request.urlopen", side_effect=OSError("Connection reset by peer")):
+        assert get_latest_version() is None
+
+
+def test_get_latest_version_timeout() -> None:
+    import time
+
+    def _slow_urlopen(*_args: object, **_kwargs: object) -> None:
+        time.sleep(0.05)
+
+    with patch("urllib.request.urlopen", side_effect=_slow_urlopen):
+        assert get_latest_version(timeout=0.005) is None
+
+
+def test_get_latest_version_thread_creation_failure() -> None:
+    with patch("threading.Thread", side_effect=RuntimeError("thread creation failed")):
         assert get_latest_version() is None
 
 

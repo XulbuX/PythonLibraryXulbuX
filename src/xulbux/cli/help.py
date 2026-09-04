@@ -3,27 +3,38 @@ from .. import console as _console_module
 from ..ansi import S, TextRenderable
 
 import json as _json
+import threading as _threading
 import urllib.request as _request
+from contextlib import suppress as _suppress
 from typing import Final
 
 PACKAGE_META_URL: Final[str] = "https://pypi.org/pypi/xulbux/json"
 """URL to fetch the package metadata from PyPI."""
 
 
-def get_latest_version() -> str | None:
+def get_latest_version(timeout: float = 1.0) -> str | None:
     """Fetches the latest version of the library from PyPI in the format `x.y.z`.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `timeout` – Maximum duration in seconds to wait for the version check
+        before aborting and continuing.\n
     ----------------------------------------------------------------------------------------------------
     Returns `None` if the latest version could not be fetched."""
 
-    with _request.urlopen(PACKAGE_META_URL) as response:
-        try:
-            return (
-                clean_version
-                if (clean_version := (_json.load(response)["info"]["version"] or "").lower().lstrip("v"))
-                else None
-            )
-        except Exception:
-            return None
+    result: list[str | None] = [None]
+
+    def _fetch() -> None:
+        """Worker function to fetch and parse package metadata in a background thread."""
+
+        with _suppress(Exception), _request.urlopen(PACKAGE_META_URL, timeout=timeout) as response:
+            if clean_version := (_json.load(response)["info"]["version"] or "").lower().lstrip("v"):
+                result[0] = clean_version
+
+    with _suppress(Exception):
+        thread = _threading.Thread(target=_fetch, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout)
+
+    return result[0]
 
 
 def is_latest_version(latest_version: str | None = None) -> bool | None:
@@ -71,16 +82,18 @@ def show_help() -> None:
 
         return _console_module.box(*args, border_style=S.DIM | S.BR.BLACK, width=58, indent=2, print=False)
 
+    is_latest_ver: bool = bool((latest_ver := get_latest_version()) and is_latest_version(latest_ver))
+
     # The local version of the library:
     version_msg: tuple[TextRenderable, TextRenderable, TextRenderable] = (
-        xx_secondary("▄" * (len(__version__) + 7)),
-        (S.hex("#000") | xx_secondary.as_bg())("  ✓ v", S.BOLD(__version__), "  "),
-        xx_secondary("▀" * (len(__version__) + 7)),
+        xx_secondary("▄" * (len(__version__) + (7 if is_latest_ver else 5))),
+        (S.hex("#000") | xx_secondary.as_bg())(f"  {'✓ ' if is_latest_ver else ''}v", S.BOLD(__version__), "  "),
+        xx_secondary("▀" * (len(__version__) + (7 if is_latest_ver else 5))),
     )
 
     # fmt:off
     # Attach a notice if the installed version is not the latest one available on PyPI:
-    if (latest_ver := get_latest_version()) and is_latest_version(latest_ver) is False:
+    if not is_latest_ver and latest_ver:
         version_msg = (
             (version_msg[0], (S.DIM | notice_st)("─" * (len(latest_ver) + 15), "╮")),
             (version_msg[1], (notice_st(" ↑ ", S.link("https://pypi.org/pypi/xulbux")("v", S.BOLD(latest_ver)), " available "), (S.DIM | notice_st)("│"))),  # ruff:ignore[line-too-long]

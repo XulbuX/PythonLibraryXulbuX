@@ -25,9 +25,11 @@ from .base.decorators import mypyc_attr
 from .base.types import AllTextChars, ProgressUpdater, SeqOrSet
 from .regex import LazyRegex
 
+import atexit as _atexit
 import ctypes as _ctypes
 import os as _os
 import re as _re
+import select as _select
 import sys as _sys
 import threading as _threading
 import time as _time
@@ -59,6 +61,11 @@ _PATTERNS: Final[LazyRegex] = LazyRegex(
     total=r"(?i){(?:total|t)(?::(.))?}",
 )
 
+_raw_mode_depth: int = 0
+"""Current nesting depth of the `raw_mode()` context manager."""
+_original_termios_attrs: list[Any] | None = None
+"""Internal cache preserving original terminal attributes for restoration when exiting raw mode."""
+
 _LOG_TITLE_CACHE: dict[tuple[str, str], str] = {}
 """Cache of rendered log-title ANSI strings, keyed by `(padded_title, style_repr)`."""
 _LOG_TITLE_CACHE_MAX: Final[int] = 256
@@ -68,9 +75,6 @@ _TITLE_COLORS_CACHE: Final[dict[object, tuple[BgColorStyle, FgColorStyle]]] = {}
 """Cache of resolved background and matching foreground style pairs."""
 _CUBE_STEPS: Final[tuple[int, ...]] = (0, 95, 135, 175, 215, 255)
 """RGB step values for the 6x6x6 256-color palette cube."""
-
-_ANSI_RESET: Final[str] = S.RESET.ansi
-"""The ANSI full-reset sequence (`ESC[0m`)."""
 
 _OPT_SEP_DEFAULT: Final[object] = object()
 """Sentinel object used as default for `opt_value_sep` in `ArgumentParser.parse()`."""
@@ -2419,31 +2423,189 @@ def input(
             raise
 
 
-def _read_single_key() -> None:
-    """Wait for a single key press without requiring elevated privileges.<br>
-    Falls back to reading a line when stdin is not a TTY (e.g., piped input)."""
+def _restore_raw_terminal() -> None:
+    """Restore terminal protocols and cursor visibility if raw mode was left active."""
 
-    if not _sys.stdin.isatty():
-        _sys.stdin.readline()
+    global _original_termios_attrs, _raw_mode_depth
+
+    if _raw_mode_depth > 0:
+        _sys.stdout.write("\x1b[<u\x1b[>4;0m\x1b[?25h\x1b[0m")
+        _sys.stdout.flush()
+
+        if _original_termios_attrs is not None and _sys.platform != "win32":
+            with _suppress(Exception):
+                import termios as _termios
+
+                _termios.tcsetattr(_sys.stdin.fileno(), _termios.TCSADRAIN, _original_termios_attrs)
+
+        _original_termios_attrs = None
+        _raw_mode_depth = 0
+
+
+_atexit.register(_restore_raw_terminal)
+
+
+@contextmanager
+def raw_mode() -> Generator[None, None, None]:
+    """Put the terminal into unbuffered raw mode with echo disabled and enhanced key protocols.\n
+    ----------------------------------------------------------------------------------------------------
+    **Attention:**<br>
+    This context manager operates exclusively within an active terminal/console environment.<br>
+    It cannot capture global desktop hotkeys or background input outside the terminal window.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux.base.consts import KEYS
+    import xulbux as xx
+
+    with xx.console.raw_mode():
+        while True:
+            key = xx.console.read_key(raw=False)
+
+            if key in KEYS.ESCAPE:
+                break
+    ```"""
+
+    global _original_termios_attrs, _raw_mode_depth
+
+    if not _sys.stdin.isatty() or _sys.platform == "win32":
+        _raw_mode_depth += 1
+        try:
+            yield
+        finally:
+            _raw_mode_depth -= 1
         return
 
+    import termios as _termios
+
+    file_descriptor = _sys.stdin.fileno()
+
+    if _raw_mode_depth == 0:
+        _original_termios_attrs = _termios.tcgetattr(file_descriptor)
+
+        modified_attrs = _termios.tcgetattr(file_descriptor)
+        modified_attrs[3] &= ~(_termios.ECHO | _termios.ICANON)
+        modified_attrs[0] &= ~_termios.ICRNL
+        modified_attrs[6][_termios.VMIN] = 1
+        modified_attrs[6][_termios.VTIME] = 0
+
+        _termios.tcsetattr(file_descriptor, _termios.TCSANOW, modified_attrs)
+
+        _sys.stdout.write("\x1b[>1u\x1b[>4;2m")
+        _sys.stdout.flush()
+
+    _raw_mode_depth += 1
+    try:
+        yield
+
+    finally:
+        _raw_mode_depth -= 1
+
+        if _raw_mode_depth == 0:
+            _sys.stdout.write("\x1b[<u\x1b[>4;0m")
+            _sys.stdout.flush()
+
+            if _original_termios_attrs is not None:
+                _termios.tcsetattr(file_descriptor, _termios.TCSADRAIN, _original_termios_attrs)
+                _original_termios_attrs = None
+
+
+def _read_key_windows() -> str:
+    """Reads a single keypress on Windows console using `msvcrt`."""
+
+    import msvcrt as _msvcrt
+
+    getwch = getattr(_msvcrt, "getwch")  # ruff:ignore[get-attr-with-constant]
+
+    if (char := str(getwch())) == "\x03":
+        raise KeyboardInterrupt
+    if char in {"\x00", "\xe0"}:
+        return char + str(getwch())
+
+    return char
+
+
+def _read_key_posix() -> str:
+    """Reads a single keypress or ANSI escape sequence on POSIX terminals."""
+
+    if not (raw_bytes := _os.read(file_descriptor := _sys.stdin.fileno(), 1)):
+        return ""
+    elif raw_bytes == b"\x03":
+        raise KeyboardInterrupt
+    elif raw_bytes != b"\x1b":
+        return raw_bytes.decode("utf-8", errors="replace")
+
+    seq = bytearray(raw_bytes)
+
+    while _select.select([file_descriptor], [], [], 0.05)[0]:
+        if not (next_byte := _os.read(file_descriptor, 1)):
+            break
+
+        seq.extend(next_byte)
+
+        if (len(seq) > 2 and 0x40 <= seq[-1] <= 0x7E and seq[-1] != ord("[")) or (
+            len(seq) == 2 and seq[1] not in {ord("["), ord("O")}
+        ):
+            break
+
+    if (decoded := seq.decode("utf-8", errors="replace")).startswith((
+        "\x1b[99;5",
+        "\x1b[67;5",
+        "\x1b[99;6",
+        "\x1b[67;6",
+    )) or decoded.startswith((
+        "\x1b[27;5;99~",
+        "\x1b[27;5;67~",
+        "\x1b[27;6;99~",
+        "\x1b[27;6;67~",
+    )):
+        raise KeyboardInterrupt
+
+    return decoded
+
+
+def read_key(*, raw: bool = True) -> str:
+    """Read a single keypress or ANSI/CSI escape sequence from standard input in the terminal.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `raw` – Whether to automatically enter raw terminal mode to capture unbuffered key presses.\n
+    ----------------------------------------------------------------------------------------------------
+    Raises `KeyboardInterrupt` if `Ctrl+C` is detected.\n
+    ----------------------------------------------------------------------------------------------------
+    **Attention:**<br>
+    This function operates exclusively within an active terminal/console environment.<br>
+    It reads standard input in raw mode and cannot capture global desktop keystrokes<br>
+    or background input outside the terminal window.\n
+    ----------------------------------------------------------------------------------------------------
+    #### Example Usage
+
+    ```python
+    from xulbux.base.consts import KEYS
+    import xulbux as xx
+
+    key = xx.console.read_key()
+
+    if key in KEYS.UP:
+        print("Up arrow pressed")
+    ```"""
+
+    if raw and _raw_mode_depth == 0 and _sys.stdin.isatty():
+        with raw_mode():
+            return read_key(raw=False)
+
+    if not _sys.stdin.isatty():
+        return _sys.stdin.read(1)
+
     if _sys.platform == "win32":
-        import msvcrt as _msvcrt
+        return _read_key_windows()
 
-        _msvcrt.getch()  # type: ignore[attr-defined]
+    return _read_key_posix()
 
-    else:
-        import termios as _termios
-        import tty as _tty
 
-        fd = _sys.stdin.fileno()
-        old_settings = _termios.tcgetattr(fd)  # type:ignore[attr-defined]
+def _read_single_key() -> None:
+    """Internal helper to wait for a single key press without returning the key representation."""
 
-        try:
-            _tty.setraw(fd)  # type:ignore[attr-defined]
-            _sys.stdin.read(1)
-        finally:
-            _termios.tcsetattr(fd, _termios.TCSADRAIN, old_settings)  # type:ignore[attr-defined]
+    read_key()
 
 
 def _resolve_title_colors(title_bg_color: object, /) -> tuple[BgColorStyle, FgColorStyle]:
@@ -3230,7 +3392,7 @@ class ProgressBar(_StdoutInterceptorMixin):
                 self.limited_format, current, total, percentage, label
             )
 
-        bar = self._create_bar(current, total, max(1, bar_width)) + _ANSI_RESET
+        bar = self._create_bar(current, total, max(1, bar_width)) + S.RESET.ansi
         progress_text = _PATTERNS.bar.sub(bar.replace("\\", r"\\"), formatted)
 
         self._current_progress_str = progress_text
@@ -3543,7 +3705,7 @@ class Throbber(_StdoutInterceptorMixin):
 
                 self._flush_buffer()
 
-                frame = self.frames[self._frame_idx % len(self.frames)] + _ANSI_RESET
+                frame = self.frames[self._frame_idx % len(self.frames)] + S.RESET.ansi
                 label_ansi = _to_styled_text(self.label).ansi if self.label is not None else ""
                 formatted = self.sep.join([
                     fmt_part

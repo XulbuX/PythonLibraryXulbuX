@@ -2,6 +2,7 @@ import io
 import os
 from collections.abc import Callable
 from unittest.mock import MagicMock, patch
+import xulbux.console as _console_module
 from xulbux.ansi import S
 from xulbux.base.consts import CHARS
 from xulbux.console import (
@@ -9,6 +10,7 @@ from xulbux.console import (
     _ConsoleInputValidator,
     _multiline_input_submit,
     _read_single_key,
+    _restore_raw_terminal,
     _to_styled_text,
     clear,
     confirm,
@@ -21,6 +23,8 @@ from xulbux.console import (
     is_tty,
     multiline_input,
     pause_exit,
+    raw_mode,
+    read_key,
 )
 import pytest
 from prompt_toolkit.document import Document
@@ -148,31 +152,267 @@ def test_pause_and_pause_exit() -> None:
     assert exc_info_zero.value.code == 0
 
 
-def test_read_single_key_non_tty() -> None:
-    with patch("sys.stdin.isatty", return_value=False), patch("sys.stdin.readline", return_value=""):
-        _read_single_key()
+def test_restore_raw_terminal(mock_os_linux: None) -> None:
+    buffer = io.StringIO()
+    mock_termios = MagicMock()
+    with (
+        patch("xulbux.console._raw_mode_depth", 1),
+        patch("xulbux.console._original_termios_attrs", [1, 2, 3]),
+        patch("sys.stdout", buffer),
+        patch("sys.stdin.fileno", return_value=0),
+        patch.dict("sys.modules", {"termios": mock_termios}),
+    ):
+        _restore_raw_terminal()
+        assert "\x1b[<u\x1b[>4;0m\x1b[?25h\x1b[0m" in buffer.getvalue()
+        mock_termios.tcsetattr.assert_called_once()
+        assert _console_module._raw_mode_depth == 0
+        assert _console_module._original_termios_attrs is None
+
+    # Suppressed exception when termios fails:
+    mock_termios_error = MagicMock()
+    mock_termios_error.tcsetattr.side_effect = RuntimeError("Failed")
+    with (
+        patch("xulbux.console._raw_mode_depth", 1),
+        patch("xulbux.console._original_termios_attrs", [1, 2, 3]),
+        patch("sys.stdout", io.StringIO()),
+        patch("sys.stdin.fileno", return_value=0),
+        patch.dict("sys.modules", {"termios": mock_termios_error}),
+    ):
+        _restore_raw_terminal()
+
+    # When _original_termios_attrs is None:
+    with (
+        patch("xulbux.console._raw_mode_depth", 1),
+        patch("xulbux.console._original_termios_attrs", None),
+        patch("sys.stdout", io.StringIO()),
+    ):
+        _restore_raw_terminal()
+
+    # Zero depth does nothing:
+    buffer_zero = io.StringIO()
+    with patch("xulbux.console._raw_mode_depth", 0), patch("sys.stdout", buffer_zero):
+        _restore_raw_terminal()
+    assert buffer_zero.getvalue() == ""
 
 
-def test_read_single_key_windows(mock_os_windows: None) -> None:
+def test_raw_mode_non_tty() -> None:
+    with patch("sys.stdin.isatty", return_value=False):
+        with raw_mode():
+            assert _console_module._raw_mode_depth == 1
+        assert _console_module._raw_mode_depth == 0
+
+
+def test_raw_mode_windows(mock_os_windows: None) -> None:
+    with patch("sys.stdin.isatty", return_value=True):
+        with raw_mode():
+            assert _console_module._raw_mode_depth == 1
+        assert _console_module._raw_mode_depth == 0
+
+
+def test_raw_mode_posix(mock_os_linux: None) -> None:
+    def _fake_tcgetattr(file_descriptor: int) -> list[object]:
+        return [1, 2, 3, 10, 5, 6, [0] * 32]
+
+    mock_termios = MagicMock()
+    mock_termios.ECHO = 8
+    mock_termios.ICANON = 2
+    mock_termios.ICRNL = 256
+    mock_termios.VMIN = 6
+    mock_termios.VTIME = 5
+    mock_termios.TCSANOW = 0
+    mock_termios.TCSADRAIN = 1
+    mock_termios.tcgetattr.side_effect = _fake_tcgetattr
+
+    buffer = io.StringIO()
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("sys.stdout", buffer),
+        patch.dict("sys.modules", {"termios": mock_termios}),
+    ):
+        with raw_mode():
+            assert _console_module._raw_mode_depth == 1
+            # Re-entrant check:
+            with raw_mode():
+                assert _console_module._raw_mode_depth == 2
+            assert _console_module._raw_mode_depth == 1
+        assert _console_module._raw_mode_depth == 0
+
+    assert "\x1b[>1u\x1b[>4;2m" in buffer.getvalue()
+    assert "\x1b[<u\x1b[>4;0m" in buffer.getvalue()
+    assert mock_termios.tcsetattr.call_count == 2
+
+    # Exit when _original_termios_attrs was reset:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("sys.stdout", io.StringIO()),
+        patch.dict("sys.modules", {"termios": mock_termios}),
+        raw_mode(),
+    ):
+        _console_module._original_termios_attrs = None
+
+
+def test_read_key_non_tty() -> None:
+    with patch("sys.stdin.isatty", return_value=False), patch("sys.stdin.read", return_value="x"):
+        assert read_key() == "x"
+
+
+def test_read_key_windows(mock_os_windows: None) -> None:
     mock_msvcrt = MagicMock()
-    mock_msvcrt.getch.return_value = b"a"
+
+    # Normal character:
+    mock_msvcrt.getwch.return_value = "a"
     with (
         patch("sys.stdin.isatty", return_value=True),
         patch.dict("sys.modules", {"msvcrt": mock_msvcrt}),
     ):
-        _read_single_key()
+        assert read_key(raw=False) == "a"
+
+    # Ctrl+C raises KeyboardInterrupt:
+    mock_msvcrt.getwch.return_value = "\x03"
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch.dict("sys.modules", {"msvcrt": mock_msvcrt}),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        read_key(raw=False)
+
+    # Special prefix character (\xe0):
+    mock_msvcrt.getwch.side_effect = ["\xe0", "H"]
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch.dict("sys.modules", {"msvcrt": mock_msvcrt}),
+    ):
+        assert read_key(raw=False) == "\xe0H"
+
+    # Special prefix character (\x00):
+    mock_msvcrt.getwch.side_effect = ["\x00", "K"]
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch.dict("sys.modules", {"msvcrt": mock_msvcrt}),
+    ):
+        assert read_key(raw=False) == "\x00K"
 
 
-def test_read_single_key_posix(mock_os_linux: None) -> None:
-    mock_termios = MagicMock()
-    mock_tty = MagicMock()
+def test_read_key_posix(mock_os_linux: None) -> None:
+    # 1. raw=True auto raw_mode delegation:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("xulbux.console._raw_mode_depth", 0),
+        patch("xulbux.console.raw_mode") as mock_raw_mode,
+        patch("os.read", return_value=b"k"),
+        patch("sys.stdin.fileno", return_value=0),
+    ):
+        mock_raw_mode.return_value.__enter__.return_value = None
+        mock_raw_mode.return_value.__exit__.return_value = None
+        assert read_key(raw=True) == "k"
+        mock_raw_mode.assert_called_once()
+
+    # 2. Empty read:
     with (
         patch("sys.stdin.isatty", return_value=True),
         patch("sys.stdin.fileno", return_value=0),
-        patch("sys.stdin.read", return_value="a"),
-        patch.dict("sys.modules", {"termios": mock_termios, "tty": mock_tty}),
+        patch("os.read", return_value=b""),
     ):
+        assert read_key(raw=False) == ""
+
+    # 3. Ctrl+C byte raises KeyboardInterrupt:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", return_value=b"\x03"),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        read_key(raw=False)
+
+    # 4. Normal character (non-escape):
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", return_value=b"z"),
+    ):
+        assert read_key(raw=False) == "z"
+
+    # 5. Escape sequence (Arrow Up):
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"[", b"A"]),
+        patch("select.select", side_effect=[([0], [], []), ([0], [], [])]),
+    ):
+        assert read_key(raw=False) == "\x1b[A"
+
+    # 6. Escape sequence terminating early due to empty read:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b""]),
+        patch("select.select", return_value=([0], [], [])),
+    ):
+        assert read_key(raw=False) == "\x1b"
+
+    # 7. 2-byte escape sequence (not starting with [ or O):
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"m"]),
+        patch("select.select", return_value=([0], [], [])),
+    ):
+        assert read_key(raw=False) == "\x1bm"
+
+    # 8. Escape sequence with O (function key F1):
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"O", b"P"]),
+        patch("select.select", side_effect=[([0], [], []), ([0], [], [])]),
+    ):
+        assert read_key(raw=False) == "\x1bOP"
+
+    # 9. Standalone escape key when select times out:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", return_value=b"\x1b"),
+        patch("select.select", return_value=([], [], [])),
+    ):
+        assert read_key(raw=False) == "\x1b"
+
+    # 10. Kitty Ctrl+C raises KeyboardInterrupt:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"[", b"9", b"9", b";", b"5", b"u"]),
+        patch("select.select", return_value=([0], [], [])),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        read_key(raw=False)
+
+    # 11. xterm Ctrl+C raises KeyboardInterrupt:
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"[", b"2", b"7", b";", b"5", b";", b"9", b"9", b"~"]),
+        patch("select.select", return_value=([0], [], [])),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        read_key(raw=False)
+
+    # 12. Linux console double-bracket sequence (F1):
+    with (
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdin.fileno", return_value=0),
+        patch("os.read", side_effect=[b"\x1b", b"[", b"[", b"A"]),
+        patch("select.select", side_effect=[([0], [], []), ([0], [], []), ([0], [], [])]),
+    ):
+        assert read_key(raw=False) == "\x1b[[A"
+
+
+def test_read_single_key() -> None:
+    with patch("xulbux.console.read_key") as mock_read_key:
         _read_single_key()
+        mock_read_key.assert_called_once_with()
 
 
 def test_confirm_prompts() -> None:

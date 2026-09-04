@@ -173,8 +173,11 @@ class StubGen(ast.NodeTransformer):
             ):
                 continue  # Drop the implementation function entirely.
 
-            if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str):
-                continue  # Drop variable docstrings.
+            if isinstance(stmt, ast.Expr) and not (isinstance(stmt.value, ast.Constant) and stmt.value.value is Ellipsis):
+                continue  # Drop docstrings, function calls, and meaningless expressions.
+
+            if isinstance(stmt, (ast.Assert, ast.Delete)):
+                continue
 
             if isinstance(stmt, ast.Assign):
                 if all(isinstance(target, ast.Attribute) for target in stmt.targets):
